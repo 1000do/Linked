@@ -1,0 +1,82 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - LinkedLearn</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#006a62",
+                        "primary-container": "#43e8d8",
+                        "on-primary": "#ffffff",
+                        "secondary": "#006b60",
+                        "surface": "#f0fcfb",
+                        "on-surface": "#131d1e",
+                        "surface-container-low": "#eaf6f5",
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .glass-nav {
+            backdrop-filter: blur(12px);
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #006a62 0%, #43e8d8 100%);
+        }
+    </style>
+</head>
+
+<body class="bg-surface font-body text-on-surface antialiased">
+
+    <!-- HEADER -->
+    @await Html.PartialAsync("_Header")
+
+    <!-- CONTENT -->
+    <main role="main" class="pt-20">
+        @RenderBody()
+    </main>
+
+    <!-- FOOTER -->
+    @await Html.PartialAsync("_Footer")
+
+    <!-- CHAT BUTTON -->
+    <div class="fixed bottom-6 right-6 z-[100] group">
+        <span class="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-slate-800 text-white text-xs font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            Chat với hỗ trợ viên
+        </span>
+
+        <button class="w-14 h-14 bg-primary-container text-primary rounded-2xl shadow-2xl shadow-primary/30 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 relative">
+            <span class="material-symbols-outlined text-[28px]" style='font-variation-settings: "FILL" 1;'>
+                chat_bubble
+            </span>
+
+            <span class="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-surface">
+                1
+            </span>
+        </button>
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

@@ -1,0 +1,83 @@
+﻿using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using CourseMarketplaceBE.Helpers;
+using CourseMarketplaceBE.Models;
+using CourseMarketplaceBE.Repositories;
+using CourseMarketplaceBE.Repositories.IRepositories;
+using CourseMarketplaceBE.Services;
+using CourseMarketplaceBE.Services.IServices;
+
+namespace CourseMarketplaceBE
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
+            var configuration = builder.Configuration;
+
+            // Bind Jwt settings
+            var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>() ?? new JwtSettings();
+            builder.Services.AddSingleton(jwtSettings);
+
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+
+            // Add DbContext
+            builder.Services.AddDbContext<AppDbContext>(options =>
+                options.UseNpgsql(connectionString));
+
+            // Repositories
+            builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+            // Services
+            builder.Services.AddScoped<IUserService, UserService>();
+
+            // Authentication (JWT) - minimal so controllers can still be tested without it
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key ?? "")),
+                    ValidateIssuerSigningKey = true,
+                };
+            });
+
+            // Add services to the container.
+            builder.Services.AddControllers();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
+
+            var app = builder.Build();
+
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
+            app.UseHttpsRedirection();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+
+            app.MapControllers();
+
+            app.Run();
+        }
+    }
+}

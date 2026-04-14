@@ -1,0 +1,75 @@
+﻿@using LinkedLearn.Models.UserVM
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<main class="flex-grow flex items-center justify-center pt-24 pb-12 px-6 bg-login-gradient relative">
+    <div class="w-full max-w-md bg-white p-10 rounded-2xl shadow-xl border border-slate-100 relative z-10">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-headline font-extrabold text-on-surface mb-2">Create Account</h2>
+            <p class="text-slate-500 text-sm">Join LinkedLearn today and start learning.</p>
+
+            @* HIỂN THỊ LỖI DUY NHẤT TẠI ĐÂY *@
+            @* Khi ModelState có lỗi, khối div này sẽ tự xuất hiện *@
+            <div asp-validation-summary="ModelOnly" class="mt-4 bg-red-50 border border-red-200 text-red-600 px-4 py-2.5 rounded-xl text-sm font-medium list-none flex items-center justify-center">
+                <span class="material-symbols-outlined text-sm mr-2">error</span>
+            </div>
+        </div>
+
+        <form asp-controller="Account" asp-action="Register" method="post" class="space-y-4">
+
+            @* Username *@
+            <div>
+                <label asp-for="FullName" class="block text-sm font-semibold text-on-surface mb-1.5">Full Name</label>
+                <input asp-for="FullName"
+                       class="w-full px-4 py-3 bg-slate-50 border border-transparent rounded-lg focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+                       placeholder="Nguyen Van A" />
+                <span asp-validation-for="FullName" class="text-[11px] text-red-500 mt-1 block font-medium"></span>
+            </div>  
+
+            @* Email *@
+            <div>
+                <label asp-for="Email" class="block text-sm font-semibold text-on-surface mb-1.5">Email address</label>
+                <input asp-for="Email"
+                       class="w-full px-4 py-3 bg-slate-50 border border-transparent rounded-lg focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+                       placeholder="name@company.com" />
+                <span asp-validation-for="Email" class="text-[11px] text-red-500 mt-1 block font-medium"></span>
+            </div>
+
+            @* Password *@
+            <div>
+                <label asp-for="Password" class="block text-sm font-semibold text-on-surface mb-1.5">Password</label>
+                <input asp-for="Password"
+                       class="w-full px-4 py-3 bg-slate-50 border border-transparent rounded-lg focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+                       placeholder="••••••••"
+                       type="password" />
+                <span asp-validation-for="Password" class="text-[11px] text-red-500 mt-1 block font-medium"></span>
+            </div>
+
+            @* Confirm Password *@
+            <div>
+                <label asp-for="ConfirmPassword" class="block text-sm font-semibold text-on-surface mb-1.5">Confirm Password</label>
+                <input asp-for="ConfirmPassword"
+                       class="w-full px-4 py-3 bg-slate-50 border border-transparent rounded-lg focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+                       placeholder="••••••••"
+                       type="password" />
+                <span asp-validation-for="ConfirmPassword" class="text-[11px] text-red-500 mt-1 block font-medium"></span>
+            </div>
+
+            <button class="w-full py-4 bg-[#43e8d8] text-[#006a62] hover:bg-[#31ddcd] font-headline font-extrabold rounded-lg shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 active:scale-[0.98] transition-all mt-4"
+                    type="submit">
+                Get Started
+            </button>
+
+            <p class="text-center text-sm text-slate-500 mt-6">
+                Already have an account? <a class="text-primary font-bold hover:underline" href="/Account/Login">Login</a>
+            </p>
+        </form>
+    </div>
+</main>
+
+@section Scripts {
+    @* Quan trọng để validate client-side (Username, Password độ dài...) *@
+    <partial name="_ValidationScriptsPartial" />
+}

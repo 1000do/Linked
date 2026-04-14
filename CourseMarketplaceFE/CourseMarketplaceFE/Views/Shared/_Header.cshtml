@@ -1,0 +1,59 @@
+﻿@using Microsoft.AspNetCore.Http
+
+<nav class="fixed top-0 w-full z-50 bg-[#f0fcfb]/40 border-b border-primary/10 glass-nav">
+    <div class="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
+
+        <div class="flex items-center gap-8">
+            <a href="/" class="text-2xl font-headline font-extrabold tracking-tight text-primary">
+                LinkedLearn
+            </a>
+            <div class="hidden md:flex items-center gap-6 text-sm font-medium">
+                <button class="flex items-center gap-1 text-slate-600 hover:text-primary transition-all">
+                    Categories <span class="material-symbols-outlined text-sm">expand_more</span>
+                </button>
+                <a class="text-slate-600 hover:text-primary" href="#">Become an Instructor</a>
+            </div>
+        </div>
+
+        <div class="hidden lg:flex flex-1 max-w-xl mx-6">
+            <form method="get" action="/Course/Search" class="w-full relative">
+                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                <input type="text" name="keyword" placeholder="Search courses..."
+                       class="w-full pl-12 pr-4 py-2.5 rounded-full bg-white/70 border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm" />
+            </form>
+        </div>
+
+        <div class="flex items-center gap-4">
+            @{
+                // Lấy thông tin UserName từ Cookie đã lưu ở AccountController
+                var userName = Context.Request.Cookies["UserName"];
+            }
+
+            @if (string.IsNullOrEmpty(userName))
+            {
+                <a href="/Account/Login" class="px-6 py-2 text-sm font-semibold text-primary hover:bg-[#eaf6f5] rounded-full transition-all">Login</a>
+                <a href="/Account/Register" class="px-6 py-2 text-sm font-semibold bg-gradient-to-r from-primary to-primary-container text-on-primary rounded-full shadow-md hover:shadow-lg transition-all">Register</a>
+            }
+            else
+            {
+                <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors relative">
+                    <span class="material-symbols-outlined text-slate-600">notifications</span>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+
+                <div class="flex items-center gap-3 pl-2 border-l border-slate-200">
+                    <div class="hidden sm:flex flex-col items-end">
+                        <span class="text-xs font-bold text-slate-700">Chào, @userName</span>
+                        <a href="/Account/Logout" class="text-[10px] text-red-500 hover:underline">Logout</a>
+                    </div>
+
+                    <a href="/User/Profile" class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary hover:scale-105 transition-transform">
+                        <img class="w-full h-full object-cover"
+                             src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(userName)&background=006a62&color=fff"
+                             alt="User avatar" />
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</nav>

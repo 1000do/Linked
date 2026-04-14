@@ -1,0 +1,279 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\coursemarketplacebe.http||{5703B403-55E7-4C63-8C88-A8F52C7A45C5}",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\coursemarketplacebe.http||{5703B403-55E7-4C63-8C88-A8F52C7A45C5}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\coursemarketplacebe.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\coursemarketplacebe.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\presentation\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\presentation\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\application\\services\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\application\\services\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\application\\dtos\\registerrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\application\\dtos\\registerrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\application\\dtos\\loginrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\application\\dtos\\loginrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\infrastructure\\repositories\\userrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\infrastructure\\repositories\\userrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\application\\iservices\\iuserservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\application\\iservices\\iuserservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\domain\\irepositories\\iuserrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\domain\\irepositories\\iuserrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\domain\\entities\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\domain\\entities\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\domain\\entities\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\domain\\entities\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\domain\\entities\\account.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\domain\\entities\\account.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|c:\\users\\binh4\\source\\repos\\coursemarketplace\\coursemarketplacebe\\coursemarketplacebe\\share\\helpers\\jwtsettings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{AACFEBE2-380F-486A-BEC7-D4D3A9F6E906}|CourseMarketplaceBE\\CourseMarketplaceBE.csproj|solutionrelative:coursemarketplacebe\\share\\helpers\\jwtsettings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 4,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "appsettings.Development.json",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\appsettings.Development.json",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\appsettings.Development.json",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\appsettings.Development.json",
+              "RelativeToolTip": "CourseMarketplaceBE\\appsettings.Development.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-04-14T14:26:08.395Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\appsettings.json",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\appsettings.json",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\appsettings.json",
+              "RelativeToolTip": "CourseMarketplaceBE\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-04-12T13:58:29.929Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "CourseMarketplaceBE.http",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\CourseMarketplaceBE.http",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\CourseMarketplaceBE.http",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\CourseMarketplaceBE.http",
+              "RelativeToolTip": "CourseMarketplaceBE\\CourseMarketplaceBE.http",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003502|",
+              "WhenOpened": "2026-04-13T06:21:35.048Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "CourseMarketplaceBE.csproj",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\CourseMarketplaceBE.csproj",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\CourseMarketplaceBE.csproj",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\CourseMarketplaceBE.csproj",
+              "RelativeToolTip": "CourseMarketplaceBE\\CourseMarketplaceBE.csproj",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAAAoAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-04-11T03:09:16.144Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Program.cs",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\Program.cs",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Program.cs",
+              "RelativeToolTip": "CourseMarketplaceBE\\Program.cs",
+              "ViewState": "AgIAADAAAAAAAAAAAAAIwDwAAAALAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-12T13:59:56.991Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "UserService.cs",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Application\\Services\\UserService.cs",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\Application\\Services\\UserService.cs",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Application\\Services\\UserService.cs",
+              "RelativeToolTip": "CourseMarketplaceBE\\Application\\Services\\UserService.cs",
+              "ViewState": "AgIAADsAAAAAAAAAAAAQwF8AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-13T03:20:45.536Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "RegisterRequest.cs",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Application\\DTOs\\RegisterRequest.cs",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\Application\\DTOs\\RegisterRequest.cs",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Application\\DTOs\\RegisterRequest.cs",
+              "RelativeToolTip": "CourseMarketplaceBE\\Application\\DTOs\\RegisterRequest.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-13T06:39:41.434Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "LoginRequest.cs",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Application\\DTOs\\LoginRequest.cs",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\Application\\DTOs\\LoginRequest.cs",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Application\\DTOs\\LoginRequest.cs",
+              "RelativeToolTip": "CourseMarketplaceBE\\Application\\DTOs\\LoginRequest.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAZAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-13T06:53:33.914Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "User.cs",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Domain\\Entities\\User.cs",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\Domain\\Entities\\User.cs",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Domain\\Entities\\User.cs",
+              "RelativeToolTip": "CourseMarketplaceBE\\Domain\\Entities\\User.cs",
+              "ViewState": "AgIAAAUAAAAAAAAAAAAowCEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-13T04:22:36.59Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "AuthController.cs",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Presentation\\Controllers\\AuthController.cs",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\Presentation\\Controllers\\AuthController.cs",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Presentation\\Controllers\\AuthController.cs",
+              "RelativeToolTip": "CourseMarketplaceBE\\Presentation\\Controllers\\AuthController.cs",
+              "ViewState": "AgIAAEcAAAAAAAAAAAAgwFUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-13T03:20:51.526Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "AppDbContext.cs",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Domain\\Entities\\AppDbContext.cs",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\Domain\\Entities\\AppDbContext.cs",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Domain\\Entities\\AppDbContext.cs",
+              "RelativeToolTip": "CourseMarketplaceBE\\Domain\\Entities\\AppDbContext.cs",
+              "ViewState": "AgIAADkAAAAAAAAAAADgv0IAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-13T04:28:56.282Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "IUserRepository.cs",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Domain\\IRepositories\\IUserRepository.cs",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\Domain\\IRepositories\\IUserRepository.cs",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Domain\\IRepositories\\IUserRepository.cs",
+              "RelativeToolTip": "CourseMarketplaceBE\\Domain\\IRepositories\\IUserRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-13T03:20:17.198Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "IUserService.cs",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Application\\IServices\\IUserService.cs",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\Application\\IServices\\IUserService.cs",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Application\\IServices\\IUserService.cs",
+              "RelativeToolTip": "CourseMarketplaceBE\\Application\\IServices\\IUserService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-13T03:20:28.572Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "UserRepository.cs",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Infrastructure\\Repositories\\UserRepository.cs",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\Infrastructure\\Repositories\\UserRepository.cs",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Infrastructure\\Repositories\\UserRepository.cs",
+              "RelativeToolTip": "CourseMarketplaceBE\\Infrastructure\\Repositories\\UserRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADsAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-13T03:20:23.758Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "Account.cs",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Domain\\Entities\\Account.cs",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\Domain\\Entities\\Account.cs",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Domain\\Entities\\Account.cs",
+              "RelativeToolTip": "CourseMarketplaceBE\\Domain\\Entities\\Account.cs",
+              "ViewState": "AgIAABkAAAAAAAAAAAAywC8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-13T04:23:00.644Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "JwtSettings.cs",
+              "DocumentMoniker": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Share\\Helpers\\JwtSettings.cs",
+              "RelativeDocumentMoniker": "CourseMarketplaceBE\\Share\\Helpers\\JwtSettings.cs",
+              "ToolTip": "C:\\Users\\binh4\\source\\repos\\CourseMarketplace\\CourseMarketplaceBE\\CourseMarketplaceBE\\Share\\Helpers\\JwtSettings.cs",
+              "RelativeToolTip": "CourseMarketplaceBE\\Share\\Helpers\\JwtSettings.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-13T03:21:20.571Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
