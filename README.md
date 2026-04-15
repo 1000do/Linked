@@ -50,5 +50,62 @@ diskpart
 ```
 Chọn Allow nếu được hỏi, cửa sổ **CMD DISKPART** sẽ đc mở<br>
 Copy paste cái **COMMAND** đã lưu ở trên vô cửa sổ vừa đc mở, Enter chạy
-	
-	
+
+#
+
+# Hướng dẫn build, chạy các thứ
+## Tắt postgresql trên máy (làm 1 lần duy nhất)
+ - Dùng thanh search của windows để vào **Services**
+ - Tìm cái service tên bắt đầu với **postgresql...**
+ - Chuột phải vô nó rồi chọn **Properties** để mở cửa sổ setting cái service
+    - Startup type: Manual
+    - Service status: Stop
+- Click ỌK để save
+
+## Màn chính
+- Mở docker desktop xong để đó
+- Mở thư mục chứa project (Linked)
+- Đè Shift, bấm chuột phải vô cửa sổ thư mục
+- Chọn **Open in Terminal** để mở cmd tại thư mục project
+
+```cmd
+# TH1: Chạy lần đầu
+# TH2: Có thay đổi trong database (cần reset lại hết dữ liệu)
+docker compose down -v
+docker compose up --build
+
+#TH3: Rebuild project, ko làm thay đổi database
+docker compose up --build
+
+# TH4: Chạy những lần sau
+docker compose up -d
+```
+
+- Backend:
+```cmd
+localhost:5207/swagger
+```
+- Frontend:
+```cmd
+localhost:5208
+```
+- Database:
+    - Mở pgAdmin (con voi)
+    - Chuột phải Servers > Register > Server... để mở cửa sổ tạo server db
+        - Tab General:
+            - Name: docker
+        - Tab Connection:
+            - Host name/address: localhost
+            - Port: 5432
+            - Maintenance database: postgres
+            - Username: postgres
+            - Password: 123456
+            - Save password? Bật
+    - Click Save
+    - Server db tên **docker** sẽ đc tạo ra, trong đó sẽ có 2 database, 1 cái tên **linked** là cái mình dùng
+
+
+
+
+
+
