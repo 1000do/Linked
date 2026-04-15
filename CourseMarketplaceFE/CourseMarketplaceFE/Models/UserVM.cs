@@ -37,6 +37,7 @@ namespace LinkedLearn.Models.UserVM
         public string? Token { get; set; }
         public string? Message { get; set; }
         public string? FullName { get; set; } // Thêm trường này
+        public string AvatarUrl { get; set; }
     }   
 
     public class ApiResponse
