@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: linked
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db_scripts/1.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: CourseMarketplaceBE/CourseMarketplaceBE/Dockerfile
+    environment:
+      # The app reads ConnectionStrings:DefaultConnection from configuration; override here to point to service 'db'
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=linked;Username=postgres;Password=123456"
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5207:80"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: CourseMarketplaceFE/CourseMarketplaceFE/Dockerfile
+    environment:
+      # Point FE to backend service inside compose network
+      BackendApiUrl: "http://backend:80/api/"
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:80"
+    ports:
+      - "5208:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  db_data:

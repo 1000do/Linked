@@ -63,9 +63,25 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<WishlistItem> WishlistItems { get; set; }
 
+//    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+//        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=Linked;Username=postgres;Password=123456");
+
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=Linked;Username=postgres;Password=123456");
+    {
+        // If DbContextOptions were already configured by DI (Program.cs AddDbContext), do nothing.
+        if (optionsBuilder.IsConfigured)
+        {
+            return;
+        }
+
+        // Allow environment variable override when running outside DI (or in tests).
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                   ?? "Host=localhost;Port=5432;Database=linked;Username=postgres;Password=123456";
+
+        optionsBuilder.UseNpgsql(conn);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

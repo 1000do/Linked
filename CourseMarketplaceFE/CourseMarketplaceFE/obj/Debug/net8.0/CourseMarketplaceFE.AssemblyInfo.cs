@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CourseMarketplaceFE")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8404127b838f97c911dd2ed7e8afe3601bd09d64")]
 [assembly: System.Reflection.AssemblyProductAttribute("CourseMarketplaceFE")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CourseMarketplaceFE")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
