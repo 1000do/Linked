@@ -1,1 +1,25 @@
-.vs
+# Build results
+bin/
+obj/
+/publish/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+
+# Cache files
+*.cache
+
+
+# Secret management
+secrets.json
+*.usersecrets
+.env
+*.env
+
+# Node / Frontend
+node_modules/
+
+
+
