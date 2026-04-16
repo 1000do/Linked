@@ -74,10 +74,19 @@ Copy paste cái **COMMAND** đã lưu ở trên vô cửa sổ vừa đc mở, E
 docker compose down -v
 docker compose up --build
 
-#TH3: Rebuild project, ko làm thay đổi database
+# TH3: Rebuild + rerun project, ko làm thay đổi database
 docker compose up --build
 
-# TH4: Chạy những lần sau
+# TH4: Rebuild + rerun frontend, ko làm ảnh hưởng đến backend, db
+docker compose build frontend
+docker start linked-frontend-1
+
+# TH5: Rebuild + rerun backend, ko làm ảnh hưởng đến frontend, db
+docker compose build backend
+docker start linked-backend-1 
+
+
+# TH6: Chạy những lần sau
 docker compose up -d
 ```
 

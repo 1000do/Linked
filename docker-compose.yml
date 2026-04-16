@@ -25,6 +25,7 @@ services:
     environment:
       # The app reads ConnectionStrings:DefaultConnection from configuration; override here to point to service 'db'
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=linked;Username=postgres;Password=123456"
+      AllowedOrigins: http://localhost:5208,http://localhost:5207
       ASPNETCORE_ENVIRONMENT: "Development"
       ASPNETCORE_URLS: "http://+:80"
     depends_on:
