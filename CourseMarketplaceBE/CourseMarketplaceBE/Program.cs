@@ -101,12 +101,16 @@ public class Program
         });
 
         // 6. CORS
+        var allowedOrigins = builder.Configuration.GetValue<string>("AllowedOrigins")?.Split(',')
+                     ?? new[] { "http://localhost:5207" }; // Fallback
+
         builder.Services.AddCors(options => {
-            options.AddPolicy("AllowAll", b => b.WithOrigins("http://localhost:5207")
+            options.AddPolicy("AllowAll", b => b.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials());
         });
+
 
         var app = builder.Build();
 
