@@ -1,0 +1,69 @@
+﻿@model LinkedLearn.Models.UserVM.UserProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="max-w-7xl mx-auto px-6 lg:px-12 py-10">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <aside class="w-full lg:w-72 flex-shrink-0">
+            <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 sticky top-24">
+                <nav class="flex flex-col gap-2">
+                    <a href="/Account/Profile" class="flex items-center gap-4 px-4 py-3 rounded-2xl bg-primary-container/30 text-primary font-bold transition-all">
+                        <span class="material-symbols-outlined" style='font-variation-settings: "FILL" 1;'>person</span>
+                        <span>Profile</span>
+                    </a>
+                    <a href="/Account/EditProfile" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all">
+                        <span class="material-symbols-outlined">edit_square</span>
+                        <span>Edit Profile</span>
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <div class="flex-grow space-y-8">
+            <div class="mb-4">
+                <h1 class="text-3xl font-extrabold text-slate-800">My Profile</h1>
+            </div>
+
+            <section class="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center gap-8">
+                <div class="relative">
+                    <div class="w-32 h-32 rounded-[2rem] overflow-hidden ring-4 ring-slate-50 shadow-lg">
+                        <img class="w-full h-full object-cover" src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? $"https://ui-avatars.com/api/?name={Model.FullName}&background=006a62&color=fff" : Model.AvatarUrl)" />
+                    </div>
+                </div>
+                <div class="flex-grow text-center md:text-left">
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
+                        <div>
+                            <h2 class="text-3xl font-bold text-slate-800">@Model.FullName</h2>
+                            <p class="text-primary font-medium">@Model.Email</p>
+                        </div>
+                        <a href="/Account/EditProfile" class="bg-primary text-white px-6 py-2.5 rounded-xl font-bold hover:opacity-90 transition-all flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">edit</span> Edit Profile
+                        </a>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <p class="text-sm italic text-slate-600">@(string.IsNullOrEmpty(Model.Bio) ? "Chưa có giới thiệu." : Model.Bio)</p>
+                    </div>
+                </div>
+            </section>
+
+            @* Thêm thông tin liên hệ *@
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div class="bg-blue-50 p-3 rounded-2xl text-blue-600"><span class="material-symbols-outlined">call</span></div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-bold uppercase">Số điện thoại</p>
+                        <p class="font-bold text-slate-700">@(Model.PhoneNumber ?? "Chưa cập nhật")</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+                    <div class="bg-purple-50 p-3 rounded-2xl text-purple-600"><span class="material-symbols-outlined">calendar_today</span></div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-bold uppercase">Ngày sinh</p>
+                        <p class="font-bold text-slate-700">@(Model.DateOfBirth?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

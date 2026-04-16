@@ -2,9 +2,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Application.IServices;
-using CourseMarketplaceBE.Application.Services;
+
 using CourseMarketplaceBE.Infrastructure.Repositories;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Share.Helpers;
@@ -22,16 +23,23 @@ public class Program
         var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>() ?? new JwtSettings();
         builder.Services.AddSingleton(jwtSettings);
 
-        // 2. Cấu hình Database (Kết nối tới Docker Container 'db')
+        // 2. Cấu hình Database
         var connectionString = configuration.GetConnectionString("DefaultConnection");
         builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString));
 
-        // 3. Đăng ký DI (Dependency Injection)
+        // 3. DI
         builder.Services.AddScoped<IUserRepository, UserRepository>();
-        builder.Services.AddScoped<IUserService, UserService>();
 
-        // 4. Cấu hình Authentication & JWT Bearer
+
+
+        builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<IFileUploadService, CloudinaryUploadService>();
+        builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+
+        builder.Services.AddHttpClient();
+
+        // 4. Authentication & JWT Bearer
         builder.Services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -54,7 +62,9 @@ public class Program
             {
                 OnMessageReceived = context =>
                 {
-                    context.Token = context.Request.Cookies["AuthToken"];
+                    // Đọc từ Cookie trước, nếu không có thì Swagger Bearer sẽ tự động điền từ Header
+                    var cookieToken = context.Request.Cookies["AuthToken"];
+                    if (!string.IsNullOrEmpty(cookieToken)) context.Token = cookieToken;
                     return Task.CompletedTask;
                 }
             };
@@ -62,9 +72,35 @@ public class Program
 
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
 
-        // 5. Cấu hình CORS (Cho phép Frontend kết nối)
+        // 5. Swagger Authorize
+        builder.Services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "Course Marketplace API", Version = "v1" });
+
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Description = "Dán Token của bạn vào đây (Chỉ cần chuỗi mã).",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT"
+            });
+
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                    },
+                    new string[] { }
+                }
+            });
+        });
+
+        // 6. CORS
         builder.Services.AddCors(options => {
             options.AddPolicy("AllowAll", b => b.WithOrigins("http://localhost:5207")
               .AllowAnyMethod()
@@ -74,38 +110,30 @@ public class Program
 
         var app = builder.Build();
 
-        // 6. TỰ ĐỘNG TẠO BẢNG DATABASE (QUAN TRỌNG NHẤT)
-        // Đoạn này giúp giải quyết lỗi 500 khi DB chưa có bảng Users
+        // 7. Migration
         using (var scope = app.Services.CreateScope())
         {
             var services = scope.ServiceProvider;
             try
             {
                 var context = services.GetRequiredService<AppDbContext>();
-                if (context.Database.GetPendingMigrations().Any())
-                {
-                    context.Database.Migrate();
-                }
+                context.Database.Migrate();
             }
             catch (Exception ex)
             {
                 var logger = services.GetRequiredService<ILogger<Program>>();
-                logger.LogError(ex, "Lỗi xảy ra khi Migration dữ liệu trong Docker.");
+                logger.LogError(ex, "Migration error.");
             }
         }
 
-        // 7. Cấu hình Middleware Pipeline
+        // 8. Middleware
         app.UseSwagger();
         app.UseSwaggerUI(c => {
-            c.SwaggerEndpoint("/swagger/v1/swagger.json", "Course Marketplace API V1");
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "V1");
             c.RoutePrefix = "swagger";
         });
 
         app.UseCors("AllowAll");
-
-        // Tắt HttpsRedirection để tránh lỗi SSL khi chạy local Docker
-        // app.UseHttpsRedirection(); 
-
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();

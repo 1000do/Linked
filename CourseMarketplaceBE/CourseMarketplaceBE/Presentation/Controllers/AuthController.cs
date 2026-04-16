@@ -1,7 +1,7 @@
 ﻿using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -9,19 +9,20 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 [ApiController]
 public class AuthController : ControllerBase
 {
-    private readonly IUserService _userService;
+    private readonly IAuthService _authService;
 
-    public AuthController(IUserService userService)
+    public AuthController(IAuthService authService)
     {
-        _userService = userService;
+        _authService = authService;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var result = await _userService.RegisterAsync(request);
+        var result = await _authService.RegisterAsync(request);
+
         if (result == "Success")
-            return Ok(new { status = 200, message = "Đăng ký thành công!" });
+            return Ok(new { status = 200, message = "Đăng ký tài khoản thành công!" });
 
         return BadRequest(new { status = 400, message = result });
     }
@@ -29,39 +30,37 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        // 1. Chỉ chấp nhận Gmail
         if (string.IsNullOrEmpty(request.Email) || !request.Email.EndsWith("@gmail.com"))
         {
-            return BadRequest(new { status = 400, message = "Tài khoản phải là định dạng @gmail.com." });
+            return BadRequest(new { status = 400, message = "Tài khoản phải có định dạng @gmail.com." });
         }
 
-        // 2. Thực hiện đăng nhập
-        var token = await _userService.LoginAsync(request);
-        if (token == null)
+        // result bây giờ chứa cả Token, FullName và AvatarUrl
+        var result = await _authService.LoginAsync(request);
+
+        if (result == null)
         {
             return Unauthorized(new { status = 401, message = "Email hoặc mật khẩu không chính xác." });
         }
 
-        // 3. Lấy FullName để FE hiển thị
-        var fullName = await _userService.GetFullNameByEmailAsync(request.Email);
-
-        // 4. Lưu JWT vào HttpOnly Cookie (Server-side)
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Secure = false, // Để false nếu dùng http localhost
+            Secure = false, // Đổi thành true nếu chạy HTTPS thực tế
             SameSite = SameSiteMode.Lax,
             Expires = DateTime.UtcNow.AddDays(7),
             Path = "/"
         };
-        Response.Cookies.Append("AuthToken", token, cookieOptions);
+
+        Response.Cookies.Append("AuthToken", result.Token, cookieOptions);
 
         return Ok(new
         {
             status = 200,
             message = "Đăng nhập thành công",
-            fullName = fullName,
-            email = request.Email.ToLower()
+            token = result.Token,
+            fullName = result.FullName,
+            avatarUrl = result.AvatarUrl
         });
     }
 
@@ -70,17 +69,5 @@ public class AuthController : ControllerBase
     {
         Response.Cookies.Delete("AuthToken", new CookieOptions { Path = "/" });
         return Ok(new { status = 200, message = "Đã đăng xuất thành công." });
-    }
-
-    [HttpGet("check-auth")]
-    [Authorize]
-    public IActionResult CheckAuth()
-    {
-        return Ok(new
-        {
-            isAuthenticated = true,
-            email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value,
-            fullName = User.FindFirst("FullName")?.Value
-        });
     }
 }

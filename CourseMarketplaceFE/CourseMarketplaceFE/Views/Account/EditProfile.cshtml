@@ -1,0 +1,129 @@
+﻿@model LinkedLearn.Models.UserVM.UpdateProfileViewModel
+@{
+    ViewData["Title"] = "Edit Profile";
+}
+
+<div class="max-w-7xl mx-auto px-6 lg:px-12 py-10">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <aside class="w-full lg:w-72 flex-shrink-0">
+            <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 sticky top-24">
+                <nav class="flex flex-col gap-2">
+                    <a href="/Account/Profile" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all">
+                        <span class="material-symbols-outlined">person</span>
+                        <span>Profile</span>
+                    </a>
+                    <a href="/Account/EditProfile" class="flex items-center gap-4 px-4 py-3 rounded-2xl bg-primary-container/30 text-primary font-bold transition-all">
+                        <span class="material-symbols-outlined" style='font-variation-settings: "FILL" 1;'>edit_square</span>
+                        <span>Edit Profile</span>
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <div class="flex-grow space-y-8">
+            <div class="mb-4">
+                <h1 class="text-3xl font-extrabold text-slate-800">Account Settings</h1>
+                <p class="text-slate-500">Cập nhật thông tin cá nhân của bạn.</p>
+            </div>
+
+            <section class="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-sm border border-slate-100">
+                <form asp-controller="Account" asp-action="EditProfile" method="post" enctype="multipart/form-data" class="space-y-6">
+                    <input type="hidden" asp-for="AvatarUrl" />
+
+                    @* Avatar Section *@
+                    <div class="flex items-center gap-6 mb-10 pb-8 border-b border-slate-50">
+                        <div class="relative group">
+                            <div class="w-24 h-24 rounded-[1.5rem] overflow-hidden ring-4 ring-primary/10">
+                                <img id="previewImg" src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? $"https://ui-avatars.com/api/?name={Model.FirstName}&background=006a62&color=fff" : Model.AvatarUrl)"
+                                     class="w-full h-full object-cover" />
+                            </div>
+                            <label class="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-xl shadow-lg cursor-pointer hover:scale-110 transition-transform">
+                                <span class="material-symbols-outlined text-sm">photo_camera</span>
+                                <input type="file" asp-for="AvatarFile" class="hidden" onchange="previewImage(event)" />
+                            </label>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800">Ảnh đại diện</h3>
+                            <p class="text-sm text-slate-500">JPG, PNG hoặc WebP. Tối đa 2MB.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        @* Họ & Tên đệm *@
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold uppercase text-slate-400 ml-1">Họ & Tên đệm</label>
+                            <input asp-for="FirstName" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary/20 transition-all" />
+                            <span asp-validation-for="FirstName" class="text-xs text-red-500"></span>
+                        </div>
+
+                        @* Tên *@
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold uppercase text-slate-400 ml-1">Tên</label>
+                            <input asp-for="LastName" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary/20 transition-all" />
+                            <span asp-validation-for="LastName" class="text-xs text-red-500"></span>
+                        </div>
+
+                        @* Số điện thoại *@
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold uppercase text-slate-400 ml-1">Số điện thoại</label>
+                            <div class="relative">
+                                <span class="absolute left-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">call</span>
+                                <input asp-for="PhoneNumber" type="tel" class="w-full bg-slate-50 border-none rounded-2xl pl-12 pr-5 py-4 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="0123 456 789" />
+                            </div>
+                            <span asp-validation-for="PhoneNumber" class="text-xs text-red-500"></span>
+                        </div>
+
+                        @* Ngày sinh - TRƯỜNG MỚI THÊM *@
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold uppercase text-slate-400 ml-1">Ngày sinh</label>
+                            <div class="relative">
+                                <span class="absolute left-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">calendar_today</span>
+                                <input asp-for="DateOfBirth" type="date" class="w-full bg-slate-50 border-none rounded-2xl pl-12 pr-5 py-4 focus:ring-2 focus:ring-primary/20 transition-all" />
+                            </div>
+                            <span asp-validation-for="DateOfBirth" class="text-xs text-red-500"></span>
+                        </div>
+                    </div>
+
+                    @* Bio *@
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold uppercase text-slate-400 ml-1">Giới thiệu bản thân (Bio)</label>
+                        <textarea asp-for="Bio" rows="4" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary/20 transition-all resize-none" placeholder="Viết vài dòng về bản thân..."></textarea>
+                        <span asp-validation-for="Bio" class="text-xs text-red-500"></span>
+                    </div>
+
+                    <div class="pt-6 flex flex-wrap gap-4">
+                        <button type="submit" class="px-10 py-4 bg-primary text-white font-bold rounded-2xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all">
+                            Lưu thay đổi
+                        </button>
+                        <a href="/Account/Profile" class="px-10 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all">
+                            Hủy
+                        </a>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+              function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Đổi ảnh trong form
+                    document.getElementById('previewImg').src = e.target.result;
+
+                    // Đổi luôn ảnh trên thanh Navbar (nếu muốn)
+                    const navAvatar = document.querySelector('nav a[href="/Account/Profile"] img');
+                    if(navAvatar) navAvatar.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
