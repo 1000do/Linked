@@ -1,4 +1,5 @@
 ﻿using CourseMarketplaceBE.Application.DTOs;
+using Microsoft.AspNetCore.Http;
 
 namespace CourseMarketplaceBE.Application.IServices;
 

@@ -4,9 +4,9 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: linked
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./db_scripts/1.sql:/docker-entrypoint-initdb.d/init.sql
@@ -23,11 +23,18 @@ services:
       context: .
       dockerfile: CourseMarketplaceBE/CourseMarketplaceBE/Dockerfile
     environment:
-      # The app reads ConnectionStrings:DefaultConnection from configuration; override here to point to service 'db'
-      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=linked;Username=postgres;Password=123456"
-      AllowedOrigins: http://localhost:5208,http://localhost:5207
-      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__DefaultConnection: "Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}"
+      AllowedOrigins: ${ALLOWED_ORIGINS}
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       ASPNETCORE_URLS: "http://+:80"
+      JWT_KEY: ${JWT_KEY}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_DURATION: ${JWT_DURATION}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      CLOUDINARY_UPLOAD_PRESET: ${CLOUDINARY_UPLOAD_PRESET}
     depends_on:
       db:
         condition: service_healthy
@@ -40,9 +47,8 @@ services:
       context: .
       dockerfile: CourseMarketplaceFE/CourseMarketplaceFE/Dockerfile
     environment:
-      # Point FE to backend service inside compose network
       BackendApiUrl: "http://backend:80/api/"
-      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       ASPNETCORE_URLS: "http://+:80"
     ports:
       - "5208:80"
