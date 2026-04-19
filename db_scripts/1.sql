@@ -40,6 +40,10 @@ CREATE TABLE accounts (
     account_flag_count INT DEFAULT 0,
     auth_provider VARCHAR(50),  -- VD: 'local', 'google', 'facebook'
     avatar_url TEXT,
+
+	refresh_token TEXT,
+    refresh_token_expiry_time TIMESTAMP,
+
     account_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     account_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     account_last_login_at TIMESTAMP
