@@ -1,4 +1,4 @@
-﻿using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -88,7 +88,7 @@ public class UserRepository : IUserRepository
     public async Task UpdateLastLoginAsync(int accountId)
     {
         var a = await _context.Accounts.FindAsync(accountId);
-        if (a != null) { a.AccountLastLoginAt = DateTime.Now; await _context.SaveChangesAsync(); }
+        if (a != null) { a.AccountLastLoginAt = Unspec(DateTime.UtcNow); await _context.SaveChangesAsync(); }
     }
 
     public async Task<bool> RegisterUserAsync(Account a, User u)
@@ -105,5 +105,36 @@ public class UserRepository : IUserRepository
             return true;
         }
         catch { await t.RollbackAsync(); return false; }
+    }
+
+    public async Task SaveRefreshTokenAsync(int accountId, string refreshToken, DateTime expiry)
+    {
+        var a = await _context.Accounts.FindAsync(accountId);
+        if (a != null)
+        {
+            a.RefreshToken = refreshToken;
+            // Npgsql yêu cầu Kind=Unspecified cho cột timestamp without time zone
+            a.RefreshTokenExpiryTime = Unspec(expiry);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    /// <summary>Strip DateTimeKind về Unspecified để tương thích PostgreSQL timestamp without time zone.</summary>
+    private static DateTime Unspec(DateTime dt) => DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
+
+    public async Task<Account?> GetAccountByRefreshTokenAsync(string refreshToken) =>
+        await _context.Accounts
+            .Include(a => a.User)
+            .FirstOrDefaultAsync(a => a.RefreshToken == refreshToken);
+
+    public async Task RevokeRefreshTokenAsync(int accountId)
+    {
+        var a = await _context.Accounts.FindAsync(accountId);
+        if (a != null)
+        {
+            a.RefreshToken = null;
+            a.RefreshTokenExpiryTime = null;
+            await _context.SaveChangesAsync();
+        }
     }
 }

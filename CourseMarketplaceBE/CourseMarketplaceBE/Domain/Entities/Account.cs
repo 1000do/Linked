@@ -21,6 +21,10 @@ public partial class Account
 
     public string? AvatarUrl { get; set; }
 
+    public string? RefreshToken { get; set; }
+
+    public DateTime? RefreshTokenExpiryTime { get; set; }
+
     public DateTime? AccountCreatedAt { get; set; }
 
     public DateTime? AccountUpdatedAt { get; set; }

@@ -9,6 +9,8 @@ public interface IUserRepository
     Task<User?> GetUserByIdAsync(int userId);
     Task UpdateLastLoginAsync(int accountId);
     Task<bool> RegisterUserAsync(Account account, User user);
-    // THÊM THAM SỐ CUỐI CÙNG NÀY VÀO INTERFACE
     Task<bool> UpdateUserProfileAsync(int userId, string fullName, string? bio, DateOnly? dob, string? avatarUrl, string? phoneNumber);
+    Task SaveRefreshTokenAsync(int accountId, string refreshToken, DateTime expiry);
+    Task<Account?> GetAccountByRefreshTokenAsync(string refreshToken);
+    Task RevokeRefreshTokenAsync(int accountId);
 }
