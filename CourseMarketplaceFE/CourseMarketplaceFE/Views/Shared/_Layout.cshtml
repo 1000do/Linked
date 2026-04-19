@@ -1,4 +1,9 @@
-﻿<!DOCTYPE html>
+﻿@{
+   
+    var tokenForLayout = Context.Request.Cookies["AuthToken"]
+                         ?? Context.Request.Cookies[".AspNetCore.Identity.Application"];
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -38,6 +43,11 @@
             }
         }
     </script>
+    <script>
+        
+        const LAYOUT_TOKEN = '@tokenForLayout';
+    </script>
+    
 
     <style>
         .glass-nav {
@@ -79,8 +89,102 @@
             </span>
         </button>
     </div>
+   
 
     @await RenderSectionAsync("Scripts", required: false)
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script>
+
+
+            const connection = new signalR.HubConnectionBuilder()
+        .withUrl("http://localhost:5207/notificationHub", {
+            
+            accessTokenFactory: () => LAYOUT_TOKEN
+        })
+        .withAutomaticReconnect()
+        .build();
+
+                // Trong _Layout.cshtml
+        connection.on("ReceiveNotification", function (noti) {
+            // 1. Luôn cập nhật chuông và popup ở Header (nếu có)
+            const badge = document.getElementById('noti-badge');
+            if(badge) badge.classList.remove('hidden');
+            if (typeof loadTopNotifications === "function") loadTopNotifications();
+
+            // 2. Tự động cập nhật trang danh sách (NẾU ĐANG Ở TRANG ĐÓ)
+            const path = window.location.pathname.toLowerCase();
+
+            // Kiểm tra nếu đang ở trang Admin
+            if (path.includes("/notification/admin")) {
+                if (typeof loadAdminHistory === "function") {
+                    console.log("SignalR: Đang cập nhật lịch sử Admin...");
+                    loadAdminHistory();
+                }
+            }
+            // Kiểm tra nếu đang ở trang Thông báo cá nhân
+            else if (path.includes("/notification")) {
+                if (typeof loadNotifications === "function") {
+                    console.log("SignalR: Đang cập nhật danh sách User...");
+                    loadNotifications();
+                }
+            }
+        });
+
+        connection.start().catch(err => console.error("SignalR Error: ", err));
+
+        // 3. Hàm lấy dữ liệu Top 3
+        async function loadTopNotifications() {
+            const container = document.getElementById('notification-items-container');
+            if (!container) return;
+
+            if (!LAYOUT_TOKEN || LAYOUT_TOKEN === "") {
+                container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">Vui lòng đăng nhập</div>`;
+                return;
+            }
+
+            try {
+                const response = await fetch("http://localhost:5207/api/Notification", {
+                    headers: { 'Authorization': `Bearer ${LAYOUT_TOKEN}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Chỉ lấy 3 cái mới nhất
+                    const top3 = data.slice(0, 3);
+
+                    if (top3.length === 0) {
+                        container.innerHTML = `<div class="px-4 py-8 text-center text-slate-400 text-sm">Không có thông báo mới</div>`;
+                        return;
+                    }
+                                   container.innerHTML = top3.map(n => `
+            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer"
+                 onclick="location.href='/Notification'">
+                <div class="flex gap-3">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            ${!n.isRead ? '<span class="w-2 h-2 bg-primary rounded-full shrink-0"></span>' : ''}
+                            <p class="text-xs font-bold text-slate-800 truncate">${n.title}</p>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1 line-clamp-2">${n.content}</p>
+                        <div class="flex justify-between items-center mt-2">
+                            <p class="text-[9px] text-slate-300 uppercase font-medium">
+                                ${new Date(n.createdAt).toLocaleTimeString('vi-VN')}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        }
+            } catch (err) {
+                console.error("Fetch error:", err);
+                container.innerHTML = `<div class="p-4 text-center text-xs text-red-400">Lỗi kết nối máy chủ</div>`;
+            }
+        }
+
+        // Tự động chạy khi load trang
+        document.addEventListener("DOMContentLoaded", loadTopNotifications);
+    </script>
 
 </body>
 </html>

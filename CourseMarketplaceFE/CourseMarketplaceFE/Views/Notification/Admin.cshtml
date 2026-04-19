@@ -1,0 +1,297 @@
+﻿@{
+    ViewData["Title"] = "Quản lý thông báo";
+    // Lấy token từ Cookie để gọi API
+    var tokenFromServer = Context.Request.Cookies["AuthToken"]
+                        ?? Context.Request.Cookies[".AspNetCore.Identity.Application"];
+}
+
+<div class="max-w-6xl mx-auto p-6 min-h-screen bg-slate-50">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+            <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight">Hệ thống thông báo</h2>
+            <p class="text-slate-500 text-sm mt-1 flex items-center gap-2">
+                <span class="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></span>
+                Quản trị viên: Gửi tin nhắn Real-time & Theo dõi lịch sử
+            </p>
+        </div>
+        <button onclick="toggleModal(true)" class="group bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-teal-200 active:scale-95">
+            <span class="material-symbols-outlined text-xl group-hover:rotate-12 transition-transform">send</span>
+            Gửi thông báo mới
+        </button>
+    </div>
+
+    <div class="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-100 bg-white/50 backdrop-blur-md flex justify-between items-center">
+            <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                <span class="material-symbols-outlined text-slate-400">history</span> Lịch sử gửi tin
+            </h3>
+            <button onclick="loadAdminHistory()" class="text-slate-400 hover:text-teal-600 transition-colors">
+                <span class="material-symbols-outlined text-xl">refresh</span>
+            </button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-slate-50/50">
+                        <th class="p-5 text-[11px] font-black text-slate-400 uppercase tracking-wider">Người nhận</th>
+                        <th class="p-5 text-[11px] font-black text-slate-400 uppercase tracking-wider">Nội dung chi tiết</th>
+                        <th class="p-5 text-[11px] font-black text-slate-400 uppercase tracking-wider">Thời gian</th>
+                        <th class="p-5 text-[11px] font-black text-slate-400 uppercase tracking-wider text-center">Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-notif-table" class="divide-y divide-slate-100">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="sendModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
+        <div class="flex justify-between items-start mb-6">
+            <h3 class="font-extrabold text-slate-800 text-2xl flex items-center gap-3">
+                <div class="w-12 h-12 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl">campaign</span>
+                </div>
+                Soạn thông báo
+            </h3>
+            <button onclick="toggleModal(false)" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                <span class="material-symbols-outlined text-slate-400">close</span>
+            </button>
+        </div>
+
+        <form id="sendNotificationForm" class="space-y-5">
+            <div>
+                <label class="text-[11px] font-black text-slate-400 uppercase ml-2 mb-1 block">Gửi đến ai?</label>
+                <select id="targetType" onchange="toggleUserFields()" class="w-full px-5 py-4 bg-slate-50 border-none ring-1 ring-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 transition-all font-semibold text-slate-700">
+                    <option value="MULTIPLE">Tag người nhận (@@email)</option>
+                    <option value="ALL">Tất cả người dùng hệ thống</option>
+                </select>
+            </div>
+
+            <div id="emailInputSection" class="relative">
+                <label class="text-[11px] font-black text-slate-400 uppercase ml-2 mb-1 block">Danh sách Email</label>
+                <div id="tag-container" class="flex flex-wrap gap-2 p-2 bg-slate-50 ring-1 ring-slate-200 rounded-2xl min-h-[56px] items-center focus-within:ring-2 focus-within:ring-teal-500 transition-all cursor-text" onclick="document.getElementById('emailTagInput').focus()">
+                    <input type="text" id="emailTagInput" class="flex-1 min-w-[150px] bg-transparent border-none focus:ring-0 text-sm h-8" placeholder="Gõ @@email hoặc tìm kiếm...">
+                </div>
+
+                <div id="emailSuggestions" class="hidden absolute left-0 right-0 max-h-48 bg-white shadow-2xl border border-slate-100 rounded-2xl mt-2 overflow-y-auto z-[110] divide-y divide-slate-50">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[11px] font-black text-slate-400 uppercase ml-2 mb-1 block">Nội dung</label>
+                <input type="text" id="title" required class="w-full px-5 py-4 bg-slate-50 border-none ring-1 ring-slate-200 rounded-2xl focus:ring-2 focus:ring-teal-500 transition-all mb-3" placeholder="Tiêu đề ngắn gọn...">
+                <textarea id="content" rows="3" required class="w-full px-5 py-4 bg-slate-50 border-none ring-1 ring-slate-200 rounded-2xl focus:ring-2 focus:ring-teal-500 transition-all resize-none" placeholder="Nhập nội dung thông báo chi tiết tại đây..."></textarea>
+            </div>
+
+            <div class="flex gap-4 pt-4">
+                <button type="button" onclick="toggleModal(false)" class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold hover:bg-slate-200 transition-all">Hủy</button>
+                <button type="submit" class="flex-[2] py-4 bg-teal-600 text-white rounded-2xl font-bold hover:bg-teal-700 shadow-lg shadow-teal-200 transition-all flex items-center justify-center gap-2">
+                    Gửi ngay <span class="material-symbols-outlined text-sm">bolt</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const TOKEN_ADMIN = '@tokenFromServer';
+        let selectedEmails = [];
+
+        // 1. MODAL & UI TOGGLE
+        function toggleModal(show) {
+            document.getElementById('sendModal').classList.toggle('hidden', !show);
+            if(!show) resetForm();
+        }
+
+        function toggleUserFields() {
+            const isAll = document.getElementById('targetType').value === 'ALL';
+            document.getElementById('emailInputSection').classList.toggle('hidden', isAll);
+        }
+
+        function resetForm() {
+            document.getElementById('sendNotificationForm').reset();
+            selectedEmails = [];
+            renderTags();
+        }
+
+        // 2. TAGGING SYSTEM
+        function renderTags() {
+            const container = document.getElementById('tag-container');
+            const input = document.getElementById('emailTagInput');
+
+            // Xóa tag cũ để render lại toàn bộ mảng
+            container.querySelectorAll('.email-tag').forEach(t => t.remove());
+
+            selectedEmails.forEach((email, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'email-tag flex items-center gap-1.5 bg-teal-50 text-teal-700 px-3 py-1.5 rounded-xl text-xs font-bold border border-teal-100 animate-in zoom-in duration-200';
+                tag.innerHTML = `
+                    ${email}
+                    <span class="material-symbols-outlined text-[16px] cursor-pointer hover:bg-teal-200 rounded-full p-0.5 transition-colors" onclick="removeTag(${index})">close</span>
+                `;
+                container.insertBefore(tag, input);
+            });
+        }
+
+        function removeTag(index) {
+            selectedEmails.splice(index, 1);
+            renderTags();
+        }
+
+        const tagInput = document.getElementById('emailTagInput');
+        const suggestionsBox = document.getElementById('emailSuggestions');
+
+        tagInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const val = tagInput.value.trim();
+                // Check @@ định dạng email cơ bản
+                if (val && !selectedEmails.includes(val) && val.includes('@@')) {
+                    selectedEmails.push(val);
+                    tagInput.value = '';
+                    renderTags();
+                    suggestionsBox.classList.add('hidden');
+                }
+            }
+            if (e.key === 'Backspace' && tagInput.value === '' && selectedEmails.length > 0) {
+                selectedEmails.pop();
+                renderTags();
+            }
+        });
+
+        // 3. AUTOCOMPLETE LOGIC (Gợi ý Email từ Database)
+        tagInput.addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            if (query.length < 2) {
+                suggestionsBox.classList.add('hidden');
+                return;
+            }
+
+            try {
+                // Đảm bảo URL API này tồn tại ở Backend của bạn
+                const response = await fetch(`http://localhost:5207/api/Notification/search-emails?query=${query}`, {
+                    headers: { 'Authorization': `Bearer ${TOKEN_ADMIN}` }
+                });
+                const emails = await response.json();
+
+                if (emails.length > 0) {
+                    suggestionsBox.innerHTML = emails
+                        .filter(e => !selectedEmails.includes(e))
+                        .map(email => `
+                            <div class="p-4 hover:bg-slate-50 cursor-pointer text-sm flex items-center gap-3 group transition-colors"
+                                 onclick="addEmailFromSuggestion('${email}')">
+                                <div class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 group-hover:bg-teal-100 group-hover:text-teal-600 transition-colors">
+                                    <span class="material-symbols-outlined text-sm">person</span>
+                                </div>
+                                <span class="font-medium text-slate-600">${email}</span>
+                            </div>
+                        `).join('');
+                    suggestionsBox.classList.remove('hidden');
+                } else {
+                    suggestionsBox.classList.add('hidden');
+                }
+            } catch (err) { console.error("Autocomplete error:", err); }
+        });
+
+        function addEmailFromSuggestion(email) {
+            if (!selectedEmails.includes(email)) {
+                selectedEmails.push(email);
+                renderTags();
+            }
+            tagInput.value = '';
+            suggestionsBox.classList.add('hidden');
+            tagInput.focus();
+        }
+
+        // Đóng gợi ý khi click ra ngoài
+        window.addEventListener('click', (e) => {
+            if (!document.getElementById('emailInputSection').contains(e.target)) {
+                suggestionsBox.classList.add('hidden');
+            }
+        });
+
+        // 4. LOAD HISTORY (Lấy toàn bộ lịch sử thông báo hệ thống)
+        async function loadAdminHistory() {
+            try {
+                const response = await fetch("http://localhost:5207/api/Notification/all", {
+                    headers: { 'Authorization': `Bearer ${TOKEN_ADMIN}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const tbody = document.getElementById('admin-notif-table');
+
+                    if(data.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-slate-400 italic">Chưa có lịch sử thông báo</td></tr>`;
+                        return;
+                    }
+
+                    tbody.innerHTML = data.map(n => `
+                        <tr class="group hover:bg-slate-50/80 transition-all">
+                            <td class="p-5">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 font-bold text-xs uppercase">
+                                        U${n.receiverId}
+                                    </div>
+                                    <span class="text-sm font-bold text-slate-700">Người dùng #${n.receiverId}</span>
+                                </div>
+                            </td>
+                            <td class="p-5">
+                                <div class="text-sm font-bold text-slate-800">${n.title}</div>
+                                <div class="text-[11px] text-slate-400 line-clamp-1">${n.content}</div>
+                            </td>
+                            <td class="p-5 text-xs text-slate-400 font-medium">${new Date(n.createdAt).toLocaleString('vi-VN')}</td>
+                            <td class="p-5 text-center">
+                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${n.isRead ? 'bg-slate-100 text-slate-400' : 'bg-teal-50 text-teal-600'}">
+                                    ${n.isRead ? 'Đã xem' : 'Chưa xem'}
+                                </span>
+                            </td>
+                        </tr>`).join('');
+                }
+            } catch (err) { console.error("Load history error:", err); }
+        }
+
+        // 5. SUBMIT FORM (Gửi thông báo nâng cao)
+        document.getElementById('sendNotificationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const targetType = document.getElementById('targetType').value;
+            if (targetType === 'MULTIPLE' && selectedEmails.length === 0) {
+                alert("Vui lòng chọn hoặc nhập ít nhất 1 email!");
+                return;
+            }
+
+            const dto = {
+                targetType: targetType,
+                emails: selectedEmails, // Gửi mảng các email đã tag
+                title: document.getElementById('title').value,
+                content: document.getElementById('content').value
+            };
+
+            try {
+                const response = await fetch("http://localhost:5207/api/Notification/send-advanced", {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN_ADMIN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dto)
+                });
+
+                if (response.ok) {
+                    toggleModal(false);
+                    loadAdminHistory(); // Reload table
+                    alert("Thông báo đã được gửi thành công!");
+                } else {
+                    const errText = await response.text();
+                    alert("Lỗi từ máy chủ: " + errText);
+                }
+            } catch (err) { console.error("Send error:", err); }
+        });
+
+        // Tự động load lịch sử khi trang vừa mở
+        document.addEventListener("DOMContentLoaded", loadAdminHistory);
+    </script>
+}

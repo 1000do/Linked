@@ -1,0 +1,115 @@
+﻿@model IEnumerable<CourseMarketplaceFE.Models.NotificationViewModel>
+@{
+    ViewData["Title"] = "Thông báo của tôi";
+    var tokenFromServer = Context.Request.Cookies["AuthToken"]
+                        ?? Context.Request.Cookies[".AspNetCore.Identity.Application"];
+}
+
+<div class="max-w-4xl mx-auto p-6 min-h-screen">
+    <div class="flex justify-between items-center mb-8">
+        <h2 class="text-2xl font-headline font-extrabold text-slate-800">Thông báo của bạn</h2>
+        <span class="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full flex items-center gap-2">
+            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            SignalR Real-time
+        </span>
+    </div>
+
+    <div id="notification-container" class="space-y-4">
+        <div class="bg-white p-10 rounded-2xl border border-dashed border-slate-200 text-center">
+            <p class="text-slate-400 italic">Đang tải thông báo từ hệ thống...</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Sử dụng var hoặc window. để Layout có thể truy cập được hàm này
+        const TOKEN_USER = '@tokenFromServer';
+
+        async function loadNotifications() {
+            if (!TOKEN_USER) return;
+
+            try {
+                const response = await fetch("http://localhost:5207/api/Notification", {
+                    headers: { 'Authorization': `Bearer ${TOKEN_USER}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    renderNotifications(data);
+                }
+            } catch (error) {
+                console.error("Lỗi loadNotifications:", error);
+            }
+        }
+
+        function renderNotifications(notifications) {
+            const container = document.getElementById('notification-container');
+            if (!notifications || notifications.length === 0) {
+                container.innerHTML = `<div class="bg-white p-10 rounded-2xl border border-dashed border-slate-200 text-center text-slate-400">Không có thông báo nào.</div>`;
+                return;
+            }
+
+            container.innerHTML = notifications
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                .map(noti => `
+                    <div class="bg-white p-5 rounded-2xl border ${noti.isRead ? 'border-slate-100 opacity-75' : 'border-teal-100 shadow-sm'} flex justify-between items-start mb-4 transition-all hover:shadow-md" id="noti-row-${noti.notificationId}">
+                        <div class="flex-1 cursor-pointer" onclick="markAsRead(${noti.notificationId})">
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-bold ${noti.isRead ? 'text-slate-500' : 'text-slate-800'}">${noti.title}</h4>
+                                ${!noti.isRead ? `<span id="dot-${noti.notificationId}" class="w-2 h-2 bg-teal-600 rounded-full"></span>` : ''}
+                            </div>
+                            <p class="text-sm text-slate-600 mt-2">${noti.content}</p>
+                            <span class="text-[10px] text-slate-400 mt-3 block uppercase font-medium">
+                                ${new Date(noti.createdAt).toLocaleString('vi-VN')}
+                            </span>
+                        </div>
+                        <div class="flex gap-2 ml-4">
+                            ${!noti.isRead ? `
+                                <button onclick="markAsRead(${noti.notificationId})" class="p-2 text-teal-600 hover:bg-teal-50 rounded-xl transition-all">
+                                    <span class="material-symbols-outlined text-xl">done_all</span>
+                                </button>` : ''}
+                            <button onclick="deleteNotification(${noti.notificationId})" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                                <span class="material-symbols-outlined text-xl">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+        }
+
+        async function markAsRead(id) {
+            try {
+                const response = await fetch(`http://localhost:5207/api/Notification/mark-as-read/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${TOKEN_USER}` }
+                });
+                if (response.ok) {
+                    const row = document.getElementById(`noti-row-${id}`);
+                    if (row) {
+                        row.classList.remove('border-teal-100', 'shadow-sm');
+                        row.classList.add('border-slate-100', 'opacity-75');
+                        const dot = document.getElementById(`dot-${id}`);
+                        if (dot) dot.remove();
+                    }
+                    // Cập nhật lại chuông trên Header
+                    if (typeof loadTopNotifications === "function") loadTopNotifications();
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        async function deleteNotification(id) {
+            if(!confirm("Xóa thông báo này?")) return;
+            try {
+                const response = await fetch(`http://localhost:5207/api/Notification/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${TOKEN_USER}` }
+                });
+                if (response.ok) {
+                    document.getElementById(`noti-row-${id}`)?.remove();
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        document.addEventListener("DOMContentLoaded", loadNotifications);
+    </script>
+}
