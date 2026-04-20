@@ -1,0 +1,375 @@
+@{
+    ViewData["Title"] = "Curriculum Editor";
+    Layout = "_InstructorLayout";
+}
+
+<div class="p-8 h-full flex flex-col">
+    <!-- Breadcrumb & Header -->
+    <div class="flex items-center justify-between mb-8 flex-shrink-0">
+        <div class="flex items-center gap-4">
+            <h1 class="text-2xl font-headline font-extrabold text-slate-900">Course Structure</h1>
+            <span class="px-2 py-1 bg-primary-container/20 text-primary border border-primary-container rounded text-[10px] font-bold uppercase tracking-wider">Draft</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <button class="px-4 py-2 bg-white text-slate-700 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">visibility</span> Preview as Student
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Editor Layout -->
+    <div class="flex gap-8 h-full overflow-hidden">
+        
+        <!-- LEFT COLUMN: Course Structure -->
+        <div class="w-80 flex-shrink-0 flex flex-col gap-4 overflow-y-auto pb-8 pr-2 custom-scrollbar">
+            
+            <!-- Section 1 -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden border-l-4 border-l-primary">
+                <div class="p-4 bg-slate-50/50 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Section 1</p>
+                        <h3 class="font-bold text-slate-900 text-sm">Introduction to Advanced UI</h3>
+                    </div>
+                    <button class="text-slate-400 hover:text-slate-600"><span class="material-symbols-outlined text-[18px]">drag_indicator</span></button>
+                </div>
+                <div class="p-4 space-y-2">
+                    <!-- Lesson 1.1 -->
+                    <div class="p-3 bg-white border border-primary ring-1 ring-primary/20 rounded-lg shadow-sm flex items-start gap-3 cursor-pointer">
+                        <span class="material-symbols-outlined text-primary text-[20px] mt-0.5" style='font-variation-settings: "FILL" 1;'>play_circle</span>
+                        <div class="flex-1">
+                            <p class="font-bold text-slate-900 text-sm">1.1 Welcome to the Course</p>
+                            <p class="text-[10px] text-slate-500 mt-1">Video • 04:32</p>
+                        </div>
+                    </div>
+                    <!-- Lesson 1.2 -->
+                    <div class="p-3 bg-white border border-slate-100 rounded-lg flex items-start gap-3 cursor-pointer hover:border-slate-300 transition-colors">
+                        <span class="material-symbols-outlined text-slate-400 text-[20px] mt-0.5">article</span>
+                        <div class="flex-1">
+                            <p class="font-semibold text-slate-700 text-sm">1.2 Required Tooling</p>
+                            <p class="text-[10px] text-slate-500 mt-1">Text Article</p>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full py-3 border-2 border-dashed border-slate-200 rounded-lg text-slate-500 hover:text-primary hover:border-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 text-xs font-bold mt-2">
+                        <span class="material-symbols-outlined text-[16px]">add_circle</span> Add Lesson
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section 2 -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-4 bg-slate-50/50 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Section 2</p>
+                        <h3 class="font-bold text-slate-900 text-sm">The Digital Atheneum Philosophy</h3>
+                    </div>
+                    <button class="text-slate-400 hover:text-slate-600"><span class="material-symbols-outlined text-[18px]">drag_indicator</span></button>
+                </div>
+                <div class="p-4 space-y-2">
+                    <button class="w-full py-3 border-2 border-dashed border-slate-200 rounded-lg text-slate-500 hover:text-primary hover:border-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 text-xs font-bold">
+                        <span class="material-symbols-outlined text-[16px]">add_circle</span> Add Lesson
+                    </button>
+                </div>
+            </div>
+
+            <!-- Add Section Button -->
+            <button class="w-full py-6 bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl text-slate-600 hover:text-slate-800 hover:border-slate-400 hover:bg-slate-200 transition-colors flex flex-col items-center justify-center gap-2 text-sm font-bold shadow-inner">
+                <span class="material-symbols-outlined text-[24px]">post_add</span> Add New Section
+            </button>
+        </div>
+
+        <!-- RIGHT COLUMN: Lesson Editor -->
+        <div class="flex-1 flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            
+            <!-- Editor Header -->
+            <div class="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+                <div>
+                    <div class="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest mb-2">
+                        <span class="material-symbols-outlined text-[14px]">edit</span> Editing Lesson 1.1
+                    </div>
+                    <h2 class="text-3xl font-headline font-extrabold text-slate-900">Welcome to the Course</h2>
+                    <div class="flex items-center gap-4 mt-2 text-xs font-semibold text-slate-500">
+                        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">schedule</span> 4 mins</span>
+                        <span class="flex items-center gap-1 text-primary"><span class="material-symbols-outlined text-[16px]">check_circle</span> Published</span>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button class="px-6 py-2.5 bg-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-300 transition-colors">Save Draft</button>
+                    <button class="px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/20">Publish Lesson</button>
+                </div>
+            </div>
+
+            <!-- Editor Body -->
+            <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                
+                <!-- Tabs -->
+                <div class="flex border-b border-slate-200 mb-8">
+                    <button class="px-6 py-3 border-b-2 border-primary text-primary font-bold text-sm">Video Content</button>
+                    <button class="px-6 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold text-sm transition-colors">Resources & Files</button>
+                    <button class="px-6 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold text-sm transition-colors">Quiz</button>
+                </div>
+
+                <!-- Video Uploader -->
+                <div class="max-w-2xl mx-auto mb-12">
+                    <input type="hidden" id="MaterialUrl" name="MaterialUrl" />
+                    
+                    <!-- Drop Zone (Initial State) -->
+                    <div id="video-drop-area" class="border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center hover:bg-slate-50 transition-colors cursor-pointer group">
+                        <div class="w-20 h-20 bg-primary-container/30 text-primary rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined text-[40px]">movie</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2">Upload Lesson Video</h3>
+                        <p class="text-sm text-slate-500 mb-4">MP4, WebM or OGG up to 2GB</p>
+                        <button class="px-6 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-bold text-sm hover:bg-slate-50">Browse Files</button>
+                        <input type="file" id="video-input" accept="video/*" class="hidden" />
+                    </div>
+
+                    <!-- Uploading State (Hidden by default) -->
+                    <div id="video-upload-progress" class="hidden text-center py-8">
+                        <div class="w-16 h-16 bg-primary-container/30 text-primary rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <span class="material-symbols-outlined text-[32px]">cloud_upload</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-2">Uploading "welcome_module_v2.mp4"</h3>
+                        <p class="text-sm text-slate-500 mb-6">Processing <span id="progress-text">0</span>% • Approximately 2 minutes remaining. Do not close this tab during upload.</p>
+                        
+                        <!-- Progress Bar -->
+                        <div class="h-2 bg-slate-100 rounded-full w-full max-w-md mx-auto mb-8 overflow-hidden">
+                            <div id="progress-bar-fill" class="h-full bg-primary-container transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        
+                        <div class="flex justify-center gap-4">
+                            <button type="button" id="cancel-upload" class="px-6 py-2.5 bg-red-50 text-red-600 font-bold rounded-lg flex items-center gap-2 hover:bg-red-100 transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">cancel</span> Cancel Upload
+                            </button>
+                            <button type="button" class="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-colors">
+                                Replace File
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Success State (Hidden by default) -->
+                    <div id="video-success" class="hidden border border-slate-200 rounded-2xl p-6 flex items-center justify-between bg-surface-container-low">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-primary text-white rounded-lg flex items-center justify-center">
+                                <span class="material-symbols-outlined" style='font-variation-settings: "FILL" 1;'>play_circle</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-900" id="uploaded-filename">welcome_module_v2.mp4</h4>
+                                <p class="text-xs text-slate-500">Video successfully processed • 1080p</p>
+                            </div>
+                        </div>
+                        <button class="text-slate-400 hover:text-red-500" onclick="resetVideoUpload()"><span class="material-symbols-outlined">delete</span></button>
+                    </div>
+                </div>
+
+                <!-- Below Video Form -->
+                <div class="grid grid-cols-3 gap-8">
+                    <!-- Lesson Description -->
+                    <div class="col-span-2 space-y-6">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="text-sm font-bold text-slate-900">Lesson Description</label>
+                                <button class="flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-sm hover:bg-slate-800 transition-colors">
+                                    <span class="material-symbols-outlined text-[14px]">auto_awesome</span> Assistant
+                                </button>
+                            </div>
+                            <div class="bg-white rounded-xl">
+                                <div id="lesson-editor"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sidebar Settings -->
+                    <div class="space-y-6">
+                        <!-- Video Thumbnail -->
+                        <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                            <label class="block text-sm font-bold text-slate-900 mb-3">Video Thumbnail</label>
+                            <div class="w-full aspect-video bg-slate-800 rounded-lg overflow-hidden relative group cursor-pointer">
+                                <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover opacity-60" />
+                                <span class="material-symbols-outlined absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-[48px] opacity-80" style='font-variation-settings: "FILL" 1;'>play_arrow</span>
+                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                    <span class="text-white text-xs font-bold px-3 py-1.5 bg-black/50 rounded-md">Change Thumbnail</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Visibility & Access -->
+                        <div class="bg-white rounded-xl p-5 border border-slate-200">
+                            <label class="block text-sm font-bold text-slate-900 mb-4">Visibility & Access</label>
+                            
+                            <label class="flex items-start gap-4 p-4 rounded-xl border border-slate-200 hover:border-primary cursor-pointer transition-colors mb-3">
+                                <div class="mt-0.5 text-slate-400">
+                                    <span class="material-symbols-outlined text-[20px]">lock_open</span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-bold text-slate-900 text-sm">Free Preview</p>
+                                    <p class="text-[10px] text-slate-500 mt-1">Students can watch without buying</p>
+                                </div>
+                                <div class="mt-1">
+                                    <input type="checkbox" class="w-5 h-5 border-2 border-slate-300 rounded text-primary focus:ring-primary" />
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-start gap-4 p-4 rounded-xl border-2 border-primary bg-primary/5 cursor-pointer transition-colors">
+                                <div class="mt-0.5 text-primary">
+                                    <span class="material-symbols-outlined text-[20px]">download</span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-bold text-slate-900 text-sm">Downloadable</p>
+                                    <p class="text-[10px] text-slate-500 mt-1">Allow students to save offline</p>
+                                </div>
+                                <div class="mt-1">
+                                    <input type="checkbox" checked class="w-5 h-5 border-2 border-primary rounded bg-primary text-white focus:ring-primary focus:ring-offset-0" />
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+</style>
+
+@section Scripts {
+    <script>
+        // Init Quill
+        var lessonQuill = new Quill('#lesson-editor', {
+            theme: 'snow',
+            placeholder: 'Introduce this lesson to your students...',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['link', 'code-block']
+                ]
+            }
+        });
+
+        // Video Upload Logic with XMLHttpRequest
+        const videoDropArea = document.getElementById('video-drop-area');
+        const videoInput = document.getElementById('video-input');
+        
+        const uiDropArea = document.getElementById('video-drop-area');
+        const uiProgress = document.getElementById('video-upload-progress');
+        const uiSuccess = document.getElementById('video-success');
+        
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        const progressText = document.getElementById('progress-text');
+        const uploadedFilename = document.getElementById('uploaded-filename');
+        const cancelBtn = document.getElementById('cancel-upload');
+        const materialUrlInput = document.getElementById('MaterialUrl');
+        
+        let currentXHR = null;
+
+        videoDropArea.addEventListener('click', () => videoInput.click());
+        videoInput.addEventListener('change', function() { handleVideoUpload(this.files) });
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            videoDropArea.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            videoDropArea.addEventListener(eventName, () => videoDropArea.classList.add('border-primary', 'bg-primary/5'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            videoDropArea.addEventListener(eventName, () => videoDropArea.classList.remove('border-primary', 'bg-primary/5'), false);
+        });
+
+        videoDropArea.addEventListener('drop', (e) => {
+            let dt = e.dataTransfer;
+            handleVideoUpload(dt.files);
+        }, false);
+
+        function handleVideoUpload(files) {
+            if (files.length === 0) return;
+            const file = files[0];
+            if (!file.type.startsWith('video/')) {
+                alert('Please upload a video file.');
+                return;
+            }
+
+            // Update UI to show progress
+            uiDropArea.classList.add('hidden');
+            uiProgress.classList.remove('hidden');
+            document.querySelector('#video-upload-progress h3').innerText = `Uploading "${file.name}"`;
+            progressBarFill.style.width = '0%';
+            progressText.innerText = '0';
+
+            // Simulate upload to Cloud Storage using XMLHttpRequest
+            // TODO: Replace URL with actual signed URL or upload endpoint
+            const uploadUrl = "https://httpbin.org/post"; // Mock URL for demo
+            
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const xhr = new XMLHttpRequest();
+            currentXHR = xhr;
+
+            xhr.upload.addEventListener("progress", function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = Math.round((e.loaded / e.total) * 100);
+                    progressBarFill.style.width = percentComplete + '%';
+                    progressText.innerText = percentComplete;
+                }
+            }, false);
+
+            xhr.addEventListener("load", function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    // Success
+                    setTimeout(() => {
+                        uiProgress.classList.add('hidden');
+                        uiSuccess.classList.remove('hidden');
+                        uploadedFilename.innerText = file.name;
+                        
+                        // Fake URL for demo
+                        materialUrlInput.value = "https://example.com/video/" + file.name;
+                    }, 500); // slight delay to show 100%
+                } else {
+                    handleUploadError('Server error: ' + xhr.statusText);
+                }
+            }, false);
+
+            xhr.addEventListener("error", function() {
+                handleUploadError('Network error occurred during upload.');
+            }, false);
+
+            xhr.addEventListener("abort", function() {
+                resetVideoUpload();
+            }, false);
+
+            xhr.open("POST", uploadUrl, true);
+            xhr.send(formData);
+        }
+
+        cancelBtn.addEventListener('click', () => {
+            if (currentXHR) {
+                currentXHR.abort();
+            }
+        });
+
+        function handleUploadError(msg) {
+            alert(msg);
+            resetVideoUpload();
+        }
+
+        function resetVideoUpload() {
+            uiDropArea.classList.remove('hidden');
+            uiProgress.classList.add('hidden');
+            uiSuccess.classList.add('hidden');
+            videoInput.value = '';
+            materialUrlInput.value = '';
+        }
+        
+        // Expose to global for the delete button
+        window.resetVideoUpload = resetVideoUpload;
+    </script>
+}
