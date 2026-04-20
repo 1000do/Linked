@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Http
 <nav class="fixed top-0 w-full z-50 bg-[#f0fcfb]/40 border-b border-primary/10 glass-nav">
     <div class="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
         <div class="flex items-center gap-8">
@@ -23,7 +23,11 @@
                 <div class="flex items-center gap-3 pl-4 border-l border-slate-200">
                     <div class="hidden sm:flex flex-col items-end">
                         <span class="text-xs font-bold text-slate-700">Chào, @userName</span>
-                        <a href="/Account/Logout" class="text-[10px] text-red-500 hover:underline font-medium">Logout</a>
+                        @* POST logout để revoke refresh token trên BE (bảo mật hơn GET) *@
+                        <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="text-[10px] text-red-500 hover:underline font-medium bg-transparent border-none p-0 cursor-pointer">Logout</button>
+                        </form>
                     </div>
 
                     @* Link trỏ vào Account/Profile với logic hiển thị Avatar *@
