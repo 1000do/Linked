@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace CourseMarketplaceBE.Domain.Entities;
@@ -25,6 +25,9 @@ public partial class Account
 
     public DateTime? RefreshTokenExpiryTime { get; set; }
 
+    /// <summary>Tài khoản đã xác thực email chưa (cột mới trong SQL v2)</summary>
+    public bool IsVerified { get; set; }
+
     public DateTime? AccountCreatedAt { get; set; }
 
     public DateTime? AccountUpdatedAt { get; set; }
@@ -48,4 +51,9 @@ public partial class Account
     public virtual ICollection<UserReport> UserReportResolvers { get; set; } = new List<UserReport>();
 
     public virtual ICollection<UserReport> UserReportTargets { get; set; } = new List<UserReport>();
+
+    // Transactions gửi/nhận (thay thế cho FK order trong Transaction cũ)
+    public virtual ICollection<Transaction> TransactionFroms { get; set; } = new List<Transaction>();
+
+    public virtual ICollection<Transaction> TransactionTos { get; set; } = new List<Transaction>();
 }

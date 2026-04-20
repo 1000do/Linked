@@ -1,9 +1,10 @@
-﻿using System.Text;
+using System.Text;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Application.Services;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Hubs;
+using CourseMarketplaceBE.Infrastructure.Data;
 using CourseMarketplaceBE.Infrastructure.Repositories;
 using CourseMarketplaceBE.Infrastructure.Services;
 using CourseMarketplaceBE.Share.Helpers;
