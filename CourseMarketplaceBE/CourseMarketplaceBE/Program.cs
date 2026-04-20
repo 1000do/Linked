@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Application.Services;
 using CourseMarketplaceBE.Domain.Entities;
@@ -95,6 +95,11 @@ public class Program
         // 🔥 5. DI
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+        builder.Services.AddScoped<ILessonRepository, LessonRepository>();
+        builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
+        builder.Services.AddScoped<ICourseService, CourseService>();
+        builder.Services.AddScoped<ILessonService, LessonService>();
 
         builder.Services.AddSignalR(); // Đăng ký SignalR
         builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
