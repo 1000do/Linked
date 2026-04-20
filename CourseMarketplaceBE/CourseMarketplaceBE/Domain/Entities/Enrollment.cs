@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace CourseMarketplaceBE.Domain.Entities;
@@ -26,6 +26,8 @@ public partial class Enrollment
     public string? EnrollmentStatus { get; set; }
 
     public virtual Course? Course { get; set; }
+
+    public virtual EnrollmentProgress? Progress { get; set; }
 
     public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
 

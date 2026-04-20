@@ -34,11 +34,13 @@ namespace LinkedLearn.Models.UserVM
     public class LoginResponse
     {
         public int Status { get; set; }
-        public string? AccessToken { get; set; }   // BE đổi tên từ 'token' → 'accessToken'
-        public string? RefreshToken { get; set; }  // Token mới để gia hạn session
+        public string? AccessToken { get; set; }
+        public string? RefreshToken { get; set; }
         public string? Message { get; set; }
         public string? FullName { get; set; }
         public string? AvatarUrl { get; set; }
+        /// <summary>"user" | "manager" — dùng để redirect sau login</summary>
+        public string? Role { get; set; }
     }
 
     public class ApiResponse
