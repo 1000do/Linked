@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseMarketplaceBE.Infrastructure.Repositories;
