@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace CourseMarketplaceBE.Domain.Entities;
@@ -21,7 +21,8 @@ public partial class LearningMaterial
 
     public string? MaterialUrl { get; set; }
 
-    public string? Duration { get; set; }
+    /// <summary>Thời lượng tính bằng giây (INT thay vì VARCHAR trong SQL v2)</summary>
+    public int? Duration { get; set; }
 
     public virtual Lesson? Lesson { get; set; }
 }

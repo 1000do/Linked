@@ -1,114 +1,291 @@
-﻿@{
-    ViewData["Title"] = "Quản lý thông báo";
-    // Lấy token từ Cookie để gọi API
-    var tokenFromServer = Context.Request.Cookies["AuthToken"]
-                        ?? Context.Request.Cookies[".AspNetCore.Identity.Application"];
+@{
+    ViewData["Title"] = "Manager Dashboard";
+    Layout = null; // Chúng ta sẽ xây dựng layout dashboard riêng biệt và ấn tượng ở đây
+    var tokenFromServer = Context.Request.Cookies["AuthToken"] ?? Context.Request.Cookies[".AspNetCore.Identity.Application"];
+    var managerName = Context.Request.Cookies["UserName"] ?? "Manager";
+    var avatarUrl = Context.Request.Cookies["AvatarUrl"];
 }
 
-<div class="max-w-6xl mx-auto p-6 min-h-screen bg-slate-50">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-            <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight">Hệ thống thông báo</h2>
-            <p class="text-slate-500 text-sm mt-1 flex items-center gap-2">
-                <span class="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></span>
-                Quản trị viên: Gửi tin nhắn Real-time & Theo dõi lịch sử
-            </p>
-        </div>
-        <button onclick="toggleModal(true)" class="group bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-teal-200 active:scale-95">
-            <span class="material-symbols-outlined text-xl group-hover:rotate-12 transition-transform">send</span>
-            Gửi thông báo mới
-        </button>
-    </div>
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - LinkedLearn Admin</title>
 
-    <div class="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
-        <div class="p-6 border-b border-slate-100 bg-white/50 backdrop-blur-md flex justify-between items-center">
-            <h3 class="font-bold text-slate-700 flex items-center gap-2">
-                <span class="material-symbols-outlined text-slate-400">history</span> Lịch sử gửi tin
-            </h3>
-            <button onclick="loadAdminHistory()" class="text-slate-400 hover:text-teal-600 transition-colors">
-                <span class="material-symbols-outlined text-xl">refresh</span>
+    <!-- Tailwind & Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0" />
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#4f46e5',
+                        accent: '#f43f5e',
+                        surface: '#0f172a',
+                        'surface-light': '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Outfit', sans-serif; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="antialiased flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 glass-panel border-r border-slate-800 flex flex-col transition-all duration-300 relative z-20">
+        <div class="h-20 flex items-center justify-center border-b border-white/5">
+            <h1 class="text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-3xl">school</span>
+                Linked<span class="text-gradient">Admin</span>
+            </h1>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-primary/20 text-indigo-400 font-semibold border border-primary/30 transition-all shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+                <span class="material-symbols-outlined">dashboard</span>
+                Tổng quan
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-400 font-medium hover:bg-white/5 hover:text-white transition-all">
+                <span class="material-symbols-outlined">group</span>
+                Quản lý User
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-400 font-medium hover:bg-white/5 hover:text-white transition-all">
+                <span class="material-symbols-outlined">play_lesson</span>
+                Khóa học
+            </a>
+            <p class="px-4 pt-6 pb-2 text-[10px] font-black uppercase text-slate-500 tracking-wider">Communication</p>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-400 font-medium hover:bg-white/5 hover:text-white transition-all group relative">
+                <span class="material-symbols-outlined group-hover:animate-bounce">notifications_active</span>
+                Hệ thống Thông báo
+                <span class="absolute right-4 w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+            </a>
+        </div>
+
+        <div class="p-4 border-t border-white/5">
+            <div class="flex items-center gap-3 px-2">
+                <div class="relative">
+                    <img src="@(string.IsNullOrEmpty(avatarUrl) ? $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(managerName)}&background=6366f1&color=fff" : avatarUrl)" class="w-10 h-10 rounded-full border-2 border-primary object-cover" />
+                    <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-surface rounded-full"></div>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-white truncate">@managerName</p>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Manager</p>
+                </div>
+            </div>
+            <form asp-controller="Account" asp-action="Logout" method="post" class="mt-4">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-white/5 text-red-400 font-bold hover:bg-red-500/10 hover:text-red-300 transition-colors flex items-center justify-center gap-2 text-sm">
+                    <span class="material-symbols-outlined text-[18px]">logout</span>
+                    Đăng xuất
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen relative overflow-hidden">
+        <!-- Decoration background -->
+        <div class="absolute top-0 right-0 -mr-40 -mt-40 w-96 h-96 rounded-full bg-primary/20 blur-[120px] pointer-events-none z-0"></div>
+        <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-accent/10 blur-[100px] pointer-events-none z-0"></div>
+
+        <!-- Header -->
+        <header class="h-20 glass-panel border-b border-white/5 flex items-center justify-between px-8 z-10">
+            <div class="flex items-center gap-4">
+                <h2 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">Notification Center</h2>
+            </div>
+            <button onclick="toggleModal(true)" class="bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white px-6 py-2.5 rounded-full font-bold flex items-center gap-2 transform hover:scale-105 transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)]">
+                <span class="material-symbols-outlined text-[20px]">send</span>
+                New Broadcast
             </button>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="bg-slate-50/50">
-                        <th class="p-5 text-[11px] font-black text-slate-400 uppercase tracking-wider">Người nhận</th>
-                        <th class="p-5 text-[11px] font-black text-slate-400 uppercase tracking-wider">Nội dung chi tiết</th>
-                        <th class="p-5 text-[11px] font-black text-slate-400 uppercase tracking-wider">Thời gian</th>
-                        <th class="p-5 text-[11px] font-black text-slate-400 uppercase tracking-wider text-center">Trạng thái</th>
-                    </tr>
-                </thead>
-                <tbody id="admin-notif-table" class="divide-y divide-slate-100">
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+        </header>
 
-<div id="sendModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl p-8 animate-in fade-in zoom-in duration-300">
-        <div class="flex justify-between items-start mb-6">
-            <h3 class="font-extrabold text-slate-800 text-2xl flex items-center gap-3">
-                <div class="w-12 h-12 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center">
-                    <span class="material-symbols-outlined text-2xl">campaign</span>
+        <!-- Dashboard Content -->
+        <div class="flex-1 overflow-y-auto p-8 z-10 relative">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Stat Card 1 -->
+                <div class="glass-panel p-6 rounded-[2rem] border border-white/5 flex items-center gap-5 relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 opacity-10">
+                        <span class="material-symbols-outlined text-[8rem]">group</span>
+                    </div>
+                    <div class="w-14 h-14 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
+                        <span class="material-symbols-outlined text-3xl">group</span>
+                    </div>
+                    <div>
+                        <p class="text-slate-400 text-sm font-semibold uppercase tracking-wider mb-1">Total Users</p>
+                        <h4 class="text-3xl font-black text-white">1,248</h4>
+                    </div>
                 </div>
-                Soạn thông báo
-            </h3>
-            <button onclick="toggleModal(false)" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                <span class="material-symbols-outlined text-slate-400">close</span>
-            </button>
-        </div>
-
-        <form id="sendNotificationForm" class="space-y-5">
-            <div>
-                <label class="text-[11px] font-black text-slate-400 uppercase ml-2 mb-1 block">Gửi đến ai?</label>
-                <select id="targetType" onchange="toggleUserFields()" class="w-full px-5 py-4 bg-slate-50 border-none ring-1 ring-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-teal-500 transition-all font-semibold text-slate-700">
-                    <option value="MULTIPLE">Tag người nhận (@@email)</option>
-                    <option value="ALL">Tất cả người dùng hệ thống</option>
-                </select>
-            </div>
-
-            <div id="emailInputSection" class="relative">
-                <label class="text-[11px] font-black text-slate-400 uppercase ml-2 mb-1 block">Danh sách Email</label>
-                <div id="tag-container" class="flex flex-wrap gap-2 p-2 bg-slate-50 ring-1 ring-slate-200 rounded-2xl min-h-[56px] items-center focus-within:ring-2 focus-within:ring-teal-500 transition-all cursor-text" onclick="document.getElementById('emailTagInput').focus()">
-                    <input type="text" id="emailTagInput" class="flex-1 min-w-[150px] bg-transparent border-none focus:ring-0 text-sm h-8" placeholder="Gõ @@email hoặc tìm kiếm...">
+                
+                <!-- Stat Card 2 -->
+                <div class="glass-panel p-6 rounded-[2rem] border border-white/5 flex items-center gap-5 relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 opacity-10">
+                        <span class="material-symbols-outlined text-[8rem]">campaign</span>
+                    </div>
+                    <div class="w-14 h-14 rounded-2xl bg-accent/20 text-accent flex items-center justify-center border border-accent/30">
+                        <span class="material-symbols-outlined text-3xl">campaign</span>
+                    </div>
+                    <div>
+                        <p class="text-slate-400 text-sm font-semibold uppercase tracking-wider mb-1">Notifs Sent</p>
+                        <h4 class="text-3xl font-black text-white">45,392</h4>
+                    </div>
                 </div>
 
-                <div id="emailSuggestions" class="hidden absolute left-0 right-0 max-h-48 bg-white shadow-2xl border border-slate-100 rounded-2xl mt-2 overflow-y-auto z-[110] divide-y divide-slate-50">
+                <!-- Stat Card 3 -->
+                <div class="glass-panel p-6 rounded-[2rem] border border-white/5 flex items-center gap-5 relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 opacity-10">
+                        <span class="material-symbols-outlined text-[8rem]">verified</span>
+                    </div>
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                        <span class="material-symbols-outlined text-3xl">verified</span>
+                    </div>
+                    <div>
+                        <p class="text-slate-400 text-sm font-semibold uppercase tracking-wider mb-1">Active Rate</p>
+                        <h4 class="text-3xl font-black text-white">88.4%</h4>
+                    </div>
                 </div>
             </div>
 
-            <div>
-                <label class="text-[11px] font-black text-slate-400 uppercase ml-2 mb-1 block">Nội dung</label>
-                <input type="text" id="title" required class="w-full px-5 py-4 bg-slate-50 border-none ring-1 ring-slate-200 rounded-2xl focus:ring-2 focus:ring-teal-500 transition-all mb-3" placeholder="Tiêu đề ngắn gọn...">
-                <textarea id="content" rows="3" required class="w-full px-5 py-4 bg-slate-50 border-none ring-1 ring-slate-200 rounded-2xl focus:ring-2 focus:ring-teal-500 transition-all resize-none" placeholder="Nhập nội dung thông báo chi tiết tại đây..."></textarea>
+            <!-- Table Section -->
+            <div class="glass-panel rounded-[2rem] border border-white/5 overflow-hidden flex flex-col h-[calc(100vh-280px)] min-h-[400px]">
+                <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                    <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">history</span> Lịch sử Gửi thông báo
+                    </h3>
+                    <button onclick="loadAdminHistory()" class="text-slate-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-full">
+                        <span class="material-symbols-outlined text-xl">refresh</span>
+                    </button>
+                </div>
+                
+                <div class="flex-1 overflow-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="sticky top-0 glass-panel bg-[#162032] z-10">
+                            <tr>
+                                <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Người nhận</th>
+                                <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest w-1/2">Nội dung</th>
+                                <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Thời gian</th>
+                                <th class="p-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-notif-table" class="divide-y divide-white/5">
+                            <!-- JS Rendered -->
+                            <tr><td colspan="4" class="p-12 text-center text-slate-500">Đang tải dữ liệu...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <div class="flex gap-4 pt-4">
-                <button type="button" onclick="toggleModal(false)" class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold hover:bg-slate-200 transition-all">Hủy</button>
-                <button type="submit" class="flex-[2] py-4 bg-teal-600 text-white rounded-2xl font-bold hover:bg-teal-700 shadow-lg shadow-teal-200 transition-all flex items-center justify-center gap-2">
-                    Gửi ngay <span class="material-symbols-outlined text-sm">bolt</span>
+        </div>
+    </main>
+
+    <!-- Modal Send Notification -->
+    <div id="sendModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onclick="toggleModal(false)"></div>
+        
+        <div class="bg-surface-light w-full max-w-lg rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10 p-8 relative z-10 transform scale-95 opacity-0 transition-all duration-300 ease-out" id="modalContent">
+            <div class="flex justify-between items-start mb-6">
+                <h3 class="font-bold text-white text-2xl flex items-center gap-3">
+                    <div class="w-12 h-12 bg-primary/20 text-primary border border-primary/30 rounded-2xl flex items-center justify-center">
+                        <span class="material-symbols-outlined text-xl">campaign</span>
+                    </div>
+                    Soạn thông báo
+                </h3>
+                <button onclick="toggleModal(false)" class="p-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-full transition-colors">
+                    <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
-        </form>
-    </div>
-</div>
 
-@section Scripts {
+            <form id="sendNotificationForm" class="space-y-5">
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block tracking-widest">Đối tượng nhận</label>
+                    <select id="targetType" onchange="toggleUserFields()" class="w-full px-5 py-4 bg-surface border border-white/5 rounded-2xl outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-semibold text-white appearance-none cursor-pointer">
+                        <option value="MULTIPLE">Tag Cá nhân (@@email)</option>
+                        <option value="ALL">Toàn bộ Hệ thống</option>
+                    </select>
+                </div>
+
+                <div id="emailInputSection" class="relative">
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block tracking-widest">Danh sách Email</label>
+                    <div id="tag-container" class="flex flex-wrap gap-2 p-2 bg-surface border border-white/5 rounded-2xl min-h-[56px] items-center focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all cursor-text" onclick="document.getElementById('emailTagInput').focus()">
+                        <input type="text" id="emailTagInput" class="flex-1 min-w-[150px] bg-transparent border-none text-white focus:outline-none text-sm px-2 h-8" placeholder="Gõ @@email hoặc tìm kiếm...">
+                    </div>
+                    <div id="emailSuggestions" class="hidden absolute left-0 right-0 max-h-48 bg-surface border border-white/10 shadow-2xl rounded-2xl mt-2 overflow-y-auto z-[110] divide-y divide-white/5">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block tracking-widest">Nội dung</label>
+                    <input type="text" id="title" required class="w-full px-5 py-4 bg-surface border border-white/5 rounded-2xl text-white placeholder-slate-500 focus:border-primary focus:ring-1 focus:ring-primary transition-all mb-3 outline-none" placeholder="Tiêu đề thông báo...">
+                    <textarea id="content" rows="4" required class="w-full px-5 py-4 bg-surface border border-white/5 rounded-2xl text-white placeholder-slate-500 focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none outline-none" placeholder="Chi tiết nội dung..."></textarea>
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="toggleModal(false)" class="flex-1 py-4 bg-white/5 text-slate-300 rounded-2xl font-bold hover:bg-white/10 transition-all">Hủy</button>
+                    <button type="submit" class="flex-[2] py-4 bg-primary text-white rounded-2xl font-bold hover:bg-secondary shadow-[0_0_15px_rgba(99,102,241,0.4)] transition-all flex items-center justify-center gap-2">
+                        Gửi Broadcast <span class="material-symbols-outlined text-sm">rocket_launch</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Scripts -->
     <script>
         const TOKEN_ADMIN = '@tokenFromServer';
         let selectedEmails = [];
 
         // 1. MODAL & UI TOGGLE
         function toggleModal(show) {
-            document.getElementById('sendModal').classList.toggle('hidden', !show);
-            if(!show) resetForm();
+            const modal = document.getElementById('sendModal');
+            const content = document.getElementById('modalContent');
+            if (show) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    content.classList.remove('scale-95', 'opacity-0');
+                    content.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            } else {
+                content.classList.remove('scale-100', 'opacity-100');
+                content.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    resetForm();
+                }, 300);
+            }
         }
 
         function toggleUserFields() {
             const isAll = document.getElementById('targetType').value === 'ALL';
-            document.getElementById('emailInputSection').classList.toggle('hidden', isAll);
+            document.getElementById('emailInputSection').style.display = isAll ? 'none' : 'block';
         }
 
         function resetForm() {
@@ -122,15 +299,14 @@
             const container = document.getElementById('tag-container');
             const input = document.getElementById('emailTagInput');
 
-            // Xóa tag cũ để render lại toàn bộ mảng
             container.querySelectorAll('.email-tag').forEach(t => t.remove());
 
             selectedEmails.forEach((email, index) => {
                 const tag = document.createElement('div');
-                tag.className = 'email-tag flex items-center gap-1.5 bg-teal-50 text-teal-700 px-3 py-1.5 rounded-xl text-xs font-bold border border-teal-100 animate-in zoom-in duration-200';
+                tag.className = 'email-tag flex items-center gap-1 min-h-[28px] bg-primary/20 text-indigo-300 px-3 py-1 rounded-lg text-xs font-bold border border-primary/30';
                 tag.innerHTML = `
                     ${email}
-                    <span class="material-symbols-outlined text-[16px] cursor-pointer hover:bg-teal-200 rounded-full p-0.5 transition-colors" onclick="removeTag(${index})">close</span>
+                    <span class="material-symbols-outlined text-[14px] cursor-pointer hover:bg-white/20 hover:text-white rounded-full transition-colors ml-1" onclick="removeTag(${index})">close</span>
                 `;
                 container.insertBefore(tag, input);
             });
@@ -148,7 +324,6 @@
             if (e.key === 'Enter') {
                 e.preventDefault();
                 const val = tagInput.value.trim();
-                // Check @@ định dạng email cơ bản
                 if (val && !selectedEmails.includes(val) && val.includes('@@')) {
                     selectedEmails.push(val);
                     tagInput.value = '';
@@ -162,7 +337,7 @@
             }
         });
 
-        // 3. AUTOCOMPLETE LOGIC (Gợi ý Email từ Database)
+        // 3. AUTOCOMPLETE LOGIC
         tagInput.addEventListener('input', async (e) => {
             const query = e.target.value.trim();
             if (query.length < 2) {
@@ -171,7 +346,6 @@
             }
 
             try {
-                // Đảm bảo URL API này tồn tại ở Backend của bạn
                 const response = await fetch(`http://localhost:5207/api/Notification/search-emails?query=${query}`, {
                     headers: { 'Authorization': `Bearer ${TOKEN_ADMIN}` }
                 });
@@ -181,12 +355,12 @@
                     suggestionsBox.innerHTML = emails
                         .filter(e => !selectedEmails.includes(e))
                         .map(email => `
-                            <div class="p-4 hover:bg-slate-50 cursor-pointer text-sm flex items-center gap-3 group transition-colors"
+                            <div class="px-5 py-3 hover:bg-white/5 cursor-pointer text-sm flex items-center gap-3 transition-colors"
                                  onclick="addEmailFromSuggestion('${email}')">
-                                <div class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 group-hover:bg-teal-100 group-hover:text-teal-600 transition-colors">
+                                <div class="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center text-slate-400">
                                     <span class="material-symbols-outlined text-sm">person</span>
                                 </div>
-                                <span class="font-medium text-slate-600">${email}</span>
+                                <span class="font-medium text-slate-300">${email}</span>
                             </div>
                         `).join('');
                     suggestionsBox.classList.remove('hidden');
@@ -206,14 +380,13 @@
             tagInput.focus();
         }
 
-        // Đóng gợi ý khi click ra ngoài
         window.addEventListener('click', (e) => {
             if (!document.getElementById('emailInputSection').contains(e.target)) {
                 suggestionsBox.classList.add('hidden');
             }
         });
 
-        // 4. LOAD HISTORY (Lấy toàn bộ lịch sử thông báo hệ thống)
+        // 4. LOAD HISTORY
         async function loadAdminHistory() {
             try {
                 const response = await fetch("http://localhost:5207/api/Notification/all", {
@@ -224,36 +397,41 @@
                     const tbody = document.getElementById('admin-notif-table');
 
                     if(data.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-slate-400 italic">Chưa có lịch sử thông báo</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-slate-500">No broadcast history yet.</td></tr>`;
                         return;
                     }
 
                     tbody.innerHTML = data.map(n => `
-                        <tr class="group hover:bg-slate-50/80 transition-all">
+                        <tr class="hover:bg-white/[0.02] transition-colors">
                             <td class="p-5">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 font-bold text-xs uppercase">
-                                        U${n.receiverId}
+                                    <div class="w-10 h-10 bg-white/5 border border-white/10 rounded-[14px] flex items-center justify-center text-slate-400 font-bold text-xs">
+                                        #${n.receiverId}
                                     </div>
-                                    <span class="text-sm font-bold text-slate-700">Người dùng #${n.receiverId}</span>
+                                    <div>
+                                        <div class="text-sm font-bold text-white">User ${n.receiverId}</div>
+                                    </div>
                                 </div>
                             </td>
                             <td class="p-5">
-                                <div class="text-sm font-bold text-slate-800">${n.title}</div>
-                                <div class="text-[11px] text-slate-400 line-clamp-1">${n.content}</div>
+                                <div class="text-sm font-bold text-slate-200 mb-1">${n.title}</div>
+                                <div class="text-xs text-slate-400 line-clamp-2 max-w-md">${n.content}</div>
                             </td>
-                            <td class="p-5 text-xs text-slate-400 font-medium">${new Date(n.createdAt).toLocaleString('vi-VN')}</td>
+                            <td class="p-5 text-sm text-slate-400">
+                                <div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">calendar_month</span> ${new Date(n.createdAt).toLocaleDateString('vi-VN')}</div>
+                                <div class="flex items-center gap-1.5 mt-0.5 text-xs"><span class="material-symbols-outlined text-[14px]">schedule</span> ${new Date(n.createdAt).toLocaleTimeString('vi-VN')}</div>
+                            </td>
                             <td class="p-5 text-center">
-                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${n.isRead ? 'bg-slate-100 text-slate-400' : 'bg-teal-50 text-teal-600'}">
+                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${n.isRead ? 'bg-white/5 text-slate-400 border border-white/10' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}">
                                     ${n.isRead ? 'Đã xem' : 'Chưa xem'}
                                 </span>
                             </td>
                         </tr>`).join('');
                 }
-            } catch (err) { console.error("Load history error:", err); }
+            } catch (err) { console.error("Load history err:", err); }
         }
 
-        // 5. SUBMIT FORM (Gửi thông báo nâng cao)
+        // 5. SUBMIT FORM
         document.getElementById('sendNotificationForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -263,9 +441,15 @@
                 return;
             }
 
+            // UI Feedback
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Đang gửi...';
+            btn.disabled = true;
+
             const dto = {
                 targetType: targetType,
-                emails: selectedEmails, // Gửi mảng các email đã tag
+                emails: selectedEmails,
                 title: document.getElementById('title').value,
                 content: document.getElementById('content').value
             };
@@ -282,16 +466,21 @@
 
                 if (response.ok) {
                     toggleModal(false);
-                    loadAdminHistory(); // Reload table
-                    alert("Thông báo đã được gửi thành công!");
+                    loadAdminHistory();
+                    
+                    // Simple modern toast logic could go here
                 } else {
-                    const errText = await response.text();
-                    alert("Lỗi từ máy chủ: " + errText);
+                    alert("Lỗi server: " + await response.text());
                 }
-            } catch (err) { console.error("Send error:", err); }
+            } catch (err) { 
+                console.error("Send error:", err); 
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         });
 
-        // Tự động load lịch sử khi trang vừa mở
         document.addEventListener("DOMContentLoaded", loadAdminHistory);
     </script>
-}
+</body>
+</html>
