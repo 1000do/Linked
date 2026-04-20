@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 
 namespace CourseMarketplaceBE.Application.DTOs;
 
@@ -9,6 +10,7 @@ public class LessonCreateRequest
     public string Title { get; set; } = null!;
     public string? Description { get; set; }
     public string? ThumbnailUrl { get; set; }
+    public IFormFile? ThumbnailFile { get; set; }
 }
 
 public class MaterialCreateRequest
@@ -17,6 +19,7 @@ public class MaterialCreateRequest
     public string? Description { get; set; }
     public string? MaterialUrl { get; set; }
     public string? Duration { get; set; }
+    public IFormFile? MaterialFile { get; set; }
 }
 
 public class LessonResponse

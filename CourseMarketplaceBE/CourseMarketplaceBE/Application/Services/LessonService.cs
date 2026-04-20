@@ -12,15 +12,18 @@ public class LessonService : ILessonService
     private readonly ILessonRepository _lessonRepository;
     private readonly ICourseRepository _courseRepository;
     private readonly IMaterialRepository _materialRepository;
+    private readonly IFileUploadService _uploadService;
 
     public LessonService(
         ILessonRepository lessonRepository, 
         ICourseRepository courseRepository,
-        IMaterialRepository materialRepository)
+        IMaterialRepository materialRepository,
+        IFileUploadService uploadService)
     {
         _lessonRepository = lessonRepository;
         _courseRepository = courseRepository;
         _materialRepository = materialRepository;
+        _uploadService = uploadService;
     }
 
     public async Task<LessonResponse> CreateLessonAsync(LessonCreateRequest request, int instructorId)
@@ -32,12 +35,23 @@ public class LessonService : ILessonService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to add a lesson to this course.");
 
+        string? thumbnailUrl = request.ThumbnailUrl;
+
+        if (request.ThumbnailFile != null)
+        {
+            var uploadedUrl = await _uploadService.UploadImageAsync(request.ThumbnailFile);
+            if (uploadedUrl != null)
+            {
+                thumbnailUrl = uploadedUrl;
+            }
+        }
+
         var lesson = new Lesson
         {
             CourseId = request.CourseId,
             Title = request.Title,
             Description = request.Description,
-            ThumbnailUrl = request.ThumbnailUrl,
+            ThumbnailUrl = thumbnailUrl,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             LessonStatus = "active"
@@ -67,12 +81,23 @@ public class LessonService : ILessonService
         if (lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to add material to this lesson.");
 
+        string? materialUrl = request.MaterialUrl;
+
+        if (request.MaterialFile != null)
+        {
+            var uploadedUrl = await _uploadService.UploadVideoAsync(request.MaterialFile);
+            if (uploadedUrl != null)
+            {
+                materialUrl = uploadedUrl;
+            }
+        }
+
         var material = new LearningMaterial
         {
             LessonId = lessonId,
             Title = request.Title,
             Description = request.Description,
-            MaterialUrl = request.MaterialUrl,
+            MaterialUrl = materialUrl,
             Duration = request.Duration,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 
 namespace CourseMarketplaceBE.Application.DTOs;
 
@@ -10,6 +11,7 @@ public class CourseCreateRequest
     public string? Description { get; set; }
     public decimal Price { get; set; }
     public string? CourseThumbnailUrl { get; set; }
+    public IFormFile? ThumbnailFile { get; set; }
 }
 
 public class CourseUpdateRequest
@@ -19,6 +21,7 @@ public class CourseUpdateRequest
     public string? Description { get; set; }
     public decimal Price { get; set; }
     public string? CourseThumbnailUrl { get; set; }
+    public IFormFile? ThumbnailFile { get; set; }
 }
 
 public class CourseResponse

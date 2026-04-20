@@ -76,7 +76,7 @@ public class CourseController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateCourse([FromBody] CourseCreateRequest request)
+    public async Task<IActionResult> CreateCourse([FromForm] CourseCreateRequest request)
     {
         try
         {
@@ -95,7 +95,7 @@ public class CourseController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCourse(int id, [FromBody] CourseUpdateRequest request)
+    public async Task<IActionResult> UpdateCourse(int id, [FromForm] CourseUpdateRequest request)
     {
         try
         {

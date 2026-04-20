@@ -12,4 +12,9 @@ public class NoopFileUploadService : IFileUploadService
         // Optionally log here.
         return Task.FromResult<string?>(null);
     }
+
+    public Task<string?> UploadVideoAsync(IFormFile file)
+    {
+        return Task.FromResult<string?>(null);
+    }
 }

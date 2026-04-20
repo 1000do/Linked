@@ -13,10 +13,12 @@ namespace CourseMarketplaceBE.Application.Services;
 public class CourseService : ICourseService
 {
     private readonly ICourseRepository _courseRepository;
+    private readonly IFileUploadService _uploadService;
 
-    public CourseService(ICourseRepository courseRepository)
+    public CourseService(ICourseRepository courseRepository, IFileUploadService uploadService)
     {
         _courseRepository = courseRepository;
+        _uploadService = uploadService;
     }
 
     public async Task<IEnumerable<CourseResponse>> GetInstructorCoursesAsync(int instructorId)
@@ -85,6 +87,17 @@ public class CourseService : ICourseService
 
     public async Task<CourseResponse> CreateCourseAsync(CourseCreateRequest request, int instructorId)
     {
+        string? thumbnailUrl = request.CourseThumbnailUrl;
+
+        if (request.ThumbnailFile != null)
+        {
+            var uploadedUrl = await _uploadService.UploadImageAsync(request.ThumbnailFile);
+            if (uploadedUrl != null)
+            {
+                thumbnailUrl = uploadedUrl;
+            }
+        }
+
         var course = new Course
         {
             InstructorId = instructorId,
@@ -92,7 +105,7 @@ public class CourseService : ICourseService
             Title = request.Title,
             Description = request.Description,
             Price = request.Price,
-            CourseThumbnailUrl = request.CourseThumbnailUrl,
+            CourseThumbnailUrl = thumbnailUrl,
             CourseStatus = "draft", // Default status
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -125,11 +138,22 @@ public class CourseService : ICourseService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to modify this course.");
 
+        string? thumbnailUrl = request.CourseThumbnailUrl ?? course.CourseThumbnailUrl;
+
+        if (request.ThumbnailFile != null)
+        {
+            var uploadedUrl = await _uploadService.UploadImageAsync(request.ThumbnailFile);
+            if (uploadedUrl != null)
+            {
+                thumbnailUrl = uploadedUrl;
+            }
+        }
+
         course.CategoryId = request.CategoryId;
         course.Title = request.Title;
         course.Description = request.Description;
         course.Price = request.Price;
-        course.CourseThumbnailUrl = request.CourseThumbnailUrl;
+        course.CourseThumbnailUrl = thumbnailUrl;
         course.UpdatedAt = DateTime.UtcNow;
 
         _courseRepository.Update(course);

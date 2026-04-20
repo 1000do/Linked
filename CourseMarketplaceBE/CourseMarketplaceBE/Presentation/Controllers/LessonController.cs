@@ -31,7 +31,7 @@ public class LessonController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateLesson([FromBody] LessonCreateRequest request)
+    public async Task<IActionResult> CreateLesson([FromForm] LessonCreateRequest request)
     {
         try
         {
@@ -50,7 +50,7 @@ public class LessonController : ControllerBase
     }
 
     [HttpPost("{lessonId}/materials")]
-    public async Task<IActionResult> AddMaterial(int lessonId, [FromBody] MaterialCreateRequest request)
+    public async Task<IActionResult> AddMaterial(int lessonId, [FromForm] MaterialCreateRequest request)
     {
         try
         {
