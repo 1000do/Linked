@@ -112,15 +112,26 @@ namespace CourseMarketplaceFE.Controllers
                 };
                 Response.Cookies.Append("UserName", result.FullName ?? model.Identifier, displayOpts);
                 Response.Cookies.Append("AvatarUrl", result.AvatarUrl ?? "", displayOpts);
+                Response.Cookies.Append("UserRole", result.Role ?? "user", displayOpts);
 
-                return RedirectToAction("Index", "Home");
+                if (string.IsNullOrEmpty(result.Role))
+                {
+                    return Content("LỖI GIAO TIẾP VỚI BACKEND: API không trả về biến Role. Điều này chắc chắn 100% là do Backend chưa được biên dịch và chạy lại (vẫn đang chạy code cũ). Vui lòng TẮT HẲN Backend, Build lại và chạy lại!");
+                }
+
+                // ── 4. Redirect theo role ──────────────────────────────────────────
+                if (result.Role.Trim().ToLower() == "manager")
+                    return RedirectToAction("Admin", "Notification");
+
+                return RedirectToAction("Index", "Home", new { debug = "is_user" });
+
             }
-
-            var errorJson = await response.Content.ReadAsStringAsync();
-            ViewBag.ErrorMessage = ParseErrorMessage(errorJson, "Email hoặc mật khẩu không chính xác.");
-            return View(model);
-        }
-
+                var errorJson = await response.Content.ReadAsStringAsync();
+                ViewBag.ErrorMessage = ParseErrorMessage(errorJson, "Email hoặc mật khẩu không chính xác.");
+                return View(model);
+            
+            }
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()

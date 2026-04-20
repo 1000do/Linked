@@ -1,4 +1,4 @@
-﻿using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Entities;
 
 namespace CourseMarketplaceBE.Domain.IRepositories;
 
@@ -13,4 +13,6 @@ public interface IUserRepository
     Task SaveRefreshTokenAsync(int accountId, string refreshToken, DateTime expiry);
     Task<Account?> GetAccountByRefreshTokenAsync(string refreshToken);
     Task RevokeRefreshTokenAsync(int accountId);
+    /// <summary>Trả về "manager" nếu account_id có trong bảng managers, ngược lại "user"</summary>
+    Task<string> GetRoleByAccountIdAsync(int accountId);
 }

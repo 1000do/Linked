@@ -84,7 +84,10 @@ public class UserRepository : IUserRepository
     public async Task<bool> IsEmailExistsAsync(string email) => await _context.Accounts.AnyAsync(a => a.Email == email);
 
     public async Task<Account?> GetAccountByEmailAsync(string email) =>
-        await _context.Accounts.Include(a => a.User).FirstOrDefaultAsync(a => a.Email == email);
+        await _context.Accounts
+            .Include(a => a.User)
+            .Include(a => a.Manager)
+            .FirstOrDefaultAsync(a => a.Email == email);
 
     public async Task UpdateLastLoginAsync(int accountId)
     {
@@ -126,6 +129,7 @@ public class UserRepository : IUserRepository
     public async Task<Account?> GetAccountByRefreshTokenAsync(string refreshToken) =>
         await _context.Accounts
             .Include(a => a.User)
+            .Include(a => a.Manager)
             .FirstOrDefaultAsync(a => a.RefreshToken == refreshToken);
 
     public async Task RevokeRefreshTokenAsync(int accountId)
@@ -137,5 +141,12 @@ public class UserRepository : IUserRepository
             a.RefreshTokenExpiryTime = null;
             await _context.SaveChangesAsync();
         }
+    }
+
+    public async Task<string> GetRoleByAccountIdAsync(int accountId)
+    {
+        // Kiểm tra bảng managers — nếu tồn tại → manager, không thì → user
+        var isManager = await _context.Managers.AnyAsync(m => m.ManagerId == accountId);
+        return isManager ? "manager" : "user";
     }
 }

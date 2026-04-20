@@ -1,4 +1,5 @@
-﻿using CourseMarketplaceBE.Application.DTOs;
+﻿using CloudinaryDotNet.Actions;
+using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -67,7 +68,8 @@ public class AuthController : ControllerBase
             message = "Đăng nhập thành công",
             accessToken = result.AccessToken,   // Trả về để FE lưu in-memory
             fullName = result.FullName,
-            avatarUrl = result.AvatarUrl
+            avatarUrl = result.AvatarUrl,
+            role = result.Role
         });
     }
 

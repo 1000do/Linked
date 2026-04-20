@@ -1,4 +1,4 @@
-﻿using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Share.Helpers;
@@ -30,10 +30,15 @@ public class AuthService : IAuthService
 
         await _userRepo.UpdateLastLoginAsync(a.AccountId);
 
-        var fullName = a.User?.FullName ?? "User";
+        // ── Detect role ───────────────────────────────────────────────────────
+        var role = await _userRepo.GetRoleByAccountIdAsync(a.AccountId);
+
+        var fullName = role == "manager"
+            ? (a.Manager?.DisplayName ?? "Manager")
+            : (a.User?.FullName ?? "User");
         var avatar = a.AvatarUrl ?? "";
 
-        var accessToken = GenerateAccessToken(a);
+        var accessToken = GenerateAccessToken(a, role);
         var refreshToken = GenerateRefreshToken();
         var expiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
 
@@ -44,7 +49,8 @@ public class AuthService : IAuthService
             AccessToken = accessToken,
             RefreshToken = refreshToken,
             FullName = fullName,
-            AvatarUrl = avatar
+            AvatarUrl = avatar,
+            Role = role
         };
     }
 
@@ -52,23 +58,28 @@ public class AuthService : IAuthService
     {
         var a = await _userRepo.GetAccountByRefreshTokenAsync(refreshToken);
 
-        // Token không tồn tại hoặc đã hết hạn → yêu cầu đăng nhập lại
         if (a == null || a.RefreshTokenExpiryTime == null || a.RefreshTokenExpiryTime <= DateTime.UtcNow)
             return null;
 
-        // Phát access token mới + rotate refresh token (bảo mật: mỗi lần dùng đổi token mới)
-        var newAccessToken = GenerateAccessToken(a);
+        var role = await _userRepo.GetRoleByAccountIdAsync(a.AccountId);
+
+        var newAccessToken = GenerateAccessToken(a, role);
         var newRefreshToken = GenerateRefreshToken();
         var newExpiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
 
         await _userRepo.SaveRefreshTokenAsync(a.AccountId, newRefreshToken, newExpiry);
 
+        var fullName = role == "manager"
+            ? (a.Manager?.DisplayName ?? "Manager")
+            : (a.User?.FullName ?? "User");
+
         return new LoginResponse
         {
             AccessToken = newAccessToken,
             RefreshToken = newRefreshToken,
-            FullName = a.User?.FullName ?? "User",
-            AvatarUrl = a.AvatarUrl ?? ""
+            FullName = fullName,
+            AvatarUrl = a.AvatarUrl ?? "",
+            Role = role
         };
     }
 
@@ -101,10 +112,12 @@ public class AuthService : IAuthService
 
     // ─── PRIVATE HELPERS ──────────────────────────────────────────────────────
 
-    private string GenerateAccessToken(Account a)
+    private string GenerateAccessToken(Account a, string role)
     {
         var key = Encoding.UTF8.GetBytes(_jwtSettings.Key!);
-        var fullName = a.User?.FullName ?? "User";
+        var fullName = role == "manager"
+            ? (a.Manager?.DisplayName ?? "Manager")
+            : (a.User?.FullName ?? "User");
         var avatar = a.AvatarUrl ?? "";
 
         var tokenDescriptor = new SecurityTokenDescriptor
@@ -113,6 +126,7 @@ public class AuthService : IAuthService
             {
                 new Claim(ClaimTypes.NameIdentifier, a.AccountId.ToString()),
                 new Claim(ClaimTypes.Email, a.Email),
+                new Claim(ClaimTypes.Role, role),          // ← dùng [Authorize(Roles="manager")]
                 new Claim("FullName", fullName),
                 new Claim("AvatarUrl", avatar)
             }),
