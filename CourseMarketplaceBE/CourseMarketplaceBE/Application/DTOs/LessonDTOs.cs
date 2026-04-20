@@ -18,7 +18,7 @@ public class MaterialCreateRequest
     public string Title { get; set; } = null!;
     public string? Description { get; set; }
     public string? MaterialUrl { get; set; }
-    public string? Duration { get; set; }
+    public int? Duration { get; set; }
     public IFormFile? MaterialFile { get; set; }
 }
 
@@ -42,7 +42,7 @@ public class MaterialResponse
     public string Title { get; set; } = null!;
     public string? Description { get; set; }
     public string? MaterialUrl { get; set; }
-    public string? Duration { get; set; }
+    public int? Duration { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }
