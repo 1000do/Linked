@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace LinkedLearn.Models.UserVM
 {
@@ -34,11 +34,12 @@ namespace LinkedLearn.Models.UserVM
     public class LoginResponse
     {
         public int Status { get; set; }
-        public string? Token { get; set; }
+        public string? AccessToken { get; set; }   // BE đổi tên từ 'token' → 'accessToken'
+        public string? RefreshToken { get; set; }  // Token mới để gia hạn session
         public string? Message { get; set; }
-        public string? FullName { get; set; } // Thêm trường này
-        public string AvatarUrl { get; set; }
-    }   
+        public string? FullName { get; set; }
+        public string? AvatarUrl { get; set; }
+    }
 
     public class ApiResponse
     {

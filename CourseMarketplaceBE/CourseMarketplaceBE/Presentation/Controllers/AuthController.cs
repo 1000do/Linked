@@ -1,5 +1,6 @@
 ﻿using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -16,6 +17,7 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
+    // ─── REGISTER ─────────────────────────────────────────────────────
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
@@ -27,47 +29,105 @@ public class AuthController : ControllerBase
         return BadRequest(new { status = 400, message = result });
     }
 
+    // ─── LOGIN ────────────────────────────────────────────────────────
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         if (string.IsNullOrEmpty(request.Email) || !request.Email.EndsWith("@gmail.com"))
-        {
             return BadRequest(new { status = 400, message = "Tài khoản phải có định dạng @gmail.com." });
-        }
 
-        // result bây giờ chứa cả Token, FullName và AvatarUrl
         var result = await _authService.LoginAsync(request);
 
         if (result == null)
-        {
             return Unauthorized(new { status = 401, message = "Email hoặc mật khẩu không chính xác." });
-        }
 
-        var cookieOptions = new CookieOptions
+        // Access token: HttpOnly cookie, ngắn hạn (15 phút)
+        Response.Cookies.Append("AccessToken", result.AccessToken, new CookieOptions
         {
             HttpOnly = true,
-            Secure = false, // Đổi thành true nếu chạy HTTPS thực tế
-            SameSite = SameSiteMode.Lax,
-            Expires = DateTime.UtcNow.AddDays(7),
+            Secure = true,          // HTTPS trên production
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddMinutes(15),
             Path = "/"
-        };
+        });
 
-        Response.Cookies.Append("AuthToken", result.Token, cookieOptions);
+        // Refresh token: HttpOnly cookie, dài hạn (7 ngày)
+        Response.Cookies.Append("RefreshToken", result.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddDays(7),
+            Path = "/api/auth/refresh" // Chỉ gửi đến endpoint refresh
+        });
 
         return Ok(new
         {
             status = 200,
             message = "Đăng nhập thành công",
-            token = result.Token,
+            accessToken = result.AccessToken,   // Trả về để FE lưu in-memory
             fullName = result.FullName,
             avatarUrl = result.AvatarUrl
         });
     }
 
-    [HttpPost("logout")]
-    public IActionResult Logout()
+    // ─── REFRESH TOKEN ────────────────────────────────────────────────
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh()
     {
-        Response.Cookies.Delete("AuthToken", new CookieOptions { Path = "/" });
+        // Lấy refresh token từ cookie (ưu tiên) hoặc body
+        var refreshToken = Request.Cookies["RefreshToken"]
+                        ?? Request.Headers["X-Refresh-Token"].ToString();
+
+        if (string.IsNullOrWhiteSpace(refreshToken))
+            return BadRequest(new { status = 400, message = "Refresh token không được để trống." });
+
+        var result = await _authService.RefreshTokenAsync(refreshToken);
+
+        if (result == null)
+            return Unauthorized(new { status = 401, message = "Refresh token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại." });
+
+        // Cấp lại cả 2 cookie (access + refresh mới, do đã rotate)
+        Response.Cookies.Append("AccessToken", result.AccessToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddMinutes(15),
+            Path = "/"
+        });
+
+        Response.Cookies.Append("RefreshToken", result.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddDays(7),
+            Path = "/api/auth/refresh"
+        });
+
+        return Ok(new
+        {
+            status = 200,
+            message = "Token đã được làm mới",
+            accessToken = result.AccessToken
+        });
+    }
+
+    // ─── LOGOUT ───────────────────────────────────────────────────────
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        var accountIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (int.TryParse(accountIdClaim, out var accountId))
+            await _authService.LogoutAsync(accountId); // Thu hồi refresh token khỏi DB
+
+        // Xoá cả 2 cookie
+        Response.Cookies.Delete("AccessToken", new CookieOptions { Path = "/" });
+        Response.Cookies.Delete("RefreshToken", new CookieOptions { Path = "/api/auth/refresh" });
+
         return Ok(new { status = 200, message = "Đã đăng xuất thành công." });
     }
 }

@@ -1,6 +1,6 @@
-﻿using LinkedLearn.Models.UserVM;
+using CourseMarketplaceFE.Helpers;
+using LinkedLearn.Models.UserVM;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -9,11 +9,13 @@ namespace CourseMarketplaceFE.Controllers
     public class AccountController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApiClient _api;
         private readonly JsonSerializerOptions _jsonOptions;
 
-        public AccountController(IHttpClientFactory httpClientFactory)
+        public AccountController(IHttpClientFactory httpClientFactory, ApiClient api)
         {
             _httpClientFactory = httpClientFactory;
+            _api = api;
             _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         }
 
@@ -30,8 +32,15 @@ namespace CourseMarketplaceFE.Controllers
 
             if (!ModelState.IsValid) return View(model);
 
+            // Endpoint register không cần auth → dùng HttpClient trực tiếp
             var client = _httpClientFactory.CreateClient("BackendApi");
-            var response = await client.PostAsJsonAsync("Auth/register", model);
+            var response = await client.PostAsJsonAsync("Auth/register", new
+            {
+                model.Email,
+                model.Password,
+                model.ConfirmPassword,
+                model.FullName
+            });
 
             if (response.IsSuccessStatusCode)
             {
@@ -46,7 +55,8 @@ namespace CourseMarketplaceFE.Controllers
         [HttpGet]
         public IActionResult Login()
         {
-            if (Request.Cookies.ContainsKey("UserName")) return RedirectToAction("Index", "Home");
+            // Đã login (có AccessToken) → về Home
+            if (Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Index", "Home");
             return View();
         }
 
@@ -55,6 +65,7 @@ namespace CourseMarketplaceFE.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
+            // Endpoint login không cần auth → dùng HttpClient trực tiếp
             var client = _httpClientFactory.CreateClient("BackendApi");
             var loginRequest = new { Email = model.Identifier.Trim().ToLower(), Password = model.Password };
             var response = await client.PostAsJsonAsync("Auth/login", loginRequest);
@@ -63,23 +74,44 @@ namespace CourseMarketplaceFE.Controllers
             {
                 var result = await response.Content.ReadFromJsonAsync<LoginResponse>(_jsonOptions);
 
-                var cookieOptions = new CookieOptions
+                if (result == null)
+                {
+                    ViewBag.ErrorMessage = "Phản hồi từ server không hợp lệ.";
+                    return View(model);
+                }
+
+                // ── 1. Lưu AccessToken (HttpOnly, 15 phút) ──────────────────────
+                Response.Cookies.Append("AccessToken", result.AccessToken ?? "", new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = false,         // dev: false | production: true
+                    SameSite = SameSiteMode.Lax,
+                    Expires = DateTimeOffset.UtcNow.AddMinutes(15),
+                    Path = "/"
+                });
+
+                // ── 2. Lưu RefreshToken (HttpOnly, 7 ngày) ───────────────────────
+                // RefreshToken BE trả trong body (vì cookie BE dùng path /api/auth/refresh)
+                if (!string.IsNullOrEmpty(result.RefreshToken))
+                {
+                    Response.Cookies.Append("RefreshToken", result.RefreshToken, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = false,
+                        SameSite = SameSiteMode.Lax,
+                        Expires = DateTimeOffset.UtcNow.AddDays(7),
+                        Path = "/"
+                    });
+                }
+
+                // ── 3. Lưu display info (không HttpOnly) ─────────────────────────
+                var displayOpts = new CookieOptions
                 {
                     Expires = DateTimeOffset.UtcNow.AddDays(7),
                     Path = "/"
                 };
-
-                // 1. Lưu AuthToken (HttpOnly)
-                Response.Cookies.Append("AuthToken", result?.Token ?? "", new CookieOptions
-                {
-                    Expires = cookieOptions.Expires,
-                    HttpOnly = true,
-                    Path = "/"
-                });
-
-                // 2. Lưu UserName & AvatarUrl từ BE trả về để Header hiển thị ngay
-                Response.Cookies.Append("UserName", result?.FullName ?? model.Identifier, cookieOptions);
-                Response.Cookies.Append("AvatarUrl", result?.AvatarUrl ?? "", cookieOptions);
+                Response.Cookies.Append("UserName", result.FullName ?? model.Identifier, displayOpts);
+                Response.Cookies.Append("AvatarUrl", result.AvatarUrl ?? "", displayOpts);
 
                 return RedirectToAction("Index", "Home");
             }
@@ -89,12 +121,34 @@ namespace CourseMarketplaceFE.Controllers
             return View(model);
         }
 
-        [HttpGet]
-        public IActionResult Logout()
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Logout()
         {
-            Response.Cookies.Delete("AuthToken", new CookieOptions { Path = "/" });
+            // Gọi BE để revoke refresh token khỏi DB
+            // ApiClient sẽ tự gắn AccessToken; nếu 401 nó sẽ thử refresh trước
+            await _api.PostAsync("Auth/logout");
+
+            // Xoá hết cookie FE
+            Response.Cookies.Delete("AccessToken", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("RefreshToken", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("UserName", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
+
+            return RedirectToAction("Login");
+        }
+
+        // Giữ GET logout cho trường hợp link đơn giản (không form)
+        [HttpGet]
+        public async Task<IActionResult> LogoutGet()
+        {
+            await _api.PostAsync("Auth/logout");
+
+            Response.Cookies.Delete("AccessToken", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("RefreshToken", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("UserName", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
+
             return RedirectToAction("Login");
         }
 
@@ -103,37 +157,33 @@ namespace CourseMarketplaceFE.Controllers
         [HttpGet]
         public async Task<IActionResult> Profile()
         {
-            var token = Request.Cookies["AuthToken"];
-            if (string.IsNullOrEmpty(token)) return RedirectToAction("Login");
+            if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login");
 
-            var client = _httpClientFactory.CreateClient("BackendApi");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            // ApiClient tự gắn token + tự refresh nếu 401
+            var response = await _api.GetAsync("Profile");
 
-            var response = await client.GetAsync("Profile");
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<UserProfileApiResponse>(_jsonOptions);
                 return View(result?.Data);
             }
+
+            // Nếu vẫn lỗi sau khi đã thử refresh → hết phiên, bắt đăng nhập lại
             return RedirectToAction("Login");
         }
 
         [HttpGet]
         public async Task<IActionResult> EditProfile()
         {
-            var token = Request.Cookies["AuthToken"];
-            if (string.IsNullOrEmpty(token)) return RedirectToAction("Login");
+            if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login");
 
-            var client = _httpClientFactory.CreateClient("BackendApi");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await client.GetAsync("Profile");
+            var response = await _api.GetAsync("Profile");
             if (!response.IsSuccessStatusCode) return RedirectToAction("Profile");
 
             var result = await response.Content.ReadFromJsonAsync<UserProfileApiResponse>(_jsonOptions);
             var data = result?.Data;
 
-            var nameParts = data?.FullName?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? new string[] { "" };
+            var nameParts = data?.FullName?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
             var vm = new UpdateProfileViewModel
             {
                 FirstName = nameParts.Length > 0 ? nameParts[0] : "",
@@ -141,7 +191,7 @@ namespace CourseMarketplaceFE.Controllers
                 Bio = data?.Bio,
                 PhoneNumber = data?.PhoneNumber,
                 AvatarUrl = data?.AvatarUrl,
-                DateOfBirth = data?.DateOfBirth?.ToString("yyyy-MM-dd") // Format cho input date
+                DateOfBirth = data?.DateOfBirth?.ToString("yyyy-MM-dd")
             };
 
             return View(vm);
@@ -150,11 +200,7 @@ namespace CourseMarketplaceFE.Controllers
         [HttpPost]
         public async Task<IActionResult> EditProfile(UpdateProfileViewModel model)
         {
-            var token = Request.Cookies["AuthToken"];
-            if (string.IsNullOrEmpty(token)) return RedirectToAction("Login");
-
-            var client = _httpClientFactory.CreateClient("BackendApi");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login");
 
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent(model.FirstName ?? ""), "FirstName");
@@ -166,15 +212,15 @@ namespace CourseMarketplaceFE.Controllers
             if (model.AvatarFile != null)
             {
                 var fileContent = new StreamContent(model.AvatarFile.OpenReadStream());
-                fileContent.Headers.ContentType = new MediaTypeHeaderValue(model.AvatarFile.ContentType);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(model.AvatarFile.ContentType);
                 content.Add(fileContent, "AvatarFile", model.AvatarFile.FileName);
             }
 
-            var response = await client.PutAsync("Profile/update", content);
+            var response = await _api.PutAsync("Profile/update", content);
             if (response.IsSuccessStatusCode)
             {
-                // ĐỒNG BỘ LẠI COOKIE: Gọi lại Profile để lấy thông tin mới nhất (bao gồm URL ảnh mới)
-                var profileResponse = await client.GetAsync("Profile");
+                // Đồng bộ lại cookie display (FullName, AvatarUrl)
+                var profileResponse = await _api.GetAsync("Profile");
                 if (profileResponse.IsSuccessStatusCode)
                 {
                     var profileResult = await profileResponse.Content.ReadFromJsonAsync<UserProfileApiResponse>(_jsonOptions);
@@ -192,6 +238,8 @@ namespace CourseMarketplaceFE.Controllers
             ViewBag.ErrorMessage = "Không thể cập nhật hồ sơ.";
             return View(model);
         }
+
+        // ─── Helpers ──────────────────────────────────────────────────────
 
         private async Task HandleApiError(HttpResponseMessage response)
         {

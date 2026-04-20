@@ -115,6 +115,10 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("auth_provider");
             entity.Property(e => e.AvatarUrl).HasColumnName("avatar_url");
+            entity.Property(e => e.RefreshToken).HasColumnName("refresh_token");
+            entity.Property(e => e.RefreshTokenExpiryTime)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("refresh_token_expiry_time");
             entity.Property(e => e.Email)
                 .HasMaxLength(255)
                 .HasColumnName("email");
