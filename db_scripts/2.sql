@@ -437,3 +437,26 @@ VALUES
 (2, 'Development', 'Software development, programming languages, web & mobile dev.', 'active'), 
 (3, 'Business', 'Business management, finance, marketing, and entrepreneurship.', 'active')
 ON CONFLICT DO NOTHING;
+
+-- ==============================================================================
+-- 9. SAMPLE DATA FOR PRIMARY ACCOUNT (phuoctai228)
+-- ==============================================================================
+
+INSERT INTO accounts (account_id, email, password_hash, account_status, auth_provider, is_verified)
+VALUES (1, 'phuoctai228@gmail.com', '$2a$11$w/itTk1gtGMzyoG6pw0Sxe2aNOjeKAGDdyW9BA/HdhUUK6HHGUoRG', 'active', 'local', TRUE)
+ON CONFLICT (account_id) DO NOTHING;
+
+INSERT INTO users (user_id, full_name)
+VALUES (1, 'phuoctai228')
+ON CONFLICT (user_id) DO NOTHING;
+
+INSERT INTO instructors (instructor_id)
+VALUES (1)
+ON CONFLICT (instructor_id) DO NOTHING;
+
+-- ==============================================================================
+-- 10. SYNC SEQUENCES (Prevent duplicate key errors)
+-- ==============================================================================
+
+SELECT setval(pg_get_serial_sequence('accounts', 'account_id'), (SELECT MAX(account_id) FROM accounts));
+SELECT setval(pg_get_serial_sequence('categories', 'category_id'), (SELECT MAX(category_id) FROM categories));
