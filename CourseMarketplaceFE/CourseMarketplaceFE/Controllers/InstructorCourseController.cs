@@ -170,5 +170,33 @@ namespace CourseMarketplaceFE.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
+        // ─── ADD LESSON (AJAX) ────────────────────────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> AddLesson([FromForm] int courseId, [FromForm] string title)
+        {
+            try
+            {
+                var formData = new MultipartFormDataContent();
+                formData.Add(new StringContent(courseId.ToString()), "CourseId");
+                formData.Add(new StringContent(title), "Title");
+
+                var resp = await _api.PostFormDataAsync("lessons", formData);
+
+                if (resp.IsSuccessStatusCode)
+                {
+                    var json = await resp.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    // Clone the element so it survives after doc is disposed
+                    var data = doc.RootElement.GetProperty("data").Clone();
+                    return Json(new { success = true, data = data });
+                }
+                var error = await resp.Content.ReadAsStringAsync();
+                return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
     }
 }

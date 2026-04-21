@@ -11,7 +11,7 @@
 <div class="p-8 max-w-7xl mx-auto">
     <div class="flex items-center justify-between mb-8">
         <div>
-            <h1 class="text-3xl font-headline font-extrabold text-slate-900">My Courses</h1>
+            <h1 class="text-3xl font-headline font-extrabold text-slate-900">Dashboard</h1>
             <p class="text-slate-500 mt-2">Manage your curriculum and track performance across @courseList.Count active courses.</p>
         </div>
         <div class="flex items-center gap-3">
@@ -55,6 +55,18 @@
             <p class="text-3xl font-headline font-extrabold text-slate-900">$48.2k</p>
             <p class="text-xs font-medium text-slate-500 mt-2">Payout in 4 days</p>
         </div>
+    </div>
+
+    <!-- ACTION BAR -->
+    <div class="flex items-center justify-between mb-6">
+        <div class="w-96 relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+            <input type="text" placeholder="Search courses or resources..." class="w-full bg-white border border-slate-200 rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-slate-400" />
+        </div>
+        <a href="/InstructorCourse/Create" class="px-5 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/20 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">add</span>
+            Create New Course
+        </a>
     </div>
 
     <!-- COURSES TABLE (List View) -->
