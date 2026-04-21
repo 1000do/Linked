@@ -426,3 +426,14 @@ SELECT
      JOIN courses c ON e.course_id = c.course_id 
      WHERE c.instructor_id = i.instructor_id) AS total_students_count
 FROM instructors i;
+
+-- ==============================================================================
+-- 8. SAMPLE DATA (EXCLUDING ACCOUNTS)
+-- ==============================================================================
+
+INSERT INTO categories (category_id, categories_name, description, category_status) 
+VALUES 
+(1, 'Design & Creative', 'Courses related to design, UX/UI, 3D modeling, and creative arts.', 'active'), 
+(2, 'Development', 'Software development, programming languages, web & mobile dev.', 'active'), 
+(3, 'Business', 'Business management, finance, marketing, and entrepreneurship.', 'active')
+ON CONFLICT DO NOTHING;
