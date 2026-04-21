@@ -453,3 +453,10 @@ ON CONFLICT (user_id) DO NOTHING;
 INSERT INTO instructors (instructor_id)
 VALUES (1)
 ON CONFLICT (instructor_id) DO NOTHING;
+
+-- ==============================================================================
+-- 10. SYNC SEQUENCES (Prevent duplicate key errors)
+-- ==============================================================================
+
+SELECT setval(pg_get_serial_sequence('accounts', 'account_id'), (SELECT MAX(account_id) FROM accounts));
+SELECT setval(pg_get_serial_sequence('categories', 'category_id'), (SELECT MAX(category_id) FROM categories));
