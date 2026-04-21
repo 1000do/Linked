@@ -443,11 +443,11 @@ ON CONFLICT DO NOTHING;
 -- ==============================================================================
 
 INSERT INTO accounts (account_id, email, password_hash, account_status, auth_provider, is_verified)
-VALUES (1, 'phuoctai228@gmail.com', '$2a$11$w/itTk1gtGMzyoG6pw0Sxe2aNOjeKAGDdyW9BA/HdhUUK6HHGUoRG', 'active', 'local', TRUE)
+VALUES (1, 'instructor@gmail.com', '$2a$11$w/itTk1gtGMzyoG6pw0Sxe2aNOjeKAGDdyW9BA/HdhUUK6HHGUoRG', 'active', 'local', TRUE)
 ON CONFLICT (account_id) DO NOTHING;
 
 INSERT INTO users (user_id, full_name)
-VALUES (1, 'phuoctai228')
+VALUES (1, 'instructor')
 ON CONFLICT (user_id) DO NOTHING;
 
 INSERT INTO instructors (instructor_id)
