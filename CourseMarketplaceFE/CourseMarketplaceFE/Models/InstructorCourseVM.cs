@@ -21,15 +21,10 @@ namespace CourseMarketplaceFE.Models
         public string Title { get; set; } = null!;
 
         [Required(ErrorMessage = "Category is required")]
-        public string Category { get; set; } = null!;
+        public int CategoryId { get; set; }
 
-        [Required(ErrorMessage = "Primary language is required")]
-        public string Language { get; set; } = null!;
-
-        [Required(ErrorMessage = "Course thumbnail is required")]
         public string CourseThumbnailUrl { get; set; } = null!;
 
-        [Required(ErrorMessage = "Description is required")]
         public string Description { get; set; } = null!;
 
         [Required(ErrorMessage = "Price is required")]
