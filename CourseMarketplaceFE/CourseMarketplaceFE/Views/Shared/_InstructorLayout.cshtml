@@ -1,5 +1,7 @@
 @{
     var tokenForLayout = Context.Request.Cookies["AuthToken"] ?? Context.Request.Cookies[".AspNetCore.Identity.Application"];
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -59,26 +61,39 @@
 
     <!-- SIDEBAR -->
     <aside class="w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col hidden md:flex">
-        <div class="h-20 flex items-center px-6">
+        <a href="/InstructorCourse" class="h-20 flex items-center px-6 hover:bg-slate-50 transition-colors">
             <div class="flex flex-col">
                 <span class="text-xl font-headline font-extrabold text-primary">LinkedLearn</span>
                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Instructor Studio</span>
             </div>
-        </div>
+        </a>
+        
+        @{
+            bool isIndex = currentAction == "Index" && currentController == "InstructorCourse";
+            bool isCreate = currentAction == "Create" && currentController == "InstructorCourse";
+            bool isEditor = currentAction == "Editor" && currentController == "InstructorCourse";
+            bool isMyCourses = isIndex || isCreate;
+            bool isCurriculumEditor = isEditor;
+        }
         
         <nav class="flex-1 px-4 py-6 space-y-2">
             <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">
                 <span class="material-symbols-outlined text-[20px]">dashboard</span>
                 <span class="text-sm font-semibold">Dashboard</span>
             </a>
-            <a href="/InstructorCourse" class="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary rounded-xl transition-colors relative">
-                <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></span>
+            <a href="/InstructorCourse" class="flex items-center gap-3 px-4 py-3 @(isMyCourses ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative">
+                @if (isMyCourses) {
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></span>
+                }
                 <span class="material-symbols-outlined text-[20px]">library_books</span>
-                <span class="text-sm font-bold">My Courses</span>
+                <span class="text-sm @(isMyCourses ? "font-bold" : "font-semibold")">My Courses</span>
             </a>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">
+            <a href="/InstructorCourse/Editor/1" class="flex items-center gap-3 px-4 py-3 @(isCurriculumEditor ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative">
+                @if (isCurriculumEditor) {
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></span>
+                }
                 <span class="material-symbols-outlined text-[20px]">edit_document</span>
-                <span class="text-sm font-semibold">Curriculum Editor</span>
+                <span class="text-sm @(isCurriculumEditor ? "font-bold" : "font-semibold")">Curriculum Editor</span>
             </a>
             <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">
                 <span class="material-symbols-outlined text-[20px]">bar_chart</span>
@@ -109,9 +124,9 @@
             </div>
             
             <div class="flex items-center gap-6">
-                <a href="#" class="text-sm font-semibold text-slate-600 hover:text-primary">View Site</a>
-                <a href="#" class="text-sm font-semibold text-slate-600 hover:text-primary">Support</a>
-                <a href="#" class="text-sm font-semibold text-slate-600 hover:text-primary">Resources</a>
+                <a href="/" class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors">View Site</a>
+                <a href="#" class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors">Support</a>
+                <a href="#" class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors">Resources</a>
                 
                 <div class="w-px h-6 bg-slate-200 mx-2"></div>
                 

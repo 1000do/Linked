@@ -2,24 +2,28 @@
 @{
     ViewData["Title"] = "My Courses";
     Layout = "_InstructorLayout";
+    var courseList = Model.ToList();
+    var totalStudents = courseList.Sum(c => c.Students);
+    var publishedCount = courseList.Count(c => c.Status == "Published");
+    var avgRating = courseList.Where(c => c.Rating > 0).Select(c => c.Rating).DefaultIfEmpty(0).Average();
 }
 
 <div class="p-8 max-w-7xl mx-auto">
     <div class="flex items-center justify-between mb-8">
         <div>
             <h1 class="text-3xl font-headline font-extrabold text-slate-900">My Courses</h1>
-            <p class="text-slate-500 mt-2">Manage your curriculum and track performance across 12 active courses.</p>
+            <p class="text-slate-500 mt-2">Manage your curriculum and track performance across @courseList.Count active courses.</p>
         </div>
         <div class="flex items-center gap-3">
-            <div class="bg-white border border-slate-200 rounded-lg p-1 flex items-center">
-                <button class="px-3 py-1.5 bg-slate-100 rounded text-slate-800 text-sm font-semibold flex items-center gap-2">
+            <div id="view-toggle" class="bg-white border border-slate-200 rounded-lg p-1 flex items-center">
+                <button data-view="list" class="view-btn px-3 py-1.5 bg-slate-100 rounded text-slate-800 text-sm font-semibold flex items-center gap-2">
                     <span class="material-symbols-outlined text-[18px]">format_list_bulleted</span> List
                 </button>
-                <button class="px-3 py-1.5 text-slate-500 hover:text-slate-800 text-sm font-semibold flex items-center gap-2 transition-colors">
+                <button data-view="grid" class="view-btn px-3 py-1.5 text-slate-500 hover:text-slate-800 text-sm font-semibold flex items-center gap-2 transition-colors">
                     <span class="material-symbols-outlined text-[18px]">grid_view</span> Grid
                 </button>
             </div>
-            <button class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm">
+            <button id="filter-btn" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm">
                 <span class="material-symbols-outlined text-[18px]">filter_list</span> Filters
             </button>
         </div>
@@ -29,22 +33,22 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
             <h3 class="text-sm font-semibold text-slate-500 mb-1">Total Enrollment</h3>
-            <p class="text-3xl font-headline font-extrabold text-slate-900">12,482</p>
+            <p class="text-3xl font-headline font-extrabold text-slate-900">@totalStudents.ToString("N0")</p>
             <p class="text-xs font-semibold text-primary mt-2 flex items-center gap-1">
                 <span class="material-symbols-outlined text-[14px]">trending_up</span> +14% this month
             </p>
         </div>
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
             <h3 class="text-sm font-semibold text-slate-500 mb-1">Average Rating</h3>
-            <p class="text-3xl font-headline font-extrabold text-slate-900">4.85</p>
+            <p class="text-3xl font-headline font-extrabold text-slate-900">@avgRating.ToString("F2")</p>
             <p class="text-xs font-semibold text-amber-600 mt-2 flex items-center gap-1">
                 <span class="material-symbols-outlined text-[14px] fill-amber-600" style='font-variation-settings: "FILL" 1;'>star</span> Top 5% Instructor
             </p>
         </div>
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
             <h3 class="text-sm font-semibold text-slate-500 mb-1">Active Courses</h3>
-            <p class="text-3xl font-headline font-extrabold text-slate-900">12</p>
-            <p class="text-xs font-medium text-slate-500 mt-2">2 Pending Review</p>
+            <p class="text-3xl font-headline font-extrabold text-slate-900">@publishedCount</p>
+            <p class="text-xs font-medium text-slate-500 mt-2">@(courseList.Count - publishedCount) Pending / Draft</p>
         </div>
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
             <h3 class="text-sm font-semibold text-slate-500 mb-1">Total Revenue</h3>
@@ -53,8 +57,8 @@
         </div>
     </div>
 
-    <!-- COURSES TABLE -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+    <!-- COURSES TABLE (List View) -->
+    <div id="list-view" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -72,17 +76,23 @@
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-4">
                                 <div class="w-24 h-16 bg-slate-200 rounded-lg overflow-hidden flex-shrink-0 relative">
-                                    <!-- Placeholder thumbnail -->
-                                    <div class="w-full h-full bg-gradient-to-br from-primary to-primary-container opacity-80"></div>
+                                    @if (!string.IsNullOrEmpty(course.ThumbnailUrl))
+                                    {
+                                        <img src="@course.ThumbnailUrl" alt="@course.Title" class="w-full h-full object-cover" />
+                                    }
+                                    else
+                                    {
+                                        <div class="w-full h-full bg-gradient-to-br from-primary to-primary-container opacity-80"></div>
+                                    }
                                 </div>
                                 <div>
                                     <h4 class="font-bold text-slate-900 text-sm">@course.Title</h4>
-                                    <p class="text-xs text-slate-500 mt-1">Updated Oct 12, 2023</p>
+                                    <p class="text-xs text-slate-500 mt-1">Updated @course.UpdatedAt.ToString("MMM dd, yyyy")</p>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4">
-                            <p class="font-bold text-slate-900 text-sm">@course.Students</p>
+                            <p class="font-bold text-slate-900 text-sm">@course.Students.ToString("N0")</p>
                             <p class="text-xs text-slate-500">Students</p>
                         </td>
                         <td class="px-6 py-4">
@@ -91,7 +101,6 @@
                                 <div class="flex items-center gap-1.5">
                                     <span class="material-symbols-outlined text-[16px] text-amber-400" style='font-variation-settings: "FILL" 1;'>star</span>
                                     <span class="font-bold text-slate-900 text-sm">@course.Rating</span>
-                                    <span class="text-xs text-slate-500">(1.2k)</span>
                                 </div>
                             }
                             else
@@ -118,13 +127,13 @@
                         </td>
                         <td class="px-6 py-4 text-right">
                             <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <a href="/InstructorCourse/Editor/@course.Id" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
+                                <a href="/InstructorCourse/Editor/@course.Id" title="Edit course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
                                     <span class="material-symbols-outlined text-[18px]">edit</span>
                                 </a>
-                                <button class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
+                                <a href="/InstructorCourse/Editor/@course.Id" title="View course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
                                     <span class="material-symbols-outlined text-[18px]">visibility</span>
-                                </button>
-                                <button class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
+                                </a>
+                                <button title="Delete course" onclick="confirmDelete(@course.Id, '@course.Title.Replace("'", "\\'")')" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
                                     <span class="material-symbols-outlined text-[18px]">delete</span>
                                 </button>
                             </div>
@@ -135,15 +144,51 @@
         </table>
         
         <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50/30">
-            <p class="text-sm text-slate-500">Showing <span class="font-bold text-slate-700">1-4</span> of <span class="font-bold text-slate-700">12</span> courses</p>
-            <div class="flex gap-1">
-                <button class="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-400 hover:bg-slate-50"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
-                <button class="w-8 h-8 flex items-center justify-center rounded bg-primary text-white font-bold text-sm">1</button>
-                <button class="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-sm">2</button>
-                <button class="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-sm">3</button>
-                <button class="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-400 hover:bg-slate-50"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
-            </div>
+            <p class="text-sm text-slate-500">Showing <span class="font-bold text-slate-700">1-@courseList.Count</span> of <span class="font-bold text-slate-700">@courseList.Count</span> courses</p>
         </div>
+    </div>
+
+    <!-- COURSES GRID (Grid View - hidden by default) -->
+    <div id="grid-view" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        @foreach (var course in Model)
+        {
+            <a href="/InstructorCourse/Editor/@course.Id" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block">
+                <div class="w-full h-40 bg-slate-200 relative overflow-hidden">
+                    @if (!string.IsNullOrEmpty(course.ThumbnailUrl))
+                    {
+                        <img src="@course.ThumbnailUrl" alt="@course.Title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    }
+                    else
+                    {
+                        <div class="w-full h-full bg-gradient-to-br from-primary to-primary-container opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                    }
+                    <div class="absolute top-3 right-3">
+                        @if (course.Status == "Published")
+                        {
+                            <span class="px-2 py-1 bg-white/90 text-primary rounded text-[10px] font-bold">Published</span>
+                        }
+                        else
+                        {
+                            <span class="px-2 py-1 bg-white/90 text-slate-600 rounded text-[10px] font-bold">@course.Status</span>
+                        }
+                    </div>
+                </div>
+                <div class="p-5">
+                    <h4 class="font-bold text-slate-900 text-sm mb-2">@course.Title</h4>
+                    <div class="flex items-center justify-between text-xs text-slate-500">
+                        <span>@course.Students.ToString("N0") students</span>
+                        @if (course.Rating > 0)
+                        {
+                            <span class="flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px] text-amber-400" style='font-variation-settings: "FILL" 1;'>star</span>
+                                @course.Rating
+                            </span>
+                        }
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-2">Updated @course.UpdatedAt.ToString("MMM dd, yyyy")</p>
+                </div>
+            </a>
+        }
     </div>
 
     <!-- BANNER -->
@@ -153,8 +198,85 @@
             <h2 class="text-2xl font-headline font-extrabold text-slate-900 mt-4 mb-2">Boost your course engagement with AI Quizzes</h2>
             <p class="text-slate-600 max-w-xl">Instructors using our new auto-generated quiz tool see a 24% higher completion rate. Try it out in the Curriculum Editor today.</p>
         </div>
-        <button class="px-6 py-3 bg-primary text-white rounded-xl font-bold flex items-center gap-2 hover:bg-secondary transition-colors shadow-lg shadow-primary/20">
+        <a href="/InstructorCourse/Editor/1" class="px-6 py-3 bg-primary text-white rounded-xl font-bold flex items-center gap-2 hover:bg-secondary transition-colors shadow-lg shadow-primary/20">
             Explore Quiz Tools <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
-        </button>
+        </a>
     </div>
 </div>
+
+<!-- Delete confirmation modal -->
+<div id="delete-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+        <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span class="material-symbols-outlined text-red-600 text-[24px]">warning</span>
+        </div>
+        <h3 class="text-lg font-headline font-bold text-slate-900 text-center mb-2">Delete Course</h3>
+        <p class="text-sm text-slate-500 text-center mb-6">Are you sure you want to delete "<span id="delete-course-name"></span>"? This action cannot be undone.</p>
+        <div class="flex gap-3">
+            <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition-colors">Cancel</button>
+            <button id="confirm-delete-btn" class="flex-1 px-4 py-2.5 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors">Delete</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // List / Grid toggle
+        const viewBtns = document.querySelectorAll('.view-btn');
+        const listView = document.getElementById('list-view');
+        const gridView = document.getElementById('grid-view');
+
+        viewBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const view = btn.dataset.view;
+                viewBtns.forEach(b => {
+                    b.classList.remove('bg-slate-100', 'text-slate-800');
+                    b.classList.add('text-slate-500');
+                });
+                btn.classList.add('bg-slate-100', 'text-slate-800');
+                btn.classList.remove('text-slate-500');
+
+                if (view === 'list') {
+                    listView.classList.remove('hidden');
+                    gridView.classList.add('hidden');
+                } else {
+                    listView.classList.add('hidden');
+                    gridView.classList.remove('hidden');
+                }
+            });
+        });
+
+        // Delete modal
+        let deleteTargetId = null;
+        function confirmDelete(id, name) {
+            deleteTargetId = id;
+            document.getElementById('delete-course-name').textContent = name;
+            document.getElementById('delete-modal').classList.remove('hidden');
+        }
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            deleteTargetId = null;
+        }
+        document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+            if (deleteTargetId) {
+                const btn = document.getElementById('confirm-delete-btn');
+                btn.disabled = true; btn.textContent = 'Deleting...';
+                try {
+                    const resp = await fetch('/InstructorCourse/Delete?id=' + deleteTargetId, { method: 'POST' });
+                    const result = await resp.json();
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        alert('Delete failed: ' + (result.message || 'Unknown error'));
+                    }
+                } catch(e) { alert('Error: ' + e.message); }
+                btn.disabled = false; btn.textContent = 'Delete';
+                closeDeleteModal();
+            }
+        });
+        // Close modal on backdrop click
+        document.getElementById('delete-modal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeDeleteModal();
+        });
+    </script>
+}

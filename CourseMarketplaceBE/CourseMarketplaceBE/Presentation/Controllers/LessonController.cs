@@ -10,7 +10,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 
 [ApiController]
 [Route("api/lessons")]
-[Authorize]
+[Authorize] // Requires authentication
 public class LessonController : ControllerBase
 {
     private readonly ILessonService _lessonService;

@@ -37,6 +37,12 @@ namespace CourseMarketplaceFE.Helpers
         public Task<HttpResponseMessage> PostAsync(string url)
             => SendWithRetryAsync(() => BuildRequest(HttpMethod.Post, url));
 
+        public Task<HttpResponseMessage> PostFormDataAsync(string url, MultipartFormDataContent content)
+            => SendWithRetryAsync(() => BuildRawRequest(HttpMethod.Post, url, content));
+
+        public Task<HttpResponseMessage> DeleteAsync(string url)
+            => SendWithRetryAsync(() => BuildRequest(HttpMethod.Delete, url));
+
         // ─── Core logic ───────────────────────────────────────────────────
 
         /// <summary>
