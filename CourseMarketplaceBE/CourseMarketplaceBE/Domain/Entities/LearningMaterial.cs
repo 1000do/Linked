@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace CourseMarketplaceBE.Domain.Entities;
 
@@ -21,8 +22,27 @@ public partial class LearningMaterial
 
     public string? MaterialUrl { get; set; }
 
-    /// <summary>Thời lượng tính bằng giây (INT thay vì VARCHAR trong SQL v2)</summary>
-    public int? Duration { get; set; }
+    public MaterialMetadata? MaterialMetadata { get; set; }
+
+    public string? MaterialHash { get; set; }
 
     public virtual Lesson? Lesson { get; set; }
+}
+
+public class MaterialMetadata
+{
+    [JsonPropertyName("file_size")]
+    public long? FileSize { get; set; }
+
+    [JsonPropertyName("file_type")]
+    public string? FileType { get; set; }
+
+    [JsonPropertyName("file_extension")]
+    public string? FileExtension { get; set; }
+
+    [JsonPropertyName("duration")]
+    public int? Duration { get; set; }
+
+    [JsonPropertyName("page_count")]
+    public int? PageCount { get; set; }
 }

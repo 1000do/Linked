@@ -419,8 +419,14 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.LearningStatus).HasMaxLength(50).HasColumnName("learning_status");
             entity.Property(e => e.MaterialUrl).HasColumnName("material_url");
-            // ★ duration đổi từ VARCHAR → INT (giây)
-            entity.Property(e => e.Duration).HasColumnName("duration");
+            // ★ duration đổi từ VARCHAR → INT (giây) -> XÓA THEO V3
+            entity.Property(e => e.MaterialMetadata)
+                .HasColumnType("jsonb")
+                .HasColumnName("material_metadata");
+
+            entity.Property(e => e.MaterialHash)
+                .HasMaxLength(32)
+                .HasColumnName("material_hash");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")

@@ -138,7 +138,9 @@ namespace CourseMarketplaceFE.Controllers
                         // Parse lessons
                         if (data.TryGetProperty("lessons", out var lessonsEl) && lessonsEl.ValueKind == JsonValueKind.Array)
                         {
-                            ViewBag.LessonsJson = lessonsEl.GetRawText();
+                            var rawJson = lessonsEl.GetRawText();
+                            Console.WriteLine("LESSONS JSON: " + rawJson);
+                            ViewBag.LessonsJson = rawJson;
                         }
                     }
                 }
@@ -197,6 +199,82 @@ namespace CourseMarketplaceFE.Controllers
             {
                 return Json(new { success = false, message = ex.Message });
             }
+        }
+        // ─── ADD MATERIAL (AJAX) ──────────────────────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> AddMaterial([FromForm] int lessonId, [FromForm] string title, [FromForm] string description, [FromForm] string materialUrl, [FromForm] string resourceUrl, [FromForm] string resourceName)
+        {
+            try
+            {
+                // Send Video Material
+                var videoData = new MultipartFormDataContent();
+                videoData.Add(new StringContent(title ?? "Untitled Lesson"), "Title");
+                if (!string.IsNullOrEmpty(description))
+                    videoData.Add(new StringContent(description), "Description");
+                if (!string.IsNullOrEmpty(materialUrl))
+                    videoData.Add(new StringContent(materialUrl), "MaterialUrl");
+                
+                // Add MaterialMetadata properties directly for ASP.NET Core binding
+                videoData.Add(new StringContent("video"), "MaterialMetadata.FileType");
+
+                var resp1 = await _api.PostFormDataAsync($"lessons/{lessonId}/materials", videoData);
+
+                // Send Resource Material if exists
+                if (!string.IsNullOrEmpty(resourceUrl))
+                {
+                    var resData = new MultipartFormDataContent();
+                    resData.Add(new StringContent(resourceName ?? "Resource File"), "Title");
+                    resData.Add(new StringContent(resourceUrl), "MaterialUrl");
+                    
+                    resData.Add(new StringContent("document"), "MaterialMetadata.FileType");
+
+                    await _api.PostFormDataAsync($"lessons/{lessonId}/materials", resData);
+                }
+
+                if (resp1.IsSuccessStatusCode)
+                {
+                    var json = await resp1.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    var data = doc.RootElement.GetProperty("data").Clone();
+                    return Json(new { success = true, data = data });
+                }
+                var error = await resp1.Content.ReadAsStringAsync();
+                return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+        // ─── UPDATE COURSE STATUS (AJAX) ──────────────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> UpdateCourseStatus([FromForm] int courseId, [FromForm] string status)
+        {
+            try
+            {
+                var payload = new { status = status };
+                var resp = await _api.PatchJsonAsync($"courses/{courseId}/status", payload);
+
+                if (resp.IsSuccessStatusCode)
+                {
+                    return Json(new { success = true });
+                }
+                var error = await resp.Content.ReadAsStringAsync();
+                return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet("TestCourse/{id}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> TestCourse(int id)
+        {
+            var materials = await _api.GetAsync($"courses/{id}");
+            var json = await materials.Content.ReadAsStringAsync();
+            return Content(json, "application/json");
         }
     }
 }

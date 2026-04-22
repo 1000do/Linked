@@ -90,8 +90,13 @@ public class Program
 
         // 🔥 4. Database
         var connectionString = configuration.GetConnectionString("DefaultConnection");
+        
+        var dataSourceBuilder = new Npgsql.NpgsqlDataSourceBuilder(connectionString);
+        dataSourceBuilder.EnableDynamicJson();
+        var dataSource = dataSourceBuilder.Build();
+
         builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(dataSource));
 
         // 🔥 5. DI
         builder.Services.AddScoped<IUserRepository, UserRepository>();

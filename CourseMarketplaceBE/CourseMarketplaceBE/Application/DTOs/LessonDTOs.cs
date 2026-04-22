@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
+using CourseMarketplaceBE.Domain.Entities;
 
 namespace CourseMarketplaceBE.Application.DTOs;
 
@@ -18,7 +19,7 @@ public class MaterialCreateRequest
     public string Title { get; set; } = null!;
     public string? Description { get; set; }
     public string? MaterialUrl { get; set; }
-    public int? Duration { get; set; }
+    public MaterialMetadata? MaterialMetadata { get; set; }
     public IFormFile? MaterialFile { get; set; }
 }
 
@@ -42,7 +43,7 @@ public class MaterialResponse
     public string Title { get; set; } = null!;
     public string? Description { get; set; }
     public string? MaterialUrl { get; set; }
-    public int? Duration { get; set; }
+    public MaterialMetadata? MaterialMetadata { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }
