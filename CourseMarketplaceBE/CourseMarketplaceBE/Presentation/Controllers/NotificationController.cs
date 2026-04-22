@@ -30,9 +30,11 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpGet("all")]
+        [Authorize(Roles = "manager")]
         public async Task<IActionResult> GetAllNotifications()
         {
-            var data = await _notiService.GetAllNotificationsAsync();
+            //var data = await _notiService.GetAllNotificationsAsync();
+            var data = await _notiService.GetAllNotificationsForAdminAsync();
             return Ok(data);
         }
 
@@ -69,21 +71,24 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             var emails = await _notiService.SearchEmailsAsync(query);
             return Ok(emails);
         }
-
+        [Authorize(Roles = "manager")]
         [HttpPost("send-test")]
         public async Task<IActionResult> SendTest([FromBody] NotificationSendDto dto)
         {
             await _notiService.SendNotificationAsync(dto.ReceiverId, dto.Title, dto.Content, null);
             return Ok("Đã gửi thành công");
         }
-
+        [Authorize(Roles = "manager")]
         [HttpPost("send-advanced")]
         public async Task<IActionResult> SendAdvanced([FromBody] NotificationAdvancedDto dto)
         {
+            // Validation cơ bản để chống tràn dữ liệu ngay từ Backend
+            if (dto.Title.Length > 100 || dto.Content.Length > 100)
+                return BadRequest("Tiêu đề tối đa 100 ký tự, nội dung tối đa 100 ký tự.");
+
             var count = await _notiService.SendAdvancedAsync(dto);
             if (count < 0) return BadRequest("Dữ liệu không hợp lệ");
-            if (dto.TargetType == "ALL") return Ok("Đã gửi cho tất cả");
-            return Ok($"Đã gửi thành công cho {count} người dùng.");
+            return Ok(new { message = "Gửi thành công", count });
         }
     }
 }

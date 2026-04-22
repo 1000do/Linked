@@ -1,4 +1,4 @@
-using CourseMarketplaceBE.Domain.Entities;
+﻿using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -16,8 +16,11 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();
 
+
         public async Task<List<Notification>> GetAllAsync() =>
             await _context.Notifications
+                .Include(n => n.Receiver) // Kết nối bảng Account
+                    .ThenInclude(a => a.User) // Kết nối bảng User từ Account
                 .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();
 
@@ -29,6 +32,8 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
 
         public async Task AddAsync(Notification notification) =>
             await _context.Notifications.AddAsync(notification);
+        public async Task AddRangeAsync(IEnumerable<Notification> notifications) =>
+            await _context.Notifications.AddRangeAsync(notifications);
 
         public async Task SaveChangesAsync() =>
             await _context.SaveChangesAsync();
