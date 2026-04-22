@@ -25,10 +25,17 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .ToListAsync();
 
         public async Task<Notification?> GetByIdAsync(int id) =>
-            await _context.Notifications.FindAsync(id);
+    await _context.Notifications
+        .FirstOrDefaultAsync(n => n.NotificationId == id);
+        // Lưu ý: Nếu bạn đã cấu hình HasQueryFilter trong DbContext, 
+        // nó sẽ tự động thêm điều kiện "AND is_removed = false" vào đây.
 
-        public void Delete(Notification notification) =>
-            _context.Notifications.Remove(notification);
+        public void Delete(Notification notification)
+        {
+            // Cập nhật trạng thái IsRemoved thay vì xóa vật lý
+            notification.IsRemoved = true;
+            _context.Notifications.Update(notification);
+        }
 
         public async Task AddAsync(Notification notification) =>
             await _context.Notifications.AddAsync(notification);
