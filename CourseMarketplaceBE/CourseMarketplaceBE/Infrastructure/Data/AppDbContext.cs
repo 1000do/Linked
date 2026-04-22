@@ -122,6 +122,8 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.PhoneNumber)
                 .HasMaxLength(50)
                 .HasColumnName("phone_number");
+            entity.Property(e => e.IsVerified)
+    .HasColumnName("is_verified");
         });
 
         modelBuilder.Entity<AiActivityLog>(entity =>

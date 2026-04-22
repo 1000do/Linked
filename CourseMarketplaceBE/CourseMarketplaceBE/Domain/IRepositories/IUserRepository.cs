@@ -11,4 +11,6 @@ public interface IUserRepository
     Task<bool> RegisterUserAsync(Account account, User user);
     // THÊM THAM SỐ CUỐI CÙNG NÀY VÀO INTERFACE
     Task<bool> UpdateUserProfileAsync(int userId, string fullName, string? bio, DateOnly? dob, string? avatarUrl, string? phoneNumber);
+    Task<bool> UpdateEmailVerifiedAsync(string email);
+    Task<bool> UpdateAccountAsync(Account account);
 }

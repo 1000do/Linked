@@ -1,5 +1,6 @@
 ﻿    using CourseMarketplaceBE.Application.IServices;
-    using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Application.Services;
+using CourseMarketplaceBE.Domain.Entities;
     using CourseMarketplaceBE.Domain.IRepositories;
     using CourseMarketplaceBE.Infrastructure.Repositories;
     using CourseMarketplaceBE.Infrastructure.Services;
@@ -78,7 +79,22 @@
             builder.Configuration["CloudinarySettings:ApiSecret"] =
                 Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET");
 
-            var configuration = builder.Configuration;
+        builder.Configuration["EmailSettings:Host"] =
+    Environment.GetEnvironmentVariable("EMAIL_HOST");
+
+        builder.Configuration["EmailSettings:Port"] =
+            Environment.GetEnvironmentVariable("EMAIL_PORT");
+
+        builder.Configuration["EmailSettings:EnableSSL"] =
+            Environment.GetEnvironmentVariable("EMAIL_ENABLESSL");
+
+        builder.Configuration["EmailSettings:Email"] =
+            Environment.GetEnvironmentVariable("EMAIL_EMAIL");
+
+        builder.Configuration["EmailSettings:Password"] =
+            Environment.GetEnvironmentVariable("EMAIL_PASSWORD");
+
+        var configuration = builder.Configuration;
 
             // 🔥 3. JWT Settings
             var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>() ?? new JwtSettings();
@@ -92,10 +108,12 @@
             // 🔥 5. DI
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddSingleton<IOtpService, OtpService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
 
-            // Register file upload implementation conditionally.
-            // If Cloudinary config is present, use CloudinaryUploadService; otherwise use a no-op fallback.
-            var cloudName = configuration["CloudinarySettings:CloudName"];
+        // Register file upload implementation conditionally.
+        // If Cloudinary config is present, use CloudinaryUploadService; otherwise use a no-op fallback.
+        var cloudName = configuration["CloudinarySettings:CloudName"];
             var cloudApiKey = configuration["CloudinarySettings:ApiKey"];
             var cloudApiSecret = configuration["CloudinarySettings:ApiSecret"];
 
@@ -113,8 +131,9 @@
             }
 
             builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+       
 
-            builder.Services.AddHttpClient();
+        builder.Services.AddHttpClient();
 
             // 🔥 6. Authentication
             builder.Services.AddAuthentication(options =>
