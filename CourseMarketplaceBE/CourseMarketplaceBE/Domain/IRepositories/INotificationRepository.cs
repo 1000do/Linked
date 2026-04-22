@@ -9,7 +9,7 @@ namespace CourseMarketplaceBE.Domain.IRepositories
 
         // THÊM DÒNG NÀY VÀO
         Task AddAsync(Notification notification);
-
+        Task AddRangeAsync(IEnumerable<Notification> notifications);
         void Delete(Notification notification);
         Task SaveChangesAsync();
         Task<List<Notification>> GetAllAsync();
