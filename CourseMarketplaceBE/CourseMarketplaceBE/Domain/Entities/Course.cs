@@ -29,11 +29,11 @@ public partial class Course
 
     public int? CourseFlagCount { get; set; }
 
-    public int? TotalLessons { get; set; }
+    //public int? TotalLessons { get; set; }
 
-    public float? RatingAverage { get; set; }
+    //public float? RatingAverage { get; set; }
 
-    public int? TotalStudents { get; set; }
+    //public int? TotalStudents { get; set; }
 
     public virtual ICollection<AiModelsCourse> AiModelsCourses { get; set; } = new List<AiModelsCourse>();
 

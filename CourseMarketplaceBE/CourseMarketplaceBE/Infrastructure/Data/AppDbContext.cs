@@ -35,9 +35,17 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Enrollment> Enrollments { get; set; }
 
+    public virtual DbSet<EnrollmentProgress> EnrollmentProgresses { get; set; }
+
     public virtual DbSet<Instructor> Instructors { get; set; }
 
+    public virtual DbSet<InstructorPayout> InstructorPayouts { get; set; }
+
     public virtual DbSet<LearningMaterial> LearningMaterials { get; set; }
+
+    public virtual DbSet<MaterialPHash> MaterialPHashes { get; set; }
+
+    public virtual DbSet<MaterialEmbedding> MaterialEmbeddings { get; set; }
 
     public virtual DbSet<Lesson> Lessons { get; set; }
 
@@ -122,6 +130,13 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.PhoneNumber)
                 .HasMaxLength(50)
                 .HasColumnName("phone_number");
+            entity.Property(e => e.RefreshToken).HasColumnName("refresh_token");
+            entity.Property(e => e.RefreshTokenExpiryTime)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("refresh_token_expiry_time");
+            entity.Property(e => e.IsVerified)
+                .HasDefaultValue(false)
+                .HasColumnName("is_verified");
         });
 
         modelBuilder.Entity<AiActivityLog>(entity =>
@@ -367,18 +382,18 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Price)
                 .HasPrecision(10, 2)
                 .HasColumnName("price");
-            entity.Property(e => e.RatingAverage)
-                .HasDefaultValueSql("0.0")
-                .HasColumnName("rating_average");
+            //entity.Property(e => e.RatingAverage)
+            //    .HasDefaultValueSql("0.0")
+            //    .HasColumnName("rating_average");
             entity.Property(e => e.Title)
                 .HasMaxLength(255)
                 .HasColumnName("title");
-            entity.Property(e => e.TotalLessons)
-                .HasDefaultValue(0)
-                .HasColumnName("total_lessons");
-            entity.Property(e => e.TotalStudents)
-                .HasDefaultValue(0)
-                .HasColumnName("total_students");
+            //entity.Property(e => e.TotalLessons)
+            //    .HasDefaultValue(0)
+            //    .HasColumnName("total_lessons");
+            //entity.Property(e => e.TotalStudents)
+            //    .HasDefaultValue(0)
+            //    .HasColumnName("total_students");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
@@ -440,6 +455,28 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("enrollments_user_id_fkey");
         });
 
+        modelBuilder.Entity<EnrollmentProgress>(entity =>
+        {
+            entity.HasKey(e => e.EnrollmentId).HasName("enrollment_progress_pkey");
+
+            entity.ToTable("enrollment_progress");
+
+            entity.Property(e => e.EnrollmentId)
+                .ValueGeneratedNever()
+                .HasColumnName("enrollment_id");
+            entity.Property(e => e.LearnedMaterialCount)
+                .HasDefaultValue(0)
+                .HasColumnName("learned_material_count");
+            entity.Property(e => e.LastModifiedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("last_modified_at");
+
+            entity.HasOne(d => d.Enrollment).WithOne(p => p.EnrollmentProgress)
+                .HasForeignKey<EnrollmentProgress>(d => d.EnrollmentId)
+                .HasConstraintName("enrollment_progress_enrollment_id_fkey");
+        });
+
         modelBuilder.Entity<Instructor>(entity =>
         {
             entity.HasKey(e => e.InstructorId).HasName("instructors_pkey");
@@ -452,9 +489,9 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.ChargesEnabled)
                 .HasDefaultValue(false)
                 .HasColumnName("charges_enabled");
-            entity.Property(e => e.InstructorRating)
-                .HasDefaultValueSql("0.0")
-                .HasColumnName("instructor_rating");
+            //entity.Property(e => e.InstructorRating)
+            //    .HasDefaultValueSql("0.0")
+            //    .HasColumnName("instructor_rating");
             entity.Property(e => e.PayoutsEnabled)
                 .HasDefaultValue(false)
                 .HasColumnName("payouts_enabled");
@@ -464,14 +501,84 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.StripeOnboardingStatus)
                 .HasMaxLength(50)
                 .HasColumnName("stripe_onboarding_status");
-            entity.Property(e => e.TotalRevenue)
-                .HasPrecision(12, 2)
-                .HasDefaultValueSql("0.00")
-                .HasColumnName("total_revenue");
+            //entity.Property(e => e.TotalRevenue)
+            //    .HasPrecision(12, 2)
+            //    .HasDefaultValueSql("0.00")
+            //    .HasColumnName("total_revenue");
 
             entity.HasOne(d => d.InstructorNavigation).WithOne(p => p.Instructor)
                 .HasForeignKey<Instructor>(d => d.InstructorId)
                 .HasConstraintName("instructors_instructor_id_fkey");
+        });
+
+        modelBuilder.Entity<MaterialPHash>(entity =>
+        {
+            entity.HasKey(e => e.MaterialId).HasName("material_p_hashes_pkey");
+
+            entity.ToTable("material_p_hashes");
+
+            entity.Property(e => e.MaterialId)
+                .ValueGeneratedNever()
+                .HasColumnName("material_id");
+            entity.Property(e => e.PHash).HasColumnName("p_hash");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Material).WithOne(p => p.MaterialPHash)
+                .HasForeignKey<MaterialPHash>(d => d.MaterialId)
+                .HasConstraintName("material_p_hashes_material_id_fkey");
+        });
+
+        modelBuilder.Entity<MaterialEmbedding>(entity =>
+        {
+            entity.HasKey(e => e.EmbeddingId).HasName("material_embeddings_pkey");
+
+            entity.ToTable("material_embeddings");
+
+            entity.Property(e => e.EmbeddingId).HasColumnName("embedding_id");
+            entity.Property(e => e.MaterialId).HasColumnName("material_id");
+            entity.Property(e => e.EmbeddingVector).HasColumnName("embedding_vector");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Material).WithMany(p => p.MaterialEmbeddings)
+                .HasForeignKey(d => d.MaterialId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("material_embeddings_material_id_fkey");
+        });
+
+        modelBuilder.Entity<InstructorPayout>(entity =>
+        {
+            entity.HasKey(e => e.PayoutId).HasName("instructor_payouts_pkey");
+
+            entity.ToTable("instructor_payouts");
+
+            entity.Property(e => e.PayoutId).HasColumnName("payout_id");
+            entity.Property(e => e.TransactionId).HasColumnName("transaction_id");
+            entity.Property(e => e.InstructorId).HasColumnName("instructor_id");
+            entity.Property(e => e.PayoutAmount)
+                .HasPrecision(10, 2)
+                .HasColumnName("payout_amount");
+            entity.Property(e => e.PayoutDate)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("payout_date");
+            entity.Property(e => e.IsPaid)
+                .HasDefaultValue(false)
+                .HasColumnName("is_paid");
+
+            entity.HasOne(d => d.Transaction).WithMany(p => p.InstructorPayouts)
+                .HasForeignKey(d => d.TransactionId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("instructor_payouts_transaction_id_fkey");
+
+            entity.HasOne(d => d.Instructor).WithMany(p => p.InstructorPayouts)
+                .HasForeignKey(d => d.InstructorId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("instructor_payouts_instructor_id_fkey");
         });
 
         modelBuilder.Entity<LearningMaterial>(entity =>
@@ -486,14 +593,17 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.Duration)
-                .HasMaxLength(50)
-                .HasColumnName("duration");
             entity.Property(e => e.LearningStatus)
                 .HasMaxLength(50)
                 .HasColumnName("learning_status");
             entity.Property(e => e.LessonId).HasColumnName("lesson_id");
             entity.Property(e => e.MaterialUrl).HasColumnName("material_url");
+            entity.Property(e => e.MaterialMetadata)
+                .HasColumnType("jsonb")
+                .HasColumnName("material_metadata");
+            entity.Property(e => e.MaterialHash)
+                .HasMaxLength(32)
+                .HasColumnName("material_hash");
             entity.Property(e => e.Title)
                 .HasMaxLength(255)
                 .HasColumnName("title");
@@ -638,10 +748,10 @@ public partial class AppDbContext : DbContext
             entity.ToTable("order_info");
 
             entity.Property(e => e.OrderId).HasColumnName("order_id");
-            entity.Property(e => e.DiscountAmount)
-                .HasPrecision(10, 2)
-                .HasDefaultValueSql("0.00")
-                .HasColumnName("discount_amount");
+            //entity.Property(e => e.DiscountAmount)
+            //    .HasPrecision(10, 2)
+            //    .HasDefaultValueSql("0.00")
+            //    .HasColumnName("discount_amount");
             entity.Property(e => e.OrderDate)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
@@ -652,9 +762,9 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.PaymentMethod)
                 .HasMaxLength(50)
                 .HasColumnName("payment_method");
-            entity.Property(e => e.TotalAmount)
-                .HasPrecision(10, 2)
-                .HasColumnName("total_amount");
+            //entity.Property(e => e.TotalAmount)
+            //    .HasPrecision(10, 2)
+            //    .HasColumnName("total_amount");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
             entity.HasOne(d => d.User).WithMany(p => p.OrderInfos)
@@ -754,11 +864,13 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Amount)
                 .HasPrecision(10, 2)
                 .HasColumnName("amount");
+            entity.Property(e => e.AccountFrom).HasColumnName("account_from");
+            entity.Property(e => e.AccountTo).HasColumnName("account_to");
             entity.Property(e => e.Currency)
                 .HasMaxLength(10)
                 .HasDefaultValueSql("'VND'::character varying")
                 .HasColumnName("currency");
-            entity.Property(e => e.OrderId).HasColumnName("order_id");
+            entity.Property(e => e.OrderItemId).HasColumnName("order_item_id");
             entity.Property(e => e.StripePaymentintentId)
                 .HasMaxLength(255)
                 .HasColumnName("stripe_paymentintent_id");
@@ -775,11 +887,25 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.TransactionsStatus)
                 .HasMaxLength(50)
                 .HasColumnName("transactions_status");
+            entity.Property(e => e.TransferRate)
+                .HasPrecision(5, 2)
+                .HasDefaultValue(100m)
+                .HasColumnName("transfer_rate");
 
-            entity.HasOne(d => d.Order).WithMany(p => p.Transactions)
-                .HasForeignKey(d => d.OrderId)
+            entity.HasOne(d => d.OrderItem).WithMany(p => p.Transactions)
+                .HasForeignKey(d => d.OrderItemId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("transactions_order_id_fkey");
+                .HasConstraintName("transactions_order_item_id_fkey");
+
+            entity.HasOne(d => d.AccountFromNavigation).WithMany(p => p.TransactionsFrom)
+                .HasForeignKey(d => d.AccountFrom)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("transactions_account_from_fkey");
+
+            entity.HasOne(d => d.AccountToNavigation).WithMany(p => p.TransactionsTo)
+                .HasForeignKey(d => d.AccountTo)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("transactions_account_to_fkey");
         });
 
         modelBuilder.Entity<User>(entity =>
@@ -793,16 +919,16 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("user_id");
             entity.Property(e => e.Bio).HasColumnName("bio");
             entity.Property(e => e.DateOfBirth).HasColumnName("date_of_birth");
-            entity.Property(e => e.EnrolledCoursesCount)
-                .HasDefaultValue(0)
-                .HasColumnName("enrolled_courses_count");
+            //entity.Property(e => e.EnrolledCoursesCount)
+            //    .HasDefaultValue(0)
+            //    .HasColumnName("enrolled_courses_count");
             entity.Property(e => e.FullName)
                 .HasMaxLength(255)
                 .HasColumnName("full_name");
-            entity.Property(e => e.TotalSpent)
-                .HasPrecision(12, 2)
-                .HasDefaultValueSql("0.00")
-                .HasColumnName("total_spent");
+            //entity.Property(e => e.TotalSpent)
+            //    .HasPrecision(12, 2)
+            //    .HasDefaultValueSql("0.00")
+            //    .HasColumnName("total_spent");
 
             entity.HasOne(d => d.UserNavigation).WithOne(p => p.User)
                 .HasForeignKey<User>(d => d.UserId)
