@@ -520,6 +520,11 @@ public partial class AppDbContext : DbContext
             entity.HasKey(e => e.NotificationId).HasName("notifications_pkey");
             entity.ToTable("notifications");
 
+            entity.HasQueryFilter(n => n.IsRemoved != true);
+            entity.Property(e => e.IsRemoved)
+        .HasDefaultValue(false)
+        .HasColumnName("is_removed");
+
             entity.Property(e => e.NotificationId).HasColumnName("notification_id");
             entity.Property(e => e.SenderId).HasColumnName("sender_id");
             entity.Property(e => e.ReceiverId).HasColumnName("receiver_id");
