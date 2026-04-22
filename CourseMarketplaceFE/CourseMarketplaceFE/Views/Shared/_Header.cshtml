@@ -18,7 +18,16 @@
             }
             else
             {
+                var userRole = Context.Request.Cookies["UserRole"] ?? "User";
                 <div class="flex items-center gap-3 pl-4 border-l border-slate-200">
+                    
+                    @if (userRole.Equals("Instructor", StringComparison.OrdinalIgnoreCase) || userRole.Equals("Manager", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <a href="/InstructorCourse" class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors mr-2">
+                            View as Instructor
+                        </a>
+                        <div class="w-px h-6 bg-slate-200 mx-2"></div>
+                    }
 
                     <div class="relative" id="notification-dropdown">
                         <button onclick="toggleNoti()" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative">

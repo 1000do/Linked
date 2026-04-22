@@ -1,0 +1,506 @@
+@{
+    ViewData["Title"] = "Curriculum Editor";
+    Layout = "_InstructorLayout";
+    var courseId = ViewBag.CourseId ?? 1;
+}
+
+<div class="p-8 h-full flex flex-col">
+    <div class="flex items-center justify-between mb-8 flex-shrink-0">
+        <div class="flex items-center gap-4">
+            <a href="/InstructorCourse" class="text-slate-400 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">arrow_back</span></a>
+            <h1 class="text-2xl font-headline font-extrabold text-slate-900">Course Structure</h1>
+            <span class="px-2 py-1 bg-primary-container/20 text-primary border border-primary-container rounded text-[10px] font-bold uppercase tracking-wider">Draft</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <button class="px-4 py-2 bg-white text-slate-700 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">visibility</span> Preview
+            </button>
+            <button class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()">
+                <span class="material-symbols-outlined text-[18px]">send</span> Submit for Review
+            </button>
+        </div>
+    </div>
+
+    <div class="flex gap-8 h-full overflow-hidden">
+        <!-- LEFT: Course Structure -->
+        <div id="course-structure-container" class="w-80 flex-shrink-0 flex flex-col gap-4 overflow-y-auto pb-8 pr-2 custom-scrollbar">
+            <!-- Dynamic content injected by JS -->
+        </div>
+
+        <!-- RIGHT: Lesson Editor -->
+        <div class="flex-1 flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
+            <!-- Empty State -->
+            <div id="lesson-editor-empty" class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-white z-10">
+                <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6 border border-slate-100">
+                    <span class="material-symbols-outlined text-[48px] text-slate-300">edit_document</span>
+                </div>
+                <h2 class="text-2xl font-headline font-extrabold text-slate-900 mb-2">No Lesson Selected</h2>
+                <p class="text-slate-500 max-w-sm">Select a lesson from the curriculum on the left or create a new one to start editing.</p>
+                <button onclick="addNewLesson()" class="mt-8 px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/20 flex items-center gap-2 mx-auto">
+                    <span class="material-symbols-outlined text-[18px]">add</span> Create New Lesson
+                </button>
+            </div>
+
+            <!-- Active Editor -->
+            <div id="lesson-editor-active" class="hidden flex-1 flex-col h-full opacity-0 transition-opacity duration-300">
+                <div class="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+                <div>
+                    <div class="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest mb-2">
+                        <span class="material-symbols-outlined text-[14px]">edit</span> Editing Lesson <span id="editing-lesson-id">1.1</span>
+                    </div>
+                    <h2 id="editing-lesson-title" class="text-3xl font-headline font-extrabold text-slate-900">Welcome to the Course</h2>
+                    <div class="flex items-center gap-4 mt-2 text-xs font-semibold text-slate-500">
+                        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">schedule</span> <span id="editing-lesson-duration">4 mins</span></span>
+                        <span class="flex items-center gap-1 text-primary"><span class="material-symbols-outlined text-[16px]">check_circle</span> Published</span>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button class="px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/20" onclick="alert('Lesson content saved locally as draft.')">Save Lesson</button>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                <!-- Tabs -->
+                <div class="flex border-b border-slate-200 mb-8">
+                    <button class="tab-btn px-6 py-3 border-b-2 border-primary text-primary font-bold text-sm" data-tab="tab-video">Video Content</button>
+                    <button class="tab-btn px-6 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold text-sm transition-colors" data-tab="tab-resources">Resources & Files</button>
+                </div>
+
+                <!-- Tab: Video Content -->
+                <div id="tab-video" class="tab-content">
+                    <div class="max-w-2xl mx-auto mb-12">
+                        <input type="hidden" id="MaterialUrl" name="MaterialUrl" />
+                        <div id="video-drop-area" class="border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center hover:bg-slate-50 transition-colors cursor-pointer group">
+                            <div class="w-20 h-20 bg-primary-container/30 text-primary rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                <span class="material-symbols-outlined text-[40px]">movie</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900 mb-2">Upload Lesson Video</h3>
+                            <p class="text-sm text-slate-500 mb-4">MP4, WebM or OGG up to 2GB</p>
+                            <span class="px-6 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-bold text-sm hover:bg-slate-50 inline-block">Browse Files</span>
+                            <input type="file" id="video-input" accept="video/*" class="hidden" />
+                        </div>
+                        <div id="video-upload-progress" class="hidden text-center py-8">
+                            <div class="w-16 h-16 bg-primary-container/30 text-primary rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <span class="material-symbols-outlined text-[32px]">cloud_upload</span>
+                            </div>
+                            <h3 id="upload-filename-display" class="text-xl font-bold text-slate-900 mb-2"></h3>
+                            <p class="text-sm text-slate-500 mb-6">Processing <span id="progress-text">0</span>% • Do not close this tab during upload.</p>
+                            <div class="h-2 bg-slate-100 rounded-full w-full max-w-md mx-auto mb-8 overflow-hidden">
+                                <div id="progress-bar-fill" class="h-full bg-primary-container transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-center gap-4">
+                                <button type="button" id="cancel-upload" class="px-6 py-2.5 bg-red-50 text-red-600 font-bold rounded-lg flex items-center gap-2 hover:bg-red-100 transition-colors">
+                                    <span class="material-symbols-outlined text-[18px]">cancel</span> Cancel Upload
+                                </button>
+                            </div>
+                        </div>
+                        <div id="video-success" class="hidden border border-slate-200 rounded-2xl p-6 flex items-center justify-between bg-surface-container-low">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-primary text-white rounded-lg flex items-center justify-center">
+                                    <span class="material-symbols-outlined" style='font-variation-settings: "FILL" 1;'>play_circle</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900" id="uploaded-filename"></h4>
+                                    <p class="text-xs text-slate-500">Video successfully processed</p>
+                                </div>
+                            </div>
+                            <button class="text-slate-400 hover:text-red-500 transition-colors" onclick="resetVideoUpload()"><span class="material-symbols-outlined">delete</span></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Resources -->
+                <div id="tab-resources" class="tab-content hidden">
+                    <div class="max-w-2xl mx-auto text-center py-16">
+                        <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="material-symbols-outlined text-[40px] text-slate-400">folder_open</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2" id="resource-title">No resources yet</h3>
+                        <p class="text-sm text-slate-500 mb-6" id="resource-desc">Upload supplementary files like PDFs, code samples, or slides.</p>
+                        
+                        <input type="file" id="resource-input" class="hidden" />
+                        <button id="upload-resource-btn" class="px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors">
+                            <span class="material-symbols-outlined text-[18px] align-middle mr-1">upload_file</span> Upload Resource
+                        </button>
+                        
+                        <div id="resource-upload-progress" class="hidden mt-6 text-primary font-bold">Uploading... Please wait.</div>
+                    </div>
+                </div>
+
+                <!-- Below-tabs content (always visible) -->
+                <div class="grid grid-cols-3 gap-8 mt-4">
+                    <div class="col-span-2 space-y-6">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="text-sm font-bold text-slate-900">Lesson Description</label>
+                                <button class="flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded shadow-sm hover:bg-slate-800 transition-colors">
+                                    <span class="material-symbols-outlined text-[14px]">auto_awesome</span> Assistant
+                                </button>
+                            </div>
+                            <div class="bg-white rounded-xl">
+                                <div id="lesson-editor"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                            <label class="block text-sm font-bold text-slate-900 mb-3">Video Thumbnail</label>
+                            <div id="thumb-drop" class="w-full aspect-video bg-slate-800 rounded-lg overflow-hidden relative group cursor-pointer">
+                                <img id="vid-thumb-preview" src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover opacity-60" />
+                                <span class="material-symbols-outlined absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-[48px] opacity-80" style='font-variation-settings: "FILL" 1;'>play_arrow</span>
+                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                    <span class="text-white text-xs font-bold px-3 py-1.5 bg-black/50 rounded-md">Change Thumbnail</span>
+                                </div>
+                            </div>
+                            <input type="file" id="thumb-input" accept="image/*" class="hidden" />
+                        </div>
+                        <div class="bg-white rounded-xl p-5 border border-slate-200">
+                            <label class="block text-sm font-bold text-slate-900 mb-4">Visibility & Access</label>
+                            <label id="downloadable-label" class="toggle-card flex items-start gap-4 p-4 rounded-xl border-2 border-primary bg-primary/5 cursor-pointer transition-all">
+                                <div class="mt-0.5 text-primary"><span class="material-symbols-outlined text-[20px]">download</span></div>
+                                <div class="flex-1">
+                                    <p class="font-bold text-slate-900 text-sm">Downloadable</p>
+                                    <p class="text-[10px] text-slate-500 mt-1">Allow students to save offline</p>
+                                </div>
+                                <div class="mt-1"><input type="checkbox" id="cb-downloadable" checked class="w-5 h-5 border-2 border-primary rounded text-primary focus:ring-primary" /></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+
+<!-- Add Lesson Modal -->
+<div id="add-lesson-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 transform scale-95 transition-transform duration-300">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-headline font-extrabold text-slate-900">Add New Lesson</h3>
+            <button onclick="closeLessonModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="mb-6">
+            <label class="block text-sm font-bold text-slate-700 mb-2">Lesson Title</label>
+            <input type="text" id="new-lesson-title" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-slate-900 font-medium" placeholder="e.g. 1.1 Introduction to the Course" onkeydown="if(event.key==='Enter') submitNewLesson()" />
+        </div>
+        <div class="flex justify-end gap-3">
+            <button onclick="closeLessonModal()" class="px-5 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-lg hover:bg-slate-200 transition-colors">Cancel</button>
+            <button onclick="submitNewLesson()" class="px-5 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/20" id="submit-lesson-btn">Create Lesson</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+</style>
+
+@section Scripts {
+    <script>
+        // ─── Quill ───
+        var lessonQuill = new Quill('#lesson-editor', {
+            theme: 'snow',
+            placeholder: 'Introduce this lesson to your students...',
+            modules: { toolbar: [['bold','italic'],[{'list':'ordered'},{'list':'bullet'}],['link','code-block']] }
+        });
+
+        // ─── Tabs ───
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('border-primary','text-primary','font-bold'); b.classList.add('border-transparent','text-slate-500','font-semibold'); });
+                btn.classList.add('border-primary','text-primary','font-bold');
+                btn.classList.remove('border-transparent','text-slate-500','font-semibold');
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                document.getElementById(btn.dataset.tab).classList.remove('hidden');
+            });
+        });
+
+        // ─── Render Lessons dynamically ───
+        const courseId = @courseId;
+        const rawLessonsJson = '@Html.Raw(ViewBag.LessonsJson ?? "[]")';
+        let lessonsData = [];
+        try { lessonsData = JSON.parse(rawLessonsJson); } catch(e) {}
+        
+        function renderCourseStructure() {
+            const container = document.getElementById('course-structure-container');
+            container.innerHTML = '';
+            
+            // Render a default section wrapper (since we don't have sections API yet)
+            let sectionHtml = `
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden border-l-4 border-l-primary mb-4">
+                <div class="p-4 bg-slate-50/50 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Course Curriculum</p>
+                        <h3 class="font-bold text-slate-900 text-sm">Main Section</h3>
+                    </div>
+                </div>
+                <div class="p-4 space-y-2">
+            `;
+            
+            lessonsData.forEach((lesson, index) => {
+                const num = index + 1;
+                const isSelected = document.getElementById('editing-lesson-id').textContent == num;
+                const activeClasses = isSelected ? 'border-primary ring-1 ring-primary/20 shadow-sm' : 'border-slate-100 hover:border-slate-300';
+                
+                sectionHtml += `
+                    <div class="lesson-item p-3 bg-white border rounded-lg flex items-start gap-3 cursor-pointer transition-colors ${activeClasses}" 
+                         data-lesson-id="${lesson.lessonId}" data-num="${num}" data-title="${lesson.title}" onclick="selectLesson(this)">
+                        <span class="material-symbols-outlined text-${isSelected ? 'primary' : 'slate-400'} text-[20px] mt-0.5" ${isSelected ? "style='font-variation-settings: \"FILL\" 1;'" : ""}>play_circle</span>
+                        <div class="flex-1">
+                            <p class="font-bold text-slate-900 text-sm">${num}. ${lesson.title}</p>
+                            <p class="text-[10px] text-slate-500 mt-1">Video Lesson</p>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            sectionHtml += `
+                    <button class="w-full py-3 border-2 border-dashed border-slate-200 rounded-lg text-slate-500 hover:text-primary hover:border-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 text-xs font-bold mt-2" onclick="addNewLesson()">
+                        <span class="material-symbols-outlined text-[16px]">add_circle</span> Add Lesson
+                    </button>
+                </div>
+            </div>`;
+            
+            container.innerHTML = sectionHtml;
+            
+            // Auto-select first lesson if none selected and we have lessons
+            if (lessonsData.length > 0) {
+                const firstLessonEl = container.querySelector('.lesson-item');
+                if (firstLessonEl && document.getElementById('lesson-editor-empty').classList.contains('z-10')) {
+                    selectLesson(firstLessonEl);
+                }
+            }
+        }
+
+        window.selectLesson = function(el) {
+            // Show editor, hide empty state
+            document.getElementById('lesson-editor-empty').classList.add('hidden');
+            document.getElementById('lesson-editor-empty').classList.remove('z-10');
+            const editor = document.getElementById('lesson-editor-active');
+            editor.classList.remove('hidden');
+            editor.classList.add('flex');
+            setTimeout(() => editor.classList.remove('opacity-0'), 10);
+            
+            document.querySelectorAll('.lesson-item').forEach(i => {
+                i.classList.remove('border-primary','ring-1','ring-primary/20','shadow-sm'); 
+                i.classList.add('border-slate-100');
+                const icon = i.querySelector('.material-symbols-outlined');
+                icon.classList.remove('text-primary'); icon.classList.add('text-slate-400');
+                icon.style.fontVariationSettings = '';
+            });
+            el.classList.add('border-primary','ring-1','ring-primary/20','shadow-sm');
+            el.classList.remove('border-slate-100');
+            const icon = el.querySelector('.material-symbols-outlined');
+            icon.classList.remove('text-slate-400'); icon.classList.add('text-primary');
+            icon.style.fontVariationSettings = '"FILL" 1';
+
+            document.getElementById('editing-lesson-id').textContent = el.dataset.num;
+            document.getElementById('editing-lesson-title').textContent = el.dataset.title;
+        };
+
+        window.addNewLesson = function() {
+            const modal = document.getElementById('add-lesson-modal');
+            const input = document.getElementById('new-lesson-title');
+            modal.classList.remove('hidden');
+            // small delay to allow display block to apply before animating opacity
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+                input.value = '';
+                input.focus();
+            }, 10);
+        };
+
+        window.closeLessonModal = function() {
+            const modal = document.getElementById('add-lesson-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        };
+
+        window.submitNewLesson = async function() {
+            const input = document.getElementById('new-lesson-title');
+            const title = input.value;
+            const btn = document.getElementById('submit-lesson-btn');
+            
+            if (title && title.trim() !== '') {
+                btn.disabled = true;
+                btn.textContent = 'Creating...';
+                
+                try {
+                    const fd = new FormData();
+                    fd.append('courseId', courseId);
+                    fd.append('title', title);
+                    const res = await fetch('/InstructorCourse/AddLesson', { method: 'POST', body: fd });
+                    if(res.ok) {
+                        const json = await res.json();
+                        if(json.success && json.data) {
+                            lessonsData.push(json.data);
+                            renderCourseStructure();
+                            // Select the newly added lesson
+                            setTimeout(() => {
+                                const newLessonEl = document.querySelector(`.lesson-item[data-lesson-id="${json.data.lessonId}"]`);
+                                if(newLessonEl) selectLesson(newLessonEl);
+                            }, 50);
+                            closeLessonModal();
+                        } else {
+                            alert('Failed to add lesson: ' + (json.message || 'Unknown error'));
+                        }
+                    } else {
+                        alert('Failed to add lesson');
+                    }
+                } catch(e) {
+                    alert('Error adding lesson');
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Create Lesson';
+                }
+            } else {
+                input.focus();
+                input.classList.add('ring-2', 'ring-red-500/50', 'border-red-500');
+                setTimeout(() => input.classList.remove('ring-2', 'ring-red-500/50', 'border-red-500'), 2000);
+            }
+        };
+
+        // Render on init
+        renderCourseStructure();
+
+        // ─── Checkbox toggle styling ───
+        function updateToggleCard(checkboxId, labelId) {
+            const cb = document.getElementById(checkboxId);
+            if (!cb) return;
+            const label = document.getElementById(labelId);
+            const icon = label.querySelector('.material-symbols-outlined');
+            cb.addEventListener('change', () => {
+                if (cb.checked) {
+                    label.classList.remove('border','border-slate-200'); label.classList.add('border-2','border-primary','bg-primary/5');
+                    if(icon) icon.classList.replace('text-slate-400','text-primary');
+                } else {
+                    label.classList.remove('border-2','border-primary','bg-primary/5'); label.classList.add('border','border-slate-200');
+                    if(icon) icon.classList.replace('text-primary','text-slate-400');
+                }
+            });
+        }
+        updateToggleCard('cb-downloadable', 'downloadable-label');
+
+        // ─── Video Thumbnail click-to-upload ───
+        document.getElementById('thumb-drop').addEventListener('click', () => document.getElementById('thumb-input').click());
+        document.getElementById('thumb-input').addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = (e) => { document.getElementById('vid-thumb-preview').src = e.target.result; };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // ─── Video Upload (XHR with progress) ───
+        const videoDropArea = document.getElementById('video-drop-area');
+        const videoInput = document.getElementById('video-input');
+        const uiProgress = document.getElementById('video-upload-progress');
+        const uiSuccess = document.getElementById('video-success');
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        const progressText = document.getElementById('progress-text');
+        const uploadedFilename = document.getElementById('uploaded-filename');
+        const materialUrlInput = document.getElementById('MaterialUrl');
+        let currentXHR = null;
+
+        videoDropArea.addEventListener('click', () => videoInput.click());
+        videoInput.addEventListener('change', function() { handleVideoUpload(this.files); });
+        ['dragenter','dragover','dragleave','drop'].forEach(ev => videoDropArea.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }, false));
+        ['dragenter','dragover'].forEach(ev => videoDropArea.addEventListener(ev, () => videoDropArea.classList.add('border-primary','bg-primary/5'), false));
+        ['dragleave','drop'].forEach(ev => videoDropArea.addEventListener(ev, () => videoDropArea.classList.remove('border-primary','bg-primary/5'), false));
+        videoDropArea.addEventListener('drop', e => handleVideoUpload(e.dataTransfer.files), false);
+
+        function handleVideoUpload(files) {
+            if (!files.length) return;
+            const file = files[0];
+            if (!file.type.startsWith('video/')) { alert('Please upload a video file.'); return; }
+            videoDropArea.classList.add('hidden');
+            uiProgress.classList.remove('hidden');
+            document.getElementById('upload-filename-display').textContent = `Uploading "${file.name}"`;
+            progressBarFill.style.width = '0%'; progressText.textContent = '0';
+
+            const CLOUD_NAME = 'df8i0azc5';
+            const UPLOAD_PRESET = 'course_marketplace_preset';
+            const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`;
+            const fd = new FormData(); fd.append('upload_preset', UPLOAD_PRESET); fd.append('file', file);
+            const xhr = new XMLHttpRequest(); currentXHR = xhr;
+
+            xhr.upload.addEventListener('progress', e => {
+                if (e.lengthComputable) { const pct = Math.round(e.loaded/e.total*100); progressBarFill.style.width=pct+'%'; progressText.textContent=pct; }
+            });
+            xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const data = JSON.parse(xhr.responseText);
+                    setTimeout(() => { uiProgress.classList.add('hidden'); uiSuccess.classList.remove('hidden'); uploadedFilename.textContent=file.name; materialUrlInput.value=data.secure_url; }, 400);
+                } else { handleUploadError('Upload failed: ' + xhr.statusText); }
+            });
+            xhr.addEventListener('error', () => handleUploadError('Network error during upload.'));
+            xhr.addEventListener('abort', () => resetVideoUpload());
+            xhr.open('POST', url, true); xhr.send(fd);
+        }
+
+        document.getElementById('cancel-upload').addEventListener('click', () => { if(currentXHR) currentXHR.abort(); });
+        function handleUploadError(msg) { alert(msg); resetVideoUpload(); }
+        function resetVideoUpload() { videoDropArea.classList.remove('hidden'); uiProgress.classList.add('hidden'); uiSuccess.classList.add('hidden'); videoInput.value=''; materialUrlInput.value=''; }
+        window.resetVideoUpload = resetVideoUpload;
+
+        // ─── Save Draft / Submit ───
+        window.submitCourseForReview = function() {
+            if(confirm("Are you sure you want to submit this course for review? Once submitted, administrators will review your content before it is published to students.")) {
+                alert("Course submitted for review successfully! Status changed to 'Pending Review'.");
+                document.querySelector('span.bg-primary-container\\/20').textContent = 'PENDING REVIEW';
+                document.querySelector('span.bg-primary-container\\/20').classList.add('bg-amber-100', 'text-amber-700', 'border-amber-200');
+                document.querySelector('span.bg-primary-container\\/20').classList.remove('bg-primary-container/20', 'text-primary', 'border-primary-container');
+            }
+        };
+
+
+        
+        // ─── Resource Upload ───
+        const resourceBtn = document.getElementById('upload-resource-btn');
+        const resourceInput = document.getElementById('resource-input');
+        const resourceProgress = document.getElementById('resource-upload-progress');
+        const resourceTitle = document.getElementById('resource-title');
+        
+        resourceBtn.addEventListener('click', () => resourceInput.click());
+        resourceInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                resourceBtn.classList.add('hidden');
+                resourceProgress.classList.remove('hidden');
+                
+                const CLOUD_NAME = 'df8i0azc5';
+                const UPLOAD_PRESET = 'course_marketplace_preset';
+                // Use raw upload for documents/pdfs
+                const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`;
+                const fd = new FormData(); fd.append('upload_preset', UPLOAD_PRESET); fd.append('file', file);
+                
+                fetch(url, { method: 'POST', body: fd })
+                .then(res => res.json())
+                .then(data => {
+                    resourceProgress.classList.add('hidden');
+                    resourceBtn.classList.remove('hidden');
+                    if (data.secure_url) {
+                        resourceTitle.textContent = file.name;
+                        resourceTitle.classList.add('text-primary');
+                        document.getElementById('resource-desc').textContent = "Uploaded successfully!";
+                        resourceBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] align-middle mr-1">change_circle</span> Replace Resource';
+                    }
+                })
+                .catch(err => {
+                    resourceProgress.classList.add('hidden');
+                    resourceBtn.classList.remove('hidden');
+                    alert('Resource upload failed');
+                });
+            }
+        });
+    </script>
+}
