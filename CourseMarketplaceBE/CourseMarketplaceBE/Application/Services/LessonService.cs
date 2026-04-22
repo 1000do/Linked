@@ -92,19 +92,46 @@ public class LessonService : ILessonService
             }
         }
 
-        var material = new LearningMaterial
-        {
-            LessonId = lessonId,
-            Title = request.Title,
-            Description = request.Description,
-            MaterialUrl = materialUrl,
-            Duration = request.Duration,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            LearningStatus = "active"
-        };
+        var existingMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
+        var fileType = request.MaterialMetadata?.FileType ?? "video";
+        var existingMaterial = existingMaterials.FirstOrDefault(m => 
+            (m.MaterialMetadata != null && m.MaterialMetadata.FileType == fileType) || 
+            (fileType == "video" && m.MaterialMetadata == null));
 
-        await _materialRepository.AddAsync(material);
+        LearningMaterial material;
+        if (existingMaterial != null)
+        {
+            material = existingMaterial;
+            material.Title = request.Title;
+            material.Description = request.Description;
+            if (!string.IsNullOrEmpty(materialUrl)) {
+                material.MaterialUrl = materialUrl;
+            }
+            if (request.MaterialMetadata != null) {
+                if (material.MaterialMetadata == null) material.MaterialMetadata = new MaterialMetadata();
+                material.MaterialMetadata.FileType = request.MaterialMetadata.FileType;
+                if (request.MaterialMetadata.Duration.HasValue) material.MaterialMetadata.Duration = request.MaterialMetadata.Duration;
+            }
+            material.UpdatedAt = DateTime.UtcNow;
+            
+            _materialRepository.Update(material);
+        }
+        else
+        {
+            material = new LearningMaterial
+            {
+                LessonId = lessonId,
+                Title = request.Title,
+                Description = request.Description,
+                MaterialUrl = materialUrl,
+                MaterialMetadata = request.MaterialMetadata ?? new MaterialMetadata { FileType = "video" },
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                LearningStatus = "active"
+            };
+            await _materialRepository.AddAsync(material);
+        }
+
         await _materialRepository.SaveChangesAsync();
 
         return new MaterialResponse
@@ -114,7 +141,7 @@ public class LessonService : ILessonService
             Title = material.Title,
             Description = material.Description,
             MaterialUrl = material.MaterialUrl,
-            Duration = material.Duration,
+            MaterialMetadata = material.MaterialMetadata,
             CreatedAt = material.CreatedAt,
             UpdatedAt = material.UpdatedAt
         };

@@ -75,7 +75,7 @@ public class CourseService : ICourseService
                     Title = m.Title,
                     Description = m.Description,
                     MaterialUrl = m.MaterialUrl,
-                    Duration = m.Duration,
+                    MaterialMetadata = m.MaterialMetadata,
                     CreatedAt = m.CreatedAt,
                     UpdatedAt = m.UpdatedAt
                 }).ToList()
