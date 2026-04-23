@@ -266,10 +266,13 @@ public class AuthService : IAuthService
         var acc = await _userRepo.GetAccountByEmailAsync(email.ToLower());
 
         if (acc == null)
-            return "Email not found";
+            return "Không tìm thấy Email";
 
         if (acc.AuthProvider == "google")
-            return "This account uses Google login";
+            return "Tài khoản này được đăng nhập bằng Google";
+
+        if (!acc.IsVerified)
+            return "Email chưa được xác thực";
 
         var otp = _otpService.GenerateOtp(email, "reset");
 
