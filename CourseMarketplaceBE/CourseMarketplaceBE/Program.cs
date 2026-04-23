@@ -13,19 +13,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-    using CourseMarketplaceBE.Application.IServices;
-using CourseMarketplaceBE.Application.Services;
-using CourseMarketplaceBE.Domain.Entities;
-    using CourseMarketplaceBE.Domain.IRepositories;
-    using CourseMarketplaceBE.Infrastructure.Repositories;
-    using CourseMarketplaceBE.Infrastructure.Services;
-    using CourseMarketplaceBE.Share.Helpers;
-    using DotNetEnv;
-    using Microsoft.AspNetCore.Authentication.JwtBearer;
-    using Microsoft.EntityFrameworkCore;
-    using Microsoft.IdentityModel.Tokens;
-    using Microsoft.OpenApi.Models;
-    using System.Text;
+
 
 namespace CourseMarketplaceBE;
 

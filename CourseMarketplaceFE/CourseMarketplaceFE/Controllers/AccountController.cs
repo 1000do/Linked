@@ -4,6 +4,7 @@ using LinkedLearn.Models.UserVM;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Net.Http.Headers;
 
 namespace CourseMarketplaceFE.Controllers
 {
@@ -289,7 +290,7 @@ namespace CourseMarketplaceFE.Controllers
                 Path = "/"
             };
 
-            Response.Cookies.Append("AuthToken", result?.Token ?? "", new CookieOptions
+            Response.Cookies.Append("AccessToken", result?.AccessToken ?? "", new CookieOptions
             {
                 HttpOnly = true,
                 Expires = cookieOptions.Expires,
@@ -450,7 +451,7 @@ namespace CourseMarketplaceFE.Controllers
         [HttpGet]
         public async Task<IActionResult> SendVerifyOtp()
         {
-            var token = Request.Cookies["AuthToken"];
+            var token = Request.Cookies["AccessToken"];
             if (string.IsNullOrEmpty(token)) return RedirectToAction("Login");
 
             var client = _httpClientFactory.CreateClient("BackendApi");

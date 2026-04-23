@@ -149,7 +149,7 @@ public class UserRepository : IUserRepository
         var isManager = await _context.Managers.AnyAsync(m => m.ManagerId == accountId);
         return isManager ? "manager" : "user";
     }
-}
+
 
     public async Task<bool> UpdateEmailVerifiedAsync(string email)
     {

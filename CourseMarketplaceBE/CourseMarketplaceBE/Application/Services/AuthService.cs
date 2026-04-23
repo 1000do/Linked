@@ -87,8 +87,8 @@ public class AuthService : IAuthService
             RefreshToken = newRefreshToken,
             FullName = fullName,
           
-            Role = role
-            AvatarUrl = avatar,
+            Role = role,
+            AvatarUrl = a.AvatarUrl,
             IsVerified = a.IsVerified
         };
     }
@@ -224,7 +224,7 @@ public class AuthService : IAuthService
 
         return new LoginResponse
         {
-            Token = token,
+            AccessToken = token,
             FullName = fullName,
             AvatarUrl = avatar,
             IsVerified = true

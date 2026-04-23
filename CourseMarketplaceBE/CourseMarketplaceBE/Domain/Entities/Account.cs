@@ -35,7 +35,7 @@ public partial class Account
     public DateTime? AccountLastLoginAt { get; set; }
 
     public virtual Manager? Manager { get; set; }
-    public bool? IsVerified { get; set; }
+  
 
     public virtual ICollection<Message> MessageReceivers { get; set; } = new List<Message>();
 

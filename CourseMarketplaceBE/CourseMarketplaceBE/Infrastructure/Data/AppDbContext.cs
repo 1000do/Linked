@@ -89,6 +89,9 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("account_updated_at");
+            entity.Property(e => e.AccountLastLoginAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("account_last_login_at");
             entity.Property(e => e.AuthProvider)
                 .HasMaxLength(50)
                 .HasColumnName("auth_provider");

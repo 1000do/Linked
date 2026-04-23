@@ -38,9 +38,9 @@ public class AuthController : ControllerBase
         if (string.IsNullOrEmpty(request.Email))
         {
             return BadRequest(new { status = 400, message = "Tài khoản phải có định dạng @gmail.com." });
-
+        }
         var result = await _authService.LoginAsync(request);
-
+    
         if (result == null)
             return Unauthorized(new { status = 401, message = "Email hoặc mật khẩu không chính xác." });
 
@@ -114,7 +114,7 @@ public class AuthController : ControllerBase
         {
             status = 200,
             message = "Token đã được làm mới",
-            accessToken = result.AccessToken
+            accessToken = result.AccessToken,
             avatarUrl = result.AvatarUrl,
             isVerified = result.IsVerified
         });
@@ -147,7 +147,7 @@ public class AuthController : ControllerBase
 
         return Ok(new
         {
-            token = result.Token,
+            token = result.AccessToken,
             fullName = result.FullName,
             avatarUrl = result.AvatarUrl,
             isVerified = result.IsVerified
