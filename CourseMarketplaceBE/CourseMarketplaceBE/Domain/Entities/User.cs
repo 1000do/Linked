@@ -13,9 +13,9 @@ namespace CourseMarketplaceBE.Domain.Entities;
 
         public DateOnly? DateOfBirth { get; set; }
 
-        //public decimal? TotalSpent { get; set; }
+        public decimal? TotalSpent { get; set; }
 
-        //public int? EnrolledCoursesCount { get; set; }
+        public int? EnrolledCoursesCount { get; set; }
 
         public virtual ICollection<AiActivityLog> AiActivityLogs { get; set; } = new List<AiActivityLog>();
 

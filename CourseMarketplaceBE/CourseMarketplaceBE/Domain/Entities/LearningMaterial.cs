@@ -21,13 +21,7 @@ public partial class LearningMaterial
 
     public string? MaterialUrl { get; set; }
 
-    public string? MaterialMetadata { get; set; }
-
-    public string? MaterialHash { get; set; }
+    public string? Duration { get; set; }
 
     public virtual Lesson? Lesson { get; set; }
-
-    public virtual MaterialPHash? MaterialPHash { get; set; }
-
-    public virtual ICollection<MaterialEmbedding> MaterialEmbeddings { get; set; } = new List<MaterialEmbedding>();
 }

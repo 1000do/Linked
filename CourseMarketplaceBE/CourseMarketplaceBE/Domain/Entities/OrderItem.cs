@@ -18,6 +18,4 @@ public partial class OrderItem
     public virtual Course? Course { get; set; }
 
     public virtual OrderInfo? Order { get; set; }
-
-    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 }

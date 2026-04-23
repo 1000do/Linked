@@ -7,15 +7,9 @@ public partial class Transaction
 {
     public int TransactionId { get; set; }
 
-    public int? OrderItemId { get; set; }
-
-    public int? AccountFrom { get; set; }
-
-    public int? AccountTo { get; set; }
+    public int? OrderId { get; set; }
 
     public decimal Amount { get; set; }
-
-    public decimal TransferRate { get; set; } = 100m;
 
     public string? StripeSessionId { get; set; }
 
@@ -29,11 +23,5 @@ public partial class Transaction
 
     public DateTime? TransactionCreatedAt { get; set; }
 
-    public virtual OrderItem? OrderItem { get; set; }
-
-    public virtual Account? AccountFromNavigation { get; set; }
-
-    public virtual Account? AccountToNavigation { get; set; }
-
-    public virtual ICollection<InstructorPayout> InstructorPayouts { get; set; } = new List<InstructorPayout>();
+    public virtual OrderInfo? Order { get; set; }
 }

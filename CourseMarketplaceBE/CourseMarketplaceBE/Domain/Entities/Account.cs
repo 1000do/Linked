@@ -21,12 +21,6 @@ public partial class Account
 
     public string? AvatarUrl { get; set; }
 
-    public string? RefreshToken { get; set; }
-
-    public DateTime? RefreshTokenExpiryTime { get; set; }
-
-    public bool IsVerified { get; set; } = false;
-
     public DateTime? AccountCreatedAt { get; set; }
 
     public DateTime? AccountUpdatedAt { get; set; }
@@ -50,8 +44,4 @@ public partial class Account
     public virtual ICollection<UserReport> UserReportResolvers { get; set; } = new List<UserReport>();
 
     public virtual ICollection<UserReport> UserReportTargets { get; set; } = new List<UserReport>();
-
-    public virtual ICollection<Transaction> TransactionsFrom { get; set; } = new List<Transaction>();
-
-    public virtual ICollection<Transaction> TransactionsTo { get; set; } = new List<Transaction>();
 }

@@ -30,6 +30,4 @@ public partial class Enrollment
     public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
 
     public virtual User? User { get; set; }
-
-    public virtual EnrollmentProgress? EnrollmentProgress { get; set; }
 }

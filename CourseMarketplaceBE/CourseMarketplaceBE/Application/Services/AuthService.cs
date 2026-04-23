@@ -75,8 +75,8 @@ public class AuthService : IAuthService
         var user = new User
         {
             FullName = r.FullName,
-            //TotalSpent = 0,
-            //EnrolledCoursesCount = 0
+            TotalSpent = 0,
+            EnrolledCoursesCount = 0
         };
 
         return await _userRepo.RegisterUserAsync(acc, user) ? "Success" : "Error";
