@@ -92,6 +92,19 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.AccountLastLoginAt)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("account_last_login_at");
+            entity.Property(e => e.AuthProvider)
+                .HasMaxLength(50)
+                .HasColumnName("auth_provider");
+            entity.Property(e => e.AvatarUrl).HasColumnName("avatar_url");
+            entity.Property(e => e.Email)
+                .HasMaxLength(255)
+                .HasColumnName("email");
+            entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
+            entity.Property(e => e.PhoneNumber)
+                .HasMaxLength(50)
+                .HasColumnName("phone_number");
+            entity.Property(e => e.IsVerified)
+    .HasColumnName("is_verified");
         });
 
         // ── ai_activity_logs ──────────────────────────────────────────────────

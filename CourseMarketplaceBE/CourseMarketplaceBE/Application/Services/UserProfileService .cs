@@ -35,7 +35,8 @@ public class UserProfileService : IUserProfileService
             Bio = user.Bio,
             DateOfBirth = user.DateOfBirth,
             AvatarUrl = user.UserNavigation.AvatarUrl,
-            PhoneNumber = user.UserNavigation.PhoneNumber
+            PhoneNumber = user.UserNavigation.PhoneNumber,
+            IsVerified = user.UserNavigation?.IsVerified ?? false
         };
     }
 
