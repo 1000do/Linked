@@ -1,9 +1,9 @@
-﻿using System.Text;
+using System.Text;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Application.Services;
-using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Hubs;
+using CourseMarketplaceBE.Infrastructure.Data;
 using CourseMarketplaceBE.Infrastructure.Repositories;
 using CourseMarketplaceBE.Infrastructure.Services;
 using CourseMarketplaceBE.Share.Helpers;
@@ -20,6 +20,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
         var builder = WebApplication.CreateBuilder(args);
 
         // 🔥 1. LOAD .env (chỉ khi chạy locally, docker compose sẽ skip)
@@ -89,12 +90,22 @@ public class Program
 
         // 🔥 4. Database
         var connectionString = configuration.GetConnectionString("DefaultConnection");
+        
+        var dataSourceBuilder = new Npgsql.NpgsqlDataSourceBuilder(connectionString);
+        dataSourceBuilder.EnableDynamicJson();
+        var dataSource = dataSourceBuilder.Build();
+
         builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(dataSource));
 
         // 🔥 5. DI
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+        builder.Services.AddScoped<ILessonRepository, LessonRepository>();
+        builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
+        builder.Services.AddScoped<ICourseService, CourseService>();
+        builder.Services.AddScoped<ILessonService, LessonService>();
 
         builder.Services.AddSignalR(); // Đăng ký SignalR
         builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
@@ -145,11 +156,39 @@ public class Program
                     Encoding.UTF8.GetBytes(jwtSettings.Key ?? "Default_Key_32_Chars_Minimum"))
             };
 
+            //    options.Events = new JwtBearerEvents
+            //    {
+            //        OnMessageReceived = context =>
+            //        {
+            //            var cookieToken = context.Request.Cookies["AuthToken"];
+            //            if (!string.IsNullOrEmpty(cookieToken))
+            //                context.Token = cookieToken;
+
+            //            return Task.CompletedTask;
+            //        }
+            //    };
+            //});
+
+            // Trong Program.cs, phần .AddJwtBearer
             options.Events = new JwtBearerEvents
             {
                 OnMessageReceived = context =>
                 {
-                    var cookieToken = context.Request.Cookies["AuthToken"];
+                    // 1. Ưu tiên lấy Token từ Header Authorization (Swagger/Postman)
+                    var authHeader = context.Request.Headers["Authorization"].ToString();
+                    if (!string.IsNullOrEmpty(authHeader)) return Task.CompletedTask;
+
+                    // 2. Nếu là SignalR, nó thường gửi token qua query string "access_token"
+                    var accessToken = context.Request.Query["access_token"];
+                    var path = context.HttpContext.Request.Path;
+                    if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/notificationHub"))
+                    {
+                        context.Token = accessToken;
+                        return Task.CompletedTask;
+                    }
+
+                    // 3. Cuối cùng, lấy từ Cookie (PHẢI KHỚP TÊN "AccessToken")
+                    var cookieToken = context.Request.Cookies["AccessToken"]; // Sửa từ AuthToken -> AccessToken
                     if (!string.IsNullOrEmpty(cookieToken))
                         context.Token = cookieToken;
 
@@ -157,7 +196,6 @@ public class Program
                 }
             };
         });
-
         // 🔥 7. Controllers + Swagger
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
@@ -203,10 +241,10 @@ public class Program
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowAll", policy =>
-                policy.WithOrigins(allowedOrigins)
+                policy.WithOrigins("http://localhost:5208") // Thay đúng port FE đang chạy
                       .AllowAnyMethod()
                       .AllowAnyHeader()
-                      .AllowCredentials());
+                      .AllowCredentials()); // Bắt buộc phải có để gửi Cookie/Token
         });
 
         var app = builder.Build();

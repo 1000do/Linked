@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace CourseMarketplaceBE.Domain.Entities;
+﻿namespace CourseMarketplaceBE.Domain.Entities;
 
 public partial class Notification
 {
@@ -18,6 +15,7 @@ public partial class Notification
     public string? LinkAction { get; set; }
 
     public bool? IsRead { get; set; }
+    public bool? IsRemoved { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 

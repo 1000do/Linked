@@ -1,98 +1,235 @@
 ﻿@model IEnumerable<CourseMarketplaceFE.Models.NotificationViewModel>
 @{
     ViewData["Title"] = "Thông báo của tôi";
-    var tokenFromServer = Context.Request.Cookies["AuthToken"]
+    var tokenFromServer = Context.Request.Cookies["AccessToken"]
                         ?? Context.Request.Cookies[".AspNetCore.Identity.Application"];
 }
 
-<div class="max-w-4xl mx-auto p-6 min-h-screen">
+<div class="max-w-4xl mx-auto p-6 min-h-screen flex flex-col">
     <div class="flex justify-between items-center mb-8">
-        <h2 class="text-2xl font-headline font-extrabold text-slate-800">Thông báo của bạn</h2>
-        <span class="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full flex items-center gap-2">
-            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            SignalR Real-time
+        <div>
+            <h2 class="text-3xl font-headline font-extrabold text-slate-800">Thông báo</h2>
+            <p class="text-slate-500 text-sm mt-1">Cập nhật những tin tức mới nhất từ hệ thống</p>
+        </div>
+        <span class="text-xs text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-full flex items-center gap-2">
+            <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+            </span>
+            Trực tuyến
         </span>
     </div>
 
-    <div id="notification-container" class="space-y-4">
+    <div id="notification-container" class="space-y-4 flex-1">
         <div class="bg-white p-10 rounded-2xl border border-dashed border-slate-200 text-center">
-            <p class="text-slate-400 italic">Đang tải thông báo từ hệ thống...</p>
+            <div class="animate-pulse flex flex-col items-center">
+                <div class="h-4 bg-slate-200 rounded w-1/3 mb-4"></div>
+                <div class="h-3 bg-slate-100 rounded w-1/2"></div>
+            </div>
+            <p class="text-slate-400 italic mt-4 text-sm">Đang tải dữ liệu...</p>
+        </div>
+    </div>
+
+    <div id="pagination-bar" class="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between hidden">
+        <div class="text-xs text-slate-500 font-medium" id="pagination-info">
+            Hiển thị 0-0 trong 0 thông báo
+        </div>
+        <div class="flex items-center gap-1" id="pagination-controls"></div>
+    </div>
+</div>
+
+<div id="modal-detail" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeModal()"></div>
+    <div class="bg-white w-full max-w-lg rounded-3xl relative z-10 flex flex-col overflow-hidden border border-slate-100 shadow-none">
+        <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-teal-50/50">
+            <div class="flex items-center gap-2 text-teal-700">
+                <span class="material-symbols-outlined text-xl">info</span>
+                <span class="font-bold uppercase text-[11px] tracking-widest">Chi tiết thông báo</span>
+            </div>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1 hover:bg-white rounded-full transition-all">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-8 max-h-[70vh] overflow-y-auto">
+            <h3 id="modal-title" class="text-2xl font-bold text-slate-800 mb-4 leading-tight break-all"></h3>
+            <div id="modal-time" class="flex items-center gap-2 mb-6 text-slate-400 text-xs uppercase tracking-tighter"></div>
+            <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                <p id="modal-content" class="text-slate-600 leading-relaxed whitespace-pre-wrap break-words"></p>
+            </div>
+        </div>
+        <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <button onclick="closeModal()" class="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-100 transition-all text-sm">
+                Đóng
+            </button>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        // Sử dụng var hoặc window. để Layout có thể truy cập được hàm này
         const TOKEN_USER = '@tokenFromServer';
+        const API_URL = "http://localhost:5207/api/Notification";
+
+        let allNotifications = [];
+        let currentPage = 1;
+        const pageSize = 10;
+
+        document.addEventListener("DOMContentLoaded", loadNotifications);
 
         async function loadNotifications() {
-            if (!TOKEN_USER) return;
-
+            if (!TOKEN_USER) {
+                document.getElementById('notification-container').innerHTML =
+                    `<div class="bg-amber-50 text-amber-700 p-8 rounded-xl border border-amber-100 text-center font-bold">Vui lòng đăng nhập để xem thông báo.</div>`;
+                return;
+            }
             try {
-                const response = await fetch("http://localhost:5207/api/Notification", {
+                const response = await fetch(`${API_URL}`, {
                     headers: { 'Authorization': `Bearer ${TOKEN_USER}` }
                 });
-
                 if (response.ok) {
-                    const data = await response.json();
-                    renderNotifications(data);
+                    allNotifications = await response.json();
+                    // Sắp xếp mới nhất lên đầu
+                    allNotifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    renderPage();
                 }
             } catch (error) {
-                console.error("Lỗi loadNotifications:", error);
+                console.error("Lỗi:", error);
+                document.getElementById('notification-container').innerHTML = `<div class="text-red-500 text-center p-8">Lỗi kết nối máy chủ.</div>`;
             }
         }
 
-        function renderNotifications(notifications) {
+        function renderPage() {
             const container = document.getElementById('notification-container');
-            if (!notifications || notifications.length === 0) {
-                container.innerHTML = `<div class="bg-white p-10 rounded-2xl border border-dashed border-slate-200 text-center text-slate-400">Không có thông báo nào.</div>`;
+            const paginationBar = document.getElementById('pagination-bar');
+
+            if (allNotifications.length === 0) {
+                container.innerHTML = `<div class="bg-white p-16 rounded-3xl border border-dashed border-slate-200 text-center text-slate-400">Bạn chưa có thông báo nào.</div>`;
+                paginationBar.classList.add('hidden');
                 return;
             }
 
-            container.innerHTML = notifications
-                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                .map(noti => `
-                    <div class="bg-white p-5 rounded-2xl border ${noti.isRead ? 'border-slate-100 opacity-75' : 'border-teal-100 shadow-sm'} flex justify-between items-start mb-4 transition-all hover:shadow-md" id="noti-row-${noti.notificationId}">
-                        <div class="flex-1 cursor-pointer" onclick="markAsRead(${noti.notificationId})">
-                            <div class="flex items-center gap-2">
-                                <h4 class="font-bold ${noti.isRead ? 'text-slate-500' : 'text-slate-800'}">${noti.title}</h4>
-                                ${!noti.isRead ? `<span id="dot-${noti.notificationId}" class="w-2 h-2 bg-teal-600 rounded-full"></span>` : ''}
+            paginationBar.classList.remove('hidden');
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pagedData = allNotifications.slice(start, end);
+
+                    container.innerHTML = pagedData.map(noti => {
+            const isUnread = !noti.isRead;
+            return `
+                <div class="group bg-white p-5 rounded-2xl border transition-all duration-200 hover:border-teal-200
+                    ${isUnread ? 'border-teal-100 bg-gradient-to-r from-white to-teal-50/20' : 'border-slate-100 opacity-90'}"
+                    id="noti-row-${noti.notificationId}">
+
+                    <div class="flex justify-between items-start gap-4">
+                        <div class="flex-1 min-w-0 cursor-pointer overflow-hidden" onclick="showDetail(${noti.notificationId})">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 uppercase">Hệ thống</span>
+                                ${isUnread ? `<span id="dot-${noti.notificationId}" class="flex h-2 w-2 rounded-full bg-teal-600"></span>` : ''}
                             </div>
-                            <p class="text-sm text-slate-600 mt-2">${noti.content}</p>
-                            <span class="text-[10px] text-slate-400 mt-3 block uppercase font-medium">
-                                ${new Date(noti.createdAt).toLocaleString('vi-VN')}
-                            </span>
+
+                            <h4 class="font-bold text-lg break-words line-clamp-1 ${isUnread ? 'text-slate-900' : 'text-slate-500 font-semibold'}">
+                                ${noti.title}
+                            </h4>
+                            <p class="text-sm text-slate-600 mt-1 line-clamp-2 break-words">
+                                ${noti.content}
+                            </p>
+
+                            <div class="flex items-center justify-between mt-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[14px] text-slate-400">schedule</span>
+                                    <span class="text-[11px] text-slate-400 uppercase font-semibold">
+                                        ${new Date(noti.createdAt).toLocaleString('vi-VN')}
+                                    </span>
+                                </div>
+                                <span class="text-[10px] font-bold text-teal-600 opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1">
+                                    Chi tiết <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+                                </span>
+                            </div>
                         </div>
-                        <div class="flex gap-2 ml-4">
-                            ${!noti.isRead ? `
-                                <button onclick="markAsRead(${noti.notificationId})" class="p-2 text-teal-600 hover:bg-teal-50 rounded-xl transition-all">
-                                    <span class="material-symbols-outlined text-xl">done_all</span>
+
+                        <div class="flex flex-shrink-0 gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            ${isUnread ? `
+                                <button onclick="markAsRead(${noti.notificationId})" title="Đánh dấu đã đọc"
+                                        class="p-2 text-teal-600 hover:bg-teal-50 rounded-xl transition-all">
+                                    <span class="material-symbols-outlined text-xl">check_circle</span>
                                 </button>` : ''}
-                            <button onclick="deleteNotification(${noti.notificationId})" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                            <button onclick="deleteNotification(${noti.notificationId})" title="Xóa"
+                                    class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
                                 <span class="material-symbols-outlined text-xl">delete</span>
                             </button>
                         </div>
                     </div>
-                `).join('');
+                </div>`;
+        }).join('');
+
+            updatePaginationInfo(start + 1, Math.min(end, allNotifications.length), allNotifications.length);
+            renderPaginationControls();
+        }
+
+        function updatePaginationInfo(start, end, total) {
+            document.getElementById('pagination-info').innerText = `Hiển thị ${start}-${end} trong ${total} thông báo`;
+        }
+
+        function renderPaginationControls() {
+            const totalPages = Math.ceil(allNotifications.length / pageSize);
+            const container = document.getElementById('pagination-controls');
+            let html = '';
+
+            html += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-20 transition-all"><span class="material-symbols-outlined text-sm">chevron_left</span></button>`;
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    html += `<button onclick="changePage(${i})" class="w-8 h-8 rounded-lg text-xs font-bold transition-all ${currentPage === i ? 'bg-teal-600 text-white' : 'text-slate-500 hover:bg-slate-100'}">${i}</button>`;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    html += `<span class="text-slate-300 text-xs px-1">...</span>`;
+                }
+            }
+
+            html += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} class="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-20 transition-all"><span class="material-symbols-outlined text-sm">chevron_right</span></button>`;
+
+            container.innerHTML = html;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderPage();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showDetail(id) {
+            const noti = allNotifications.find(n => n.notificationId === id);
+            if (!noti) return;
+
+            document.getElementById('modal-title').innerText = noti.title;
+            document.getElementById('modal-content').innerText = noti.content;
+            document.getElementById('modal-time').innerHTML = `
+                <span class="material-symbols-outlined text-[14px]">schedule</span>
+                ${new Date(noti.createdAt).toLocaleString('vi-VN')}
+            `;
+
+            document.getElementById('modal-detail').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            // Tự động mark as read khi mở xem
+            if(!noti.isRead) markAsRead(id);
+        }
+
+        function closeModal() {
+            document.getElementById('modal-detail').classList.add('hidden');
+            document.body.style.overflow = 'auto';
         }
 
         async function markAsRead(id) {
             try {
-                const response = await fetch(`http://localhost:5207/api/Notification/mark-as-read/${id}`, {
+                const response = await fetch(`${API_URL}/mark-as-read/${id}`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${TOKEN_USER}` }
                 });
+
                 if (response.ok) {
-                    const row = document.getElementById(`noti-row-${id}`);
-                    if (row) {
-                        row.classList.remove('border-teal-100', 'shadow-sm');
-                        row.classList.add('border-slate-100', 'opacity-75');
-                        const dot = document.getElementById(`dot-${id}`);
-                        if (dot) dot.remove();
-                    }
-                    // Cập nhật lại chuông trên Header
-                    if (typeof loadTopNotifications === "function") loadTopNotifications();
+                    const localNoti = allNotifications.find(n => n.notificationId === id);
+                    if(localNoti) localNoti.isRead = true;
+                    renderPage();
                 }
             } catch (err) { console.error(err); }
         }
@@ -100,16 +237,15 @@
         async function deleteNotification(id) {
             if(!confirm("Xóa thông báo này?")) return;
             try {
-                const response = await fetch(`http://localhost:5207/api/Notification/${id}`, {
+                const response = await fetch(`${API_URL}/${id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${TOKEN_USER}` }
                 });
                 if (response.ok) {
-                    document.getElementById(`noti-row-${id}`)?.remove();
+                    allNotifications = allNotifications.filter(n => n.notificationId !== id);
+                    renderPage();
                 }
             } catch (err) { console.error(err); }
         }
-
-        document.addEventListener("DOMContentLoaded", loadNotifications);
     </script>
 }

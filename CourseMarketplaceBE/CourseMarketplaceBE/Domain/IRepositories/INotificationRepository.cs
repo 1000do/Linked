@@ -1,4 +1,4 @@
-﻿using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Entities;
 
 namespace CourseMarketplaceBE.Domain.IRepositories
 {
@@ -9,9 +9,13 @@ namespace CourseMarketplaceBE.Domain.IRepositories
 
         // THÊM DÒNG NÀY VÀO
         Task AddAsync(Notification notification);
-
+        Task AddRangeAsync(IEnumerable<Notification> notifications);
         void Delete(Notification notification);
         Task SaveChangesAsync();
         Task<List<Notification>> GetAllAsync();
+        Task<bool> MarkAsReadAsync(int notificationId, int userId);
+        Task<List<string>> SearchEmailsByQueryAsync(string query, int take = 5);
+        Task<List<int>> GetAllUserIdsAsync();
+        Task<int?> GetUserIdByEmailAsync(string email);
     }
 }

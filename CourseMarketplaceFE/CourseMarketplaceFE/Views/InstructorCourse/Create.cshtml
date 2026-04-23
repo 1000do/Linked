@@ -1,0 +1,216 @@
+@model CourseMarketplaceFE.Models.CreateCourseViewModel
+@{
+    ViewData["Title"] = "Create New Course";
+    Layout = "_InstructorLayout";
+}
+
+<div class="p-8 max-w-4xl mx-auto pb-32">
+    <a href="/InstructorCourse" class="flex items-center gap-2 text-sm font-semibold text-primary mb-4 hover:underline">
+        <span class="material-symbols-outlined text-[18px]">arrow_back</span> Back to Courses
+    </a>
+    
+    <h1 class="text-3xl font-headline font-extrabold text-slate-900 mb-2">Create New Course</h1>
+    <p class="text-slate-500 mb-8">Design a high-impact learning experience for your students.</p>
+
+    <!-- Progress Bar -->
+    <div class="flex gap-2 mb-10">
+        <div id="step-1" class="h-1 flex-1 bg-primary rounded-full transition-colors duration-300"></div>
+        <div id="step-2" class="h-1 flex-1 bg-slate-200 rounded-full transition-colors duration-300"></div>
+        <div id="step-3" class="h-1 flex-1 bg-slate-200 rounded-full transition-colors duration-300"></div>
+    </div>
+
+    <form method="post" asp-action="Create" id="createCourseForm">
+        <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm mb-4 bg-red-50 p-4 rounded-xl border border-red-200" style="display:none"></div>
+        <input type="hidden" asp-for="CourseThumbnailUrl" id="CourseThumbnailUrl" />
+        
+        <!-- Section 1: Core Identity -->
+        <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-8 h-8 rounded-full bg-primary-container text-primary flex items-center justify-center font-bold text-sm">1</div>
+                <h2 class="text-xl font-headline font-bold text-slate-900">Core Identity</h2>
+            </div>
+            
+            <div class="mb-6">
+                <label asp-for="Title" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Course Title</label>
+                <input asp-for="Title" placeholder="e.g. Advanced Architectural Principles in Modern UI" class="w-full bg-slate-50 border-none rounded-xl py-4 px-4 text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 outline-none font-medium" />
+                <span asp-validation-for="Title" class="text-red-500 text-xs mt-1 block"></span>
+            </div>
+            
+            <div>
+                <label asp-for="CategoryId" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Category</label>
+                <div class="relative">
+                    <select asp-for="CategoryId" class="w-full bg-slate-50 border-none rounded-xl py-4 px-4 pr-10 text-slate-800 focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none">
+                        <option value="0">Select Category</option>
+                        <option value="1">Design & Creative</option>
+                        <option value="2">Development</option>
+                        <option value="3">Business</option>
+                    </select>
+                    <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
+                </div>
+                <span asp-validation-for="CategoryId" class="text-red-500 text-xs mt-1 block"></span>
+            </div>
+        </div>
+
+        <!-- Section 2: Course Thumbnail -->
+        <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-8 h-8 rounded-full bg-primary-container text-primary flex items-center justify-center font-bold text-sm">2</div>
+                <h2 class="text-xl font-headline font-bold text-slate-900">Course Thumbnail</h2>
+            </div>
+            
+            <div id="drop-area" class="border-2 border-dashed border-slate-200 rounded-2xl p-10 text-center hover:bg-slate-50 transition-colors cursor-pointer relative overflow-hidden group">
+                <div id="preview-container" class="absolute inset-0 z-10 hidden bg-black">
+                    <img id="thumbnail-preview" src="" class="w-full h-full object-cover opacity-80" />
+                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                        <span class="px-4 py-2 bg-white text-slate-900 rounded-lg font-bold text-sm">Replace Image</span>
+                    </div>
+                </div>
+                <div class="w-16 h-16 bg-primary-container/30 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-[32px]">cloud_upload</span>
+                </div>
+                <p class="font-bold text-slate-800 mb-2">Drag and drop your thumbnail here</p>
+                <p class="text-xs text-slate-500 mb-4">or <span class="text-primary hover:underline">Browse Files</span></p>
+                <input type="file" id="fileElem" accept="image/*" class="hidden" />
+                <div id="upload-progress" class="hidden absolute inset-0 bg-white/90 z-20 flex flex-col items-center justify-center">
+                    <div class="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin mb-3"></div>
+                    <p class="text-sm font-bold text-primary">Uploading to Cloudinary...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Description & Curriculum -->
+        <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-sm">3</div>
+                <h2 class="text-xl font-headline font-bold text-slate-900">Description & Curriculum</h2>
+            </div>
+            <label asp-for="Description" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Rich Text Description</label>
+            <div class="bg-white rounded-xl">
+                <div id="editor" class="bg-slate-50"></div>
+                <input type="hidden" asp-for="Description" id="DescriptionInput" />
+            </div>
+        </div>
+
+        <!-- Section 4: Access & Pricing -->
+        <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm">4</div>
+                <h2 class="text-xl font-headline font-bold text-slate-900">Access & Pricing</h2>
+            </div>
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <label asp-for="Price" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Course Price (USD)</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-500">$</span>
+                        <input asp-for="Price" step="0.01" placeholder="49.99" class="w-full bg-slate-50 border-none rounded-xl py-4 pl-8 pr-4 text-slate-800 font-bold focus:ring-2 focus:ring-primary/20 outline-none" />
+                    </div>
+                    <span asp-validation-for="Price" class="text-red-500 text-xs mt-1 block"></span>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-4 flex gap-4 border border-slate-100">
+                    <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white shrink-0 mt-1">
+                        <span class="material-symbols-outlined text-[14px]">info</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Instructor Revenue</p>
+                        <p class="font-bold text-slate-900 text-lg">90% Share</p>
+                        <p class="text-[10px] text-slate-500 mt-1">Estimated payout per sale: <span id="payout-estimate">$0.00</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Floating Action Bar -->
+<div class="fixed bottom-0 left-64 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 p-4 z-50">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-2 text-sm text-slate-500">
+            <span id="save-indicator" class="w-2 h-2 rounded-full bg-slate-300"></span>
+            <span id="save-status">Not saved yet</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="/InstructorCourse" class="px-6 py-2.5 bg-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-300 transition-colors">Cancel</a>
+            <button type="submit" form="createCourseForm" class="px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/20">Create Course</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Quill
+        var quill = new Quill('#editor', {
+            theme: 'snow', placeholder: 'Tell your students what they will achieve...',
+            modules: { toolbar: [['bold','italic'],[{'list':'ordered'},{'list':'bullet'}],['link','code-block']] }
+        });
+        const descriptionInput = document.getElementById('DescriptionInput');
+        if(descriptionInput.value) quill.clipboard.dangerouslyPasteHTML(descriptionInput.value);
+
+        // Show validation summary if it has content
+        const valSummary = document.querySelector('[data-valmsg-summary]') || document.querySelector('.text-red-500.bg-red-50');
+        if (valSummary && valSummary.querySelector('li')) valSummary.style.display = 'block';
+
+        // Sync Quill + submit
+        document.getElementById('createCourseForm').addEventListener('submit', function(e) {
+            const html = quill.root.innerHTML;
+            descriptionInput.value = (html === '<p><br></p>') ? '' : html;
+        });
+
+        // Progress bar
+        function updateProgressBar() {
+            const title = document.getElementById('Title').value.trim();
+            const catId = document.getElementById('CategoryId').value;
+            const thumb = document.getElementById('CourseThumbnailUrl').value;
+            const desc = quill.getText().trim();
+            const price = document.getElementById('Price').value;
+            const s1 = title.length > 0 && catId !== '0';
+            const s2 = thumb.length > 0;
+            document.getElementById('step-2').className = 'h-1 flex-1 rounded-full transition-colors duration-300 ' + (s1 ? 'bg-primary' : 'bg-slate-200');
+            document.getElementById('step-3').className = 'h-1 flex-1 rounded-full transition-colors duration-300 ' + (s1 && s2 ? 'bg-primary' : 'bg-slate-200');
+        }
+        ['Title','CategoryId','Price'].forEach(id => { const el = document.getElementById(id); if(el) { el.addEventListener('input', updateProgressBar); el.addEventListener('change', updateProgressBar); } });
+        quill.on('text-change', updateProgressBar);
+
+        // Cloudinary Upload
+        const CLOUD_NAME = 'df8i0azc5';
+        const UPLOAD_PRESET = 'course_marketplace_preset';
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('fileElem');
+        const progressEl = document.getElementById('upload-progress');
+        const previewContainer = document.getElementById('preview-container');
+        const thumbnailPreview = document.getElementById('thumbnail-preview');
+        const urlInput = document.getElementById('CourseThumbnailUrl');
+
+        ['dragenter','dragover','dragleave','drop'].forEach(e => dropArea.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); }, false));
+        ['dragenter','dragover'].forEach(e => dropArea.addEventListener(e, () => dropArea.classList.add('border-primary','bg-primary/5'), false));
+        ['dragleave','drop'].forEach(e => dropArea.addEventListener(e, () => dropArea.classList.remove('border-primary','bg-primary/5'), false));
+        dropArea.addEventListener('drop', e => handleFiles(e.dataTransfer.files), false);
+        dropArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', function() { handleFiles(this.files); });
+
+        function handleFiles(files) { if (files.length > 0) uploadFile(files[0]); }
+        function uploadFile(file) {
+            if (!file.type.startsWith('image/')) { alert('Please select an image file.'); return; }
+            progressEl.classList.remove('hidden');
+            const fd = new FormData();
+            fd.append('upload_preset', UPLOAD_PRESET); fd.append('file', file);
+            fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method: 'POST', body: fd })
+            .then(r => { if(!r.ok) throw new Error('Upload failed'); return r.json(); })
+            .then(data => {
+                progressEl.classList.add('hidden'); urlInput.value = data.secure_url;
+                thumbnailPreview.src = data.secure_url; previewContainer.classList.remove('hidden');
+                updateProgressBar();
+            })
+            .catch(() => {
+                progressEl.classList.add('hidden');
+                const reader = new FileReader();
+                reader.onload = e => { thumbnailPreview.src = e.target.result; previewContainer.classList.remove('hidden'); urlInput.value = e.target.result; updateProgressBar(); };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Price calc
+        const priceInput = document.getElementById('Price');
+        if(priceInput) priceInput.addEventListener('input', e => { document.getElementById('payout-estimate').textContent = '$' + ((parseFloat(e.target.value)||0)*0.9).toFixed(2); });
+        updateProgressBar();
+    </script>
+}

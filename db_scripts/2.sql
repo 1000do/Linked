@@ -426,3 +426,37 @@ SELECT
      JOIN courses c ON e.course_id = c.course_id 
      WHERE c.instructor_id = i.instructor_id) AS total_students_count
 FROM instructors i;
+
+-- ==============================================================================
+-- 8. SAMPLE DATA (EXCLUDING ACCOUNTS)
+-- ==============================================================================
+
+INSERT INTO categories (category_id, categories_name, description, category_status) 
+VALUES 
+(1, 'Design & Creative', 'Courses related to design, UX/UI, 3D modeling, and creative arts.', 'active'), 
+(2, 'Development', 'Software development, programming languages, web & mobile dev.', 'active'), 
+(3, 'Business', 'Business management, finance, marketing, and entrepreneurship.', 'active')
+ON CONFLICT DO NOTHING;
+
+-- ==============================================================================
+-- 9. SAMPLE DATA FOR PRIMARY ACCOUNT (phuoctai228)
+-- ==============================================================================
+
+INSERT INTO accounts (account_id, email, password_hash, account_status, auth_provider, is_verified)
+VALUES (1, 'instructor@gmail.com', '$2a$11$w/itTk1gtGMzyoG6pw0Sxe2aNOjeKAGDdyW9BA/HdhUUK6HHGUoRG', 'active', 'local', TRUE)
+ON CONFLICT (account_id) DO NOTHING;
+
+INSERT INTO users (user_id, full_name)
+VALUES (1, 'instructor')
+ON CONFLICT (user_id) DO NOTHING;
+
+INSERT INTO instructors (instructor_id)
+VALUES (1)
+ON CONFLICT (instructor_id) DO NOTHING;
+
+-- ==============================================================================
+-- 10. SYNC SEQUENCES (Prevent duplicate key errors)
+-- ==============================================================================
+
+SELECT setval(pg_get_serial_sequence('accounts', 'account_id'), (SELECT MAX(account_id) FROM accounts));
+SELECT setval(pg_get_serial_sequence('categories', 'category_id'), (SELECT MAX(category_id) FROM categories));

@@ -1,10 +1,11 @@
-﻿using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Share.Helpers;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace CourseMarketplaceBE.Application.IServices;
@@ -29,37 +30,65 @@ public class AuthService : IAuthService
 
         await _userRepo.UpdateLastLoginAsync(a.AccountId);
 
-        var key = Encoding.UTF8.GetBytes(_jwtSettings.Key!);
+        // ── Detect role ───────────────────────────────────────────────────────
+        var role = await _userRepo.GetRoleByAccountIdAsync(a.AccountId);
 
-        // Lấy thông tin hiển thị
-        var fullName = a.User?.FullName ?? "User";
+        var fullName = role == "manager"
+            ? (a.Manager?.DisplayName ?? "Manager")
+            : (a.User?.FullName ?? "User");
         var avatar = a.AvatarUrl ?? "";
 
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new[]
-            {
-            new Claim(ClaimTypes.NameIdentifier, a.AccountId.ToString()),
-            new Claim(ClaimTypes.Email, a.Email),
-            new Claim("FullName", fullName),
-            new Claim("AvatarUrl", avatar)
-        }),
-            Expires = DateTime.UtcNow.AddHours(24),
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key),
-                SecurityAlgorithms.HmacSha256Signature)
-        };
+        var accessToken = GenerateAccessToken(a, role);
+        var refreshToken = GenerateRefreshToken();
+        var expiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
 
-        var token = new JwtSecurityTokenHandler().WriteToken(new JwtSecurityTokenHandler().CreateToken(tokenDescriptor));
+        await _userRepo.SaveRefreshTokenAsync(a.AccountId, refreshToken, expiry);
 
-        // Trả về object đầy đủ
-        return new LoginResponse    
+        return new LoginResponse
         {
-            Token = token,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
             FullName = fullName,
-            AvatarUrl = avatar
+            AvatarUrl = avatar,
+            Role = role
         };
     }
+
+    public async Task<LoginResponse?> RefreshTokenAsync(string refreshToken)
+    {
+        var a = await _userRepo.GetAccountByRefreshTokenAsync(refreshToken);
+
+        if (a == null || a.RefreshTokenExpiryTime == null || a.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            return null;
+
+        var role = await _userRepo.GetRoleByAccountIdAsync(a.AccountId);
+
+        var newAccessToken = GenerateAccessToken(a, role);
+        var newRefreshToken = GenerateRefreshToken();
+        var newExpiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+
+        await _userRepo.SaveRefreshTokenAsync(a.AccountId, newRefreshToken, newExpiry);
+
+        var fullName = role == "manager"
+            ? (a.Manager?.DisplayName ?? "Manager")
+            : (a.User?.FullName ?? "User");
+
+        return new LoginResponse
+        {
+            AccessToken = newAccessToken,
+            RefreshToken = newRefreshToken,
+            FullName = fullName,
+            AvatarUrl = a.AvatarUrl ?? "",
+            Role = role
+        };
+    }
+
+    public async Task<bool> LogoutAsync(int accountId)
+    {
+        await _userRepo.RevokeRefreshTokenAsync(accountId);
+        return true;
+    }
+
     public async Task<string> RegisterAsync(RegisterRequest r)
     {
         var acc = new Account
@@ -75,10 +104,49 @@ public class AuthService : IAuthService
         var user = new User
         {
             FullName = r.FullName,
-            TotalSpent = 0,
-            EnrolledCoursesCount = 0
+         
         };
 
         return await _userRepo.RegisterUserAsync(acc, user) ? "Success" : "Error";
+    }
+
+    // ─── PRIVATE HELPERS ──────────────────────────────────────────────────────
+
+    private string GenerateAccessToken(Account a, string role)
+    {
+        var key = Encoding.UTF8.GetBytes(_jwtSettings.Key!);
+        var fullName = role == "manager"
+            ? (a.Manager?.DisplayName ?? "Manager")
+            : (a.User?.FullName ?? "User");
+        var avatar = a.AvatarUrl ?? "";
+
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, a.AccountId.ToString()),
+                new Claim(ClaimTypes.Email, a.Email),
+                new Claim(ClaimTypes.Role, role),          // ← dùng [Authorize(Roles="manager")]
+                new Claim("FullName", fullName),
+                new Claim("AvatarUrl", avatar)
+            }),
+            Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes),
+            Issuer = _jwtSettings.Issuer,
+            Audience = _jwtSettings.Audience,
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(key),
+                SecurityAlgorithms.HmacSha256Signature)
+        };
+
+        return new JwtSecurityTokenHandler()
+            .WriteToken(new JwtSecurityTokenHandler().CreateToken(tokenDescriptor));
+    }
+
+    private static string GenerateRefreshToken()
+    {
+        var randomBytes = new byte[64];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomBytes);
+        return Convert.ToBase64String(randomBytes);
     }
 }
