@@ -72,10 +72,10 @@ Copy paste cái **COMMAND** đã lưu ở trên vô cửa sổ vừa đc mở, E
 # TH1: Chạy lần đầu
 # TH2: Có thay đổi trong database (cần reset lại hết dữ liệu)
 docker compose down -v
-docker compose up --build
+docker compose up --build -d
 
 # TH3: Rebuild + rerun project, ko làm thay đổi database
-docker compose up --build
+docker compose up --build -d
 
 # TH4: Rebuild + rerun frontend, ko làm ảnh hưởng đến backend, db
 docker compose build frontend

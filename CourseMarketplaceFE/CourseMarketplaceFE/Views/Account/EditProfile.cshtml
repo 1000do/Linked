@@ -5,6 +5,7 @@
 
 <div class="max-w-7xl mx-auto px-6 lg:px-12 py-10">
     <div class="flex flex-col lg:flex-row gap-8">
+        @* Sidebar *@
         <aside class="w-full lg:w-72 flex-shrink-0">
             <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 sticky top-24">
                 <nav class="flex flex-col gap-2">
@@ -20,6 +21,7 @@
             </div>
         </aside>
 
+        @* Main Content *@
         <div class="flex-grow space-y-8">
             <div class="mb-4">
                 <h1 class="text-3xl font-extrabold text-slate-800">Account Settings</h1>
@@ -27,7 +29,7 @@
             </div>
 
             <section class="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-sm border border-slate-100">
-                <form asp-controller="Account" asp-action="EditProfile" method="post" enctype="multipart/form-data" class="space-y-6">
+                <form id="editProfileForm" asp-controller="Account" asp-action="EditProfile" method="post" enctype="multipart/form-data" class="space-y-6">
                     <input type="hidden" asp-for="AvatarUrl" />
 
                     @* Avatar Section *@
@@ -39,7 +41,7 @@
                             </div>
                             <label class="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-xl shadow-lg cursor-pointer hover:scale-110 transition-transform">
                                 <span class="material-symbols-outlined text-sm">photo_camera</span>
-                                <input type="file" asp-for="AvatarFile" class="hidden" onchange="previewImage(event)" />
+                                <input type="file" asp-for="AvatarFile" id="AvatarInput" class="hidden" onchange="previewImage(event)" accept="image/*" />
                             </label>
                         </div>
                         <div>
@@ -49,31 +51,30 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        @* Họ & Tên đệm *@
                         <div class="space-y-2">
                             <label class="text-xs font-bold uppercase text-slate-400 ml-1">Họ & Tên đệm</label>
                             <input asp-for="FirstName" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary/20 transition-all" />
                             <span asp-validation-for="FirstName" class="text-xs text-red-500"></span>
                         </div>
 
-                        @* Tên *@
                         <div class="space-y-2">
                             <label class="text-xs font-bold uppercase text-slate-400 ml-1">Tên</label>
                             <input asp-for="LastName" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary/20 transition-all" />
                             <span asp-validation-for="LastName" class="text-xs text-red-500"></span>
                         </div>
 
-                        @* Số điện thoại *@
+                        @* Số điện thoại - ĐÃ CẬP NHẬT *@
                         <div class="space-y-2">
                             <label class="text-xs font-bold uppercase text-slate-400 ml-1">Số điện thoại</label>
                             <div class="relative">
                                 <span class="absolute left-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">call</span>
-                                <input asp-for="PhoneNumber" type="tel" class="w-full bg-slate-50 border-none rounded-2xl pl-12 pr-5 py-4 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="0123 456 789" />
+                                <input asp-for="PhoneNumber" id="PhoneInput" type="tel" maxlength="11"
+                                       class="w-full bg-slate-50 border-none rounded-2xl pl-12 pr-5 py-4 focus:ring-2 focus:ring-primary/20 transition-all"
+                                       placeholder="Nhập 10-11 số" />
                             </div>
                             <span asp-validation-for="PhoneNumber" class="text-xs text-red-500"></span>
                         </div>
 
-                        @* Ngày sinh - TRƯỜNG MỚI THÊM *@
                         <div class="space-y-2">
                             <label class="text-xs font-bold uppercase text-slate-400 ml-1">Ngày sinh</label>
                             <div class="relative">
@@ -84,7 +85,6 @@
                         </div>
                     </div>
 
-                    @* Bio *@
                     <div class="space-y-2">
                         <label class="text-xs font-bold uppercase text-slate-400 ml-1">Giới thiệu bản thân (Bio)</label>
                         <textarea asp-for="Bio" rows="4" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary/20 transition-all resize-none" placeholder="Viết vài dòng về bản thân..."></textarea>
@@ -106,23 +106,62 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
-              function previewImage(event) {
+        // 1. Kiểm tra ảnh
+        function previewImage(event) {
             const file = event.target.files[0];
+            const maxFileSize = 2 * 1024 * 1024;
+
             if (file) {
+                if (file.size > maxFileSize) {
+                    Swal.fire({
+                        title: 'Lỗi dung lượng!',
+                        text: 'Dung lượng ảnh không được vượt quá 2MB.',
+                        icon: 'error',
+                        confirmButtonColor: '#006a62'
+                    });
+                    event.target.value = "";
+                    return;
+                }
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    // Đổi ảnh trong form
                     document.getElementById('previewImg').src = e.target.result;
-
-                    // Đổi luôn ảnh trên thanh Navbar (nếu muốn)
-                    const navAvatar = document.querySelector('nav a[href="/Account/Profile"] img');
-                    if(navAvatar) navAvatar.src = e.target.result;
                 }
                 reader.readAsDataURL(file);
             }
         }
+
+        // 2. Chặn nhập chữ và kiểm tra độ dài số điện thoại
+        const phoneInput = document.getElementById('PhoneInput');
+        const profileForm = document.getElementById('editProfileForm');
+
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function (e) {
+                // Chỉ cho phép nhập số
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        }
+
+        // 3. Kiểm tra trước khi Submit
+        profileForm.addEventListener('submit', function (e) {
+            const phoneVal = phoneInput.value;
+
+            // Nếu ít hơn 10 số hoặc nhiều hơn 11 số
+            if (phoneVal.length < 10 || phoneVal.length > 11) {
+                e.preventDefault(); // Chặn gửi form
+
+                Swal.fire({
+                    title: 'Số điện thoại không hợp lệ',
+                    text: 'Số điện thoại phải có đúng 10 hoặc 11 chữ số.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+            }
+        });
     </script>
+
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }

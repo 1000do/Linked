@@ -1,4 +1,4 @@
-﻿using CloudinaryDotNet;
+using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Http;
@@ -78,6 +78,49 @@ public class CloudinaryUploadService : IFileUploadService
         catch (Exception ex)
         {
             _logger.LogError(ex, "🔥 Exception khi upload ảnh");
+            return null;
+        }
+    }
+
+    public async Task<string?> UploadVideoAsync(IFormFile file)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+            {
+                _logger.LogWarning("⚠️ Video rỗng hoặc null");
+                return null;
+            }
+
+            await using var stream = file.OpenReadStream();
+
+            var uploadParams = new VideoUploadParams
+            {
+                File = new FileDescription(file.FileName, stream)
+            };
+
+            if (!string.IsNullOrWhiteSpace(_uploadPreset))
+            {
+                uploadParams.UploadPreset = _uploadPreset;
+            }
+
+            var result = await _cloudinary.UploadLargeAsync(uploadParams);
+
+            if (result?.Error != null)
+            {
+                _logger.LogError("❌ Upload video lỗi: {msg} | {desc}",
+                    result.Error.Message
+                   );
+                return null;
+            }
+
+            _logger.LogInformation("✅ Upload video thành công: {url}", result?.SecureUrl);
+
+            return result?.SecureUrl?.ToString();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "🔥 Exception khi upload video");
             return null;
         }
     }

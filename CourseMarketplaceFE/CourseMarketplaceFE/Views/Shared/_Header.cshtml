@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Http
 <nav class="fixed top-0 w-full z-50 bg-[#f0fcfb]/40 border-b border-primary/10 glass-nav">
     <div class="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
         <div class="flex items-center gap-8">
@@ -7,8 +7,6 @@
 
         <div class="flex items-center gap-4">
             @{
-                // Ưu tiên lấy từ Claims nếu bạn dùng Authentication, 
-                // hoặc lấy từ Cookies như code cũ của bạn.
                 var userName = Context.Request.Cookies["UserName"];
                 var avatarUrl = Context.Request.Cookies["AvatarUrl"];
             }
@@ -20,30 +18,53 @@
             }
             else
             {
+                var userRole = Context.Request.Cookies["UserRole"] ?? "User";
                 <div class="flex items-center gap-3 pl-4 border-l border-slate-200">
-                    <div class="hidden sm:flex flex-col items-end">
-                        <span class="text-xs font-bold text-slate-700">Chào, @userName</span>
-                        <a href="/Account/Logout" class="text-[10px] text-red-500 hover:underline font-medium">Logout</a>
+                    
+                    @if (userRole.Equals("Instructor", StringComparison.OrdinalIgnoreCase) || userRole.Equals("Manager", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <a href="/InstructorCourse" class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors mr-2">
+                            View as Instructor
+                        </a>
+                        <div class="w-px h-6 bg-slate-200 mx-2"></div>
+                    }
+
+                    <div class="relative" id="notification-dropdown">
+                        <button onclick="toggleNoti()" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative">
+                            <span class="material-symbols-outlined text-[24px]">notifications</span>
+                            <span id="noti-badge" class="hidden absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                        </button>
+
+                        <div id="noti-box" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[60]">
+                            <div class="p-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                                <span class="font-bold text-slate-800 text-sm">Thông báo</span>
+                                <a href="/Notification" class="text-[11px] text-primary font-bold hover:underline">Xem tất cả</a>
+                            </div>
+                            <div id="notification-items-container" class="max-h-80 overflow-y-auto">
+                                <div class="p-4 text-center text-slate-400 text-xs">Đang tải...</div>
+                            </div>
+                        </div>
                     </div>
 
-                    @* Link trỏ vào Account/Profile với logic hiển thị Avatar *@
-                    <a asp-controller="Account" asp-action="Profile" 
+                    <div class="hidden sm:flex flex-col items-end">
+                        <span class="text-xs font-bold text-slate-700">Chào, @userName</span>
+                        @* POST logout để revoke refresh token trên BE (bảo mật hơn GET) *@
+                        <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="text-[10px] text-red-500 hover:underline font-medium bg-transparent border-none p-0 cursor-pointer">Logout</button>
+                        </form>
+                    </div>
+
+                    <a asp-controller="Account" asp-action="Profile"
                        class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 hover:border-primary hover:scale-105 transition-all shadow-sm">
-                        
                         @if (!string.IsNullOrEmpty(avatarUrl) && avatarUrl != "null")
                         {
-                            @* Nếu có ảnh trong DB/Cookie, hiển thị ảnh đó *@
-                            <img class="w-full h-full object-cover" 
-                                 src="@avatarUrl" 
-                                 alt="User avatar" 
-                                 onerror="this.src='https://ui-avatars.com/api/?name=@Uri.EscapeDataString(userName)&background=006a62&color=fff'"/>
+                            <img class="w-full h-full object-cover" src="@avatarUrl" alt="User avatar"
+                                 onerror="this.src='https://ui-avatars.com/api/?name=@Uri.EscapeDataString(userName)&background=006a62&color=fff'" />
                         }
                         else
                         {
-                            @* Nếu chưa có ảnh, hiện ảnh chữ cái mặc định *@
-                            <img class="w-full h-full object-cover" 
-                                 src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(userName)&background=006a62&color=fff" 
-                                 alt="Default avatar" />
+                            <img class="w-full h-full object-cover" src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(userName)&background=006a62&color=fff" alt="Default avatar" />
                         }
                     </a>
                 </div>
@@ -51,3 +72,23 @@
         </div>
     </div>
 </nav>
+
+<script>
+       function toggleNoti() {
+        const box = document.getElementById('noti-box');
+        box.classList.toggle('hidden');
+        if (!box.classList.contains('hidden')) {
+            document.getElementById('noti-badge').classList.add('hidden');
+           
+        }
+    }
+
+    
+
+    window.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('notification-dropdown');
+        if (dropdown && !dropdown.contains(e.target)) {
+            document.getElementById('noti-box').classList.add('hidden');
+        }
+    });
+</script>

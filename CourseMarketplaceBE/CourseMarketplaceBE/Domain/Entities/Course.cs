@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace CourseMarketplaceBE.Domain.Entities;
@@ -29,11 +29,8 @@ public partial class Course
 
     public int? CourseFlagCount { get; set; }
 
-    public int? TotalLessons { get; set; }
-
-    public float? RatingAverage { get; set; }
-
-    public int? TotalStudents { get; set; }
+    // TotalLessons, RatingAverage, TotalStudents đã bị xóa trong SQL v2
+    // Dùng VIEW view_course_stats để lấy các giá trị này (tính động)
 
     public virtual ICollection<AiModelsCourse> AiModelsCourses { get; set; } = new List<AiModelsCourse>();
 

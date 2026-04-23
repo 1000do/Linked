@@ -1,5 +1,6 @@
-﻿using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseMarketplaceBE.Infrastructure.Repositories;
@@ -83,12 +84,15 @@ public class UserRepository : IUserRepository
     public async Task<bool> IsEmailExistsAsync(string email) => await _context.Accounts.AnyAsync(a => a.Email == email);
 
     public async Task<Account?> GetAccountByEmailAsync(string email) =>
-        await _context.Accounts.Include(a => a.User).FirstOrDefaultAsync(a => a.Email == email);
+        await _context.Accounts
+            .Include(a => a.User)
+            .Include(a => a.Manager)
+            .FirstOrDefaultAsync(a => a.Email == email);
 
     public async Task UpdateLastLoginAsync(int accountId)
     {
         var a = await _context.Accounts.FindAsync(accountId);
-        if (a != null) { a.AccountLastLoginAt = DateTime.Now; await _context.SaveChangesAsync(); }
+        if (a != null) { a.AccountLastLoginAt = Unspec(DateTime.UtcNow); await _context.SaveChangesAsync(); }
     }
 
     public async Task<bool> RegisterUserAsync(Account a, User u)
@@ -106,6 +110,46 @@ public class UserRepository : IUserRepository
         }
         catch { await t.RollbackAsync(); return false; }
     }
+
+    public async Task SaveRefreshTokenAsync(int accountId, string refreshToken, DateTime expiry)
+    {
+        var a = await _context.Accounts.FindAsync(accountId);
+        if (a != null)
+        {
+            a.RefreshToken = refreshToken;
+            // Npgsql yêu cầu Kind=Unspecified cho cột timestamp without time zone
+            a.RefreshTokenExpiryTime = Unspec(expiry);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    /// <summary>Strip DateTimeKind về Unspecified để tương thích PostgreSQL timestamp without time zone.</summary>
+    private static DateTime Unspec(DateTime dt) => DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
+
+    public async Task<Account?> GetAccountByRefreshTokenAsync(string refreshToken) =>
+        await _context.Accounts
+            .Include(a => a.User)
+            .Include(a => a.Manager)
+            .FirstOrDefaultAsync(a => a.RefreshToken == refreshToken);
+
+    public async Task RevokeRefreshTokenAsync(int accountId)
+    {
+        var a = await _context.Accounts.FindAsync(accountId);
+        if (a != null)
+        {
+            a.RefreshToken = null;
+            a.RefreshTokenExpiryTime = null;
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<string> GetRoleByAccountIdAsync(int accountId)
+    {
+        // Kiểm tra bảng managers — nếu tồn tại → manager, không thì → user
+        var isManager = await _context.Managers.AnyAsync(m => m.ManagerId == accountId);
+        return isManager ? "manager" : "user";
+    }
+}
 
     public async Task<bool> UpdateEmailVerifiedAsync(string email)
     {
