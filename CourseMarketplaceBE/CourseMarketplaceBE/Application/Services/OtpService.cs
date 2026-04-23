@@ -14,34 +14,56 @@ namespace CourseMarketplaceBE.Application.Services
 
         private static readonly ConcurrentDictionary<string, OtpInfo> _store = new();
 
-        public string GenerateOtp(string email)
+        public string GenerateOtp(string email, string purpose)
         {
+            var key = $"{email}_{purpose}";
+
             var otp = new Random().Next(100000, 999999).ToString();
 
-            _store[email] = new OtpInfo
+            _store[key] = new OtpInfo
             {
                 Code = otp,
-                ExpireAt = DateTime.UtcNow.AddMinutes(2) 
+                ExpireAt = DateTime.UtcNow.AddMinutes(2)
             };
 
             return otp;
         }
 
-        public bool VerifyOtp(string email, string otp)
+        // CHỈ CHECK - KHÔNG XOÁ
+        public bool ValidateOtp(string email, string otp, string purpose)
         {
-            if (!_store.TryGetValue(email, out var info))
+            var key = $"{email}_{purpose}";
+
+            if (!_store.TryGetValue(key, out var info))
                 return false;
 
             if (DateTime.UtcNow > info.ExpireAt)
             {
-                _store.TryRemove(email, out _);
+                _store.TryRemove(key, out _);
+                return false;
+            }
+
+            return info.Code == otp;
+        }
+
+        //  CHECK + XOÁ
+        public bool ConsumeOtp(string email, string otp, string purpose)
+        {
+            var key = $"{email}_{purpose}";
+
+            if (!_store.TryGetValue(key, out var info))
+                return false;
+
+            if (DateTime.UtcNow > info.ExpireAt)
+            {
+                _store.TryRemove(key, out _);
                 return false;
             }
 
             if (info.Code != otp)
                 return false;
 
-            _store.TryRemove(email, out _);
+            _store.TryRemove(key, out _);
             return true;
         }
     }

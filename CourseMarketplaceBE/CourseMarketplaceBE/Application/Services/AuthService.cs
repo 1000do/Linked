@@ -168,7 +168,7 @@ public class AuthService : IAuthService
         var acc = await _userRepo.GetAccountByEmailAsync(email.ToLower());
         if (acc == null) return false;
 
-        var otp = _otpService.GenerateOtp(email);
+        var otp = _otpService.GenerateOtp(email, "verify");
 
         var body = $@"
         <h3>Xác Thực Email</h3>
@@ -184,7 +184,7 @@ public class AuthService : IAuthService
 
     public async Task<bool> VerifyEmailAsync(string email, string otp)
     {
-        var isValid = _otpService.VerifyOtp(email, otp);
+        var isValid = _otpService.ConsumeOtp(email, otp, "verify");
 
         if (!isValid) return false;
 
@@ -202,7 +202,7 @@ public class AuthService : IAuthService
         if (acc.AuthProvider == "google")
             return "This account uses Google login";
 
-        var otp = _otpService.GenerateOtp(email);
+        var otp = _otpService.GenerateOtp(email, "reset");
 
         var body = $@"
         <h3>Reset Password</h3>
@@ -218,7 +218,7 @@ public class AuthService : IAuthService
 
     public async Task<bool> ResetPasswordAsync(string email, string otp, string newPassword)
     {
-        var isValid = _otpService.VerifyOtp(email, otp);
+        var isValid = _otpService.ConsumeOtp(email, otp, "reset");
 
         if (!isValid) return false;
 
@@ -234,5 +234,10 @@ public class AuthService : IAuthService
         await _userRepo.UpdateAccountAsync(acc);
 
         return true;
+    }
+
+    public bool VerifyOtpForReset(string email, string otp)
+    {
+        return _otpService.ValidateOtp(email, otp, "reset");
     }
 }

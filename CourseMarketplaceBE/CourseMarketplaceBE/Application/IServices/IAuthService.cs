@@ -11,4 +11,5 @@ public interface IAuthService
     Task<bool> VerifyEmailAsync(string email, string otp);
     Task<string> ForgotPasswordAsync(string email);
     Task<bool> ResetPasswordAsync(string email, string otp, string newPassword);
+    bool VerifyOtpForReset(string email, string otp);
 }

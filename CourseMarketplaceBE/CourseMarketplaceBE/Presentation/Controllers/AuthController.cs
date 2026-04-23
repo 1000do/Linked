@@ -136,4 +136,15 @@ public class AuthController : ControllerBase
 
         return Ok("Password reset successfully");
     }
+
+    [HttpPost("verify-otp")]
+    public IActionResult VerifyOtpForReset([FromBody] VerifyOtpRequest request)
+    {
+        var isValid = _authService.VerifyOtpForReset(request.Email, request.Otp);
+
+        if (!isValid)
+            return BadRequest("Invalid or expired OTP");
+
+        return Ok("OTP valid");
+    }
 }
