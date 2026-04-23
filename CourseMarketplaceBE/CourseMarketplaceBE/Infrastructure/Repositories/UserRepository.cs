@@ -149,4 +149,32 @@ public class UserRepository : IUserRepository
         var isManager = await _context.Managers.AnyAsync(m => m.ManagerId == accountId);
         return isManager ? "manager" : "user";
     }
+
+
+    public async Task<bool> UpdateEmailVerifiedAsync(string email)
+    {
+        var acc = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == email);
+
+        if (acc == null) return false;
+
+        acc.IsVerified = true;
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> UpdateAccountAsync(Account account)
+    {
+        try
+        {
+            _context.Accounts.Update(account);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"UpdateAccount Error: {ex.Message}");
+            return false;
+        }
+    }
 }

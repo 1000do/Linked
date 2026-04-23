@@ -1,8 +1,10 @@
+using CourseMarketplaceFE.Models;
 using CourseMarketplaceFE.Helpers;
 using LinkedLearn.Models.UserVM;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Net.Http.Headers;
 
 namespace CourseMarketplaceFE.Controllers
 {
@@ -268,6 +270,220 @@ namespace CourseMarketplaceFE.Controllers
             }
             catch { }
             return defaultMsg;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
+        {
+            var client = _httpClientFactory.CreateClient("BackendApi");
+
+            var response = await client.PostAsJsonAsync("Auth/google-login", request);
+
+            if (!response.IsSuccessStatusCode)
+                return BadRequest();
+
+            var result = await response.Content.ReadFromJsonAsync<LoginResponse>(_jsonOptions);
+
+            var cookieOptions = new CookieOptions
+            {
+                Expires = DateTimeOffset.UtcNow.AddDays(7),
+                Path = "/"
+            };
+
+            Response.Cookies.Append("AccessToken", result?.AccessToken ?? "", new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = cookieOptions.Expires,
+                Path = "/"
+            });
+
+            Response.Cookies.Append("UserName", result?.FullName ?? "User", cookieOptions);
+            Response.Cookies.Append("AvatarUrl", result?.AvatarUrl ?? "", cookieOptions);
+
+            return Ok();
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPassword() => View();
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(string email)
+        {
+            var client = _httpClientFactory.CreateClient("BackendApi");
+
+            var res = await client.PostAsync($"Auth/forgot-password?email={email}", null);
+
+            if (res.IsSuccessStatusCode)
+            {
+                TempData.Remove("IsVerifyFlow");
+                TempData["ResetEmail"] = email;
+                return RedirectToAction("VerifyOtp");
+            }
+
+            var error = await res.Content.ReadAsStringAsync();
+            ViewBag.ErrorMessage = error;
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult VerifyOtp()
+        {
+            var email = TempData["VerifyEmail"] ?? TempData["ResetEmail"];
+
+            if (email == null) return RedirectToAction("Login");
+
+            ViewBag.Email = email;
+            TempData.Keep("VerifyEmail");
+            TempData.Keep("ResetEmail");
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> VerifyOtp(string otp)
+        {
+            var email = TempData["VerifyEmail"]?.ToString() ?? TempData["ResetEmail"]?.ToString();
+            var isEmailVerify = TempData["IsVerifyFlow"] != null;
+
+            if (string.IsNullOrEmpty(email))
+                return RedirectToAction("Login");
+
+            var client = _httpClientFactory.CreateClient("BackendApi");
+
+            HttpResponseMessage res;
+
+            if (isEmailVerify)
+            {
+                // VERIFY EMAIL
+                res = await client.PostAsJsonAsync("Auth/verify-email", new
+                {
+                    Email = email,
+                    Otp = otp
+                });
+            }
+            else
+            {
+                // VERIFY OTP CHO RESET PASSWORD
+                res = await client.PostAsJsonAsync("Auth/verify-otp", new
+                {
+                    Email = email,
+                    Otp = otp
+                });
+            }
+
+            if (!res.IsSuccessStatusCode)
+            {
+                ViewBag.ErrorMessage = "OTP không đúng hoặc đã hết hạn";
+                ViewBag.Email = email;
+
+                if (isEmailVerify)
+                {
+                    TempData.Keep("VerifyEmail");
+                    TempData.Keep("IsVerifyFlow");
+                }
+                else
+                {
+                    TempData.Keep("ResetEmail");
+                }
+
+                return View();
+            }
+
+            if (isEmailVerify)
+            {
+                // 🔥 XÓA CỜ SAU KHI DÙNG
+                TempData.Remove("IsVerifyFlow");
+                TempData.Remove("VerifyEmail");
+
+                TempData["SuccessMessage"] = "Xác thực email thành công!";
+                return RedirectToAction("Profile");
+            }
+
+            // flow reset password
+            TempData["Otp"] = otp;
+            TempData.Keep("ResetEmail");
+            TempData.Keep("Otp");
+
+            return RedirectToAction("ResetPassword");
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword()
+        {
+            if (TempData["ResetEmail"] == null || TempData["Otp"] == null)
+                return RedirectToAction("Login");
+
+            ViewBag.Email = TempData["ResetEmail"];
+            ViewBag.Otp = TempData["Otp"];
+
+            TempData.Keep("ResetEmail");
+            TempData.Keep("Otp");
+
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(string email, string otp, string newPassword)
+        {
+            var client = _httpClientFactory.CreateClient("BackendApi");
+
+            var res = await client.PostAsJsonAsync("Auth/reset-password", new
+            {
+                Email = email,
+                Otp = otp,
+                NewPassword = newPassword
+            });
+
+            if (res.IsSuccessStatusCode)
+            {
+                TempData["SuccessMessage"] = "Đổi mật khẩu thành công";
+                return RedirectToAction("Login");
+            }
+
+            // ❗ FIX QUAN TRỌNG
+            ViewBag.ErrorMessage = "OTP sai hoặc hết hạn";
+
+            ViewBag.Email = email;
+            ViewBag.Otp = otp;
+
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SendVerifyOtp()
+        {
+            var token = Request.Cookies["AccessToken"];
+            if (string.IsNullOrEmpty(token)) return RedirectToAction("Login");
+
+            var client = _httpClientFactory.CreateClient("BackendApi");
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+
+            // 🔥 GỌI PROFILE ĐỂ LẤY EMAIL
+            var profileRes = await client.GetAsync("Profile");
+
+            if (!profileRes.IsSuccessStatusCode)
+                return RedirectToAction("Profile");
+
+            var profile = await profileRes.Content.ReadFromJsonAsync<UserProfileApiResponse>(_jsonOptions);
+
+            var email = profile?.Data?.Email;
+
+            if (string.IsNullOrEmpty(email))
+                return RedirectToAction("Profile");
+
+            // 🔥 SET EMAIL
+            TempData["VerifyEmail"] = email;
+            TempData["IsVerifyFlow"] = true;
+
+            var res = await client.PostAsync($"Auth/send-otp?email={email}", null);
+
+            if (!res.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = "Không gửi được OTP";
+                return RedirectToAction("Profile");
+            }
+
+            return RedirectToAction("VerifyOtp");
         }
     }
 }

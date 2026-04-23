@@ -1,0 +1,123 @@
+﻿@{
+    ViewData["Title"] = "Xác thực OTP";
+    var email = ViewBag.Email as string;
+}
+
+<main class="flex-grow flex items-center justify-center px-6 py-12 min-h-[70vh]">
+    <div class="w-full max-w-md">
+        <div class="bg-white rounded-xl shadow-[0px_12px_32px_rgba(19,29,30,0.04)] p-8 md:p-10 relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-primary-container/20 rounded-full blur-3xl"></div>
+
+            <div class="relative z-10">
+                <!-- ICON -->
+                <div class="mb-8 flex justify-center">
+                    <div class="w-16 h-16 rounded-full bg-surface-container-low flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary text-3xl">verified</span>
+                    </div>
+                </div>
+
+                <!-- TITLE -->
+                <div class="text-center mb-8">
+                    <h1 class="font-headline font-extrabold text-3xl text-on-surface tracking-tight mb-3">
+                        Xác thực OTP
+                    </h1>
+
+                    <p class="text-slate-500 text-sm leading-relaxed">
+                        Mã OTP đã được gửi tới <br />
+                        <span class="font-semibold text-on-surface">@email</span>
+                    </p>
+                </div>
+
+                <!-- ERROR -->
+                @if (ViewBag.ErrorMessage != null)
+                {
+                    <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm mb-4">
+                        @ViewBag.ErrorMessage
+                    </div>
+                }
+
+                <!-- FORM -->
+                <form asp-action="VerifyOtp" method="post" class="space-y-6">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold uppercase text-slate-500 px-1">
+                            Nhập mã OTP
+                        </label>
+
+                        <input name="otp"
+                               class="w-full text-center tracking-[8px] text-xl font-bold py-4 bg-slate-50 border-none rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                               placeholder="------"
+                               maxlength="6"
+                               required />
+                    </div>
+
+                    <!-- COUNTDOWN -->
+                    <div class="text-center text-sm text-slate-500">
+                        Mã sẽ hết hạn sau
+                        <span id="countdown" class="font-bold text-primary">02:00</span>
+                    </div>
+
+                    <button class="w-full bg-gradient-to-br from-primary to-primary-container text-white font-headline font-bold py-4 rounded-full shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                            type="submit">
+                        Xác nhận OTP
+                    </button>
+                </form>
+
+                <!-- RESEND -->
+                <div class="mt-6 text-center">
+                    <button id="resendBtn"
+                            class="text-sm text-primary font-semibold opacity-50 cursor-not-allowed"
+                            disabled>
+                        Gửi lại OTP
+                    </button>
+                </div>
+
+                <!-- BACK -->
+                <div class="mt-6 text-center">
+                    <a class="inline-flex items-center gap-2 text-primary font-semibold hover:gap-3 transition-all text-sm"
+                       href="/Account/Login">
+                        <span class="material-symbols-outlined text-lg">arrow_back</span>
+                        Quay lại đăng nhập
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    let time = 120; // 2 phút
+
+    const countdownEl = document.getElementById("countdown");
+    const resendBtn = document.getElementById("resendBtn");
+
+    const timer = setInterval(() => {
+        const minutes = Math.floor(time / 60);
+        const seconds = time % 60;
+
+        countdownEl.textContent =
+            String(minutes).padStart(2, '0') + ":" +
+            String(seconds).padStart(2, '0');
+
+        time--;
+
+        if (time < 0) {
+            clearInterval(timer);
+
+            countdownEl.textContent = "Hết hạn";
+
+            resendBtn.disabled = false;
+            resendBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+    }, 1000);
+
+    // RESEND OTP
+    resendBtn.addEventListener("click", async () => {
+        const email = "@email";
+
+        await fetch(`/Account/ForgotPassword?email=${email}`, {
+            method: "POST"
+        });
+
+        location.reload();
+    });
+</script>
