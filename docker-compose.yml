@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./db_scripts/3.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db_scripts/2.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     healthcheck:
@@ -35,6 +35,11 @@ services:
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
       CLOUDINARY_UPLOAD_PRESET: ${CLOUDINARY_UPLOAD_PRESET}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
+      EMAIL_ENABLESSL: ${EMAIL_ENABLESSL}
+      EMAIL_EMAIL: ${EMAIL_EMAIL}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
     depends_on:
       db:
         condition: service_healthy

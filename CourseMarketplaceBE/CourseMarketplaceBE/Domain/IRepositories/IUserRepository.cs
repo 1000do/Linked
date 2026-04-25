@@ -15,4 +15,6 @@ public interface IUserRepository
     Task RevokeRefreshTokenAsync(int accountId);
     /// <summary>Trả về "manager" nếu account_id có trong bảng managers, ngược lại "user"</summary>
     Task<string> GetRoleByAccountIdAsync(int accountId);
+    Task<bool> UpdateEmailVerifiedAsync(string email);
+    Task<bool> UpdateAccountAsync(Account account);
 }
