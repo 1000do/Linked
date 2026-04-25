@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
+
 namespace CourseMarketplaceBE;
 
 public class Program
@@ -83,6 +84,21 @@ public class Program
         builder.Configuration["CloudinarySettings:ApiSecret"] =
             Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET");
 
+        builder.Configuration["EmailSettings:Host"] =
+    Environment.GetEnvironmentVariable("EMAIL_HOST");
+
+        builder.Configuration["EmailSettings:Port"] =
+            Environment.GetEnvironmentVariable("EMAIL_PORT");
+
+        builder.Configuration["EmailSettings:EnableSSL"] =
+            Environment.GetEnvironmentVariable("EMAIL_ENABLESSL");
+
+        builder.Configuration["EmailSettings:Email"] =
+            Environment.GetEnvironmentVariable("EMAIL_EMAIL");
+
+        builder.Configuration["EmailSettings:Password"] =
+            Environment.GetEnvironmentVariable("EMAIL_PASSWORD");
+
         var configuration = builder.Configuration;
 
         // 🔥 Stripe Configuration – đọc Secret Key từ biến môi trường (Docker inject)
@@ -104,8 +120,13 @@ public class Program
 
         // 🔥 4. Database
         var connectionString = configuration.GetConnectionString("DefaultConnection");
+        
+        var dataSourceBuilder = new Npgsql.NpgsqlDataSourceBuilder(connectionString);
+        dataSourceBuilder.EnableDynamicJson();
+        var dataSource = dataSourceBuilder.Build();
+
         builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            options.UseNpgsql(dataSource));
 
         // 🔥 5. DI
         builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -120,6 +141,9 @@ public class Program
         builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
         builder.Services.AddScoped<INotificationService, NotificationService>();
         builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+          
+        builder.Services.AddSingleton<IOtpService, OtpService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
 
         // Register file upload implementation conditionally.
         // If Cloudinary config is present, use CloudinaryUploadService; otherwise use a no-op fallback.

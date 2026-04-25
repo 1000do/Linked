@@ -55,7 +55,7 @@
                     </div>
                 </div>
                 <div class="flex gap-3">
-                    <button class="px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/20" onclick="alert('Lesson content saved locally as draft.')">Save Lesson</button>
+                    <button class="px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/20" onclick="saveLesson()" id="save-lesson-btn">Save Lesson</button>
                 </div>
             </div>
 
@@ -118,6 +118,8 @@
                         <h3 class="text-lg font-bold text-slate-900 mb-2" id="resource-title">No resources yet</h3>
                         <p class="text-sm text-slate-500 mb-6" id="resource-desc">Upload supplementary files like PDFs, code samples, or slides.</p>
                         
+                        <input type="hidden" id="ResourceUrl" name="ResourceUrl" />
+                        <input type="hidden" id="ResourceName" name="ResourceName" />
                         <input type="file" id="resource-input" class="hidden" />
                         <button id="upload-resource-btn" class="px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors">
                             <span class="material-symbols-outlined text-[18px] align-middle mr-1">upload_file</span> Upload Resource
@@ -301,6 +303,60 @@
 
             document.getElementById('editing-lesson-id').textContent = el.dataset.num;
             document.getElementById('editing-lesson-title').textContent = el.dataset.title;
+
+            // Extract duration from materialMetadata
+            const lessonId = parseInt(el.dataset.lessonId);
+            const lesson = lessonsData.find(l => l.lessonId === lessonId);
+            let durationDisplay = "0 mins";
+            
+            // Clear current form
+            lessonQuill.root.innerHTML = '';
+            document.getElementById('MaterialUrl').value = '';
+            document.getElementById('ResourceUrl').value = '';
+            document.getElementById('ResourceName').value = '';
+            resetVideoUpload();
+            document.getElementById('resource-title').textContent = "No resources yet";
+            document.getElementById('resource-title').classList.remove('text-primary');
+            document.getElementById('resource-desc').textContent = "Upload supplementary files like PDFs, code samples, or slides.";
+            document.getElementById('upload-resource-btn').innerHTML = '<span class="material-symbols-outlined text-[18px] align-middle mr-1">upload_file</span> Upload Resource';
+            
+            if (lesson && lesson.learningMaterials && lesson.learningMaterials.length > 0) {
+                // Loop through all materials to populate both video and document
+                lesson.learningMaterials.forEach(material => {
+                    const type = material.materialMetadata?.fileType || material.materialMetadata?.file_type || 'video';
+                    
+                    if (type === 'video') {
+                        // Populate description
+                        if (material.description) {
+                            lessonQuill.root.innerHTML = material.description;
+                        }
+                        // Populate video
+                        if (material.materialUrl) {
+                            document.getElementById('MaterialUrl').value = material.materialUrl;
+                            document.getElementById('video-drop-area').classList.add('hidden');
+                            document.getElementById('video-success').classList.remove('hidden');
+                            document.getElementById('uploaded-filename').textContent = "Existing Video Material";
+                        }
+                        if (material.materialMetadata && material.materialMetadata.duration) {
+                            const totalSeconds = material.materialMetadata.duration;
+                            const mins = Math.floor(totalSeconds / 60);
+                            durationDisplay = mins + " mins";
+                        }
+                    } else if (type === 'document') {
+                        // Populate resource
+                        if (material.materialUrl) {
+                            document.getElementById('ResourceUrl').value = material.materialUrl;
+                            document.getElementById('ResourceName').value = material.title;
+                            document.getElementById('resource-title').textContent = material.title;
+                            document.getElementById('resource-title').classList.add('text-primary');
+                            document.getElementById('resource-desc').textContent = "Existing resource file";
+                            document.getElementById('upload-resource-btn').innerHTML = '<span class="material-symbols-outlined text-[18px] align-middle mr-1">change_circle</span> Replace Resource';
+                        }
+                    }
+                });
+            }
+            const durationEl = document.getElementById('editing-lesson-duration');
+            if(durationEl) durationEl.textContent = durationDisplay;
         };
 
         window.addNewLesson = function() {
@@ -453,13 +509,102 @@
         window.resetVideoUpload = resetVideoUpload;
 
         // ─── Save Draft / Submit ───
-        window.submitCourseForReview = function() {
-            if(confirm("Are you sure you want to submit this course for review? Once submitted, administrators will review your content before it is published to students.")) {
-                alert("Course submitted for review successfully! Status changed to 'Pending Review'.");
-                document.querySelector('span.bg-primary-container\\/20').textContent = 'PENDING REVIEW';
-                document.querySelector('span.bg-primary-container\\/20').classList.add('bg-amber-100', 'text-amber-700', 'border-amber-200');
-                document.querySelector('span.bg-primary-container\\/20').classList.remove('bg-primary-container/20', 'text-primary', 'border-primary-container');
+        window.saveLesson = async function() {
+            const lessonIdEl = document.querySelector('.lesson-item.border-primary');
+            if (!lessonIdEl) {
+                Swal.fire({ icon: 'warning', title: 'Oops...', text: 'Please select a lesson first.' });
+                return;
             }
+            const lessonId = lessonIdEl.dataset.lessonId;
+            const title = lessonIdEl.dataset.title;
+            const description = lessonQuill.root.innerHTML;
+            const materialUrl = document.getElementById('MaterialUrl').value;
+            const resourceUrl = document.getElementById('ResourceUrl').value;
+            const resourceName = document.getElementById('ResourceName').value;
+            
+            const btn = document.getElementById('save-lesson-btn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            
+            try {
+                const fd = new FormData();
+                fd.append('lessonId', lessonId);
+                fd.append('title', title + " Video Material");
+                if(description && description !== '<p><br></p>') fd.append('description', description);
+                if(materialUrl) fd.append('materialUrl', materialUrl);
+                if(resourceUrl) {
+                    fd.append('resourceUrl', resourceUrl);
+                    fd.append('resourceName', resourceName || title + " Resource");
+                }
+                
+                const res = await fetch('/InstructorCourse/AddMaterial', { method: 'POST', body: fd });
+                if(res.ok) {
+                    const json = await res.json();
+                    if(json.success) {
+                        Swal.fire({ icon: 'success', title: 'Saved!', text: 'Lesson material has been saved successfully.', timer: 1500, showConfirmButton: false });
+                        // Ideally update local lessonsData array with new material
+                        if (json.data) {
+                            const lesson = lessonsData.find(l => l.lessonId == lessonId);
+                            if (lesson) {
+                                if (!lesson.learningMaterials) lesson.learningMaterials = [];
+                                // If material already existed, we could replace it, but the API just adds currently.
+                                lesson.learningMaterials.push(json.data);
+                                selectLesson(lessonIdEl); // refresh duration
+                            }
+                        }
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Error', text: "Failed to save lesson: " + (json.message || "Unknown error") });
+                    }
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Error', text: "Failed to save lesson." });
+                }
+            } catch(e) {
+                Swal.fire({ icon: 'error', title: 'Error', text: "Error saving lesson." });
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Lesson';
+            }
+        };
+
+        window.submitCourseForReview = function() {
+            Swal.fire({
+                title: 'Submit for review?',
+                text: "Are you sure you want to submit this course for review? Once submitted, administrators will review your content before it is published to students.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#006a62',
+                cancelButtonColor: '#cbd5e1',
+                confirmButtonText: 'Yes, submit it!'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const res = await fetch('/InstructorCourse/UpdateCourseStatus', { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: new URLSearchParams({ courseId: courseId, status: 'published' })
+                        });
+                        
+                        if (res.ok) {
+                            const json = await res.json();
+                            if (json.success) {
+                                Swal.fire('Submitted!', 'Course submitted for review successfully! Status changed to Pending Review.', 'success');
+                                const badge = document.querySelector('span.bg-primary-container\\/20');
+                                if(badge) {
+                                    badge.textContent = 'PENDING REVIEW';
+                                    badge.classList.add('bg-amber-100', 'text-amber-700', 'border-amber-200');
+                                    badge.classList.remove('bg-primary-container/20', 'text-primary', 'border-primary-container');
+                                }
+                            } else {
+                                Swal.fire('Error', json.message || 'Failed to update course status.', 'error');
+                            }
+                        } else {
+                            Swal.fire('Error', 'Failed to update course status.', 'error');
+                        }
+                    } catch (e) {
+                        Swal.fire('Error', 'An error occurred while communicating with the server.', 'error');
+                    }
+                }
+            });
         };
 
 
@@ -492,6 +637,8 @@
                         resourceTitle.textContent = file.name;
                         resourceTitle.classList.add('text-primary');
                         document.getElementById('resource-desc').textContent = "Uploaded successfully!";
+                        document.getElementById('ResourceUrl').value = data.secure_url;
+                        document.getElementById('ResourceName').value = file.name;
                         resourceBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] align-middle mr-1">change_circle</span> Replace Resource';
                     }
                 })

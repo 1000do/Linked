@@ -36,6 +36,11 @@ services:
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
       CLOUDINARY_UPLOAD_PRESET: ${CLOUDINARY_UPLOAD_PRESET}
       Stripe__SecretKey: ${STRIPE_SECRET_KEY}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
+      EMAIL_ENABLESSL: ${EMAIL_ENABLESSL}
+      EMAIL_EMAIL: ${EMAIL_EMAIL}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
     depends_on:
       db:
         condition: service_healthy

@@ -92,6 +92,19 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.AccountLastLoginAt)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("account_last_login_at");
+            entity.Property(e => e.AuthProvider)
+                .HasMaxLength(50)
+                .HasColumnName("auth_provider");
+            entity.Property(e => e.AvatarUrl).HasColumnName("avatar_url");
+            entity.Property(e => e.Email)
+                .HasMaxLength(255)
+                .HasColumnName("email");
+            entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
+            entity.Property(e => e.PhoneNumber)
+                .HasMaxLength(50)
+                .HasColumnName("phone_number");
+            entity.Property(e => e.IsVerified)
+    .HasColumnName("is_verified");
         });
 
         // ── ai_activity_logs ──────────────────────────────────────────────────
@@ -428,8 +441,14 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.LearningStatus).HasMaxLength(50).HasColumnName("learning_status");
             entity.Property(e => e.MaterialUrl).HasColumnName("material_url");
-            // ★ duration đổi từ VARCHAR → INT (giây)
-            entity.Property(e => e.Duration).HasColumnName("duration");
+            // ★ duration đổi từ VARCHAR → INT (giây) -> XÓA THEO V3
+            entity.Property(e => e.MaterialMetadata)
+                .HasColumnType("jsonb")
+                .HasColumnName("material_metadata");
+
+            entity.Property(e => e.MaterialHash)
+                .HasMaxLength(32)
+                .HasColumnName("material_hash");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")

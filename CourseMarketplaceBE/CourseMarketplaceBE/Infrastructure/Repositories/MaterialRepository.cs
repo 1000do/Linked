@@ -20,6 +20,11 @@ public class MaterialRepository : IMaterialRepository
         return await _context.LearningMaterials.FindAsync(materialId);
     }
 
+    public async Task<List<LearningMaterial>> GetMaterialsByLessonIdAsync(int lessonId)
+    {
+        return await _context.LearningMaterials.Where(m => m.LessonId == lessonId).ToListAsync();
+    }
+
     public async Task AddAsync(LearningMaterial material)
     {
         await _context.LearningMaterials.AddAsync(material);

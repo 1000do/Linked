@@ -28,6 +28,8 @@ DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS accounts CASCADE;
 DROP TABLE IF EXISTS material_p_hashes CASCADE;
 DROP TABLE IF EXISTS material_embeddings CASCADE;
+DROP TABLE IF EXISTS course_exts CASCADE;
+DROP TABLE IF EXISTS lesson_exts CASCADE;
 
 
 -- ==============================================================================
@@ -184,11 +186,19 @@ CREATE TABLE learning_materials (
 	
 );
    
--- p_hash dùng cho video và image, check duplication cho file đã qua chỉnh sửa ( bit_count(p_hash XOR :new_hash) )
-CREATE TABLE material_p_hashes (
-    material_id INT PRIMARY KEY REFERENCES learning_materials(material_id) ON DELETE CASCADE,
-    p_hash BIGINT[] NOT NULL, 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+CREATE TABLE course_exts (
+    course_id INT PRIMARY KEY REFERENCES courses(course_id) ON DELETE CASCADE,
+    title_hash CHAR(32),
+	description_hash CHAR(32),
+	thumbnail_hash CHAR(32)
+   
+);CREATE TABLE lesson_exts (
+    lesson_id INT PRIMARY KEY REFERENCES lessons(lesson_id) ON DELETE CASCADE,
+    title_hash CHAR(32),
+	description_hash CHAR(32),
+	thumbnail_hash CHAR(32)
+   
 );
 
 -- Check duplication thông qua AI (tính cosine similarity của embedding) 

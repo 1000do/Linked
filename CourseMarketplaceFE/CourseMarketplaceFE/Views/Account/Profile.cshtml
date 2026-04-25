@@ -36,6 +36,27 @@
                         <div>
                             <h2 class="text-3xl font-bold text-slate-800">@Model.FullName</h2>
                             <p class="text-primary font-medium">@Model.Email</p>
+
+                            @if (!Model.IsVerified)
+                            {
+                                <div class="mt-2 flex items-center gap-3">
+                                    <span class="text-red-500 text-sm font-semibold">
+                                        Email chưa xác thực
+                                    </span>
+
+                                    <a href="/Account/SendVerifyOtp"
+                                       class="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:opacity-90">
+                                        Xác thực
+                                    </a>
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="text-green-500 text-sm font-semibold">
+                                    ✔ Đã xác thực
+                                </span>
+                            }
+
                         </div>
                         <a href="/Account/EditProfile" class="bg-primary text-white px-6 py-2.5 rounded-xl font-bold hover:opacity-90 transition-all flex items-center gap-2">
                             <span class="material-symbols-outlined text-sm">edit</span> Edit Profile

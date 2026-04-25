@@ -8,6 +8,7 @@
         public DateOnly? DateOfBirth { get; set; }
         public string? AvatarUrl { get; set; }
         public string? PhoneNumber { get; set; }
+        public bool IsVerified { get; set; }
     }
 
     // Class hứng dữ liệu bọc ngoài từ API (status, data)

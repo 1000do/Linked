@@ -8,4 +8,5 @@ public class UserProfileResponse
     public DateOnly? DateOfBirth { get; set; }
     public string? AvatarUrl { get; set; }
     public string? PhoneNumber { get; set; } // Thêm trường này để hiện SĐT
+    public bool IsVerified { get; set; }
 }
