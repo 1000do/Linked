@@ -1,0 +1,189 @@
+@model CourseMarketplaceFE.Models.BecomeInstructorViewModel
+@{
+    ViewData["Title"] = "Trở thành Giảng viên";
+}
+
+<section class="min-h-screen flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-2xl">
+
+        @* ── Header ──────────────────────────────────────────────────── *@
+        <div class="text-center mb-10">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-primary-container/60 mb-6 shadow-lg shadow-primary/20">
+                <span class="material-symbols-outlined text-white text-4xl" style='font-variation-settings: "FILL" 1;'>school</span>
+            </div>
+            <h1 class="font-headline text-3xl md:text-4xl font-extrabold text-on-surface tracking-tight">
+                Trở thành Giảng viên
+            </h1>
+            <p class="mt-3 text-slate-500 max-w-md mx-auto leading-relaxed">
+                Chia sẻ kiến thức của bạn với hàng nghìn học viên. Điền thông tin bên dưới để bắt đầu hành trình dạy học.
+            </p>
+        </div>
+
+        @* ── Success Message ─────────────────────────────────────────── *@
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium flex items-center gap-3">
+                <span class="material-symbols-outlined text-emerald-500">check_circle</span>
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @* ── Error Summary ───────────────────────────────────────────── *@
+        @if (!ViewData.ModelState.IsValid)
+        {
+            var errors = ViewData.ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .Where(m => !string.IsNullOrEmpty(m));
+
+            if (errors.Any())
+            {
+                <div class="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-red-500">error</span>
+                        <span class="font-bold">Có lỗi xảy ra:</span>
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 ml-1">
+                        @foreach (var error in errors)
+                        {
+                            <li>@error</li>
+                        }
+                    </ul>
+                </div>
+            }
+        }
+
+        @* ── Form Card ───────────────────────────────────────────────── *@
+        <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+            <form asp-action="Become" method="post" class="p-8 md:p-10 space-y-6">
+                @Html.AntiForgeryToken()
+
+                @* ── Steps indicator ─────────────────────────────────── *@
+                <div class="flex items-center justify-center gap-4 mb-4 text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <div class="flex items-center gap-2 text-primary">
+                        <span class="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-xs">1</span>
+                        <span>Thông tin</span>
+                    </div>
+                    <div class="w-8 h-px bg-slate-200"></div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-xs">2</span>
+                        <span>Thanh toán</span>
+                    </div>
+                    <div class="w-8 h-px bg-slate-200"></div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-xs">3</span>
+                        <span>Hoàn tất</span>
+                    </div>
+                </div>
+
+                @* ── Professional Title ──────────────────────────────── *@
+                <div>
+                    <label asp-for="ProfessionalTitle" class="block text-sm font-semibold text-slate-700 mb-2">
+                        <span class="material-symbols-outlined text-base align-middle mr-1 text-primary">badge</span>
+                        Chức danh chuyên môn
+                    </label>
+                    <input asp-for="ProfessionalTitle"
+                           class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                           placeholder="VD: Senior .NET Developer, UX Designer, Data Scientist..." />
+                    <span asp-validation-for="ProfessionalTitle" class="text-red-500 text-xs mt-1 block"></span>
+                </div>
+
+                @* ── Bio ─────────────────────────────────────────────── *@
+                <div>
+                    <label asp-for="Bio" class="block text-sm font-semibold text-slate-700 mb-2">
+                        <span class="material-symbols-outlined text-base align-middle mr-1 text-primary">person</span>
+                        Giới thiệu bản thân
+                    </label>
+                    <textarea asp-for="Bio"
+                              rows="4"
+                              class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all resize-none"
+                              placeholder="Mô tả ngắn gọn về kinh nghiệm, thành tích và phong cách giảng dạy của bạn..."></textarea>
+                    <span asp-validation-for="Bio" class="text-red-500 text-xs mt-1 block"></span>
+                    <p class="text-xs text-slate-400 mt-1">Tối đa 2000 ký tự</p>
+                </div>
+
+                @* ── Expertise ───────────────────────────────────────── *@
+                <div>
+                    <label asp-for="Expertise" class="block text-sm font-semibold text-slate-700 mb-2">
+                        <span class="material-symbols-outlined text-base align-middle mr-1 text-primary">psychology</span>
+                        Lĩnh vực chuyên môn
+                    </label>
+                    <input asp-for="Expertise"
+                           class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                           placeholder="VD: C#, ASP.NET Core, Cloud Architecture, DevOps..." />
+                    <span asp-validation-for="Expertise" class="text-red-500 text-xs mt-1 block"></span>
+                </div>
+
+                @* ── Stripe Notice ───────────────────────────────────── *@
+                <div class="bg-gradient-to-r from-indigo-50 to-violet-50 rounded-2xl p-5 border border-indigo-100">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-indigo-600">account_balance</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-indigo-800">Thiết lập thanh toán qua Stripe</p>
+                            <p class="text-xs text-indigo-600 mt-1 leading-relaxed">
+                                Sau khi điền form, bạn sẽ được chuyển đến trang bảo mật của
+                                <strong>Stripe</strong> để khai báo thông tin ngân hàng.
+                                Điều này giúp bạn nhận thanh toán khi có học viên mua khóa học.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                @* ── Submit Button ───────────────────────────────────── *@
+                <button type="submit"
+                        class="w-full py-4 bg-gradient-to-r from-primary to-primary/80 text-white font-bold text-base rounded-2xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 flex items-center justify-center gap-3">
+                    <span class="material-symbols-outlined">rocket_launch</span>
+                    Đăng ký & Thiết lập thanh toán
+                </button>
+
+                <p class="text-center text-xs text-slate-400 mt-2">
+                    Bằng việc đăng ký, bạn đồng ý với
+                    <a href="#" class="text-primary hover:underline">Điều khoản Giảng viên</a>
+                    của LinkedLearn.
+                </p>
+            </form>
+        </div>
+
+        @* ── Benefits Section ────────────────────────────────────────── *@
+        <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm text-center hover:shadow-md transition-shadow">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+                    <span class="material-symbols-outlined text-emerald-600" style='font-variation-settings: "FILL" 1;'>monetization_on</span>
+                </div>
+                <h3 class="font-bold text-sm text-slate-800">Thu nhập không giới hạn</h3>
+                <p class="text-xs text-slate-400 mt-1">Nhận thanh toán trực tiếp qua Stripe mỗi khi có học viên mua khóa học.</p>
+            </div>
+            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm text-center hover:shadow-md transition-shadow">
+                <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-3">
+                    <span class="material-symbols-outlined text-blue-600" style='font-variation-settings: "FILL" 1;'>groups</span>
+                </div>
+                <h3 class="font-bold text-sm text-slate-800">Cộng đồng lớn</h3>
+                <p class="text-xs text-slate-400 mt-1">Tiếp cận hàng nghìn học viên đang tìm kiếm kiến thức mới.</p>
+            </div>
+            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm text-center hover:shadow-md transition-shadow">
+                <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-3">
+                    <span class="material-symbols-outlined text-amber-600" style='font-variation-settings: "FILL" 1;'>dashboard_customize</span>
+                </div>
+                <h3 class="font-bold text-sm text-slate-800">Công cụ mạnh mẽ</h3>
+                <p class="text-xs text-slate-400 mt-1">Dashboard quản lý khóa học, thống kê doanh thu và đánh giá.</p>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Auto-resize textarea
+        const bioTextarea = document.getElementById('Bio');
+        if (bioTextarea) {
+            bioTextarea.addEventListener('input', function () {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 300) + 'px';
+            });
+        }
+    </script>
+}

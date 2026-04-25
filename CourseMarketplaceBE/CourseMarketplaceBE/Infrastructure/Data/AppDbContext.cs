@@ -370,6 +370,15 @@ public partial class AppDbContext : DbContext
             entity.ToTable("instructors");
 
             entity.Property(e => e.InstructorId).ValueGeneratedNever().HasColumnName("instructor_id");
+
+            // ★ Cột đơn đăng ký (v3)
+            entity.Property(e => e.ProfessionalTitle).HasMaxLength(255).HasColumnName("professional_title");
+            entity.Property(e => e.ExpertiseCategories).HasMaxLength(255).HasColumnName("expertise_categories");
+            entity.Property(e => e.LinkedinUrl).HasColumnName("linkedin_url");
+            entity.Property(e => e.DocumentUrl).HasColumnName("document_url");
+            entity.Property(e => e.ApprovalStatus).HasMaxLength(50).HasDefaultValue("Pending").HasColumnName("approval_status");
+
+            // Stripe
             entity.Property(e => e.StripeAccountId).HasMaxLength(255).HasColumnName("stripe_account_id");
             entity.Property(e => e.StripeOnboardingStatus).HasMaxLength(50).HasColumnName("stripe_onboarding_status");
             entity.Property(e => e.PayoutsEnabled).HasDefaultValue(false).HasColumnName("payouts_enabled");

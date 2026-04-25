@@ -145,8 +145,19 @@ public class UserRepository : IUserRepository
 
     public async Task<string> GetRoleByAccountIdAsync(int accountId)
     {
-        // Kiểm tra bảng managers — nếu tồn tại → manager, không thì → user
+        // Kiểm tra bảng managers — nếu tồn tại → manager
         var isManager = await _context.Managers.AnyAsync(m => m.ManagerId == accountId);
-        return isManager ? "manager" : "user";
+        if (isManager) return "manager";
+
+        // Kiểm tra bảng instructors:
+        // - ApprovalStatus == 'Approved' (Admin đã duyệt)
+        // - StripeOnboardingStatus == 'Active' (Stripe hoàn tất, PayoutsEnabled + ChargesEnabled)
+        var isInstructor = await _context.Instructors.AnyAsync(i =>
+            i.InstructorId == accountId
+            && i.ApprovalStatus == "Approved"
+            && i.StripeOnboardingStatus == "Active");
+        if (isInstructor) return "instructor";
+
+        return "user";
     }
 }

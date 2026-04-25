@@ -1,0 +1,67 @@
+@{
+    ViewData["Title"] = ViewBag.Title ?? "Kết quả Onboarding";
+    var isSuccess = (bool)(ViewBag.IsSuccess ?? false);
+    var message = (string)(ViewBag.Message ?? "");
+}
+
+<section class="min-h-screen flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-lg text-center">
+
+        @* ── Icon ────────────────────────────────────────────────────── *@
+        @if (isSuccess)
+        {
+            <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 to-primary mb-8 shadow-xl shadow-emerald-200/50 animate-bounce">
+                <span class="material-symbols-outlined text-white text-5xl" style='font-variation-settings: "FILL" 1;'>check_circle</span>
+            </div>
+        }
+        else
+        {
+            <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 mb-8 shadow-xl shadow-amber-200/50">
+                <span class="material-symbols-outlined text-white text-5xl" style='font-variation-settings: "FILL" 1;'>refresh</span>
+            </div>
+        }
+
+        @* ── Title ───────────────────────────────────────────────────── *@
+        <h1 class="font-headline text-3xl font-extrabold text-on-surface mb-4">
+            @ViewBag.Title
+        </h1>
+
+        @* ── Message ─────────────────────────────────────────────────── *@
+        <p class="text-slate-500 leading-relaxed max-w-md mx-auto mb-8">
+            @message
+        </p>
+
+        @* ── Actions ─────────────────────────────────────────────────── *@
+        @if (isSuccess)
+        {
+            <div class="space-y-3">
+                <a href="/InstructorCourse"
+                   class="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-primary to-primary/80 text-white font-bold rounded-2xl shadow-lg shadow-primary/25 hover:shadow-xl hover:scale-105 transition-all duration-300">
+                    <span class="material-symbols-outlined">add_circle</span>
+                    Tạo khóa học đầu tiên
+                </a>
+                <div>
+                    <a href="/" class="text-sm text-slate-400 hover:text-primary transition-colors">
+                        ← Về trang chủ
+                    </a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="space-y-3">
+                <a href="/Instructor/Dashboard"
+                   class="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-2xl shadow-lg shadow-amber-200/50 hover:shadow-xl hover:scale-105 transition-all duration-300">
+                    <span class="material-symbols-outlined">refresh</span>
+                    Về Dashboard để thử lại
+                </a>
+                <div>
+                    <a href="/" class="text-sm text-slate-400 hover:text-primary transition-colors">
+                        ← Về trang chủ
+                    </a>
+                </div>
+            </div>
+        }
+
+    </div>
+</section>
