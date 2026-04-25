@@ -35,6 +35,7 @@ services:
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
       CLOUDINARY_UPLOAD_PRESET: ${CLOUDINARY_UPLOAD_PRESET}
+      Stripe__SecretKey: ${STRIPE_SECRET_KEY}
       EMAIL_HOST: ${EMAIL_HOST}
       EMAIL_PORT: ${EMAIL_PORT}
       EMAIL_ENABLESSL: ${EMAIL_ENABLESSL}
@@ -54,6 +55,7 @@ services:
     environment:
       BackendApiUrl: "http://backend:80/api/"
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      Stripe__PublishableKey: ${STRIPE_PUBLISHABLE_KEY}
       ASPNETCORE_URLS: "http://+:80"
     ports:
       - "5208:80"

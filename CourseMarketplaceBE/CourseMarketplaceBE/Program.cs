@@ -1,4 +1,5 @@
 using System.Text;
+using Stripe;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Application.Services;
 using CourseMarketplaceBE.Domain.IRepositories;
@@ -100,6 +101,19 @@ public class Program
 
         var configuration = builder.Configuration;
 
+        // 🔥 Stripe Configuration – đọc Secret Key từ biến môi trường (Docker inject)
+        var stripeSecretKey = Environment.GetEnvironmentVariable("Stripe__SecretKey")
+                              ?? configuration["Stripe:SecretKey"];
+        if (!string.IsNullOrWhiteSpace(stripeSecretKey))
+        {
+            StripeConfiguration.ApiKey = stripeSecretKey;
+            Console.WriteLine("✅ Stripe API Key đã được cấu hình.");
+        }
+        else
+        {
+            Console.WriteLine("⚠️  Warning: Stripe Secret Key chưa được cấu hình. Tính năng thanh toán sẽ không hoạt động.");
+        }
+
         // 🔥 3. JWT Settings
         var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>() ?? new JwtSettings();
         builder.Services.AddSingleton(jwtSettings);
@@ -151,6 +165,7 @@ public class Program
         }
 
         builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+        builder.Services.AddScoped<IInstructorService, InstructorService>();
 
         builder.Services.AddHttpClient();
 

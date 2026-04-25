@@ -8,6 +8,13 @@ namespace CourseMarketplaceFE
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // 🔥 Stripe PublishableKey – đọc từ biến môi trường (Docker inject)
+            var stripePublishableKey = Environment.GetEnvironmentVariable("Stripe__PublishableKey");
+            if (!string.IsNullOrWhiteSpace(stripePublishableKey))
+            {
+                builder.Configuration["Stripe:PublishableKey"] = stripePublishableKey;
+            }
+
             // 1. Đăng ký HttpClient để FE có thể gọi API Backend
             builder.Services.AddHttpClient("BackendApi", client =>
             {

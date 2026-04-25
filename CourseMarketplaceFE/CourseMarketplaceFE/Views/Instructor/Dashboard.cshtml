@@ -1,0 +1,197 @@
+@model CourseMarketplaceFE.Models.InstructorDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard Giảng viên";
+}
+
+<div class="min-h-screen pt-28 pb-16">
+    <div class="max-w-3xl mx-auto px-4">
+
+        @* ── SUCCESS / ERROR MESSAGES ──────────────────────────── *@
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+                <span class="text-sm font-medium text-emerald-700">@TempData["SuccessMessage"]</span>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-red-600">error</span>
+                <span class="text-sm font-medium text-red-700">@TempData["ErrorMessage"]</span>
+            </div>
+        }
+
+        @* ── HEADER ──────────────────────────────────────────── *@
+        <div class="flex items-center gap-4 mb-8">
+            <div class="w-14 h-14 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center shadow-lg">
+                <span class="material-symbols-outlined text-white text-2xl">school</span>
+            </div>
+            <div>
+                <h1 class="text-2xl font-headline font-extrabold text-slate-800">Dashboard Giảng viên</h1>
+                <p class="text-sm text-slate-500">Xin chào, <strong>@Model.FullName</strong></p>
+            </div>
+        </div>
+
+        @* ── THÔNG TIN ĐƠN ─────────────────────────────────── *@
+        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 mb-6">
+            <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">description</span>
+                Thông tin đơn đăng ký
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider mb-1">Chức danh</p>
+                    <p class="text-sm font-semibold text-slate-700">@(Model.ProfessionalTitle ?? "—")</p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider mb-1">Chuyên môn</p>
+                    <p class="text-sm font-semibold text-slate-700">@(Model.ExpertiseCategories ?? "—")</p>
+                </div>
+            </div>
+        </div>
+
+        @* ── TRẠNG THÁI DUYỆT ─────────────────────────────── *@
+        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 mb-6">
+            <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">verified</span>
+                Trạng thái
+            </h2>
+
+            @* Progress Steps *@
+            <div class="flex items-center justify-between mb-6">
+                @{
+                    var step1Done = true;
+                    var step2Done = Model.ApprovalStatus == "Approved";
+                    var step3Done = Model.PayoutsEnabled && Model.ChargesEnabled;
+                }
+
+                @* Step 1: Nộp đơn *@
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-10 h-10 rounded-full @(step1Done ? "bg-emerald-500" : "bg-slate-200") text-white flex items-center justify-center">
+                        <span class="material-symbols-outlined text-lg">@(step1Done ? "check" : "edit")</span>
+                    </div>
+                    <span class="text-xs font-semibold @(step1Done ? "text-emerald-600" : "text-slate-400")">Đã nộp</span>
+                </div>
+                <div class="flex-1 h-px @(step2Done ? "bg-emerald-400" : "bg-slate-200") mx-3"></div>
+
+                @* Step 2: Admin duyệt *@
+                <div class="flex flex-col items-center gap-1">
+                    @if (Model.ApprovalStatus == "Pending")
+                    {
+                        <div class="w-10 h-10 rounded-full bg-amber-400 text-white flex items-center justify-center animate-pulse">
+                            <span class="material-symbols-outlined text-lg">hourglass_top</span>
+                        </div>
+                        <span class="text-xs font-semibold text-amber-600">Chờ duyệt</span>
+                    }
+                    else if (Model.ApprovalStatus == "Approved")
+                    {
+                        <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                            <span class="material-symbols-outlined text-lg">check</span>
+                        </div>
+                        <span class="text-xs font-semibold text-emerald-600">Đã duyệt</span>
+                    }
+                    else
+                    {
+                        <div class="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center">
+                            <span class="material-symbols-outlined text-lg">close</span>
+                        </div>
+                        <span class="text-xs font-semibold text-red-600">Bị từ chối</span>
+                    }
+                </div>
+                <div class="flex-1 h-px @(step3Done ? "bg-emerald-400" : "bg-slate-200") mx-3"></div>
+
+                @* Step 3: Stripe *@
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-10 h-10 rounded-full @(step3Done ? "bg-emerald-500" : "bg-slate-200") @(step3Done ? "text-white" : "text-slate-400") flex items-center justify-center">
+                        <span class="material-symbols-outlined text-lg">@(step3Done ? "check" : "account_balance")</span>
+                    </div>
+                    <span class="text-xs font-semibold @(step3Done ? "text-emerald-600" : "text-slate-400")">Stripe</span>
+                </div>
+            </div>
+
+            @* ── NÚT HÀNH ĐỘNG DỰA TRÊN TRẠNG THÁI ──────────── *@
+
+            @if (Model.ApprovalStatus == "Pending")
+            {
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+                    <span class="material-symbols-outlined text-amber-500 text-3xl mb-2">schedule</span>
+                    <p class="text-sm font-medium text-amber-700">Đơn đăng ký đang chờ Admin xét duyệt...</p>
+                </div>
+            }
+            else if (Model.ApprovalStatus == "Rejected")
+            {
+                <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+                    <span class="material-symbols-outlined text-red-500 text-3xl mb-2">cancel</span>
+                    <p class="text-sm font-medium text-red-700">Đơn đăng ký đã bị từ chối. Vui lòng liên hệ Admin để biết thêm chi tiết.</p>
+                </div>
+            }
+            else if (Model.ApprovalStatus == "Approved" && !Model.PayoutsEnabled)
+            {
+                @* ★ ĐÃ DUYỆT nhưng chưa setup Stripe hoặc Pending → Hiện nút "Set up Payout Method" *@
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
+                    <span class="material-symbols-outlined text-blue-500 text-3xl mb-2">account_balance</span>
+                    <p class="text-sm font-medium text-blue-700 mb-4">
+                        Đơn đã được duyệt! Thiết lập phương thức thanh toán qua Stripe để bắt đầu nhận tiền.
+                    </p>
+                    <form asp-action="SetupPayout" asp-controller="Instructor" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit"
+                                class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-sm">
+                            <span class="material-symbols-outlined text-lg">credit_card</span>
+                            Set up Payout Method
+                        </button>
+                    </form>
+                </div>
+            }
+            else if (Model.PayoutsEnabled && Model.ChargesEnabled)
+            {
+                @* ✅ Hoàn tất tất cả *@
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-6 text-center">
+                    <span class="material-symbols-outlined text-emerald-500 text-3xl mb-2">verified</span>
+                    <p class="text-sm font-medium text-emerald-700 mb-1">Tất cả đã hoàn tất!</p>
+                    <p class="text-xs text-emerald-600">PayoutsEnabled ✅ · ChargesEnabled ✅ · Stripe Active</p>
+                    <a href="/InstructorCourse"
+                       class="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-primary text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all text-sm">
+                        <span class="material-symbols-outlined text-lg">play_arrow</span>
+                        Bắt đầu tạo khóa học
+                    </a>
+                </div>
+            }
+        </div>
+
+        @* ── STRIPE INFO ───────────────────────────────────── *@
+        @if (!string.IsNullOrEmpty(Model.StripeOnboardingStatus))
+        {
+            <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
+                <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">payments</span>
+                    Thông tin Stripe
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <p class="text-xs text-slate-400 uppercase tracking-wider mb-1">Onboarding Status</p>
+                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold
+                            @(Model.StripeOnboardingStatus == "Active" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")">
+                            @Model.StripeOnboardingStatus
+                        </span>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 uppercase tracking-wider mb-1">Payouts</p>
+                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold
+                            @(Model.PayoutsEnabled ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")">
+                            @(Model.PayoutsEnabled ? "✅ Enabled" : "❌ Disabled")
+                        </span>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 uppercase tracking-wider mb-1">Charges</p>
+                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold
+                            @(Model.ChargesEnabled ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700")">
+                            @(Model.ChargesEnabled ? "✅ Enabled" : "❌ Disabled")
+                        </span>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
