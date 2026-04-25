@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace CourseMarketplaceBE.Domain.Entities;
@@ -24,4 +24,6 @@ public partial class Lesson
     public virtual Course? Course { get; set; }
 
     public virtual ICollection<LearningMaterial> LearningMaterials { get; set; } = new List<LearningMaterial>();
+
+    public virtual LessonExt? LessonExt { get; set; }
 }
