@@ -68,6 +68,7 @@ public class CourseService : ICourseService
                 ThumbnailUrl = l.ThumbnailUrl,
                 CreatedAt = l.CreatedAt,
                 UpdatedAt = l.UpdatedAt,
+                LessonStatus = l.LessonStatus,
                 LearningMaterials = l.LearningMaterials.Select(m => new MaterialResponse
                 {
                     MaterialId = m.MaterialId,

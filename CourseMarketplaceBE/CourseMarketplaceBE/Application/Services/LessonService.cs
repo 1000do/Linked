@@ -68,7 +68,8 @@ public class LessonService : ILessonService
             Description = lesson.Description,
             ThumbnailUrl = lesson.ThumbnailUrl,
             CreatedAt = lesson.CreatedAt,
-            UpdatedAt = lesson.UpdatedAt
+            UpdatedAt = lesson.UpdatedAt,
+            LessonStatus = lesson.LessonStatus
         };
     }
 
