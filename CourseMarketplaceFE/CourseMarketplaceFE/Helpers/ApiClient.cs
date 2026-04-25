@@ -61,7 +61,25 @@ namespace CourseMarketplaceFE.Helpers
                 // Cố gắng refresh
                 var refreshed = await TryRefreshTokenAsync();
                 if (refreshed)
+                {
                     response = await SendAsync(requestFactory()); // thử lại với token mới
+                }
+
+                // Nếu vẫn 401 (nghĩa là refresh thất bại, hoặc token mới vẫn bị từ chối)
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    var httpCtx = _ctx.HttpContext;
+                    if (httpCtx != null)
+                    {
+                        // Xóa sạch session/cookie
+                        httpCtx.Response.Cookies.Delete("AccessToken");
+                        httpCtx.Response.Cookies.Delete("RefreshToken");
+                        httpCtx.Response.Cookies.Delete("UserRole");
+
+                        // Ra hiệu cho Middleware bên Program.cs đá văng về trang đăng nhập
+                        httpCtx.Items["ForceLogout"] = true;
+                    }
+                }
             }
 
             return response;
