@@ -27,6 +27,8 @@ public partial class LearningMaterial
     public string? MaterialHash { get; set; }
 
     public virtual Lesson? Lesson { get; set; }
+    
+    public virtual ICollection<MaterialEmbedding> MaterialEmbeddings { get; set; } = new List<MaterialEmbedding>();
 }
 
 public class MaterialMetadata

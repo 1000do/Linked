@@ -42,6 +42,9 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<User> Users { get; set; }
     public virtual DbSet<UserReport> UserReports { get; set; }
     public virtual DbSet<WishlistItem> WishlistItems { get; set; }
+    public virtual DbSet<CourseExt> CourseExts { get; set; }
+    public virtual DbSet<LessonExt> LessonExts { get; set; }
+    public virtual DbSet<MaterialEmbedding> MaterialEmbeddings { get; set; }
 
     // ─── OnConfiguring ────────────────────────────────────────────────────────
 
@@ -794,6 +797,60 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("wishlist_items_user_id_fkey");
+        });
+
+        // ── course_exts ───────────────────────────────────────────────────────
+        modelBuilder.Entity<CourseExt>(entity =>
+        {
+            entity.HasKey(e => e.CourseId).HasName("course_exts_pkey");
+            entity.ToTable("course_exts");
+
+            entity.Property(e => e.CourseId).ValueGeneratedNever().HasColumnName("course_id");
+            entity.Property(e => e.TitleHash).HasMaxLength(32).IsFixedLength().HasColumnName("title_hash");
+            entity.Property(e => e.DescriptionHash).HasMaxLength(32).IsFixedLength().HasColumnName("description_hash");
+            entity.Property(e => e.ThumbnailHash).HasMaxLength(32).IsFixedLength().HasColumnName("thumbnail_hash");
+
+            entity.HasOne(d => d.Course).WithOne(p => p.CourseExt)
+                .HasForeignKey<CourseExt>(d => d.CourseId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("course_exts_course_id_fkey");
+        });
+
+        // ── lesson_exts ───────────────────────────────────────────────────────
+        modelBuilder.Entity<LessonExt>(entity =>
+        {
+            entity.HasKey(e => e.LessonId).HasName("lesson_exts_pkey");
+            entity.ToTable("lesson_exts");
+
+            entity.Property(e => e.LessonId).ValueGeneratedNever().HasColumnName("lesson_id");
+            entity.Property(e => e.TitleHash).HasMaxLength(32).IsFixedLength().HasColumnName("title_hash");
+            entity.Property(e => e.DescriptionHash).HasMaxLength(32).IsFixedLength().HasColumnName("description_hash");
+            entity.Property(e => e.ThumbnailHash).HasMaxLength(32).IsFixedLength().HasColumnName("thumbnail_hash");
+
+            entity.HasOne(d => d.Lesson).WithOne(p => p.LessonExt)
+                .HasForeignKey<LessonExt>(d => d.LessonId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("lesson_exts_lesson_id_fkey");
+        });
+
+        // ── material_embeddings ───────────────────────────────────────────────
+        modelBuilder.Entity<MaterialEmbedding>(entity =>
+        {
+            entity.HasKey(e => e.EmbeddingId).HasName("material_embeddings_pkey");
+            entity.ToTable("material_embeddings");
+
+            entity.Property(e => e.EmbeddingId).HasColumnName("embedding_id");
+            entity.Property(e => e.MaterialId).HasColumnName("material_id");
+            entity.Property(e => e.Embedding).HasColumnType("vector(768)").HasColumnName("embedding");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Material).WithMany(p => p.MaterialEmbeddings)
+                .HasForeignKey(d => d.MaterialId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("material_embeddings_material_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);
