@@ -297,8 +297,19 @@ namespace CourseMarketplaceFE.Controllers
                 Path = "/"
             });
 
+            if (!string.IsNullOrEmpty(result?.RefreshToken))
+            {
+                Response.Cookies.Append("RefreshToken", result.RefreshToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Expires = DateTimeOffset.UtcNow.AddDays(7),
+                    Path = "/"
+                });
+            }
+
             Response.Cookies.Append("UserName", result?.FullName ?? "User", cookieOptions);
             Response.Cookies.Append("AvatarUrl", result?.AvatarUrl ?? "", cookieOptions);
+            Response.Cookies.Append("UserRole", result?.Role ?? "user", cookieOptions);
 
             return Ok();
         }

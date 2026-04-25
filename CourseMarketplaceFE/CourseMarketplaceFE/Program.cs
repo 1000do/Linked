@@ -50,6 +50,22 @@ namespace CourseMarketplaceFE
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
+            // Middleware ép buộc Force Logout khi API trả về 401 (token chết)
+            app.Use(async (context, next) =>
+            {
+                context.Response.OnStarting(() =>
+                {
+                    // Nếu ApiClient đánh dấu cần ForceLogout, ta ép ghi đè StatusCode và chuyển hướng về Login
+                    if (context.Items.ContainsKey("ForceLogout"))
+                    {
+                        context.Response.StatusCode = 302;
+                        context.Response.Headers["Location"] = "/Account/Login";
+                    }
+                    return Task.CompletedTask;
+                });
+                await next();
+            });
+
             app.UseRouting();
 
             // Kích hoạt xác thực và phân quyền (nếu dùng Identity ở FE)
