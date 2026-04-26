@@ -48,7 +48,7 @@ public class AuthController : ControllerBase
         Response.Cookies.Append("AccessToken", result.AccessToken, new CookieOptions
         {
             HttpOnly = true,
-            Secure = true,          // HTTPS trên production
+            Secure = Request.IsHttps,
             SameSite = SameSiteMode.Strict,
             Expires = DateTimeOffset.UtcNow.AddMinutes(15),
             Path = "/"
@@ -58,7 +58,7 @@ public class AuthController : ControllerBase
         Response.Cookies.Append("RefreshToken", result.RefreshToken, new CookieOptions
         {
             HttpOnly = true,
-            Secure = true,
+            Secure = Request.IsHttps,
             SameSite = SameSiteMode.Strict,
             Expires = DateTimeOffset.UtcNow.AddDays(7),
             Path = "/api/auth/refresh" // Chỉ gửi đến endpoint refresh
@@ -96,7 +96,7 @@ public class AuthController : ControllerBase
         Response.Cookies.Append("AccessToken", result.AccessToken, new CookieOptions
         {
             HttpOnly = true,
-            Secure = true,
+            Secure = Request.IsHttps,
             SameSite = SameSiteMode.Strict,
             Expires = DateTimeOffset.UtcNow.AddMinutes(15),
             Path = "/"
@@ -105,7 +105,7 @@ public class AuthController : ControllerBase
         Response.Cookies.Append("RefreshToken", result.RefreshToken, new CookieOptions
         {
             HttpOnly = true,
-            Secure = true,
+            Secure = Request.IsHttps,
             SameSite = SameSiteMode.Strict,
             Expires = DateTimeOffset.UtcNow.AddDays(7),
             Path = "/api/auth/refresh"
