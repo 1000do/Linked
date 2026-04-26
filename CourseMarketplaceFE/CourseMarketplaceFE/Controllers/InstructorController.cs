@@ -1,7 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
-using CourseMarketplaceFE.Models;
-using CourseMarketplaceFE.Helpers;
 using System.Text.Json;
+using CourseMarketplaceFE.Helpers;
+using CourseMarketplaceFE.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceFE.Controllers;
 
@@ -258,5 +258,42 @@ public class InstructorController : Controller
         ViewBag.Message = "Link thiết lập Stripe đã hết hạn. Vui lòng vào Dashboard để tạo lại.";
         ViewBag.IsSuccess = false;
         return View("OnboardingResult");
+    }
+
+    [HttpGet]
+    [Route("Instructor/Notifications")]
+    public async Task<IActionResult> Notifications()
+    {
+        var response = await _api.GetAsync("notification");
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+
+            // Đọc thẳng thành List giống hệt cách làm của bên User
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var list = JsonSerializer.Deserialize<List<NotificationViewModel>>(json, options);
+
+            return View(list ?? new List<NotificationViewModel>());
+        }
+        return View(new List<NotificationViewModel>());
+    }
+    [HttpPost]
+    public async Task<IActionResult> MarkAsRead(int id)
+    {
+        // SỬA: Đưa id vào chuỗi URL để khớp với [HttpPut("mark-as-read/{id}")] bên BE
+        var response = await _api.PutAsync($"notification/mark-as-read/{id}", null);
+
+        if (response.IsSuccessStatusCode) return Ok();
+        return BadRequest();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Delete(int id)
+    {
+        // SỬA: Đưa id vào chuỗi URL để khớp với [HttpDelete("{id}")] bên BE
+        var response = await _api.DeleteAsync($"notification/{id}");
+
+        if (response.IsSuccessStatusCode) return Ok();
+        return BadRequest();
     }
 }
