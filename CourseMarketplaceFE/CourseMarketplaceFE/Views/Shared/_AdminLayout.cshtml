@@ -1,0 +1,118 @@
+﻿@using System.Net
+@{
+    var managerName = Context.Request.Cookies["UserName"] ?? "Admin";
+    var token = Context.Request.Cookies["AccessToken"] ?? "";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Admin</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10b981',
+                        secondary: '#059669',
+                        surface: '#ffffff',
+                        border: '#e2e8f0'
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-shadow {
+            box-shadow: none !important;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #10b981;
+            border-radius: 10px;
+        }
+
+        .nav-link-active {
+            background-color: #f0fdf4;
+            color: #10b981;
+            font-weight: 600;
+        }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="bg-white text-slate-800 flex h-screen overflow-hidden">
+
+    <aside class="w-64 border-r border-border flex flex-col bg-white shrink-0">
+        <div class="h-16 flex items-center px-6 border-b border-border">
+            <span class="text-primary font-bold text-xl flex items-center gap-2">
+                <span class="material-symbols-outlined">shield_person</span> Quản trị
+            </span>
+        </div>
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <a href="/AdminApproval" class="nav-item flex items-center gap-3 p-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-all">
+                <span class="material-symbols-outlined">verified_user</span> Xét duyệt
+            </a>
+            <a href="/Notification/Admin" class="nav-item flex items-center gap-3 p-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-all">
+                <span class="material-symbols-outlined">notifications</span> Thông báo
+            </a>
+            <a href="/Coupon/Admin" class="nav-item flex items-center gap-3 p-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-all">
+                <span class="material-symbols-outlined">confirmation_number</span> Coupon
+            </a>
+            <a href="/" class="flex items-center gap-3 p-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-all">
+                <span class="material-symbols-outlined">home</span> Trang chủ
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-border">
+            <form method="post" action="/Account/Logout">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="w-full flex items-center gap-3 p-3 rounded-lg text-red-500 hover:bg-red-50 transition-all font-semibold">
+                    <span class="material-symbols-outlined">logout</span> Đăng xuất
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col bg-white overflow-hidden">
+        <header class="h-16 border-b border-border flex items-center justify-between px-8 bg-white shrink-0">
+            <div class="flex items-center gap-3">
+                <h2 class="font-semibold text-lg text-slate-700">@ViewData["PageHeader"]</h2>
+                <span class="text-[10px] bg-slate-100 px-2 py-1 rounded-full text-slate-500 font-bold uppercase tracking-wider">
+                    Admin: @managerName
+                </span>
+            </div>
+            @await RenderSectionAsync("HeaderActions", required: false)
+        </header>
+
+        <div class="flex-1 p-6 flex flex-col overflow-hidden">
+            @RenderBody()
+        </div>
+    </main>
+
+    <script>
+        // Xử lý Active Link tự động
+        document.addEventListener("DOMContentLoaded", () => {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-item').forEach(link => {
+                if (link.getAttribute('href').toLowerCase() === currentPath.toLowerCase()) {
+                    link.classList.add('nav-link-active');
+                    link.classList.remove('text-slate-500');
+                }
+            });
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
