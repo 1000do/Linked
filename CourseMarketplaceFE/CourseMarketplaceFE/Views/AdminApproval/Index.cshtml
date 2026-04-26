@@ -2,8 +2,7 @@
 @model List<CourseMarketplaceFE.Models.InstructorApprovalViewModel>
 @{
     ViewData["Title"] = "Quản lý xét duyệt";
-    Layout = null; // Tùy chỉnh theo yêu cầu của bạn, hoặc để mặc định nếu dùng Layout chung
-
+    Layout = null;
     var managerName = Context.Request.Cookies["UserName"] ?? "Admin";
 }
 
@@ -23,7 +22,7 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#10b981', // Màu xanh emerald giống bên Notification
+                        primary: '#10b981',
                         secondary: '#059669',
                         surface: '#ffffff',
                         border: '#e2e8f0'
@@ -86,8 +85,9 @@
                         <thead class="bg-slate-50 border-b border-border sticky top-0 z-10">
                             <tr>
                                 <th class="p-4 text-xs font-bold text-slate-400 uppercase w-[25%]">Giảng viên</th>
-                                <th class="p-4 text-xs font-bold text-slate-400 uppercase w-[30%]">Chuyên môn</th>
-                                <th class="p-4 text-xs font-bold text-slate-400 uppercase w-[25%]">Tài liệu hồ sơ</th>
+                                <th class="p-4 text-xs font-bold text-slate-400 uppercase w-[20%]">Chuyên môn</th>
+                                <th class="p-4 text-xs font-bold text-slate-400 uppercase w-[10%] text-center">Linked</th>
+                                <th class="p-4 text-xs font-bold text-slate-400 uppercase w-[25%]">Hồ sơ (CV)</th>
                                 <th class="p-4 text-xs font-bold text-slate-400 uppercase w-[20%] text-center">Thao tác</th>
                             </tr>
                         </thead>
@@ -98,50 +98,67 @@
                                 {
                                     <tr id="row-@item.InstructorId" class="hover:bg-slate-50 transition-colors">
                                         <td class="p-4">
-                                            <div class="text-sm font-bold text-slate-700 truncate">
-                                                @item.FullName
-                                            </div>
-                                            <div class="text-[11px] text-slate-400 truncate">
-                                                @item.Email
+                                            <div class="flex items-center gap-3">
+                                                <img src="@(string.IsNullOrEmpty(item.AvatarUrl) ? "/img/default-avatar.png" : item.AvatarUrl)"
+                                                     class="w-10 h-10 rounded-full object-cover border border-slate-100 shadow-sm" />
+                                                <div class="flex flex-col min-w-0">
+                                                    <div class="text-sm font-bold text-slate-700 truncate" title="@item.FullName">@item.FullName</div>
+                                                    <div class="text-[11px] text-slate-400 truncate" title="@item.Email">@item.Email</div>
+                                                </div>
                                             </div>
                                         </td>
+
                                         <td class="p-4">
                                             <div class="text-sm font-bold text-slate-800 truncate">@item.ProfessionalTitle</div>
-                                            <div class="text-xs text-slate-400">@item.ExpertiseCategories</div>
+                                            <div class="text-[10px] text-slate-400 uppercase font-medium">@item.ExpertiseCategories</div>
                                         </td>
-                                        <td class="p-4">
-                                            @if (!string.IsNullOrEmpty(item.DocumentUrl))
+
+                                        <td class="p-4 text-center">
+                                            @if (!string.IsNullOrEmpty(item.LinkedInUrl) && item.LinkedInUrl != "#")
                                             {
-                                                <a href="@item.DocumentUrl" target="_blank" class="text-xs text-primary font-bold flex items-center gap-1 hover:underline">
-                                                    <span class="material-symbols-outlined text-sm">description</span> Xem chứng chỉ/CV
+                                                <a href="@item.LinkedInUrl" target="_blank"
+                                                   class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
+                                                    <span class="material-symbols-outlined text-lg">link</span>
                                                 </a>
                                             }
                                             else
                                             {
-                                                <span class="text-xs text-slate-300 italic">Không có tài liệu</span>
+                                                <span class="text-[10px] text-slate-300 italic font-medium">N/A</span>
                                             }
                                         </td>
+
+                                        <td class="p-4">
+                                            @if (!string.IsNullOrEmpty(item.DocumentUrl))
+                                            {
+                                                var fileName = item.DocumentUrl.Split('/').Last();
+                                                <a href="@item.DocumentUrl" target="_blank"
+                                                   class="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg group hover:border-emerald-400 hover:bg-emerald-50 transition-all">
+                                                    <span class="material-symbols-outlined text-emerald-600">description</span>
+                                                    <div class="flex flex-col min-w-0">
+                                                        <span class="text-[11px] font-bold text-slate-700 truncate w-32">@fileName</span>
+                                                        <span class="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">PDF Document</span>
+                                                    </div>
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-xs text-slate-300 italic">Trống</span>
+                                            }
+                                        </td>
+
                                         <td class="p-4 text-center">
                                             <div class="relative inline-block text-left group">
-                                                <button class="flex items-center gap-1 px-3 py-1.5 bg-slate-50 border border-border rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-all">
-                                                    <span class="material-symbols-outlined text-sm text-amber-500">pending</span>
-                                                    Xử lý
+                                                <button class="flex items-center gap-1 px-3 py-1.5 bg-white border border-border rounded-lg text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition-all">
+                                                    XỬ LÝ
                                                     <span class="material-symbols-outlined text-xs ml-1 transition-transform group-hover:rotate-180">expand_more</span>
                                                 </button>
-
-                                                <div class="absolute right-0 mt-1 w-40 bg-white border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
-                                                    <div class="py-1">
-                                                        <button onclick="processAction(@item.InstructorId, 'Approved')"
-                                                                class="w-full flex items-center gap-2 px-4 py-2 text-xs text-emerald-600 hover:bg-emerald-50 transition-colors">
-                                                            <span class="material-symbols-outlined text-sm">check_circle</span>
-                                                            Duyệt hồ sơ
-                                                        </button>
-                                                        <button onclick="processAction(@item.InstructorId, 'Rejected')"
-                                                                class="w-full flex items-center gap-2 px-4 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors border-t border-slate-50">
-                                                            <span class="material-symbols-outlined text-sm">cancel</span>
-                                                            Từ chối
-                                                        </button>
-                                                    </div>
+                                                <div class="absolute right-0 mt-1 w-44 bg-white border border-border rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
+                                                    <button onclick="processAction(@item.InstructorId, 'Approved')" class="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold text-emerald-600 hover:bg-emerald-50 transition-colors">
+                                                        <span class="material-symbols-outlined text-sm">check_circle</span> DUYỆT HỒ SƠ
+                                                    </button>
+                                                    <button onclick="processAction(@item.InstructorId, 'Rejected')" class="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-bold text-red-600 hover:bg-red-50 border-t border-slate-50 transition-colors">
+                                                        <span class="material-symbols-outlined text-sm">cancel</span> TỪ CHỐI
+                                                    </button>
                                                 </div>
                                             </div>
                                         </td>
@@ -151,7 +168,7 @@
                             else
                             {
                                 <tr>
-                                    <td colspan="4" class="p-12 text-center text-slate-400 text-sm italic">
+                                    <td colspan="5" class="p-12 text-center text-slate-400 text-sm italic">
                                         Hiện không có đơn đăng ký nào cần xử lý
                                     </td>
                                 </tr>
@@ -184,7 +201,7 @@
                     setTimeout(() => {
                         row.remove();
                         if (document.querySelectorAll('#approval-table-body tr').length === 0) {
-                            location.reload(); // Reload để hiện trạng thái trống
+                            location.reload();
                         }
                     }, 400);
                 } else {

@@ -92,24 +92,18 @@
                 <span class="text-sm font-semibold">Analytics</span>
             </a>
 
-            <div class="relative" id="notification-dropdown">
-                <button onclick="toggleNoti()" class="w-full flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors text-left relative">
-                    <span class="material-symbols-outlined text-[20px]">notifications</span>
-                    <span class="text-sm font-semibold">Notifications</span>
-                    <span id="noti-badge" class="hidden absolute left-8 top-3 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                </button>
-
-                <!-- Inline accordion style instead of absolute popup -->
-                <div id="noti-box" class="hidden mt-1 mx-2 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden shadow-inner">
-                    <div class="p-3 border-b border-slate-200 flex justify-between items-center bg-white">
-                        <span class="font-bold text-slate-800 text-xs">Thông báo mới</span>
-                        <a href="/Notification" class="text-[10px] text-primary font-bold hover:underline">Xem tất cả</a>
-                    </div>
-                    <div id="notification-items-container" class="max-h-60 overflow-y-auto custom-scrollbar">
-                        <div class="p-4 text-center text-slate-400 text-xs">Đang tải...</div>
-                    </div>
-                </div>
-            </div>
+            @{
+                bool isNotifications = currentAction == "Notifications" && currentController == "Instructor";
+            }
+            <a href="/Instructor/Notifications"
+               class="flex items-center gap-3 px-4 py-3 @(isNotifications ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative">
+                @if (isNotifications)
+                {
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></span>
+                }
+                <span class="material-symbols-outlined text-[20px]">notifications</span>
+                <span class="text-sm @(isNotifications ? "font-bold" : "font-semibold")">Notifications</span>
+            </a>
             
             <div class="h-px bg-slate-200 my-4 mx-2"></div>
 
@@ -200,16 +194,26 @@
             .withAutomaticReconnect()
             .build();
 
-        connection.on("ReceiveNotification", function (noti) {
+                connection.on("ReceiveNotification", function (noti) {
+            // 1. Hiện chấm đỏ ở chuông (giữ nguyên của bạn)
             const badge = document.getElementById('noti-badge');
             if(badge) badge.classList.remove('hidden');
+
+            // 2. Cập nhật danh sách nhỏ ở chuông (giữ nguyên của bạn)
             if (typeof loadTopNotifications === "function") loadTopNotifications();
 
-            const path = window.location.pathname.toLowerCase();
-            if (path.includes("/notification/admin")) {
-                if (typeof loadAdminHistory === "function") loadAdminHistory();
-            } else if (path.includes("/notification")) {
-                if (typeof loadNotifications === "function") loadNotifications();
+            // 3. KIỂM TRA: Nếu trang hiện tại có hàm prependNotification thì gọi nó ngay
+            if (typeof prependNotification === "function") {
+                prependNotification(noti);
+            }
+            // Nếu không có prependNotification thì mới gọi các hàm cũ của bạn
+            else {
+                const path = window.location.pathname.toLowerCase();
+                if (path.includes("/notification/admin")) {
+                    if (typeof loadAdminHistory === "function") loadAdminHistory();
+                } else if (path.includes("/notification")) {
+                    if (typeof loadNotifications === "function") loadNotifications();
+                }
             }
         });
 
