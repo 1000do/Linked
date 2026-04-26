@@ -98,6 +98,9 @@ public class Program
         builder.Configuration["EmailSettings:Password"] =
             Environment.GetEnvironmentVariable("EMAIL_PASSWORD");
 
+        builder.Configuration["Authentication:Google:ClientId"] =
+    Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
+
         var configuration = builder.Configuration;
 
         // 🔥 3. JWT Settings
@@ -130,6 +133,9 @@ public class Program
           
         builder.Services.AddSingleton<IOtpService, OtpService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
+
+        builder.Services.AddScoped<ICouponRepository, CouponRepository>();
+        builder.Services.AddScoped<ICouponService, CouponService>();
 
         // Register file upload implementation conditionally.
         // If Cloudinary config is present, use CloudinaryUploadService; otherwise use a no-op fallback.

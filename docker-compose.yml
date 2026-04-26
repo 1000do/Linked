@@ -40,6 +40,7 @@ services:
       EMAIL_ENABLESSL: ${EMAIL_ENABLESSL}
       EMAIL_EMAIL: ${EMAIL_EMAIL}
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      GOOGLE_CLIENT_ID: 207287723661-0snls2216uufh9259riot8nvtns9jdkf.apps.googleusercontent.com
     depends_on:
       db:
         condition: service_healthy
