@@ -275,7 +275,7 @@ public class Program
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowAll", policy =>
-                policy.WithOrigins("http://localhost:5208") // Thay đúng port FE đang chạy
+                policy.WithOrigins(allowedOrigins)
                       .AllowAnyMethod()
                       .AllowAnyHeader()
                       .AllowCredentials()); // Bắt buộc phải có để gửi Cookie/Token
