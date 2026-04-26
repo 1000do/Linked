@@ -86,7 +86,7 @@ namespace CourseMarketplaceFE.Controllers
                 Response.Cookies.Append("AccessToken", result.AccessToken ?? "", new CookieOptions
                 {
                     HttpOnly = true,
-                    Secure = false,         // dev: false | production: true
+                    Secure = Request.IsHttps,
                     SameSite = SameSiteMode.Lax,
                     Expires = DateTimeOffset.UtcNow.AddMinutes(15),
                     Path = "/"
@@ -99,7 +99,7 @@ namespace CourseMarketplaceFE.Controllers
                     Response.Cookies.Append("RefreshToken", result.RefreshToken, new CookieOptions
                     {
                         HttpOnly = true,
-                        Secure = false,
+                        Secure = Request.IsHttps,
                         SameSite = SameSiteMode.Lax,
                         Expires = DateTimeOffset.UtcNow.AddDays(7),
                         Path = "/"
@@ -148,7 +148,7 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Delete("UserName", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
 
-            return RedirectToAction("Login");
+            return RedirectToAction("Index", "Home");
         }
 
         // Giữ GET logout cho trường hợp link đơn giản (không form)

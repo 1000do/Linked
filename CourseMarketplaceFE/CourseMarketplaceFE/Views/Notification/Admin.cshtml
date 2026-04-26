@@ -66,15 +66,27 @@
             <a href="#" class="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 text-primary font-semibold transition-colors">
                 <span class="material-symbols-outlined">notifications</span> Thông báo
             </a>
+
+            <a href="/Coupon/Admin"
+               class="flex items-center gap-3 p-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-all">
+                <span class="material-symbols-outlined">confirmation_number</span>
+                Coupon
+            </a>
+
             <a href="/" class="flex items-center gap-3 p-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-all">
                 <span class="material-symbols-outlined">home</span> Trang chủ
             </a>
         </nav>
 
         <div class="p-4 border-t border-border">
-            <button onclick="logout()" class="w-full flex items-center gap-3 p-3 rounded-lg text-red-500 hover:bg-red-50 transition-all font-semibold">
-                <span class="material-symbols-outlined">logout</span> Đăng xuất
-            </button>
+            <form method="post" action="/Account/Logout">
+                @Html.AntiForgeryToken()
+                <button type="submit"
+                        class="w-full flex items-center gap-3 p-3 rounded-lg text-red-500 hover:bg-red-50 transition-all font-semibold">
+                    <span class="material-symbols-outlined">logout</span>
+                    Đăng xuất
+                </button>
+            </form>
         </div>
     </aside>
 
@@ -317,11 +329,7 @@
 
         function closeModal() { document.getElementById('modal-send').classList.add('hidden'); }
 
-        function logout() {
-            document.cookie = "AccessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-            document.cookie = "UserName=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-            window.location.href = "/";
-        }
+        
 
         // 4. SUBMIT FORM
         document.getElementById('form-advanced').onsubmit = async (e) => {

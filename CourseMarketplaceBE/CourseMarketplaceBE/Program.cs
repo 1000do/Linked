@@ -99,6 +99,9 @@ public class Program
         builder.Configuration["EmailSettings:Password"] =
             Environment.GetEnvironmentVariable("EMAIL_PASSWORD");
 
+        builder.Configuration["Authentication:Google:ClientId"] =
+    Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
+
         var configuration = builder.Configuration;
 
         // 🔥 Stripe Configuration – đọc Secret Key từ biến môi trường (Docker inject)
@@ -147,6 +150,9 @@ public class Program
 
         builder.Services.AddScoped<IInstructorRepository, InstructorRepository>();
         builder.Services.AddScoped<IInstructorApprovalService, InstructorApprovalService>();
+
+        builder.Services.AddScoped<ICouponRepository, CouponRepository>();
+        builder.Services.AddScoped<ICouponService, CourseMarketplaceBE.Application.Services.CouponService>();
 
         // Register file upload implementation conditionally.
         // If Cloudinary config is present, use CloudinaryUploadService; otherwise use a no-op fallback.
@@ -278,7 +284,7 @@ public class Program
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowAll", policy =>
-                policy.WithOrigins("http://localhost:5208") // Thay đúng port FE đang chạy
+                policy.WithOrigins(allowedOrigins)
                       .AllowAnyMethod()
                       .AllowAnyHeader()
                       .AllowCredentials()); // Bắt buộc phải có để gửi Cookie/Token

@@ -1,0 +1,432 @@
+﻿@{
+    Layout = null;
+    var token = Context.Request.Cookies["AccessToken"] ?? "";
+    var managerName = Context.Request.Cookies["UserName"] ?? "Admin";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Coupon Admin</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10b981',
+                        secondary: '#059669',
+                        border: '#e2e8f0'
+                    },
+                    fontFamily: { sans: ['Inter'] }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-white text-slate-800 flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 border-r flex flex-col bg-white">
+        <div class="h-16 flex items-center px-6 border-b">
+            <span class="text-primary font-bold text-xl">Quản trị</span>
+        </div>
+
+        <nav class="p-4 space-y-2">
+            <a href="/Notification/Admin" class="flex items-center gap-2 p-3 rounded-lg text-slate-500 hover:bg-slate-50">
+                📢 Thông báo
+            </a>
+
+            <a href="/Coupon/Admin" class="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 text-primary font-semibold">
+                🎟 Coupon
+            </a>
+        </nav>
+
+        <div class="p-4 mt-auto">
+            <form method="post" action="/Account/Logout">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="w-full p-3 text-red-500 hover:bg-red-50 rounded-lg font-semibold">
+                    Logout
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="flex-1 flex flex-col">
+
+        <header class="h-16 flex justify-between items-center px-6 border-b">
+            <div class="flex items-center gap-3">
+                <h2 class="font-semibold text-lg">Quản lý Coupon</h2>
+                <span class="text-xs bg-slate-100 px-2 py-1 rounded-full">
+                    Admin: @managerName
+                </span>
+            </div>            
+
+            <div class="flex items-center gap-3">
+                <input id="search"
+                       placeholder="Tìm theo code hoặc id..."
+                       oninput="applyFilter()"
+                       class="border rounded-lg px-3 py-2 text-sm w-64" />
+
+                <select id="filter" onchange="applyFilter()"
+                        class="border rounded-lg px-3 py-2 text-sm">
+                    <option value="">Tất cả</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Unactive</option>
+                    <option value="percentage">Percentage</option>
+                    <option value="fixed">Fixed</option>
+                </select>
+
+                <button onclick="openModal()" class="bg-primary text-white px-4 py-2 rounded-lg font-bold">
+                    + Tạo Coupon
+                </button>
+
+            </div>
+        </header>
+
+        <div class="p-6 flex-1 overflow-auto">
+
+            <div class="border rounded-xl overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 border-b">
+                        <tr>
+                            <th class="p-4 text-left">Code</th>
+                            <th class="p-4 text-left">Type</th>
+                            <th class="p-4 text-left">Value</th>
+                            <th class="p-4 text-left">Start</th>
+                            <th class="p-4 text-left">End</th>
+                            <th class="p-4 text-left">Limit</th>
+                            <th class="p-4 text-center">Status</th>
+                            <th class="p-4 text-center">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="table-body" class="divide-y"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- MODAL -->
+    <div id="modal-coupon" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/30 backdrop-blur-sm" onclick="closeModal()"></div>
+
+    <div class="bg-white w-full max-w-lg rounded-2xl border border-slate-200 relative z-10 flex flex-col overflow-hidden">
+
+        <!-- HEADER -->
+        <div class="p-6 border-b flex justify-between items-center bg-emerald-50/50">
+            <h3 class="font-bold text-emerald-800">Tạo / Cập nhật Coupon</h3>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600">
+                ✕
+            </button>
+        </div>
+
+        <!-- BODY -->
+        <form id="coupon-form" class="p-6 space-y-4">
+
+            <!-- CODE -->
+            <div>
+                <label class="text-xs font-bold text-slate-400">CODE</label>
+                <input id="code" class="w-full border rounded-lg px-3 py-2 mt-1" />
+                <p id="err-code" class="text-red-500 text-xs mt-1 hidden"></p>
+            </div>
+
+            <!-- TYPE -->
+            <div>
+                <label class="text-xs font-bold text-slate-400">TYPE</label>
+                <select id="type" class="w-full border rounded-lg px-3 py-2 mt-1">
+                    <option value="fixed">Fixed</option>
+                    <option value="percentage">Percentage</option>
+                </select>
+            </div>
+
+            <!-- VALUE -->
+            <div>
+                <label class="text-xs font-bold text-slate-400">VALUE</label>
+                <input id="value" type="number" class="w-full border rounded-lg px-3 py-2 mt-1" />
+                <p id="err-value" class="text-red-500 text-xs mt-1 hidden"></p>
+            </div>
+
+                <!-- START DATE -->
+                <div>
+                    <label class="text-xs font-bold text-slate-400">START DATE</label>
+                    <input id="startDate" type="date" class="w-full border rounded-lg px-3 py-2 mt-1" />
+                </div>
+
+                <!-- END DATE -->
+                <div>
+                    <label class="text-xs font-bold text-slate-400">END DATE</label>
+                    <input id="endDate" type="date" class="w-full border rounded-lg px-3 py-2 mt-1" />
+                    <p id="err-date" class="text-red-500 text-xs mt-1 hidden"></p>
+                </div>
+
+                <!-- USAGE LIMIT -->
+                <div>
+                    <label class="text-xs font-bold text-slate-400">USAGE LIMIT</label>
+                    <input id="usageLimit" type="number" class="w-full border rounded-lg px-3 py-2 mt-1" placeholder="Không giới hạn nếu bỏ trống" />
+                    <p id="err-usage" class="text-red-500 text-xs mt-1 hidden"></p>
+                </div>
+
+            <!-- STATUS -->
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="isActive" />
+                <label class="text-sm">Kích hoạt</label>
+            </div>
+
+            <!-- BUTTON -->
+            <button type="submit" id="btnSubmit"
+                    class="w-full bg-primary text-white py-3 rounded-xl font-bold">
+                Lưu Coupon
+            </button>
+
+        </form>
+    </div>
+</div>
+
+    <script>
+        const API = "http://localhost:5207/api/Coupon";
+        const TOKEN = `@Html.Raw(token)`;
+
+        let editId = null;
+
+        // LOAD
+        async function loadData(query = "") {
+            const res = await fetch(`${API}${query}`, {
+                headers: { 'Authorization': `Bearer ${TOKEN}` }
+            });
+
+            const data = await res.json();
+
+            document.getElementById("table-body").innerHTML = data.map(x => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-4 font-semibold">${x.couponCode}</td>
+                    <td class="p-4">${x.couponType}</td>
+                    <td class="p-4">${x.discountValue}</td>
+                    <td class="p-4">${x.startDate ? x.startDate.split("T")[0] : "-"}</td>
+                    <td class="p-4">${x.endDate ? x.endDate.split("T")[0] : "-"}</td>
+                    <td class="p-4">${x.usageLimit ?? "∞"}</td>
+                    <td class="p-4 text-center">
+                        <span class="px-2 py-1 rounded text-xs font-bold ${x.isActive ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'}">
+                            ${x.isActive ? 'Active' : 'Off'}
+                        </span>
+                    </td>
+                    <td class="p-4 text-center">
+                        <button onclick="edit(${x.couponId})" class="text-blue-500 mr-2">Edit</button>
+                        <button onclick="del(${x.couponId})" class="text-red-500">Delete</button>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        // CRUD giữ nguyên
+
+        async function del(id) {
+            if (!confirm("Delete?")) return;
+            await fetch(`${API}/${id}`, { method: "DELETE", headers: { 'Authorization': `Bearer ${TOKEN}` } });
+            applyFilter();
+        }
+
+        async function edit(id) {
+            const res = await fetch(`${API}/${id}`, {
+                headers: { 'Authorization': `Bearer ${TOKEN}` }
+            });
+
+            const x = await res.json();
+
+            editId = id;
+
+            openModal(true);
+
+            // BASIC
+            code.value = x.couponCode;
+            type.value = x.couponType;
+            value.value = x.discountValue;
+          
+            document.getElementById("startDate").value =
+                x.startDate ? x.startDate.split("T")[0] : "";
+
+            document.getElementById("endDate").value =
+                x.endDate ? x.endDate.split("T")[0] : "";
+
+            document.getElementById("usageLimit").value =
+                x.usageLimit ?? "";
+
+            document.getElementById("isActive").checked =
+                x.isActive ?? true;
+
+           
+        }
+
+        // UI
+        function openModal(isEdit = false) {
+            if (!isEdit) {
+                document.getElementById("coupon-form").reset();
+                document.getElementById("isActive").checked = true;
+            }
+
+            document.querySelectorAll("[id^='err-']").forEach(e => e.classList.add("hidden"));
+
+            document.getElementById("modal-coupon").classList.remove("hidden");
+        }
+
+        function closeModal() {
+            document.getElementById("modal-coupon").classList.add("hidden");
+            editId = null;
+        }
+        
+        //Validate form
+        function showError(id, message) {
+            const el = document.getElementById(id);
+            el.innerText = message;
+            el.classList.remove("hidden");
+        }
+
+        function validateForm() {
+            let isValid = true;
+
+            const codeVal = code.value.trim();
+            const valueVal = parseFloat(value.value);
+            const typeVal = type.value;
+
+            const startVal = document.getElementById("startDate").value;
+            const endVal = document.getElementById("endDate").value;
+            const usageVal = document.getElementById("usageLimit").value;
+
+            // reset lỗi
+            document.querySelectorAll("[id^='err-']").forEach(e => e.classList.add("hidden"));
+
+            // CODE
+            if (!codeVal) {
+                showError("err-code", "Code không được để trống");
+                isValid = false;
+            }
+
+            // VALUE
+            if (isNaN(valueVal) || valueVal <= 0) {
+                showError("err-value", "Value phải > 0");
+                isValid = false;
+            }
+
+            if (typeVal === "percentage" && valueVal > 100) {
+                showError("err-value", "Không được > 100%");
+                isValid = false;
+            }
+
+            // DATE
+            if (startVal && endVal && new Date(startVal) > new Date(endVal)) {
+            showError("err-date", "StartDate phải trước EndDate");
+            isValid = false;
+             }
+
+            // USAGE LIMIT
+            if (usageVal !== "") {
+                const usageNum = parseInt(usageVal);
+                if (isNaN(usageNum) || usageNum < 0) {
+                    showError("err-usage", "UsageLimit phải >= 0");
+                    isValid = false;
+                }
+            }
+
+            return isValid;
+        }
+        //Nút submit
+        document.getElementById("coupon-form").onsubmit = async (e) => {
+            e.preventDefault();
+
+            if (!validateForm()) return;
+
+            const btn = document.getElementById("btnSubmit");
+            btn.disabled = true;
+            btn.innerText = "Đang xử lý...";
+
+        const body = {
+            couponCode: code.value.trim(),
+            couponType: type.value,
+            discountValue: parseFloat(value.value),
+                    startDate: formatDateLocal(document.getElementById("startDate").value),
+                endDate: formatDateLocal(document.getElementById("endDate").value),
+            usageLimit: document.getElementById("usageLimit").value
+                ? parseInt(document.getElementById("usageLimit").value)
+                : null,
+            isActive: document.getElementById("isActive").checked
+        };
+
+            try {
+                if (editId == null) {
+                    await fetch(API, {
+                        method: "POST",
+                        headers: {
+                            'Authorization': `Bearer ${TOKEN}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(body)
+                    });
+                } else {
+                    await fetch(`${API}/${editId}`, {
+                        method: "PUT",
+                        headers: {
+                            'Authorization': `Bearer ${TOKEN}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(body)
+                    });
+                }
+
+                closeModal();
+                applyFilter();
+            } catch {
+                alert("Lỗi API");
+            }
+
+            btn.disabled = false;
+            btn.innerText = "Lưu Coupon";
+        };
+
+                function formatDateLocal(dateStr) {
+            if (!dateStr) return null;
+            return dateStr + "T00:00:00"; // fix lệch timezone + đúng format BE
+        }
+
+        function applyFilter() {
+            const filter = document.getElementById("filter").value;
+            const search = document.getElementById("search").value;
+
+            let params = [];
+
+            // filter
+            if (filter === "active") {
+                params.push("isActive=true");
+            }
+            else if (filter === "inactive") {
+                params.push("isActive=false");
+            }
+            else if (filter === "percentage") {
+                params.push("type=percentage");
+            }
+            else if (filter === "fixed") {
+                params.push("type=fixed");
+            }
+
+            // search
+            if (search && search.trim() !== "") {
+                params.push(`search=${encodeURIComponent(search.trim())}`);
+            }
+
+            // build query
+            const query = params.length > 0 ? "?" + params.join("&") : "";
+
+            loadData(query);
+        }
+
+        loadData();
+    </script>
+
+</body>
+</html>
