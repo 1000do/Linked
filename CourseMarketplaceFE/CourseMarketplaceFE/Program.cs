@@ -8,6 +8,13 @@ namespace CourseMarketplaceFE
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // 🔥 Stripe PublishableKey – đọc từ biến môi trường (Docker inject)
+            var stripePublishableKey = Environment.GetEnvironmentVariable("Stripe__PublishableKey");
+            if (!string.IsNullOrWhiteSpace(stripePublishableKey))
+            {
+                builder.Configuration["Stripe:PublishableKey"] = stripePublishableKey;
+            }
+
             // 1. Đăng ký HttpClient để FE có thể gọi API Backend
             builder.Services.AddHttpClient("BackendApi", client =>
             {
@@ -42,6 +49,22 @@ namespace CourseMarketplaceFE
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+
+            // Middleware ép buộc Force Logout khi API trả về 401 (token chết)
+            app.Use(async (context, next) =>
+            {
+                context.Response.OnStarting(() =>
+                {
+                    // Nếu ApiClient đánh dấu cần ForceLogout, ta ép ghi đè StatusCode và chuyển hướng về Login
+                    if (context.Items.ContainsKey("ForceLogout"))
+                    {
+                        context.Response.StatusCode = 302;
+                        context.Response.Headers["Location"] = "/Account/Login";
+                    }
+                    return Task.CompletedTask;
+                });
+                await next();
+            });
 
             app.UseRouting();
 

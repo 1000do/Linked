@@ -28,6 +28,8 @@ DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS accounts CASCADE;
 DROP TABLE IF EXISTS material_p_hashes CASCADE;
 DROP TABLE IF EXISTS material_embeddings CASCADE;
+DROP TABLE IF EXISTS course_exts CASCADE;
+DROP TABLE IF EXISTS lesson_exts CASCADE;
 
 
 -- ==============================================================================
@@ -92,10 +94,20 @@ CREATE TABLE managers (
 
 CREATE TABLE instructors (
     instructor_id INT PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+    
+    -- Các trường phục vụ hệ thống thanh toán Stripe
     stripe_account_id VARCHAR(255),
     stripe_onboarding_status VARCHAR(50),
     payouts_enabled BOOLEAN DEFAULT FALSE,
-    charges_enabled BOOLEAN DEFAULT FALSE
+    charges_enabled BOOLEAN DEFAULT FALSE,
+    
+    -- Các trường thông tin hồ sơ và xét duyệt giảng viên
+    professional_title VARCHAR(255),
+    expertise_categories VARCHAR(255),
+    linkedin_url TEXT,
+    document_url TEXT,
+    approval_status VARCHAR(50) DEFAULT 'Pending'
+    
     -- instructor_rating NUMERIC(3,2) DEFAULT 0.0, -- AVERAGE of their courses.rating_average
     -- total_revenue NUMERIC(12, 2) DEFAULT 0.00 -- SUM of their instructor_payouts.payout_amount
 );
@@ -174,11 +186,19 @@ CREATE TABLE learning_materials (
 	
 );
    
--- p_hash dùng cho video và image, check duplication cho file đã qua chỉnh sửa ( bit_count(p_hash XOR :new_hash) )
-CREATE TABLE material_p_hashes (
-    material_id INT PRIMARY KEY REFERENCES learning_materials(material_id) ON DELETE CASCADE,
-    p_hash BIGINT[] NOT NULL, 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+CREATE TABLE course_exts (
+    course_id INT PRIMARY KEY REFERENCES courses(course_id) ON DELETE CASCADE,
+    title_hash CHAR(32),
+	description_hash CHAR(32),
+	thumbnail_hash CHAR(32)
+   
+);CREATE TABLE lesson_exts (
+    lesson_id INT PRIMARY KEY REFERENCES lessons(lesson_id) ON DELETE CASCADE,
+    title_hash CHAR(32),
+	description_hash CHAR(32),
+	thumbnail_hash CHAR(32)
+   
 );
 
 -- Check duplication thông qua AI (tính cosine similarity của embedding) 

@@ -19,6 +19,16 @@ namespace CourseMarketplaceFE.Controllers
             _api = api;
         }
 
+        // ─── Auth guard: redirect to Login if no AccessToken cookie ────
+        public override void OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext context)
+        {
+            base.OnActionExecuting(context);
+            if (!Request.Cookies.ContainsKey("AccessToken"))
+            {
+                context.Result = RedirectToAction("Login", "Account");
+            }
+        }
+
         // ─── LIST COURSES ─────────────────────────────────────────────────
         public async Task<IActionResult> Index()
         {
@@ -124,6 +134,8 @@ namespace CourseMarketplaceFE.Controllers
             try
             {
                 var resp = await _api.GetAsync($"courses/{id}");
+                Console.WriteLine($"[Editor] GET courses/{id} => StatusCode: {(int)resp.StatusCode}");
+
                 if (resp.IsSuccessStatusCode)
                 {
                     var json = await resp.Content.ReadAsStringAsync();
@@ -139,14 +151,37 @@ namespace CourseMarketplaceFE.Controllers
                         if (data.TryGetProperty("lessons", out var lessonsEl) && lessonsEl.ValueKind == JsonValueKind.Array)
                         {
                             var rawJson = lessonsEl.GetRawText();
-                            Console.WriteLine("LESSONS JSON: " + rawJson);
+                            Console.WriteLine("[Editor] LESSONS JSON length: " + rawJson.Length);
                             ViewBag.LessonsJson = rawJson;
                         }
+                        else
+                        {
+                            Console.WriteLine("[Editor] WARNING: 'lessons' property not found in API response.");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("[Editor] WARNING: 'data' property not found in API response.");
                     }
                 }
+                else
+                {
+                    var errorBody = await resp.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[Editor] API FAILED: {(int)resp.StatusCode} - {errorBody}");
+                    
+                    // If 401/403 after auto-refresh attempt, session is dead — force re-login
+                    if ((int)resp.StatusCode == 401 || (int)resp.StatusCode == 403)
+                    {
+                        Response.Cookies.Delete("AccessToken", new CookieOptions { Path = "/" });
+                        return RedirectToAction("Login", "Account");
+                    }
+                    
+                    ViewBag.ApiError = $"API returned {(int)resp.StatusCode}.";
+                }
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"[Editor] EXCEPTION: {ex.Message}");
                 ViewBag.CourseTitle = "Course #" + id;
             }
 

@@ -49,4 +49,6 @@ public partial class Course
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
     public virtual ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();
+
+    public virtual CourseExt? CourseExt { get; set; }
 }

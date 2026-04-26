@@ -21,10 +21,34 @@
                 var userRole = Context.Request.Cookies["UserRole"] ?? "User";
                 <div class="flex items-center gap-3 pl-4 border-l border-slate-200">
                     
-                    @if (userRole.Equals("Instructor", StringComparison.OrdinalIgnoreCase) || userRole.Equals("Manager", StringComparison.OrdinalIgnoreCase))
+                    @if (userRole.Equals("instructor", StringComparison.OrdinalIgnoreCase) || userRole.Equals("manager", StringComparison.OrdinalIgnoreCase))
                     {
-                        <a href="/InstructorCourse" class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors mr-2">
-                            View as Instructor
+                        var currentPath = Context.Request.Path.ToString().ToLower();
+                        var isInstructorView = currentPath.StartsWith("/instructorcourse") || currentPath.StartsWith("/lesson");
+                        
+                        if (isInstructorView)
+                        {
+                            <a href="/" class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors mr-2 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[18px]">person</span>
+                                Switch to Learner
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="/InstructorCourse" class="text-sm font-semibold text-primary hover:text-primary/80 transition-colors mr-2 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[18px]">school</span>
+                                Switch to Instructor
+                            </a>
+                        }
+                        <div class="w-px h-6 bg-slate-200 mx-2"></div>
+                    }
+                    else
+                    {
+                        @* 🎓 Nút đăng ký Giảng viên — chỉ hiện cho Learner (role = User) *@
+                        <a href="/Instructor/Apply"
+                           class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-primary to-secondary rounded-full shadow-md shadow-primary/20 hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-300">
+                            <span class="material-symbols-outlined text-[16px]" style='font-variation-settings: "FILL" 1;'>school</span>
+                            Trở thành Giảng viên
                         </a>
                         <div class="w-px h-6 bg-slate-200 mx-2"></div>
                     }

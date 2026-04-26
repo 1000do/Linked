@@ -32,6 +32,7 @@ public class LessonResponse
     public string? ThumbnailUrl { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? LessonStatus { get; set; }
     
     public List<MaterialResponse> LearningMaterials { get; set; } = new List<MaterialResponse>();
 }

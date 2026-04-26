@@ -46,12 +46,15 @@
                 <div class="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
                 <div>
                     <div class="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest mb-2">
-                        <span class="material-symbols-outlined text-[14px]">edit</span> Editing Lesson <span id="editing-lesson-id">1.1</span>
+                        <span class="material-symbols-outlined text-[14px]">edit</span> Editing Lesson <span id="editing-lesson-id">--</span>
                     </div>
-                    <h2 id="editing-lesson-title" class="text-3xl font-headline font-extrabold text-slate-900">Welcome to the Course</h2>
+                    <h2 id="editing-lesson-title" class="text-3xl font-headline font-extrabold text-slate-900">Select a Lesson</h2>
                     <div class="flex items-center gap-4 mt-2 text-xs font-semibold text-slate-500">
-                        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">schedule</span> <span id="editing-lesson-duration">4 mins</span></span>
-                        <span class="flex items-center gap-1 text-primary"><span class="material-symbols-outlined text-[16px]">check_circle</span> Published</span>
+                        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">schedule</span> <span id="editing-lesson-duration">0 mins</span></span>
+                        <span id="editing-lesson-status-badge" class="flex items-center gap-1 text-slate-400">
+                            <span class="material-symbols-outlined text-[16px]">pending_actions</span> 
+                            <span id="editing-lesson-status-text">Draft</span>
+                        </span>
                     </div>
                 </div>
                 <div class="flex gap-3">
@@ -224,10 +227,49 @@
 
         // ─── Render Lessons dynamically ───
         const courseId = @courseId;
-        const rawLessonsJson = '@Html.Raw(ViewBag.LessonsJson ?? "[]")';
-        let lessonsData = [];
-        try { lessonsData = JSON.parse(rawLessonsJson); } catch(e) {}
+        // Pass JSON directly as a JS object to avoid quote/newline issues
+        let lessonsData = @Html.Raw(ViewBag.LessonsJson ?? "[]");
         
+        // Show API error if any
+        @if (ViewBag.ApiError != null) {
+            <text>
+            console.error("API Error:", "@Html.Raw(ViewBag.ApiError)");
+            // Show a warning banner at the top
+            const errBanner = document.createElement('div');
+            errBanner.className = 'mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-semibold';
+            errBanner.innerHTML = '<span class="material-symbols-outlined text-[16px] align-middle mr-1">error</span> @Html.Raw(ViewBag.ApiError) — Lesson data could not be loaded. Try logging in again.';
+            document.querySelector('.p-8')?.prepend(errBanner);
+            </text>
+        }
+
+        // Debugging — inspect what the server gave us
+        console.log("Lessons Data loaded:", lessonsData);
+        if (lessonsData.length > 0) {
+            console.log("First lesson keys:", Object.keys(lessonsData[0]));
+            if (lessonsData[0].learningMaterials || lessonsData[0].LearningMaterials) {
+                console.log("First lesson has materials:", lessonsData[0].learningMaterials || lessonsData[0].LearningMaterials);
+            } else {
+                console.warn("First lesson has NO learningMaterials property. Available keys:", Object.keys(lessonsData[0]));
+            }
+        } else {
+            console.warn("lessonsData is EMPTY. API may have returned 401 or no lessons exist.");
+        }
+
+        // ─── UI Element Declarations (moved up to avoid TDZ) ───
+        const videoDropArea = document.getElementById('video-drop-area');
+        const videoInput = document.getElementById('video-input');
+        const uiProgress = document.getElementById('video-upload-progress');
+        const uiSuccess = document.getElementById('video-success');
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        const progressText = document.getElementById('progress-text');
+        const uploadedFilename = document.getElementById('uploaded-filename');
+        const materialUrlInput = document.getElementById('MaterialUrl');
+        let currentXHR = null;
+
+        const resourceBtn = document.getElementById('upload-resource-btn');
+        const resourceInput = document.getElementById('resource-input');
+        const resourceProgress = document.getElementById('resource-upload-progress');
+        const resourceTitle = document.getElementById('resource-title');
         function renderCourseStructure() {
             const container = document.getElementById('course-structure-container');
             container.innerHTML = '';
@@ -246,15 +288,20 @@
             
             lessonsData.forEach((lesson, index) => {
                 const num = index + 1;
-                const isSelected = document.getElementById('editing-lesson-id').textContent == num;
+                // Safely get lesson properties (handle both PascalCase and camelCase)
+                const lId = lesson.lessonId || lesson.LessonId;
+                const lTitle = lesson.title || lesson.Title;
+                
+                const currentEditingId = document.getElementById('editing-lesson-id').textContent;
+                const isSelected = currentEditingId == num;
                 const activeClasses = isSelected ? 'border-primary ring-1 ring-primary/20 shadow-sm' : 'border-slate-100 hover:border-slate-300';
                 
                 sectionHtml += `
                     <div class="lesson-item p-3 bg-white border rounded-lg flex items-start gap-3 cursor-pointer transition-colors ${activeClasses}" 
-                         data-lesson-id="${lesson.lessonId}" data-num="${num}" data-title="${lesson.title}" onclick="selectLesson(this)">
+                         data-lesson-id="${lId}" data-num="${num}" data-title="${lTitle}" onclick="selectLesson(this)">
                         <span class="material-symbols-outlined text-${isSelected ? 'primary' : 'slate-400'} text-[20px] mt-0.5" ${isSelected ? "style='font-variation-settings: \"FILL\" 1;'" : ""}>play_circle</span>
                         <div class="flex-1">
-                            <p class="font-bold text-slate-900 text-sm">${num}. ${lesson.title}</p>
+                            <p class="font-bold text-slate-900 text-sm">${num}. ${lTitle}</p>
                             <p class="text-[10px] text-slate-500 mt-1">Video Lesson</p>
                         </div>
                     </div>
@@ -273,7 +320,7 @@
             // Auto-select first lesson if none selected and we have lessons
             if (lessonsData.length > 0) {
                 const firstLessonEl = container.querySelector('.lesson-item');
-                if (firstLessonEl && document.getElementById('lesson-editor-empty').classList.contains('z-10')) {
+                if (firstLessonEl && (document.getElementById('lesson-editor-empty').classList.contains('z-10') || !document.getElementById('lesson-editor-empty').classList.contains('hidden'))) {
                     selectLesson(firstLessonEl);
                 }
             }
@@ -281,11 +328,18 @@
 
         window.selectLesson = function(el) {
             // Show editor, hide empty state
-            document.getElementById('lesson-editor-empty').classList.add('hidden');
-            document.getElementById('lesson-editor-empty').classList.remove('z-10');
+            const emptyState = document.getElementById('lesson-editor-empty');
             const editor = document.getElementById('lesson-editor-active');
+            
+            emptyState.style.display = 'none';
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('z-10');
+            emptyState.style.pointerEvents = 'none';
+            
+            editor.style.display = 'flex';
             editor.classList.remove('hidden');
-            editor.classList.add('flex');
+            editor.classList.add('z-20');
+            editor.style.pointerEvents = 'auto';
             setTimeout(() => editor.classList.remove('opacity-0'), 10);
             
             document.querySelectorAll('.lesson-item').forEach(i => {
@@ -306,8 +360,24 @@
 
             // Extract duration from materialMetadata
             const lessonId = parseInt(el.dataset.lessonId);
-            const lesson = lessonsData.find(l => l.lessonId === lessonId);
+            const lesson = lessonsData.find(l => (l.lessonId || l.LessonId) == lessonId);
+            console.log("Selecting Lesson:", lessonId, lesson); // Debug log
             let durationDisplay = "0 mins";
+            
+            // Update Status Badge
+            const statusBadge = document.getElementById('editing-lesson-status-badge');
+            const statusText = document.getElementById('editing-lesson-status-text');
+            const lStatus = (lesson?.lessonStatus || lesson?.LessonStatus || 'draft').toLowerCase();
+            
+            if (lStatus === 'published') {
+                statusBadge.className = "flex items-center gap-1 text-primary";
+                statusBadge.querySelector('.material-symbols-outlined').textContent = "check_circle";
+                statusText.textContent = "Published";
+            } else {
+                statusBadge.className = "flex items-center gap-1 text-slate-400";
+                statusBadge.querySelector('.material-symbols-outlined').textContent = "pending_actions";
+                statusText.textContent = "Draft";
+            }
             
             // Clear current form
             lessonQuill.root.innerHTML = '';
@@ -320,40 +390,53 @@
             document.getElementById('resource-desc').textContent = "Upload supplementary files like PDFs, code samples, or slides.";
             document.getElementById('upload-resource-btn').innerHTML = '<span class="material-symbols-outlined text-[18px] align-middle mr-1">upload_file</span> Upload Resource';
             
-            if (lesson && lesson.learningMaterials && lesson.learningMaterials.length > 0) {
-                // Loop through all materials to populate both video and document
-                lesson.learningMaterials.forEach(material => {
-                    const type = material.materialMetadata?.fileType || material.materialMetadata?.file_type || 'video';
-                    
-                    if (type === 'video') {
-                        // Populate description
-                        if (material.description) {
-                            lessonQuill.root.innerHTML = material.description;
+            if (lesson) {
+                // Handle various casing: learningMaterials, LearningMaterials, learning_materials
+                const materials = lesson.learningMaterials || lesson.LearningMaterials || lesson.learning_materials || [];
+                console.log("Materials found for lesson:", lessonId, materials);
+                
+                if (Array.isArray(materials) && materials.length > 0) {
+                    materials.forEach(material => {
+                        // Extract metadata safely - it might be an object or a JSON string
+                        let metadata = material.materialMetadata || material.MaterialMetadata;
+                        if (typeof metadata === 'string') {
+                            try { metadata = JSON.parse(metadata); } catch(e) { metadata = {}; }
                         }
-                        // Populate video
-                        if (material.materialUrl) {
-                            document.getElementById('MaterialUrl').value = material.materialUrl;
-                            document.getElementById('video-drop-area').classList.add('hidden');
-                            document.getElementById('video-success').classList.remove('hidden');
-                            document.getElementById('uploaded-filename').textContent = "Existing Video Material";
+                        
+                        const type = (metadata?.file_type || 'video').toLowerCase();
+                        const mUrl = material.materialUrl || material.MaterialUrl;
+                        const mDesc = material.description || material.Description;
+                        const mTitle = material.title || material.Title;
+
+                        if (type === 'video') {
+                            // Populate description (usually stored with the main video material)
+                            if (mDesc && lessonQuill) {
+                                lessonQuill.root.innerHTML = mDesc;
+                            }
+                            // Populate video UI
+                            if (mUrl) {
+                                document.getElementById('MaterialUrl').value = mUrl;
+                                document.getElementById('video-drop-area').classList.add('hidden');
+                                document.getElementById('video-success').classList.remove('hidden');
+                                document.getElementById('uploaded-filename').textContent = mTitle || "Lesson Video Content";
+                                
+                                const totalSeconds = metadata?.duration || 0;
+                                const mins = Math.floor(totalSeconds / 60);
+                                durationDisplay = (mins > 0 ? mins : 0) + " mins";
+                            }
+                        } else if (type === 'document' || type === 'file') {
+                            // Populate resource UI
+                            if (mUrl) {
+                                document.getElementById('ResourceUrl').value = mUrl;
+                                document.getElementById('ResourceName').value = mTitle || "Resource File";
+                                document.getElementById('resource-title').textContent = mTitle || "Resource File";
+                                document.getElementById('resource-title').classList.add('text-primary');
+                                document.getElementById('resource-desc').textContent = "Existing resource file attached.";
+                                document.getElementById('upload-resource-btn').innerHTML = '<span class="material-symbols-outlined text-[18px] align-middle mr-1">change_circle</span> Replace Resource';
+                            }
                         }
-                        if (material.materialMetadata && material.materialMetadata.duration) {
-                            const totalSeconds = material.materialMetadata.duration;
-                            const mins = Math.floor(totalSeconds / 60);
-                            durationDisplay = mins + " mins";
-                        }
-                    } else if (type === 'document') {
-                        // Populate resource
-                        if (material.materialUrl) {
-                            document.getElementById('ResourceUrl').value = material.materialUrl;
-                            document.getElementById('ResourceName').value = material.title;
-                            document.getElementById('resource-title').textContent = material.title;
-                            document.getElementById('resource-title').classList.add('text-primary');
-                            document.getElementById('resource-desc').textContent = "Existing resource file";
-                            document.getElementById('upload-resource-btn').innerHTML = '<span class="material-symbols-outlined text-[18px] align-middle mr-1">change_circle</span> Replace Resource';
-                        }
-                    }
-                });
+                    });
+                }
             }
             const durationEl = document.getElementById('editing-lesson-duration');
             if(durationEl) durationEl.textContent = durationDisplay;
@@ -457,16 +540,6 @@
         });
 
         // ─── Video Upload (XHR with progress) ───
-        const videoDropArea = document.getElementById('video-drop-area');
-        const videoInput = document.getElementById('video-input');
-        const uiProgress = document.getElementById('video-upload-progress');
-        const uiSuccess = document.getElementById('video-success');
-        const progressBarFill = document.getElementById('progress-bar-fill');
-        const progressText = document.getElementById('progress-text');
-        const uploadedFilename = document.getElementById('uploaded-filename');
-        const materialUrlInput = document.getElementById('MaterialUrl');
-        let currentXHR = null;
-
         videoDropArea.addEventListener('click', () => videoInput.click());
         videoInput.addEventListener('change', function() { handleVideoUpload(this.files); });
         ['dragenter','dragover','dragleave','drop'].forEach(ev => videoDropArea.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }, false));
@@ -542,14 +615,28 @@
                     const json = await res.json();
                     if(json.success) {
                         Swal.fire({ icon: 'success', title: 'Saved!', text: 'Lesson material has been saved successfully.', timer: 1500, showConfirmButton: false });
-                        // Ideally update local lessonsData array with new material
+                        
                         if (json.data) {
-                            const lesson = lessonsData.find(l => l.lessonId == lessonId);
+                            const lesson = lessonsData.find(l => (l.lessonId || l.LessonId) == lessonId);
                             if (lesson) {
                                 if (!lesson.learningMaterials) lesson.learningMaterials = [];
-                                // If material already existed, we could replace it, but the API just adds currently.
-                                lesson.learningMaterials.push(json.data);
-                                selectLesson(lessonIdEl); // refresh duration
+                                
+                                // Update or Add material to local state to avoid duplicates
+                                const newMat = json.data;
+                                const newType = newMat.materialMetadata?.file_type || 'video';
+                                
+                                const existingIdx = lesson.learningMaterials.findIndex(m => {
+                                    const mType = m.materialMetadata?.file_type || 'video';
+                                    return mType === newType;
+                                });
+
+                                if (existingIdx !== -1) {
+                                    lesson.learningMaterials[existingIdx] = newMat;
+                                } else {
+                                    lesson.learningMaterials.push(newMat);
+                                }
+                                
+                                selectLesson(lessonIdEl); // refresh duration and UI
                             }
                         }
                     } else {
@@ -610,11 +697,6 @@
 
         
         // ─── Resource Upload ───
-        const resourceBtn = document.getElementById('upload-resource-btn');
-        const resourceInput = document.getElementById('resource-input');
-        const resourceProgress = document.getElementById('resource-upload-progress');
-        const resourceTitle = document.getElementById('resource-title');
-        
         resourceBtn.addEventListener('click', () => resourceInput.click());
         resourceInput.addEventListener('change', function() {
             if (this.files.length > 0) {

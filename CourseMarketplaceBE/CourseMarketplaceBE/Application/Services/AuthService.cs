@@ -168,9 +168,7 @@ public class AuthService : IAuthService
     public async Task<LoginResponse?> GoogleLoginAsync(string idToken)
     {
         var payload = await GoogleJsonWebSignature.ValidateAsync(idToken);
-
         var email = payload.Email.ToLower();
-
         var account = await _userRepo.GetAccountByEmailAsync(email);
 
         if (account == null)
@@ -192,40 +190,34 @@ public class AuthService : IAuthService
             };
 
             var created = await _userRepo.RegisterUserAsync(acc, user);
-
             if (!created) return null;
 
             account = await _userRepo.GetAccountByEmailAsync(email);
         }
 
-        // GENERATE JWT (reuse code cũ)
-        var key = Encoding.UTF8.GetBytes(_jwtSettings.Key!);
+        await _userRepo.UpdateLastLoginAsync(account!.AccountId);
 
-        var fullName = account!.User?.FullName ?? payload.Name;
-        var avatar = account.AvatarUrl ?? payload.Picture;
+        // ── Detect role ───────────────────────────────────────────────────────
+        var role = await _userRepo.GetRoleByAccountIdAsync(account.AccountId);
 
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new[]
-            {
-            new Claim(ClaimTypes.NameIdentifier, account.AccountId.ToString()),
-            new Claim(ClaimTypes.Email, account.Email),
-            new Claim("FullName", fullName),
-            new Claim("AvatarUrl", avatar ?? "")
-        }),
-            Expires = DateTime.UtcNow.AddHours(24),
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key),
-                SecurityAlgorithms.HmacSha256Signature)
-        };
+        var fullName = role == "manager"
+            ? (account.Manager?.DisplayName ?? "Manager")
+            : (account.User?.FullName ?? payload.Name ?? "User");
+        
+        var avatar = account.AvatarUrl ?? payload.Picture ?? "";
 
-        var token = new JwtSecurityTokenHandler()
-            .WriteToken(new JwtSecurityTokenHandler().CreateToken(tokenDescriptor));
+        var accessToken = GenerateAccessToken(account, role);
+        var refreshToken = GenerateRefreshToken();
+        var expiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+
+        await _userRepo.SaveRefreshTokenAsync(account.AccountId, refreshToken, expiry);
 
         return new LoginResponse
         {
-            AccessToken = token,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
             FullName = fullName,
+            Role = role,
             AvatarUrl = avatar,
             IsVerified = true
         };
