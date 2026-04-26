@@ -1,5 +1,4 @@
 using System.Text;
-using Stripe;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Application.Services;
 using CourseMarketplaceBE.Domain.IRepositories;
@@ -14,6 +13,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Stripe;
 
 
 namespace CourseMarketplaceBE;
@@ -120,7 +120,7 @@ public class Program
 
         // 🔥 4. Database
         var connectionString = configuration.GetConnectionString("DefaultConnection");
-        
+
         var dataSourceBuilder = new Npgsql.NpgsqlDataSourceBuilder(connectionString);
         dataSourceBuilder.EnableDynamicJson();
         var dataSource = dataSourceBuilder.Build();
@@ -141,9 +141,12 @@ public class Program
         builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
         builder.Services.AddScoped<INotificationService, NotificationService>();
         builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
-          
+
         builder.Services.AddSingleton<IOtpService, OtpService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
+
+        builder.Services.AddScoped<IInstructorRepository, InstructorRepository>();
+        builder.Services.AddScoped<IInstructorApprovalService, InstructorApprovalService>();
 
         // Register file upload implementation conditionally.
         // If Cloudinary config is present, use CloudinaryUploadService; otherwise use a no-op fallback.
