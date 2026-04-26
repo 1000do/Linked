@@ -30,6 +30,13 @@ public class InstructorService : IInstructorService
     // ═══════════════════════════════════════════════════════════════════════
     public async Task<string> SubmitApplicationAsync(int userId, InstructorApplicationRequest request)
     {
+        // Kiểm tra email đã xác thực chưa
+        var account = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == userId);
+        if (account == null)
+            throw new InvalidOperationException("Không tìm thấy tài khoản.");
+        if (!account.IsVerified)
+            throw new InvalidOperationException("EMAIL_NOT_VERIFIED");
+
         // Kiểm tra đã nộp đơn chưa
         var existing = await _context.Instructors.FirstOrDefaultAsync(i => i.InstructorId == userId);
         if (existing != null)

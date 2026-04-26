@@ -27,6 +27,10 @@ public class InstructorController : Controller
     [HttpGet]
     public async Task<IActionResult> Apply()
     {
+        // Kiểm tra đăng nhập
+        if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
+            return Redirect("/Account/Login");
+
         try
         {
             // Kiểm tra xem đã có đơn đăng ký chưa
@@ -38,6 +42,34 @@ public class InstructorController : Controller
             }
         }
         catch { }
+
+        // Kiểm tra email đã xác thực chưa
+        try
+        {
+            var profileResponse = await _api.GetAsync("Profile");
+            if (profileResponse.IsSuccessStatusCode)
+            {
+                var json = await profileResponse.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("data", out var data) &&
+                    data.TryGetProperty("isVerified", out var isVerifiedProp))
+                {
+                    ViewBag.IsEmailVerified = isVerifiedProp.GetBoolean();
+                }
+                else
+                {
+                    ViewBag.IsEmailVerified = false;
+                }
+            }
+            else
+            {
+                ViewBag.IsEmailVerified = false;
+            }
+        }
+        catch
+        {
+            ViewBag.IsEmailVerified = false;
+        }
 
         return View(new InstructorApplyViewModel());
     }

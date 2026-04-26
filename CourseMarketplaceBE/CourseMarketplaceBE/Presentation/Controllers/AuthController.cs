@@ -1,4 +1,4 @@
-﻿using CloudinaryDotNet.Actions;
+using CloudinaryDotNet.Actions;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
@@ -69,6 +69,7 @@ public class AuthController : ControllerBase
             status = 200,
             message = "Đăng nhập thành công",
             accessToken = result.AccessToken,   // Trả về để FE lưu in-memory
+            refreshToken = result.RefreshToken,
             fullName = result.FullName,
             avatarUrl = result.AvatarUrl,
             role = result.Role
@@ -147,7 +148,9 @@ public class AuthController : ControllerBase
 
         return Ok(new
         {
-            token = result.AccessToken,
+            accessToken = result.AccessToken,
+            refreshToken = result.RefreshToken,
+            role = result.Role,
             fullName = result.FullName,
             avatarUrl = result.AvatarUrl,
             isVerified = result.IsVerified
