@@ -22,10 +22,12 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 InstructorId = i.InstructorId,
                 FullName = i.InstructorNavigation.FullName,
-                // ĐỔI TÊN Ở ĐÂY:
                 Email = i.InstructorNavigation.UserNavigation.Email,
+                AvatarUrl = i.InstructorNavigation.UserNavigation.AvatarUrl,
                 ProfessionalTitle = i.ProfessionalTitle,
+                // Lấy đúng dữ liệu từ DB thay vì gán cứng
                 DocumentUrl = i.DocumentUrl,
+                LinkedInUrl = i.LinkedinUrl,
                 ApprovalStatus = i.ApprovalStatus,
                 ExpertiseCategories = i.ExpertiseCategories
             });

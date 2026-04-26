@@ -1,0 +1,187 @@
+﻿@model List<CourseMarketplaceFE.Models.NotificationViewModel>
+@{
+    Layout = "_InstructorLayout";
+    ViewData["Title"] = "Thông báo";
+}
+
+<div class="min-h-screen pt-8 pb-16 bg-[#f8fafc]">
+    <div class="max-w-4xl mx-auto px-4">
+
+        <div class="flex items-center justify-between mb-8 border-b border-slate-200 pb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800">Thông báo của bạn</h1>
+                <p class="text-sm text-slate-500">Cập nhật các hoạt động mới nhất từ hệ thống</p>
+            </div>
+        </div>
+
+        <div id="notification-container" class="space-y-3">
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var item in Model.OrderByDescending(x => x.CreatedAt))
+                {
+                    <div id="noti-@item.NotificationId"
+                         class="group relative flex items-start gap-4 p-5 rounded-2xl transition-all duration-200 @(item.IsRead ? "bg-slate-50/50 opacity-80" : "bg-white shadow-md border-l-4 border-primary")">
+
+                        <div class="shrink-0 relative">
+                            <div class="w-12 h-12 rounded-full @(item.IsRead ? "bg-slate-100" : "bg-blue-50") flex items-center justify-center border border-slate-100">
+                                <span class="material-symbols-outlined @(item.IsRead ? "text-slate-400" : "text-primary")">
+                                    @(item.Title.Contains("Duyệt") ? "verified" : "notifications")
+                                </span>
+                            </div>
+                            @if (!item.IsRead)
+                            {
+                                <span class="absolute top-0 right-0 w-3 h-3 bg-red-500 border-2 border-white rounded-full"></span>
+                            }
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-start mb-1">
+                                <h4 class="text-[15px] @(item.IsRead ? "font-medium text-slate-600" : "font-bold text-slate-900") pr-8">
+                                    @item.Title
+                                </h4>
+                                <span class="text-[11px] text-slate-400 font-medium bg-slate-100 px-2 py-1 rounded-md">
+                                    @item.CreatedAt?.ToString("HH:mm, dd/MM/yyyy")
+                                </span>
+                            </div>
+                            <p class="text-[14px] text-slate-500 leading-relaxed line-clamp-2">@item.Content</p>
+
+                            <div class="flex gap-3 mt-3 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                                @if (!item.IsRead)
+                                {
+                                    <button onclick="updateStatus(@item.NotificationId, 'read')"
+                                            class="flex items-center gap-1 text-[11px] font-bold text-primary hover:bg-blue-50 px-2 py-1 rounded-md transition-colors">
+                                        <span class="material-symbols-outlined text-sm">done</span> ĐÃ ĐỌC
+                                    </button>
+                                }
+                                <button onclick="updateStatus(@item.NotificationId, 'delete')"
+                                        class="flex items-center gap-1 text-[11px] font-bold text-red-500 hover:bg-red-50 px-2 py-1 rounded-md transition-colors">
+                                    <span class="material-symbols-outlined text-sm">delete</span> XÓA
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div id="empty-state" class="text-center py-24 bg-white rounded-3xl border border-dashed border-slate-300">
+                    <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="material-symbols-outlined text-slate-300 text-4xl">notifications_off</span>
+                    </div>
+                    <p class="text-slate-400 font-bold">Bạn không có thông báo nào</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 1. HÀM XỬ LÝ BẤM NÚT (Đọc/Xóa)
+        async function updateStatus(id, action) {
+            const isDelete = action === 'delete';
+
+            // Hiện xác nhận để tránh bấm nhầm
+            if(!confirm(isDelete ? "Bạn có chắc chắn muốn xóa thông báo này?" : "Đánh dấu thông báo này là đã đọc?")) return;
+
+            // Đường dẫn URL gửi về Server (Điều chỉnh cho khớp với Controller của bạn)
+            const url = isDelete ? `/Instructor/Delete?id=${id}` : `/Instructor/MarkAsRead?id=${id}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    }
+                });
+
+                if (response.ok) {
+                    if (isDelete) {
+                        // Hiệu ứng xóa mượt mà
+                        const el = document.getElementById(`noti-${id}`);
+                        if (el) {
+                            el.style.transform = "scale(0.95)";
+                            el.style.opacity = "0";
+                            setTimeout(() => {
+                                el.remove();
+                                // Nếu xóa hết thì reload để hiện trạng thái trống
+                                if(document.querySelectorAll('[id^="noti-"]').length === 0) location.reload();
+                            }, 300);
+                        }
+                    } else {
+                        // Nếu là đọc thì reload để cập nhật UI (mờ đi, mất chấm đỏ)
+                        location.reload();
+                    }
+                } else {
+                    alert("Có lỗi xảy ra khi cập nhật trạng thái.");
+                }
+            } catch (err) {
+                console.error("Lỗi kết nối:", err);
+                alert("Không thể kết nối đến máy chủ.");
+            }
+        }
+
+        // 2. HÀM XỬ LÝ KHI CÓ THÔNG BÁO MỚI (SignalR gọi)
+        function prependNotification(data) {
+            console.log("Đã nhận data từ SignalR:", data);
+            const container = document.getElementById('notification-container');
+            const emptyState = document.getElementById('empty-state');
+            if (emptyState) emptyState.remove();
+
+            const id = data.notificationId || data.NotificationId;
+            const title = data.title || data.Title;
+            const content = data.content || data.Content;
+
+            const html = `
+                <div id="noti-${id}"
+                     class="group relative flex items-start gap-4 p-5 rounded-2xl transition-all duration-500 bg-white shadow-md border-l-4 border-primary animate-bounce-subtle"
+                     style="background-color: #fffef0; border-left-color: #006a62;">
+
+                    <div class="shrink-0 relative">
+                        <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center border border-slate-100">
+                            <span class="material-symbols-outlined text-primary">notifications</span>
+                        </div>
+                        <span class="absolute top-0 right-0 w-3 h-3 bg-red-500 border-2 border-white rounded-full"></span>
+                    </div>
+
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start mb-1">
+                            <h4 class="text-[15px] font-bold text-slate-900 pr-8">${title}</h4>
+                            <span class="text-[11px] text-slate-400 font-medium bg-slate-100 px-2 py-1 rounded-md">Vừa xong</span>
+                        </div>
+                        <p class="text-[14px] text-slate-500 leading-relaxed line-clamp-2">${content}</p>
+
+                        <div class="flex gap-3 mt-3 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                            <button onclick="updateStatus(${id}, 'read')"
+                                    class="flex items-center gap-1 text-[11px] font-bold text-primary hover:bg-blue-50 px-2 py-1 rounded-md transition-colors">
+                                <span class="material-symbols-outlined text-sm">done</span> ĐÃ ĐỌC
+                            </button>
+                            <button onclick="updateStatus(${id}, 'delete')"
+                                    class="flex items-center gap-1 text-[11px] font-bold text-red-500 hover:bg-red-50 px-2 py-1 rounded-md transition-colors">
+                                <span class="material-symbols-outlined text-sm">delete</span> XÓA
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+
+            container.insertAdjacentHTML('afterbegin', html);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+
+    <style>
+        @@keyframes bounce-subtle {
+            0%, 100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .animate-bounce-subtle {
+            animation: bounce-subtle 0.5s ease-in-out 2;
+        }
+    </style>
+}
