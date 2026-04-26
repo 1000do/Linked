@@ -152,7 +152,7 @@ public class Program
         builder.Services.AddScoped<IInstructorApprovalService, InstructorApprovalService>();
 
         builder.Services.AddScoped<ICouponRepository, CouponRepository>();
-        builder.Services.AddScoped<ICouponService, CouponService>();
+        builder.Services.AddScoped<ICouponService, CourseMarketplaceBE.Application.Services.CouponService>();
 
         // Register file upload implementation conditionally.
         // If Cloudinary config is present, use CloudinaryUploadService; otherwise use a no-op fallback.
