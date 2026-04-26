@@ -126,7 +126,7 @@ namespace CourseMarketplaceFE.Helpers
             httpCtx.Response.Cookies.Append("AccessToken", newAccessToken, new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false, // dev: false; production: true
+                Secure = httpCtx.Request.IsHttps,
                 SameSite = SameSiteMode.Lax,
                 Expires = DateTimeOffset.UtcNow.AddMinutes(15),
                 Path = "/"
@@ -141,7 +141,7 @@ namespace CourseMarketplaceFE.Helpers
                     httpCtx.Response.Cookies.Append("RefreshToken", newRefreshToken, new CookieOptions
                     {
                         HttpOnly = true,
-                        Secure = false,
+                        Secure = httpCtx.Request.IsHttps,
                         SameSite = SameSiteMode.Lax,
                         Expires = DateTimeOffset.UtcNow.AddDays(7),
                         Path = "/"
