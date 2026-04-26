@@ -148,7 +148,7 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Delete("UserName", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
 
-            return RedirectToAction("Login");
+            return RedirectToAction("Index", "Home");
         }
 
         // Giữ GET logout cho trường hợp link đơn giản (không form)
