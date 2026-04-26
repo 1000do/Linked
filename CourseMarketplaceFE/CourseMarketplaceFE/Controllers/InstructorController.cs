@@ -278,21 +278,20 @@ public class InstructorController : Controller
         return View(new List<NotificationViewModel>());
     }
     [HttpPost]
+    [IgnoreAntiforgeryToken] // Diệt lỗi 400 khi gọi AJAX
     public async Task<IActionResult> MarkAsRead(int id)
     {
-        // SỬA: Đưa id vào chuỗi URL để khớp với [HttpPut("mark-as-read/{id}")] bên BE
+        // Gọi trực tiếp đến Backend API từ Server
         var response = await _api.PutAsync($"notification/mark-as-read/{id}", null);
-
         if (response.IsSuccessStatusCode) return Ok();
         return BadRequest();
     }
 
     [HttpPost]
-    public async Task<IActionResult> Delete(int id)
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> DeleteNotification(int id)
     {
-        // SỬA: Đưa id vào chuỗi URL để khớp với [HttpDelete("{id}")] bên BE
         var response = await _api.DeleteAsync($"notification/{id}");
-
         if (response.IsSuccessStatusCode) return Ok();
         return BadRequest();
     }

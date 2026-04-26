@@ -1,103 +1,104 @@
 @using System.Net
 @{
     ViewData["Title"] = "Quản lý thông báo";
-    Layout = null;
+    ViewData["PageHeader"] = "Lịch sử thông báo";
+    Layout = "_AdminLayout";
 
     var token = Context.Request.Cookies["AccessToken"] ?? "";
     var managerName = Context.Request.Cookies["UserName"] ?? "Admin";
 }
 
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin - Notification Center</title>
+@* <!DOCTYPE html> *@
+@* <html lang="vi"> *@
+@* <head> *@
+@*     <meta charset="utf-8" /> *@
+@*     <meta name="viewport" content="width=device-width, initial-scale=1.0" /> *@
+@*     <title>Admin - Notification Center</title> *@
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+@*     <script src="https://cdn.tailwindcss.com"></script> *@
+@*     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"> *@
+@*     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" /> *@
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+@*     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script> *@
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#10b981',
-                        secondary: '#059669',
-                        surface: '#ffffff',
-                        border: '#e2e8f0'
-                    },
-                    fontFamily: { sans: ['Inter', 'sans-serif'] }
-                }
-            }
-        }
-    </script>
-    <style>
-        .no-shadow {
-            box-shadow: none !important;
-        }
+@*     <script> *@
+@*         tailwind.config = { *@
+@*             theme: { *@
+@*                 extend: { *@
+@*                     colors: { *@
+@*                         primary: '#10b981', *@
+@*                         secondary: '#059669', *@
+@*                         surface: '#ffffff', *@
+@*                         border: '#e2e8f0' *@
+@*                     }, *@
+@*                     fontFamily: { sans: ['Inter', 'sans-serif'] } *@
+@*                 } *@
+@*             } *@
+@*         } *@
+@*     </script> *@
+@*     <style> *@
+@*         .no-shadow { *@
+@*             box-shadow: none !important; *@
+@*         } *@
 
-        .flat-border {
-            border: 1px solid #e2e8f0;
-        }
+@*         .flat-border { *@
+@*             border: 1px solid #e2e8f0; *@
+@*         } *@
 
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
+@*         ::-webkit-scrollbar { *@
+@*             width: 6px; *@
+@*         } *@
 
-        ::-webkit-scrollbar-thumb {
-            background: #10b981;
-            border-radius: 10px;
-        }
-    </style>
-</head>
-<body class="bg-white text-slate-800 flex h-screen overflow-hidden">
+@*         ::-webkit-scrollbar-thumb { *@
+@*             background: #10b981; *@
+@*             border-radius: 10px; *@
+@*         } *@
+@*     </style> *@
+@* </head> *@
+@* <body class="bg-white text-slate-800 flex h-screen overflow-hidden"> *@
 
-    <aside class="w-64 border-r border-border flex flex-col bg-white">
-        <div class="h-16 flex items-center px-6 border-b border-border">
-            <span class="text-primary font-bold text-xl flex items-center gap-2">
-                <span class="material-symbols-outlined">shield_person</span> Quản trị
-            </span>
-        </div>
-        <nav class="flex-1 p-4 space-y-2">
-            <a href="#" class="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 text-primary font-semibold transition-colors">
-                <span class="material-symbols-outlined">notifications</span> Thông báo
-            </a>
+    @* <aside class="w-64 border-r border-border flex flex-col bg-white"> *@
+    @*     <div class="h-16 flex items-center px-6 border-b border-border"> *@
+    @*         <span class="text-primary font-bold text-xl flex items-center gap-2"> *@
+    @*             <span class="material-symbols-outlined">shield_person</span> Quản trị *@
+    @*         </span> *@
+    @*     </div> *@
+    @*     <nav class="flex-1 p-4 space-y-2"> *@
+    @*         <a href="#" class="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 text-primary font-semibold transition-colors"> *@
+    @*             <span class="material-symbols-outlined">notifications</span> Thông báo *@
+    @*         </a> *@
 
-            <a href="/Coupon/Admin"
-               class="flex items-center gap-3 p-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-all">
-                <span class="material-symbols-outlined">confirmation_number</span>
-                Coupon
-            </a>
+    @*         <a href="/Coupon/Admin" *@
+    @*            class="flex items-center gap-3 p-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-all"> *@
+    @*             <span class="material-symbols-outlined">confirmation_number</span> *@
+    @*             Coupon *@
+    @*         </a> *@
 
-            <a href="/" class="flex items-center gap-3 p-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-all">
-                <span class="material-symbols-outlined">home</span> Trang chủ
-            </a>
-        </nav>
+    @*         <a href="/" class="flex items-center gap-3 p-3 rounded-lg text-slate-500 hover:bg-slate-50 transition-all"> *@
+    @*             <span class="material-symbols-outlined">home</span> Trang chủ *@
+    @*         </a> *@
+    @*     </nav> *@
 
-        <div class="p-4 border-t border-border">
-            <form method="post" action="/Account/Logout">
-                @Html.AntiForgeryToken()
-                <button type="submit"
-                        class="w-full flex items-center gap-3 p-3 rounded-lg text-red-500 hover:bg-red-50 transition-all font-semibold">
-                    <span class="material-symbols-outlined">logout</span>
-                    Đăng xuất
-                </button>
-            </form>
-        </div>
-    </aside>
+    @*     <div class="p-4 border-t border-border"> *@
+    @*         <form method="post" action="/Account/Logout"> *@
+    @*             @Html.AntiForgeryToken() *@
+    @*             <button type="submit" *@
+    @*                     class="w-full flex items-center gap-3 p-3 rounded-lg text-red-500 hover:bg-red-50 transition-all font-semibold"> *@
+    @*                 <span class="material-symbols-outlined">logout</span> *@
+    @*                 Đăng xuất *@
+    @*             </button> *@
+    @*         </form> *@
+    @*     </div> *@
+    @* </aside> *@
 
-    <main class="flex-1 flex flex-col bg-white overflow-hidden">
+    @* <main class="flex-1 flex flex-col bg-white overflow-hidden"> *@
         <header class="h-16 border-b border-border flex items-center justify-between px-8 bg-white">
-            <div class="flex items-center gap-3">
-                <h2 class="font-semibold text-lg text-slate-700">Lịch sử thông báo</h2>
-                <span class="text-[10px] bg-slate-100 px-2 py-1 rounded-full text-slate-500 font-bold uppercase tracking-wider">
-                    Admin: @managerName
-                </span>
-            </div>
+            @* <div class="flex items-center gap-3"> *@
+            @*     <h2 class="font-semibold text-lg text-slate-700">Lịch sử thông báo</h2> *@
+            @*     <span class="text-[10px] bg-slate-100 px-2 py-1 rounded-full text-slate-500 font-bold uppercase tracking-wider"> *@
+            @*         Admin: @managerName *@
+            @*     </span> *@
+            @* </div> *@
             <button onclick="openModal()" class="bg-primary hover:bg-secondary text-white px-5 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors no-shadow">
                 <span class="material-symbols-outlined text-sm">add</span> Gửi thông báo
             </button>
@@ -126,7 +127,7 @@
                 </div>
             </div>
         </div>
-    </main>
+    @* </main> *@
 
     <div id="modal-send" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-slate-900/20 backdrop-blur-sm" onclick="closeModal()"></div>
@@ -374,5 +375,5 @@
 
         document.addEventListener('DOMContentLoaded', loadHistory);
     </script>
-</body>
-</html>
+@* </body> *@
+@* </html> *@

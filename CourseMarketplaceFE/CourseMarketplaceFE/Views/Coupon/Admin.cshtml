@@ -1,5 +1,5 @@
 ﻿@{
-    Layout = null;
+    Layout = "_AdminLayout";
     var token = Context.Request.Cookies["AccessToken"] ?? "";
     var managerName = Context.Request.Cookies["UserName"] ?? "Admin";
 }
@@ -32,30 +32,30 @@
 <body class="bg-white text-slate-800 flex h-screen overflow-hidden">
 
     <!-- SIDEBAR -->
-    <aside class="w-64 border-r flex flex-col bg-white">
-        <div class="h-16 flex items-center px-6 border-b">
-            <span class="text-primary font-bold text-xl">Quản trị</span>
-        </div>
+    @* <aside class="w-64 border-r flex flex-col bg-white"> *@
+    @*     <div class="h-16 flex items-center px-6 border-b"> *@
+    @*         <span class="text-primary font-bold text-xl">Quản trị</span> *@
+    @*     </div> *@
 
-        <nav class="p-4 space-y-2">
-            <a href="/Notification/Admin" class="flex items-center gap-2 p-3 rounded-lg text-slate-500 hover:bg-slate-50">
-                📢 Thông báo
-            </a>
+    @*     <nav class="p-4 space-y-2"> *@
+    @*         <a href="/Notification/Admin" class="flex items-center gap-2 p-3 rounded-lg text-slate-500 hover:bg-slate-50"> *@
+    @*             📢 Thông báo *@
+    @*         </a> *@
 
-            <a href="/Coupon/Admin" class="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 text-primary font-semibold">
-                🎟 Coupon
-            </a>
-        </nav>
+    @*         <a href="/Coupon/Admin" class="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 text-primary font-semibold"> *@
+    @*             🎟 Coupon *@
+    @*         </a> *@
+    @*     </nav> *@
 
-        <div class="p-4 mt-auto">
-            <form method="post" action="/Account/Logout">
-                @Html.AntiForgeryToken()
-                <button type="submit" class="w-full p-3 text-red-500 hover:bg-red-50 rounded-lg font-semibold">
-                    Logout
-                </button>
-            </form>
-        </div>
-    </aside>
+    @*     <div class="p-4 mt-auto"> *@
+    @*         <form method="post" action="/Account/Logout"> *@
+    @*             @Html.AntiForgeryToken() *@
+    @*             <button type="submit" class="w-full p-3 text-red-500 hover:bg-red-50 rounded-lg font-semibold"> *@
+    @*                 Logout *@
+    @*             </button> *@
+    @*         </form> *@
+    @*     </div> *@
+    @* </aside> *@
 
     <!-- MAIN -->
     <main class="flex-1 flex flex-col">
