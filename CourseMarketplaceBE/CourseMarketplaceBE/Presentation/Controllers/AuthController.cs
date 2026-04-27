@@ -44,13 +44,13 @@ public class AuthController : ControllerBase
         if (result == null)
             return Unauthorized(new { status = 401, message = "Email hoặc mật khẩu không chính xác." });
 
-        // Access token: HttpOnly cookie, ngắn hạn (15 phút)
+        // Access token: HttpOnly cookie, dài hạn (24 giờ — khớp JWT)
         Response.Cookies.Append("AccessToken", result.AccessToken, new CookieOptions
         {
             HttpOnly = true,
             Secure = Request.IsHttps,
             SameSite = SameSiteMode.Strict,
-            Expires = DateTimeOffset.UtcNow.AddMinutes(15),
+            Expires = DateTimeOffset.UtcNow.AddHours(24),
             Path = "/"
         });
 
@@ -98,7 +98,7 @@ public class AuthController : ControllerBase
             HttpOnly = true,
             Secure = Request.IsHttps,
             SameSite = SameSiteMode.Strict,
-            Expires = DateTimeOffset.UtcNow.AddMinutes(15),
+            Expires = DateTimeOffset.UtcNow.AddHours(24),
             Path = "/"
         });
 

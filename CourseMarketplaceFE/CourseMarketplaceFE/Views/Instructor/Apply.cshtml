@@ -45,6 +45,21 @@
         }
         else
         {
+            @* ── RESUBMIT BANNER ───────────────────────────────────── *@
+            @if (Model.IsResubmit)
+            {
+                <div class="bg-amber-50 border border-amber-300 rounded-xl p-4 mb-6 flex items-start gap-3">
+                    <span class="material-symbols-outlined text-amber-500 text-2xl mt-0.5">warning</span>
+                    <div>
+                        <p class="text-sm font-bold text-amber-800 mb-1">Đơn đăng ký trước đã bị từ chối</p>
+                        <p class="text-sm text-amber-700">
+                            Vui lòng kiểm tra lại thông tin bên dưới, chỉnh sửa nếu cần và nhấn <strong>Nộp lại đơn</strong>.
+                            Đơn mới sẽ được xử lý với cùng ID cũ.
+                        </p>
+                    </div>
+                </div>
+            }
+
             @* ── VALIDATION ERRORS ────────────────────────────────── *@
             if (!ViewData.ModelState.IsValid)
             {
@@ -126,6 +141,21 @@
                             <span class="material-symbols-outlined text-lg text-primary">upload_file</span>
                             Tải lên CV / Chứng chỉ / CMND (không bắt buộc)
                         </label>
+
+                        @* Hiển link tài liệu cũ khi resubmit *@
+                        @if (Model.IsResubmit && !string.IsNullOrEmpty(Model.ExistingDocumentUrl))
+                        {
+                            <div class="flex items-center gap-2 mb-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <span class="material-symbols-outlined text-slate-500 text-lg">attach_file</span>
+                                <span class="text-xs text-slate-500">Tài liệu hiện tại:</span>
+                                <a href="@Model.ExistingDocumentUrl" target="_blank"
+                                   class="text-xs text-primary font-semibold hover:underline truncate max-w-xs">
+                                    Xem tài liệu cũ
+                                </a>
+                                <span class="text-xs text-slate-400">(Tải file mới để thay thế, hoặc để trống để giữ nguyên)</span>
+                            </div>
+                        }
+
                         <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-primary/40 transition-colors">
                             <input asp-for="DocumentFile" type="file" accept=".pdf,.jpg,.jpeg,.png"
                                    class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
@@ -137,7 +167,7 @@
                     <button type="submit"
                             class="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-sm uppercase tracking-wider">
                         <span class="material-symbols-outlined text-lg align-middle mr-1">send</span>
-                        Nộp đơn đăng ký
+                        @(Model.IsResubmit ? "Nộp lại đơn" : "Nộp đơn đăng ký")
                     </button>
                 </form>
             </div>

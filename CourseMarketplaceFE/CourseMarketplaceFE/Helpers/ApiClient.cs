@@ -71,10 +71,12 @@ namespace CourseMarketplaceFE.Helpers
                     var httpCtx = _ctx.HttpContext;
                     if (httpCtx != null)
                     {
-                        // Xóa sạch session/cookie
-                        httpCtx.Response.Cookies.Delete("AccessToken");
-                        httpCtx.Response.Cookies.Delete("RefreshToken");
-                        httpCtx.Response.Cookies.Delete("UserRole");
+                        // Xóa sạch session/cookie (bao gồm cả display cookies để header reset)
+                        httpCtx.Response.Cookies.Delete("AccessToken", new CookieOptions { Path = "/" });
+                        httpCtx.Response.Cookies.Delete("RefreshToken", new CookieOptions { Path = "/" });
+                        httpCtx.Response.Cookies.Delete("UserRole", new CookieOptions { Path = "/" });
+                        httpCtx.Response.Cookies.Delete("UserName", new CookieOptions { Path = "/" });
+                        httpCtx.Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
 
                         // Ra hiệu cho Middleware bên Program.cs đá văng về trang đăng nhập
                         httpCtx.Items["ForceLogout"] = true;
@@ -128,7 +130,7 @@ namespace CourseMarketplaceFE.Helpers
                 HttpOnly = true,
                 Secure = httpCtx.Request.IsHttps,
                 SameSite = SameSiteMode.Lax,
-                Expires = DateTimeOffset.UtcNow.AddMinutes(15),
+                Expires = DateTimeOffset.UtcNow.AddHours(24), // Đổi thành 24h thay vì 15 phút
                 Path = "/"
             });
 

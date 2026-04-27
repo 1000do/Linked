@@ -82,13 +82,14 @@ namespace CourseMarketplaceFE.Controllers
                     return View(model);
                 }
 
-                // ── 1. Lưu AccessToken (HttpOnly, 15 phút) ──────────────────────
+                // ── 1. Lưu AccessToken (HttpOnly, 24 giờ — khớp JWT expiration) ──────
+                var tokenExpiry = DateTimeOffset.UtcNow.AddHours(24);
                 Response.Cookies.Append("AccessToken", result.AccessToken ?? "", new CookieOptions
                 {
                     HttpOnly = true,
                     Secure = Request.IsHttps,
                     SameSite = SameSiteMode.Lax,
-                    Expires = DateTimeOffset.UtcNow.AddMinutes(15),
+                    Expires = tokenExpiry,
                     Path = "/"
                 });
 
@@ -106,10 +107,10 @@ namespace CourseMarketplaceFE.Controllers
                     });
                 }
 
-                // ── 3. Lưu display info (không HttpOnly) ─────────────────────────
+                // ── 3. Lưu display info (cùng thời hạn với AccessToken) ───────────
                 var displayOpts = new CookieOptions
                 {
-                    Expires = DateTimeOffset.UtcNow.AddDays(7),
+                    Expires = tokenExpiry,
                     Path = "/"
                 };
                 Response.Cookies.Append("UserName", result.FullName ?? model.Identifier, displayOpts);
@@ -147,6 +148,7 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Delete("RefreshToken", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("UserName", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("UserRole", new CookieOptions { Path = "/" });
 
             return RedirectToAction("Index", "Home");
         }
@@ -161,6 +163,7 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Delete("RefreshToken", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("UserName", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("UserRole", new CookieOptions { Path = "/" });
 
             return RedirectToAction("Login");
         }
@@ -284,16 +287,20 @@ namespace CourseMarketplaceFE.Controllers
 
             var result = await response.Content.ReadFromJsonAsync<LoginResponse>(_jsonOptions);
 
+            var tokenExpiry = DateTimeOffset.UtcNow.AddHours(24);
+
             var cookieOptions = new CookieOptions
             {
-                Expires = DateTimeOffset.UtcNow.AddDays(7),
+                Expires = tokenExpiry,
                 Path = "/"
             };
 
             Response.Cookies.Append("AccessToken", result?.AccessToken ?? "", new CookieOptions
             {
                 HttpOnly = true,
-                Expires = cookieOptions.Expires,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
+                Expires = tokenExpiry,
                 Path = "/"
             });
 
@@ -302,6 +309,8 @@ namespace CourseMarketplaceFE.Controllers
                 Response.Cookies.Append("RefreshToken", result.RefreshToken, new CookieOptions
                 {
                     HttpOnly = true,
+                    Secure = Request.IsHttps,
+                    SameSite = SameSiteMode.Lax,
                     Expires = DateTimeOffset.UtcNow.AddDays(7),
                     Path = "/"
                 });

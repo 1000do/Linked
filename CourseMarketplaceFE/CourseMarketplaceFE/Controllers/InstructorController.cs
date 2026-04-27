@@ -37,13 +37,54 @@ public class InstructorController : Controller
             var response = await _api.GetAsync("instructor/dashboard");
             if (response.IsSuccessStatusCode)
             {
-                // Đã có đơn (Pending/Approved/...) -> chuyển sang Dashboard xem trạng thái
+                var dashJson = await response.Content.ReadAsStringAsync();
+                using var dashDoc = JsonDocument.Parse(dashJson);
+                if (dashDoc.RootElement.TryGetProperty("data", out var dashData) &&
+                    dashData.TryGetProperty("approvalStatus", out var statusEl))
+                {
+                    var approvalStatus = statusEl.GetString();
+
+                    // Nếu đơn bị từ chối → hiển form điền sẵn thông tin cũ để nộp lại
+                    if (approvalStatus == "Rejected")
+                    {
+                        var model = new InstructorApplyViewModel { IsResubmit = true };
+
+                        // Gọi API lấy thông tin đơn cũ
+                        var infoResponse = await _api.GetAsync("instructor/apply-info");
+                        if (infoResponse.IsSuccessStatusCode)
+                        {
+                            var infoJson = await infoResponse.Content.ReadAsStringAsync();
+                            using var infoDoc = JsonDocument.Parse(infoJson);
+                            if (infoDoc.RootElement.TryGetProperty("data", out var info))
+                            {
+                                model.ProfessionalTitle = info.TryGetProperty("professionalTitle", out var pt) ? pt.GetString() ?? "" : "";
+                                model.ExpertiseCategories = info.TryGetProperty("expertiseCategories", out var ec) ? ec.GetString() ?? "" : "";
+                                model.LinkedinUrl = info.TryGetProperty("linkedinUrl", out var li) ? li.GetString() : null;
+                                model.ExistingDocumentUrl = info.TryGetProperty("documentUrl", out var doc) ? doc.GetString() : null;
+                            }
+                        }
+
+                        // Kiểm tra email đã xác thực
+                        await LoadEmailVerifiedAsync();
+                        return View(model);
+                    }
+                }
+
+                // Pending hoặc Approved → redirect Dashboard xem trạng thái
                 return RedirectToAction("Dashboard");
             }
         }
         catch { }
 
         // Kiểm tra email đã xác thực chưa
+        await LoadEmailVerifiedAsync();
+
+        return View(new InstructorApplyViewModel());
+    }
+
+    /// <summary>Load ViewBag.IsEmailVerified từ API Profile.</summary>
+    private async Task LoadEmailVerifiedAsync()
+    {
         try
         {
             var profileResponse = await _api.GetAsync("Profile");
@@ -55,23 +96,12 @@ public class InstructorController : Controller
                     data.TryGetProperty("isVerified", out var isVerifiedProp))
                 {
                     ViewBag.IsEmailVerified = isVerifiedProp.GetBoolean();
-                }
-                else
-                {
-                    ViewBag.IsEmailVerified = false;
+                    return;
                 }
             }
-            else
-            {
-                ViewBag.IsEmailVerified = false;
-            }
         }
-        catch
-        {
-            ViewBag.IsEmailVerified = false;
-        }
-
-        return View(new InstructorApplyViewModel());
+        catch { }
+        ViewBag.IsEmailVerified = false;
     }
 
     [HttpPost]

@@ -1,101 +1,173 @@
 @model List<CourseMarketplaceFE.Models.PublicCourseViewModel>
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Trang chủ - Nền tảng học tập trực tuyến";
 }
 
-<section class="relative px-8 pt-20 pb-32 overflow-hidden">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
-        <div class="flex-1 z-10">
-            <h1 class="font-headline text-5xl md:text-6xl font-extrabold text-on-surface tracking-tight leading-tight mb-6">
-                Master New Skills,<br />
-                <span class="text-primary">Anytime, Anywhere.</span>
+@* 
+  THIẾT KẾ BỞI IMPECCABLE SKILL - UI/UX SENIOR DESIGNER
+  - Layout: 12-column grid system
+  - Palette: Deep Slate (Trust) + Emerald/Primary Accent (Action)
+  - Typography: Modern Sans-serif, High Contrast Hierarchy
+  - Spacing: Generous padding to reduce cognitive load
+*@
+
+<style>
+    /* Custom Ease cho micro-interactions mượt mà */
+    .ease-out-expo { transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1); }
+</style>
+
+@* ─── HERO SECTION ───────────────────────────────────────────────────────── *@
+<section class="relative pt-24 pb-32 lg:pt-36 lg:pb-40 overflow-hidden bg-slate-50 border-b border-slate-200">
+    <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-40"></div>
+    
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-16">
+        <div class="flex-1 max-w-3xl">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-bold mb-6">
+                <span class="relative flex h-2.5 w-2.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+                </span>
+                Hơn 2 triệu học viên đã tham gia
+            </div>
+
+            <h1 class="text-5xl lg:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-8">
+                Làm chủ kỹ năng mới. <br />
+                <span class="text-primary">Kiến tạo tương lai.</span>
             </h1>
-            <p class="text-lg text-slate-600 max-w-xl mb-10 leading-relaxed">
-                Curated learning paths designed by industry experts. Join 2M+ students unlocking their digital potential with LinkedLearn.
+            
+            <p class="text-lg lg:text-xl text-slate-600 leading-relaxed mb-10 max-w-2xl">
+                Nền tảng học tập trực tuyến hàng đầu với hàng ngàn khóa học chất lượng cao từ các chuyên gia thực chiến. Học mọi lúc, mọi nơi.
             </p>
-            <div class="flex flex-col sm:flex-row gap-4 mb-8">
-                <div class="relative flex-1 max-w-md">
-                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                    <input class="w-full bg-white border border-slate-200 rounded-full py-4 pl-12 pr-4 shadow-xl focus:ring-4 focus:ring-primary/10 outline-none" placeholder="What do you want to learn today?" type="text" />
+
+            <div class="flex flex-col sm:flex-row gap-4 max-w-xl">
+                <div class="relative flex-1 group">
+                    <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+                    <input type="text" 
+                           class="w-full h-14 pl-14 pr-6 bg-white border-2 border-slate-200 rounded-2xl text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all ease-out-expo text-base font-medium shadow-sm"
+                           placeholder="Bạn muốn học gì hôm nay?" />
                 </div>
-                <button class="bg-primary text-on-primary px-8 py-4 rounded-full font-bold shadow-lg hover:opacity-90 transition-all">
-                    Explore Courses
+                <button class="h-14 px-8 bg-primary text-white text-base font-bold rounded-2xl shadow-lg shadow-primary/30 hover:bg-primary/90 hover:-translate-y-0.5 active:translate-y-0 active:shadow-md transition-all ease-out-expo whitespace-nowrap">
+                    Khám phá ngay
                 </button>
             </div>
         </div>
 
-        <div class="flex-1 relative">
-            <div class="relative z-10 bg-white p-4 rounded-xl shadow-2xl rotate-3">
-                <div class="aspect-video bg-slate-200 rounded-lg flex items-center justify-center text-slate-400 overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover" alt="Hero" />
+        <div class="flex-1 w-full relative hidden lg:block">
+            <div class="relative aspect-square max-w-md mx-auto">
+                <div class="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent rounded-full blur-3xl"></div>
+                <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1000&auto=format&fit=crop" 
+                     class="relative z-10 w-full h-full object-cover rounded-[2rem] shadow-2xl border-4 border-white/50" 
+                     alt="Students collaborating" />
+                
+                @* Floating UI Element cho cảm giác dynamic *@
+                <div class="absolute -bottom-6 -left-6 z-20 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-4 animate-bounce" style="animation-duration: 3s;">
+                    <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center text-amber-500">
+                        <span class="material-symbols-outlined" style='font-variation-settings:"FILL" 1;'>star</span>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Đánh giá trung bình</p>
+                        <p class="text-xl font-extrabold text-slate-900">4.8 / 5.0</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Course List Section -->
-<section class="py-12 px-8">
-    <div class="max-w-7xl mx-auto">
-        <div class="flex items-center justify-between mb-10">
-            <div>
-                <h2 class="font-headline text-3xl font-extrabold text-on-surface">Top Courses</h2>
-                <p class="text-slate-500 mt-1">Hand-picked selections to start your journey</p>
+@* ─── TOP COURSES SECTION (12-COLUMN GRID / CARD-BASED) ─────────────────── *@
+<section class="py-24 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+            <div class="max-w-2xl">
+                <h2 class="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">Khóa học nổi bật</h2>
+                <p class="text-lg text-slate-500 leading-relaxed">Tuyển tập những khóa học được đánh giá cao nhất, thiết kế riêng cho mục tiêu nghề nghiệp của bạn.</p>
             </div>
-            <a href="#" class="text-primary font-bold hover:underline flex items-center gap-1">
-                View all <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            <a href="/Courses" class="inline-flex items-center gap-2 text-primary font-bold hover:text-primary/80 transition-colors group pb-1">
+                Xem tất cả khóa học 
+                <span class="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform ease-out-expo">arrow_forward</span>
             </a>
         </div>
 
         @if (Model == null || !Model.Any())
         {
-            <div class="bg-white rounded-2xl p-12 text-center border border-dashed border-slate-200">
-                <span class="material-symbols-outlined text-6xl text-slate-200 mb-4">school</span>
-                <p class="text-slate-500 font-medium">No courses available at the moment.</p>
+            <div class="py-24 flex flex-col items-center justify-center text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-6">
+                    <span class="material-symbols-outlined text-4xl text-slate-300">school</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-700 mb-2">Chưa có khóa học nào</h3>
+                <p class="text-slate-500">Hệ thống đang cập nhật các khóa học mới. Vui lòng quay lại sau.</p>
             </div>
         }
         else
         {
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            @* Grid 12 cột logic: sm(6) md(4) lg(3) => tương đương 1, 2, 3, 4 cột thẻ *@
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                 @foreach (var course in Model)
                 {
-                    <div class="group bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 flex flex-col cursor-pointer" onclick="location.href='/Course/Details/@course.CourseId'">
-                        <div class="aspect-video relative overflow-hidden">
-                            <img src="@(string.IsNullOrEmpty(course.CourseThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" : course.CourseThumbnailUrl)" 
-                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                                 alt="@course.Title" />
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    <div class="flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 ease-out-expo group cursor-pointer" 
+                         onclick="location.href='/Course/Details/@course.CourseId'">
+                        
+                        @* 1. Thumbnail *@
+                        <div class="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 shrink-0">
+                            <img src="@(string.IsNullOrEmpty(course.CourseThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800&auto=format&fit=crop" : course.CourseThumbnailUrl)" 
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out-expo" 
+                                 alt="@course.Title" loading="lazy" />
+                            <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
                         </div>
-                        <div class="p-5 flex-1 flex flex-col">
-                            <h3 class="font-bold text-slate-900 mb-2 line-clamp-2 group-hover:text-primary transition-colors">@course.Title</h3>
-                            <p class="text-xs text-slate-500 mb-4">@course.InstructorName</p>
+
+                        @* Body Content *@
+                        <div class="p-6 flex flex-col flex-grow">
+                            @* 2. Title *@
+                            <h3 class="text-lg font-bold text-slate-900 line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
+                                @course.Title
+                            </h3>
                             
-                            <div class="flex items-center gap-1 mb-4">
-                                <div class="flex text-amber-400">
-                                    <span class="material-symbols-outlined text-[16px] fill-1">star</span>
-                                    <span class="material-symbols-outlined text-[16px] fill-1">star</span>
-                                    <span class="material-symbols-outlined text-[16px] fill-1">star</span>
-                                    <span class="material-symbols-outlined text-[16px] fill-1">star</span>
-                                    <span class="material-symbols-outlined text-[16px] fill-1">star_half</span>
-                                </div>
-                                <span class="text-[11px] font-bold text-slate-700">4.8</span>
-                                <span class="text-[11px] text-slate-400">(2.5k)</span>
+                            @* 3. Instructor *@
+                            <div class="flex items-center gap-2 text-sm text-slate-500 mb-4">
+                                <span class="material-symbols-outlined text-[18px]">person</span>
+                                <span class="truncate">@course.InstructorName</span>
                             </div>
 
-                            <div class="mt-auto flex items-center justify-between">
-                                <div class="text-lg font-extrabold text-slate-900">
+                            @* 4. Rating *@
+                            <div class="flex items-center gap-1.5 mb-6">
+                                <span class="text-sm font-bold text-slate-800">4.8</span>
+                                <div class="flex text-amber-400">
+                                    <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star</span>
+                                    <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star</span>
+                                    <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star</span>
+                                    <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star</span>
+                                    <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star_half</span>
+                                </div>
+                                <span class="text-xs text-slate-400 font-medium">(2,451)</span>
+                            </div>
+
+                            @* Spacer đẩy Footer xuống đáy *@
+                            <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                                @* 5. Price *@
+                                <div class="text-xl font-extrabold text-slate-900 tracking-tight">
                                     @if (course.Price == 0)
                                     {
-                                        <span class="text-primary">Free</span>
+                                        <span class="text-emerald-600 uppercase text-lg">Miễn phí</span>
                                     }
                                     else
                                     {
-                                        <span>$@course.Price.ToString("F2")</span>
+                                        <span>@course.Price.ToString("N0") <span class="text-sm font-normal text-slate-500 uppercase">VND</span></span>
                                     }
                                 </div>
-                                <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-colors">
-                                    <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
-                                </div>
+                                
+                                @* 6. CTA / Add to cart *@
+                                <form asp-action="AddToCart" asp-controller="Cart" method="post" class="m-0 z-20">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="courseId" value="@course.CourseId" />
+                                    <input type="hidden" name="returnUrl" value="/" />
+                                    <button type="submit" 
+                                            class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all ease-out-expo"
+                                            onclick="event.stopPropagation();"
+                                            title="Thêm vào giỏ hàng">
+                                        <span class="material-symbols-outlined text-[20px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -105,30 +177,36 @@
     </div>
 </section>
 
-<section class="py-24 px-8 bg-surface-container-low">
-    <div class="max-w-7xl mx-auto">
-        <h2 class="font-headline text-3xl font-extrabold text-on-surface mb-12">Explore Categories</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+@* ─── CATEGORIES SECTION ─────────────────────────────────────────────────── *@
+<section class="py-24 bg-slate-50 border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center max-w-2xl mx-auto mb-16">
+            <h2 class="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">Khám phá danh mục</h2>
+            <p class="text-lg text-slate-500">Mở rộng kỹ năng của bạn với các chuyên ngành đa dạng được giảng dạy bởi chuyên gia.</p>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             @{
                 var categories = new[] {
-                        new { Name = "Design", Icon = "brush", Color = "bg-orange-100 text-orange-600" },
-                        new { Name = "Development", Icon = "code", Color = "bg-blue-100 text-blue-600" },
-                        new { Name = "Marketing", Icon = "monitoring", Color = "bg-green-100 text-green-600" },
-                        new { Name = "Business", Icon = "account_balance", Color = "bg-purple-100 text-purple-600" },
-                        new { Name = "Photography", Icon = "photo_camera", Color = "bg-pink-100 text-pink-600" },
-                        new { Name = "Music", Icon = "music_note", Color = "bg-yellow-100 text-yellow-600" }
-                        };
+                    new { Name = "Lập trình", Icon = "code", Color = "text-blue-600", Bg = "bg-blue-50", Hover = "hover:border-blue-200 hover:shadow-blue-500/10" },
+                    new { Name = "Thiết kế", Icon = "brush", Color = "text-orange-600", Bg = "bg-orange-50", Hover = "hover:border-orange-200 hover:shadow-orange-500/10" },
+                    new { Name = "Marketing", Icon = "monitoring", Color = "text-emerald-600", Bg = "bg-emerald-50", Hover = "hover:border-emerald-200 hover:shadow-emerald-500/10" },
+                    new { Name = "Kinh doanh", Icon = "account_balance", Color = "text-indigo-600", Bg = "bg-indigo-50", Hover = "hover:border-indigo-200 hover:shadow-indigo-500/10" },
+                    new { Name = "Nhiếp ảnh", Icon = "photo_camera", Color = "text-pink-600", Bg = "bg-pink-50", Hover = "hover:border-pink-200 hover:shadow-pink-500/10" },
+                    new { Name = "Âm nhạc", Icon = "music_note", Color = "text-purple-600", Bg = "bg-purple-50", Hover = "hover:border-purple-200 hover:shadow-purple-500/10" }
+                };
             }
 
             @foreach (var cat in categories)
             {
-                <div class="group bg-white p-6 rounded-xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer">
-                    <div class="w-12 h-12 rounded-xl @cat.Color flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <span class="material-symbols-outlined">@cat.Icon</span>
+                <a href="/Courses?category=@cat.Name" class="group flex flex-col items-center justify-center p-8 bg-white rounded-2xl border border-slate-100 shadow-sm @cat.Hover hover:-translate-y-1 transition-all duration-300 ease-out-expo text-center">
+                    <div class="w-16 h-16 @cat.Bg @cat.Color rounded-full flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300 ease-out-expo">
+                        <span class="material-symbols-outlined text-3xl">@cat.Icon</span>
                     </div>
-                    <h3 class="font-bold text-on-surface">@cat.Name</h3>
-                </div>
+                    <h3 class="font-bold text-slate-800 text-sm md:text-base">@cat.Name</h3>
+                </a>
             }
         </div>
     </div>
-</section>
+</section>

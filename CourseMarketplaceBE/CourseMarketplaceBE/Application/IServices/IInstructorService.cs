@@ -36,6 +36,11 @@ public interface IInstructorService
     Task<List<InstructorDashboardDto>> GetAllApplicationsAsync();
 
     /// <summary>
+    /// Lấy thông tin đơn cũ của user (chỉ khi status = Rejected), dùng để điền sẵn vào form nộp lại.
+    /// </summary>
+    Task<InstructorDashboardDto?> GetRejectedApplicationInfoAsync(int userId);
+
+    /// <summary>
     /// Lấy thông tin instructor dashboard cho user.
     /// </summary>
     Task<InstructorDashboardDto?> GetInstructorDashboardAsync(int userId);
