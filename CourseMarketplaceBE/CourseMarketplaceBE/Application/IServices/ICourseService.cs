@@ -6,6 +6,7 @@ namespace CourseMarketplaceBE.Application.IServices;
 
 public interface ICourseService
 {
+    Task<IEnumerable<CourseResponse>> GetAllPublishedCoursesAsync();
     Task<IEnumerable<CourseResponse>> GetInstructorCoursesAsync(int instructorId);
     Task<CourseDetailResponse?> GetCourseWithDetailsAsync(int courseId, int instructorId);
     Task<CourseResponse> CreateCourseAsync(CourseCreateRequest request, int instructorId);

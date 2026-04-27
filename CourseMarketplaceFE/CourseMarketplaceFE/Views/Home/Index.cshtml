@@ -1,4 +1,5 @@
-﻿@{
+@model List<CourseMarketplaceFE.Models.PublicCourseViewModel>
+@{
     ViewData["Title"] = "Home Page";
 }
 
@@ -25,11 +26,82 @@
 
         <div class="flex-1 relative">
             <div class="relative z-10 bg-white p-4 rounded-xl shadow-2xl rotate-3">
-                <div class="aspect-video bg-slate-200 rounded-lg flex items-center justify-center text-slate-400">
-                    <span class="material-symbols-outlined text-6xl">image</span>
+                <div class="aspect-video bg-slate-200 rounded-lg flex items-center justify-center text-slate-400 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover" alt="Hero" />
                 </div>
             </div>
         </div>
+    </div>
+</section>
+
+<!-- Course List Section -->
+<section class="py-12 px-8">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex items-center justify-between mb-10">
+            <div>
+                <h2 class="font-headline text-3xl font-extrabold text-on-surface">Top Courses</h2>
+                <p class="text-slate-500 mt-1">Hand-picked selections to start your journey</p>
+            </div>
+            <a href="#" class="text-primary font-bold hover:underline flex items-center gap-1">
+                View all <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </a>
+        </div>
+
+        @if (Model == null || !Model.Any())
+        {
+            <div class="bg-white rounded-2xl p-12 text-center border border-dashed border-slate-200">
+                <span class="material-symbols-outlined text-6xl text-slate-200 mb-4">school</span>
+                <p class="text-slate-500 font-medium">No courses available at the moment.</p>
+            </div>
+        }
+        else
+        {
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                @foreach (var course in Model)
+                {
+                    <div class="group bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 flex flex-col cursor-pointer" onclick="location.href='/Course/Details/@course.CourseId'">
+                        <div class="aspect-video relative overflow-hidden">
+                            <img src="@(string.IsNullOrEmpty(course.CourseThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" : course.CourseThumbnailUrl)" 
+                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                                 alt="@course.Title" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                        </div>
+                        <div class="p-5 flex-1 flex flex-col">
+                            <h3 class="font-bold text-slate-900 mb-2 line-clamp-2 group-hover:text-primary transition-colors">@course.Title</h3>
+                            <p class="text-xs text-slate-500 mb-4">@course.InstructorName</p>
+                            
+                            <div class="flex items-center gap-1 mb-4">
+                                <div class="flex text-amber-400">
+                                    <span class="material-symbols-outlined text-[16px] fill-1">star</span>
+                                    <span class="material-symbols-outlined text-[16px] fill-1">star</span>
+                                    <span class="material-symbols-outlined text-[16px] fill-1">star</span>
+                                    <span class="material-symbols-outlined text-[16px] fill-1">star</span>
+                                    <span class="material-symbols-outlined text-[16px] fill-1">star_half</span>
+                                </div>
+                                <span class="text-[11px] font-bold text-slate-700">4.8</span>
+                                <span class="text-[11px] text-slate-400">(2.5k)</span>
+                            </div>
+
+                            <div class="mt-auto flex items-center justify-between">
+                                <div class="text-lg font-extrabold text-slate-900">
+                                    @if (course.Price == 0)
+                                    {
+                                        <span class="text-primary">Free</span>
+                                    }
+                                    else
+                                    {
+                                        <span>$@course.Price.ToString("F2")</span>
+                                    }
+                                </div>
+                                <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-colors">
+                                    <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
     </div>
 </section>
 
@@ -59,5 +131,4 @@
             }
         </div>
     </div>
-  
-</section>
+</section>

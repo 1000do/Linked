@@ -7,6 +7,8 @@ using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -14,16 +16,18 @@ public class CourseService : ICourseService
 {
     private readonly ICourseRepository _courseRepository;
     private readonly IFileUploadService _uploadService;
+    private readonly AppDbContext _context;
 
-    public CourseService(ICourseRepository courseRepository, IFileUploadService uploadService)
+    public CourseService(ICourseRepository courseRepository, IFileUploadService uploadService, AppDbContext context)
     {
         _courseRepository = courseRepository;
         _uploadService = uploadService;
+        _context = context;
     }
 
-    public async Task<IEnumerable<CourseResponse>> GetInstructorCoursesAsync(int instructorId)
+    public async Task<IEnumerable<CourseResponse>> GetAllPublishedCoursesAsync()
     {
-        var courses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
+        var courses = await _courseRepository.GetAllPublishedCoursesAsync();
         return courses.Select(c => new CourseResponse
         {
             CourseId = c.CourseId,
@@ -35,7 +39,39 @@ public class CourseService : ICourseService
             CourseThumbnailUrl = c.CourseThumbnailUrl,
             CourseStatus = c.CourseStatus,
             CreatedAt = c.CreatedAt,
-            UpdatedAt = c.UpdatedAt
+            UpdatedAt = c.UpdatedAt,
+            InstructorName = c.Instructor?.InstructorNavigation?.FullName ?? "Unknown Instructor"
+        });
+    }
+
+    public async Task<IEnumerable<CourseResponse>> GetInstructorCoursesAsync(int instructorId)
+    {
+        var courses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
+        var courseIds = courses.Select(c => c.CourseId).ToList();
+
+        // Fetch stats for these courses
+        var stats = await _context.CourseStats
+            .Where(s => courseIds.Contains(s.CourseId))
+            .ToListAsync();
+
+        return courses.Select(c =>
+        {
+            var s = stats.FirstOrDefault(st => st.CourseId == c.CourseId);
+            return new CourseResponse
+            {
+                CourseId = c.CourseId,
+                InstructorId = c.InstructorId,
+                CategoryId = c.CategoryId,
+                Title = c.Title,
+                Description = c.Description,
+                Price = c.Price,
+                CourseThumbnailUrl = c.CourseThumbnailUrl,
+                CourseStatus = c.CourseStatus,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt,
+                TotalStudents = s?.TotalStudents ?? 0,
+                RatingAverage = (decimal)(s?.RatingAverage ?? 0)
+            };
         });
     }
 

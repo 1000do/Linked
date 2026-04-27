@@ -47,4 +47,10 @@ public class InstructorDashboardDto
     public bool ChargesEnabled { get; set; }
     public string? FullName { get; set; }
     public string? Email { get; set; }
+
+    // Statistics from Views
+    public int TotalStudents { get; set; }
+    public decimal AverageRating { get; set; }
+    public int ActiveCoursesCount { get; set; }
+    public decimal TotalRevenue { get; set; }
 }

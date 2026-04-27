@@ -31,4 +31,12 @@ namespace CourseMarketplaceFE.Models
         [Range(0, 10000, ErrorMessage = "Price must be between 0 and 10000")]
         public decimal Price { get; set; }
     }
+    public class InstructorStudioViewModel
+    {
+        public List<CourseListViewModel> Courses { get; set; } = new();
+        public int TotalStudents { get; set; }
+        public double AverageRating { get; set; }
+        public int ActiveCoursesCount { get; set; }
+        public decimal TotalRevenue { get; set; }
+    }
 }

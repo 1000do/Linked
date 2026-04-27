@@ -573,8 +573,35 @@ VALUES (1)
 ON CONFLICT (instructor_id) DO NOTHING;
 
 -- ==============================================================================
--- 10. SYNC SEQUENCES (Prevent duplicate key errors)
+-- 10. SAMPLE DATA FOR COURSES, LESSONS, MATERIALS
+-- ==============================================================================
+
+INSERT INTO courses (course_id, instructor_id, category_id, title, description, price, course_thumbnail_url, created_at, updated_at, status, sort_order)
+VALUES 
+(1, 1, 2, 'khóa học này chỉ để khoe con gái iu ', '<p>con gái t cưng vl</p>', 99.00, 'https://res.cloudinary.com/df8i0azc5/image/upload/v1777282331/ax2hwj8pqzuibmvhd5vj.jpg', '2026-04-27 09:32:39.948416', '2026-04-27 09:36:51.590609', 'published', 0)
+ON CONFLICT (course_id) DO NOTHING;
+
+INSERT INTO lessons (lesson_id, course_id, title, created_at, updated_at, status)
+VALUES 
+(1, 1, 'test bài 1', '2026-04-27 09:32:55.104932', '2026-04-27 09:32:55.104943', 'active'),
+(2, 1, 'dạy sv Hưng 1 bài học', '2026-04-27 09:35:33.136066', '2026-04-27 09:35:33.136066', 'active')
+ON CONFLICT (lesson_id) DO NOTHING;
+
+INSERT INTO learning_materials (material_id, lesson_id, title, description, created_at, updated_at, status, material_url, material_metadata)
+VALUES 
+(1, 1, 'test bài 1 Video', '<p>video bài 1 nè </p>', '2026-04-27 09:33:11.417814', '2026-04-27 09:33:11.417825', 'active', 'https://res.cloudinary.com/df8i0azc5/video/upload/v1777282385/lg37j1wxk8tfnllaest8.mp4', '{"duration": null, "file_size": null, "file_type": "video", "page_count": null, "file_extension": null}'),
+(2, 1, 'show_tree.txt', '<p>cây thư mục project</p>', '2026-04-27 09:34:47.772047', '2026-04-27 09:34:47.772048', 'active', 'https://res.cloudinary.com/df8i0azc5/raw/upload/v1777282478/hm4fojolpyl7wotai1lv.txt', '{"duration": null, "file_size": null, "file_type": "document", "page_count": null, "file_extension": null}'),
+(3, 1, 'project_db.txt', '<p>db mới nhất 27/4/2026</p>', '2026-04-27 09:35:10.398022', '2026-04-27 09:35:10.398022', 'active', 'https://res.cloudinary.com/df8i0azc5/raw/upload/v1777282495/yqoju6pug3ruw1skefjk.txt', '{"duration": null, "file_size": null, "file_type": "document", "page_count": null, "file_extension": null}'),
+(4, 2, 'dạy sv Hưng 1 bài học Video', '<p>video bài 2 nè Hưng</p>', '2026-04-27 09:36:01.576742', '2026-04-27 09:36:01.576742', 'active', 'https://res.cloudinary.com/df8i0azc5/video/upload/v1777282552/kmjeb8rz86ndr9ovchcf.mp4', '{"duration": null, "file_size": null, "file_type": "video", "page_count": null, "file_extension": null}'),
+(5, 2, 'uc đồ án .docx', '<p>document đồ án</p>', '2026-04-27 09:36:46.627784', '2026-04-27 09:36:46.627785', 'active', 'https://res.cloudinary.com/df8i0azc5/raw/upload/v1777282591/sqtvmz0thxpxcnugdx0l.docx', '{"duration": null, "file_size": null, "file_type": "document", "page_count": null, "file_extension": null}')
+ON CONFLICT (material_id) DO NOTHING;
+
+-- ==============================================================================
+-- 11. SYNC SEQUENCES (Prevent duplicate key errors)
 -- ==============================================================================
 
 SELECT setval(pg_get_serial_sequence('accounts', 'account_id'), (SELECT MAX(account_id) FROM accounts));
 SELECT setval(pg_get_serial_sequence('categories', 'category_id'), (SELECT MAX(category_id) FROM categories));
+SELECT setval(pg_get_serial_sequence('courses', 'course_id'), (SELECT MAX(course_id) FROM courses));
+SELECT setval(pg_get_serial_sequence('lessons', 'lesson_id'), (SELECT MAX(lesson_id) FROM lessons));
+SELECT setval(pg_get_serial_sequence('learning_materials', 'material_id'), (SELECT MAX(material_id) FROM learning_materials));

@@ -95,9 +95,15 @@ public class LessonService : ILessonService
 
         var existingMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
         var fileType = request.MaterialMetadata?.FileType ?? "video";
-        var existingMaterial = existingMaterials.FirstOrDefault(m => 
-            (m.MaterialMetadata != null && m.MaterialMetadata.FileType == fileType) || 
-            (fileType == "video" && m.MaterialMetadata == null));
+        
+        LearningMaterial? existingMaterial = null;
+        // Only enforce 1-to-1 for videos. For documents, allow multiple by creating new.
+        if (fileType == "video")
+        {
+            existingMaterial = existingMaterials.FirstOrDefault(m => 
+                (m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || 
+                (m.MaterialMetadata == null));
+        }
 
         LearningMaterial material;
         if (existingMaterial != null)
