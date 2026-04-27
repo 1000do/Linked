@@ -22,6 +22,12 @@ public class InstructorApplyViewModel
 
     [Display(Name = "Tài liệu CV / CMND")]
     public IFormFile? DocumentFile { get; set; }
+
+    /// <summary>URL tài liệu cũ (khi nộp lại sau khi bị Rejected)</summary>
+    public string? ExistingDocumentUrl { get; set; }
+
+    /// <summary>True nếu đang nộp lại (status cũ = Rejected)</summary>
+    public bool IsResubmit { get; set; }
 }
 
 /// <summary>

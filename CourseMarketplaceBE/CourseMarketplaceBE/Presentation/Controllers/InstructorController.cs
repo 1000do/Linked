@@ -30,6 +30,7 @@ public class InstructorController : ControllerBase
     /// <summary>
     /// POST /api/instructor/apply
     /// Learner gửi form đăng ký Giảng viên (có upload file CV/ID).
+    /// Nếu bị Rejected trước đó sẽ UPDATE lại record cũ (không INSERT mới).
     /// </summary>
     [HttpPost("apply")]
     [Authorize]
@@ -51,6 +52,24 @@ public class InstructorController : ControllerBase
         {
             return StatusCode(500, new { status = 500, message = $"Lỗi server: {ex.Message}" });
         }
+    }
+
+    // ─── 1b. LẤY THÔNG TIN ĐƠN CŨ (Để ĐIỀN SẴN KHI BỊ REJECTED) ─────────
+    /// <summary>
+    /// GET /api/instructor/apply-info
+    /// Trả về thông tin đơn cũ khi user bị Rejected, dùng để FE điền sẵn vào form.
+    /// </summary>
+    [HttpGet("apply-info")]
+    [Authorize]
+    public async Task<IActionResult> GetApplyInfo()
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+
+        var info = await _instructorService.GetRejectedApplicationInfoAsync(userId.Value);
+        if (info == null) return NotFound(new { status = 404, message = "Không tìm thấy đơn bị từ chối." });
+
+        return Ok(new { status = 200, data = info });
     }
 
     // ─── 2. ADMIN DUYỆT ĐƠN ─────────────────────────────────────────

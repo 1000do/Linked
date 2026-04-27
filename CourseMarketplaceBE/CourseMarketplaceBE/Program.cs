@@ -176,6 +176,9 @@ public class Program
         builder.Services.AddScoped<IUserProfileService, UserProfileService>();
         builder.Services.AddScoped<IInstructorService, InstructorService>();
 
+        // 🛒 Cart & Coupon
+        builder.Services.AddScoped<ICartService, CartService>();
+
         builder.Services.AddHttpClient();
 
         // 🔥 6. Authentication
@@ -277,17 +280,16 @@ public class Program
             });
         });
 
-        // 🔥 8. CORS
-        var allowedOrigins = configuration.GetValue<string>("AllowedOrigins")?.Split(',')
-                     ?? new[] { "http://localhost:5207" };
-
+        // 🔥 8. CORS — cho phép FE MVC gọi BE API (dev: allow all origins)
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowAll", policy =>
-                policy.WithOrigins(allowedOrigins)
+                policy.AllowAnyOrigin()   // Cho phép mọi origin (FE port bất kỳ)
                       .AllowAnyMethod()
-                      .AllowAnyHeader()
-                      .AllowCredentials()); // Bắt buộc phải có để gửi Cookie/Token
+                      .AllowAnyHeader());
+            // NOTE: AllowAnyOrigin() không tương thích với AllowCredentials().
+            // Cookie/JWT vẫn hoạt động vì FE truyền Bearer Token qua Authorization header,
+            // không phụ thuộc vào CORS credentials.
         });
 
         var app = builder.Build();

@@ -39,8 +39,26 @@ public class InstructorService : IInstructorService
 
         // Kiểm tra đã nộp đơn chưa
         var existing = await _context.Instructors.FirstOrDefaultAsync(i => i.InstructorId == userId);
+
         if (existing != null)
-            throw new InvalidOperationException("Bạn đã nộp đơn đăng ký Giảng viên trước đó.");
+        {
+            // Chỉ cho phép nộp lại nếu đơn đang ở trạng thái 'Rejected'
+            if (existing.ApprovalStatus != "Rejected")
+                throw new InvalidOperationException("Bạn đã nộp đơn đăng ký Giảng viên trước đó.");
+
+            // Upload file mới nếu có, không thì giữ file cũ
+            if (request.DocumentFile != null && request.DocumentFile.Length > 0)
+                existing.DocumentUrl = await _uploadService.UploadImageAsync(request.DocumentFile);
+
+            // Cập nhật thông tin, giữ nguyên InstructorId cũ
+            existing.ProfessionalTitle = request.ProfessionalTitle;
+            existing.ExpertiseCategories = request.ExpertiseCategories;
+            existing.LinkedinUrl = request.LinkedinUrl;
+            existing.ApprovalStatus = "Pending";
+
+            await _context.SaveChangesAsync();
+            return "Đơn đăng ký đã được gửi lại. Vui lòng chờ Admin xét duyệt.";
+        }
 
         // Upload file CV/ID lên Cloudinary (nếu có)
         string? documentUrl = null;
@@ -285,5 +303,28 @@ public class InstructorService : IInstructorService
         }
 
         return dto;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 7. GET REJECTED APPLICATION INFO — Lấy thông tin đơn cũ khi bị Rejected
+    // ═══════════════════════════════════════════════════════════════════════
+    public async Task<InstructorDashboardDto?> GetRejectedApplicationInfoAsync(int userId)
+    {
+        return await _context.Instructors
+            .Include(i => i.InstructorNavigation)
+                .ThenInclude(u => u.UserNavigation)
+            .Where(i => i.InstructorId == userId && i.ApprovalStatus == "Rejected")
+            .Select(i => new InstructorDashboardDto
+            {
+                InstructorId = i.InstructorId,
+                ProfessionalTitle = i.ProfessionalTitle,
+                ExpertiseCategories = i.ExpertiseCategories,
+                LinkedinUrl = i.LinkedinUrl,
+                DocumentUrl = i.DocumentUrl,
+                ApprovalStatus = i.ApprovalStatus,
+                FullName = i.InstructorNavigation.FullName,
+                Email = i.InstructorNavigation.UserNavigation.Email
+            })
+            .FirstOrDefaultAsync();
     }
 }

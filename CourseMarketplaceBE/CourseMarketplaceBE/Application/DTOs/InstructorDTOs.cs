@@ -40,6 +40,8 @@ public class InstructorDashboardDto
     public int InstructorId { get; set; }
     public string? ProfessionalTitle { get; set; }
     public string? ExpertiseCategories { get; set; }
+    public string? LinkedinUrl { get; set; }
+    public string? DocumentUrl { get; set; }
     public string? ApprovalStatus { get; set; }
     public string? StripeAccountId { get; set; }
     public string? StripeOnboardingStatus { get; set; }
