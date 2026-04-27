@@ -576,18 +576,18 @@ ON CONFLICT (instructor_id) DO NOTHING;
 -- 10. SAMPLE DATA FOR COURSES, LESSONS, MATERIALS
 -- ==============================================================================
 
-INSERT INTO courses (course_id, instructor_id, category_id, title, description, price, course_thumbnail_url, created_at, updated_at, status, sort_order)
+INSERT INTO courses (course_id, instructor_id, category_id, title, description, price, course_thumbnail_url, created_at, updated_at, course_status)
 VALUES 
-(1, 1, 2, 'khóa học này chỉ để khoe con gái iu ', '<p>con gái t cưng vl</p>', 99.00, 'https://res.cloudinary.com/df8i0azc5/image/upload/v1777282331/ax2hwj8pqzuibmvhd5vj.jpg', '2026-04-27 09:32:39.948416', '2026-04-27 09:36:51.590609', 'published', 0)
+(1, 1, 2, 'khóa học này chỉ để khoe con gái iu ', '<p>con gái t cưng vl</p>', 99.00, 'https://res.cloudinary.com/df8i0azc5/image/upload/v1777282331/ax2hwj8pqzuibmvhd5vj.jpg', '2026-04-27 09:32:39.948416', '2026-04-27 09:36:51.590609', 'published')
 ON CONFLICT (course_id) DO NOTHING;
 
-INSERT INTO lessons (lesson_id, course_id, title, created_at, updated_at, status)
+INSERT INTO lessons (lesson_id, course_id, title, created_at, updated_at, lesson_status)
 VALUES 
 (1, 1, 'test bài 1', '2026-04-27 09:32:55.104932', '2026-04-27 09:32:55.104943', 'active'),
 (2, 1, 'dạy sv Hưng 1 bài học', '2026-04-27 09:35:33.136066', '2026-04-27 09:35:33.136066', 'active')
 ON CONFLICT (lesson_id) DO NOTHING;
 
-INSERT INTO learning_materials (material_id, lesson_id, title, description, created_at, updated_at, status, material_url, material_metadata)
+INSERT INTO learning_materials (material_id, lesson_id, title, description, created_at, updated_at, learning_status, material_url, material_metadata)
 VALUES 
 (1, 1, 'test bài 1 Video', '<p>video bài 1 nè </p>', '2026-04-27 09:33:11.417814', '2026-04-27 09:33:11.417825', 'active', 'https://res.cloudinary.com/df8i0azc5/video/upload/v1777282385/lg37j1wxk8tfnllaest8.mp4', '{"duration": null, "file_size": null, "file_type": "video", "page_count": null, "file_extension": null}'),
 (2, 1, 'show_tree.txt', '<p>cây thư mục project</p>', '2026-04-27 09:34:47.772047', '2026-04-27 09:34:47.772048', 'active', 'https://res.cloudinary.com/df8i0azc5/raw/upload/v1777282478/hm4fojolpyl7wotai1lv.txt', '{"duration": null, "file_size": null, "file_type": "document", "page_count": null, "file_extension": null}'),
