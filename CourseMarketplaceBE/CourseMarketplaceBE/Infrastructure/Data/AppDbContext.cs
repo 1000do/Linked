@@ -271,6 +271,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.CouponCode).HasMaxLength(50).HasColumnName("coupon_code");
             entity.Property(e => e.CouponType).HasMaxLength(50).HasColumnName("coupon_type");
             entity.Property(e => e.DiscountValue).HasPrecision(10, 2).HasColumnName("discount_value");
+            entity.Property(e => e.MinOrderValue).HasPrecision(10, 2).HasDefaultValue(0m).HasColumnName("min_order_value");
             entity.Property(e => e.StartDate)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("start_date");

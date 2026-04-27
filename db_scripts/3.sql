@@ -131,6 +131,7 @@ CREATE TABLE coupons (
     coupon_code VARCHAR(50) UNIQUE NOT NULL,
     coupon_type VARCHAR(50), -- VD: 'percentage', 'fixed_amount'
     discount_value NUMERIC(10, 2) NOT NULL,
+    min_order_value NUMERIC(10, 2) NOT NULL DEFAULT 0,
     start_date TIMESTAMP,
     end_date TIMESTAMP,
     usage_limit INT, -- giới hạn số lần sử dụng của coupon này

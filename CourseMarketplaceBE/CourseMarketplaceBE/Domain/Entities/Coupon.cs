@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace CourseMarketplaceBE.Domain.Entities;
@@ -14,6 +14,9 @@ public partial class Coupon
     public string? CouponType { get; set; }
 
     public decimal DiscountValue { get; set; }
+
+    /// <summary>Giá trị đơn hàng tối thiểu để coupon có hiệu lực. Mặc định = 0 (không yêu cầu).</summary>
+    public decimal MinOrderValue { get; set; }
 
     public DateTime? StartDate { get; set; }
 

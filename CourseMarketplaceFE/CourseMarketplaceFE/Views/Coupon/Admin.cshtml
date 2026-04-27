@@ -1,279 +1,245 @@
-﻿@{
+@{
+    ViewData["Title"] = "Quản lý mã giảm giá";
+    ViewData["PageHeader"] = "Danh sách mã giảm giá";
     Layout = "_AdminLayout";
     var token = Context.Request.Cookies["AccessToken"] ?? "";
-    var managerName = Context.Request.Cookies["UserName"] ?? "Admin";
 }
 
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="utf-8" />
-    <title>Coupon Admin</title>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#10b981',
-                        secondary: '#059669',
-                        border: '#e2e8f0'
-                    },
-                    fontFamily: { sans: ['Inter'] }
-                }
-            }
-        }
-    </script>
-</head>
-
-<body class="bg-white text-slate-800 flex h-screen overflow-hidden">
-
-    <!-- SIDEBAR -->
-    @* <aside class="w-64 border-r flex flex-col bg-white"> *@
-    @*     <div class="h-16 flex items-center px-6 border-b"> *@
-    @*         <span class="text-primary font-bold text-xl">Quản trị</span> *@
-    @*     </div> *@
-
-    @*     <nav class="p-4 space-y-2"> *@
-    @*         <a href="/Notification/Admin" class="flex items-center gap-2 p-3 rounded-lg text-slate-500 hover:bg-slate-50"> *@
-    @*             📢 Thông báo *@
-    @*         </a> *@
-
-    @*         <a href="/Coupon/Admin" class="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 text-primary font-semibold"> *@
-    @*             🎟 Coupon *@
-    @*         </a> *@
-    @*     </nav> *@
-
-    @*     <div class="p-4 mt-auto"> *@
-    @*         <form method="post" action="/Account/Logout"> *@
-    @*             @Html.AntiForgeryToken() *@
-    @*             <button type="submit" class="w-full p-3 text-red-500 hover:bg-red-50 rounded-lg font-semibold"> *@
-    @*                 Logout *@
-    @*             </button> *@
-    @*         </form> *@
-    @*     </div> *@
-    @* </aside> *@
-
-    <!-- MAIN -->
-    <main class="flex-1 flex flex-col">
-
-        <header class="h-16 flex justify-between items-center px-6 border-b">
-            <div class="flex items-center gap-3">
-                <h2 class="font-semibold text-lg">Quản lý Coupon</h2>
-                <span class="text-xs bg-slate-100 px-2 py-1 rounded-full">
-                    Admin: @managerName
-                </span>
-            </div>            
-
-            <div class="flex items-center gap-3">
-                <input id="search"
-                       placeholder="Tìm theo code hoặc id..."
-                       oninput="applyFilter()"
-                       class="border rounded-lg px-3 py-2 text-sm w-64" />
-
-                <select id="filter" onchange="applyFilter()"
-                        class="border rounded-lg px-3 py-2 text-sm">
-                    <option value="">Tất cả</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Unactive</option>
-                    <option value="percentage">Percentage</option>
-                    <option value="fixed">Fixed</option>
-                </select>
-
-                <button onclick="openModal()" class="bg-primary text-white px-4 py-2 rounded-lg font-bold">
-                    + Tạo Coupon
-                </button>
-
-            </div>
-        </header>
-
-        <div class="p-6 flex-1 overflow-auto">
-
-            <div class="border rounded-xl overflow-hidden">
-                <table class="w-full text-sm">
-                    <thead class="bg-slate-50 border-b">
-                        <tr>
-                            <th class="p-4 text-left">Code</th>
-                            <th class="p-4 text-left">Type</th>
-                            <th class="p-4 text-left">Value</th>
-                            <th class="p-4 text-left">Start</th>
-                            <th class="p-4 text-left">End</th>
-                            <th class="p-4 text-left">Limit</th>
-                            <th class="p-4 text-center">Status</th>
-                            <th class="p-4 text-center">Action</th>
-                        </tr>
-                    </thead>
-
-                    <tbody id="table-body" class="divide-y"></tbody>
-                </table>
-            </div>
-
+@section HeaderActions {
+    <div class="flex items-center gap-3">
+        <div class="relative">
+            <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+            <input id="search" placeholder="Tìm mã..." oninput="applyFilter()" class="pl-9 pr-3 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow w-48 bg-slate-50 focus:bg-white" />
         </div>
-    </main>
 
-    <!-- MODAL -->
-    <div id="modal-coupon" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-slate-900/30 backdrop-blur-sm" onclick="closeModal()"></div>
+        <select id="filter" onchange="applyFilter()" class="border border-slate-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow text-slate-700">
+            <option value="">Tất cả</option>
+            <option value="active">Đang hiệu lực</option>
+            <option value="inactive">Đã đóng</option>
+            <option value="percentage">Theo %</option>
+            <option value="fixed">Cố định</option>
+        </select>
 
-    <div class="bg-white w-full max-w-lg rounded-2xl border border-slate-200 relative z-10 flex flex-col overflow-hidden">
+        <button onclick="openModal()" class="flex items-center gap-2 px-3 py-1.5 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-md transition-colors shadow-sm">
+            <span class="material-symbols-outlined text-[18px]">add</span>
+            Tạo Coupon
+        </button>
+    </div>
+}
 
-        <!-- HEADER -->
-        <div class="p-6 border-b flex justify-between items-center bg-emerald-50/50">
-            <h3 class="font-bold text-emerald-800">Tạo / Cập nhật Coupon</h3>
-            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600">
-                ✕
+<div class="bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col h-[calc(100vh-8rem)]">
+    <div class="flex-1 overflow-auto">
+        <table class="w-full text-left border-collapse">
+            <thead class="sticky top-0 bg-slate-50/90 backdrop-blur-sm z-10 border-b border-slate-200">
+                <tr>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Mã (Code)</th>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Loại</th>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Giá trị</th>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Hiệu lực</th>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Đơn tối thiểu</th>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Lượt dùng</th>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Trạng thái</th>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="table-body" class="divide-y divide-slate-100 text-sm">
+                <!-- Populated by JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Coupon -->
+<div id="modal-coupon" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+
+    <div class="bg-white w-full max-w-md rounded-xl shadow-xl relative z-10 flex flex-col overflow-hidden border border-slate-200">
+        <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <h3 class="font-semibold text-slate-900" id="modal-title">Tạo mã giảm giá</h3>
+            <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                <span class="material-symbols-outlined text-[20px]">close</span>
             </button>
         </div>
 
-        <!-- BODY -->
-        <form id="coupon-form" class="p-6 space-y-4">
-
-            <!-- CODE -->
+        <form id="coupon-form" class="p-5 space-y-4">
             <div>
-                <label class="text-xs font-bold text-slate-400">CODE</label>
-                <input id="code" class="w-full border rounded-lg px-3 py-2 mt-1" />
+                <label class="text-xs font-medium text-slate-700 block mb-1">Mã giảm giá</label>
+                <input id="code" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase transition-shadow" placeholder="VD: SUMMER2026" />
                 <p id="err-code" class="text-red-500 text-xs mt-1 hidden"></p>
             </div>
 
-            <!-- TYPE -->
-            <div>
-                <label class="text-xs font-bold text-slate-400">TYPE</label>
-                <select id="type" class="w-full border rounded-lg px-3 py-2 mt-1">
-                    <option value="fixed">Fixed</option>
-                    <option value="percentage">Percentage</option>
-                </select>
-            </div>
-
-            <!-- VALUE -->
-            <div>
-                <label class="text-xs font-bold text-slate-400">VALUE</label>
-                <input id="value" type="number" class="w-full border rounded-lg px-3 py-2 mt-1" />
-                <p id="err-value" class="text-red-500 text-xs mt-1 hidden"></p>
-            </div>
-
-                <!-- START DATE -->
+            <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="text-xs font-bold text-slate-400">START DATE</label>
-                    <input id="startDate" type="date" class="w-full border rounded-lg px-3 py-2 mt-1" />
+                    <label class="text-xs font-medium text-slate-700 block mb-1">Loại</label>
+                    <select id="type" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow">
+                        <option value="percentage">Theo phần trăm (%)</option>
+                        <option value="fixed">Số tiền cố định (VNĐ)</option>
+                    </select>
                 </div>
-
-                <!-- END DATE -->
                 <div>
-                    <label class="text-xs font-bold text-slate-400">END DATE</label>
-                    <input id="endDate" type="date" class="w-full border rounded-lg px-3 py-2 mt-1" />
+                    <label class="text-xs font-medium text-slate-700 block mb-1">Giá trị</label>
+                    <input id="value" type="number" step="0.01" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow" placeholder="0" />
+                    <p id="err-value" class="text-red-500 text-xs mt-1 hidden"></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs font-medium text-slate-700 block mb-1">Ngày bắt đầu</label>
+                    <input id="startDate" type="date" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow text-slate-600" />
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-slate-700 block mb-1">Ngày kết thúc</label>
+                    <input id="endDate" type="date" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow text-slate-600" />
                     <p id="err-date" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
-
-                <!-- USAGE LIMIT -->
-                <div>
-                    <label class="text-xs font-bold text-slate-400">USAGE LIMIT</label>
-                    <input id="usageLimit" type="number" class="w-full border rounded-lg px-3 py-2 mt-1" placeholder="Không giới hạn nếu bỏ trống" />
-                    <p id="err-usage" class="text-red-500 text-xs mt-1 hidden"></p>
-                </div>
-
-            <!-- STATUS -->
-            <div class="flex items-center gap-2">
-                <input type="checkbox" id="isActive" />
-                <label class="text-sm">Kích hoạt</label>
             </div>
 
-            <!-- BUTTON -->
-            <button type="submit" id="btnSubmit"
-                    class="w-full bg-primary text-white py-3 rounded-xl font-bold">
-                Lưu Coupon
-            </button>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs font-medium text-slate-700 block mb-1">Giá trị đơn tối thiểu</label>
+                    <div class="relative">
+                        <input id="minOrderValue" type="number" min="0" step="1000" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow pr-10" placeholder="0" />
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">VND</span>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Bỏ trống = không yêu cầu</p>
+                </div>
+                <div>
+                    <label class="text-xs font-medium text-slate-700 block mb-1">Giới hạn số lần dùng</label>
+                    <input id="usageLimit" type="number" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow" placeholder="Không giới hạn" />
+                    <p id="err-usage" class="text-red-500 text-xs mt-1 hidden"></p>
+                </div>
+            </div>
 
+            <div class="flex items-center gap-2 pt-1">
+                <input type="checkbox" id="isActive" class="rounded border-slate-300 text-primary focus:ring-primary/20 h-4 w-4 cursor-pointer" />
+                <label for="isActive" class="text-sm text-slate-700 cursor-pointer font-medium">Kích hoạt ngay</label>
+            </div>
+
+            <div class="pt-3 flex justify-end gap-2 border-t border-slate-100 mt-5">
+                <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-md transition-colors">
+                    Hủy
+                </button>
+                <button type="submit" id="btnSubmit" class="px-4 py-2 text-sm font-medium bg-primary hover:bg-secondary text-white rounded-md transition-colors shadow-sm">
+                    Lưu mã giảm giá
+                </button>
+            </div>
         </form>
     </div>
 </div>
 
+@section Scripts {
     <script>
         const API = "http://localhost:5207/api/Coupon";
         const TOKEN = `@Html.Raw(token)`;
 
         let editId = null;
 
-        // LOAD
         async function loadData(query = "") {
-            const res = await fetch(`${API}${query}`, {
-                headers: { 'Authorization': `Bearer ${TOKEN}` }
-            });
+            try {
+                const res = await fetch(`${API}${query}`, {
+                    headers: { 'Authorization': `Bearer ${TOKEN}` }
+                });
+                
+                if(!res.ok) throw new Error("API failed");
+                const data = await res.json();
+                
+                const tbody = document.getElementById("table-body");
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-12 text-center">
+                        <div class="flex flex-col items-center justify-center text-slate-400">
+                            <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">local_activity</span>
+                            <p class="text-sm">Không tìm thấy mã giảm giá nào</p>
+                        </div>
+                    </td></tr>`;
+                    return;
+                }
 
-            const data = await res.json();
-
-            document.getElementById("table-body").innerHTML = data.map(x => `
-                <tr class="hover:bg-slate-50">
-                    <td class="p-4 font-semibold">${x.couponCode}</td>
-                    <td class="p-4">${x.couponType}</td>
-                    <td class="p-4">${x.discountValue}</td>
-                    <td class="p-4">${x.startDate ? x.startDate.split("T")[0] : "-"}</td>
-                    <td class="p-4">${x.endDate ? x.endDate.split("T")[0] : "-"}</td>
-                    <td class="p-4">${x.usageLimit ?? "∞"}</td>
-                    <td class="p-4 text-center">
-                        <span class="px-2 py-1 rounded text-xs font-bold ${x.isActive ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'}">
-                            ${x.isActive ? 'Active' : 'Off'}
-                        </span>
-                    </td>
-                    <td class="p-4 text-center">
-                        <button onclick="edit(${x.couponId})" class="text-blue-500 mr-2">Edit</button>
-                        <button onclick="del(${x.couponId})" class="text-red-500">Delete</button>
-                    </td>
-                </tr>
-            `).join("");
+                tbody.innerHTML = data.map(x => `
+                    <tr class="hover:bg-slate-50/50 transition-colors group">
+                        <td class="px-5 py-3 align-middle">
+                            <div class="font-mono font-medium text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 inline-block">${x.couponCode}</div>
+                        </td>
+                        <td class="px-5 py-3 align-middle">
+                            <span class="text-xs font-medium text-slate-600 uppercase tracking-wider">${x.couponType}</span>
+                        </td>
+                        <td class="px-5 py-3 align-middle text-right font-medium text-slate-900">
+                            ${x.couponType === 'percentage' ? x.discountValue + '%' : new Intl.NumberFormat('vi-VN').format(x.discountValue) + ' đ'}
+                        </td>
+                        <td class="px-5 py-3 align-middle">
+                            <div class="text-xs text-slate-600">Từ: ${x.startDate ? x.startDate.split("T")[0] : "—"}</div>
+                            <div class="text-xs text-slate-600 mt-0.5">Đến: ${x.endDate ? x.endDate.split("T")[0] : "—"}</div>
+                        </td>
+                        <td class="px-5 py-3 align-middle text-right">
+                            ${x.minOrderValue > 0
+                                ? `<span class="text-xs font-medium text-slate-700">${new Intl.NumberFormat('vi-VN').format(x.minOrderValue)}đ</span>`
+                                : `<span class="text-xs text-slate-400">—</span>`
+                            }
+                        </td>
+                        <td class="px-5 py-3 align-middle text-center text-slate-600">
+                            <span class="font-medium">${x.usedCount || 0}</span> / ${x.usageLimit ?? "∞"}
+                        </td>
+                        <td class="px-5 py-3 align-middle text-center">
+                            ${x.isActive 
+                                ? `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Hoạt động</span>`
+                                : `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Đã đóng</span>`
+                            }
+                        </td>
+                        <td class="px-5 py-3 align-middle text-right">
+                            <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button type="button" onclick="edit(${x.couponId})" class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded transition-all" title="Sửa">
+                                    <span class="material-symbols-outlined text-[18px]">edit</span>
+                                </button>
+                                <button type="button" onclick="del(${x.couponId})" class="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded transition-all" title="Xóa">
+                                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join("");
+            } catch (e) {
+                console.error(e);
+            }
         }
 
-        // CRUD giữ nguyên
-
         async function del(id) {
-            if (!confirm("Delete?")) return;
-            await fetch(`${API}/${id}`, { method: "DELETE", headers: { 'Authorization': `Bearer ${TOKEN}` } });
-            applyFilter();
+            if (!confirm("Bạn có chắc chắn muốn xóa mã này?")) return;
+            try {
+                await fetch(`${API}/${id}`, { method: "DELETE", headers: { 'Authorization': `Bearer ${TOKEN}` } });
+                applyFilter();
+            } catch (e) {}
         }
 
         async function edit(id) {
-            const res = await fetch(`${API}/${id}`, {
-                headers: { 'Authorization': `Bearer ${TOKEN}` }
-            });
+            try {
+                const res = await fetch(`${API}/${id}`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
+                const x = await res.json();
+                
+                editId = id;
+                document.getElementById("modal-title").innerText = "Sửa mã giảm giá";
+                openModal(true);
 
-            const x = await res.json();
-
-            editId = id;
-
-            openModal(true);
-
-            // BASIC
-            code.value = x.couponCode;
-            type.value = x.couponType;
-            value.value = x.discountValue;
-          
-            document.getElementById("startDate").value =
-                x.startDate ? x.startDate.split("T")[0] : "";
-
-            document.getElementById("endDate").value =
-                x.endDate ? x.endDate.split("T")[0] : "";
-
-            document.getElementById("usageLimit").value =
-                x.usageLimit ?? "";
-
-            document.getElementById("isActive").checked =
-                x.isActive ?? true;
-
-           
+                code.value = x.couponCode;
+                type.value = x.couponType;
+                value.value = x.discountValue;
+                document.getElementById("startDate").value = x.startDate ? x.startDate.split("T")[0] : "";
+                document.getElementById("endDate").value = x.endDate ? x.endDate.split("T")[0] : "";
+                document.getElementById("usageLimit").value = x.usageLimit ?? "";
+                document.getElementById("minOrderValue").value = x.minOrderValue > 0 ? x.minOrderValue : "";
+                document.getElementById("isActive").checked = x.isActive ?? true;
+            } catch (e) {}
         }
 
-        // UI
         function openModal(isEdit = false) {
             if (!isEdit) {
+                document.getElementById("modal-title").innerText = "Tạo mã giảm giá mới";
                 document.getElementById("coupon-form").reset();
                 document.getElementById("isActive").checked = true;
+                editId = null;
             }
-
             document.querySelectorAll("[id^='err-']").forEach(e => e.classList.add("hidden"));
-
             document.getElementById("modal-coupon").classList.remove("hidden");
+            setTimeout(() => document.getElementById("code").focus(), 100);
         }
 
         function closeModal() {
@@ -281,7 +247,6 @@
             editId = null;
         }
         
-        //Validate form
         function showError(id, message) {
             const el = document.getElementById(id);
             el.innerText = message;
@@ -290,143 +255,84 @@
 
         function validateForm() {
             let isValid = true;
-
             const codeVal = code.value.trim();
             const valueVal = parseFloat(value.value);
             const typeVal = type.value;
-
             const startVal = document.getElementById("startDate").value;
             const endVal = document.getElementById("endDate").value;
             const usageVal = document.getElementById("usageLimit").value;
 
-            // reset lỗi
             document.querySelectorAll("[id^='err-']").forEach(e => e.classList.add("hidden"));
 
-            // CODE
-            if (!codeVal) {
-                showError("err-code", "Code không được để trống");
-                isValid = false;
-            }
-
-            // VALUE
-            if (isNaN(valueVal) || valueVal <= 0) {
-                showError("err-value", "Value phải > 0");
-                isValid = false;
-            }
-
-            if (typeVal === "percentage" && valueVal > 100) {
-                showError("err-value", "Không được > 100%");
-                isValid = false;
-            }
-
-            // DATE
-            if (startVal && endVal && new Date(startVal) > new Date(endVal)) {
-            showError("err-date", "StartDate phải trước EndDate");
-            isValid = false;
-             }
-
-            // USAGE LIMIT
+            if (!codeVal) { showError("err-code", "Bắt buộc nhập mã"); isValid = false; }
+            if (isNaN(valueVal) || valueVal <= 0) { showError("err-value", "Giá trị phải > 0"); isValid = false; }
+            if (typeVal === "percentage" && valueVal > 100) { showError("err-value", "Phần trăm không được > 100"); isValid = false; }
+            if (startVal && endVal && new Date(startVal) > new Date(endVal)) { showError("err-date", "Ngày kết thúc phải sau ngày bắt đầu"); isValid = false; }
             if (usageVal !== "") {
                 const usageNum = parseInt(usageVal);
-                if (isNaN(usageNum) || usageNum < 0) {
-                    showError("err-usage", "UsageLimit phải >= 0");
-                    isValid = false;
-                }
+                if (isNaN(usageNum) || usageNum < 0) { showError("err-usage", "Lượt dùng phải ≥ 0"); isValid = false; }
             }
-
             return isValid;
         }
-        //Nút submit
+
         document.getElementById("coupon-form").onsubmit = async (e) => {
             e.preventDefault();
-
             if (!validateForm()) return;
 
             const btn = document.getElementById("btnSubmit");
+            const originalText = btn.innerText;
             btn.disabled = true;
             btn.innerText = "Đang xử lý...";
 
-        const body = {
-            couponCode: code.value.trim(),
-            couponType: type.value,
-            discountValue: parseFloat(value.value),
-                    startDate: formatDateLocal(document.getElementById("startDate").value),
+            const body = {
+                couponCode: code.value.trim(),
+                couponType: type.value,
+                discountValue: parseFloat(value.value),
+                minOrderValue: document.getElementById("minOrderValue").value
+                    ? parseFloat(document.getElementById("minOrderValue").value)
+                    : 0,
+                startDate: formatDateLocal(document.getElementById("startDate").value),
                 endDate: formatDateLocal(document.getElementById("endDate").value),
-            usageLimit: document.getElementById("usageLimit").value
-                ? parseInt(document.getElementById("usageLimit").value)
-                : null,
-            isActive: document.getElementById("isActive").checked
-        };
+                usageLimit: document.getElementById("usageLimit").value
+                    ? parseInt(document.getElementById("usageLimit").value)
+                    : null,
+                isActive: document.getElementById("isActive").checked
+            };
 
             try {
                 if (editId == null) {
-                    await fetch(API, {
-                        method: "POST",
-                        headers: {
-                            'Authorization': `Bearer ${TOKEN}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(body)
-                    });
+                    await fetch(API, { method: "POST", headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
                 } else {
-                    await fetch(`${API}/${editId}`, {
-                        method: "PUT",
-                        headers: {
-                            'Authorization': `Bearer ${TOKEN}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(body)
-                    });
+                    await fetch(`${API}/${editId}`, { method: "PUT", headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
                 }
-
                 closeModal();
                 applyFilter();
             } catch {
-                alert("Lỗi API");
+                alert("Đã xảy ra lỗi.");
             }
 
             btn.disabled = false;
-            btn.innerText = "Lưu Coupon";
+            btn.innerText = originalText;
         };
 
-                function formatDateLocal(dateStr) {
-            if (!dateStr) return null;
-            return dateStr + "T00:00:00"; // fix lệch timezone + đúng format BE
+        function formatDateLocal(dateStr) {
+            return dateStr ? dateStr + "T00:00:00" : null;
         }
 
         function applyFilter() {
             const filter = document.getElementById("filter").value;
             const search = document.getElementById("search").value;
-
             let params = [];
-
-            // filter
-            if (filter === "active") {
-                params.push("isActive=true");
-            }
-            else if (filter === "inactive") {
-                params.push("isActive=false");
-            }
-            else if (filter === "percentage") {
-                params.push("type=percentage");
-            }
-            else if (filter === "fixed") {
-                params.push("type=fixed");
-            }
-
-            // search
-            if (search && search.trim() !== "") {
-                params.push(`search=${encodeURIComponent(search.trim())}`);
-            }
-
-            // build query
-            const query = params.length > 0 ? "?" + params.join("&") : "";
-
-            loadData(query);
+            if (filter === "active") params.push("isActive=true");
+            else if (filter === "inactive") params.push("isActive=false");
+            else if (filter === "percentage") params.push("type=percentage");
+            else if (filter === "fixed") params.push("type=fixed");
+            
+            if (search && search.trim() !== "") params.push(`search=${encodeURIComponent(search.trim())}`);
+            
+            loadData(params.length > 0 ? "?" + params.join("&") : "");
         }
 
-        loadData();
+        document.addEventListener("DOMContentLoaded", () => loadData());
     </script>
-
-</body>
-</html>
+}

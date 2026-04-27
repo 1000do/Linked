@@ -13,7 +13,7 @@ public class CartItemDto
 }
 
 /// <summary>
-/// Kết quả tổng hợp giỏ hàng, bao gồm tính toán coupon.
+/// Kết quả tổng hợp giỏ hàng, bao gồm tính toán coupon và danh sách voucher khả dụng.
 /// </summary>
 public class CartSummaryResponse
 {
@@ -26,7 +26,7 @@ public class CartSummaryResponse
     /// <summary>Số tiền được giảm (= 0 nếu không áp dụng coupon hợp lệ).</summary>
     public decimal DiscountAmount { get; set; }
 
-    /// <summary>Tổng tiền thanh toán = SubTotal - DiscountAmount.</summary>
+    /// <summary>Tổng tiền thanh toán = SubTotal - DiscountAmount (không bao giờ âm).</summary>
     public decimal Total { get; set; }
 
     /// <summary>Mã coupon đã áp dụng thành công (null nếu không dùng).</summary>
@@ -34,4 +34,11 @@ public class CartSummaryResponse
 
     /// <summary>Thông báo về coupon (thành công / lỗi / hết hạn...).</summary>
     public string? CouponMessage { get; set; }
+
+    /// <summary>
+    /// Danh sách các voucher đang hoạt động, kèm trạng thái IsEligible dựa trên SubTotal hiện tại.
+    /// Dùng để render Voucher Wallet trên UI (kiểu Shopee).
+    /// </summary>
+    public List<AvailableCouponDto> AvailableCoupons { get; set; } = new();
 }
+
