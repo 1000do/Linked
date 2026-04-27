@@ -61,11 +61,16 @@ public class CartController : Controller
                         ? JsonSerializer.Deserialize<List<CartItemViewModel>>(itemsEl.GetRawText(), opts) ?? new()
                         : new();
 
-                    model.SubTotal          = dataEl.TryGetProperty("subTotal",         out var st)  ? st.GetDecimal()  : 0m;
-                    model.DiscountAmount    = dataEl.TryGetProperty("discountAmount",   out var da)  ? da.GetDecimal()  : 0m;
-                    model.Total             = dataEl.TryGetProperty("total",            out var tot) ? tot.GetDecimal() : 0m;
-                    model.AppliedCouponCode = dataEl.TryGetProperty("appliedCouponCode", out var ac) ? ac.GetString()  : null;
-                    model.CouponMessage     = dataEl.TryGetProperty("couponMessage",    out var cm)  ? cm.GetString()  : null;
+                    model.SubTotal          = dataEl.TryGetProperty("subTotal",          out var st)  ? st.GetDecimal()  : 0m;
+                    model.DiscountAmount    = dataEl.TryGetProperty("discountAmount",     out var da)  ? da.GetDecimal()  : 0m;
+                    model.Total             = dataEl.TryGetProperty("total",              out var tot) ? tot.GetDecimal() : 0m;
+                    model.AppliedCouponCode = dataEl.TryGetProperty("appliedCouponCode",  out var ac)  ? ac.GetString()  : null;
+                    model.CouponMessage     = dataEl.TryGetProperty("couponMessage",      out var cm)  ? cm.GetString()  : null;
+
+                    // Parse danh sách voucher khả dụng (Voucher Wallet)
+                    model.AvailableCoupons = dataEl.TryGetProperty("availableCoupons", out var avEl)
+                        ? JsonSerializer.Deserialize<List<AvailableCouponViewModel>>(avEl.GetRawText(), opts) ?? new()
+                        : new();
                 }
             }
             catch { /* json parse lỗi → model rỗng */ }

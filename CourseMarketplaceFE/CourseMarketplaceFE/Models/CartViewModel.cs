@@ -15,6 +15,9 @@ public class CartViewModel
 
     /// <summary>True nếu coupon được áp dụng thành công (DiscountAmount > 0).</summary>
     public bool HasDiscount => DiscountAmount > 0;
+
+    /// <summary>Danh sách voucher khả dụng từ hệ thống (Voucher Wallet UI).</summary>
+    public List<AvailableCouponViewModel> AvailableCoupons { get; set; } = new();
 }
 
 public class CartItemViewModel
@@ -25,3 +28,15 @@ public class CartItemViewModel
     public string? InstructorName { get; set; }
     public decimal Price { get; set; }
 }
+
+public class AvailableCouponViewModel
+{
+    public string CouponCode { get; set; } = string.Empty;
+    public string CouponType { get; set; } = string.Empty;
+    public decimal DiscountValue { get; set; }
+    public decimal MinOrderValue { get; set; }
+    public DateTime? EndDate { get; set; }
+    public bool IsEligible { get; set; }
+    public string ConditionMessage { get; set; } = string.Empty;
+}
+

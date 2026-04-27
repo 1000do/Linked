@@ -177,6 +177,7 @@ public class Program
         builder.Services.AddScoped<IInstructorService, InstructorService>();
 
         // 🛒 Cart & Coupon
+        builder.Services.AddScoped<ICartRepository, CartRepository>();
         builder.Services.AddScoped<ICartService, CartService>();
 
         builder.Services.AddHttpClient();
