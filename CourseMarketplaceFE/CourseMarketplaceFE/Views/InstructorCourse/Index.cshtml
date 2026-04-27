@@ -1,11 +1,12 @@
-@model IEnumerable<CourseMarketplaceFE.Models.CourseListViewModel>
+@model CourseMarketplaceFE.Models.InstructorStudioViewModel
 @{
-    ViewData["Title"] = "My Courses";
+    ViewData["Title"] = "Instructor Studio";
     Layout = "_InstructorLayout";
-    var courseList = Model.ToList();
-    var totalStudents = courseList.Sum(c => c.Students);
-    var publishedCount = courseList.Count(c => c.Status == "Published");
-    var avgRating = courseList.Where(c => c.Rating > 0).Select(c => c.Rating).DefaultIfEmpty(0).Average();
+    var courseList = Model.Courses;
+    var totalStudents = Model.TotalStudents;
+    var activeCourses = Model.ActiveCoursesCount;
+    var avgRating = Model.AverageRating;
+    var totalRevenue = Model.TotalRevenue;
 }
 
 <div class="p-8 max-w-7xl mx-auto">
@@ -47,13 +48,13 @@
         </div>
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
             <h3 class="text-sm font-semibold text-slate-500 mb-1">Active Courses</h3>
-            <p class="text-3xl font-headline font-extrabold text-slate-900">@publishedCount</p>
-            <p class="text-xs font-medium text-slate-500 mt-2">@(courseList.Count - publishedCount) Pending / Draft</p>
+            <p class="text-3xl font-headline font-extrabold text-slate-900">@activeCourses</p>
+            <p class="text-xs font-medium text-slate-500 mt-2">@(courseList.Count - activeCourses) Pending / Draft</p>
         </div>
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
             <h3 class="text-sm font-semibold text-slate-500 mb-1">Total Revenue</h3>
-            <p class="text-3xl font-headline font-extrabold text-slate-900">$48.2k</p>
-            <p class="text-xs font-medium text-slate-500 mt-2">Payout in 4 days</p>
+            <p class="text-3xl font-headline font-extrabold text-slate-900">@totalRevenue.ToString("C0")</p>
+            <p class="text-xs font-medium text-slate-500 mt-2">All time earnings</p>
         </div>
     </div>
 
@@ -82,7 +83,7 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-                @foreach (var course in Model)
+                @foreach (var course in courseList)
                 {
                     <tr class="hover:bg-slate-50/50 transition-colors group">
                         <td class="px-6 py-4">
@@ -162,7 +163,7 @@
 
     <!-- COURSES GRID (Grid View - hidden by default) -->
     <div id="grid-view" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        @foreach (var course in Model)
+        @foreach (var course in courseList)
         {
             <a href="/InstructorCourse/Editor/@course.Id" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block">
                 <div class="w-full h-40 bg-slate-200 relative overflow-hidden">

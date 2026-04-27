@@ -36,6 +36,9 @@ public class CourseResponse
     public string? CourseStatus { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? InstructorName { get; set; }
+    public int TotalStudents { get; set; }
+    public decimal RatingAverage { get; set; }
 }
 
 public class CourseDetailResponse : CourseResponse

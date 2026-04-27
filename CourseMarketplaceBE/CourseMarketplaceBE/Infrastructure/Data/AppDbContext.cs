@@ -45,6 +45,8 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<CourseExt> CourseExts { get; set; }
     public virtual DbSet<LessonExt> LessonExts { get; set; }
     public virtual DbSet<MaterialEmbedding> MaterialEmbeddings { get; set; }
+    public virtual DbSet<InstructorStats> InstructorStats { get; set; }
+    public virtual DbSet<CourseStats> CourseStats { get; set; }
 
     // ─── OnConfiguring ────────────────────────────────────────────────────────
 
@@ -797,6 +799,19 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("wishlist_items_user_id_fkey");
+        });
+
+        // ── view_instructor_stats ─────────────────────────────────────────────
+        modelBuilder.Entity<InstructorStats>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("view_instructor_stats");
+        });
+
+        modelBuilder.Entity<CourseStats>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("view_course_stats");
         });
 
         // ── course_exts ───────────────────────────────────────────────────────

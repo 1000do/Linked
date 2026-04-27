@@ -1,0 +1,215 @@
+@model CourseMarketplaceFE.Models.CourseDetailViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<style>
+    .prose p { margin-bottom: 1em; }
+    .sticky-card {
+        top: 24px;
+        transition: all 0.3s ease;
+    }
+</style>
+
+<!-- Hero Section -->
+<div class="bg-[#1c1d1f] text-white py-12 px-8 border-b border-slate-700">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div class="lg:col-span-2">
+            <nav class="flex gap-2 text-sm font-bold text-[#cec0fc] mb-4 uppercase tracking-wider">
+                <a href="/" class="hover:text-white transition-colors">Home</a>
+                <span>/</span>
+                <a href="#" class="hover:text-white transition-colors">Courses</a>
+            </nav>
+            <h1 class="font-headline text-4xl font-extrabold mb-4 leading-tight">@Model.Title</h1>
+            <div class="text-lg text-slate-300 mb-6 prose max-w-none line-clamp-2">
+                @Html.Raw(Model.Description)
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-4 text-sm mb-6">
+                <div class="flex items-center gap-1">
+                    <span class="font-bold text-[#f3ca8c] text-base">4.8</span>
+                    <div class="flex text-[#f3ca8c]">
+                        @for(int i=0; i<4; i++) { <span class="material-symbols-outlined text-[18px] fill-1">star</span> }
+                        <span class="material-symbols-outlined text-[18px] fill-1">star_half</span>
+                    </div>
+                </div>
+                <a href="#reviews" class="text-[#cec0fc] underline hover:text-white">(2,543 ratings)</a>
+                <span class="text-slate-300">15,234 students</span>
+            </div>
+            
+            <div class="flex items-center gap-2 text-sm text-slate-300">
+                <span>Created by <a href="#" class="text-[#cec0fc] hover:text-white underline font-bold">@Model.InstructorName</a></span>
+            </div>
+            
+            <div class="mt-4 flex items-center gap-6 text-sm text-slate-300">
+                <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[18px]">new_releases</span>
+                    <span>Last updated @(Model.CreatedAt?.ToString("MM/yyyy") ?? "04/2026")</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[18px]">language</span>
+                    <span>English</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sticky Sidebar Card -->
+        <div class="relative">
+            <div class="lg:absolute top-0 right-0 w-full bg-white text-slate-900 rounded-xl shadow-2xl overflow-hidden border border-slate-200 z-20">
+                <div class="aspect-video relative group cursor-pointer">
+                    <img src="@(string.IsNullOrEmpty(Model.CourseThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" : Model.CourseThumbnailUrl)" class="w-full h-full object-cover" />
+                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined text-4xl text-slate-900">play_arrow</span>
+                        </div>
+                    </div>
+                    <p class="absolute bottom-4 left-0 right-0 text-center text-white font-bold text-sm">Preview this course</p>
+                </div>
+                
+                <div class="p-6">
+                    <div class="text-3xl font-extrabold mb-4">$@Model.Price.ToString("F2")</div>
+                    <div class="flex flex-col gap-3">
+                        <button class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:opacity-90 transition-all">Add to cart</button>
+                        <button class="w-full border-2 border-slate-900 font-bold py-3 rounded-lg hover:bg-slate-50 transition-all">Buy now</button>
+                    </div>
+                    <p class="text-[11px] text-slate-500 text-center mt-4">30-Day Money-Back Guarantee</p>
+                    
+                    <div class="mt-6">
+                        <p class="font-bold text-sm mb-3">This course includes:</p>
+                        <ul class="text-sm space-y-2">
+                            <li class="flex items-center gap-3 text-slate-600">
+                                <span class="material-symbols-outlined text-[18px]">ondemand_video</span>
+                                <span>15.5 hours on-demand video</span>
+                            </li>
+                            <li class="flex items-center gap-3 text-slate-600">
+                                <span class="material-symbols-outlined text-[18px]">description</span>
+                                <span>12 downloadable resources</span>
+                            </li>
+                            <li class="flex items-center gap-3 text-slate-600">
+                                <span class="material-symbols-outlined text-[18px]">all_inclusive</span>
+                                <span>Full lifetime access</span>
+                            </li>
+                            <li class="flex items-center gap-3 text-slate-600">
+                                <span class="material-symbols-outlined text-[18px]">devices</span>
+                                <span>Access on mobile and TV</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-8 py-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
+    <div class="lg:col-span-2">
+        <!-- What you'll learn -->
+        <div class="border border-slate-200 p-6 rounded mb-12">
+            <h2 class="text-2xl font-bold text-slate-900 mb-6">What you'll learn</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                @for(int i=0; i<6; i++) {
+                    <div class="flex gap-3 text-sm text-slate-700">
+                        <span class="material-symbols-outlined text-slate-500 text-[20px]">check</span>
+                        <span>Comprehensive understanding of the core concepts and advanced techniques.</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Course Content -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">Course content</h2>
+            <div class="flex justify-between items-center text-sm text-slate-600 mb-2">
+                <span>@Model.Lessons.Count sections • @Model.Lessons.SelectMany(l => l.LearningMaterials).Count() lectures • 14h 25m total length</span>
+                <button class="text-[#a435f0] font-bold hover:text-[#8710d8]">Expand all sections</button>
+            </div>
+            
+            <div class="border border-slate-200">
+                @foreach (var lesson in Model.Lessons)
+                {
+                    <div class="border-b border-slate-200 last:border-0">
+                        <button class="w-full px-6 py-4 flex items-center justify-between bg-slate-50/50 hover:bg-slate-50 transition-colors text-left" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-slate-500 text-[20px]">expand_more</span>
+                                <span class="font-bold text-slate-800">@lesson.Title</span>
+                            </div>
+                            <span class="text-sm text-slate-600">@lesson.LearningMaterials.Count lectures • 45m</span>
+                        </button>
+                        <div class="hidden px-6 py-2 bg-white">
+                            @foreach (var material in lesson.LearningMaterials)
+                            {
+                                <div class="flex items-center justify-between text-sm py-3">
+                                    <div class="flex items-center gap-3 text-slate-700">
+                                        <span class="material-symbols-outlined text-slate-400 text-[18px]">
+                                            @(material.MaterialMetadata?.FileType == "video" ? "play_circle" : "description")
+                                        </span>
+                                        <a href="/Course/Learn/@Model.CourseId" class="hover:text-[#a435f0] hover:underline cursor-pointer">@material.Title</a>
+                                    </div>
+                                    <div class="flex items-center gap-8">
+                                        <a href="#" class="text-[#a435f0] text-xs underline">Preview</a>
+                                        <span class="text-slate-500 text-xs w-12 text-right">05:24</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Requirements -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">Requirements</h2>
+            <ul class="list-disc ml-4 text-slate-700 space-y-2 text-sm">
+                <li>No prior experience required – everything you need to know is included.</li>
+                <li>A computer with internet access.</li>
+                <li>Passion for learning and growth.</li>
+            </ul>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">Description</h2>
+            <div class="text-slate-700 text-sm leading-relaxed prose max-w-none">
+                @Html.Raw(Model.Description)
+            </div>
+        </div>
+
+        <!-- Instructor -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-slate-900 mb-4">Instructor</h2>
+            <div class="flex flex-col gap-4">
+                <div>
+                    <h3 class="text-[#a435f0] font-bold text-lg underline hover:text-[#8710d8] cursor-pointer">@Model.InstructorName</h3>
+                    <p class="text-slate-500 text-sm">Senior Professional Instructor</p>
+                </div>
+                <div class="flex gap-4 items-start">
+                    <div class="w-32 h-32 rounded-full bg-slate-200 shrink-0 overflow-hidden">
+                        <img src="https://ui-avatars.com/api/?name=@(Model.InstructorName?.Replace(" ", "+"))&background=random" class="w-full h-full object-cover" />
+                    </div>
+                    <div class="space-y-2 text-sm text-slate-700">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-[18px] fill-1">star</span>
+                            <span class="font-bold">4.8 Instructor Rating</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-[18px]">workspace_premium</span>
+                            <span class="font-bold">1,543 Reviews</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-[18px]">group</span>
+                            <span class="font-bold">45,234 Students</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-[18px]">play_circle</span>
+                            <span class="font-bold">12 Courses</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-sm text-slate-700 mt-2 leading-relaxed">
+                    With over 10 years of experience in the industry, @Model.InstructorName has helped thousands of students master complex technologies and advance their careers.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

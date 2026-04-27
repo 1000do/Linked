@@ -10,6 +10,7 @@ public interface ICourseRepository
     Task<Course?> GetCourseWithDetailsAsync(int courseId);
     Task<Course?> GetByIdAsync(int courseId);
     Task<bool> HasEnrollmentsAsync(int courseId);
+    Task<IEnumerable<Course>> GetAllPublishedCoursesAsync();
     Task AddAsync(Course course);
     void Update(Course course);
     void Delete(Course course);

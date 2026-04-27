@@ -247,7 +247,7 @@ public class InstructorService : IInstructorService
     // ═══════════════════════════════════════════════════════════════════════
     public async Task<InstructorDashboardDto?> GetInstructorDashboardAsync(int userId)
     {
-        return await _context.Instructors
+        var dto = await _context.Instructors
             .Include(i => i.InstructorNavigation)
                 .ThenInclude(u => u.UserNavigation)
             .Where(i => i.InstructorId == userId)
@@ -265,5 +265,25 @@ public class InstructorService : IInstructorService
                 Email = i.InstructorNavigation.UserNavigation.Email
             })
             .FirstOrDefaultAsync();
+
+        if (dto != null)
+        {
+            // Fetch dynamic stats from view
+            var stats = await _context.InstructorStats
+                .FirstOrDefaultAsync(s => s.InstructorId == userId);
+
+            if (stats != null)
+            {
+                dto.TotalStudents = stats.TotalStudentsCount;
+                dto.AverageRating = (decimal)stats.InstructorRating;
+                dto.TotalRevenue = stats.TotalRevenue;
+            }
+
+            // Count Active (Published) courses
+            dto.ActiveCoursesCount = await _context.Courses
+                .CountAsync(c => c.InstructorId == userId && c.CourseStatus == "published");
+        }
+
+        return dto;
     }
 }

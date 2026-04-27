@@ -25,6 +25,17 @@ public class CourseRepository : ICourseRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Course>> GetAllPublishedCoursesAsync()
+    {
+        return await _context.Courses
+            .Include(c => c.Instructor)
+                .ThenInclude(i => i!.InstructorNavigation)
+            .Where(c => c.CourseStatus == "published")
+            .OrderByDescending(c => c.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
     public async Task<Course?> GetCourseWithDetailsAsync(int courseId)
     {
         return await _context.Courses

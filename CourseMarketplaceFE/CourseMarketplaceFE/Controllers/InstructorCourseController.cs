@@ -32,10 +32,25 @@ namespace CourseMarketplaceFE.Controllers
         // ─── LIST COURSES ─────────────────────────────────────────────────
         public async Task<IActionResult> Index()
         {
-            var courses = new List<CourseListViewModel>();
+            var viewModel = new InstructorStudioViewModel();
 
             try
             {
+                // 1. Fetch Stats
+                var statsResp = await _api.GetAsync("instructor/dashboard");
+                if (statsResp.IsSuccessStatusCode)
+                {
+                    var statsJson = await statsResp.Content.ReadAsStringAsync();
+                    using var statsDoc = JsonDocument.Parse(statsJson);
+                    var statsData = statsDoc.RootElement.GetProperty("data");
+                    
+                    viewModel.TotalStudents = statsData.GetProperty("totalStudents").GetInt32();
+                    viewModel.AverageRating = (double)statsData.GetProperty("averageRating").GetDecimal();
+                    viewModel.ActiveCoursesCount = statsData.GetProperty("activeCoursesCount").GetInt32();
+                    viewModel.TotalRevenue = statsData.GetProperty("totalRevenue").GetDecimal();
+                }
+
+                // 2. Fetch Courses
                 var resp = await _api.GetAsync("courses/my-courses");
                 if (resp.IsSuccessStatusCode)
                 {
@@ -47,12 +62,12 @@ namespace CourseMarketplaceFE.Controllers
                     {
                         foreach (var item in dataEl.EnumerateArray())
                         {
-                            courses.Add(new CourseListViewModel
+                            viewModel.Courses.Add(new CourseListViewModel
                             {
                                 Id = item.GetProperty("courseId").GetInt32(),
                                 Title = item.GetProperty("title").GetString() ?? "Untitled",
-                                Students = 0, // Backend doesn't return student count yet
-                                Rating = 0,
+                                Students = item.TryGetProperty("totalStudents", out var s) ? s.GetInt32() : 0, 
+                                Rating = item.TryGetProperty("ratingAverage", out var r) ? (double)r.GetDecimal() : 0,
                                 Status = item.GetProperty("courseStatus").GetString() ?? "Draft",
                                 ThumbnailUrl = item.TryGetProperty("courseThumbnailUrl", out var t) ? t.GetString() ?? "" : "",
                                 UpdatedAt = item.TryGetProperty("updatedAt", out var u) && u.ValueKind != JsonValueKind.Null
@@ -64,10 +79,10 @@ namespace CourseMarketplaceFE.Controllers
             }
             catch (Exception ex)
             {
-                ViewBag.Error = "Failed to load courses: " + ex.Message;
+                ViewBag.Error = "Failed to load dashboard: " + ex.Message;
             }
 
-            return View(courses);
+            return View(viewModel);
         }
 
         // ─── CREATE (GET) ─────────────────────────────────────────────────
@@ -237,43 +252,29 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── ADD MATERIAL (AJAX) ──────────────────────────────────────────
         [HttpPost]
-        public async Task<IActionResult> AddMaterial([FromForm] int lessonId, [FromForm] string title, [FromForm] string description, [FromForm] string materialUrl, [FromForm] string resourceUrl, [FromForm] string resourceName)
+        public async Task<IActionResult> AddMaterial([FromForm] int lessonId, [FromForm] string title, [FromForm] string description, [FromForm] string materialUrl, [FromForm] string type)
         {
             try
             {
-                // Send Video Material
-                var videoData = new MultipartFormDataContent();
-                videoData.Add(new StringContent(title ?? "Untitled Lesson"), "Title");
+                var formData = new MultipartFormDataContent();
+                formData.Add(new StringContent(title ?? "Untitled Material"), "Title");
                 if (!string.IsNullOrEmpty(description))
-                    videoData.Add(new StringContent(description), "Description");
+                    formData.Add(new StringContent(description), "Description");
                 if (!string.IsNullOrEmpty(materialUrl))
-                    videoData.Add(new StringContent(materialUrl), "MaterialUrl");
+                    formData.Add(new StringContent(materialUrl), "MaterialUrl");
                 
-                // Add MaterialMetadata properties directly for ASP.NET Core binding
-                videoData.Add(new StringContent("video"), "MaterialMetadata.FileType");
+                formData.Add(new StringContent(type ?? "video"), "MaterialMetadata.FileType");
 
-                var resp1 = await _api.PostFormDataAsync($"lessons/{lessonId}/materials", videoData);
+                var resp = await _api.PostFormDataAsync($"lessons/{lessonId}/materials", formData);
 
-                // Send Resource Material if exists
-                if (!string.IsNullOrEmpty(resourceUrl))
+                if (resp.IsSuccessStatusCode)
                 {
-                    var resData = new MultipartFormDataContent();
-                    resData.Add(new StringContent(resourceName ?? "Resource File"), "Title");
-                    resData.Add(new StringContent(resourceUrl), "MaterialUrl");
-                    
-                    resData.Add(new StringContent("document"), "MaterialMetadata.FileType");
-
-                    await _api.PostFormDataAsync($"lessons/{lessonId}/materials", resData);
-                }
-
-                if (resp1.IsSuccessStatusCode)
-                {
-                    var json = await resp1.Content.ReadAsStringAsync();
+                    var json = await resp.Content.ReadAsStringAsync();
                     using var doc = JsonDocument.Parse(json);
                     var data = doc.RootElement.GetProperty("data").Clone();
                     return Json(new { success = true, data = data });
                 }
-                var error = await resp1.Content.ReadAsStringAsync();
+                var error = await resp.Content.ReadAsStringAsync();
                 return Json(new { success = false, message = error });
             }
             catch (Exception ex)

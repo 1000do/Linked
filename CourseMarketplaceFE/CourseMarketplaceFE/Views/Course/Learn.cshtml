@@ -1,0 +1,384 @@
+@model CourseMarketplaceFE.Models.CourseDetailViewModel
+@{
+    ViewData["Title"] = "Learning: " + Model.Title;
+    Layout = null; // No layout for full-screen player experience
+    var firstMaterial = Model.Lessons.SelectMany(l => l.LearningMaterials).FirstOrDefault();
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f0fcfb; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #006a6233; border-radius: 3px; }
+        .active-material { background-color: #e0f2f1; border-left: 4px solid #006a62; }
+        .fill-1 { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-[#f0fcfb] text-[#191c1b] h-screen flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="h-14 bg-[#006a62] text-white flex items-center justify-between px-6 shrink-0 z-50 shadow-md">
+        <div class="flex items-center gap-4">
+            <a href="/Course/Details/@Model.CourseId" class="hover:opacity-80 transition-all">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <div class="h-6 w-px bg-white/20"></div>
+            <h1 class="font-bold text-sm truncate max-w-md">@Model.Title</h1>
+        </div>
+        <div class="flex items-center gap-6 text-sm font-bold">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#43e8d8]">workspace_premium</span>
+                <span>Get Certificate</span>
+            </div>
+            <button class="bg-[#43e8d8] text-[#00201d] px-4 py-1.5 rounded text-xs hover:opacity-90 transition-all">Share</button>
+        </div>
+    </header>
+
+    <div class="flex-1 flex overflow-hidden">
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col relative bg-white overflow-y-auto custom-scrollbar">
+            @{
+                bool isFirstVideo = true;
+                var fileType = firstMaterial?.MaterialMetadata?.FileType;
+                if (!string.IsNullOrEmpty(fileType))
+                {
+                    isFirstVideo = fileType.StartsWith("video") || fileType == "mp4";
+                }
+            }
+            <!-- Media Area -->
+            <div class="w-full bg-[#191c1b] flex items-center justify-center relative group min-h-[500px] h-[80vh] shrink-0" oncontextmenu="return false;">
+                <!-- Video Player -->
+                <video id="main-video" class="w-full h-full @(isFirstVideo ? "" : "hidden")" controls autoplay controlsList="nodownload" oncontextmenu="return false;">
+                    <source id="video-source" src="@(firstMaterial?.MaterialUrl ?? "")" type="video/mp4">
+                </video>
+
+                <!-- Document Viewer (Embed) -->
+                <div id="document-viewer" class="w-full h-full bg-[#f0fcfb] flex flex-col @(isFirstVideo ? "hidden" : "")">
+                    <div class="flex items-center justify-between px-6 py-3 bg-[#006a62]/10 border-b border-[#006a62]/20 shrink-0 select-none">
+                        <div class="flex items-center gap-2 text-[#006a62] font-bold">
+                            <span class="material-symbols-outlined text-[20px]">description</span>
+                            <span id="doc-title" class="text-sm">@(firstMaterial?.Title)</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="text-xs text-[#006a62] font-semibold bg-[#006a62]/10 px-2 py-1 rounded">Protected Material</span>
+                        </div>
+                    </div>
+                    @{
+                        bool isTxt = false;
+                        if (!isFirstVideo && firstMaterial != null && !string.IsNullOrEmpty(firstMaterial.MaterialUrl))
+                        {
+                            isTxt = firstMaterial.MaterialUrl.EndsWith(".txt", StringComparison.OrdinalIgnoreCase);
+                        }
+                    }
+                    <iframe id="doc-iframe" src="@(isTxt ? firstMaterial?.MaterialUrl : "")" class="w-full flex-1 bg-white hidden" frameborder="0"></iframe>
+                    
+                    <!-- Text Viewer -->
+                    <div id="doc-txt-viewer" class="w-full flex-1 bg-white overflow-y-auto p-8 @(isTxt && !isFirstVideo ? "" : "hidden")">
+                        <pre id="doc-txt-content" class="text-sm font-mono text-slate-800 whitespace-pre-wrap word-break"></pre>
+                    </div>
+                    
+                    <div id="doc-download-fallback" class="w-full flex-1 bg-slate-50 flex flex-col items-center justify-center @(!isTxt && !isFirstVideo ? "" : "hidden")">
+                        <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center max-w-sm">
+                            <div class="w-16 h-16 bg-[#006a62]/10 text-[#006a62] rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span class="material-symbols-outlined text-[32px]">download_for_offline</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2">Tài liệu đính kèm</h3>
+                            <p class="text-sm text-slate-500 mb-6">Định dạng file này không hỗ trợ xem trực tiếp trên trình duyệt. Vui lòng tải về để xem.</p>
+                            <a id="doc-download-btn" href="@(!isFirstVideo ? firstMaterial?.MaterialUrl : "#")" target="_blank" download class="bg-[#006a62] text-white px-6 py-2.5 rounded-full font-bold hover:bg-[#00544e] transition-colors flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-[20px]">download</span>
+                                Tải xuống tài liệu
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Loading Overlay -->
+                <div id="video-loader" class="absolute inset-0 bg-black/60 hidden flex items-center justify-center z-10">
+                    <div class="w-12 h-12 border-4 border-[#006a62] border-t-[#43e8d8] rounded-full animate-spin"></div>
+                </div>
+            </div>
+
+            <!-- Content Info Tabs -->
+            <div class="flex-1 bg-white border-t border-slate-100 p-8 pb-20">
+                <div class="max-w-4xl mx-auto">
+                    <div class="flex gap-8 border-b border-slate-100 mb-6 sticky top-0 bg-white z-10 pt-2">
+                        <button onclick="switchTab('overview', this)" class="tab-btn pb-4 border-b-2 border-[#006a62] text-[#006a62] font-bold text-sm">Overview</button>
+                        <button class="pb-4 text-slate-400 font-bold text-sm hover:text-[#006a62] transition-colors">Notes</button>
+                        <button class="pb-4 text-slate-400 font-bold text-sm hover:text-[#006a62] transition-colors">Announcements</button>
+                        <button onclick="switchTab('reviews', this)" class="tab-btn pb-4 text-slate-400 font-bold text-sm hover:text-[#006a62] transition-colors">Reviews</button>
+                    </div>
+                    
+                    <!-- Overview Tab Content -->
+                    <div id="tab-overview" class="tab-content">
+                        <h2 id="current-material-title" class="text-2xl font-bold mb-4">@(firstMaterial?.Title ?? "Select a lesson to start")</h2>
+                        <div id="current-material-desc" class="text-slate-600 leading-relaxed prose prose-slate max-w-none">
+                            @(Html.Raw(firstMaterial?.Description ?? "No description available."))
+                        </div>
+                    </div>
+
+                    <!-- Reviews Tab Content (Hardcoded) -->
+                    <div id="tab-reviews" class="tab-content hidden text-slate-700">
+                        <h2 class="text-xl font-extrabold mb-6 text-[#191c1b]">Student Feedback</h2>
+                        
+                        <div class="flex flex-col md:flex-row gap-8 mb-10 items-start">
+                            <div class="text-center w-32 shrink-0">
+                                <p class="text-5xl font-extrabold text-[#006a62] mb-1">4.8</p>
+                                <div class="flex justify-center text-amber-500 mb-1">
+                                    <span class="material-symbols-outlined text-[20px] fill-1">star</span>
+                                    <span class="material-symbols-outlined text-[20px] fill-1">star</span>
+                                    <span class="material-symbols-outlined text-[20px] fill-1">star</span>
+                                    <span class="material-symbols-outlined text-[20px] fill-1">star</span>
+                                    <span class="material-symbols-outlined text-[20px] fill-1">star_half</span>
+                                </div>
+                                <p class="text-xs font-bold text-[#006a62]">Course Rating</p>
+                            </div>
+                            
+                            <div class="flex-1 w-full space-y-1.5 max-w-md">
+                                @foreach (var star in new[] { new { n = 5, p = 70 }, new { n = 4, p = 20 }, new { n = 3, p = 7 }, new { n = 2, p = 2 }, new { n = 1, p = 1 } })
+                                {
+                                    <div class="flex items-center gap-3 group cursor-pointer">
+                                        <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                            <div class="h-full bg-slate-400 group-hover:bg-[#006a62] transition-colors" style="width: @star.p%"></div>
+                                        </div>
+                                        <div class="flex items-center gap-1 w-28 shrink-0">
+                                            <div class="flex text-amber-500">
+                                                @for (int i = 0; i < 5; i++) {
+                                                    <span class="material-symbols-outlined text-[14px] @(i < star.n ? "fill-1" : "")">star</span>
+                                                }
+                                            </div>
+                                            <span class="text-xs text-[#006a62] font-bold">@star.p%</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <h3 class="font-bold text-lg text-[#191c1b]">Reviews</h3>
+                            <div class="flex gap-3 mb-6">
+                                <div class="flex-1 relative">
+                                    <input type="text" placeholder="Search reviews" class="w-full bg-white border border-slate-300 rounded py-2 px-4 text-sm focus:outline-none focus:ring-1 focus:ring-[#006a62]" />
+                                    <button class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"><span class="material-symbols-outlined text-[20px]">search</span></button>
+                                </div>
+                                <select class="bg-white border border-slate-300 rounded py-2 px-4 text-sm font-bold text-slate-700 focus:outline-none">
+                                    <option>All ratings</option>
+                                </select>
+                            </div>
+
+                            <!-- Review Item -->
+                            <div class="border-t border-slate-100 pt-6">
+                                <div class="flex gap-4 mb-3">
+                                    <div class="w-10 h-10 rounded-full bg-[#191c1b] text-white flex items-center justify-center font-bold text-sm">JD</div>
+                                    <div>
+                                        <h4 class="font-bold text-sm text-[#191c1b]">John Doe</h4>
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex text-amber-500">
+                                                @for (int i = 0; i < 5; i++) { <span class="material-symbols-outlined text-[14px] fill-1">star</span> }
+                                            </div>
+                                            <span class="text-[11px] text-slate-400 font-medium">1 week ago</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-slate-700 leading-relaxed mb-4">
+                                    This course is amazing! The instructor explains complex concepts in a very simple way. I've learned more in 2 hours than I did in a month of self-study.
+                                </p>
+                                <div class="flex items-center gap-4 text-xs text-slate-500">
+                                    <span class="text-[11px]">Was this review helpful?</span>
+                                    <div class="flex gap-2">
+                                        <button class="w-8 h-8 flex items-center justify-center hover:bg-slate-100 border border-slate-300 rounded-full transition-colors"><span class="material-symbols-outlined text-[18px]">thumb_up</span></button>
+                                        <button class="w-8 h-8 flex items-center justify-center hover:bg-slate-100 border border-slate-300 rounded-full transition-colors"><span class="material-symbols-outlined text-[18px]">thumb_down</span></button>
+                                    </div>
+                                    <button class="hover:underline text-[11px]">Report</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Sidebar (Curriculum) -->
+        <aside class="w-[350px] bg-white border-l border-slate-100 flex flex-col shrink-0 shadow-sm">
+            <div class="p-4 border-b border-slate-100 font-bold flex items-center justify-between text-[#191c1b]">
+                <span>Course Content</span>
+                <button class="text-slate-400 hover:text-[#006a62]"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto custom-scrollbar">
+                @foreach (var lesson in Model.Lessons)
+                {
+                    <div class="lesson-section border-b border-slate-50">
+                        <button class="w-full px-4 py-3 bg-slate-50 flex items-center justify-between text-left hover:bg-slate-100 transition-colors"
+                                onclick="this.nextElementSibling.classList.toggle('hidden')">
+                            <div>
+                                <p class="text-xs font-bold text-[#006a62] uppercase tracking-tighter">Section @(Model.Lessons.IndexOf(lesson) + 1)</p>
+                                <h3 class="font-bold text-sm text-[#191c1b]">@lesson.Title</h3>
+                            </div>
+                            <span class="material-symbols-outlined text-slate-400">expand_more</span>
+                        </button>
+                        <div class="lesson-items bg-white">
+                            @foreach (var material in lesson.LearningMaterials)
+                            {
+                                string mFileType = material.MaterialMetadata?.FileType;
+                                if (string.IsNullOrEmpty(mFileType)) {
+                                    mFileType = (material.MaterialUrl?.EndsWith(".mp4") == true || material.MaterialUrl?.EndsWith(".webm") == true) ? "video" : "document";
+                                }
+
+                                <div class="material-item group cursor-pointer border-b border-slate-50 @(material == firstMaterial ? "active-material" : "")"
+                                     onclick="playMaterial('@material.MaterialUrl', '@material.Title', '@(material.Description?.Replace("'", "\\'"))', this, '@mFileType')">
+                                    <div class="px-4 py-4 flex gap-3">
+                                        <div class="flex flex-col items-center pt-1 shrink-0">
+                                            @if (mFileType.StartsWith("video") || mFileType == "mp4") {
+                                                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-[#006a62]">play_circle</span>
+                                            } else {
+                                                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-[#006a62]">description</span>
+                                            }
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium leading-tight mb-1 group-hover:text-[#006a62] transition-colors">@material.Title</p>
+                                            <div class="flex items-center gap-2 text-[11px] text-slate-400">
+                                                <span class="material-symbols-outlined text-[14px]">@(mFileType.StartsWith("video") || mFileType == "mp4" ? "ondemand_video" : "description")</span>
+                                                <span>@(material.MaterialMetadata?.Duration / 60 ?? 0)min</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        const videoPlayer = document.getElementById('main-video');
+        const videoSource = document.getElementById('video-source');
+        const videoLoader = document.getElementById('video-loader');
+        const docViewer = document.getElementById('document-viewer');
+        const docTitle = document.getElementById('doc-title');
+        const docIframe = document.getElementById('doc-iframe');
+        const docDownloadFallback = document.getElementById('doc-download-fallback');
+        const docDownloadBtn = document.getElementById('doc-download-btn');
+        const titleEl = document.getElementById('current-material-title');
+        const descEl = document.getElementById('current-material-desc');
+
+        function switchTab(tabId, element) {
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-b-2', 'border-[#006a62]', 'text-[#006a62]');
+                btn.classList.add('text-slate-400');
+            });
+            element.classList.add('border-b-2', 'border-[#006a62]', 'text-[#006a62]');
+            element.classList.remove('text-slate-400');
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+        }
+
+        function playMaterial(url, title, description, element, type = 'video') {
+            if (!url) {
+                alert('This material has no content yet.');
+                return;
+            }
+
+            // UI feedback
+            document.querySelectorAll('.material-item').forEach(el => el.classList.remove('active-material'));
+            element.classList.add('active-material');
+
+            // Update Info
+            titleEl.textContent = title;
+            descEl.innerHTML = description || 'No description available.';
+
+            const isVideo = type.startsWith('video') || type === 'mp4';
+
+            if (isVideo) {
+                docViewer.classList.add('hidden');
+                videoPlayer.classList.remove('hidden');
+                videoLoader.classList.remove('hidden');
+                
+                if (docIframe) {
+                    docIframe.src = '';
+                    docIframe.classList.add('hidden');
+                }
+                if (docDownloadFallback) docDownloadFallback.classList.add('hidden');
+
+                videoSource.src = url;
+                videoPlayer.load();
+                videoPlayer.play().catch(e => console.log('Auto-play blocked or failed:', e));
+                
+                videoPlayer.onloadeddata = () => {
+                    videoLoader.classList.add('hidden');
+                };
+            } else {
+                videoPlayer.classList.add('hidden');
+                videoPlayer.pause();
+                docViewer.classList.remove('hidden');
+                
+                docTitle.textContent = title;
+                
+                var lowerUrl = url.toLowerCase();
+                if (lowerUrl.endsWith('.txt')) {
+                    if (docIframe) {
+                        docIframe.src = '';
+                        docIframe.classList.add('hidden');
+                    }
+                    if (docDownloadFallback) docDownloadFallback.classList.add('hidden');
+                    
+                    const txtViewer = document.getElementById('doc-txt-viewer');
+                    const txtContent = document.getElementById('doc-txt-content');
+                    if (txtViewer) txtViewer.classList.remove('hidden');
+                    if (txtContent) txtContent.textContent = 'Đang tải nội dung...';
+
+                    fetch(url)
+                        .then(res => res.arrayBuffer())
+                        .then(buffer => {
+                            const decoder = new TextDecoder('utf-8');
+                            txtContent.textContent = decoder.decode(buffer);
+                        })
+                        .catch(err => {
+                            txtContent.textContent = 'Lỗi tải file: ' + err.message;
+                        });
+                } else {
+                    if (docIframe) {
+                        docIframe.src = '';
+                        docIframe.classList.add('hidden');
+                    }
+                    const txtViewer = document.getElementById('doc-txt-viewer');
+                    if (txtViewer) txtViewer.classList.add('hidden');
+
+                    if (docDownloadFallback) docDownloadFallback.classList.remove('hidden');
+                    
+                    let downloadUrl = url;
+                    if (url.includes('cloudinary.com') && !url.includes('fl_attachment')) {
+                        downloadUrl = url.replace(/\/upload\//, '/upload/fl_attachment/');
+                    }
+                    if (docDownloadBtn) {
+                        docDownloadBtn.href = downloadUrl;
+                        docDownloadBtn.onclick = null;
+                    }
+                }
+            }
+        }
+
+        // Auto-play first material
+        window.addEventListener('DOMContentLoaded', () => {
+            const firstItem = document.querySelector('.material-item');
+            if (firstItem) {
+                // Remove the active class because playMaterial will add it back
+                firstItem.classList.remove('active-material');
+                firstItem.click();
+            }
+        });
+    </script>
+</body>
+</html>
