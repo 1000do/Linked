@@ -1,4 +1,4 @@
-﻿@model LinkedLearn.Models.UserVM.UserProfileViewModel
+@model LinkedLearn.Models.UserVM.UserProfileViewModel
 @{
     ViewData["Title"] = "My Profile";
 }
@@ -15,6 +15,10 @@
                     <a href="/Account/EditProfile" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all">
                         <span class="material-symbols-outlined">edit_square</span>
                         <span>Edit Profile</span>
+                    </a>
+                    <a href="/Account/ChangePassword" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all mt-2 border-t border-slate-100 pt-4">
+                        <span class="material-symbols-outlined">lock</span>
+                        <span>Đổi mật khẩu</span>
                     </a>
                 </nav>
             </div>
@@ -85,6 +89,128 @@
                     </div>
                 </div>
             </div>
+
+            @* ── THÔNG TIN GIẢNG VIÊN ────────────────────────────── *@
+            @if (Model.IsInstructor)
+            {
+                @* Đã đăng ký giảng viên → hiển thị thông tin *@
+                <section class="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-sm border border-slate-100">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-gradient-to-br from-primary to-secondary p-3 rounded-2xl">
+                                <span class="material-symbols-outlined text-white text-xl">school</span>
+                            </div>
+                            <h3 class="text-xl font-extrabold text-slate-800">Thông tin Giảng viên</h3>
+                        </div>
+
+                        @* Badge trạng thái *@
+                        @{
+                            var statusColor = Model.ApprovalStatus switch
+                            {
+                                "Approved" => "bg-green-100 text-green-700",
+                                "Rejected" => "bg-red-100 text-red-700",
+                                _ => "bg-amber-100 text-amber-700"
+                            };
+                            var statusText = Model.ApprovalStatus switch
+                            {
+                                "Approved" => "✔ Đã duyệt",
+                                "Rejected" => "✘ Bị từ chối",
+                                _ => "⏳ Đang chờ duyệt"
+                            };
+                        }
+                        <span class="px-4 py-1.5 rounded-full text-xs font-bold @statusColor">
+                            @statusText
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="material-symbols-outlined text-primary text-lg">badge</span>
+                                <p class="text-xs text-slate-400 font-bold uppercase">Chức danh chuyên môn</p>
+                            </div>
+                            <p class="font-bold text-slate-700">@(Model.ProfessionalTitle ?? "Chưa cập nhật")</p>
+                        </div>
+
+                        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="material-symbols-outlined text-primary text-lg">category</span>
+                                <p class="text-xs text-slate-400 font-bold uppercase">Lĩnh vực chuyên môn</p>
+                            </div>
+                            <p class="font-bold text-slate-700">@(Model.ExpertiseCategories ?? "Chưa cập nhật")</p>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.LinkedinUrl))
+                        {
+                            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 md:col-span-2">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="material-symbols-outlined text-primary text-lg">link</span>
+                                    <p class="text-xs text-slate-400 font-bold uppercase">LinkedIn</p>
+                                </div>
+                                <a href="@Model.LinkedinUrl" target="_blank"
+                                   class="font-bold text-primary hover:underline break-all">
+                                    @Model.LinkedinUrl
+                                </a>
+                            </div>
+                        }
+                    </div>
+
+                    @if (Model.ApprovalStatus == "Rejected")
+                    {
+                        <div class="mt-6 pt-6 border-t border-slate-100 flex items-center justify-between">
+                            <p class="text-sm text-slate-500">Đơn đăng ký đã bị từ chối. Bạn có thể nộp lại đơn.</p>
+                            <a href="/Instructor/Apply"
+                               class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all text-sm">
+                                <span class="material-symbols-outlined text-lg">refresh</span>
+                                Nộp lại đơn
+                            </a>
+                        </div>
+                    }
+                </section>
+            }
+            else
+            {
+                @* Chưa đăng ký giảng viên → hiển thị section bị khóa *@
+                <section class="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-sm border border-slate-100 relative overflow-hidden">
+                    @* Overlay mờ *@
+                    <div class="absolute inset-0 bg-slate-50/80 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center">
+                        <div class="text-center">
+                            <div class="inline-flex items-center justify-center w-16 h-16 bg-slate-200 rounded-full mb-4">
+                                <span class="material-symbols-outlined text-slate-400 text-3xl">lock</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-600 mb-2">Chưa đăng ký Giảng viên</h3>
+                            <p class="text-sm text-slate-500 mb-5 max-w-sm">
+                                Trở thành giảng viên để mở khóa thông tin chuyên môn và bắt đầu tạo khóa học.
+                            </p>
+                            <a href="/Instructor/Apply"
+                               class="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-sm">
+                                <span class="material-symbols-outlined text-lg">school</span>
+                                Đăng ký làm Giảng viên
+                            </a>
+                        </div>
+                    </div>
+
+                    @* Nội dung placeholder phía dưới (bị mờ) *@
+                    <div class="opacity-40 pointer-events-none select-none">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="bg-gradient-to-br from-primary to-secondary p-3 rounded-2xl">
+                                <span class="material-symbols-outlined text-white text-xl">school</span>
+                            </div>
+                            <h3 class="text-xl font-extrabold text-slate-800">Thông tin Giảng viên</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                                <p class="text-xs text-slate-400 font-bold uppercase mb-2">Chức danh chuyên môn</p>
+                                <div class="h-5 bg-slate-200 rounded-lg w-3/4"></div>
+                            </div>
+                            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                                <p class="text-xs text-slate-400 font-bold uppercase mb-2">Lĩnh vực chuyên môn</p>
+                                <div class="h-5 bg-slate-200 rounded-lg w-2/3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            }
         </div>
     </div>
 </div>

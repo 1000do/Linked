@@ -1,4 +1,4 @@
-﻿using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -49,5 +49,30 @@ public class ProfileController : ControllerBase
             return Ok(new { status = 200, message = "Cập nhật thông tin hồ sơ thành công!" });
 
         return BadRequest(new { status = 400, message = "Cập nhật thất bại." });
+    }
+
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new { status = 400, message = "Dữ liệu không hợp lệ.", errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage) });
+        }
+
+        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(userIdStr, out int userId))
+            return Unauthorized(new { status = 401, message = "Phiên đăng nhập không hợp lệ." });
+
+        var (success, message) = await _profileService.ChangePasswordAsync(userId, request.CurrentPassword, request.NewPassword);
+
+        if (success)
+        {
+            return Ok(new { status = 200, message = message });
+        }
+        else
+        {
+            return BadRequest(new { status = 400, message = message });
+        }
     }
 }

@@ -18,6 +18,7 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users
             .Include(u => u.UserNavigation)
+            .Include(u => u.Instructor)
             .FirstOrDefaultAsync(u => u.UserId == userId);
     }
 
