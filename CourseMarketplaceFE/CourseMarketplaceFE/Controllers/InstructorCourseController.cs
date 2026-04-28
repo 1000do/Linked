@@ -85,10 +85,29 @@ namespace CourseMarketplaceFE.Controllers
             return View(viewModel);
         }
 
-        // ─── CREATE (GET) ─────────────────────────────────────────────────
-        public IActionResult Create()
+        private async Task<List<CategoryViewModel>> GetCategoriesAsync()
         {
-            return View(new CreateCourseViewModel());
+            var resp = await _api.GetAsync("public/courses/categories");
+            if (resp.IsSuccessStatusCode)
+            {
+                var content = await resp.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(content);
+                if (json.RootElement.TryGetProperty("data", out var data))
+                {
+                    return JsonSerializer.Deserialize<List<CategoryViewModel>>(data.ToString(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<CategoryViewModel>();
+                }
+            }
+            return new List<CategoryViewModel>();
+        }
+
+        // ─── CREATE (GET) ─────────────────────────────────────────────────
+        public async Task<IActionResult> Create()
+        {
+            var model = new CreateCourseViewModel
+            {
+                AvailableCategories = await GetCategoriesAsync()
+            };
+            return View(model);
         }
 
         // ─── CREATE (POST) ────────────────────────────────────────────────
@@ -97,6 +116,7 @@ namespace CourseMarketplaceFE.Controllers
         {
             if (!ModelState.IsValid)
             {
+                model.AvailableCategories = await GetCategoriesAsync();
                 return View(model);
             }
 
@@ -161,6 +181,12 @@ namespace CourseMarketplaceFE.Controllers
                     {
                         ViewBag.CourseTitle = data.GetProperty("title").GetString();
                         ViewBag.CourseStatus = data.TryGetProperty("courseStatus", out var s) ? s.GetString() : "Draft";
+                        ViewBag.Description = data.TryGetProperty("description", out var d) ? d.GetString() : "";
+                        ViewBag.WhatYouWillLearn = data.TryGetProperty("whatYouWillLearn", out var w) ? w.GetString() : "";
+                        ViewBag.Requirements = data.TryGetProperty("requirements", out var r) ? r.GetString() : "";
+                        ViewBag.CategoryId = data.TryGetProperty("categoryId", out var c) ? c.GetInt32() : 0;
+                        ViewBag.Price = data.TryGetProperty("price", out var p) ? p.GetDecimal() : 0;
+                        ViewBag.ThumbnailUrl = data.TryGetProperty("courseThumbnailUrl", out var t) ? t.GetString() : "";
 
                         // Parse lessons
                         if (data.TryGetProperty("lessons", out var lessonsEl) && lessonsEl.ValueKind == JsonValueKind.Array)
@@ -290,6 +316,37 @@ namespace CourseMarketplaceFE.Controllers
             {
                 var payload = new { status = status };
                 var resp = await _api.PatchJsonAsync($"courses/{courseId}/status", payload);
+
+                if (resp.IsSuccessStatusCode)
+                {
+                    return Json(new { success = true });
+                }
+                var error = await resp.Content.ReadAsStringAsync();
+                return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+        
+        // ─── UPDATE COURSE DETAILS (AJAX) ─────────────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> UpdateDetails([FromForm] int courseId, [FromForm] string title, [FromForm] string description, [FromForm] decimal price, [FromForm] int categoryId, [FromForm] string whatYouWillLearn, [FromForm] string requirements, [FromForm] string thumbnailUrl)
+        {
+            try
+            {
+                var formData = new MultipartFormDataContent();
+                formData.Add(new StringContent(courseId.ToString()), "CourseId");
+                formData.Add(new StringContent(title), "Title");
+                formData.Add(new StringContent(description ?? ""), "Description");
+                formData.Add(new StringContent(price.ToString()), "Price");
+                formData.Add(new StringContent(categoryId.ToString()), "CategoryId");
+                formData.Add(new StringContent(whatYouWillLearn ?? ""), "WhatYouWillLearn");
+                formData.Add(new StringContent(requirements ?? ""), "Requirements");
+                formData.Add(new StringContent(thumbnailUrl ?? ""), "CourseThumbnailUrl");
+
+                var resp = await _api.PutFormDataAsync($"courses/{courseId}", formData);
 
                 if (resp.IsSuccessStatusCode)
                 {

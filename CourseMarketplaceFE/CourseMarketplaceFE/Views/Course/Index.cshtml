@@ -1,0 +1,151 @@
+@model List<CourseMarketplaceFE.Models.PublicCourseViewModel>
+@{
+    ViewData["Title"] = "Tất cả khóa học";
+    var currentQuery = ViewBag.Query as string;
+    var currentCategory = ViewBag.Category as string;
+    var currentSort = ViewBag.Sort as string;
+}
+
+<style>
+    .ease-out-expo { transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1); }
+</style>
+
+<div class="bg-slate-50 min-h-screen py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="mb-12">
+            <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight mb-4">Khám phá Khóa học</h1>
+            <p class="text-lg text-slate-600">Tìm kiếm từ hàng ngàn khóa học để phát triển kỹ năng của bạn.</p>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Sidebar / Filters -->
+            <div class="w-full lg:w-1/4 shrink-0">
+                <form method="get" action="/Course" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm sticky top-24">
+                    <h3 class="font-bold text-lg text-slate-900 mb-6">Lọc kết quả</h3>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Tìm kiếm</label>
+                        <input type="text" name="query" value="@currentQuery" placeholder="Tên khóa học..." 
+                               class="w-full border-slate-300 rounded-lg shadow-sm focus:border-primary focus:ring-primary/20 p-2 border" />
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Danh mục</label>
+                        <select name="category" class="w-full border-slate-300 rounded-lg shadow-sm focus:border-primary focus:ring-primary/20 p-2 border">
+                            <option value="">Tất cả danh mục</option>
+                            @{
+                                var sidebarCategories = ViewBag.Categories as List<CourseMarketplaceFE.Models.CategoryViewModel> ?? new List<CourseMarketplaceFE.Models.CategoryViewModel>();
+                            }
+                            @foreach (var cat in sidebarCategories)
+                            {
+                                <option value="@cat.CategoriesName" selected="@(currentCategory == cat.CategoriesName)">@cat.CategoriesName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-8">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Sắp xếp theo</label>
+                        <select name="sort" class="w-full border-slate-300 rounded-lg shadow-sm focus:border-primary focus:ring-primary/20 p-2 border">
+                            <option value="newest" selected="@(currentSort == "newest")">Mới nhất</option>
+                            <option value="rating" selected="@(currentSort == "rating")">Đánh giá cao</option>
+                            <option value="price_asc" selected="@(currentSort == "price_asc")">Giá: Thấp đến cao</option>
+                            <option value="price_desc" selected="@(currentSort == "price_desc")">Giá: Cao đến thấp</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-primary/90 transition-colors">
+                        Áp dụng
+                    </button>
+                    <a href="/Course" class="block w-full text-center mt-3 text-sm text-slate-500 hover:text-slate-700 underline">Xóa bộ lọc</a>
+                </form>
+            </div>
+
+            <!-- Course Grid -->
+            <div class="flex-1">
+                @if (Model == null || !Model.Any())
+                {
+                    <div class="bg-white rounded-2xl border border-dashed border-slate-300 p-16 text-center">
+                        <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">search_off</span>
+                        <h3 class="text-xl font-bold text-slate-700 mb-2">Không tìm thấy khóa học nào</h3>
+                        <p class="text-slate-500">Hãy thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm của bạn.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="mb-6 flex justify-between items-center">
+                        <p class="text-slate-600 font-medium">Hiển thị <span class="font-bold text-slate-900">@Model.Count</span> khóa học</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        @foreach (var course in Model)
+                        {
+                            <div class="flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300 ease-out-expo group cursor-pointer" 
+                                 onclick="location.href='/Course/Details/@course.CourseId'">
+                                
+                                <div class="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 shrink-0">
+                                    <img src="@(string.IsNullOrEmpty(course.CourseThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800&auto=format&fit=crop" : course.CourseThumbnailUrl)" 
+                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out-expo" 
+                                         alt="@course.Title" loading="lazy" />
+                                    <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
+                                    
+                                    @* Wishlist Toggle *@
+                                    <button type="button" 
+                                            class="absolute top-3 right-3 z-30 w-9 h-9 rounded-full bg-white/90 @(course.IsInWishlist ? "text-red-500" : "text-slate-400") flex items-center justify-center hover:bg-white hover:text-red-500 hover:scale-110 shadow-sm transition-all duration-300"
+                                            onclick="event.stopPropagation(); toggleWishlist(this, @course.CourseId);">
+                                        <span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "FILL" @(course.IsInWishlist ? "1" : "0");'>favorite</span>
+                                    </button>
+                                </div>
+
+                                <div class="p-5 flex flex-col flex-grow">
+                                    <h3 class="text-lg font-bold text-slate-900 line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
+                                        @course.Title
+                                    </h3>
+                                    
+                                    <div class="flex items-center gap-2 text-sm text-slate-500 mb-3">
+                                        <span class="material-symbols-outlined text-[16px]">person</span>
+                                        <span class="truncate">@course.InstructorName</span>
+                                    </div>
+
+                                    <div class="flex items-center gap-1.5 mb-5">
+                                        <span class="text-sm font-bold text-slate-800">@course.RatingAverage.ToString("F1")</span>
+                                        <div class="flex text-amber-400">
+                                            @for(int i=0; i<Math.Floor((double)course.RatingAverage); i++) { <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star</span> }
+                                            @if((double)course.RatingAverage - Math.Floor((double)course.RatingAverage) >= 0.5) { <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star_half</span> }
+                                        </div>
+                                        <span class="text-xs text-slate-400 font-medium">(@course.TotalStudents)</span>
+                                    </div>
+
+                                    <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                                        <div class="text-lg font-extrabold text-slate-900 tracking-tight">
+                                            @if (course.Price == 0)
+                                            {
+                                                <span class="text-emerald-600 uppercase text-base">Miễn phí</span>
+                                            }
+                                            else
+                                            {
+                                                <span>$@course.Price.ToString("N2")</span>
+                                            }
+                                        </div>
+                                        
+                                        <form asp-action="AddToCart" asp-controller="Cart" method="post" class="m-0 z-20">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="courseId" value="@course.CourseId" />
+                                            <input type="hidden" name="returnUrl" value="/Course" />
+                                            <button type="submit" 
+                                                    class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all ease-out-expo"
+                                                    onclick="event.stopPropagation();"
+                                                    title="Thêm vào giỏ hàng">
+                                                <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

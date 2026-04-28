@@ -312,6 +312,8 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
+            entity.Property(e => e.WhatYouWillLearn).HasColumnName("what_you_will_learn");
+            entity.Property(e => e.Requirements).HasColumnName("requirements");
             // ★ total_lessons, rating_average, total_students ĐÃ BỊ XÓA → dùng view_course_stats
 
             entity.HasOne(d => d.Category).WithMany(p => p.Courses)

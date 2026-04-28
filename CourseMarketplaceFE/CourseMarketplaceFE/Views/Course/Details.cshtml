@@ -18,7 +18,7 @@
             <nav class="flex gap-2 text-sm font-bold text-[#cec0fc] mb-4 uppercase tracking-wider">
                 <a href="/" class="hover:text-white transition-colors">Home</a>
                 <span>/</span>
-                <a href="#" class="hover:text-white transition-colors">Courses</a>
+                <a href="#" class="hover:text-white transition-colors">@(Model.CategoryName ?? "Category")</a>
             </nav>
             <h1 class="font-headline text-4xl font-extrabold mb-4 leading-tight">@Model.Title</h1>
             <div class="text-lg text-slate-300 mb-6 prose max-w-none line-clamp-2">
@@ -27,14 +27,14 @@
             
             <div class="flex flex-wrap items-center gap-4 text-sm mb-6">
                 <div class="flex items-center gap-1">
-                    <span class="font-bold text-[#f3ca8c] text-base">4.8</span>
+                    <span class="font-bold text-[#f3ca8c] text-base">@Model.RatingAverage.ToString("F1")</span>
                     <div class="flex text-[#f3ca8c]">
-                        @for(int i=0; i<4; i++) { <span class="material-symbols-outlined text-[18px] fill-1">star</span> }
-                        <span class="material-symbols-outlined text-[18px] fill-1">star_half</span>
+                        @for(int i=0; i<Math.Floor((double)Model.RatingAverage); i++) { <span class="material-symbols-outlined text-[18px] fill-1">star</span> }
+                        @if((double)Model.RatingAverage - Math.Floor((double)Model.RatingAverage) >= 0.5) { <span class="material-symbols-outlined text-[18px] fill-1">star_half</span> }
                     </div>
                 </div>
-                <a href="#reviews" class="text-[#cec0fc] underline hover:text-white">(2,543 ratings)</a>
-                <span class="text-slate-300">15,234 students</span>
+                <a href="#reviews" class="text-[#cec0fc] underline hover:text-white">(0 ratings)</a>
+                <span class="text-slate-300">@Model.TotalStudents students</span>
             </div>
             
             <div class="flex items-center gap-2 text-sm text-slate-300">
@@ -56,14 +56,13 @@
         <!-- Sticky Sidebar Card -->
         <div class="relative">
             <div class="lg:absolute top-0 right-0 w-full bg-white text-slate-900 rounded-xl shadow-2xl overflow-hidden border border-slate-200 z-20">
-                <div class="aspect-video relative group cursor-pointer">
+                <div class="aspect-video relative group cursor-pointer" onclick="openPreviewModal()">
                     <img src="@(string.IsNullOrEmpty(Model.CourseThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" : Model.CourseThumbnailUrl)" class="w-full h-full object-cover" />
                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
                         <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                             <span class="material-symbols-outlined text-4xl text-slate-900">play_arrow</span>
                         </div>
                     </div>
-                    <p class="absolute bottom-4 left-0 right-0 text-center text-white font-bold text-sm">Preview this course</p>
                 </div>
                 
                 <div class="p-6">
@@ -71,19 +70,34 @@
                     <div class="flex flex-col gap-3">
                         <button class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:opacity-90 transition-all">Add to cart</button>
                         <button class="w-full border-2 border-slate-900 font-bold py-3 rounded-lg hover:bg-slate-50 transition-all">Buy now</button>
+                        
+                        <button type="button" 
+                                onclick="toggleWishlist(this, @Model.CourseId);"
+                                class="w-full border border-slate-200 font-bold py-3 rounded-lg hover:bg-slate-50 transition-all flex items-center justify-center gap-2 @(Model.IsInWishlist ? "text-red-500" : "text-slate-700")">
+                            <span class="material-symbols-outlined @(Model.IsInWishlist ? "text-red-500" : "text-slate-400")" style='font-variation-settings: "FILL" @(Model.IsInWishlist ? "1" : "0");'>favorite</span>
+                            <span class="wishlist-text">@(Model.IsInWishlist ? "Saved to Wishlist" : "Add to Wishlist")</span>
+                        </button>
                     </div>
                     <p class="text-[11px] text-slate-500 text-center mt-4">30-Day Money-Back Guarantee</p>
                     
                     <div class="mt-6">
                         <p class="font-bold text-sm mb-3">This course includes:</p>
                         <ul class="text-sm space-y-2">
+                            @{
+                                var totalDurationInSeconds = Model.Lessons.SelectMany(l => l.LearningMaterials)
+                                    .Where(m => m.MaterialMetadata?.FileType == "video")
+                                    .Sum(m => m.MaterialMetadata?.Duration ?? 0);
+                                var totalResources = Model.Lessons.SelectMany(l => l.LearningMaterials)
+                                    .Count(m => m.MaterialMetadata?.FileType != "video");
+                                var heroTotalHours = Math.Round(totalDurationInSeconds / 3600.0, 1);
+                            }
                             <li class="flex items-center gap-3 text-slate-600">
                                 <span class="material-symbols-outlined text-[18px]">ondemand_video</span>
-                                <span>15.5 hours on-demand video</span>
+                                <span>@(heroTotalHours > 0 ? heroTotalHours.ToString("F1") : "0") hours on-demand video</span>
                             </li>
                             <li class="flex items-center gap-3 text-slate-600">
                                 <span class="material-symbols-outlined text-[18px]">description</span>
-                                <span>12 downloadable resources</span>
+                                <span>@totalResources downloadable resources</span>
                             </li>
                             <li class="flex items-center gap-3 text-slate-600">
                                 <span class="material-symbols-outlined text-[18px]">all_inclusive</span>
@@ -106,12 +120,14 @@
         <!-- What you'll learn -->
         <div class="border border-slate-200 p-6 rounded mb-12">
             <h2 class="text-2xl font-bold text-slate-900 mb-6">What you'll learn</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-                @for(int i=0; i<6; i++) {
-                    <div class="flex gap-3 text-sm text-slate-700">
-                        <span class="material-symbols-outlined text-slate-500 text-[20px]">check</span>
-                        <span>Comprehensive understanding of the core concepts and advanced techniques.</span>
-                    </div>
+            <div class="prose max-w-none text-sm text-slate-700">
+                @if (!string.IsNullOrEmpty(Model.WhatYouWillLearn) && Model.WhatYouWillLearn != "<p><br></p>")
+                {
+                    @Html.Raw(Model.WhatYouWillLearn)
+                }
+                else
+                {
+                    <p class="italic text-slate-400">Instructor hasn't added this information yet.</p>
                 }
             </div>
         </div>
@@ -119,21 +135,63 @@
         <!-- Course Content -->
         <div class="mb-12">
             <h2 class="text-2xl font-bold text-slate-900 mb-4">Course content</h2>
+            @{
+                var totalSeconds = Model.Lessons.SelectMany(l => l.LearningMaterials).Sum(m => m.MaterialMetadata?.Duration ?? 0);
+                var totalHours = totalSeconds / 3600;
+                var totalMinutes = (totalSeconds % 3600) / 60;
+                var remainingSeconds = totalSeconds % 60;
+                
+                string totalDurationDisplay;
+                if (totalHours > 0)
+                {
+                    totalDurationDisplay = $"{totalHours}h {totalMinutes}m {remainingSeconds}s";
+                }
+                else if (totalMinutes > 0)
+                {
+                    totalDurationDisplay = $"{totalMinutes}m {remainingSeconds}s";
+                }
+                else
+                {
+                    totalDurationDisplay = $"{remainingSeconds}s";
+                }
+            }
             <div class="flex justify-between items-center text-sm text-slate-600 mb-2">
-                <span>@Model.Lessons.Count sections • @Model.Lessons.SelectMany(l => l.LearningMaterials).Count() lectures • 14h 25m total length</span>
-                <button class="text-[#a435f0] font-bold hover:text-[#8710d8]">Expand all sections</button>
+                <span>@Model.Lessons.Count sections • @Model.Lessons.SelectMany(l => l.LearningMaterials).Count() lectures • @totalDurationDisplay total length</span>
+                <button id="toggleSectionsBtn" class="flex items-center gap-1 text-[#a435f0] font-bold hover:text-[#8710d8]" onclick="toggleAllSections()">
+                    <span>Expand all sections</span>
+                    <span class="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
+                </button>
             </div>
             
             <div class="border border-slate-200">
                 @foreach (var lesson in Model.Lessons)
                 {
+                    var lessonSeconds = lesson.LearningMaterials.Sum(m => m.MaterialMetadata?.Duration ?? 0);
+                    var lessonHours = lessonSeconds / 3600;
+                    var lessonMins = (lessonSeconds % 3600) / 60;
+                    var lessonSecs = lessonSeconds % 60;
+                    
+                    string lessonDurationDisplay;
+                    if (lessonHours > 0)
+                    {
+                        lessonDurationDisplay = $"{lessonHours}h {lessonMins}m {lessonSecs}s";
+                    }
+                    else if (lessonMins > 0)
+                    {
+                        lessonDurationDisplay = $"{lessonMins}m {lessonSecs}s";
+                    }
+                    else
+                    {
+                        lessonDurationDisplay = $"{lessonSecs}s";
+                    }
+
                     <div class="border-b border-slate-200 last:border-0">
                         <button class="w-full px-6 py-4 flex items-center justify-between bg-slate-50/50 hover:bg-slate-50 transition-colors text-left" onclick="this.nextElementSibling.classList.toggle('hidden')">
                             <div class="flex items-center gap-3">
                                 <span class="material-symbols-outlined text-slate-500 text-[20px]">expand_more</span>
                                 <span class="font-bold text-slate-800">@lesson.Title</span>
                             </div>
-                            <span class="text-sm text-slate-600">@lesson.LearningMaterials.Count lectures • 45m</span>
+                            <span class="text-sm text-slate-600">@lesson.LearningMaterials.Count lectures • @lessonDurationDisplay</span>
                         </button>
                         <div class="hidden px-6 py-2 bg-white">
                             @foreach (var material in lesson.LearningMaterials)
@@ -141,13 +199,16 @@
                                 <div class="flex items-center justify-between text-sm py-3">
                                     <div class="flex items-center gap-3 text-slate-700">
                                         <span class="material-symbols-outlined text-slate-400 text-[18px]">
-                                            @(material.MaterialMetadata?.FileType == "video" ? "play_circle" : "description")
+                                            @(material.MaterialMetadata?.FileType?.ToLower() == "video" || (material.MaterialUrl != null && (material.MaterialUrl.Contains(".mp4") || material.MaterialUrl.Contains("video/upload"))) ? "play_circle" : "description")
                                         </span>
                                         <a href="/Course/Learn/@Model.CourseId" class="hover:text-[#a435f0] hover:underline cursor-pointer">@material.Title</a>
                                     </div>
                                     <div class="flex items-center gap-8">
-                                        <a href="#" class="text-[#a435f0] text-xs underline">Preview</a>
-                                        <span class="text-slate-500 text-xs w-12 text-right">05:24</span>
+                                        <span class="text-slate-500 text-xs w-12 text-right">
+                                            @(material.MaterialMetadata?.Duration > 0 
+                                                ? $"{(material.MaterialMetadata.Duration / 60):00}:{(material.MaterialMetadata.Duration % 60):00}" 
+                                                : "--:--")
+                                        </span>
                                     </div>
                                 </div>
                             }
@@ -160,11 +221,16 @@
         <!-- Requirements -->
         <div class="mb-12">
             <h2 class="text-2xl font-bold text-slate-900 mb-4">Requirements</h2>
-            <ul class="list-disc ml-4 text-slate-700 space-y-2 text-sm">
-                <li>No prior experience required – everything you need to know is included.</li>
-                <li>A computer with internet access.</li>
-                <li>Passion for learning and growth.</li>
-            </ul>
+            <div class="prose max-w-none text-sm text-slate-700">
+                @if (!string.IsNullOrEmpty(Model.Requirements) && Model.Requirements != "<p><br></p>")
+                {
+                    @Html.Raw(Model.Requirements)
+                }
+                else
+                {
+                    <p class="italic text-slate-400">No specific requirements mentioned.</p>
+                }
+            </div>
         </div>
 
         <!-- Description -->
@@ -181,35 +247,123 @@
             <div class="flex flex-col gap-4">
                 <div>
                     <h3 class="text-[#a435f0] font-bold text-lg underline hover:text-[#8710d8] cursor-pointer">@Model.InstructorName</h3>
-                    <p class="text-slate-500 text-sm">Senior Professional Instructor</p>
+                    <p class="text-slate-500 text-sm">@(string.IsNullOrEmpty(Model.InstructorProfessionalTitle) ? "Instructor" : Model.InstructorProfessionalTitle)</p>
                 </div>
                 <div class="flex gap-4 items-start">
                     <div class="w-32 h-32 rounded-full bg-slate-200 shrink-0 overflow-hidden">
-                        <img src="https://ui-avatars.com/api/?name=@(Model.InstructorName?.Replace(" ", "+"))&background=random" class="w-full h-full object-cover" />
+                        <img src="@(string.IsNullOrEmpty(Model.InstructorAvatarUrl) ? $"https://ui-avatars.com/api/?name={Model.InstructorName?.Replace(" ", "+")}&background=random" : Model.InstructorAvatarUrl)" class="w-full h-full object-cover" />
                     </div>
                     <div class="space-y-2 text-sm text-slate-700">
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-[18px] fill-1">star</span>
-                            <span class="font-bold">4.8 Instructor Rating</span>
+                            <span class="font-bold">@Model.RatingAverage.ToString("F1") Instructor Rating</span>
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-[18px]">workspace_premium</span>
-                            <span class="font-bold">1,543 Reviews</span>
+                            <span class="font-bold">@Model.InstructorReviewCount Reviews</span>
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-[18px]">group</span>
-                            <span class="font-bold">45,234 Students</span>
+                            <span class="font-bold">@Model.InstructorStudentsCount Students</span>
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-[18px]">play_circle</span>
-                            <span class="font-bold">12 Courses</span>
+                            <span class="font-bold">@Model.InstructorCoursesCount Courses</span>
                         </div>
                     </div>
                 </div>
-                <p class="text-sm text-slate-700 mt-2 leading-relaxed">
-                    With over 10 years of experience in the industry, @Model.InstructorName has helped thousands of students master complex technologies and advance their careers.
-                </p>
+                <div class="text-sm text-slate-700 mt-2 leading-relaxed prose max-w-none">
+                    @if (!string.IsNullOrEmpty(Model.InstructorBio))
+                    {
+                        @Html.Raw(Model.InstructorBio)
+                    }
+                    else
+                    {
+                        <p>With years of experience in the industry, @Model.InstructorName is dedicated to helping students master new skills.</p>
+                    }
+</div>
+
+<!-- Video Preview Modal -->
+<div id="previewModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/90 p-4" onclick="closePreviewModal()">
+    <div class="relative w-full max-w-4xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+        <button class="absolute top-4 right-4 text-white hover:text-slate-300 z-10 bg-black/50 rounded-full p-2" onclick="closePreviewModal()">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+        @{
+            var firstVideo = Model.Lessons
+                .SelectMany(l => l.LearningMaterials)
+                .FirstOrDefault(m => m.MaterialMetadata?.FileType?.ToLower() == "video" || (m.MaterialUrl != null && m.MaterialUrl.Contains(".mp4")));
+        }
+        @if (firstVideo != null)
+        {
+            <video id="previewVideo" class="w-full h-full" controls controlsList="nodownload">
+                <source src="@firstVideo.MaterialUrl" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        }
+        else
+        {
+            <div class="w-full h-full flex flex-col items-center justify-center text-white gap-4">
+                <span class="material-symbols-outlined text-6xl opacity-30">videocam_off</span>
+                <p class="text-lg font-medium">No preview video available for this course.</p>
             </div>
-        </div>
+        }
     </div>
 </div>
+
+<script>
+    let allExpanded = false;
+
+    function toggleAllSections() {
+        allExpanded = !allExpanded;
+        const sections = document.querySelectorAll('.border-b.border-slate-200 > div');
+        const btn = document.getElementById('toggleSectionsBtn');
+        const btnText = btn.querySelector('span:first-child');
+        const btnIcon = btn.querySelector('.material-symbols-outlined');
+
+        sections.forEach(section => {
+            if (allExpanded) {
+                section.classList.remove('hidden');
+            } else {
+                section.classList.add('hidden');
+            }
+        });
+
+        // Toggle section icons
+        const sectionIcons = document.querySelectorAll('.border-b.border-slate-200 button .material-symbols-outlined');
+        sectionIcons.forEach(icon => {
+            if (allExpanded) {
+                icon.innerText = 'expand_less';
+            } else {
+                icon.innerText = 'expand_more';
+            }
+        });
+
+        if (allExpanded) {
+            btnText.innerText = 'Collapse all sections';
+            btnIcon.innerText = 'keyboard_arrow_up';
+        } else {
+            btnText.innerText = 'Expand all sections';
+            btnIcon.innerText = 'keyboard_arrow_down';
+        }
+    }
+
+    function openPreviewModal() {
+        const modal = document.getElementById('previewModal');
+        const video = document.getElementById('previewVideo');
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        if (video) video.play();
+    }
+
+    function closePreviewModal() {
+        const modal = document.getElementById('previewModal');
+        const video = document.getElementById('previewVideo');
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        if (video) {
+            video.pause();
+            video.currentTime = 0;
+        }
+    }
+</script>

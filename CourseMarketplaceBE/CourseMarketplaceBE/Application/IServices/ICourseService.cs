@@ -13,4 +13,5 @@ public interface ICourseService
     Task<CourseResponse> UpdateCourseAsync(int courseId, CourseUpdateRequest request, int instructorId);
     Task UpdateCourseStatusAsync(int courseId, string status, int instructorId);
     Task DeleteCourseAsync(int courseId, int instructorId);
+    Task<IEnumerable<CategoryResponse>> GetCategoriesAsync();
 }

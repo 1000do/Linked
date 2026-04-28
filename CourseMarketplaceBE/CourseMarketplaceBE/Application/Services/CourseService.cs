@@ -7,52 +7,29 @@ using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
-using CourseMarketplaceBE.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace CourseMarketplaceBE.Application.Services;
 
 public class CourseService : ICourseService
 {
     private readonly ICourseRepository _courseRepository;
+    private readonly IInstructorRepository _instructorRepository;
     private readonly IFileUploadService _uploadService;
-    private readonly AppDbContext _context;
 
-    public CourseService(ICourseRepository courseRepository, IFileUploadService uploadService, AppDbContext context)
+    public CourseService(ICourseRepository courseRepository, IInstructorRepository instructorRepository, IFileUploadService uploadService)
     {
         _courseRepository = courseRepository;
+        _instructorRepository = instructorRepository;
         _uploadService = uploadService;
-        _context = context;
     }
 
     public async Task<IEnumerable<CourseResponse>> GetAllPublishedCoursesAsync()
     {
         var courses = await _courseRepository.GetAllPublishedCoursesAsync();
-        return courses.Select(c => new CourseResponse
-        {
-            CourseId = c.CourseId,
-            InstructorId = c.InstructorId,
-            CategoryId = c.CategoryId,
-            Title = c.Title,
-            Description = c.Description,
-            Price = c.Price,
-            CourseThumbnailUrl = c.CourseThumbnailUrl,
-            CourseStatus = c.CourseStatus,
-            CreatedAt = c.CreatedAt,
-            UpdatedAt = c.UpdatedAt,
-            InstructorName = c.Instructor?.InstructorNavigation?.FullName ?? "Unknown Instructor"
-        });
-    }
-
-    public async Task<IEnumerable<CourseResponse>> GetInstructorCoursesAsync(int instructorId)
-    {
-        var courses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
         var courseIds = courses.Select(c => c.CourseId).ToList();
 
         // Fetch stats for these courses
-        var stats = await _context.CourseStats
-            .Where(s => courseIds.Contains(s.CourseId))
-            .ToListAsync();
+        var stats = await _courseRepository.GetCourseStatsAsync(courseIds);
 
         return courses.Select(c =>
         {
@@ -69,6 +46,42 @@ public class CourseService : ICourseService
                 CourseStatus = c.CourseStatus,
                 CreatedAt = c.CreatedAt,
                 UpdatedAt = c.UpdatedAt,
+                WhatYouWillLearn = c.WhatYouWillLearn,
+                Requirements = c.Requirements,
+                CategoryName = c.Category?.CategoriesName,
+                InstructorName = c.Instructor?.InstructorNavigation?.FullName ?? "Unknown Instructor",
+                InstructorAvatarUrl = c.Instructor?.InstructorNavigation?.UserNavigation?.AvatarUrl,
+                TotalStudents = s?.TotalStudents ?? 0,
+                RatingAverage = (decimal)(s?.RatingAverage ?? 0)
+            };
+        });
+    }
+
+    public async Task<IEnumerable<CourseResponse>> GetInstructorCoursesAsync(int instructorId)
+    {
+        var courses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
+        var courseIds = courses.Select(c => c.CourseId).ToList();
+
+        // Fetch stats for these courses
+        var stats = await _courseRepository.GetCourseStatsAsync(courseIds);
+
+        return courses.Select(c =>
+        {
+            var s = stats.FirstOrDefault(st => st.CourseId == c.CourseId);
+            return new CourseResponse
+            {
+                CourseId = c.CourseId,
+                InstructorId = c.InstructorId,
+                CategoryId = c.CategoryId,
+                Title = c.Title,
+                Description = c.Description,
+                Price = c.Price,
+                CourseThumbnailUrl = c.CourseThumbnailUrl,
+                CourseStatus = c.CourseStatus,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt,
+                WhatYouWillLearn = c.WhatYouWillLearn,
+                Requirements = c.Requirements,
                 TotalStudents = s?.TotalStudents ?? 0,
                 RatingAverage = (decimal)(s?.RatingAverage ?? 0)
             };
@@ -80,8 +93,10 @@ public class CourseService : ICourseService
         var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
         if (course == null) return null;
 
-        // Optionally, if only the instructor can view it:
-        // if (course.InstructorId != instructorId) throw new UnauthorizedAccessException();
+        var courseStats = await _courseRepository.GetCourseStatsAsync(courseId);
+        var instructorStats = course.InstructorId.HasValue 
+            ? await _instructorRepository.GetStatsAsync(course.InstructorId.Value) 
+            : null;
 
         var response = new CourseDetailResponse
         {
@@ -95,6 +110,18 @@ public class CourseService : ICourseService
             CourseStatus = course.CourseStatus,
             CreatedAt = course.CreatedAt,
             UpdatedAt = course.UpdatedAt,
+            WhatYouWillLearn = course.WhatYouWillLearn,
+            Requirements = course.Requirements,
+            CategoryName = course.Category?.CategoriesName,
+            InstructorName = course.Instructor?.InstructorNavigation?.FullName ?? "Unknown Instructor",
+            InstructorAvatarUrl = course.Instructor?.InstructorNavigation?.UserNavigation?.AvatarUrl,
+            InstructorBio = course.Instructor?.InstructorNavigation?.Bio,
+            InstructorProfessionalTitle = course.Instructor?.ProfessionalTitle,
+            InstructorCoursesCount = course.Instructor?.Courses?.Count ?? 0,
+            InstructorStudentsCount = instructorStats?.TotalStudentsCount ?? 0,
+            InstructorReviewCount = 0, // Mocked or query from _context.Reviews
+            TotalStudents = courseStats?.TotalStudents ?? 0,
+            RatingAverage = (decimal)(courseStats?.RatingAverage ?? 0),
             Lessons = course.Lessons.Select(l => new LessonResponse
             {
                 LessonId = l.LessonId,
@@ -122,6 +149,7 @@ public class CourseService : ICourseService
         return response;
     }
 
+
     public async Task<CourseResponse> CreateCourseAsync(CourseCreateRequest request, int instructorId)
     {
         string? thumbnailUrl = request.CourseThumbnailUrl;
@@ -143,6 +171,8 @@ public class CourseService : ICourseService
             Description = request.Description,
             Price = request.Price,
             CourseThumbnailUrl = thumbnailUrl,
+            WhatYouWillLearn = request.WhatYouWillLearn,
+            Requirements = request.Requirements,
             CourseStatus = "draft", // Default status
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -162,7 +192,9 @@ public class CourseService : ICourseService
             CourseThumbnailUrl = course.CourseThumbnailUrl,
             CourseStatus = course.CourseStatus,
             CreatedAt = course.CreatedAt,
-            UpdatedAt = course.UpdatedAt
+            UpdatedAt = course.UpdatedAt,
+            WhatYouWillLearn = course.WhatYouWillLearn,
+            Requirements = course.Requirements
         };
     }
 
@@ -191,6 +223,8 @@ public class CourseService : ICourseService
         course.Description = request.Description;
         course.Price = request.Price;
         course.CourseThumbnailUrl = thumbnailUrl;
+        course.WhatYouWillLearn = request.WhatYouWillLearn;
+        course.Requirements = request.Requirements;
         course.UpdatedAt = DateTime.UtcNow;
 
         _courseRepository.Update(course);
@@ -207,7 +241,9 @@ public class CourseService : ICourseService
             CourseThumbnailUrl = course.CourseThumbnailUrl,
             CourseStatus = course.CourseStatus,
             CreatedAt = course.CreatedAt,
-            UpdatedAt = course.UpdatedAt
+            UpdatedAt = course.UpdatedAt,
+            WhatYouWillLearn = course.WhatYouWillLearn,
+            Requirements = course.Requirements
         };
     }
 
@@ -245,5 +281,15 @@ public class CourseService : ICourseService
 
         _courseRepository.Delete(course);
         await _courseRepository.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<CategoryResponse>> GetCategoriesAsync()
+    {
+        var categories = await _courseRepository.GetCategoriesAsync();
+        return categories.Select(c => new CategoryResponse
+        {
+            CategoryId = c.CategoryId,
+            CategoriesName = c.CategoriesName
+        });
     }
 }

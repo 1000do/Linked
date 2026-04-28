@@ -28,6 +28,7 @@ public class CourseRepository : ICourseRepository
     public async Task<IEnumerable<Course>> GetAllPublishedCoursesAsync()
     {
         return await _context.Courses
+            .Include(c => c.Category)
             .Include(c => c.Instructor)
                 .ThenInclude(i => i!.InstructorNavigation)
             .Where(c => c.CourseStatus == "published")
@@ -36,9 +37,18 @@ public class CourseRepository : ICourseRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Category>> GetCategoriesAsync()
+    {
+        return await _context.Categories.AsNoTracking().ToListAsync();
+    }
+
     public async Task<Course?> GetCourseWithDetailsAsync(int courseId)
     {
         return await _context.Courses
+            .Include(c => c.Category)
+            .Include(c => c.Instructor)
+                .ThenInclude(i => i!.InstructorNavigation)
+                    .ThenInclude(u => u.UserNavigation)
             .Include(c => c.Lessons)
                 .ThenInclude(l => l.LearningMaterials)
             .AsNoTracking()
@@ -53,6 +63,18 @@ public class CourseRepository : ICourseRepository
     public async Task<bool> HasEnrollmentsAsync(int courseId)
     {
         return await _context.Enrollments.AnyAsync(e => e.CourseId == courseId);
+    }
+
+    public async Task<IEnumerable<CourseStats>> GetCourseStatsAsync(IEnumerable<int> courseIds)
+    {
+        return await _context.CourseStats
+            .Where(s => courseIds.Contains(s.CourseId))
+            .ToListAsync();
+    }
+
+    public async Task<CourseStats?> GetCourseStatsAsync(int courseId)
+    {
+        return await _context.CourseStats.FirstOrDefaultAsync(s => s.CourseId == courseId);
     }
 
     public async Task AddAsync(Course course)

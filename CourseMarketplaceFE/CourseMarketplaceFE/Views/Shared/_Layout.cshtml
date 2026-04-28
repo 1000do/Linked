@@ -1,4 +1,4 @@
-﻿@{
+@{
    
     var tokenForLayout = Context.Request.Cookies["AccessToken"]
                          ?? Context.Request.Cookies[".AspNetCore.Identity.Application"];
@@ -197,6 +197,60 @@
             });
 
             connection.start().catch(err => console.error("SignalR Error: ", err));
+        }
+
+        // Wishlist Toggle AJAX
+        async function toggleWishlist(btn, courseId) {
+            if (!currentToken || currentToken === "") {
+                window.location.href = "/Account/Login";
+                return;
+            }
+
+            try {
+                // Thêm hiệu ứng loading
+                const icon = btn.querySelector('.material-symbols-outlined');
+                const originalFill = icon.style.fontVariationSettings;
+                btn.style.pointerEvents = 'none';
+                btn.style.opacity = '0.5';
+
+                const response = await fetch(`/Wishlist/ToggleAjax?courseId=${courseId}`, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        // Cập nhật UI
+                        const textEl = btn.querySelector('.wishlist-text');
+                        if (result.isInWishlist) {
+                            btn.classList.remove('text-slate-400', 'text-slate-700');
+                            btn.classList.add('text-red-500');
+                            icon.style.fontVariationSettings = '"FILL" 1';
+                            if (textEl) textEl.textContent = "Saved to Wishlist";
+                        } else {
+                            btn.classList.remove('text-red-500');
+                            btn.classList.add('text-slate-400', 'text-slate-700');
+                            icon.style.fontVariationSettings = '"FILL" 0';
+                            if (textEl) textEl.textContent = "Add to Wishlist";
+                        }
+                        
+                        // Nếu đang ở trang wishlist mà xóa thì ẩn item đó luôn
+                        if (window.location.pathname.toLowerCase() === "/wishlist") {
+                            const card = btn.closest('.group');
+                            if (card) {
+                                card.style.opacity = '0';
+                                setTimeout(() => card.remove(), 300);
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Wishlist error:", err);
+            } finally {
+                btn.style.pointerEvents = 'auto';
+                btn.style.opacity = '1';
+            }
         }
 
         // Chạy khi load trang

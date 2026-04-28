@@ -51,4 +51,8 @@ public partial class Course
     public virtual ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();
 
     public virtual CourseExt? CourseExt { get; set; }
+
+    public string? WhatYouWillLearn { get; set; }
+
+    public string? Requirements { get; set; }
 }
