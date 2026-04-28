@@ -1,4 +1,4 @@
-﻿using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Share.Helpers;
@@ -28,6 +28,8 @@ public class UserProfileService : IUserProfileService
         var user = await _userRepo.GetUserByIdAsync(userId);
         if (user == null) return null;
 
+        var instructor = user.Instructor; // null nếu chưa đăng ký giảng viên
+
         return new UserProfileResponse
         {
             FullName = user.FullName,
@@ -36,7 +38,14 @@ public class UserProfileService : IUserProfileService
             DateOfBirth = user.DateOfBirth,
             AvatarUrl = user.UserNavigation.AvatarUrl,
             PhoneNumber = user.UserNavigation.PhoneNumber,
-            IsVerified = user.UserNavigation?.IsVerified ?? false
+            IsVerified = user.UserNavigation?.IsVerified ?? false,
+
+            // ── Thông tin Giảng viên ────────────────────────────
+            IsInstructor = instructor != null,
+            ProfessionalTitle = instructor?.ProfessionalTitle,
+            ExpertiseCategories = instructor?.ExpertiseCategories,
+            LinkedinUrl = instructor?.LinkedinUrl,
+            ApprovalStatus = instructor?.ApprovalStatus
         };
     }
 
@@ -78,5 +87,48 @@ public class UserProfileService : IUserProfileService
             avatarUrl,
             request.PhoneNumber
         );
+    }
+
+    public async Task<(bool Success, string Message)> ChangePasswordAsync(int userId, string currentPassword, string newPassword)
+    {
+        var user = await _userRepo.GetUserByIdAsync(userId);
+        if (user == null || user.UserNavigation == null)
+        {
+            return (false, "Không tìm thấy thông tin người dùng.");
+        }
+
+        var account = user.UserNavigation;
+
+        // If the account was created with Google/Facebook, it might not have a password
+        if (string.IsNullOrEmpty(account.PasswordHash))
+        {
+            return (false, "Tài khoản của bạn đăng nhập qua bên thứ ba và không sử dụng mật khẩu.");
+        }
+
+        // Verify current password
+        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(currentPassword, account.PasswordHash);
+        if (!isPasswordValid)
+        {
+            return (false, "Mật khẩu hiện tại không chính xác.");
+        }
+
+        // Hash and update new password
+        account.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        account.AccountUpdatedAt = DateTime.Now;
+        
+        // Revoke token (force logout on other devices / this device)
+        account.RefreshToken = null;
+        account.RefreshTokenExpiryTime = null;
+
+        bool updated = await _userRepo.UpdateAccountAsync(account);
+
+        if (updated)
+        {
+            return (true, "Đổi mật khẩu thành công.");
+        }
+        else
+        {
+            return (false, "Đã xảy ra lỗi khi đổi mật khẩu.");
+        }
     }
 }

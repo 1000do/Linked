@@ -255,6 +255,51 @@ namespace CourseMarketplaceFE.Controllers
             return View(model);
         }
 
+        [HttpGet]
+        public IActionResult ChangePassword()
+        {
+            if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login");
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmNewPassword)
+        {
+            if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login");
+
+            if (newPassword != confirmNewPassword)
+            {
+                ViewBag.ErrorMessage = "Mật khẩu xác nhận không khớp.";
+                return View();
+            }
+
+            var response = await _api.PostJsonAsync("Profile/change-password", new
+            {
+                CurrentPassword = currentPassword,
+                NewPassword = newPassword
+            });
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Gọi BE logout để dọn token nếu cần
+                await _api.PostAsync("Auth/logout");
+
+                // Xoá cookie FE để force đăng nhập lại
+                Response.Cookies.Delete("AccessToken", new CookieOptions { Path = "/" });
+                Response.Cookies.Delete("RefreshToken", new CookieOptions { Path = "/" });
+                Response.Cookies.Delete("UserName", new CookieOptions { Path = "/" });
+                Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
+                Response.Cookies.Delete("UserRole", new CookieOptions { Path = "/" });
+
+                TempData["SuccessMessage"] = "Đổi mật khẩu thành công! Vui lòng đăng nhập lại.";
+                return RedirectToAction("Login");
+            }
+
+            var errorJson = await response.Content.ReadAsStringAsync();
+            ViewBag.ErrorMessage = ParseErrorMessage(errorJson, "Lỗi khi đổi mật khẩu.");
+            return View();
+        }
+
         // ─── Helpers ──────────────────────────────────────────────────────
 
         private async Task HandleApiError(HttpResponseMessage response)
