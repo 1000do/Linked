@@ -51,4 +51,17 @@ public class CoursePublicController : ControllerBase
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
         }
     }
+    [HttpGet("categories")]
+    public async Task<IActionResult> GetCategories()
+    {
+        try
+        {
+            var categories = await _courseService.GetCategoriesAsync();
+            return Ok(ApiResponse<object>.SuccessResponse(categories, "Retrieved categories successfully."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
 }

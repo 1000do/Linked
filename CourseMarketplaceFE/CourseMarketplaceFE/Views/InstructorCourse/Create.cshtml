@@ -41,9 +41,13 @@
                 <div class="relative">
                     <select asp-for="CategoryId" class="w-full bg-slate-50 border-none rounded-xl py-4 px-4 pr-10 text-slate-800 focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none">
                         <option value="0">Select Category</option>
-                        <option value="1">Design & Creative</option>
-                        <option value="2">Development</option>
-                        <option value="3">Business</option>
+                        @if (Model.AvailableCategories != null)
+                        {
+                            @foreach (var cat in Model.AvailableCategories)
+                            {
+                                <option value="@cat.CategoryId">@cat.CategoriesName</option>
+                            }
+                        }
                     </select>
                     <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
                 </div>
@@ -101,8 +105,16 @@
                 <div>
                     <label asp-for="Price" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Course Price (USD)</label>
                     <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-500">$</span>
-                        <input asp-for="Price" step="0.01" placeholder="49.99" class="w-full bg-slate-50 border-none rounded-xl py-4 pl-8 pr-4 text-slate-800 font-bold focus:ring-2 focus:ring-primary/20 outline-none" />
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-500 material-symbols-outlined text-[18px]">attach_money</span>
+                        <input asp-for="Price" min="0" step="0.01" placeholder="0.00" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-4 pl-11 pr-4 text-slate-800 font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-colors" onblur="formatPrice(this)" />
+                    </div>
+                    <!-- Quick Price Tiers -->
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        <button type="button" onclick="setPrice(0)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">Free</button>
+                        <button type="button" onclick="setPrice(9.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$9.99</button>
+                        <button type="button" onclick="setPrice(19.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$19.99</button>
+                        <button type="button" onclick="setPrice(49.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$49.99</button>
+                        <button type="button" onclick="setPrice(99.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$99.99</button>
                     </div>
                     <span asp-validation-for="Price" class="text-red-500 text-xs mt-1 block"></span>
                 </div>
@@ -208,9 +220,36 @@
             });
         }
 
-        // Price calc
+        // Price calc and formatting
         const priceInput = document.getElementById('Price');
-        if(priceInput) priceInput.addEventListener('input', e => { document.getElementById('payout-estimate').textContent = '$' + ((parseFloat(e.target.value)||0)*0.9).toFixed(2); });
+        
+        function updatePayout(val) {
+            document.getElementById('payout-estimate').textContent = '$' + ((parseFloat(val)||0)*0.9).toFixed(2);
+        }
+
+        window.formatPrice = function(input) {
+            if (!input.value) { input.value = "0.00"; }
+            let val = parseFloat(input.value);
+            if (isNaN(val) || val < 0) val = 0;
+            input.value = val.toFixed(2);
+            updatePayout(val);
+        };
+
+        window.setPrice = function(price) {
+            if (priceInput) {
+                priceInput.value = parseFloat(price).toFixed(2);
+                priceInput.classList.add('ring-2', 'ring-primary', 'bg-primary/5');
+                setTimeout(() => priceInput.classList.remove('ring-2', 'ring-primary', 'bg-primary/5'), 500);
+                updatePayout(priceInput.value);
+                updateProgressBar();
+            }
+        };
+
+        if(priceInput) {
+            priceInput.addEventListener('input', e => updatePayout(e.target.value));
+            // Format on init if there's a value
+            if (priceInput.value) formatPrice(priceInput);
+        }
         updateProgressBar();
     </script>
 }

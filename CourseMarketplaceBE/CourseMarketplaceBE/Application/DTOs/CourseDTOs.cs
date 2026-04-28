@@ -11,6 +11,8 @@ public class CourseCreateRequest
     public string? Description { get; set; }
     public decimal Price { get; set; }
     public string? CourseThumbnailUrl { get; set; }
+    public string? WhatYouWillLearn { get; set; }
+    public string? Requirements { get; set; }
     public IFormFile? ThumbnailFile { get; set; }
 }
 
@@ -21,6 +23,8 @@ public class CourseUpdateRequest
     public string? Description { get; set; }
     public decimal Price { get; set; }
     public string? CourseThumbnailUrl { get; set; }
+    public string? WhatYouWillLearn { get; set; }
+    public string? Requirements { get; set; }
     public IFormFile? ThumbnailFile { get; set; }
 }
 
@@ -36,12 +40,27 @@ public class CourseResponse
     public string? CourseStatus { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? WhatYouWillLearn { get; set; }
+    public string? Requirements { get; set; }
     public string? InstructorName { get; set; }
     public int TotalStudents { get; set; }
     public decimal RatingAverage { get; set; }
+    public string? CategoryName { get; set; }
+    public string? InstructorAvatarUrl { get; set; }
+    public string? InstructorBio { get; set; }
+    public string? InstructorProfessionalTitle { get; set; }
+    public int InstructorReviewCount { get; set; }
+    public int InstructorStudentsCount { get; set; }
+    public int InstructorCoursesCount { get; set; }
 }
 
 public class CourseDetailResponse : CourseResponse
 {
     public List<LessonResponse> Lessons { get; set; } = new List<LessonResponse>();
+}
+
+public class CategoryResponse
+{
+    public int CategoryId { get; set; }
+    public string CategoriesName { get; set; } = null!;
 }

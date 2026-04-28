@@ -151,7 +151,9 @@ CREATE TABLE courses (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     course_status VARCHAR(50), -- VD: 'draft', 'published', 'archived'
-    course_flag_count INT DEFAULT 0 -- Theo dõi số lần course bị report (1 lần, 2 lần , 3 lần sẽ có mức phạt ngày càng nặng, cần lên Udemy tham khảo thêm)
+    course_flag_count INT DEFAULT 0, -- Theo dõi số lần course bị report (1 lần, 2 lần , 3 lần sẽ có mức phạt ngày càng nặng, cần lên Udemy tham khảo thêm)
+    what_you_will_learn TEXT, -- mô tả mục tiêu đạt được ở trang detail khóa học
+    requirements TEXT -- mô tả yêu cầu để học khóa học ở trang detail khóa học
     
 	
 );
@@ -552,17 +554,23 @@ USING GIN (material_metadata);
 
 INSERT INTO categories (category_id, categories_name, description, category_status) 
 VALUES 
-(1, 'Design & Creative', 'Courses related to design, UX/UI, 3D modeling, and creative arts.', 'active'), 
-(2, 'Development', 'Software development, programming languages, web & mobile dev.', 'active'), 
-(3, 'Business', 'Business management, finance, marketing, and entrepreneurship.', 'active')
-ON CONFLICT DO NOTHING;
+(1, 'Thiết kế', 'Courses related to design, UX/UI, 3D modeling, and creative arts.', 'active'), 
+(2, 'Lập trình', 'Software development, programming languages, web & mobile dev.', 'active'), 
+(3, 'Kinh doanh', 'Business management, finance, marketing, and entrepreneurship.', 'active'),
+(4, 'Marketing', 'Digital marketing, SEO, social media, and content strategy.', 'active'),
+(5, 'Nhiếp ảnh', 'Photography, video editing, and digital imaging.', 'active'),
+(6, 'Âm nhạc', 'Music theory, instrument playing, and audio production.', 'active'),
+(7, 'Ngoại ngữ', 'Learn English, Japanese, Chinese, and other languages.', 'active'),
+(8, 'Sức khỏe & Đời sống', 'Fitness, nutrition, meditation, and personal well-being.', 'active'),
+(9, 'Khoa học dữ liệu', 'Data science, machine learning, and artificial intelligence.', 'active')
+ON CONFLICT (category_id) DO UPDATE SET categories_name = EXCLUDED.categories_name, description = EXCLUDED.description;
 
 -- ==============================================================================
 -- 9. SAMPLE DATA FOR PRIMARY ACCOUNT (phuoctai228)
 -- ==============================================================================
 
 INSERT INTO accounts (account_id, email, password_hash, account_status, auth_provider, is_verified)
-VALUES (1, 'instructor@gmail.com', '$2a$11$w/itTk1gtGMzyoG6pw0Sxe2aNOjeKAGDdyW9BA/HdhUUK6HHGUoRG', 'active', 'local', TRUE)
+VALUES (1, 'instructor@gmail.com', '$2a$11$O7PrVmv/I5yxkexhkdrY2OB2tQf5c6Gy9P8hvqLIAF2NO34wt9C3i', 'active', 'local', TRUE)
 ON CONFLICT (account_id) DO NOTHING;
 
 INSERT INTO users (user_id, full_name)
@@ -577,9 +585,9 @@ ON CONFLICT (instructor_id) DO NOTHING;
 -- 10. SAMPLE DATA FOR COURSES, LESSONS, MATERIALS
 -- ==============================================================================
 
-INSERT INTO courses (course_id, instructor_id, category_id, title, description, price, course_thumbnail_url, created_at, updated_at, course_status)
+INSERT INTO courses (course_id, instructor_id, category_id, title, description, price, course_thumbnail_url, created_at, updated_at, course_status, what_you_will_learn, requirements)
 VALUES 
-(1, 1, 2, 'khóa học này chỉ để khoe con gái iu ', '<p>con gái t cưng vl</p>', 99.00, 'https://res.cloudinary.com/df8i0azc5/image/upload/v1777282331/ax2hwj8pqzuibmvhd5vj.jpg', '2026-04-27 09:32:39.948416', '2026-04-27 09:36:51.590609', 'published')
+(1, 1, 2, 'khóa học này chỉ để khoe con gái iu ', '<p>con gái t cưng vl</p>', 99.00, 'https://res.cloudinary.com/df8i0azc5/image/upload/v1777282331/ax2hwj8pqzuibmvhd5vj.jpg', '2026-04-27 09:32:39.948416', '2026-04-27 09:36:51.590609', 'published', '<ul><li>Biết cách chăm sóc con gái</li><li>Hiểu tâm lý trẻ nhỏ</li></ul>', '<p>Chỉ cần có tình yêu thương</p>')
 ON CONFLICT (course_id) DO NOTHING;
 
 INSERT INTO lessons (lesson_id, course_id, title, created_at, updated_at, lesson_status)

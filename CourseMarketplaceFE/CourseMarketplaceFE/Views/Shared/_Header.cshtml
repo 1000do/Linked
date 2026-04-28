@@ -1,11 +1,38 @@
 @using Microsoft.AspNetCore.Http
 <nav class="fixed top-0 w-full z-50 bg-[#f0fcfb]/40 border-b border-primary/10 glass-nav">
-    <div class="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
-        <div class="flex items-center gap-8">
+    <div class="flex items-center px-8 py-2 w-full">
+        <div class="flex items-center gap-6">
             <a href="/" class="text-2xl font-headline font-extrabold tracking-tight text-primary">LinkedLearn</a>
+            
+            @* 🧭 CATEGORIES DROPDOWN *@
+            <div class="relative hidden md:block" id="categories-dropdown">
+                <button onclick="toggleCategories()" 
+                        class="px-4 py-2 text-sm font-bold text-slate-700 hover:text-primary transition-colors flex items-center gap-1">
+                    Chủ Đề Tôi Cần
+                    <span class="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
+                </button>
+                <div id="categories-box" 
+                     class="hidden absolute left-0 mt-3 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-[60] py-2">
+                    <div id="categories-items-container" class="max-h-96 overflow-y-auto">
+                        <div class="px-4 py-3 text-xs text-slate-400">Đang tải danh mục...</div>
+                    </div>
+                </div>
+            </div>
+
+            @* 🔍 GLOBAL SEARCH BAR *@
+            <div class="hidden lg:flex items-center flex-1 max-w-5xl px-12 group">
+                <div class="relative w-full">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+                    <form action="/Course" method="get">
+                        <input type="text" name="query" 
+                               class="w-full h-10 pl-12 pr-4 bg-slate-100 border border-slate-200 rounded-full text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+                               placeholder="Tìm kiếm nội dung bất kỳ..." />
+                    </form>
+                </div>
+            </div>
         </div>
 
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 ml-auto shrink-0">
         @{
                 var accessTokenExists = !string.IsNullOrEmpty(Context.Request.Cookies["AccessToken"]);
                 var userName = Context.Request.Cookies["UserName"];
@@ -88,6 +115,11 @@
                             </div>
                         </div>
                     </div>
+
+                    @* ❤️ WISHLIST ICON *@
+                    <a href="/Wishlist" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Danh sách yêu thích">
+                        <span class="material-symbols-outlined text-[24px]">favorite</span>
+                    </a>
 
                     <div class="relative" id="notification-dropdown">
                         <button onclick="toggleNoti()" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative">
@@ -254,4 +286,57 @@
     });
 
     document.addEventListener('DOMContentLoaded', initCartBadge);
+
+    // ─── CATEGORIES DROPDOWN ───
+    function toggleCategories() {
+        const box = document.getElementById('categories-box');
+        const isHidden = box.classList.contains('hidden');
+        
+        // Đóng các dropdown khác
+        document.getElementById('cart-box')?.classList.add('hidden');
+        document.getElementById('noti-box')?.classList.add('hidden');
+        
+        box.classList.toggle('hidden');
+        if (isHidden) loadCategories();
+    }
+
+    async function loadCategories() {
+        const container = document.getElementById('categories-items-container');
+        if (!container) return;
+
+        try {
+            const res = await fetch("http://localhost:5207/api/public/courses/categories");
+            if (!res.ok) {
+                container.innerHTML = `<div class="px-4 py-3 text-xs text-red-400">Không thể tải danh mục</div>`;
+                return;
+            }
+
+            const result = await res.json();
+            const categories = result?.data ?? [];
+
+            if (categories.length === 0) {
+                container.innerHTML = `<div class="px-4 py-3 text-xs text-slate-400">Chưa có danh mục nào</div>`;
+                return;
+            }
+
+            container.innerHTML = categories.map(cat => `
+                <a href="/Course?category=${encodeURIComponent(cat.categoriesName)}" 
+                   class="flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition-colors group">
+                    <span class="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors">${cat.categoriesName}</span>
+                    <span class="material-symbols-outlined text-[18px] text-slate-300 group-hover:text-primary transition-transform group-hover:translate-x-1">chevron_right</span>
+                </a>
+            `).join('');
+
+        } catch (err) {
+            container.innerHTML = `<div class="px-4 py-3 text-xs text-red-400">Lỗi kết nối</div>`;
+        }
+    }
+
+    // Đóng dropdown khi click ra ngoài
+    window.addEventListener('click', function(e) {
+        const catDropdown = document.getElementById('categories-dropdown');
+        if (catDropdown && !catDropdown.contains(e.target)) {
+            document.getElementById('categories-box')?.classList.add('hidden');
+        }
+    });
 </script>

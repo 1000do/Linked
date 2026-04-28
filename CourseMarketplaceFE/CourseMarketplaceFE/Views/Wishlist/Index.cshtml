@@ -1,0 +1,77 @@
+@model List<CourseMarketplaceFE.Controllers.WishlistResponse>
+@{
+    ViewData["Title"] = "Danh sách yêu thích";
+}
+
+<div class="bg-slate-50 min-h-screen py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-12">
+            <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight mb-4">Danh sách yêu thích</h1>
+            <p class="text-lg text-slate-600">Những khóa học bạn đã lưu lại để học sau.</p>
+        </div>
+
+        @if (Model == null || !Model.Any())
+        {
+            <div class="bg-white rounded-2xl border border-dashed border-slate-300 p-16 text-center">
+                <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">favorite</span>
+                <h3 class="text-xl font-bold text-slate-700 mb-2">Danh sách yêu thích trống</h3>
+                <p class="text-slate-500 mb-8">Bạn chưa lưu khóa học nào vào danh sách yêu thích.</p>
+                <a href="/Course" class="inline-flex items-center gap-2 bg-primary text-white font-bold px-8 py-3 rounded-xl hover:bg-primary/90 transition-all">
+                    Khám phá khóa học
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                @foreach (var item in Model)
+                {
+                    <div class="flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300 group">
+                        <div class="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 shrink-0">
+                            <img src="@(string.IsNullOrEmpty(item.CourseThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800&auto=format&fit=crop" : item.CourseThumbnailUrl)" 
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                                 alt="@item.Title" loading="lazy" />
+                            
+                            <button type="button" 
+                                    onclick="toggleWishlist(this, @item.CourseId);"
+                                    class="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/90 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                                <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>favorite</span>
+                            </button>
+                        </div>
+
+                        <div class="p-5 flex flex-col flex-grow">
+                            <h3 class="text-sm font-bold text-slate-900 line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
+                                <a href="/Course/Details/@item.CourseId">@item.Title</a>
+                            </h3>
+                            
+                            <p class="text-[11px] text-slate-500 mb-4">@item.InstructorName</p>
+
+                            <div class="mt-auto flex items-center justify-between">
+                                <div class="text-base font-extrabold text-slate-900">
+                                    @if (item.Price == 0)
+                                    {
+                                        <span class="text-emerald-600">FREE</span>
+                                    }
+                                    else
+                                    {
+                                        <span>$@item.Price.ToString("N2")</span>
+                                    }
+                                </div>
+                                
+                                <form asp-action="AddToCart" asp-controller="Cart" method="post" class="m-0 z-20">
+                                    <input type="hidden" name="courseId" value="@item.CourseId" />
+                                    <input type="hidden" name="returnUrl" value="/Wishlist" />
+                                    <button type="submit" 
+                                            class="p-2 rounded-lg bg-slate-50 text-primary hover:bg-primary hover:text-white transition-all shadow-sm"
+                                            title="Thêm vào giỏ hàng">
+                                        <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

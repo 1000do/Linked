@@ -12,9 +12,9 @@
             <span class="px-2 py-1 bg-primary-container/20 text-primary border border-primary-container rounded text-[10px] font-bold uppercase tracking-wider">Draft</span>
         </div>
         <div class="flex items-center gap-3">
-            <button class="px-4 py-2 bg-white text-slate-700 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2">
+            <a href="/Course/Details/@courseId" target="_blank" class="px-4 py-2 bg-white text-slate-700 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2">
                 <span class="material-symbols-outlined text-[18px]">visibility</span> Preview
-            </button>
+            </a>
             <button class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()">
                 <span class="material-symbols-outlined text-[18px]">send</span> Submit for Review
             </button>
@@ -23,12 +23,113 @@
 
     <div class="flex gap-8 h-full overflow-hidden">
         <!-- LEFT: Course Structure -->
-        <div id="course-structure-container" class="w-80 flex-shrink-0 flex flex-col gap-4 overflow-y-auto pb-8 pr-2 custom-scrollbar">
-            <!-- Dynamic content injected by JS -->
+        <div class="w-80 flex-shrink-0 flex flex-col gap-4 overflow-hidden">
+            <div class="flex border-b border-slate-200 mb-2">
+                <button class="flex-1 py-3 text-sm font-bold border-b-2 border-primary text-primary" id="btn-tab-curriculum" onclick="switchMainTab('curriculum')">Curriculum</button>
+                <button class="flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors" id="btn-tab-landing" onclick="switchMainTab('landing')">Course Landing Page</button>
+            </div>
+            
+            <div id="course-structure-container" class="flex-1 flex flex-col gap-4 overflow-y-auto pb-8 pr-2 custom-scrollbar">
+                <!-- Dynamic content injected by JS -->
+            </div>
         </div>
 
-        <!-- RIGHT: Lesson Editor -->
+        <!-- RIGHT: Lesson Editor / Landing Page Editor -->
         <div class="flex-1 flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
+            
+            <!-- Tab: Landing Page Editor (Hidden by default) -->
+            <div id="landing-page-editor" class="hidden flex-1 flex-col h-full overflow-y-auto p-8 custom-scrollbar">
+                <div class="max-w-4xl mx-auto space-y-12">
+                    <div>
+                        <h2 class="text-3xl font-headline font-extrabold text-slate-900 mb-2">Course Landing Page</h2>
+                        <p class="text-slate-500">Your course landing page is crucial to your success. Make it stand out!</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-8">
+                        <!-- Basic Info -->
+                        <div class="space-y-4">
+                            <label class="text-sm font-bold text-slate-900 block">Course Title</label>
+                            <input type="text" id="course-title-input" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary" value="@ViewBag.CourseTitle" />
+                        </div>
+
+                        <!-- Description -->
+                        <div class="space-y-4">
+                            <label class="text-sm font-bold text-slate-900 block">Course Description</label>
+                            <div class="bg-white rounded-xl">
+                                <div id="course-description-editor">@Html.Raw(ViewBag.Description)</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-8">
+                            <!-- Category -->
+                            <div class="space-y-4">
+                                <label class="text-sm font-bold text-slate-900 block">Category</label>
+                                <select id="course-category-input" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary">
+                                    <!option value="1" @(ViewBag.CategoryId == 1 ? "selected" : "")>Design & Creative</!option>
+                                    <!option value="2" @(ViewBag.CategoryId == 2 ? "selected" : "")>Development</!option>
+                                    <!option value="3" @(ViewBag.CategoryId == 3 ? "selected" : "")>Business</!option>
+                                </select>
+                            </div>
+                            <!-- Price -->
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-sm font-bold text-slate-900 block">Price (USD)</label>
+                                    <span class="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-1 rounded">Min: $0.00</span>
+                                </div>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <span class="text-slate-500 font-bold material-symbols-outlined text-[18px]">attach_money</span>
+                                    </div>
+                                    <input type="number" id="course-price-input" min="0" step="0.01" class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary font-semibold text-slate-800 transition-colors" value="@ViewBag.Price" placeholder="0.00" onblur="formatPrice(this)" />
+                                </div>
+                                
+                                <!-- Quick Price Tiers -->
+                                <div class="flex flex-wrap gap-2 mt-3">
+                                    <button type="button" onclick="setPrice(0)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">Free</button>
+                                    <button type="button" onclick="setPrice(9.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$9.99</button>
+                                    <button type="button" onclick="setPrice(19.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$19.99</button>
+                                    <button type="button" onclick="setPrice(49.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$49.99</button>
+                                    <button type="button" onclick="setPrice(99.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$99.99</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- What you will learn -->
+                        <div class="space-y-4">
+                            <label class="text-sm font-bold text-slate-900 block">What you will learn (one per line or list)</label>
+                            <div class="bg-white rounded-xl">
+                                <div id="course-learn-editor">@Html.Raw(ViewBag.WhatYouWillLearn)</div>
+                            </div>
+                        </div>
+
+                        <!-- Requirements -->
+                        <div class="space-y-4">
+                            <label class="text-sm font-bold text-slate-900 block">Requirements</label>
+                            <div class="bg-white rounded-xl">
+                                <div id="course-req-editor">@Html.Raw(ViewBag.Requirements)</div>
+                            </div>
+                        </div>
+
+                        <!-- Thumbnail -->
+                        <div class="space-y-4">
+                            <label class="text-sm font-bold text-slate-900 block">Course Thumbnail URL</label>
+                            <div class="flex gap-4">
+                                <input type="text" id="course-thumbnail-input" class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary" value="@ViewBag.ThumbnailUrl" />
+                                <div class="w-24 h-16 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                                    <img id="course-thumbnail-preview" src="@(string.IsNullOrEmpty(ViewBag.ThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=200" : ViewBag.ThumbnailUrl)" class="w-full h-full object-cover" />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-6 border-t border-slate-100 flex justify-end">
+                            <button class="px-8 py-3 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-all shadow-lg shadow-primary/20 flex items-center gap-2" onclick="saveCourseDetails()" id="save-course-details-btn">
+                                <span class="material-symbols-outlined text-[20px]">save</span> Save Course Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Empty State -->
             <div id="lesson-editor-empty" class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-white z-10">
                 <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6 border border-slate-100">
@@ -227,6 +328,116 @@
         };
         window.videoQuill = new Quill('#video-editor', { ...quillConfig, placeholder: 'Describe the video content...' });
         window.resourceQuill = new Quill('#resource-editor', { ...quillConfig, placeholder: 'Describe this resource...' });
+        
+        // Course Landing Page Quills
+        window.courseDescQuill = new Quill('#course-description-editor', { ...quillConfig, placeholder: 'Detailed course description...' });
+        window.courseLearnQuill = new Quill('#course-learn-editor', { ...quillConfig, placeholder: 'What will students achieve?' });
+        window.courseReqQuill = new Quill('#course-req-editor', { ...quillConfig, placeholder: 'What do students need before starting?' });
+
+        // ─── Main Tabs Switching ───
+        window.switchMainTab = function(tab) {
+            const btnCurriculum = document.getElementById('btn-tab-curriculum');
+            const btnLanding = document.getElementById('btn-tab-landing');
+            const structureContainer = document.getElementById('course-structure-container');
+            const lessonEditorEmpty = document.getElementById('lesson-editor-empty');
+            const lessonEditorActive = document.getElementById('lesson-editor-active');
+            const landingEditor = document.getElementById('landing-page-editor');
+
+            if (tab === 'curriculum') {
+                btnCurriculum.className = "flex-1 py-3 text-sm font-bold border-b-2 border-primary text-primary";
+                btnLanding.className = "flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors";
+                structureContainer.classList.remove('hidden');
+                
+                landingEditor.classList.add('hidden');
+                landingEditor.style.display = 'none';
+
+                // Determine which curriculum state to show
+                if (lessonsData.length === 0) {
+                    lessonEditorEmpty.classList.remove('hidden');
+                    lessonEditorEmpty.style.display = 'flex';
+                    lessonEditorActive.classList.add('hidden');
+                    lessonEditorActive.style.display = 'none';
+                } else {
+                    const activeId = document.getElementById('editing-lesson-id').textContent;
+                    if (activeId !== '--') {
+                        lessonEditorActive.classList.remove('hidden');
+                        lessonEditorActive.style.display = 'flex';
+                        lessonEditorEmpty.classList.add('hidden');
+                        lessonEditorEmpty.style.display = 'none';
+                    } else {
+                        lessonEditorEmpty.classList.remove('hidden');
+                        lessonEditorEmpty.style.display = 'flex';
+                        lessonEditorActive.classList.add('hidden');
+                        lessonEditorActive.style.display = 'none';
+                    }
+                }
+            } else {
+                btnLanding.className = "flex-1 py-3 text-sm font-bold border-b-2 border-primary text-primary";
+                btnCurriculum.className = "flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors";
+                structureContainer.classList.add('hidden');
+                
+                landingEditor.classList.remove('hidden');
+                landingEditor.style.display = 'flex';
+                
+                lessonEditorEmpty.classList.add('hidden');
+                lessonEditorEmpty.style.display = 'none';
+                lessonEditorActive.classList.add('hidden');
+                lessonEditorActive.style.display = 'none';
+            }
+        };
+
+        window.saveCourseDetails = async function() {
+            const btn = document.getElementById('save-course-details-btn');
+            const title = document.getElementById('course-title-input').value;
+            const price = document.getElementById('course-price-input').value;
+            const catId = document.getElementById('course-category-input').value;
+            const thumb = document.getElementById('course-thumbnail-input').value;
+            
+            const desc = window.courseDescQuill.root.innerHTML;
+            const learn = window.courseLearnQuill.root.innerHTML;
+            const req = window.courseReqQuill.root.innerHTML;
+
+            if (!title) { Swal.fire('Error', 'Title is required', 'error'); return; }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Saving...';
+
+            try {
+                const fd = new FormData();
+                fd.append('courseId', courseId);
+                fd.append('title', title);
+                fd.append('description', desc);
+                fd.append('price', price);
+                fd.append('categoryId', catId);
+                fd.append('thumbnailUrl', thumb);
+                fd.append('whatYouWillLearn', learn);
+                fd.append('requirements', req);
+
+                const res = await fetch('/InstructorCourse/UpdateDetails', { method: 'POST', body: fd });
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json.success) {
+                        Swal.fire({ icon: 'success', title: 'Saved!', text: 'Course details updated successfully.', timer: 1500, showConfirmButton: false });
+                        document.querySelector('h1').textContent = title;
+                        document.getElementById('course-thumbnail-preview').src = thumb || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=200";
+                    } else {
+                        Swal.fire('Error', json.message || 'Failed to update details', 'error');
+                    }
+                } else {
+                    Swal.fire('Error', 'Server error while updating details', 'error');
+                }
+            } catch (e) {
+                Swal.fire('Error', 'An error occurred', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">save</span> Save Course Details';
+            }
+        };
+
+        // Thumbnail preview sync
+        document.getElementById('course-thumbnail-input').addEventListener('input', function(e) {
+            document.getElementById('course-thumbnail-preview').src = e.target.value || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=200";
+        });
 
         // ─── Tabs ───
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -341,7 +552,12 @@
             // Show editor, hide empty state
             const emptyState = document.getElementById('lesson-editor-empty');
             const editor = document.getElementById('lesson-editor-active');
+            const landingEditor = document.getElementById('landing-page-editor');
             
+            // Ensure landing page editor is hidden when selecting a lesson
+            landingEditor.classList.add('hidden');
+            landingEditor.style.display = 'none';
+
             emptyState.style.display = 'none';
             emptyState.classList.add('hidden');
             emptyState.classList.remove('z-10');
@@ -535,6 +751,10 @@
 
         // Render on init
         renderCourseStructure();
+        
+        // Format initial price
+        const priceInput = document.getElementById('course-price-input');
+        if (priceInput) formatPrice(priceInput);
 
         // ─── Checkbox toggle styling ───
         function updateToggleCard(checkboxId, labelId) {
@@ -733,6 +953,29 @@
         };
 
 
+        // ─── Price Formatting & Quick Selection ───
+        window.formatPrice = function(input) {
+            if (!input.value) {
+                input.value = "0.00";
+                return;
+            }
+            // Parse float and format to 2 decimal places
+            let val = parseFloat(input.value);
+            if (isNaN(val) || val < 0) val = 0;
+            input.value = val.toFixed(2);
+        };
+
+        window.setPrice = function(price) {
+            const input = document.getElementById('course-price-input');
+            if (input) {
+                input.value = parseFloat(price).toFixed(2);
+                // Optional: visual feedback that price changed
+                input.classList.add('ring-2', 'ring-primary', 'bg-primary/5');
+                setTimeout(() => {
+                    input.classList.remove('ring-2', 'ring-primary', 'bg-primary/5');
+                }, 500);
+            }
+        };
         
         // ─── Resource Upload ───
         const resourceBtnEl = document.getElementById('upload-resource-btn');
