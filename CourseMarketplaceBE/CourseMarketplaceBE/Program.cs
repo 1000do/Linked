@@ -180,6 +180,20 @@ public class Program
         builder.Services.AddScoped<ICartRepository, CartRepository>();
         builder.Services.AddScoped<ICartService, CartService>();
 
+        // 💳 Checkout & Payment (UC-19)
+        builder.Services.AddScoped<ICheckoutRepository, CheckoutRepository>();
+        builder.Services.AddScoped<ICheckoutService, CourseMarketplaceBE.Application.Services.CheckoutService>();
+        builder.Services.AddScoped<IPaymentGatewayService, StripePaymentService>();
+        // OCP: Đổi sang VNPay chỉ cần tạo VNPayPaymentService và đổi dòng trên.
+
+        // 💰 Admin Finance (UC-112, UC-120)
+        builder.Services.AddScoped<IAdminFinanceRepository, AdminFinanceRepository>();
+        builder.Services.AddScoped<IAdminFinanceService, AdminFinanceService>();
+
+        // 📊 Transactions (UC-114, UC-115)
+        builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+        builder.Services.AddScoped<ITransactionService, TransactionService>();
+
         builder.Services.AddHttpClient();
 
         // 🔥 6. Authentication

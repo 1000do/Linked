@@ -762,9 +762,7 @@
         // Render on init
         renderCourseStructure();
         
-        // Format initial price
-        const priceInput = document.getElementById('course-price-input');
-        if (priceInput) formatPrice(priceInput);
+        // Format initial price — deferred to after formatPrice definition (line ~966)
 
         // ─── Checkbox toggle styling ───
         function updateToggleCard(checkboxId, labelId) {
@@ -1052,6 +1050,10 @@
             if (isNaN(val) || val < 0) val = 0;
             input.value = val.toFixed(2);
         };
+
+        // Format initial price (must be called AFTER formatPrice is defined)
+        const priceInput = document.getElementById('course-price-input');
+        if (priceInput) formatPrice(priceInput);
 
         window.setPrice = function(price) {
             const input = document.getElementById('course-price-input');

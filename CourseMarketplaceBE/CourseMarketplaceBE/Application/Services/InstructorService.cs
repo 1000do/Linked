@@ -138,7 +138,9 @@ public class InstructorService : IInstructorService
         var stripeAccount   = await accountService.CreateAsync(new AccountCreateOptions
         {
             Type    = "express",
-            Country = "US",
+            // ★ PHẢI KHỚP với country của Platform account (AU)
+            // Nếu Platform ở AU mà Connected account ở US → Stripe chặn transfer cross-border
+            Country = "AU",
             Email   = email,
             Capabilities = new AccountCapabilitiesOptions
             {
@@ -247,4 +249,39 @@ public class InstructorService : IInstructorService
     // ═══════════════════════════════════════════════════════════════════════
     public async Task<InstructorDashboardDto?> GetRejectedApplicationInfoAsync(int userId)
         => await _repo.GetRejectedApplicationDtoAsync(userId);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 8. RESET STRIPE ACCOUNT — Xóa Connected Account cũ, cho phép tạo lại
+    //    Dùng khi: Platform ở AU, Connected Account lỗi ở US → không Transfer được
+    // ═══════════════════════════════════════════════════════════════════════
+    public async Task<string> ResetStripeAccountAsync(int instructorId)
+    {
+        var instructor = await _repo.GetByIdAsync(instructorId);
+        if (instructor == null)
+            throw new InvalidOperationException("Không tìm thấy instructor.");
+
+        if (string.IsNullOrEmpty(instructor.StripeAccountId))
+            throw new InvalidOperationException("Instructor chưa có Stripe account.");
+
+        // ★ Xóa Stripe Connected Account trên Stripe
+        try
+        {
+            var accountService = new AccountService();
+            await accountService.DeleteAsync(instructor.StripeAccountId);
+            Console.WriteLine($"[STRIPE-RESET] ✅ Deleted Stripe account {instructor.StripeAccountId} for instructor {instructorId}");
+        }
+        catch (StripeException ex)
+        {
+            Console.WriteLine($"[STRIPE-RESET] ⚠️ Stripe delete failed (may already be deleted): {ex.Message}");
+        }
+
+        // ★ Reset DB fields → Instructor phải onboard lại
+        instructor.StripeAccountId = null;
+        instructor.StripeOnboardingStatus = null;
+        instructor.PayoutsEnabled = false;
+        instructor.ChargesEnabled = false;
+        await _repo.SaveChangesAsync();
+
+        return $"Đã reset Stripe account cho instructor {instructorId}. Giảng viên cần setup lại Stripe.";
+    }
 }
