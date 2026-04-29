@@ -18,6 +18,8 @@ public interface ICheckoutRepository
 
     /// <summary>Kiểm tra user đã enrolled course chưa (tránh mua trùng).</summary>
     Task<bool> IsEnrolledAsync(int userId, int courseId);
+    Task<Enrollment?> GetEnrollmentAsync(int userId, int courseId);
+    Task<Enrollment?> GetEnrollmentWithProgressAsync(int userId, int courseId);
 
     /// <summary>Lấy email của user từ account (gửi cho Stripe).</summary>
     Task<string?> GetUserEmailAsync(int userId);

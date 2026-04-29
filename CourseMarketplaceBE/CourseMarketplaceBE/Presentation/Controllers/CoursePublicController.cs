@@ -19,12 +19,19 @@ public class CoursePublicController : ControllerBase
         _courseService = courseService;
     }
 
+    private int? GetUserId()
+    {
+        var str = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        return int.TryParse(str, out int id) ? id : null;
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetAllCourses()
     {
         try
         {
-            var courses = await _courseService.GetAllPublishedCoursesAsync();
+            var userId = GetUserId();
+            var courses = await _courseService.GetAllPublishedCoursesAsync(userId);
             return Ok(ApiResponse<object>.SuccessResponse(courses, "Retrieved courses successfully."));
         }
         catch (Exception ex)
@@ -38,8 +45,9 @@ public class CoursePublicController : ControllerBase
     {
         try
         {
+            var userId = GetUserId();
             // For public view, instructorId doesn't matter much if we just want to view it
-            var course = await _courseService.GetCourseWithDetailsAsync(id, 0); 
+            var course = await _courseService.GetCourseWithDetailsAsync(id, 0, userId); 
             if (course == null)
             {
                 return NotFound(ApiResponse<object>.ErrorResponse("Course not found."));

@@ -146,6 +146,22 @@ namespace CourseMarketplaceFE.Controllers
             return NotFound();
         }
 
+        [HttpPost]
+        public async Task<IActionResult> EnrollFree(int id)
+        {
+            var response = await _apiClient.PostAsync($"enrollment/free-enroll/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                return Json(new { success = true, message = "Ghi danh thành công!" });
+            }
+            
+            var content = await response.Content.ReadAsStringAsync();
+            var json = JsonDocument.Parse(content);
+            var message = json.RootElement.TryGetProperty("message", out var msg) ? msg.GetString() : "Lỗi ghi danh.";
+            
+            return Json(new { success = false, message });
+        }
+
         [HttpGet]
         public async Task<IActionResult> DownloadMaterial(string url, string fileName)
         {
@@ -175,6 +191,92 @@ namespace CourseMarketplaceFE.Controllers
             catch (Exception)
             {
                 return BadRequest("An error occurred while downloading the file.");
+            }
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetProgress(int id)
+        {
+            var response = await _apiClient.GetAsync($"enrollment/progress/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(content);
+                return Json(new { success = true, data = json.RootElement.GetProperty("data") });
+            }
+            return Json(new { success = false });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateProgress([FromBody] JsonElement body)
+        {
+            var response = await _apiClient.PostJsonAsync("enrollment/progress", body);
+            if (response.IsSuccessStatusCode)
+            {
+                return Json(new { success = true });
+            }
+            return Json(new { success = false });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetReviews(int id)
+        {
+            var response = await _apiClient.GetAsync($"review/course/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(content);
+                return Json(new { success = true, data = json.RootElement.GetProperty("data") });
+            }
+            return Json(new { success = false, data = new List<object>() });
+        }
+
+        /// <summary>Thống kê phân bổ sao (dynamic từ DB)</summary>
+        [HttpGet]
+        public async Task<IActionResult> GetReviewStats(int id)
+        {
+            var response = await _apiClient.GetAsync($"review/stats/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(content);
+                return Json(new { success = true, data = json.RootElement.GetProperty("data") });
+            }
+            return Json(new { success = false });
+        }
+
+        /// <summary>Kiểm tra quyền review của user cho khóa học</summary>
+        [HttpGet]
+        public async Task<IActionResult> GetReviewEligibility(int id)
+        {
+            var response = await _apiClient.GetAsync($"review/eligibility/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(content);
+                return Json(new { success = true, data = json.RootElement.GetProperty("data") });
+            }
+            return Json(new { success = false });
+        }
+
+        /// <summary>Gửi review — source = detail | learn</summary>
+        [HttpPost]
+        public async Task<IActionResult> SubmitReview([FromBody] JsonElement body, [FromQuery] string source = "learn")
+        {
+            var response = await _apiClient.PostJsonAsync($"review?source={source}", body);
+            if (response.IsSuccessStatusCode)
+            {
+                return Json(new { success = true });
+            }
+            var content = await response.Content.ReadAsStringAsync();
+            try
+            {
+                var json = JsonDocument.Parse(content);
+                var message = json.RootElement.TryGetProperty("message", out var msg) ? msg.GetString() : "Lỗi gửi đánh giá.";
+                return Json(new { success = false, message });
+            }
+            catch
+            {
+                return Json(new { success = false, message = "Lỗi gửi đánh giá." });
             }
         }
     }

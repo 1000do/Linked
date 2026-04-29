@@ -11,6 +11,7 @@ public interface ICourseRepository
     Task<Course?> GetByIdAsync(int courseId);
     Task<bool> HasEnrollmentsAsync(int courseId);
     Task<IEnumerable<Course>> GetAllPublishedCoursesAsync();
+    Task<bool> IsEnrolledAsync(int userId, int courseId);
     Task<IEnumerable<Category>> GetCategoriesAsync();
     Task<IEnumerable<CourseStats>> GetCourseStatsAsync(IEnumerable<int> courseIds);
     Task<CourseStats?> GetCourseStatsAsync(int courseId);

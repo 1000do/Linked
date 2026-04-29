@@ -24,6 +24,9 @@ namespace CourseMarketplaceFE.Models
         public int InstructorStudentsCount { get; set; }
         public int InstructorCoursesCount { get; set; }
         public bool IsInWishlist { get; set; }
+        public bool IsEnrolled { get; set; }
+        public bool IsOwner { get; set; }
+        public int TotalReviews { get; set; }
     }
 
     public class CourseDetailViewModel : PublicCourseViewModel

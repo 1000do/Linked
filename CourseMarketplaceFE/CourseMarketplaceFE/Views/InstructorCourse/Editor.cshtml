@@ -101,6 +101,16 @@
                                     <button type="button" onclick="setPrice(49.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$49.99</button>
                                     <button type="button" onclick="setPrice(99.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$99.99</button>
                                 </div>
+                                <div class="bg-slate-50 rounded-xl p-4 flex gap-4 border border-slate-100 mt-4">
+                                    <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white shrink-0 mt-1">
+                                        <span class="material-symbols-outlined text-[14px]">info</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Instructor Revenue</p>
+                                        <p class="font-bold text-slate-900 text-lg">70% Share</p>
+                                        <p class="text-[10px] text-slate-500 mt-1">Estimated payout per sale: <span id="payout-estimate">$0.00</span></p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -1043,13 +1053,20 @@
         window.formatPrice = function(input) {
             if (!input.value) {
                 input.value = "0.00";
+                updatePayout(0);
                 return;
             }
             // Parse float and format to 2 decimal places
             let val = parseFloat(input.value);
             if (isNaN(val) || val < 0) val = 0;
             input.value = val.toFixed(2);
+            updatePayout(val);
         };
+
+        function updatePayout(val) {
+            const el = document.getElementById('payout-estimate');
+            if (el) el.textContent = '$' + ((parseFloat(val)||0)*0.7).toFixed(2);
+        }
 
         // Format initial price (must be called AFTER formatPrice is defined)
         const priceInput = document.getElementById('course-price-input');
@@ -1059,6 +1076,7 @@
             const input = document.getElementById('course-price-input');
             if (input) {
                 input.value = parseFloat(price).toFixed(2);
+                updatePayout(price);
                 // Optional: visual feedback that price changed
                 input.classList.add('ring-2', 'ring-primary', 'bg-primary/5');
                 setTimeout(() => {

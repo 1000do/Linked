@@ -128,17 +128,26 @@
                                             }
                                         </div>
                                         
-                                        <form asp-action="AddToCart" asp-controller="Cart" method="post" class="m-0 z-20">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="courseId" value="@course.CourseId" />
-                                            <input type="hidden" name="returnUrl" value="/Course" />
-                                            <button type="submit" 
-                                                    class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all ease-out-expo"
-                                                    onclick="event.stopPropagation();"
-                                                    title="Thêm vào giỏ hàng">
-                                                <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
-                                            </button>
-                                        </form>
+                                        @if (course.IsEnrolled)
+                                        {
+                                            <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm" title="Đã sở hữu">
+                                                <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="AddToCart" asp-controller="Cart" method="post" class="m-0 z-20">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="courseId" value="@course.CourseId" />
+                                                <input type="hidden" name="returnUrl" value="/Course" />
+                                                <button type="submit" 
+                                                        class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all ease-out-expo"
+                                                        onclick="event.stopPropagation();"
+                                                        title="Thêm vào giỏ hàng">
+                                                    <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
+                                                </button>
+                                            </form>
+                                        }
                                     </div>
                                 </div>
                             </div>

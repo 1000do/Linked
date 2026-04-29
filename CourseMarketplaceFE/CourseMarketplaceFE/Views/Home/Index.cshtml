@@ -165,7 +165,16 @@
                                     </h3>
                                     <div class="mt-auto flex items-center justify-between border-t border-slate-50 pt-4">
                                         <span class="text-xs text-slate-500 truncate max-w-[120px]">@course.InstructorName</span>
-                                        <div class="text-base font-black text-slate-900">$@course.Price.ToString("N0")</div>
+                                        <div class="text-base font-black text-slate-900">
+                                            @if (course.Price == 0)
+                                            {
+                                                <span class="text-emerald-600 uppercase text-xs">Free</span>
+                                            }
+                                            else
+                                            {
+                                                <span>$@course.Price.ToString("N0")</span>
+                                            }
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -236,16 +245,25 @@
                                 }
                             </div>
 
-                            <form asp-action="AddToCart" asp-controller="Cart" method="post" class="m-0 z-20">
-                                <input type="hidden" name="courseId" value="@course.CourseId" />
-                                <input type="hidden" name="returnUrl" value="/" />
-                                <button type="submit" 
-                                        class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all duration-300"
-                                        onclick="event.stopPropagation();"
-                                        title="Thêm vào giỏ hàng">
-                                    <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
-                                </button>
-                            </form>
+                            @if (course.IsEnrolled)
+                            {
+                                <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm" title="Đã sở hữu">
+                                    <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <form asp-action="AddToCart" asp-controller="Cart" method="post" class="m-0 z-20">
+                                    <input type="hidden" name="courseId" value="@course.CourseId" />
+                                    <input type="hidden" name="returnUrl" value="/" />
+                                    <button type="submit" 
+                                            class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all duration-300"
+                                            onclick="event.stopPropagation();"
+                                            title="Thêm vào giỏ hàng">
+                                        <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
+                                    </button>
+                                </form>
+                            }
                         </div>
                     </div>
                 </div>
