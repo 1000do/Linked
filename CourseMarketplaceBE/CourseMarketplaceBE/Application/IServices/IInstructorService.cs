@@ -44,4 +44,10 @@ public interface IInstructorService
     /// Lấy thông tin instructor dashboard cho user.
     /// </summary>
     Task<InstructorDashboardDto?> GetInstructorDashboardAsync(int userId);
+
+    /// <summary>
+    /// ★ Reset Stripe Connected Account (xóa account cũ, cho phép tạo lại).
+    /// Dùng khi account cũ bị lỗi region mismatch.
+    /// </summary>
+    Task<string> ResetStripeAccountAsync(int instructorId);
 }

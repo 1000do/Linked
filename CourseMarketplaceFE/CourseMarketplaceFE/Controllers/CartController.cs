@@ -175,4 +175,121 @@ public class CartController : Controller
 
         return RedirectToAction(nameof(Index));
     }
+
+    // ─── 6. CHECKOUT — GỌI API THANH TOÁN ────────────────────────────────
+    /// <summary>
+    /// POST /Cart/Checkout
+    /// Gọi BE API tạo Stripe session → redirect user tới Stripe Checkout Page.
+    /// Cookie JWT tự động được ApiClient gắn vào request (DIP — FE không cần biết Stripe).
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Checkout()
+    {
+        if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
+            return Redirect("/Account/Login");
+
+        // Đọc coupon code từ Cookie (nhất quán với trang giỏ hàng)
+        var couponCode = HttpContext.Request.Cookies[CouponCookieName];
+
+        // Tạo base URL của FE (dựa vào Request context)
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        
+        // Gọi BE API checkout/process
+        var response = await _api.PostJsonAsync("checkout/process", new
+        {
+            couponCode = couponCode,
+            successUrl = $"{baseUrl}/Cart/CheckoutSuccess?session_id={{CHECKOUT_SESSION_ID}}",
+            cancelUrl = $"{baseUrl}/Cart"
+        });
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorJson = await response.Content.ReadAsStringAsync();
+            string errorMsg = "Có lỗi xảy ra khi tạo phiên thanh toán.";
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(errorJson);
+                if (doc.RootElement.TryGetProperty("message", out var m))
+                    errorMsg = m.GetString() ?? errorMsg;
+            }
+            catch { }
+            TempData["CartError"] = errorMsg;
+            return RedirectToAction(nameof(Index));
+        }
+
+        // Parse response để lấy Stripe Session URL
+        var json = await response.Content.ReadAsStringAsync();
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("data", out var dataEl) &&
+                dataEl.TryGetProperty("sessionUrl", out var urlEl))
+            {
+                var sessionUrl = urlEl.GetString();
+                if (!string.IsNullOrEmpty(sessionUrl))
+                {
+                    // Xóa coupon cookie sau khi checkout thành công
+                    HttpContext.Response.Cookies.Delete(CouponCookieName);
+
+                    // Redirect tới Stripe Checkout Page
+                    return Redirect(sessionUrl);
+                }
+            }
+        }
+        catch { }
+
+        TempData["CartError"] = "Không thể tạo phiên thanh toán. Vui lòng thử lại.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ─── 7. CHECKOUT SUCCESS — STRIPE REDIRECT VỀ ĐÂY ───────────────────
+    /// <summary>
+    /// GET /Cart/CheckoutSuccess?session_id=cs_xxx
+    /// Stripe redirect user về đây sau khi thanh toán thành công.
+    /// Gọi BE API để finalize (cấp enrollment, chia tiền...) rồi redirect My Learning.
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> CheckoutSuccess([FromQuery(Name = "session_id")] string sessionId)
+    {
+        Console.WriteLine($"[FE-CHECKOUT] ═══ CheckoutSuccess CALLED ═══ session_id={sessionId}");
+
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            Console.WriteLine("[FE-CHECKOUT] ❌ session_id is EMPTY!");
+            TempData["CartError"] = "Phiên thanh toán không hợp lệ.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        try
+        {
+            Console.WriteLine($"[FE-CHECKOUT] Calling BE: GET checkout/success?session_id={sessionId}");
+            
+            // Gọi BE API success endpoint
+            var response = await _api.GetAsync($"checkout/success?session_id={Uri.EscapeDataString(sessionId)}");
+            
+            Console.WriteLine($"[FE-CHECKOUT] BE responded: {(int)response.StatusCode} {response.StatusCode}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("[FE-CHECKOUT] ✅ SUCCESS — redirecting to /Course");
+                TempData["CartSuccess"] = "🎉 Thanh toán thành công! Chúc bạn học vui vẻ!";
+                return Redirect("/Course");
+            }
+
+            // ★ Log chi tiết lỗi từ BE
+            var errorBody = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"[FE-CHECKOUT] ❌ BE ERROR: {errorBody}");
+
+            TempData["CartError"] = "Có lỗi xảy ra khi xử lý thanh toán. Vui lòng liên hệ hỗ trợ.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[FE-CHECKOUT] ❌ EXCEPTION: {ex.Message}\n{ex.StackTrace}");
+            TempData["CartError"] = "Có lỗi xảy ra khi xử lý thanh toán. Vui lòng liên hệ hỗ trợ.";
+            return RedirectToAction(nameof(Index));
+        }
+    }
 }
+

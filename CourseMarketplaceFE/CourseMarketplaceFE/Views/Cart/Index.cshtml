@@ -86,7 +86,7 @@
                                     </p>
                                 }
                                 <p class="text-base font-extrabold text-primary mt-2">
-                                    @item.Price.ToString("N0") <span class="text-xs font-normal text-slate-400">VND</span>
+                                    $@item.Price.ToString("N2")
                                 </p>
                             </div>
 
@@ -173,7 +173,7 @@
                             @* Tạm tính *@
                             <div class="flex justify-between items-center text-sm">
                                 <span class="text-slate-500">Tạm tính</span>
-                                <span class="font-semibold text-slate-700">@Model.SubTotal.ToString("N0") VND</span>
+                                <span class="font-semibold text-slate-700">$@Model.SubTotal.ToString("N2")</span>
                             </div>
 
                             @* Giảm giá (chỉ hiện khi > 0) *@
@@ -184,7 +184,7 @@
                                         <span class="material-symbols-outlined text-sm">local_offer</span>
                                         Giảm giá
                                     </span>
-                                    <span class="font-bold text-emerald-600">-@Model.DiscountAmount.ToString("N0") VND</span>
+                                    <span class="font-bold text-emerald-600">-$@Model.DiscountAmount.ToString("N2")</span>
                                 </div>
                             }
 
@@ -193,19 +193,21 @@
                                 <span class="font-bold text-slate-800">Tổng thanh toán</span>
                                 <div class="text-right">
                                     <span class="text-2xl font-extrabold text-primary block">
-                                        @Model.Total.ToString("N0")
+                                        $@Model.Total.ToString("N2")
                                     </span>
-                                    <span class="text-xs text-slate-400">VND</span>
                                 </div>
                             </div>
                         </div>
 
                         @* ── NÚT CHECKOUT ─────────────────────────────────── *@
-                        <a href="/Checkout"
-                           class="mt-6 w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-sm uppercase tracking-wider">
-                            <span class="material-symbols-outlined text-lg">payment</span>
-                            Tiến hành thanh toán
-                        </a>
+                        <form asp-action="Checkout" asp-controller="Cart" method="post" id="checkout-form">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" id="checkout-btn"
+                               class="mt-6 w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-sm uppercase tracking-wider">
+                                <span class="material-symbols-outlined text-lg">payment</span>
+                                Tiến hành thanh toán
+                            </button>
+                        </form>
 
                         <a href="/"
                            class="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 text-sm text-slate-500 hover:text-primary font-medium transition-colors">
@@ -295,7 +297,7 @@
                             <p class="text-sm font-semibold text-primary">@voucher.ConditionMessage</p>
                             @if (voucher.MinOrderValue > 0)
                             {
-                                <p class="text-[11px] text-slate-500 mt-0.5">Đơn tối thiểu @voucher.MinOrderValue.ToString("N0")đ</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Đơn tối thiểu $@voucher.MinOrderValue.ToString("N2")</p>
                             }
                             @if (voucher.EndDate.HasValue)
                             {
@@ -343,7 +345,7 @@
                                 </span>
                             </div>
                             <p class="text-sm font-semibold text-slate-600">@voucher.ConditionMessage</p>
-                            <p class="text-[11px] text-slate-500 mt-0.5">Đơn tối thiểu @voucher.MinOrderValue.ToString("N0")đ</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Đơn tối thiểu $@voucher.MinOrderValue.ToString("N2")</p>
                             @if (voucher.EndDate.HasValue)
                             {
                                 <p class="text-[10px] text-slate-400 mt-0.5">HSD: @voucher.EndDate.Value.ToString("dd/MM/yyyy")</p>
