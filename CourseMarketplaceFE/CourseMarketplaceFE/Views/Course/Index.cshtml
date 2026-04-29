@@ -144,6 +144,42 @@
                             </div>
                         }
                     </div>
+
+                    <!-- Pagination -->
+                    @if (ViewBag.TotalPages > 1)
+                    {
+                        <div class="mt-16 flex justify-center items-center gap-2">
+                            @{
+                                int totalPages = ViewBag.TotalPages;
+                                int currentPage = ViewBag.CurrentPage;
+                            }
+                            
+                            <a href="@Url.Action("Index", "Course", new { query = currentQuery, category = currentCategory, sort = currentSort, page = currentPage - 1 })" 
+                               class="w-12 h-12 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary transition-all duration-300 @(currentPage <= 1 ? "pointer-events-none opacity-50" : "")">
+                                <span class="material-symbols-outlined">chevron_left</span>
+                            </a>
+
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                if (i == 1 || i == totalPages || (i >= currentPage - 1 && i <= currentPage + 1))
+                                {
+                                    <a href="@Url.Action("Index", "Course", new { query = currentQuery, category = currentCategory, sort = currentSort, page = i })" 
+                                       class="w-12 h-12 flex items-center justify-center rounded-xl font-bold border @(i == currentPage ? "bg-primary border-primary text-white shadow-lg shadow-primary/20" : "bg-white border-slate-200 text-slate-600 hover:border-primary hover:text-primary") transition-all duration-300">
+                                        @i
+                                    </a>
+                                }
+                                else if (i == 2 || i == totalPages - 1)
+                                {
+                                    <span class="w-8 text-center text-slate-400">...</span>
+                                }
+                            }
+
+                            <a href="@Url.Action("Index", "Course", new { query = currentQuery, category = currentCategory, sort = currentSort, page = currentPage + 1 })" 
+                               class="w-12 h-12 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:border-primary hover:text-primary transition-all duration-300 @(currentPage >= totalPages ? "pointer-events-none opacity-50" : "")">
+                                <span class="material-symbols-outlined">chevron_right</span>
+                            </a>
+                        </div>
+                    }
                 }
             </div>
         </div>

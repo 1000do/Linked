@@ -8,7 +8,7 @@ using System.Text.Json;
 
 namespace CourseMarketplaceFE.Controllers
 {
-    // [Authorize(Roles = "Instructor")] // TODO: Enable when FE auth is configured
+    [Authorize]
     public class InstructorCourseController : Controller
     {
         private readonly ApiClient _api;
@@ -30,9 +30,14 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // ─── LIST COURSES ─────────────────────────────────────────────────
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? searchTerm, string? status, int page = 1)
         {
-            var viewModel = new InstructorStudioViewModel();
+            var viewModel = new InstructorStudioViewModel
+            {
+                CurrentPage = page,
+                SearchTerm = searchTerm,
+                FilterStatus = status
+            };
 
             try
             {
@@ -60,9 +65,10 @@ namespace CourseMarketplaceFE.Controllers
 
                     if (root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array)
                     {
+                        var allCourses = new List<CourseListViewModel>();
                         foreach (var item in dataEl.EnumerateArray())
                         {
-                            viewModel.Courses.Add(new CourseListViewModel
+                            allCourses.Add(new CourseListViewModel
                             {
                                 Id = item.GetProperty("courseId").GetInt32(),
                                 Title = item.GetProperty("title").GetString() ?? "Untitled",
@@ -74,6 +80,29 @@ namespace CourseMarketplaceFE.Controllers
                                     ? u.GetDateTime() : DateTime.Now
                             });
                         }
+
+                        // Apply Search & Filter
+                        var filtered = allCourses.AsQueryable();
+                        if (!string.IsNullOrEmpty(searchTerm))
+                        {
+                            filtered = filtered.Where(c => c.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+                        }
+                        if (!string.IsNullOrEmpty(status) && status != "All")
+                        {
+                            filtered = filtered.Where(c => c.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+                        }
+
+                        // Pagination
+                        int pageSize = 6;
+                        var final = filtered.ToList();
+                        viewModel.TotalItems = final.Count;
+                        viewModel.TotalPages = (int)Math.Ceiling(viewModel.TotalItems / (double)pageSize);
+                        
+                        viewModel.Courses = final
+                            .OrderByDescending(c => c.UpdatedAt)
+                            .Skip((page - 1) * pageSize)
+                            .Take(pageSize)
+                            .ToList();
                     }
                 }
             }
@@ -165,12 +194,11 @@ namespace CourseMarketplaceFE.Controllers
         public async Task<IActionResult> Editor(int id)
         {
             ViewBag.CourseId = id;
+            ViewBag.AvailableCategories = await GetCategoriesAsync();
 
             try
             {
                 var resp = await _api.GetAsync($"courses/{id}");
-                Console.WriteLine($"[Editor] GET courses/{id} => StatusCode: {(int)resp.StatusCode}");
-
                 if (resp.IsSuccessStatusCode)
                 {
                     var json = await resp.Content.ReadAsStringAsync();
@@ -192,12 +220,7 @@ namespace CourseMarketplaceFE.Controllers
                         if (data.TryGetProperty("lessons", out var lessonsEl) && lessonsEl.ValueKind == JsonValueKind.Array)
                         {
                             var rawJson = lessonsEl.GetRawText();
-                            Console.WriteLine("[Editor] LESSONS JSON length: " + rawJson.Length);
                             ViewBag.LessonsJson = rawJson;
-                        }
-                        else
-                        {
-                            Console.WriteLine("[Editor] WARNING: 'lessons' property not found in API response.");
                         }
                     }
                     else
@@ -208,8 +231,6 @@ namespace CourseMarketplaceFE.Controllers
                 else
                 {
                     var errorBody = await resp.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[Editor] API FAILED: {(int)resp.StatusCode} - {errorBody}");
-                    
                     // If 401/403 after auto-refresh attempt, session is dead — force re-login
                     if ((int)resp.StatusCode == 401 || (int)resp.StatusCode == 403)
                     {
@@ -278,7 +299,7 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── ADD MATERIAL (AJAX) ──────────────────────────────────────────
         [HttpPost]
-        public async Task<IActionResult> AddMaterial([FromForm] int lessonId, [FromForm] string title, [FromForm] string description, [FromForm] string materialUrl, [FromForm] string type)
+        public async Task<IActionResult> AddMaterial([FromForm] int lessonId, [FromForm] string title, [FromForm] string description, [FromForm] string materialUrl, [FromForm] string type, [FromForm] int? duration, [FromForm] long? fileSize, [FromForm] string? fileExtension)
         {
             try
             {
@@ -290,6 +311,9 @@ namespace CourseMarketplaceFE.Controllers
                     formData.Add(new StringContent(materialUrl), "MaterialUrl");
                 
                 formData.Add(new StringContent(type ?? "video"), "MaterialMetadata.FileType");
+                if (duration.HasValue) formData.Add(new StringContent(duration.Value.ToString()), "MaterialMetadata.Duration");
+                if (fileSize.HasValue) formData.Add(new StringContent(fileSize.Value.ToString()), "MaterialMetadata.FileSize");
+                if (!string.IsNullOrEmpty(fileExtension)) formData.Add(new StringContent(fileExtension), "MaterialMetadata.FileExtension");
 
                 var resp = await _api.PostFormDataAsync($"lessons/{lessonId}/materials", formData);
 
@@ -361,13 +385,5 @@ namespace CourseMarketplaceFE.Controllers
             }
         }
 
-        [HttpGet("TestCourse/{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> TestCourse(int id)
-        {
-            var materials = await _api.GetAsync($"courses/{id}");
-            var json = await materials.Content.ReadAsStringAsync();
-            return Content(json, "application/json");
-        }
     }
 }

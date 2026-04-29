@@ -33,7 +33,7 @@ namespace CourseMarketplaceFE.Controllers
             public int CourseId { get; set; }
         }
 
-        public async Task<IActionResult> Index(string query, string category, string sort)
+        public async Task<IActionResult> Index(string query, string category, string sort, int page = 1)
         {
             var response = await _apiClient.GetAsync("public/courses");
             if (response.IsSuccessStatusCode)
@@ -41,40 +41,56 @@ namespace CourseMarketplaceFE.Controllers
                 var content = await response.Content.ReadAsStringAsync();
                 var json = JsonDocument.Parse(content);
                 var data = json.RootElement.GetProperty("data").ToString();
-                var courses = JsonSerializer.Deserialize<List<PublicCourseViewModel>>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var allCourses = JsonSerializer.Deserialize<List<PublicCourseViewModel>>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<PublicCourseViewModel>();
                 
-                if (courses != null)
+                // Check wishlist status
+                var wishlistIds = await GetWishlistIdsAsync();
+                foreach (var c in allCourses)
                 {
-                    // Check wishlist status
-                    var wishlistIds = await GetWishlistIdsAsync();
-                    foreach (var c in courses)
-                    {
-                        c.IsInWishlist = wishlistIds.Contains(c.CourseId);
-                    }
-
-                    if (!string.IsNullOrEmpty(query))
-                    {
-                        courses = courses.Where(c => c.Title.Contains(query, StringComparison.OrdinalIgnoreCase) || 
-                                                     (c.Description != null && c.Description.Contains(query, StringComparison.OrdinalIgnoreCase))).ToList();
-                    }
-                    if (!string.IsNullOrEmpty(category))
-                    {
-                        courses = courses.Where(c => string.Equals(c.CategoryName, category, StringComparison.OrdinalIgnoreCase)).ToList();
-                    }
-                    
-                    if (sort == "price_asc")
-                        courses = courses.OrderBy(c => c.Price).ToList();
-                    else if (sort == "price_desc")
-                        courses = courses.OrderByDescending(c => c.Price).ToList();
-                    else if (sort == "rating")
-                        courses = courses.OrderByDescending(c => c.RatingAverage).ToList();
-                    else // default: newest
-                        courses = courses.OrderByDescending(c => c.CreatedAt).ToList();
+                    c.IsInWishlist = wishlistIds.Contains(c.CourseId);
                 }
+
+                // Filtering
+                var filtered = allCourses.AsQueryable();
+                if (!string.IsNullOrEmpty(query))
+                {
+                    filtered = filtered.Where(c => c.Title.Contains(query, StringComparison.OrdinalIgnoreCase) || 
+                                                 (c.Description != null && c.Description.Contains(query, StringComparison.OrdinalIgnoreCase)));
+                }
+                if (!string.IsNullOrEmpty(category))
+                {
+                    filtered = filtered.Where(c => string.Equals(c.CategoryName, category, StringComparison.OrdinalIgnoreCase));
+                }
+                
+                // Sorting
+                if (sort == "price_asc")
+                    filtered = filtered.OrderBy(c => c.Price);
+                else if (sort == "price_desc")
+                    filtered = filtered.OrderByDescending(c => c.Price);
+                else if (sort == "rating")
+                    filtered = filtered.OrderByDescending(c => c.RatingAverage);
+                else // default: newest
+                    filtered = filtered.OrderByDescending(c => c.CreatedAt);
+
+                var final = filtered.ToList();
+
+                // Pagination
+                int pageSize = 12;
+                int totalItems = final.Count;
+                int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+                page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
+
+                var paginatedCourses = final
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
                 
                 ViewBag.Query = query;
                 ViewBag.Category = category;
                 ViewBag.Sort = sort;
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.TotalItems = totalItems;
 
                 var catResponse = await _apiClient.GetAsync("public/courses/categories");
                 if (catResponse.IsSuccessStatusCode)
@@ -85,7 +101,7 @@ namespace CourseMarketplaceFE.Controllers
                     ViewBag.Categories = JsonSerializer.Deserialize<List<CategoryViewModel>>(catData, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 }
 
-                return View(courses ?? new List<PublicCourseViewModel>());
+                return View(paginatedCourses);
             }
             return View(new List<PublicCourseViewModel>());
         }

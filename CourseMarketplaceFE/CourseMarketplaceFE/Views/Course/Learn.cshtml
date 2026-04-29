@@ -245,8 +245,11 @@
                                         <div class="flex-1">
                                             <p class="text-sm font-medium leading-tight mb-1 group-hover:text-[#006a62] transition-colors">@material.Title</p>
                                             <div class="flex items-center gap-2 text-[11px] text-slate-400">
-                                                <span class="material-symbols-outlined text-[14px]">@(mFileType.StartsWith("video") || mFileType == "mp4" ? "ondemand_video" : "description")</span>
-                                                <span>@(material.MaterialMetadata?.Duration / 60 ?? 0)min</span>
+                                                @{
+                                                    bool isVid = mFileType.StartsWith("video") || mFileType == "mp4";
+                                                }
+                                                <span class="material-symbols-outlined text-[14px]">@(isVid ? "ondemand_video" : "description")</span>
+                                                <span>@(isVid ? $"{(material.MaterialMetadata?.Duration / 60 ?? 0)} min" : "Document")</span>
                                             </div>
                                         </div>
                                     </div>
@@ -312,7 +315,13 @@
                 }
                 if (docDownloadFallback) docDownloadFallback.classList.add('hidden');
 
-                videoSource.src = url;
+                // Optimization for Cloudinary URLs
+                let optimizedUrl = url;
+                if (url.includes('cloudinary.com/df8i0azc5/video/upload/')) {
+                    optimizedUrl = url.replace('/video/upload/', '/video/upload/f_auto,q_auto/');
+                }
+
+                videoSource.src = optimizedUrl;
                 videoPlayer.load();
                 videoPlayer.play().catch(e => console.log('Auto-play blocked or failed:', e));
                 

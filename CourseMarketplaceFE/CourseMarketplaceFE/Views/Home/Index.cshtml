@@ -14,6 +14,19 @@
 <style>
     /* Custom Ease cho micro-interactions mượt mà */
     .ease-out-expo { transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1); }
+    
+    @@keyframes marquee {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+    .animate-marquee {
+        display: flex;
+        width: max-content;
+        animation: marquee 40s linear infinite;
+    }
+    .animate-marquee:hover {
+        animation-play-state: paused;
+    }
 </style>
 
 @* ─── HERO SECTION ───────────────────────────────────────────────────────── *@
@@ -78,165 +91,167 @@
 <section class="py-24 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         @{
-            var featuredCourses = Model?.OrderByDescending(c => c.RatingAverage).Take(4).ToList() ?? new List<CourseMarketplaceFE.Models.PublicCourseViewModel>();
-            var recentCourses = Model?.OrderByDescending(c => c.CreatedAt).Take(4).ToList() ?? new List<CourseMarketplaceFE.Models.PublicCourseViewModel>();
+            var featuredCourses = ViewBag.FeaturedCourses as List<CourseMarketplaceFE.Models.PublicCourseViewModel> ?? new List<CourseMarketplaceFE.Models.PublicCourseViewModel>();
         }
         
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-            <div class="max-w-2xl">
-                <h2 class="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">Khóa học nổi bật</h2>
-                <p class="text-lg text-slate-500 leading-relaxed">Tuyển tập những khóa học được đánh giá cao nhất, thiết kế riêng cho mục tiêu nghề nghiệp của bạn.</p>
-            </div>
-            <a href="/Course" class="inline-flex items-center gap-2 text-primary font-bold hover:text-primary/80 transition-colors group pb-1">
-                Xem tất cả khóa học 
-                <span class="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform ease-out-expo">arrow_forward</span>
-            </a>
+        <div class="mb-12">
+            <h2 class="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">Khóa học nổi bật</h2>
+            <p class="text-lg text-slate-500 leading-relaxed">Những khóa học đỉnh cao được cộng đồng bình chọn. Top 3 sẽ nhận được huy hiệu danh dự.</p>
         </div>
 
         @if (!featuredCourses.Any())
         {
-            <div class="py-24 flex flex-col items-center justify-center text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
-                <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-6">
-                    <span class="material-symbols-outlined text-4xl text-slate-300">school</span>
-                </div>
-                <h3 class="text-xl font-bold text-slate-700 mb-2">Chưa có khóa học nào</h3>
-                <p class="text-slate-500">Hệ thống đang cập nhật các khóa học mới. Vui lòng quay lại sau.</p>
+            <div class="py-24 flex flex-col items-center justify-center text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200 mb-24">
+                <h3 class="text-xl font-bold text-slate-700 mb-2">Đang cập nhật danh sách nổi bật...</h3>
             </div>
         }
         else
         {
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mb-24">
-                @foreach (var course in featuredCourses)
-                {
-                    <div class="flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 ease-out-expo group cursor-pointer" 
-                         onclick="location.href='/Course/Details/@course.CourseId'">
-                        <div class="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 shrink-0">
-                            <img src="@(string.IsNullOrEmpty(course.CourseThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800&auto=format&fit=crop" : course.CourseThumbnailUrl)" 
-                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out-expo" 
-                                 alt="@course.Title" loading="lazy" />
-                            <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
-
-                            @* Wishlist Toggle *@
-                            <button type="button" 
-                                    class="absolute top-3 right-3 z-30 w-9 h-9 rounded-full bg-white/90 @(course.IsInWishlist ? "text-red-500" : "text-slate-400") flex items-center justify-center hover:bg-white hover:text-red-500 hover:scale-110 shadow-sm transition-all duration-300"
-                                    onclick="event.stopPropagation(); toggleWishlist(this, @course.CourseId);">
-                                <span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "FILL" @(course.IsInWishlist ? "1" : "0");'>favorite</span>
-                            </button>
-                        </div>
-                        <div class="p-6 flex flex-col flex-grow">
-                            <h3 class="text-lg font-bold text-slate-900 line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
-                                @course.Title
-                            </h3>
-                            <div class="flex items-center gap-2 text-sm text-slate-500 mb-4">
-                                <span class="material-symbols-outlined text-[18px]">person</span>
-                                <span class="truncate">@course.InstructorName</span>
-                            </div>
-                            <div class="flex items-center gap-1.5 mb-6">
-                                <span class="text-sm font-bold text-slate-800">@course.RatingAverage.ToString("F1")</span>
-                                <div class="flex text-amber-400">
-                                    @for(int i=0; i<Math.Floor((double)course.RatingAverage); i++) { <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star</span> }
-                                    @if((double)course.RatingAverage - Math.Floor((double)course.RatingAverage) >= 0.5) { <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star_half</span> }
-                                </div>
-                                <span class="text-xs text-slate-400 font-medium">(@course.TotalStudents)</span>
-                            </div>
-                            <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
-                                <div class="text-xl font-extrabold text-slate-900 tracking-tight">
-                                    @if (course.Price == 0)
+            var isCarousel = featuredCourses.Count > 4;
+            @* Marquee Carousel Section *@
+            <div class="relative overflow-hidden mb-32 -mx-4 sm:-mx-6 lg:-mx-8">
+                <div class="@(isCarousel ? "animate-marquee" : "flex flex-wrap justify-center") gap-8 px-4 sm:px-6 lg:px-8 py-4">
+                    @* Render 2 times only for infinite loop effect if carousel is active *@
+                    @for (int loop = 0; loop < (isCarousel ? 2 : 1); loop++)
+                    {
+                        @for (int i = 0; i < featuredCourses.Count; i++)
+                        {
+                            var course = featuredCourses[i];
+                            var rank = i + 1;
+                            <div class="w-[320px] flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-2 transition-all duration-500 ease-out-expo group cursor-pointer" 
+                                 onclick="location.href='/Course/Details/@course.CourseId'">
+                                <div class="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 shrink-0">
+                                    <img src="@(string.IsNullOrEmpty(course.CourseThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800&auto=format&fit=crop" : course.CourseThumbnailUrl)" 
+                                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out-expo" 
+                                         alt="@course.Title" />
+                                    
+                                    @* Rank Badges for Top 3 *@
+                                    @if (rank <= 3)
                                     {
-                                        <span class="text-emerald-600 uppercase text-lg">Miễn phí</span>
+                                        <div class="absolute top-0 left-0 p-3 z-20">
+                                            @if (rank == 1)
+                                            {
+                                                <div class="bg-amber-400 text-white px-3 py-1 rounded-br-xl rounded-tl-lg font-black text-[10px] flex items-center gap-1 shadow-lg border border-amber-200/50">
+                                                    <span class="material-symbols-outlined text-[12px] fill-current">workspace_premium</span> NO.1
+                                                </div>
+                                            }
+                                            else if (rank == 2)
+                                            {
+                                                <div class="bg-slate-300 text-slate-800 px-3 py-1 rounded-br-xl rounded-tl-lg font-black text-[10px] flex items-center gap-1 shadow-lg border border-slate-200/50">
+                                                    <span class="material-symbols-outlined text-[12px] fill-current">workspace_premium</span> NO.2
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="bg-orange-400 text-white px-3 py-1 rounded-br-xl rounded-tl-lg font-black text-[10px] flex items-center gap-1 shadow-lg border border-orange-200/50">
+                                                    <span class="material-symbols-outlined text-[12px] fill-current">workspace_premium</span> NO.3
+                                                </div>
+                                            }
+                                        </div>
                                     }
-                                    else
-                                    {
-                                        <span>$@course.Price.ToString("N2")</span>
-                                    }
+
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent group-hover:opacity-0 transition-opacity"></div>
                                 </div>
-
-                                <form asp-action="AddToCart" asp-controller="Cart" method="post" class="m-0 z-20">
-                                    <input type="hidden" name="courseId" value="@course.CourseId" />
-                                    <input type="hidden" name="returnUrl" value="/" />
-                                    <button type="submit" 
-                                            class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all duration-300"
-                                            onclick="event.stopPropagation();"
-                                            title="Thêm vào giỏ hàng">
-                                        <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
-                                    </button>
-                                </form>
+                                <div class="p-6 flex flex-col flex-grow">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="text-[9px] font-black text-primary uppercase tracking-widest px-2 py-0.5 bg-primary/5 rounded">Featured</span>
+                                        <div class="flex items-center gap-0.5 text-amber-400">
+                                            <span class="material-symbols-outlined text-[14px] fill-current">star</span>
+                                            <span class="text-xs font-bold text-slate-700">@course.RatingAverage.ToString("F1")</span>
+                                        </div>
+                                    </div>
+                                    <h3 class="text-sm font-bold text-slate-900 line-clamp-2 leading-snug mb-4 group-hover:text-primary transition-colors">
+                                        @course.Title
+                                    </h3>
+                                    <div class="mt-auto flex items-center justify-between border-t border-slate-50 pt-4">
+                                        <span class="text-xs text-slate-500 truncate max-w-[120px]">@course.InstructorName</span>
+                                        <div class="text-base font-black text-slate-900">$@course.Price.ToString("N0")</div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                }
-            </div>
-
-            <!-- Recently Updated -->
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-                <div class="max-w-2xl">
-                    <h2 class="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">Mới cập nhật</h2>
-                    <p class="text-lg text-slate-500 leading-relaxed">Những khóa học mới nhất với kiến thức cập nhật liên tục.</p>
+                        }
+                    }
                 </div>
             </div>
+        }
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-                @foreach (var course in recentCourses)
-                {
-                    <div class="flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 ease-out-expo group cursor-pointer" 
-                         onclick="location.href='/Course/Details/@course.CourseId'">
-                        <div class="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 shrink-0">
-                            <img src="@(string.IsNullOrEmpty(course.CourseThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800&auto=format&fit=crop" : course.CourseThumbnailUrl)" 
-                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out-expo" 
-                                 alt="@course.Title" loading="lazy" />
-                            <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
+        <!-- Mới cập nhật -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div class="max-w-2xl">
+                <h2 class="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">Mới cập nhật</h2>
+                <p class="text-lg text-slate-500 leading-relaxed">Top 8 khóa học vừa cập nhật kiến thức mới nhất trong tuần này.</p>
+            </div>
+            <a href="/Course?sort=newest" class="inline-flex items-center gap-2 text-primary font-bold hover:text-primary/80 transition-colors group">
+                Xem tất cả 
+                <span class="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform ease-out-expo">arrow_forward</span>
+            </a>
+        </div>
 
-                            @* Wishlist Toggle *@
-                            <button type="button" 
-                                    class="absolute top-3 right-3 z-30 w-9 h-9 rounded-full bg-white/90 @(course.IsInWishlist ? "text-red-500" : "text-slate-400") flex items-center justify-center hover:bg-white hover:text-red-500 hover:scale-110 shadow-sm transition-all duration-300"
-                                    onclick="event.stopPropagation(); toggleWishlist(this, @course.CourseId);">
-                                <span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "FILL" @(course.IsInWishlist ? "1" : "0");'>favorite</span>
-                            </button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mb-24">
+            @{
+                var recentCourses = ViewBag.RecentCourses as List<CourseMarketplaceFE.Models.PublicCourseViewModel> ?? new List<CourseMarketplaceFE.Models.PublicCourseViewModel>();
+            }
+            @foreach (var course in recentCourses)
+            {
+                <div class="flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 ease-out-expo group cursor-pointer" 
+                     onclick="location.href='/Course/Details/@course.CourseId'">
+                    <div class="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 shrink-0">
+                        <img src="@(string.IsNullOrEmpty(course.CourseThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800&auto=format&fit=crop" : course.CourseThumbnailUrl)" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out-expo" 
+                             alt="@course.Title" loading="lazy" />
+                        <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
+
+                        @* Wishlist Toggle *@
+                        <button type="button" 
+                                class="absolute top-3 right-3 z-30 w-9 h-9 rounded-full bg-white/90 @(course.IsInWishlist ? "text-red-500" : "text-slate-400") flex items-center justify-center hover:bg-white hover:text-red-500 hover:scale-110 shadow-sm transition-all duration-300"
+                                onclick="event.stopPropagation(); toggleWishlist(this, @course.CourseId);">
+                            <span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "FILL" @(course.IsInWishlist ? "1" : "0");'>favorite</span>
+                        </button>
+                    </div>
+                    <div class="p-6 flex flex-col flex-grow">
+                        <h3 class="text-lg font-bold text-slate-900 line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
+                            @course.Title
+                        </h3>
+                        <div class="flex items-center gap-2 text-sm text-slate-500 mb-4">
+                            <span class="material-symbols-outlined text-[18px]">person</span>
+                            <span class="truncate">@course.InstructorName</span>
                         </div>
-                        <div class="p-6 flex flex-col flex-grow">
-                            <h3 class="text-lg font-bold text-slate-900 line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
-                                @course.Title
-                            </h3>
-                            <div class="flex items-center gap-2 text-sm text-slate-500 mb-4">
-                                <span class="material-symbols-outlined text-[18px]">person</span>
-                                <span class="truncate">@course.InstructorName</span>
+                        <div class="flex items-center gap-1.5 mb-6">
+                            <span class="text-sm font-bold text-slate-800">@course.RatingAverage.ToString("F1")</span>
+                            <div class="flex text-amber-400">
+                                @for(int i=0; i<Math.Floor((double)course.RatingAverage); i++) { <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star</span> }
+                                @if((double)course.RatingAverage - Math.Floor((double)course.RatingAverage) >= 0.5) { <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star_half</span> }
                             </div>
-                            <div class="flex items-center gap-1.5 mb-6">
-                                <span class="text-sm font-bold text-slate-800">@course.RatingAverage.ToString("F1")</span>
-                                <div class="flex text-amber-400">
-                                    @for(int i=0; i<Math.Floor((double)course.RatingAverage); i++) { <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star</span> }
-                                    @if((double)course.RatingAverage - Math.Floor((double)course.RatingAverage) >= 0.5) { <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star_half</span> }
-                                </div>
-                                <span class="text-xs text-slate-400 font-medium">(@course.TotalStudents)</span>
+                            <span class="text-xs text-slate-400 font-medium">(@course.TotalStudents)</span>
+                        </div>
+                        <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                            <div class="text-xl font-extrabold text-slate-900 tracking-tight">
+                                @if (course.Price == 0)
+                                {
+                                    <span class="text-emerald-600 uppercase text-lg">Miễn phí</span>
+                                }
+                                else
+                                {
+                                    <span>$@course.Price.ToString("N2")</span>
+                                }
                             </div>
-                            <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
-                                <div class="text-xl font-extrabold text-slate-900 tracking-tight">
-                                    @if (course.Price == 0)
-                                    {
-                                        <span class="text-emerald-600 uppercase text-lg">Miễn phí</span>
-                                    }
-                                    else
-                                    {
-                                        <span>$@course.Price.ToString("N2")</span>
-                                    }
-                                </div>
 
-                                <form asp-action="AddToCart" asp-controller="Cart" method="post" class="m-0 z-20">
-                                    <input type="hidden" name="courseId" value="@course.CourseId" />
-                                    <input type="hidden" name="returnUrl" value="/" />
-                                    <button type="submit" 
-                                            class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all duration-300"
-                                            onclick="event.stopPropagation();"
-                                            title="Thêm vào giỏ hàng">
-                                        <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
-                                    </button>
-                                </form>
-                            </div>
+                            <form asp-action="AddToCart" asp-controller="Cart" method="post" class="m-0 z-20">
+                                <input type="hidden" name="courseId" value="@course.CourseId" />
+                                <input type="hidden" name="returnUrl" value="/" />
+                                <button type="submit" 
+                                        class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all duration-300"
+                                        onclick="event.stopPropagation();"
+                                        title="Thêm vào giỏ hàng">
+                                    <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
+                                </button>
+                            </form>
                         </div>
                     </div>
-                }
-            </div>
-        }
+                </div>
+            }
+        </div>
+        </div>
     </div>
 </section>
 
