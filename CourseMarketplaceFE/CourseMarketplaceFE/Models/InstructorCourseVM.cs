@@ -40,5 +40,12 @@ namespace CourseMarketplaceFE.Models
         public double AverageRating { get; set; }
         public int ActiveCoursesCount { get; set; }
         public decimal TotalRevenue { get; set; }
+        
+        // Pagination & Search
+        public int CurrentPage { get; set; }
+        public int TotalPages { get; set; }
+        public int TotalItems { get; set; }
+        public string? SearchTerm { get; set; }
+        public string? FilterStatus { get; set; }
     }
 }

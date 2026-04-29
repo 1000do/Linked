@@ -39,7 +39,7 @@
             <div>
                 <label asp-for="CategoryId" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Category</label>
                 <div class="relative">
-                    <select asp-for="CategoryId" class="w-full bg-slate-50 border-none rounded-xl py-4 px-4 pr-10 text-slate-800 focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none">
+                    <select asp-for="CategoryId" class="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-4 pr-10 text-slate-800 focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none cursor-pointer transition-all">
                         <option value="0">Select Category</option>
                         @if (Model.AvailableCategories != null)
                         {
@@ -49,7 +49,9 @@
                             }
                         }
                     </select>
-                    <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                        <span class="material-symbols-outlined text-slate-400 text-[20px]">unfold_more</span>
+                    </div>
                 </div>
                 <span asp-validation-for="CategoryId" class="text-red-500 text-xs mt-1 block"></span>
             </div>

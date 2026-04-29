@@ -64,11 +64,21 @@
                             <!-- Category -->
                             <div class="space-y-4">
                                 <label class="text-sm font-bold text-slate-900 block">Category</label>
-                                <select id="course-category-input" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary">
-                                    <!option value="1" @(ViewBag.CategoryId == 1 ? "selected" : "")>Design & Creative</!option>
-                                    <!option value="2" @(ViewBag.CategoryId == 2 ? "selected" : "")>Development</!option>
-                                    <!option value="3" @(ViewBag.CategoryId == 3 ? "selected" : "")>Business</!option>
-                                </select>
+                                <div class="relative">
+                                    <select id="course-category-input" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary appearance-none pr-10 transition-all cursor-pointer">
+                                        <option value="0">Select Category</option>
+                                        @if (ViewBag.AvailableCategories != null)
+                                        {
+                                            foreach (var cat in (List<CourseMarketplaceFE.Models.CategoryViewModel>)ViewBag.AvailableCategories)
+                                            {
+                                                <option value="@cat.CategoryId" selected="@(ViewBag.CategoryId == cat.CategoryId)">@cat.CategoriesName</option>
+                                            }
+                                        }
+                                    </select>
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                        <span class="material-symbols-outlined text-slate-400 text-[20px]">expand_all</span>
+                                    </div>
+                                </div>
                             </div>
                             <!-- Price -->
                             <div class="space-y-4">
@@ -784,10 +794,28 @@
         ['dragleave','drop'].forEach(ev => videoDropArea.addEventListener(ev, () => videoDropArea.classList.remove('border-primary','bg-primary/5'), false));
         videoDropArea.addEventListener('drop', e => handleVideoUpload(e.dataTransfer.files), false);
 
-        function handleVideoUpload(files) {
+        async function handleVideoUpload(files) {
             if (!files.length) return;
             const file = files[0];
-            if (!file.type.startsWith('video/')) { alert('Please upload a video file.'); return; }
+            if (!file.type.startsWith('video/')) { 
+                Swal.fire('Invalid File', 'Please upload a video file.', 'warning');
+                return; 
+            }
+            
+            // Analyze file size and show tip if heavy
+            const sizeInMB = file.size / (1024 * 1024);
+            if (sizeInMB > 50) {
+                const proceed = await Swal.fire({
+                    title: 'Large File Detected',
+                    text: `This video is ${sizeInMB.toFixed(1)}MB. Large files take longer to upload and might lag for students. We recommend compressing it below 20MB using a tool like "MP4 Converter" before uploading. Proceed anyway?`,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, upload anyway',
+                    cancelButtonText: 'I will compress it first'
+                });
+                if (!proceed.isConfirmed) { videoInput.value = ''; return; }
+            }
+
             videoDropArea.classList.add('hidden');
             uiProgress.classList.remove('hidden');
             document.getElementById('upload-filename-display').textContent = `Uploading "${file.name}"`;
@@ -795,26 +823,76 @@
 
             const CLOUD_NAME = 'df8i0azc5';
             const UPLOAD_PRESET = 'course_marketplace_preset';
-            const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`;
-            const fd = new FormData(); fd.append('upload_preset', UPLOAD_PRESET); fd.append('file', file);
-            const xhr = new XMLHttpRequest(); currentXHR = xhr;
-
-            xhr.upload.addEventListener('progress', e => {
-                if (e.lengthComputable) { const pct = Math.round(e.loaded/e.total*100); progressBarFill.style.width=pct+'%'; progressText.textContent=pct; }
-            });
-            xhr.addEventListener('load', () => {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    const data = JSON.parse(xhr.responseText);
-                    setTimeout(() => { uiProgress.classList.add('hidden'); uiSuccess.classList.remove('hidden'); uploadedFilename.textContent=file.name; materialUrlInput.value=data.secure_url; }, 400);
-                } else { handleUploadError('Upload failed: ' + xhr.statusText); }
-            });
-            xhr.addEventListener('error', () => handleUploadError('Network error during upload.'));
-            xhr.addEventListener('abort', () => resetVideoUpload());
-            xhr.open('POST', url, true); xhr.send(fd);
+            
+            // Use Chunked Upload for stability
+            const chunkSize = 6 * 1024 * 1024; // 6MB chunks
+            const totalChunks = Math.ceil(file.size / chunkSize);
+            const uniqueUploadId = 'vid_' + Date.now() + '_' + Math.random().toString(36).substring(7);
+            
+            try {
+                for (let i = 0; i < totalChunks; i++) {
+                    const start = i * chunkSize;
+                    const end = Math.min(start + chunkSize, file.size);
+                    const chunk = file.slice(start, end);
+                    
+                    const fd = new FormData();
+                    fd.append('upload_preset', UPLOAD_PRESET);
+                    fd.append('file', chunk);
+                    
+                    const xhr = new XMLHttpRequest();
+                    currentXHR = xhr;
+                    
+                    const promise = new Promise((resolve, reject) => {
+                        xhr.upload.addEventListener('progress', e => {
+                            if (e.lengthComputable) {
+                                const currentUploaded = start + e.loaded;
+                                const totalPct = Math.round((currentUploaded / file.size) * 100);
+                                progressBarFill.style.width = totalPct + '%';
+                                progressText.textContent = totalPct;
+                            }
+                        });
+                        
+                        xhr.addEventListener('load', () => {
+                            if (xhr.status >= 200 && xhr.status < 300) {
+                                resolve(JSON.parse(xhr.responseText));
+                            } else {
+                                reject('Chunk upload failed: ' + xhr.statusText);
+                            }
+                        });
+                        xhr.addEventListener('error', () => reject('Network error.'));
+                        xhr.addEventListener('abort', () => reject('Aborted'));
+                    });
+                    
+                    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`, true);
+                    xhr.setRequestHeader('X-Unique-Upload-Id', uniqueUploadId);
+                    xhr.setRequestHeader('Content-Range', `bytes ${start}-${end - 1}/${file.size}`);
+                    xhr.send(fd);
+                    
+                    const result = await promise;
+                    if (i === totalChunks - 1) {
+                        // Last chunk returns the final object
+                        setTimeout(() => {
+                            uiProgress.classList.add('hidden');
+                            uiSuccess.classList.remove('hidden');
+                            uploadedFilename.textContent = file.name;
+                            materialUrlInput.value = result.secure_url;
+                            // Capture metadata for the database
+                            materialUrlInput.dataset.duration = Math.round(result.duration || 0);
+                            materialUrlInput.dataset.fileSize = result.bytes || 0;
+                            materialUrlInput.dataset.format = result.format || '';
+                        }, 400);
+                    }
+                }
+            } catch (err) {
+                if (err !== 'Aborted') handleUploadError(err);
+            }
         }
 
         document.getElementById('cancel-upload').addEventListener('click', () => { if(currentXHR) currentXHR.abort(); });
-        function handleUploadError(msg) { alert(msg); resetVideoUpload(); }
+        function handleUploadError(msg) { 
+            Swal.fire('Upload Failed', msg, 'error');
+            resetVideoUpload(); 
+        }
         function resetVideoUpload() { videoDropArea.classList.remove('hidden'); uiProgress.classList.add('hidden'); uiSuccess.classList.add('hidden'); videoInput.value=''; materialUrlInput.value=''; }
         window.resetVideoUpload = resetVideoUpload;
 
@@ -839,6 +917,11 @@
                 if(description && description !== '<p><br></p>') fd.append('description', description);
                 fd.append('materialUrl', materialUrl);
                 fd.append('type', 'video');
+                
+                // Pass metadata captured from Cloudinary
+                if (materialUrlInput.dataset.duration) fd.append('duration', materialUrlInput.dataset.duration);
+                if (materialUrlInput.dataset.fileSize) fd.append('fileSize', materialUrlInput.dataset.fileSize);
+                if (materialUrlInput.dataset.format) fd.append('fileExtension', materialUrlInput.dataset.format);
                 
                 const res = await fetch('/InstructorCourse/AddMaterial', { method: 'POST', body: fd });
                 if(res.ok) {
@@ -872,6 +955,11 @@
                 if(description && description !== '<p><br></p>') fd.append('description', description);
                 fd.append('materialUrl', resourceUrl);
                 fd.append('type', 'document');
+                
+                // Pass metadata
+                const resUrlInput = document.getElementById('ResourceUrl');
+                if (resUrlInput.dataset.fileSize) fd.append('fileSize', resUrlInput.dataset.fileSize);
+                if (resUrlInput.dataset.format) fd.append('fileExtension', resUrlInput.dataset.format);
                 
                 const res = await fetch('/InstructorCourse/AddMaterial', { method: 'POST', body: fd });
                 if(res.ok) {
@@ -1002,14 +1090,20 @@
                     if (data.secure_url) {
                         document.getElementById('resource-file-name').textContent = file.name;
                         document.getElementById('resource-title-input').value = file.name;
-                        document.getElementById('ResourceUrl').value = data.secure_url;
+                        const resUrlInput = document.getElementById('ResourceUrl');
+                        resUrlInput.value = data.secure_url;
+                        
+                        // Capture metadata
+                        resUrlInput.dataset.fileSize = data.bytes || 0;
+                        resUrlInput.dataset.format = data.format || '';
+                        
                         resourceBtnEl.innerHTML = 'Change File';
                     }
                 })
                 .catch(err => {
                     resourceProgressEl.classList.add('hidden');
                     resourceBtnEl.classList.remove('hidden');
-                    alert('Resource upload failed');
+                    Swal.fire('Resource Upload Failed', 'An error occurred while uploading your resource.', 'error');
                 });
             }
         });

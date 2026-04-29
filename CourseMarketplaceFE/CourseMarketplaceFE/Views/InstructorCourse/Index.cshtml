@@ -24,9 +24,14 @@
                     <span class="material-symbols-outlined text-[18px]">grid_view</span> Grid
                 </button>
             </div>
-            <button id="filter-btn" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm">
-                <span class="material-symbols-outlined text-[18px]">filter_list</span> Filters
-            </button>
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Status:</label>
+                <select id="status-filter" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors outline-none text-sm cursor-pointer">
+                    <option value="All" selected="@(Model.FilterStatus == "All")">All Status</option>
+                    <option value="Draft" selected="@(Model.FilterStatus == "Draft")">Draft</option>
+                    <option value="Published" selected="@(Model.FilterStatus == "Published")">Published</option>
+                </select>
+            </div>
         </div>
     </div>
 
@@ -62,7 +67,7 @@
     <div class="flex items-center justify-between mb-6">
         <div class="w-96 relative">
             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
-            <input type="text" placeholder="Search courses or resources..." class="w-full bg-white border border-slate-200 rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-slate-400" />
+            <input type="text" id="course-search-input" placeholder="Search courses by title..." value="@Model.SearchTerm" class="w-full bg-white border border-slate-200 rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-slate-400" />
         </div>
         <a href="/InstructorCourse/Create" class="px-5 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/20 flex items-center gap-2">
             <span class="material-symbols-outlined text-[18px]">add</span>
@@ -157,7 +162,30 @@
         </table>
         
         <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50/30">
-            <p class="text-sm text-slate-500">Showing <span class="font-bold text-slate-700">1-@courseList.Count</span> of <span class="font-bold text-slate-700">@courseList.Count</span> courses</p>
+            <p class="text-sm text-slate-500">
+                Showing <span class="font-bold text-slate-700">@((Model.CurrentPage - 1) * 6 + 1) - @Math.Min(Model.CurrentPage * 6, Model.TotalItems)</span> of <span class="font-bold text-slate-700">@Model.TotalItems</span> courses
+            </p>
+            
+            <!-- Pagination Controls -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="flex items-center gap-1">
+                    <button onclick="changePage(@(Model.CurrentPage - 1))" @(Model.CurrentPage == 1 ? "disabled" : "") class="p-2 rounded-lg border border-slate-200 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                    </button>
+                    
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <button onclick="changePage(@i)" class="w-10 h-10 rounded-lg border @(Model.CurrentPage == i ? "bg-primary text-white border-primary font-bold" : "border-slate-200 hover:bg-white text-slate-600 font-semibold") transition-all">
+                            @i
+                        </button>
+                    }
+
+                    <button onclick="changePage(@(Model.CurrentPage + 1))" @(Model.CurrentPage == Model.TotalPages ? "disabled" : "") class="p-2 rounded-lg border border-slate-200 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                    </button>
+                </div>
+            }
         </div>
     </div>
 
@@ -259,6 +287,35 @@
             });
         });
 
+        // Search and Filter Logic
+        const searchInput = document.getElementById('course-search-input');
+        const statusFilter = document.getElementById('status-filter');
+
+        function updateFilters(newPage = 1) {
+            const searchTerm = searchInput.value.trim();
+            const status = statusFilter.value;
+            
+            let url = new URL(window.location.origin + window.location.pathname);
+            if (searchTerm) url.searchParams.set('searchTerm', searchTerm);
+            if (status && status !== 'All') url.searchParams.set('status', status);
+            if (newPage > 1) url.searchParams.set('page', newPage);
+            
+            window.location.href = url.toString();
+        }
+
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') updateFilters(1);
+        });
+
+        statusFilter.addEventListener('change', () => {
+            updateFilters(1);
+        });
+
+        window.changePage = function(page) {
+            if (page < 1 || page > @Model.TotalPages) return;
+            updateFilters(page);
+        };
+
         // Delete modal
         let deleteTargetId = null;
         function confirmDelete(id, name) {
@@ -280,9 +337,9 @@
                     if (result.success) {
                         location.reload();
                     } else {
-                        alert('Delete failed: ' + (result.message || 'Unknown error'));
+                        Swal.fire('Error', 'Delete failed: ' + (result.message || 'Unknown error'), 'error');
                     }
-                } catch(e) { alert('Error: ' + e.message); }
+                } catch(e) { Swal.fire('Error', 'An error occurred: ' + e.message, 'error'); }
                 btn.disabled = false; btn.textContent = 'Delete';
                 closeDeleteModal();
             }

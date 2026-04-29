@@ -13,7 +13,7 @@ namespace CourseMarketplaceFE.Controllers
         {
             _apiClient = apiClient;
         }
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1)
         {
             var courses = new List<PublicCourseViewModel>();
             var response = await _apiClient.GetAsync("public/courses");
@@ -22,23 +22,46 @@ namespace CourseMarketplaceFE.Controllers
                 var content = await response.Content.ReadAsStringAsync();
                 var json = JsonDocument.Parse(content);
                 var data = json.RootElement.GetProperty("data").ToString();
-                courses = JsonSerializer.Deserialize<List<PublicCourseViewModel>>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<PublicCourseViewModel>();
+                var allCourses = JsonSerializer.Deserialize<List<PublicCourseViewModel>>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<PublicCourseViewModel>();
 
                 // Check wishlist status
                 var wishResponse = await _apiClient.GetAsync("wishlist");
+                var wishlistIds = new List<int>();
                 if (wishResponse.IsSuccessStatusCode)
                 {
                     var wishContent = await wishResponse.Content.ReadAsStringAsync();
                     var wishJson = JsonDocument.Parse(wishContent);
                     var wishData = wishJson.RootElement.GetProperty("data");
                     var wishlist = JsonSerializer.Deserialize<List<WishlistIdItem>>(wishData.ToString(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    var wishlistIds = wishlist?.Select(w => w.CourseId).ToList() ?? new List<int>();
-                    
-                    foreach (var c in courses)
-                    {
-                        c.IsInWishlist = wishlistIds.Contains(c.CourseId);
-                    }
+                    wishlistIds = wishlist?.Select(w => w.CourseId).ToList() ?? new List<int>();
                 }
+
+                foreach (var c in allCourses)
+                {
+                    c.IsInWishlist = wishlistIds.Contains(c.CourseId);
+                }
+
+                // Sorting for Home: newest first
+                var final = allCourses.OrderByDescending(c => c.CreatedAt).ToList();
+
+                // Pagination
+                int pageSize = 8;
+                int totalItems = final.Count;
+                int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+                page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
+
+                courses = final
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.TotalItems = totalItems;
+
+                // Data for specific sections
+                ViewBag.FeaturedCourses = allCourses.OrderByDescending(c => c.RatingAverage).ThenByDescending(c => c.TotalStudents).Take(10).ToList();
+                ViewBag.RecentCourses = allCourses.OrderByDescending(c => c.CreatedAt).Take(8).ToList();
             }
 
             var catResponse = await _apiClient.GetAsync("public/courses/categories");
