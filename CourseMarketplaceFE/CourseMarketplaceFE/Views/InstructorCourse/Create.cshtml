@@ -126,7 +126,7 @@
                     </div>
                     <div>
                         <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Instructor Revenue</p>
-                        <p class="font-bold text-slate-900 text-lg">90% Share</p>
+                        <p class="font-bold text-slate-900 text-lg">70% Share</p>
                         <p class="text-[10px] text-slate-500 mt-1">Estimated payout per sale: <span id="payout-estimate">$0.00</span></p>
                     </div>
                 </div>
@@ -226,7 +226,7 @@
         const priceInput = document.getElementById('Price');
         
         function updatePayout(val) {
-            document.getElementById('payout-estimate').textContent = '$' + ((parseFloat(val)||0)*0.9).toFixed(2);
+            document.getElementById('payout-estimate').textContent = '$' + ((parseFloat(val)||0)*0.7).toFixed(2);
         }
 
         window.formatPrice = function(input) {

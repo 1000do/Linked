@@ -42,6 +42,12 @@ public class CourseRepository : ICourseRepository
         return await _context.Categories.AsNoTracking().ToListAsync();
     }
 
+    public async Task<bool> IsEnrolledAsync(int userId, int courseId)
+    {
+        return await _context.Enrollments
+            .AnyAsync(e => e.UserId == userId && e.CourseId == courseId);
+    }
+
     public async Task<Course?> GetCourseWithDetailsAsync(int courseId)
     {
         return await _context.Courses

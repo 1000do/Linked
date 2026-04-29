@@ -248,6 +248,8 @@ CREATE TABLE reviews (
 	enrollment_id INT REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
     rating NUMERIC(3,2) CHECK (rating >= 0 AND rating <= 5),
     comment TEXT,
+    review_source VARCHAR(20) DEFAULT 'detail', -- 'detail' = tổng hợp từ trang chi tiết, 'learn' = từ trang học (lesson cụ thể)
+    lesson_id INT REFERENCES lessons(lesson_id) ON DELETE SET NULL, -- NULL = review tổng, có giá trị = review cho lesson cụ thể
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_removed BOOLEAN DEFAULT FALSE

@@ -31,7 +31,15 @@
                 <span class="material-symbols-outlined">arrow_back</span>
             </a>
             <div class="h-6 w-px bg-white/20"></div>
-            <h1 class="font-bold text-sm truncate max-w-md">@Model.Title</h1>
+            <div class="flex flex-col">
+                <h1 class="font-bold text-sm truncate max-w-md">@Model.Title</h1>
+                <div class="flex items-center gap-2 mt-0.5">
+                    <div class="w-32 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                        <div id="top-progress-bar" class="h-full bg-[#43e8d8] transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <span id="top-progress-text" class="text-[10px] font-bold text-white/70">0% complete</span>
+                </div>
+            </div>
         </div>
         <div class="flex items-center gap-6 text-sm font-bold">
             <div class="flex items-center gap-2">
@@ -124,80 +132,60 @@
                         </div>
                     </div>
 
-                    <!-- Reviews Tab Content (Hardcoded) -->
+                    <!-- Reviews Tab Content -->
                     <div id="tab-reviews" class="tab-content hidden text-slate-700">
                         <h2 class="text-xl font-extrabold mb-6 text-[#191c1b]">Student Feedback</h2>
                         
+                        <!-- Dynamic stats (populated via JS) -->
                         <div class="flex flex-col md:flex-row gap-8 mb-10 items-start">
                             <div class="text-center w-32 shrink-0">
-                                <p class="text-5xl font-extrabold text-[#006a62] mb-1">4.8</p>
-                                <div class="flex justify-center text-amber-500 mb-1">
-                                    <span class="material-symbols-outlined text-[20px] fill-1">star</span>
-                                    <span class="material-symbols-outlined text-[20px] fill-1">star</span>
-                                    <span class="material-symbols-outlined text-[20px] fill-1">star</span>
-                                    <span class="material-symbols-outlined text-[20px] fill-1">star</span>
-                                    <span class="material-symbols-outlined text-[20px] fill-1">star_half</span>
-                                </div>
-                                <p class="text-xs font-bold text-[#006a62]">Course Rating</p>
+                                <p id="learn-stats-avg" class="text-5xl font-extrabold text-[#006a62] mb-1">—</p>
+                                <div id="learn-stats-stars" class="flex justify-center text-amber-500 mb-1"></div>
+                                <p id="learn-stats-total" class="text-xs font-bold text-[#006a62]">Course Rating</p>
                             </div>
                             
-                            <div class="flex-1 w-full space-y-1.5 max-w-md">
-                                @foreach (var star in new[] { new { n = 5, p = 70 }, new { n = 4, p = 20 }, new { n = 3, p = 7 }, new { n = 2, p = 2 }, new { n = 1, p = 1 } })
-                                {
-                                    <div class="flex items-center gap-3 group cursor-pointer">
-                                        <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                            <div class="h-full bg-slate-400 group-hover:bg-[#006a62] transition-colors" style="width: @star.p%"></div>
-                                        </div>
-                                        <div class="flex items-center gap-1 w-28 shrink-0">
-                                            <div class="flex text-amber-500">
-                                                @for (int i = 0; i < 5; i++) {
-                                                    <span class="material-symbols-outlined text-[14px] @(i < star.n ? "fill-1" : "")">star</span>
-                                                }
-                                            </div>
-                                            <span class="text-xs text-[#006a62] font-bold">@star.p%</span>
-                                        </div>
-                                    </div>
-                                }
+                            <div id="learn-stats-bars" class="flex-1 w-full space-y-1.5 max-w-md">
+                                <!-- Dynamic bars -->
                             </div>
                         </div>
 
                         <div class="space-y-6">
-                            <h3 class="font-bold text-lg text-[#191c1b]">Reviews</h3>
-                            <div class="flex gap-3 mb-6">
-                                <div class="flex-1 relative">
-                                    <input type="text" placeholder="Search reviews" class="w-full bg-white border border-slate-300 rounded py-2 px-4 text-sm focus:outline-none focus:ring-1 focus:ring-[#006a62]" />
-                                    <button class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"><span class="material-symbols-outlined text-[20px]">search</span></button>
+                            <h3 class="font-bold text-lg text-[#191c1b] mb-4">Reviews</h3>
+                            
+                            <!-- Submit Review Form (conditionally shown by JS) -->
+                            <div id="learn-review-form" class="hidden">
+                                <div class="bg-gradient-to-r from-[#006a62]/5 to-[#43e8d8]/10 p-6 rounded-2xl border border-[#006a62]/20 mb-8">
+                                    <h4 class="font-bold text-sm mb-1 text-[#006a62]">✍️ Viết đánh giá của bạn</h4>
+                                    <p class="text-xs text-slate-500 mb-4">Đánh giá sau khi bạn đã trải nghiệm bài học</p>
+                                    <div class="flex gap-1 mb-4" id="rating-input">
+                                        @for (int i = 1; i <= 5; i++) {
+                                            <button onclick="setRating(@i)" class="star-btn text-slate-300 hover:text-amber-500 transition-colors">
+                                                <span class="material-symbols-outlined text-3xl">star</span>
+                                            </button>
+                                        }
+                                        <input type="hidden" id="selected-rating" value="0" />
+                                    </div>
+                                    <textarea id="review-comment" rows="3" class="w-full bg-white border border-slate-200 rounded-lg p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#006a62]/20 mb-4" placeholder="Chia sẻ trải nghiệm học tập của bạn..."></textarea>
+                                    <button onclick="submitReview()" id="submit-review-btn" class="bg-[#006a62] text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-[#00544e] transition-all flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-[18px]">send</span>
+                                        Gửi đánh giá
+                                    </button>
                                 </div>
-                                <select class="bg-white border border-slate-300 rounded py-2 px-4 text-sm font-bold text-slate-700 focus:outline-none">
-                                    <option>All ratings</option>
-                                </select>
                             </div>
 
-                            <!-- Review Item -->
-                            <div class="border-t border-slate-100 pt-6">
-                                <div class="flex gap-4 mb-3">
-                                    <div class="w-10 h-10 rounded-full bg-[#191c1b] text-white flex items-center justify-center font-bold text-sm">JD</div>
+                            <!-- Blocked message for users who haven't learned yet -->
+                            <div id="learn-review-blocked" class="hidden mb-8">
+                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-[#006a62] text-xl mt-0.5">school</span>
                                     <div>
-                                        <h4 class="font-bold text-sm text-[#191c1b]">John Doe</h4>
-                                        <div class="flex items-center gap-2">
-                                            <div class="flex text-amber-500">
-                                                @for (int i = 0; i < 5; i++) { <span class="material-symbols-outlined text-[14px] fill-1">star</span> }
-                                            </div>
-                                            <span class="text-[11px] text-slate-400 font-medium">1 week ago</span>
-                                        </div>
+                                        <p id="learn-blocked-msg" class="text-sm font-medium text-slate-700"></p>
+                                        <p class="text-xs text-slate-500 mt-1">Hoàn thành ít nhất 1 bài học để mở khóa chức năng đánh giá.</p>
                                     </div>
                                 </div>
-                                <p class="text-sm text-slate-700 leading-relaxed mb-4">
-                                    This course is amazing! The instructor explains complex concepts in a very simple way. I've learned more in 2 hours than I did in a month of self-study.
-                                </p>
-                                <div class="flex items-center gap-4 text-xs text-slate-500">
-                                    <span class="text-[11px]">Was this review helpful?</span>
-                                    <div class="flex gap-2">
-                                        <button class="w-8 h-8 flex items-center justify-center hover:bg-slate-100 border border-slate-300 rounded-full transition-colors"><span class="material-symbols-outlined text-[18px]">thumb_up</span></button>
-                                        <button class="w-8 h-8 flex items-center justify-center hover:bg-slate-100 border border-slate-300 rounded-full transition-colors"><span class="material-symbols-outlined text-[18px]">thumb_down</span></button>
-                                    </div>
-                                    <button class="hover:underline text-[11px]">Report</button>
-                                </div>
+                            </div>
+
+                            <div id="learn-reviews-list" class="space-y-6">
+                                <!-- Loaded via JS -->
                             </div>
                         </div>
                     </div>
@@ -233,7 +221,7 @@
                                 }
 
                                 <div class="material-item group cursor-pointer border-b border-slate-50 @(material == firstMaterial ? "active-material" : "")"
-                                     onclick="playMaterial('@material.MaterialUrl', '@material.Title', '@(material.Description?.Replace("'", "\\'"))', this, '@mFileType')">
+                                      onclick="playMaterial('@material.MaterialUrl', '@material.Title', '@(material.Description?.Replace("'", "\\'"))', this, '@mFileType', @material.MaterialId, @lesson.LessonId)">
                                     <div class="px-4 py-4 flex gap-3">
                                         <div class="flex flex-col items-center pt-1 shrink-0">
                                             @if (mFileType.StartsWith("video") || mFileType == "mp4") {
@@ -262,6 +250,8 @@
         </aside>
     </div>
 
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         const videoPlayer = document.getElementById('main-video');
         const videoSource = document.getElementById('video-source');
@@ -274,8 +264,205 @@
         const titleEl = document.getElementById('current-material-title');
         const descEl = document.getElementById('current-material-desc');
 
+        let currentMaterialId = 0;
+        let currentLessonId = 0;
+
+        async function loadProgress() {
+            try {
+                const res = await fetch('/Course/GetProgress/@Model.CourseId');
+                const result = await res.json();
+                if (result.success) {
+                    const pct = Math.round(result.data.progressPercentage);
+                    document.getElementById('top-progress-bar').style.width = pct + '%';
+                    document.getElementById('top-progress-text').textContent = pct + '% complete';
+                }
+            } catch (e) {}
+        }
+
+        async function markAsCompleted(materialId) {
+            try {
+                await fetch('/Course/UpdateProgress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ courseId: @Model.CourseId, materialId: materialId })
+                });
+                loadProgress();
+                // Re-check eligibility after progress update (user might now be able to review)
+                loadLearnEligibility();
+            } catch (e) {}
+        }
+
+        videoPlayer.onended = () => {
+            if (currentMaterialId) markAsCompleted(currentMaterialId);
+        };
+
+        // ── Stats (dynamic from DB) ────────────────────────────────
+        async function loadLearnStats() {
+            try {
+                const res = await fetch('/Course/GetReviewStats/@Model.CourseId');
+                const result = await res.json();
+                if (result.success && result.data) {
+                    const d = result.data;
+                    document.getElementById('learn-stats-avg').textContent = (d.averageRating || 0).toFixed(1);
+                    document.getElementById('learn-stats-total').textContent = `${d.totalReviews || 0} đánh giá`;
+                    const avg = Math.round(d.averageRating || 0);
+                    document.getElementById('learn-stats-stars').innerHTML = Array(5).fill(0).map((_, i) =>
+                        `<span class="material-symbols-outlined text-[20px] ${i < avg ? 'fill-1' : ''}">star</span>`
+                    ).join('');
+                    const bars = [
+                        { n: 5, pct: d.star5Pct },
+                        { n: 4, pct: d.star4Pct },
+                        { n: 3, pct: d.star3Pct },
+                        { n: 2, pct: d.star2Pct },
+                        { n: 1, pct: d.star1Pct }
+                    ];
+                    document.getElementById('learn-stats-bars').innerHTML = bars.map(b => `
+                        <div class="flex items-center gap-3 group cursor-pointer">
+                            <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-[#006a62] transition-all duration-700" style="width: ${b.pct}%"></div>
+                            </div>
+                            <div class="flex items-center gap-1 w-28 shrink-0">
+                                <div class="flex text-amber-500">
+                                    ${Array(5).fill(0).map((_, i) => `<span class="material-symbols-outlined text-[14px] ${i < b.n ? 'fill-1' : ''}">star</span>`).join('')}
+                                </div>
+                                <span class="text-xs text-[#006a62] font-bold">${b.pct}%</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch(e) {}
+        }
+
+        // ── Eligibility Check ──────────────────────────────────────
+        async function loadLearnEligibility() {
+            try {
+                const res = await fetch('/Course/GetReviewEligibility/@Model.CourseId');
+                const result = await res.json();
+                if (result.success && result.data) {
+                    const d = result.data;
+                    if (d.canReview) {
+                        document.getElementById('learn-review-form').classList.remove('hidden');
+                        document.getElementById('learn-review-blocked').classList.add('hidden');
+                    } else {
+                        document.getElementById('learn-review-form').classList.add('hidden');
+                        document.getElementById('learn-review-blocked').classList.remove('hidden');
+                        document.getElementById('learn-blocked-msg').textContent = 
+                            d.reviewBlockedReason || 'Bạn cần học ít nhất 1 bài học trước khi đánh giá.';
+                    }
+                }
+            } catch(e) {}
+        }
+
+        // ── Rating Input ───────────────────────────────────────────
+        function setRating(n) {
+            document.getElementById('selected-rating').value = n;
+            const stars = document.querySelectorAll('.star-btn');
+            stars.forEach((btn, i) => {
+                const icon = btn.querySelector('.material-symbols-outlined');
+                if (i < n) {
+                    btn.classList.add('text-amber-500');
+                    btn.classList.remove('text-slate-300');
+                    icon.classList.add('fill-1');
+                } else {
+                    btn.classList.remove('text-amber-500');
+                    btn.classList.add('text-slate-300');
+                    icon.classList.remove('fill-1');
+                }
+            });
+        }
+
+        // ── Submit Review (source=learn) ───────────────────────────
+        async function submitReview() {
+            const rating = document.getElementById('selected-rating').value;
+            const comment = document.getElementById('review-comment').value;
+            if (rating == 0) return Swal.fire('Lỗi', 'Vui lòng chọn số sao.', 'warning');
+            if (!comment.trim()) return Swal.fire('Lỗi', 'Vui lòng nhập nội dung đánh giá.', 'warning');
+
+            const btn = document.getElementById('submit-review-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="animate-spin material-symbols-outlined text-[18px]">sync</span> Đang gửi...';
+
+            try {
+                const response = await fetch('/Course/SubmitReview?source=learn', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        courseId: @Model.CourseId, 
+                        rating: parseFloat(rating), 
+                        comment: comment,
+                        lessonId: currentLessonId // Gửi kèm lessonId hiện tại
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    Swal.fire('Thành công!', 'Đánh giá của bạn đã được gửi.', 'success');
+                    document.getElementById('review-comment').value = '';
+                    setRating(0);
+                    loadReviews();
+                    loadLearnStats();
+                } else {
+                    Swal.fire('Lỗi', result.message || 'Không thể gửi đánh giá.', 'error');
+                }
+            } catch (e) {
+                Swal.fire('Lỗi', 'Không thể gửi đánh giá.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">send</span> Gửi đánh giá';
+            }
+        }
+
+        // ── Load Reviews List ──────────────────────────────────────
+        async function loadReviews() {
+            const list = document.getElementById('learn-reviews-list');
+            try {
+                const res = await fetch('/Course/GetReviews/@Model.CourseId');
+                const result = await res.json();
+                if (result.success && result.data && result.data.length > 0) {
+                    list.innerHTML = result.data.map(r => `
+                        <div class="border-t border-slate-100 pt-6">
+                            <div class="flex gap-4 mb-3">
+                                <div class="w-10 h-10 rounded-full bg-[#191c1b] text-white flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
+                                    ${r.userAvatarUrl ? `<img src="${r.userAvatarUrl}" class="w-full h-full object-cover" />` : r.userFullName.charAt(0)}
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <h4 class="font-bold text-sm text-[#191c1b]">
+                                            ${r.userFullName}
+                                            ${r.isInstructor ? '<span class="ml-2 bg-[#006a62]/10 text-[#006a62] text-[10px] px-2 py-0.5 rounded-full border border-[#006a62]/20">Instructor</span>' : ''}
+                                        </h4>
+                                        <span class="text-[11px] text-slate-400 font-medium">${new Date(r.createdAt).toLocaleDateString('vi-VN')}</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <div class="flex text-amber-500">
+                                            ${Array(5).fill(0).map((_, i) => `
+                                                <span class="material-symbols-outlined text-[14px] ${i < r.rating ? 'fill-1' : ''}">star</span>
+                                            `).join('')}
+                                        </div>
+                                        ${r.lessonTitle ? `
+                                            <div class="flex items-center gap-1 bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded border border-slate-200">
+                                                <span class="material-symbols-outlined text-[12px]">menu_book</span>
+                                                ${r.lessonTitle}
+                                            </div>
+                                        ` : `
+                                            <div class="flex items-center gap-1 bg-amber-50 text-amber-600 text-[10px] px-2 py-0.5 rounded border border-amber-200">
+                                                <span class="material-symbols-outlined text-[12px]">auto_awesome</span>
+                                                Khóa học tổng quát
+                                            </div>
+                                        `}
+                                    </div>
+                                    <p class="text-sm text-slate-700 leading-relaxed">${r.comment}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    list.innerHTML = '<p class="text-slate-400 italic">Chưa có đánh giá nào.</p>';
+                }
+            } catch (e) {}
+        }
+
+        // ── Tab Switching ──────────────────────────────────────────
         function switchTab(tabId, element) {
-            // Update buttons
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('border-b-2', 'border-[#006a62]', 'text-[#006a62]');
                 btn.classList.add('text-slate-400');
@@ -283,16 +470,23 @@
             element.classList.add('border-b-2', 'border-[#006a62]', 'text-[#006a62]');
             element.classList.remove('text-slate-400');
 
-            // Update content
             document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
             document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+            if (tabId === 'reviews') {
+                loadReviews();
+                loadLearnStats();
+                loadLearnEligibility();
+            }
         }
 
-        function playMaterial(url, title, description, element, type = 'video') {
+        function playMaterial(url, title, description, element, type, materialId, lessonId) {
             if (!url) {
                 alert('This material has no content yet.');
                 return;
             }
+            currentMaterialId = materialId;
+            currentLessonId = lessonId;
 
             // UI feedback
             document.querySelectorAll('.material-item').forEach(el => el.classList.remove('active-material'));
@@ -315,7 +509,6 @@
                 }
                 if (docDownloadFallback) docDownloadFallback.classList.add('hidden');
 
-                // Optimization for Cloudinary URLs
                 let optimizedUrl = url;
                 if (url.includes('cloudinary.com/df8i0azc5/video/upload/')) {
                     optimizedUrl = url.replace('/video/upload/', '/video/upload/f_auto,q_auto/');
@@ -332,7 +525,6 @@
                 videoPlayer.classList.add('hidden');
                 videoPlayer.pause();
                 docViewer.classList.remove('hidden');
-                
                 docTitle.textContent = title;
                 
                 var lowerUrl = url.toLowerCase();
@@ -357,6 +549,8 @@
                         .catch(err => {
                             txtContent.textContent = 'Lỗi tải file: ' + err.message;
                         });
+                    
+                    markAsCompleted(materialId); // Mark text as completed immediately on view
                 } else {
                     if (docIframe) {
                         docIframe.src = '';
@@ -373,20 +567,19 @@
                     }
                     if (docDownloadBtn) {
                         docDownloadBtn.href = downloadUrl;
-                        docDownloadBtn.onclick = null;
+                        docDownloadBtn.onclick = () => markAsCompleted(materialId); // Mark when downloaded
                     }
                 }
             }
         }
 
-        // Auto-play first material
         window.addEventListener('DOMContentLoaded', () => {
             const firstItem = document.querySelector('.material-item');
             if (firstItem) {
-                // Remove the active class because playMaterial will add it back
                 firstItem.classList.remove('active-material');
                 firstItem.click();
             }
+            loadProgress();
         });
     </script>
 </body>

@@ -639,6 +639,8 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.EnrollmentId).HasColumnName("enrollment_id");
             entity.Property(e => e.Rating).HasColumnName("rating");
             entity.Property(e => e.Comment).HasColumnName("comment");
+            entity.Property(e => e.ReviewSource).HasMaxLength(20).HasDefaultValue("detail").HasColumnName("review_source");
+            entity.Property(e => e.LessonId).HasColumnName("lesson_id");
             entity.Property(e => e.IsRemoved).HasDefaultValue(false).HasColumnName("is_removed");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -653,6 +655,11 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.EnrollmentId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("reviews_enrollment_id_fkey");
+
+            entity.HasOne(d => d.Lesson).WithMany(p => p.Reviews)
+                .HasForeignKey(d => d.LessonId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("reviews_lesson_id_fkey");
         });
 
         // ── system_configs ────────────────────────────────────────────────────

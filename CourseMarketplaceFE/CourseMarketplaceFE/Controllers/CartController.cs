@@ -119,7 +119,6 @@ public class CartController : Controller
     // ─── 4. THÊM VÀO GIỎ ────────────────────────────────────────────────
     /// <summary>
     /// POST /Cart/AddToCart
-    /// Gọi API BE rồi redirect về giỏ hàng (hoặc returnUrl nếu có).
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -148,11 +147,34 @@ public class CartController : Controller
             TempData["CartSuccess"] = "Đã thêm khóa học vào giỏ hàng!";
         }
 
-        // Quay lại trang chi tiết khóa học nếu có returnUrl hợp lệ
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             return Redirect(returnUrl);
 
         return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> AddToCartAjax(int id)
+    {
+        if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
+            return Json(new { success = false, message = "Please login first." });
+
+        var response = await _api.PostAsync($"cart/add/{id}");
+        if (response.IsSuccessStatusCode)
+        {
+            return Json(new { success = true });
+        }
+
+        var json = await response.Content.ReadAsStringAsync();
+        string errorMsg = "Failed to add to cart.";
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("message", out var m))
+                errorMsg = m.GetString() ?? errorMsg;
+        }
+        catch { }
+        return Json(new { success = false, message = errorMsg });
     }
 
     // ─── 5. XÓA KHỎI GIỎ ────────────────────────────────────────────────

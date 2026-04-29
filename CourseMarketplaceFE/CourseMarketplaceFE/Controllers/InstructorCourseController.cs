@@ -8,7 +8,6 @@ using System.Text.Json;
 
 namespace CourseMarketplaceFE.Controllers
 {
-    [Authorize]
     public class InstructorCourseController : Controller
     {
         private readonly ApiClient _api;

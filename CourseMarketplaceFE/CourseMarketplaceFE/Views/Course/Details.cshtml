@@ -27,13 +27,13 @@
             
             <div class="flex flex-wrap items-center gap-4 text-sm mb-6">
                 <div class="flex items-center gap-1">
-                    <span class="font-bold text-[#f3ca8c] text-base">@Model.RatingAverage.ToString("F1")</span>
-                    <div class="flex text-[#f3ca8c]">
+                    <span id="header-rating-avg" class="font-bold text-[#f3ca8c] text-base">@Model.RatingAverage.ToString("F1")</span>
+                    <div id="header-rating-stars" class="flex text-[#f3ca8c]">
                         @for(int i=0; i<Math.Floor((double)Model.RatingAverage); i++) { <span class="material-symbols-outlined text-[18px] fill-1">star</span> }
                         @if((double)Model.RatingAverage - Math.Floor((double)Model.RatingAverage) >= 0.5) { <span class="material-symbols-outlined text-[18px] fill-1">star_half</span> }
                     </div>
                 </div>
-                <a href="#reviews" class="text-[#cec0fc] underline hover:text-white">(0 ratings)</a>
+                <a href="#reviews" class="text-[#cec0fc] underline hover:text-white" id="header-rating-count">(@Model.TotalReviews ratings)</a>
                 <span class="text-slate-300">@Model.TotalStudents students</span>
             </div>
             
@@ -74,10 +74,39 @@
                 </div>
                 
                 <div class="p-6">
-                    <div class="text-3xl font-extrabold mb-4">$@Model.Price.ToString("F2")</div>
-                    <div class="flex flex-col gap-3">
-                        <button class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:opacity-90 transition-all">Add to cart</button>
-                        <button class="w-full border-2 border-slate-900 font-bold py-3 rounded-lg hover:bg-slate-50 transition-all">Buy now</button>
+                    <div class="text-3xl font-extrabold mb-4">
+                        @if (Model.Price == 0)
+                        {
+                            <span class="text-primary">FREE</span>
+                        }
+                        else
+                        {
+                            <span>$@Model.Price.ToString("F2")</span>
+                        }
+                    </div>
+                    <div id="enrollment-actions" class="flex flex-col gap-3">
+                        @if (Model.IsEnrolled || Model.IsOwner)
+                        {
+                            <a href="/Course/Learn/@Model.CourseId" class="w-full bg-slate-900 text-white text-center font-bold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined">play_circle</span>
+                                Go to learning
+                            </a>
+                        }
+                        else if (Model.Price == 0)
+                        {
+                            <button onclick="enrollFree(@Model.CourseId)" class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined">person_add</span>
+                                Enroll Now
+                            </button>
+                        }
+                        else
+                        {
+                            <button onclick="addToCart(@Model.CourseId)" class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+                                Add to cart
+                            </button>
+                            <button onclick="buyNow(@Model.CourseId)" class="w-full border-2 border-slate-900 font-bold py-3 rounded-lg hover:bg-slate-50 transition-all">Buy now</button>
+                        }
                         
                         <button type="button" 
                                 onclick="toggleWishlist(this, @Model.CourseId);"
@@ -202,16 +231,45 @@
                             <span class="text-sm text-slate-600">@lesson.LearningMaterials.Count lectures • @lessonDurationDisplay</span>
                         </button>
                         <div class="hidden px-6 py-2 bg-white">
+                            @{ int materialIndex = 0; }
                             @foreach (var material in lesson.LearningMaterials)
                             {
-                                <div class="flex items-center justify-between text-sm py-3">
-                                    <div class="flex items-center gap-3 text-slate-700">
+                                var isFirstMaterial = materialIndex == 0 && lesson == Model.Lessons.First();
+                                var isLocked = !Model.IsEnrolled && !isFirstMaterial;
+                                
+                                <div class="flex items-center justify-between text-sm py-3 @(isLocked ? "opacity-60" : "")">
+                                    <div class="flex items-center gap-3 text-slate-700 flex-1">
                                         <span class="material-symbols-outlined text-slate-400 text-[18px]">
-                                            @(material.MaterialMetadata?.FileType?.ToLower() == "video" || (material.MaterialUrl != null && (material.MaterialUrl.Contains(".mp4") || material.MaterialUrl.Contains("video/upload"))) ? "play_circle" : "description")
+                                            @if (isLocked)
+                                            {
+                                                <text>lock</text>
+                                            }
+                                            else
+                                            {
+                                                @(material.MaterialMetadata?.FileType?.ToLower() == "video" || (material.MaterialUrl != null && (material.MaterialUrl.Contains(".mp4") || material.MaterialUrl.Contains("video/upload"))) ? "play_circle" : "description")
+                                            }
                                         </span>
-                                        <a href="/Course/Learn/@Model.CourseId" class="hover:text-[#a435f0] hover:underline cursor-pointer">@material.Title</a>
+                                        
+                                        @if (isFirstMaterial)
+                                        {
+                                            <button onclick="openPreviewModal()" class="text-[#a435f0] font-bold hover:underline cursor-pointer text-left">@material.Title</button>
+                                            <span class="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">Preview</span>
+                                        }
+                                        else if (isLocked)
+                                        {
+                                            <span class="cursor-not-allowed">@material.Title</span>
+                                        }
+                                        else
+                                        {
+                                            <a href="/Course/Learn/@Model.CourseId" class="hover:text-[#a435f0] hover:underline cursor-pointer">@material.Title</a>
+                                        }
                                     </div>
                                     <div class="flex items-center gap-8">
+                                        @if (isFirstMaterial)
+                                        {
+                                            <button onclick="openPreviewModal()" class="text-[#a435f0] font-bold hover:underline text-xs">Preview</button>
+                                        }
+                                        
                                         <span class="text-slate-500 text-xs w-12 text-right">
                                             @{
                                                 var isVideoMat = material.MaterialMetadata?.FileType?.ToLower() == "video" || 
@@ -224,12 +282,13 @@
                                                 }
                                                 else
                                                 {
-                                                    <span class="material-symbols-outlined text-[16px] opacity-40">description</span>
+                                                    <span class="material-symbols-outlined text-[16px] opacity-40">@(isLocked ? "lock" : "description")</span>
                                                 }
                                             }
                                         </span>
                                     </div>
                                 </div>
+                                materialIndex++;
                             }
                         </div>
                     </div>
@@ -300,7 +359,68 @@
                     {
                         <p>With years of experience in the industry, @Model.InstructorName is dedicated to helping students master new skills.</p>
                     }
-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="mb-12" id="reviews-section">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-slate-900">Student feedback</h2>
+            </div>
+            
+            <!-- Dynamic stats area (populated via JS) -->
+            <div id="review-stats-area" class="flex flex-col md:flex-row gap-8 mb-10 items-start">
+                <div class="text-center w-32 shrink-0">
+                    <p id="stats-avg" class="text-5xl font-extrabold text-[#a435f0] mb-1">—</p>
+                    <div id="stats-stars" class="flex justify-center text-amber-500 mb-1"></div>
+                    <p id="stats-total" class="text-xs font-bold text-[#a435f0]">Course Rating</p>
+                </div>
+                
+                <div id="stats-bars" class="flex-1 w-full space-y-2 max-w-md">
+                    <!-- Dynamic bars -->
+                </div>
+            </div>
+
+            <!-- Review Form (conditionally shown by JS) -->
+            <div id="detail-review-form" class="hidden mb-10">
+                <div class="bg-gradient-to-r from-[#a435f0]/5 to-[#a435f0]/10 p-6 rounded-2xl border border-[#a435f0]/20">
+                    <h4 class="font-bold text-sm mb-1 text-[#a435f0]">✍️ Viết đánh giá của bạn</h4>
+                    <p class="text-xs text-slate-500 mb-4">Chia sẻ trải nghiệm học tập của bạn với cộng đồng</p>
+                    <div class="flex gap-1 mb-4" id="detail-rating-input">
+                        @for (int ri = 1; ri <= 5; ri++) {
+                            <button onclick="setDetailRating(@ri)" class="detail-star-btn text-slate-300 hover:text-amber-500 transition-colors">
+                                <span class="material-symbols-outlined text-3xl">star</span>
+                            </button>
+                        }
+                        <input type="hidden" id="detail-selected-rating" value="0" />
+                    </div>
+                    <textarea id="detail-review-comment" rows="3" class="w-full bg-white border border-slate-200 rounded-lg p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#a435f0]/30 mb-4" placeholder="Khóa học này đã giúp bạn như thế nào?"></textarea>
+                    <button onclick="submitDetailReview()" id="detail-submit-btn" class="bg-[#a435f0] text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-[#8710d8] transition-all flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">send</span>
+                        Gửi đánh giá
+                    </button>
+                </div>
+            </div>
+
+            <!-- Status message (for users who haven't completed) -->
+            <div id="detail-review-blocked" class="hidden mb-10">
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-start gap-3">
+                    <span class="material-symbols-outlined text-amber-500 text-xl mt-0.5">info</span>
+                    <div>
+                        <p id="detail-blocked-msg" class="text-sm font-medium text-amber-800"></p>
+                        <p class="text-xs text-amber-600 mt-1">Hoàn thành tất cả bài học để mở khóa chức năng đánh giá.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6" id="reviews-list">
+                <div class="flex items-center justify-center py-10 text-slate-400">
+                    <span class="animate-spin material-symbols-outlined mr-2">sync</span>
+                    Loading reviews...
+                </div>
+            </div>
+        </div>
 
 <!-- Video Preview Modal -->
 <div id="previewModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/90 p-4" onclick="closePreviewModal()">
@@ -391,4 +511,332 @@
             video.currentTime = 0;
         }
     }
+
+    async function enrollFree(courseId) {
+        const btn = event.currentTarget;
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="animate-spin material-symbols-outlined">sync</span> Enrolling...';
+
+        try {
+            const response = await fetch('/Course/EnrollFree/' + courseId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+                // 1. Update Buttons
+                const actionContainer = document.getElementById('enrollment-actions');
+                if (actionContainer) {
+                    actionContainer.innerHTML = `
+                        <a href="/Course/Learn/${courseId}" class="w-full bg-slate-900 text-white text-center font-bold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">play_circle</span>
+                            Go to learning
+                        </a>
+                        <button type="button" onclick="toggleWishlist(this, ${courseId});" class="w-full border border-slate-200 font-bold py-3 rounded-lg hover:bg-slate-50 transition-all flex items-center justify-center gap-2 text-slate-700">
+                            <span class="material-symbols-outlined text-slate-400">favorite</span>
+                            <span class="wishlist-text">Add to Wishlist</span>
+                        </button>
+                    `;
+                }
+
+                // 2. Unlock Curriculum
+                document.querySelectorAll('.opacity-60').forEach(el => {
+                    el.classList.remove('opacity-60');
+                    // Replace lock icons with play_circle or description
+                    const icon = el.querySelector('.material-symbols-outlined');
+                    if (icon && icon.innerText === 'lock') {
+                        icon.innerText = 'play_circle'; 
+                    }
+                    // Enable links
+                    const titleSpan = el.querySelector('.cursor-not-allowed');
+                    if (titleSpan) {
+                        const link = document.createElement('a');
+                        link.href = `/Course/Learn/${courseId}`;
+                        link.className = 'hover:text-[#a435f0] hover:underline cursor-pointer';
+                        link.innerText = titleSpan.innerText;
+                        titleSpan.parentNode.replaceChild(link, titleSpan);
+                    }
+                    // Update metadata locks
+                    el.querySelectorAll('.material-symbols-outlined.opacity-40').forEach(metaIcon => {
+                        if (metaIcon.innerText === 'lock') metaIcon.innerText = 'description';
+                    });
+                });
+
+                Swal.fire({
+                    title: 'Thành công!',
+                    text: 'Bạn đã ghi danh khóa học thành công.',
+                    icon: 'success',
+                    showCancelButton: true,
+                    confirmButtonText: 'Bắt đầu học ngay',
+                    cancelButtonText: 'Ở lại trang này'
+                }).then((res) => {
+                    if (res.isConfirmed) {
+                        window.location.href = '/Course/Learn/' + courseId;
+                    }
+                });
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                Swal.fire('Lỗi', result.message, 'error');
+            }
+        } catch (error) {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+            Swal.fire('Lỗi', 'Không thể kết nối với máy chủ.', 'error');
+        }
+    }
+
+    async function addToCart(courseId) {
+        const btn = event.currentTarget;
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="animate-spin material-symbols-outlined">sync</span> Adding...';
+
+        try {
+            const response = await fetch('/Cart/AddToCartAjax/' + courseId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+                // Update cart badge in header
+                if (typeof initCartBadge === "function") initCartBadge();
+                
+                Swal.fire({
+                    title: 'Thêm thành công!',
+                    text: 'Khóa học đã được thêm vào giỏ hàng.',
+                    icon: 'success',
+                    showCancelButton: true,
+                    confirmButtonText: 'Đến giỏ hàng',
+                    cancelButtonText: 'Tiếp tục xem'
+                }).then((res) => {
+                    if (res.isConfirmed) {
+                        window.location.href = '/Cart';
+                    }
+                });
+            } else {
+                Swal.fire('Lỗi', result.message, 'error');
+            }
+        } catch (error) {
+            Swal.fire('Lỗi', 'Không thể kết nối với máy chủ.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    }
+
+    async function buyNow(courseId) {
+        try {
+            const response = await fetch('/Cart/AddToCartAjax/' + courseId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+            if (result.success) {
+                window.location.href = '/Cart';
+            } else {
+                Swal.fire('Lỗi', result.message, 'error');
+            }
+        } catch (error) {
+            Swal.fire('Lỗi', 'Không thể kết nối với máy chủ.', 'error');
+        }
+    }
+
+    async function loadReviewStats() {
+        try {
+            const res = await fetch('/Course/GetReviewStats/@Model.CourseId');
+            const result = await res.json();
+            if (result.success && result.data) {
+                const d = result.data;
+                // Average
+                const avgVal = d.averageRating || 0;
+                const totalVal = d.totalReviews || 0;
+                
+                document.getElementById('stats-avg').textContent = avgVal.toFixed(1);
+                document.getElementById('stats-total').textContent = `${totalVal} đánh giá`;
+                
+                // Header update
+                const headerAvg = document.getElementById('header-rating-avg');
+                if (headerAvg) headerAvg.textContent = avgVal.toFixed(1);
+                const headerCount = document.getElementById('header-rating-count');
+                if (headerCount) headerCount.textContent = `(${totalVal} ratings)`;
+
+                // Stars
+                const roundedAvg = Math.round(avgVal);
+                document.getElementById('stats-stars').innerHTML = Array(5).fill(0).map((_, i) =>
+                    `<span class="material-symbols-outlined text-[20px] ${i < roundedAvg ? 'fill-1' : ''}">star</span>`
+                ).join('');
+
+                // Header Stars
+                const headerStars = document.getElementById('header-rating-stars');
+                if (headerStars) {
+                    let starHtml = '';
+                    for (let i = 0; i < 5; i++) {
+                        if (i < Math.floor(avgVal)) {
+                            starHtml += '<span class="material-symbols-outlined text-[18px] fill-1">star</span>';
+                        } else if (i === Math.floor(avgVal) && (avgVal % 1) >= 0.5) {
+                            starHtml += '<span class="material-symbols-outlined text-[18px] fill-1">star_half</span>';
+                        } else {
+                            starHtml += '<span class="material-symbols-outlined text-[18px]">star</span>';
+                        }
+                    }
+                    headerStars.innerHTML = starHtml;
+                }
+                // Bars
+                const bars = [
+                    { n: 5, pct: d.star5Pct },
+                    { n: 4, pct: d.star4Pct },
+                    { n: 3, pct: d.star3Pct },
+                    { n: 2, pct: d.star2Pct },
+                    { n: 1, pct: d.star1Pct }
+                ];
+                document.getElementById('stats-bars').innerHTML = bars.map(b => `
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-[#a435f0] transition-all duration-700" style="width: ${b.pct}%"></div>
+                        </div>
+                        <div class="flex items-center gap-1 w-28 shrink-0">
+                            <div class="flex text-amber-500">
+                                ${Array(5).fill(0).map((_, i) => `<span class="material-symbols-outlined text-[14px] ${i < b.n ? 'fill-1' : ''}">star</span>`).join('')}
+                            </div>
+                            <span class="text-xs text-[#a435f0] font-bold">${b.pct}%</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch(e) { console.warn('Stats load failed', e); }
+    }
+
+    async function loadReviewEligibility() {
+        try {
+            const res = await fetch('/Course/GetReviewEligibility/@Model.CourseId');
+            const result = await res.json();
+            if (result.success && result.data) {
+                const d = result.data;
+                if (d.isEnrolled && d.isCompleted) {
+                    document.getElementById('detail-review-form').classList.remove('hidden');
+                    document.getElementById('detail-review-blocked').classList.add('hidden');
+                } else if (d.isEnrolled && !d.isCompleted) {
+                    document.getElementById('detail-review-form').classList.add('hidden');
+                    document.getElementById('detail-review-blocked').classList.remove('hidden');
+                    const pct = Math.round(d.progressPercentage || 0);
+                    document.getElementById('detail-blocked-msg').textContent =
+                        `Tiến độ hiện tại: ${pct}%. Bạn cần hoàn thành 100% khóa học để viết đánh giá tại đây.`;
+                }
+                // Not enrolled → both hidden (default)
+            }
+        } catch(e) { /* user not logged in → just hide form */ }
+    }
+
+    function setDetailRating(n) {
+        document.getElementById('detail-selected-rating').value = n;
+        const stars = document.querySelectorAll('.detail-star-btn');
+        stars.forEach((btn, i) => {
+            const icon = btn.querySelector('.material-symbols-outlined');
+            if (i < n) {
+                btn.classList.add('text-amber-500');
+                btn.classList.remove('text-slate-300');
+                icon.classList.add('fill-1');
+            } else {
+                btn.classList.remove('text-amber-500');
+                btn.classList.add('text-slate-300');
+                icon.classList.remove('fill-1');
+            }
+        });
+    }
+
+    async function submitDetailReview() {
+        const rating = document.getElementById('detail-selected-rating').value;
+        const comment = document.getElementById('detail-review-comment').value;
+        if (rating == 0) return Swal.fire('Lỗi', 'Vui lòng chọn số sao.', 'warning');
+        if (!comment.trim()) return Swal.fire('Lỗi', 'Vui lòng nhập nội dung đánh giá.', 'warning');
+
+        const btn = document.getElementById('detail-submit-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="animate-spin material-symbols-outlined text-[18px]">sync</span> Đang gửi...';
+
+        try {
+            const response = await fetch('/Course/SubmitReview?source=detail', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ courseId: @Model.CourseId, rating: parseFloat(rating), comment: comment })
+            });
+            const result = await response.json();
+            if (result.success) {
+                Swal.fire('Thành công!', 'Đánh giá của bạn đã được gửi.', 'success');
+                document.getElementById('detail-review-comment').value = '';
+                setDetailRating(0);
+                loadReviews();
+                loadReviewStats();
+            } else {
+                Swal.fire('Lỗi', result.message || 'Không thể gửi đánh giá.', 'error');
+            }
+        } catch (e) {
+            Swal.fire('Lỗi', 'Không thể kết nối với máy chủ.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">send</span> Gửi đánh giá';
+        }
+    }
+
+    async function loadReviews() {
+        const list = document.getElementById('reviews-list');
+        try {
+            const res = await fetch('/Course/GetReviews/@Model.CourseId');
+            const result = await res.json();
+            
+            if (result.success && result.data && result.data.length > 0) {
+                list.innerHTML = result.data.map(r => `
+                    <div class="border-t border-slate-100 pt-6">
+                        <div class="flex gap-4 mb-3">
+                            <div class="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
+                                ${r.userAvatarUrl ? `<img src="${r.userAvatarUrl}" class="w-full h-full object-cover" />` : r.userFullName.charAt(0)}
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-1">
+                                    <h4 class="font-bold text-sm text-slate-900">
+                                        ${r.userFullName}
+                                        ${r.isInstructor ? '<span class="ml-2 bg-[#a435f0]/10 text-[#a435f0] text-[10px] px-2 py-0.5 rounded-full border border-[#a435f0]/20">Instructor</span>' : ''}
+                                    </h4>
+                                    <span class="text-[11px] text-slate-400 font-medium">${new Date(r.createdAt).toLocaleDateString('vi-VN')}</span>
+                                </div>
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="flex text-amber-500">
+                                        ${Array(5).fill(0).map((_, i) => `
+                                            <span class="material-symbols-outlined text-[14px] ${i < r.rating ? 'fill-1' : ''}">star</span>
+                                        `).join('')}
+                                    </div>
+                                    ${r.lessonTitle ? `
+                                        <div class="flex items-center gap-1 bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded border border-slate-200">
+                                            <span class="material-symbols-outlined text-[12px]">menu_book</span>
+                                            ${r.lessonTitle}
+                                        </div>
+                                    ` : `
+                                        <div class="flex items-center gap-1 bg-purple-50 text-purple-600 text-[10px] px-2 py-0.5 rounded border border-purple-200">
+                                            <span class="material-symbols-outlined text-[12px]">auto_awesome</span>
+                                            Khóa học tổng quát
+                                        </div>
+                                    `}
+                                </div>
+                                <p class="text-sm text-slate-700 leading-relaxed">${r.comment}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                list.innerHTML = '<p class="text-slate-400 italic text-center py-10">Chưa có đánh giá nào cho khóa học này.</p>';
+            }
+        } catch (e) {
+            list.innerHTML = '<p class="text-red-400 italic text-center py-10">Không thể tải đánh giá.</p>';
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        loadReviews();
+        loadReviewStats();
+        loadReviewEligibility();
+    });
 </script>

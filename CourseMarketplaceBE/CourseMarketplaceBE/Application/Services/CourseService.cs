@@ -23,13 +23,26 @@ public class CourseService : ICourseService
         _uploadService = uploadService;
     }
 
-    public async Task<IEnumerable<CourseResponse>> GetAllPublishedCoursesAsync()
+    public async Task<IEnumerable<CourseResponse>> GetAllPublishedCoursesAsync(int? userId = null)
     {
         var courses = await _courseRepository.GetAllPublishedCoursesAsync();
         var courseIds = courses.Select(c => c.CourseId).ToList();
 
         // Fetch stats for these courses
         var stats = await _courseRepository.GetCourseStatsAsync(courseIds);
+
+        // Check enrollment if user is logged in
+        var enrolledCourseIds = new List<int>();
+        if (userId.HasValue)
+        {
+            foreach (var cid in courseIds)
+            {
+                if (await _courseRepository.IsEnrolledAsync(userId.Value, cid))
+                {
+                    enrolledCourseIds.Add(cid);
+                }
+            }
+        }
 
         return courses.Select(c =>
         {
@@ -52,9 +65,17 @@ public class CourseService : ICourseService
                 InstructorName = c.Instructor?.InstructorNavigation?.FullName ?? "Unknown Instructor",
                 InstructorAvatarUrl = c.Instructor?.InstructorNavigation?.UserNavigation?.AvatarUrl,
                 TotalStudents = s?.TotalStudents ?? 0,
-                RatingAverage = (decimal)(s?.RatingAverage ?? 0)
+                RatingAverage = (decimal)(s?.RatingAverage ?? 0),
+                IsEnrolled = enrolledCourseIds.Contains(c.CourseId),
+                IsOwner = userId.HasValue && c.InstructorId == userId.Value,
+                TotalReviews = s?.TotalReviews ?? 0
             };
         });
+    }
+
+    public async Task<bool> IsEnrolledAsync(int userId, int courseId)
+    {
+        return await _courseRepository.IsEnrolledAsync(userId, courseId);
     }
 
     public async Task<IEnumerable<CourseResponse>> GetInstructorCoursesAsync(int instructorId)
@@ -88,7 +109,7 @@ public class CourseService : ICourseService
         });
     }
 
-    public async Task<CourseDetailResponse?> GetCourseWithDetailsAsync(int courseId, int instructorId)
+    public async Task<CourseDetailResponse?> GetCourseWithDetailsAsync(int courseId, int instructorId, int? userId = null)
     {
         var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
         if (course == null) return null;
@@ -118,10 +139,13 @@ public class CourseService : ICourseService
             InstructorBio = course.Instructor?.InstructorNavigation?.Bio,
             InstructorProfessionalTitle = course.Instructor?.ProfessionalTitle,
             InstructorCoursesCount = course.Instructor?.Courses?.Count ?? 0,
+            InstructorReviewCount = 0, 
             InstructorStudentsCount = instructorStats?.TotalStudentsCount ?? 0,
-            InstructorReviewCount = 0, // Mocked or query from _context.Reviews
             TotalStudents = courseStats?.TotalStudents ?? 0,
+            TotalReviews = courseStats?.TotalReviews ?? 0,
             RatingAverage = (decimal)(courseStats?.RatingAverage ?? 0),
+            IsEnrolled = userId.HasValue && await _courseRepository.IsEnrolledAsync(userId.Value, courseId),
+            IsOwner = userId.HasValue && course.InstructorId == userId.Value,
             Lessons = course.Lessons.Select(l => new LessonResponse
             {
                 LessonId = l.LessonId,

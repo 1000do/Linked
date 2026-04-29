@@ -52,6 +52,9 @@ public class CourseResponse
     public int InstructorReviewCount { get; set; }
     public int InstructorStudentsCount { get; set; }
     public int InstructorCoursesCount { get; set; }
+    public bool IsEnrolled { get; set; }
+    public bool IsOwner { get; set; }
+    public int TotalReviews { get; set; }
 }
 
 public class CourseDetailResponse : CourseResponse
