@@ -28,6 +28,13 @@ public class InstructorApplyViewModel
 
     /// <summary>True nếu đang nộp lại (status cũ = Rejected)</summary>
     public bool IsResubmit { get; set; }
+
+    [Required(ErrorMessage = "Vui lòng chọn quốc gia cho tài khoản Stripe.")]
+    [Display(Name = "Quốc gia Stripe")]
+    public string StripeCountry { get; set; } = null!;
+
+    /// <summary>Danh sách quốc gia để bind vào dropdown</summary>
+    public List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> AvailableCountries { get; set; } = new();
 }
 
 /// <summary>

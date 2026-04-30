@@ -205,10 +205,67 @@ public class InstructorController : ControllerBase
         return Ok(new { status = 200, data });
     }
 
+    // ─── 7. LẤY DANH SÁCH QUỐC GIA STRIPE HỖ TRỢ ───────────────────
+    /// <summary>
+    /// GET /api/instructor/stripe-countries
+    /// Trả về danh sách quốc gia Stripe Connect hỗ trợ (từ system_configs.StripeCountries).
+    /// </summary>
+    [HttpGet("stripe-countries")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetStripeCountries(
+        [FromServices] CourseMarketplaceBE.Domain.IRepositories.IAdminFinanceRepository financeRepo)
+    {
+        try
+        {
+            var json = await financeRepo.GetConfigValueAsync("StripeCountries");
+            if (string.IsNullOrEmpty(json))
+                return Ok(new { status = 200, data = new List<object>() });
+
+            var countries = System.Text.Json.JsonSerializer.Deserialize<List<object>>(json);
+            return Ok(new { status = 200, data = countries });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = 500, message = ex.Message });
+        }
+    }
+
+    // ─── 8. GIẢNG VIÊN CHỌN QUỐC GIA STRIPE ─────────────────────────
+    /// <summary>
+    /// PUT /api/instructor/stripe-country
+    /// Giảng viên chọn quốc gia cho tài khoản Stripe Connect.
+    /// Phải gọi TRƯỚC khi setup-payout.
+    /// </summary>
+    [HttpPut("stripe-country")]
+    [Authorize]
+    public async Task<IActionResult> SetStripeCountry([FromBody] SetCountryRequest request)
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+
+        try
+        {
+            await _instructorService.SetStripeCountryAsync(userId.Value, request.CountryCode);
+            return Ok(new { status = 200, message = $"Đã lưu quốc gia Stripe: {request.CountryCode}" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { status = 400, message = ex.Message });
+        }
+    }
+
     // ─── HELPER ──────────────────────────────────────────────────────
     private int? GetUserId()
     {
         var str = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return int.TryParse(str, out int id) ? id : null;
     }
+}
+
+/// <summary>
+/// Request body for PUT /api/instructor/stripe-country
+/// </summary>
+public class SetCountryRequest
+{
+    public string CountryCode { get; set; } = null!;
 }
