@@ -598,3 +598,30 @@ SELECT setval(pg_get_serial_sequence('categories', 'category_id'), (SELECT MAX(c
 SELECT setval(pg_get_serial_sequence('courses', 'course_id'), (SELECT MAX(course_id) FROM courses));
 SELECT setval(pg_get_serial_sequence('lessons', 'lesson_id'), (SELECT MAX(lesson_id) FROM lessons));
 SELECT setval(pg_get_serial_sequence('learning_materials', 'material_id'), (SELECT MAX(material_id) FROM learning_materials));
+
+DO $$
+DECLARE
+    new_account_id INT;
+BEGIN
+    -- Tạo account
+    INSERT INTO accounts (
+        email, password_hash, phone_number, account_status, 
+        auth_provider, is_verified, account_created_at, account_updated_at
+    ) VALUES (
+        'admin@gmail.com',
+        '$2a$11$O7PrVmv/I5yxkexhkdrY2OB2tQf5c6Gy9P8hvqLIAF2NO34wt9C3i',
+        '+84123456789',
+        'active',
+        'local',
+        TRUE,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    )
+    RETURNING account_id INTO new_account_id;
+
+    -- Tạo manager (Admin)
+    INSERT INTO managers (manager_id, role, display_name)
+    VALUES (new_account_id, 'admin', 'Super Administrator');
+
+    RAISE NOTICE 'Tạo Admin thành công! Account ID = %', new_account_id;
+END $$;
