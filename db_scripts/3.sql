@@ -606,7 +606,7 @@ VALUES ('StripeCountries',
    {"code":"US","name":"United States"},{"code":"GB","name":"United Kingdom"},{"code":"CA","name":"Canada"},{"code":"CH","name":"Switzerland"},{"code":"AT","name":"Austria"},{"code":"BE","name":"Belgium"},{"code":"BG","name":"Bulgaria"},{"code":"HR","name":"Croatia"},{"code":"CY","name":"Cyprus"},{"code":"CZ","name":"Czech Republic"},{"code":"DK","name":"Denmark"},{"code":"EE","name":"Estonia"},{"code":"FI","name":"Finland"},{"code":"FR","name":"France"},{"code":"DE","name":"Germany"},{"code":"GR","name":"Greece"},{"code":"HU","name":"Hungary"},{"code":"IS","name":"Iceland"},{"code":"IE","name":"Ireland"},{"code":"IT","name":"Italy"},{"code":"LV","name":"Latvia"},{"code":"LI","name":"Liechtenstein"},{"code":"LT","name":"Lithuania"},{"code":"LU","name":"Luxembourg"},{"code":"MT","name":"Malta"},{"code":"NL","name":"Netherlands"},{"code":"NO","name":"Norway"},{"code":"PL","name":"Poland"},{"code":"PT","name":"Portugal"},{"code":"RO","name":"Romania"},{"code":"SK","name":"Slovakia"},{"code":"SI","name":"Slovenia"},{"code":"ES","name":"Spain"},{"code":"SE","name":"Sweden"}
 ]', 'Danh sách quốc gia mà Stripe Connect hỗ trợ đăng ký tài khoản Express. Giảng viên chọn 1 trong số này khi đăng ký Stripe.')
 ON CONFLICT (config_key) DO UPDATE SET config_value = EXCLUDED.config_value, description = EXCLUDED.description;
-
+    
 -- ==============================================================================
 -- 10. SAMPLE DATA FOR COURSES, LESSONS, MATERIALS
 -- ==============================================================================
@@ -621,4 +621,35 @@ SELECT setval(pg_get_serial_sequence('accounts', 'account_id'), (SELECT MAX(acco
 SELECT setval(pg_get_serial_sequence('categories', 'category_id'), (SELECT MAX(category_id) FROM categories));
 SELECT setval(pg_get_serial_sequence('courses', 'course_id'), (SELECT MAX(course_id) FROM courses));
 SELECT setval(pg_get_serial_sequence('lessons', 'lesson_id'), (SELECT MAX(lesson_id) FROM lessons));
-SELECT setval(pg_get_serial_sequence('learning_materials', 'material_id'), (SELECT MAX(material_id) FROM learning_materials));
+SELECT setval(pg_get_serial_sequence('learning_materials', 'material_id'), (SELECT MAX(material_id) FROM learning_materials)
+);
+DO $$
+DECLARE
+    new_account_id INT;
+BEGIN
+    -- Tạo account
+    INSERT INTO accounts (
+        email, password_hash, phone_number, account_status, 
+        auth_provider, is_verified, account_created_at, account_updated_at
+    ) VALUES (
+        'admin@gmail.com',
+        '$2a$11$O7PrVmv/I5yxkexhkdrY2OB2tQf5c6Gy9P8hvqLIAF2NO34wt9C3i',
+        '+84123456789',
+        'active',
+        'local',
+        TRUE,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    )
+    RETURNING account_id INTO new_account_id;
+
+    -- Tạo manager (Admin)
+    INSERT INTO managers (manager_id, role, display_name)
+    VALUES (new_account_id, 'admin', 'Super Administrator');
+
+    RAISE NOTICE 'Tạo Admin thành công! Account ID = %', new_account_id;
+END $$;
+
+
+
+
