@@ -1,0 +1,380 @@
+@using CourseMarketplaceFE.Controllers
+@model TransactionController.TransactionPagedVM
+@{
+    ViewData["Title"] = "Lịch sử Giao dịch";
+    Layout = "_InstructorLayout";
+    
+    // Tính toán một số thống kê nhanh từ trang hiện tại
+    var totalAmountThisPage = Model.Items?.Sum(i => i.Amount) ?? 0;
+    var successfulCount = Model.Items?.Count(i => i.Status == "succeeded") ?? 0;
+    var pendingCount = Model.Items?.Count(i => i.Status == "pending") ?? 0;
+}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="p-8 max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+            <h1 class="text-3xl font-headline font-extrabold text-slate-900 tracking-tight">Lợi nhuận & Giao dịch</h1>
+            <p class="text-slate-500 mt-2 text-sm font-medium">Theo dõi dòng tiền, doanh thu thực nhận và lịch sử bán khóa học.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-colors shadow-sm text-sm flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">download</span> Xuất báo cáo
+            </button>
+        </div>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="mb-6 flex items-start gap-3 px-5 py-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-800 shadow-sm">
+            <span class="material-symbols-outlined text-[20px] text-red-600 mt-0.5">error</span>
+            <div>
+                <p class="font-bold">Có lỗi xảy ra</p>
+                <p class="mt-1 text-red-700 opacity-90">@TempData["Error"]</p>
+            </div>
+        </div>
+    }
+
+    <!-- Stats Overview & Chart -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        
+        <!-- Left Column: Key Metrics -->
+        <div class="flex flex-col gap-6">
+            <!-- Card 1 -->
+            <div class="bg-gradient-to-br from-primary to-secondary rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+                <div class="absolute -right-6 -top-6 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
+                <div class="flex items-center justify-between mb-4 relative z-10">
+                    <h3 class="text-sm font-semibold opacity-90 uppercase tracking-wider">Doanh thu trang này</h3>
+                    <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                        <span class="material-symbols-outlined text-[18px] text-white">account_balance_wallet</span>
+                    </div>
+                </div>
+                <div class="relative z-10">
+                    <p class="text-4xl font-headline font-extrabold">A$@totalAmountThisPage.ToString("N2")</p>
+                    <p class="text-sm font-medium opacity-80 mt-2 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[14px]">arrow_upward</span>
+                        Thực nhận sau phí Sàn
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6">
+                <!-- Card 2 -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Thành công</h3>
+                    <p class="text-2xl font-headline font-extrabold text-emerald-600">@successfulCount</p>
+                    <p class="text-xs text-slate-400 font-medium mt-1">Giao dịch hoàn tất</p>
+                </div>
+                <!-- Card 3 -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Đang xử lý</h3>
+                    <p class="text-2xl font-headline font-extrabold text-amber-500">@pendingCount</p>
+                    <p class="text-xs text-slate-400 font-medium mt-1">Chờ Stripe chuyển</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Chart Area -->
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-base font-bold text-slate-800 tracking-tight">Biểu đồ Lợi nhuận (Trang @Model.Page)</h3>
+                <div class="flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                    <span class="w-2 h-2 rounded-full bg-primary"></span> Thực nhận
+                </div>
+            </div>
+            <div class="flex-1 relative w-full min-h-[200px]">
+                <canvas id="profitChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRANSACTIONS TABLE -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+        <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+            <h2 class="text-base font-bold text-slate-900">Chi tiết giao dịch</h2>
+            <div class="text-xs font-bold text-slate-500 px-3 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm">
+                Tổng: <span class="text-slate-800">@Model.TotalCount</span> bản ghi
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200 text-[11px] font-extrabold text-slate-500 uppercase tracking-widest bg-white">
+                        <th class="px-6 py-4">Mã Giao dịch</th>
+                        <th class="px-6 py-4">Khóa học</th>
+                        <th class="px-6 py-4">Học viên</th>
+                        <th class="px-6 py-4 text-right">Bạn nhận được</th>
+                        <th class="px-6 py-4">Trạng thái</th>
+                        <th class="px-6 py-4">Ngày giao dịch</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    @if (Model.Items != null && Model.Items.Any())
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            <tr class="hover:bg-slate-50/80 transition-colors group">
+                                <!-- ID & Stripe -->
+                                <td class="px-6 py-4 align-top">
+                                    <p class="font-mono font-bold text-slate-800 text-sm">#@item.TransactionId</p>
+                                    @if (!string.IsNullOrEmpty(item.StripeSessionId))
+                                    {
+                                        <div class="mt-1 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <span class="material-symbols-outlined text-[12px] text-slate-400">tag</span>
+                                            <p class="text-[10px] text-slate-400 font-mono" title="@item.StripeSessionId">
+                                                @(item.StripeSessionId.Length > 15 ? item.StripeSessionId[..15] + "…" : item.StripeSessionId)
+                                            </p>
+                                        </div>
+                                    }
+                                </td>
+
+                                <!-- Course -->
+                                <td class="px-6 py-4 max-w-[220px] align-top">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-8 h-8 rounded bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 mt-0.5">
+                                            <span class="material-symbols-outlined text-[16px] text-slate-400">play_lesson</span>
+                                        </div>
+                                        <span class="font-bold text-slate-800 line-clamp-2 leading-snug" title="@item.CourseTitle">
+                                            @item.CourseTitle
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <!-- Buyer -->
+                                <td class="px-6 py-4 align-top">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600 shrink-0">
+                                            @(string.IsNullOrEmpty(item.BuyerName) ? "?" : item.BuyerName[..1].ToUpper())
+                                        </div>
+                                        <span class="text-slate-700 font-semibold">@item.BuyerName</span>
+                                    </div>
+                                </td>
+
+                                <!-- Amount (Net Payout for Instructor) -->
+                                <td class="px-6 py-4 text-right align-top">
+                                    <span class="text-base font-extrabold text-slate-900 tracking-tight">
+                                        A$@item.Amount.ToString("N2")
+                                    </span>
+                                </td>
+
+                                <!-- Status -->
+                                <td class="px-6 py-4 align-top">
+                                    @{
+                                        var (bgClass, textClass, dotClass, label) = item.Status switch
+                                        {
+                                            "succeeded" => ("bg-emerald-50", "text-emerald-700", "bg-emerald-500", "Đã thanh toán"),
+                                            "failed"    => ("bg-red-50", "text-red-700", "bg-red-500", "Thất bại"),
+                                            "pending"   => ("bg-amber-50", "text-amber-800", "bg-amber-400", "Chờ chuyển"),
+                                            _           => ("bg-slate-100", "text-slate-600", "bg-slate-400", item.Status ?? "—")
+                                        };
+                                    }
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-transparent @bgClass @textClass text-[11px] font-extrabold uppercase tracking-wide">
+                                        <span class="w-1.5 h-1.5 rounded-full @dotClass"></span>
+                                        @label
+                                    </span>
+                                </td>
+
+                                <!-- Date -->
+                                <td class="px-6 py-4 align-top">
+                                    <p class="text-slate-700 font-semibold text-sm">@(item.Date.HasValue ? item.Date.Value.ToString("dd/MM/yyyy") : "—")</p>
+                                    <p class="text-slate-400 text-xs font-medium mt-0.5">@(item.Date.HasValue ? item.Date.Value.ToString("HH:mm") : "—")</p>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="px-6 py-20 text-center bg-slate-50/30">
+                                <div class="flex flex-col items-center justify-center text-slate-400">
+                                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 mb-4">
+                                        <span class="material-symbols-outlined text-3xl text-slate-300">inbox</span>
+                                    </div>
+                                    <p class="text-base font-bold text-slate-700">Chưa có giao dịch nào</p>
+                                    <p class="text-sm text-slate-500 mt-1 max-w-sm">Dữ liệu doanh thu sẽ xuất hiện ở đây ngay khi có học viên mua khóa học của bạn.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-white">
+                <p class="text-sm font-medium text-slate-500">
+                    Hiển thị <span class="font-bold text-slate-800">@((Model.Page - 1) * Model.PageSize + 1)</span> - <span class="font-bold text-slate-800">@Math.Min(Model.Page * Model.PageSize, Model.TotalCount)</span>
+                </p>
+                <div class="flex items-center gap-1.5">
+                    @if (Model.Page > 1)
+                    {
+                        <a href="@Url.Action("Instructor", new { page = Model.Page - 1, pageSize = Model.PageSize })"
+                           class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm">
+                            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                        </a>
+                    }
+
+                    @for (int p = Math.Max(1, Model.Page - 2); p <= Math.Min(Model.TotalPages, Model.Page + 2); p++)
+                    {
+                        if (Model.Page == p)
+                        {
+                            <span class="w-9 h-9 flex items-center justify-center rounded-lg bg-primary text-white font-bold shadow-md shadow-primary/20">@p</span>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Instructor", new { page = p, pageSize = Model.PageSize })"
+                               class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm">
+                                @p
+                            </a>
+                        }
+                    }
+
+                    @if (Model.Page < Model.TotalPages)
+                    {
+                        <a href="@Url.Action("Instructor", new { page = Model.Page + 1, pageSize = Model.PageSize })"
+                           class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm">
+                            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const ctx = document.getElementById('profitChart');
+            if (!ctx) return;
+
+            // Xử lý dữ liệu từ Model (của trang hiện tại)
+            // Lấy danh sách giao dịch, đảo ngược để vẽ từ cũ đến mới
+            const items = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                Model.Items?.OrderBy(x => x.Date).Select(x => new {
+                    date = x.Date?.ToString("dd/MM"),
+                    amount = x.Amount
+                }).ToList() ?? new List<object>().Select(x => new { date = "", amount = 0m }).ToList()
+            ));
+
+            if (items.length === 0) {
+                // Render empty state chart
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Lợi nhuận',
+                            data: [0, 0, 0, 0, 0, 0, 0],
+                            borderColor: '#e2e8f0',
+                            borderWidth: 2,
+                            fill: true,
+                            backgroundColor: 'rgba(248, 250, 252, 0.5)',
+                            pointRadius: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { display: false, min: 0 },
+                            x: { grid: { display: false }, border: { display: false } }
+                        }
+                    }
+                });
+                return;
+            }
+
+            // Gộp data theo ngày
+            const aggregated = items.reduce((acc, curr) => {
+                const dateStr = curr.date || "Unknown";
+                acc[dateStr] = (acc[dateStr] || 0) + curr.amount;
+                return acc;
+            }, {});
+
+            const labels = Object.keys(aggregated);
+            const dataValues = Object.values(aggregated);
+
+            // Chart design tuân thủ "impeccable" (Màu primary của template là #006a62)
+            const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(0, 106, 98, 0.2)'); // bg-primary/20
+            gradient.addColorStop(1, 'rgba(0, 106, 98, 0)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Lợi nhuận (A$)',
+                        data: dataValues,
+                        borderColor: '#006a62', // primary color
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#006a62',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        backgroundColor: gradient,
+                        tension: 0.4 // Smooth curve
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b', // slate-800
+                            titleFont: { family: 'Inter', size: 13 },
+                            bodyFont: { family: 'Inter', size: 14, weight: 'bold' },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return 'A$' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#f1f5f9', // slate-100
+                                drawBorder: false,
+                            },
+                            ticks: {
+                                font: { family: 'Inter', size: 11, weight: '600' },
+                                color: '#94a3b8', // slate-400
+                                callback: function(value) {
+                                    return 'A$' + value;
+                                }
+                            },
+                            border: { display: false }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { family: 'Inter', size: 12, weight: '600' },
+                                color: '#64748b' // slate-500
+                            },
+                            border: { display: false }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

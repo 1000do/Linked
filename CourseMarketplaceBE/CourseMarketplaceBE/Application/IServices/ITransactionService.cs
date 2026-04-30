@@ -21,4 +21,9 @@ public interface ITransactionService
     /// Trả null nếu không tìm thấy.
     /// </summary>
     Task<TransactionDetailDto?> GetTransactionDetailAsync(int transactionId);
+
+    /// <summary>
+    /// Lấy danh sách giao dịch của một giảng viên cụ thể.
+    /// </summary>
+    Task<TransactionPagedResult> GetInstructorTransactionsAsync(int instructorId, int page = 1, int pageSize = 20);
 }

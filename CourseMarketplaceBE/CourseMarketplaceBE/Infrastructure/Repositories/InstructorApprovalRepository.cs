@@ -67,6 +67,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                     StripeOnboardingStatus = i.StripeOnboardingStatus,
                     PayoutsEnabled         = i.PayoutsEnabled ?? false,
                     ChargesEnabled         = i.ChargesEnabled ?? false,
+                    StripeCountry          = i.StripeCountry,
                     FullName               = i.InstructorNavigation!.FullName,
                     Email                  = i.InstructorNavigation.UserNavigation!.Email
                 })
@@ -87,6 +88,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                     StripeOnboardingStatus = i.StripeOnboardingStatus,
                     PayoutsEnabled         = i.PayoutsEnabled ?? false,
                     ChargesEnabled         = i.ChargesEnabled ?? false,
+                    StripeCountry          = i.StripeCountry,
                     FullName               = i.InstructorNavigation!.FullName,
                     Email                  = i.InstructorNavigation.UserNavigation!.Email
                 })

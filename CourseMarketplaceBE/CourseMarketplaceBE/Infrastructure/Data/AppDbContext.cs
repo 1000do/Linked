@@ -404,6 +404,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.StripeOnboardingStatus).HasMaxLength(50).HasColumnName("stripe_onboarding_status");
             entity.Property(e => e.PayoutsEnabled).HasDefaultValue(false).HasColumnName("payouts_enabled");
             entity.Property(e => e.ChargesEnabled).HasDefaultValue(false).HasColumnName("charges_enabled");
+            entity.Property(e => e.StripeCountry).HasMaxLength(2).HasColumnName("stripe_country");
             // ★ instructor_rating & total_revenue ĐÃ BỊ XÓA → dùng view_instructor_stats
 
             entity.HasOne(d => d.InstructorNavigation).WithOne(p => p.Instructor)

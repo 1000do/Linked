@@ -176,6 +176,12 @@ public class CourseService : ICourseService
 
     public async Task<CourseResponse> CreateCourseAsync(CourseCreateRequest request, int instructorId)
     {
+        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        if (instructor == null || instructor.ApprovalStatus != "Approved")
+        {
+            throw new BadRequestException("You must be an approved instructor to create a course.");
+        }
+
         string? thumbnailUrl = request.CourseThumbnailUrl;
 
         if (request.ThumbnailFile != null)

@@ -51,4 +51,21 @@ public class TransactionService : ITransactionService
 
         return await _repo.GetTransactionDetailAsync(transactionId);
     }
+
+    public async Task<TransactionPagedResult> GetInstructorTransactionsAsync(int instructorId, int page = 1, int pageSize = 20)
+    {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 20;
+        if (pageSize > MaxPageSize) pageSize = MaxPageSize;
+
+        var (items, totalCount) = await _repo.GetInstructorTransactionsAsync(instructorId, page, pageSize);
+
+        return new TransactionPagedResult
+        {
+            Items      = items,
+            TotalCount = totalCount,
+            Page       = page,
+            PageSize   = pageSize
+        };
+    }
 }

@@ -331,14 +331,14 @@ public class CheckoutService : ICheckoutService
                 {
                     try
                     {
-                        Console.WriteLine($"[CHECKOUT] ★ Creating Stripe Transfer: ${payoutAmount} AUD → {stripeAccountId} (group={transferGroup}, charge={chargeId ?? "NULL"})");
+                        Console.WriteLine($"[CHECKOUT] ★ Creating Stripe Transfer: ${payoutAmount} USD → {stripeAccountId} (group={transferGroup}, charge={chargeId ?? "NULL"})");
 
-                        // ★ Currency PHẢI là AUD (settlement currency của platform AU)
-                        // Khi dùng source_transaction, Stripe yêu cầu currency = platform's balance currency
-                        // Stripe sẽ tự convert sang connected account's currency nếu khác
+                        // ★ Currency PHẢI trùng với currency của Checkout Session (usd)
+                        // Khi dùng source_transaction, Stripe yêu cầu currency = charge's currency
+                        // Stripe sẽ tự convert sang connected account's local currency nếu khác
                         await _paymentGateway.CreateTransferAsync(
                             payoutAmount,
-                            "aud",
+                            "usd",
                             stripeAccountId,
                             transferGroup,
                             $"Payout for course: {txn.OrderItem?.Course?.Title}",
