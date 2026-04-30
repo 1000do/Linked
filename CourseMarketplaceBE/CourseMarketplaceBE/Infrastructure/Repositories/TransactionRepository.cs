@@ -135,4 +135,40 @@ public class TransactionRepository : ITransactionRepository
             })
             .FirstOrDefaultAsync();
     }
+
+    public async Task<(List<TransactionListDto> Items, int TotalCount)> GetInstructorTransactionsAsync(int instructorId, int page, int pageSize)
+    {
+        var query = _context.Transactions
+            // Điều kiện: Chỉ lấy những giao dịch mà Giảng viên này có khóa học được bán (và payout có liên quan)
+            // InstructorPayouts.InstructorId = instructorId
+            .Where(t => t.InstructorPayouts.Any(p => p.InstructorId == instructorId))
+            .OrderByDescending(t => t.TransactionCreatedAt)
+            .Select(t => new TransactionListDto
+            {
+                TransactionId  = t.TransactionId,
+                StripeSessionId = t.StripeSessionId,
+                Date           = t.TransactionCreatedAt,
+                // Chú ý: Ở đây Amount của ListDto ta có thể ghi đè thành tiền mà GV nhận,
+                // hoặc vẫn hiển thị Gross Amount. Dựa theo yêu cầu "tổng tiền trừ phí còn nhiêu",
+                // ta sẽ truyền PayoutAmount qua cột Amount.
+                Amount         = t.InstructorPayouts.FirstOrDefault(p => p.InstructorId == instructorId)!.PayoutAmount,
+                Status         = t.TransactionsStatus,
+
+                BuyerName = t.AccountFromNavigation != null && t.AccountFromNavigation.User != null
+                    ? t.AccountFromNavigation.User.FullName ?? "N/A"
+                    : "N/A",
+
+                CourseTitle = t.OrderItem != null && t.OrderItem.Course != null
+                    ? t.OrderItem.Course.Title ?? "N/A"
+                    : "N/A",
+
+                InstructorName = "Me" // Vì đây là view của chính instructor
+            });
+
+        var totalCount = await query.CountAsync();
+        var skip = (page - 1) * pageSize;
+        var items = await query.Skip(skip).Take(pageSize).ToListAsync();
+
+        return (items, totalCount);
+    }
 }

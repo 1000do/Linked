@@ -49,6 +49,7 @@ public class InstructorService : IInstructorService
             existing.ProfessionalTitle   = request.ProfessionalTitle;
             existing.ExpertiseCategories = request.ExpertiseCategories;
             existing.LinkedinUrl         = request.LinkedinUrl;
+            existing.StripeCountry       = request.StripeCountry.ToUpper();
             existing.ApprovalStatus      = "Pending";
 
             await _repo.SaveChangesAsync();
@@ -68,6 +69,7 @@ public class InstructorService : IInstructorService
             LinkedinUrl          = request.LinkedinUrl,
             DocumentUrl          = documentUrl,
             ApprovalStatus       = "Pending",
+            StripeCountry        = request.StripeCountry.ToUpper(),
             StripeAccountId      = null,
             StripeOnboardingStatus = null,
             PayoutsEnabled       = false,
@@ -133,14 +135,18 @@ public class InstructorService : IInstructorService
         // Lấy email từ Account (qua User → Account navigation)
         var email = instructor.InstructorNavigation?.UserNavigation?.Email ?? "";
 
+        // Lấy quốc gia mà giảng viên đã chọn khi đăng ký (từ DB)
+        var country = !string.IsNullOrEmpty(instructor.StripeCountry)
+            ? instructor.StripeCountry
+            : "SG"; // Fallback mặc định nếu chưa chọn
+
         // Tạo Stripe Express account mới
         var accountService  = new AccountService();
         var stripeAccount   = await accountService.CreateAsync(new AccountCreateOptions
         {
             Type    = "express",
-            // ★ PHẢI KHỚP với country của Platform account (AU)
-            // Nếu Platform ở AU mà Connected account ở US → Stripe chặn transfer cross-border
-            Country = "AU",
+            // ★ Country được lấy từ bảng instructors.stripe_country (giảng viên tự chọn)
+            Country = country,
             Email   = email,
             Capabilities = new AccountCapabilitiesOptions
             {
@@ -283,5 +289,25 @@ public class InstructorService : IInstructorService
         await _repo.SaveChangesAsync();
 
         return $"Đã reset Stripe account cho instructor {instructorId}. Giảng viên cần setup lại Stripe.";
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 8. SET STRIPE COUNTRY — Giảng viên chọn quốc gia Stripe Connect
+    // ═══════════════════════════════════════════════════════════════════════
+    public async Task SetStripeCountryAsync(int userId, string countryCode)
+    {
+        if (string.IsNullOrWhiteSpace(countryCode) || countryCode.Length != 2)
+            throw new InvalidOperationException("Mã quốc gia không hợp lệ (cần đúng 2 ký tự ISO, VD: SG, AU, US).");
+
+        var instructor = await _repo.GetByIdAsync(userId);
+        if (instructor == null)
+            throw new InvalidOperationException("Bạn chưa nộp đơn đăng ký Giảng viên.");
+
+        // Nếu đã có Stripe account rồi → không cho đổi country nữa
+        if (!string.IsNullOrEmpty(instructor.StripeAccountId))
+            throw new InvalidOperationException("Không thể đổi quốc gia khi đã có tài khoản Stripe. Hãy Reset Stripe trước.");
+
+        instructor.StripeCountry = countryCode.ToUpper();
+        await _repo.SaveChangesAsync();
     }
 }

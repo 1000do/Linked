@@ -50,4 +50,10 @@ public interface IInstructorService
     /// Dùng khi account cũ bị lỗi region mismatch.
     /// </summary>
     Task<string> ResetStripeAccountAsync(int instructorId);
+
+    /// <summary>
+    /// Giảng viên chọn quốc gia cho tài khoản Stripe Connect.
+    /// Lưu vào cột stripe_country trong bảng instructors.
+    /// </summary>
+    Task SetStripeCountryAsync(int userId, string countryCode);
 }

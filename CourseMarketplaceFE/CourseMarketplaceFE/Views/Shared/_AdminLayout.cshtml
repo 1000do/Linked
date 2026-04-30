@@ -8,10 +8,13 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Admin</title>
+    <title>@ViewData["Title"] - Admin Workspace</title>
 
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Fonts: Inter for UI, Manrope for display -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
 
@@ -20,101 +23,129 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#10b981', // Emerald 500
-                        secondary: '#059669', // Emerald 600
+                        primary: '#0ea5e9', // Sky 500
+                        secondary: '#0284c7', // Sky 600
+                        accent: '#0f172a', // Slate 900
                     },
-                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+                    fontFamily: { 
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Manrope', 'system-ui', 'sans-serif']
+                    }
                 }
             }
         }
     </script>
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; }
+        h1, h2, h3, h4, h5, h6, .font-display { font-family: 'Manrope', system-ui, sans-serif; }
         
-        /* Thin, elegant scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Custom scrollbar for modern feel */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        /* Material symbols adjustment for finer weight */
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
         }
 
         .nav-link-active {
-            background-color: #e2e8f0; /* slate-200 */
+            background-color: #f1f5f9; /* slate-100 */
             color: #0f172a !important; /* slate-900 */
-            font-weight: 500;
+            font-weight: 700;
+        }
+        .nav-link-active .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1;
+            color: #0ea5e9;
         }
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="bg-white text-slate-900 flex h-screen overflow-hidden antialiased selection:bg-emerald-100 selection:text-emerald-900">
+<body class="bg-slate-50 text-slate-800 flex h-screen overflow-hidden antialiased selection:bg-primary/20 selection:text-primary">
 
-    <aside class="w-60 border-r border-slate-200 flex flex-col bg-slate-50 shrink-0">
-        <div class="h-14 flex items-center px-5 border-b border-slate-200">
-            <span class="font-semibold text-slate-900 text-sm flex items-center gap-2">
-                <span class="material-symbols-outlined text-[18px]">admin_panel_settings</span>
-                Linked Admin
-            </span>
+    <!-- SIDEBAR -->
+    <aside class="w-64 border-r border-slate-200 flex flex-col bg-white shrink-0 shadow-sm z-20 relative">
+        <div class="h-16 flex items-center px-6 border-b border-slate-100">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-accent rounded-lg flex items-center justify-center shadow-inner">
+                    <span class="material-symbols-outlined text-white text-[18px]">admin_panel_settings</span>
+                </div>
+                <span class="font-display font-extrabold text-slate-900 text-base tracking-tight">Linked<span class="text-primary">Admin</span></span>
+            </div>
         </div>
         
-        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-            <div class="px-2 mb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Quản lý</div>
-            <a href="/AdminApproval" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-slate-600 hover:bg-slate-200/50 transition-colors">
-                <span class="material-symbols-outlined text-[18px]">how_to_reg</span> Xét duyệt
+        <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
+            <div class="px-3 mb-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Workspace</div>
+            
+            <a href="/AdminApproval" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
+                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">how_to_reg</span> 
+                Xét duyệt
             </a>
-            <a href="/Notification/Admin" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-slate-600 hover:bg-slate-200/50 transition-colors">
-                <span class="material-symbols-outlined text-[18px]">notifications</span> Thông báo
+            <a href="/Notification/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group relative">
+                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">notifications</span> 
+                Thông báo
+                <!-- Badge (Optional) -->
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-red-500 hidden" id="admin-noti-badge"></span>
             </a>
-            <a href="/Coupon/Admin" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-slate-600 hover:bg-slate-200/50 transition-colors">
-                <span class="material-symbols-outlined text-[18px]">local_activity</span> Coupon
+            <a href="/Coupon/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
+                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">local_activity</span> 
+                Coupon & Khuyến mãi
             </a>
 
-            <div class="px-2 mb-2 mt-6 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Tài chính</div>
-            <a href="/AdminFinance" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-slate-600 hover:bg-slate-200/50 transition-colors">
-                <span class="material-symbols-outlined text-[18px]">bar_chart</span> Tổng quan TC
+            <div class="px-3 mb-3 mt-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tài chính & Giao dịch</div>
+            
+            <a href="/AdminFinance" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
+                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">monitoring</span> 
+                Tổng quan doanh thu
             </a>
-            <a href="/Transaction" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-slate-600 hover:bg-slate-200/50 transition-colors">
-                <span class="material-symbols-outlined text-[18px]">receipt_long</span> Giao dịch
+            <a href="/Transaction/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
+                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">receipt_long</span> 
+                Lịch sử giao dịch
             </a>
             
-            <div class="px-2 mb-2 mt-6 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Hệ thống</div>
-            <a href="/" class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-slate-600 hover:bg-slate-200/50 transition-colors">
-                <span class="material-symbols-outlined text-[18px]">public</span> Về trang chủ
+            <div class="px-3 mb-3 mt-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hệ thống</div>
+            
+            <a href="/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
+                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">public</span> 
+                Về trang mua sắm
             </a>
         </nav>
 
-        <div class="p-3 border-t border-slate-200">
+        <div class="p-4 border-t border-slate-100 bg-slate-50/50">
             <form method="post" action="/Account/Logout">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors">
+                <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-600 hover:text-red-700 hover:bg-red-50 transition-all border border-transparent hover:border-red-100">
                     <span class="material-symbols-outlined text-[18px]">logout</span> Đăng xuất
                 </button>
             </form>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col bg-white overflow-hidden">
-        <header class="h-14 border-b border-slate-200 flex items-center justify-between px-6 bg-white shrink-0">
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-[#f8fafc]">
+        <!-- HEADER -->
+        <header class="h-16 border-b border-slate-200 flex items-center justify-between px-8 bg-white shrink-0 shadow-sm z-10">
             <div class="flex items-center gap-4">
-                <h2 class="font-medium text-sm text-slate-900">@ViewData["PageHeader"]</h2>
+                <h2 class="font-display font-bold text-lg text-slate-900 tracking-tight">@ViewData["PageHeader"]</h2>
             </div>
             
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-5">
                 @await RenderSectionAsync("HeaderActions", required: false)
                 
-                <div class="flex items-center gap-2 pl-4 border-l border-slate-200">
-                    <div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-semibold text-xs">
+                <div class="flex items-center gap-3 pl-5 border-l border-slate-200">
+                    <div class="flex flex-col items-end">
+                        <span class="text-xs font-bold text-slate-900">@managerName</span>
+                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Super Admin</span>
+                    </div>
+                    <div class="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center font-bold text-sm shadow-sm">
                         @(managerName.Length > 0 ? managerName[..1].ToUpper() : "A")
                     </div>
-                    <span class="text-sm font-medium text-slate-700">@managerName</span>
                 </div>
             </div>
         </header>
 
-        <div class="flex-1 overflow-auto bg-slate-50 p-6">
+        <!-- PAGE CONTENT -->
+        <div class="flex-1 overflow-auto custom-scrollbar p-8">
             @RenderBody()
         </div>
     </main>
@@ -123,13 +154,18 @@
         document.addEventListener("DOMContentLoaded", () => {
             const currentPath = window.location.pathname.toLowerCase();
             document.querySelectorAll('.nav-item').forEach(link => {
-                if (link.getAttribute('href').toLowerCase() === currentPath || (currentPath === '/adminapproval/index' && link.getAttribute('href').toLowerCase() === '/adminapproval')) {
+                const href = link.getAttribute('href').toLowerCase();
+                // Matching logic for active route
+                if (href === currentPath || 
+                   (currentPath.includes('/adminapproval') && href.includes('/adminapproval')) ||
+                   (currentPath.includes('/transaction') && href.includes('/transaction/admin'))) {
                     link.classList.add('nav-link-active');
-                    link.classList.remove('text-slate-600');
                 }
             });
         });
     </script>
+    <!-- SweetAlert2 for general use -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
