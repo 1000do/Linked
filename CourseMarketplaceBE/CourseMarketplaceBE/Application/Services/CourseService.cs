@@ -257,6 +257,14 @@ public class CourseService : ICourseService
         course.Requirements = request.Requirements;
         course.UpdatedAt = DateTime.UtcNow;
 
+        // Nếu khóa học đang ở trạng thái Published, chuyển về Pending để kiểm duyệt lại
+        if (course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        {
+            course.CourseStatus = "pending";
+            // Tùy chọn: Xóa feedback cũ khi có thay đổi mới
+            course.ModerationFeedback = null;
+        }
+
         _courseRepository.Update(course);
         await _courseRepository.SaveChangesAsync();
 
@@ -286,8 +294,10 @@ public class CourseService : ICourseService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to modify this course.");
 
-        if (status != "published" && status != "archived")
-            throw new BadRequestException("Invalid status. Allowed values are 'published' or 'archived'.");
+        // Instructor chỉ được gửi yêu cầu duyệt (pending) hoặc ẩn khóa học (archived)
+        // Việc chuyển sang "published" chỉ Admin mới được thực hiện (qua AdminModerationController)
+        if (status != "pending" && status != "archived")
+            throw new BadRequestException("Invalid status. Allowed values are 'pending' or 'archived'.");
 
         course.CourseStatus = status;
         course.UpdatedAt = DateTime.UtcNow;

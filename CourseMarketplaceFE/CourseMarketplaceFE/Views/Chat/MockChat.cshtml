@@ -1,0 +1,438 @@
+@using Microsoft.AspNetCore.Http
+@{
+    var actor = ViewBag.Actor as string ?? "Learner";
+    if (actor == "Admin") { Layout = "_AdminLayout"; }
+    else if (actor == "Instructor") { Layout = "_InstructorLayout"; }
+    else { Layout = "_Layout"; }
+    
+    ViewData["Title"] = "Tin nhắn & Hỗ trợ";
+    ViewData["PageHeader"] = "Giám sát & Hỗ trợ Chat";
+    var userId = Context.Request.Cookies["UserId"] ?? "0";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        /* Chat & Support UI - Premium Material Design 3 */
+        :root {
+            --primary-chat: #10b981;
+            --primary-container-chat: #d1fae5;
+            --surface-chat: #f8fafc;
+            --on-surface-chat: #1e293b;
+            --outline-variant-chat: #e2e8f0;
+        }
+
+        .chat-container {
+            display: flex;
+            height: @(actor == "Admin" ? "calc(100vh - 128px)" : "calc(100vh - 80px)");
+            background: #ffffff;
+            overflow: hidden;
+            border-radius: @(actor == "Admin" ? "32px" : "0");
+            box-shadow: @(actor == "Admin" ? "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)" : "none");
+            border: @(actor == "Admin" ? "1px solid #f1f5f9" : "none");
+            margin: @(actor == "Admin" ? "0" : "0");
+        }
+
+        /* Sidebar Styling */
+        .chat-sidebar {
+            width: 380px;
+            border-right: 1px solid var(--outline-variant-chat);
+            display: flex;
+            flex-direction: column;
+            background: #fcfdfe;
+            flex-shrink: 0;
+        }
+
+        .chat-sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .chat-list-section-title {
+            padding: 0 24px;
+            margin: 20px 0 10px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #64748b;
+            opacity: 0.7;
+        }
+
+        .chat-item {
+            padding: 12px 20px;
+            margin: 4px 12px;
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .chat-item:hover { background: #f1f5f9; }
+        .chat-item.active { background: #f1f5f9; border-left: 4px solid var(--primary-chat); }
+
+        .chat-item .avatar-wrapper { position: relative; }
+        .chat-item img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+
+        .online-dot {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            background: #22c55e;
+            border: 2.5px solid #ffffff;
+            border-radius: 50%;
+        }
+
+        /* Main Chat Area */
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            position: relative;
+            min-width: 0;
+        }
+
+        .chat-header {
+            height: 72px;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--outline-variant-chat);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 24px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Bubbles */
+        .msg-wrapper { display: flex; gap: 10px; max-width: 80%; }
+        .msg-wrapper.me { align-self: flex-end; flex-direction: row-reverse; }
+        .msg-bubble { padding: 12px 16px; font-size: 14px; line-height: 1.5; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+        .msg-them .msg-bubble { background: #f1f5f9; color: #1e293b; border-radius: 20px 20px 20px 4px; }
+        .msg-me .msg-bubble { background: var(--primary-container-chat); color: #064e3b; border-radius: 20px 20px 4px 20px; font-weight: 500; }
+
+        .msg-meta { font-size: 10px; color: #94a3b8; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+        .msg-me .msg-meta { justify-content: flex-end; }
+
+        /* Input Area */
+        .chat-footer { padding: 20px 24px 30px; }
+        .input-container { background: #f1f5f9; border-radius: 24px; padding: 8px 8px 8px 16px; display: flex; align-items: flex-end; gap: 8px; border: 1px solid transparent; transition: all 0.2s; }
+        .input-container:focus-within { background: #ffffff; border-color: var(--primary-chat); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .chat-textarea { flex: 1; border: none; background: transparent; padding: 8px 0; resize: none; max-height: 120px; font-size: 14px; outline: none; }
+        
+        .btn-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #64748b; transition: all 0.2s; }
+        .btn-icon:hover { background: #e2e8f0; }
+        .btn-send-main { background: var(--primary-chat); color: white !important; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: none; }
+        .btn-send-main:hover { background: #059669; transform: scale(1.05); }
+
+        .date-separator { display: flex; justify-content: center; margin: 20px 0; }
+        .date-separator span { background: #f1f5f9; padding: 4px 16px; border-radius: 99px; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .alert-emerald { background: #ecfdf5; border-radius: 16px; border: 1px solid #d1fae5; }
+        
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+}
+
+<div class="chat-container">
+    <!-- Sidebar: Inboxes -->
+    <aside class="chat-sidebar">
+        <div class="chat-sidebar-header">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-xl font-display font-black text-emerald-600">Inboxes</h1>
+                <button class="bg-emerald-50 text-emerald-600 p-2 rounded-xl hover:bg-emerald-100 transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">add_alert</span>
+                </button>
+            </div>
+            
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                <input type="text" class="w-full bg-slate-100 border-none rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 transition-all" placeholder="Tìm kiếm hội thoại...">
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-auto custom-scrollbar pb-4">
+            <div class="chat-list-section-title">Hệ thống</div>
+            <div id="system-alerts-container" class="px-3 mb-4">
+                <p class="text-[10px] text-slate-400 ps-2">Không có thông báo mới.</p>
+            </div>
+
+            <div class="chat-list-section-title">Tin nhắn gần đây</div>
+            <div id="chat-list-container">
+                <!-- Data loaded via AJAX -->
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Chat View -->
+    <main class="chat-main">
+        <div id="empty-chat-state" class="flex-1 flex flex-col items-center justify-center bg-white">
+            <div class="text-center opacity-20">
+                <span class="material-symbols-outlined" style="font-size: 120px;">forum</span>
+                <h3 class="mt-4 font-display font-bold text-slate-900">Chọn một cuộc hội thoại</h3>
+                <p class="text-sm text-slate-500">Bắt đầu trao đổi để hỗ trợ người dùng ngay</p>
+            </div>
+        </div>
+
+        <div id="chat-main-area" class="flex-1 flex flex-col h-full" style="display: none !important;">
+            <!-- Chat Header -->
+            <header class="chat-header">
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <img id="partner-avatar" src="" class="w-11 h-11 rounded-full object-cover border-2 border-white shadow-sm">
+                        <div class="online-dot" style="bottom: 0; right: 0;"></div>
+                    </div>
+                    <div>
+                        <h2 id="partner-name" class="text-sm font-display font-bold text-slate-900 leading-none mb-1">...</h2>
+                        <span class="text-[10px] text-emerald-600 font-black uppercase tracking-widest flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Đang hoạt động
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    @if (actor == "Admin")
+                    {
+                        <button class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center gap-2" onclick="requestConnection()">
+                            <span class="material-symbols-outlined text-[18px]">link</span> Kết nối
+                        </button>
+                    }
+                    <button class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors"><span class="material-symbols-outlined text-[20px]">call</span></button>
+                    <button class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors"><span class="material-symbols-outlined text-[20px]">videocam</span></button>
+                    <button class="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-red-500 transition-colors" data-bs-toggle="modal" data-bs-target="#reportModal"><span class="material-symbols-outlined text-[20px]">flag</span></button>
+                </div>
+            </header>
+
+            <!-- Message Area -->
+            <div class="chat-messages custom-scrollbar" id="messages-container">
+                <!-- Tin nhắn hiển thị ở đây -->
+            </div>
+
+            <!-- User Connection Request Banner -->
+            <div id="connection-request-banner" class="mx-6 mt-3 bg-emerald-50 border border-emerald-100 p-4 rounded-2xl shadow-sm animate-in fade-in slide-in-from-top-4" style="display: none;">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-emerald-600 shadow-sm">
+                            <span class="material-symbols-outlined text-[24px]">admin_panel_settings</span>
+                        </div>
+                        <div>
+                            <p class="font-bold text-slate-900 leading-tight">Admin muốn kết nối trực tiếp</p>
+                            <p class="text-xs text-slate-500">Để hỗ trợ giải quyết vấn đề của bạn nhanh hơn.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-emerald-500/20" onclick="acceptConnection()">Chấp nhận</button>
+                        <button class="bg-white text-slate-500 px-4 py-2 rounded-xl text-xs font-bold border border-slate-100" onclick="rejectConnection()">Từ chối</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Footer -->
+            <footer class="chat-footer">
+                <div class="input-container group">
+                    <button class="btn-icon hover:text-emerald-600"><span class="material-symbols-outlined text-[22px]">add_circle</span></button>
+                    <button class="btn-icon hover:text-emerald-600"><span class="material-symbols-outlined text-[22px]">image</span></button>
+                    <textarea class="chat-textarea" id="chat-input" placeholder="Nhập tin nhắn..." rows="1" oninput="autoGrow(this)"></textarea>
+                    <button class="btn-send-main shadow-lg shadow-emerald-500/20 active:scale-90 transition-all" onclick="sendMessage()">
+                        <span class="material-symbols-outlined text-[20px]">send</span>
+                    </button>
+                </div>
+            </footer>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Báo cáo -->
+<div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-2xl rounded-3xl overflow-hidden">
+            <div class="bg-slate-900 px-6 py-4 flex justify-between items-center">
+                <h5 class="text-white font-display font-bold mb-0">Báo cáo vi phạm</h5>
+                <button type="button" class="text-white/50 hover:text-white transition-colors" data-bs-dismiss="modal"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-[0.1em] mb-2">Lý do báo cáo</label>
+                        <select id="report-reason" class="w-full bg-slate-50 border-slate-100 rounded-xl focus:ring-emerald-500 text-sm">
+                            <option value="spam">Spam / Quảng cáo rác</option>
+                            <option value="harassment">Quấy rối / Ngôn từ thù ghét</option>
+                            <option value="inappropriate">Nội dung không phù hợp</option>
+                            <option value="other">Lý do khác</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-[0.1em] mb-2">Chi tiết thêm</label>
+                        <textarea id="report-details" class="w-full bg-slate-50 border-slate-100 rounded-xl focus:ring-emerald-500 text-sm h-24" placeholder="Mô tả cụ thể hành vi vi phạm..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 pt-0 flex gap-2">
+                <button type="button" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors" data-bs-dismiss="modal">Hủy bỏ</button>
+                <button type="button" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all active:scale-95" onclick="submitReport()">Gửi báo cáo</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script>
+        // SignalR & Chat Logic (Mocked & Real)
+        let currentChatId = null;
+        let actor = "@actor";
+        let userId = "@userId";
+
+        function autoGrow(element) {
+            element.style.height = "5px";
+            element.style.height = (element.scrollHeight) + "px";
+        }
+
+        // --- Giả lập dữ liệu & Logic điều hướng ---
+        async function loadChatList() {
+            // Trong thực tế sẽ fetch từ API
+            const container = document.getElementById('chat-list-container');
+            container.innerHTML = `
+                <div class="chat-item active" onclick="selectChat(1, 'Trần Minh Quân', 'https://i.pravatar.cc/150?u=1')">
+                    <div class="avatar-wrapper">
+                        <img src="https://i.pravatar.cc/150?u=1">
+                        <div class="online-dot"></div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center mb-0.5">
+                            <span class="font-bold text-slate-900 truncate text-sm">Trần Minh Quân</span>
+                            <span class="text-[10px] text-slate-400">12:45</span>
+                        </div>
+                        <p class="text-xs text-slate-500 truncate">Em chào thầy, cho em hỏi chút về bài 4...</p>
+                    </div>
+                </div>
+                <div class="chat-item" onclick="selectChat(2, 'Nguyễn Thu Thảo', 'https://i.pravatar.cc/150?u=2')">
+                    <div class="avatar-wrapper">
+                        <img src="https://i.pravatar.cc/150?u=2">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center mb-0.5">
+                            <span class="font-bold text-slate-900 truncate text-sm">Nguyễn Thu Thảo</span>
+                            <span class="text-[10px] text-slate-400">Hôm qua</span>
+                        </div>
+                        <p class="text-xs text-slate-400 truncate">Cảm ơn thầy đã hỗ trợ em ạ!</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectChat(id, name, avatar) {
+            currentChatId = id;
+            document.getElementById('empty-chat-state').style.display = 'none';
+            document.getElementById('chat-main-area').style.setProperty('display', 'flex', 'important');
+            document.getElementById('partner-name').innerText = name;
+            document.getElementById('partner-avatar').src = avatar;
+            
+            // Mock messages
+            const msgContainer = document.getElementById('messages-container');
+            msgContainer.innerHTML = `
+                <div class="date-separator"><span>Hôm nay</span></div>
+                <div class="msg-wrapper them msg-them">
+                    <div class="msg-bubble shadow-sm">Em chào thầy, bài giảng số 4 phần React Hooks em chưa rõ cách dùng useMemo lắm ạ.</div>
+                </div>
+                <div class="msg-wrapper me msg-me">
+                    <div class="msg-bubble shadow-sm">Chào Quân, useMemo dùng để ghi nhớ kết quả của một phép tính tốn kém, tránh tính toán lại khi component re-render không cần thiết.</div>
+                </div>
+            `;
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+
+            // Highlight active item
+            document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const msgContainer = document.getElementById('messages-container');
+            const newMsg = `
+                <div class="msg-wrapper me msg-me animate-in fade-in slide-in-from-right-4 duration-300">
+                    <div class="msg-bubble shadow-sm">${text}</div>
+                    <div class="msg-meta">Vừa xong <span class="material-symbols-outlined text-[12px]">done_all</span></div>
+                </div>
+            `;
+            msgContainer.insertAdjacentHTML('beforeend', newMsg);
+            input.value = '';
+            input.style.height = "auto";
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+        }
+
+        function requestConnection() {
+            Swal.fire({
+                title: 'Kết nối trực tiếp?',
+                text: "Hệ thống sẽ gửi yêu cầu chat trực tiếp đến người dùng này.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Xác nhận kết nối',
+                customClass: { popup: 'rounded-3xl' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Đã gửi yêu cầu',
+                        text: 'Vui lòng đợi người dùng chấp nhận.',
+                        icon: 'success',
+                        confirmButtonColor: '#10b981',
+                        customClass: { popup: 'rounded-3xl' }
+                    });
+                }
+            });
+        }
+
+        function submitReport() {
+            const reason = document.getElementById('report-reason').value;
+            const details = document.getElementById('report-details').value;
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Đã gửi báo cáo',
+                text: 'Cảm ơn bạn đã đóng góp xây dựng cộng đồng an toàn.',
+                confirmButtonColor: '#10b981',
+                customClass: { popup: 'rounded-3xl' }
+            });
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('reportModal'));
+            modal.hide();
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadChatList();
+            
+            document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        });
+    </script>
+}

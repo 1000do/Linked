@@ -1,0 +1,256 @@
+@model List<CourseMarketplaceFE.Models.CourseModerationViewModel>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Xét duyệt Khóa học";
+    ViewData["PageHeader"] = "Xét duyệt Khóa học";
+}
+
+<div class="space-y-6">
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-emerald-600">pending_actions</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Đang chờ duyệt</p>
+                <h3 class="text-2xl font-display font-extrabold text-slate-900">@Model.Count</h3>
+            </div>
+        </div>
+        <div class="bg-accent p-6 rounded-3xl shadow-lg shadow-emerald-900/20 flex items-center gap-4">
+            <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-white">verified</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-white/60 uppercase tracking-widest">Hệ thống</p>
+                <h3 class="text-lg font-display font-bold text-white">Moderation Active</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/50 border-b border-slate-100">
+                        <th class="px-8 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Thông tin khóa học</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Giảng viên</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Danh mục</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Giá bán</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Ngày gửi</th>
+                        <th class="px-8 py-5 text-right text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="px-8 py-20 text-center">
+                                <div class="flex flex-col items-center">
+                                    <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                        <span class="material-symbols-outlined text-slate-300 text-4xl">inventory_2</span>
+                                    </div>
+                                    <h4 class="text-slate-900 font-display font-bold">Không có khóa học chờ duyệt</h4>
+                                    <p class="text-slate-400 text-sm">Hệ thống hiện đã xử lý xong toàn bộ hàng đợi.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var item in Model)
+                    {
+                        <tr class="group hover:bg-slate-50/80 transition-colors">
+                            <td class="px-8 py-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-14 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-100 shadow-sm">
+                                        @if (!string.IsNullOrEmpty(item.CourseThumbnailUrl))
+                                        {
+                                            <img src="@item.CourseThumbnailUrl" class="w-full h-full object-cover" alt="Thumbnail" />
+                                        }
+                                        else
+                                        {
+                                            <div class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
+                                                <span class="material-symbols-outlined text-[20px]">image</span>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div>
+                                        <a href="/Course/Details/@item.CourseId" target="_blank" class="font-display font-extrabold text-slate-900 leading-tight hover:text-primary transition-colors block">
+                                            @item.Title
+                                        </a>
+                                        <p class="text-[11px] text-slate-400 font-medium">ID: #@item.CourseId</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-6">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                                        @item.InstructorName[..1].ToUpper()
+                                    </div>
+                                    <span class="text-sm font-semibold text-slate-700">@item.InstructorName</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-6">
+                                <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[11px] font-bold uppercase tracking-wider">
+                                    @item.CategoryName
+                                </span>
+                            </td>
+                            <td class="px-6 py-6 font-display font-black text-primary">
+                                @item.Price.ToString("N0")đ
+                            </td>
+                            <td class="px-6 py-6">
+                                <p class="text-sm text-slate-500 font-medium">@item.CreatedAt?.ToString("dd/MM/yyyy")</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">@item.CreatedAt?.ToString("HH:mm")</p>
+                            </td>
+                            <td class="px-8 py-6 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="/Course/Details/@item.CourseId" target="_blank" class="w-9 h-9 flex items-center justify-center bg-slate-100 text-slate-400 rounded-xl hover:bg-primary hover:text-white transition-all active:scale-95" title="Xem chi tiết khóa học">
+                                        <span class="material-symbols-outlined text-[20px]">visibility</span>
+                                    </a>
+                                    <button onclick="approveCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
+                                        <span class="material-symbols-outlined text-[18px]">done</span> Duyệt
+                                    </button>
+                                    <button onclick="rejectCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-bold transition-all active:scale-95">
+                                        <span class="material-symbols-outlined text-[18px]">close</span> Từ chối
+                                    </button>
+                                    <button onclick="flagCourse(@item.CourseId)" class="flex items-center justify-center w-9 h-9 bg-accent text-white rounded-xl hover:bg-red-600 transition-all active:scale-95" title="Gắn cờ vi phạm">
+                                        <span class="material-symbols-outlined text-[18px]">flag</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    async function approveCourse(id) {
+        const { value: feedback } = await Swal.fire({
+            title: 'Duyệt khóa học',
+            text: 'Bạn có muốn gửi lời nhắn khích lệ cho giảng viên không?',
+            input: 'textarea',
+            inputPlaceholder: 'Ví dụ: Khóa học của bạn rất tuyệt vời, hãy tiếp tục phát huy nhé!',
+            showCancelButton: true,
+            confirmButtonText: 'Phê duyệt & Đăng tải',
+            confirmButtonColor: '#10b981',
+            cancelButtonText: 'Hủy',
+            background: '#ffffff',
+            customClass: {
+                title: 'font-display font-extrabold text-slate-900',
+                confirmButton: 'rounded-xl font-bold px-6 py-3',
+                cancelButton: 'rounded-xl font-bold px-6 py-3',
+                input: 'rounded-2xl border-slate-200 focus:ring-primary focus:border-primary'
+            }
+        });
+
+        if (feedback === undefined) return;
+
+        Swal.showLoading();
+        const response = await fetch(`/AdminModeration/ApproveCourse/${id}`, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `feedback=${encodeURIComponent(feedback)}`
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Đã phê duyệt!',
+                text: 'Khóa học hiện đã có mặt trên sàn.',
+                confirmButtonColor: '#10b981',
+                customClass: { popup: 'rounded-3xl' }
+            }).then(() => location.reload());
+        } else {
+            Swal.fire('Lỗi', 'Có lỗi xảy ra khi duyệt khóa học.', 'error');
+        }
+    }
+
+    async function rejectCourse(id) {
+        const { value: reason } = await Swal.fire({
+            title: 'Từ chối khóa học',
+            input: 'textarea',
+            inputLabel: 'Lý do từ chối (Gửi cho giảng viên)',
+            inputPlaceholder: 'Nội dung video chưa đạt chuẩn, thiếu tài liệu đi kèm...',
+            inputValidator: (value) => {
+                if (!value) return 'Bạn phải nhập lý do từ chối để giảng viên sửa lỗi!';
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Gửi từ chối',
+            confirmButtonColor: '#ef4444',
+            cancelButtonText: 'Hủy',
+            background: '#ffffff',
+            customClass: {
+                title: 'font-display font-extrabold text-slate-900',
+                input: 'rounded-2xl border-slate-200 focus:ring-primary focus:border-primary'
+            }
+        });
+
+        if (!reason) return;
+
+        Swal.showLoading();
+        const response = await fetch(`/AdminModeration/RejectCourse`, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `id=${id}&reason=${encodeURIComponent(reason)}`
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Đã gửi phản hồi',
+                text: 'Khóa học đã bị từ chối và giảng viên đã nhận được lý do.',
+                confirmButtonColor: '#10b981'
+            }).then(() => location.reload());
+        } else {
+            Swal.fire('Lỗi', 'Có lỗi xảy ra khi thực hiện.', 'error');
+        }
+    }
+
+    async function flagCourse(id) {
+        const { value: reason } = await Swal.fire({
+            title: 'Gắn cờ vi phạm',
+            html: '<p class="text-sm text-slate-500 mb-4">Hành động này sẽ khóa khóa học và gửi cảnh báo vi phạm nghiêm trọng cho giảng viên.</p>',
+            input: 'textarea',
+            inputPlaceholder: 'Mô tả vi phạm (Bản quyền, Nội dung độc hại...)',
+            inputValidator: (value) => {
+                if (!value) return 'Bạn phải nhập lý do vi phạm!';
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Xác nhận Gắn cờ',
+            confirmButtonColor: '#064e3b',
+            cancelButtonText: 'Hủy',
+            customClass: {
+                title: 'font-display font-extrabold text-red-600',
+                input: 'rounded-2xl border-slate-200 focus:ring-primary focus:border-primary'
+            }
+        });
+
+        if (!reason) return;
+
+        Swal.showLoading();
+        const response = await fetch(`/AdminModeration/FlagCourse`, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `id=${id}&reason=${encodeURIComponent(reason)}`
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Đã gắn cờ',
+                text: 'Khóa học đã bị tạm ẩn và đưa vào danh sách đen.',
+                confirmButtonColor: '#10b981'
+            }).then(() => location.reload());
+        } else {
+            Swal.fire('Lỗi', 'Có lỗi xảy ra khi thực hiện.', 'error');
+        }
+    }
+</script>
+}

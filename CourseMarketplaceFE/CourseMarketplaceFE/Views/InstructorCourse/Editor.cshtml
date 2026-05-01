@@ -9,17 +9,48 @@
         <div class="flex items-center gap-4">
             <a href="/InstructorCourse" class="text-slate-400 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">arrow_back</span></a>
             <h1 class="text-2xl font-headline font-extrabold text-slate-900">Course Structure</h1>
-            <span class="px-2 py-1 bg-primary-container/20 text-primary border border-primary-container rounded text-[10px] font-bold uppercase tracking-wider">Draft</span>
+            @{
+                var courseStatus = ViewBag.CourseStatus as string ?? "Draft";
+                if (courseStatus.Equals("Published", StringComparison.OrdinalIgnoreCase)) {
+                    <span class="px-2 py-1 bg-primary-container/20 text-primary border border-primary-container rounded text-[10px] font-bold uppercase tracking-wider">Published</span>
+                } else if (courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase)) {
+                    <span class="px-2 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded text-[10px] font-bold uppercase tracking-wider">Pending Review</span>
+                } else if (courseStatus.Equals("Rejected", StringComparison.OrdinalIgnoreCase)) {
+                    <span class="px-2 py-1 bg-red-50 text-red-600 border border-red-200 rounded text-[10px] font-bold uppercase tracking-wider">Rejected</span>
+                } else {
+                    <span class="px-2 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded text-[10px] font-bold uppercase tracking-wider">Draft</span>
+                }
+            }
         </div>
         <div class="flex items-center gap-3">
             <a href="/Course/Details/@courseId" target="_blank" class="px-4 py-2 bg-white text-slate-700 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2">
                 <span class="material-symbols-outlined text-[18px]">visibility</span> Preview
             </a>
-            <button class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()">
-                <span class="material-symbols-outlined text-[18px]">send</span> Submit for Review
-            </button>
+            @if (!courseStatus.Equals("Published", StringComparison.OrdinalIgnoreCase) && !courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase)) {
+                <button class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()">
+                    <span class="material-symbols-outlined text-[18px]">send</span> Submit for Review
+                </button>
+            }
         </div>
     </div>
+
+    <!-- Moderation Feedback Alert -->
+    @{
+        var moderationFeedback = ViewBag.ModerationFeedback as string;
+    }
+    @if (!string.IsNullOrEmpty(moderationFeedback))
+    {
+        <div class="mb-6 bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start gap-3 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+            <span class="material-symbols-outlined text-amber-600">report</span>
+            <div class="flex-1">
+                <h4 class="text-sm font-bold text-amber-900 mb-1">Phản hồi kiểm duyệt:</h4>
+                <p class="text-sm text-amber-800 leading-relaxed">@moderationFeedback</p>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-amber-400 hover:text-amber-600">
+                <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+        </div>
+    }
 
     <div class="flex gap-8 h-full overflow-hidden">
         <!-- LEFT: Course Structure -->
@@ -437,9 +468,20 @@
                 if (res.ok) {
                     const json = await res.json();
                     if (json.success) {
-                        Swal.fire({ icon: 'success', title: 'Saved!', text: 'Course details updated successfully.', timer: 1500, showConfirmButton: false });
-                        document.querySelector('h1').textContent = title;
-                        document.getElementById('course-thumbnail-preview').src = thumb || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=200";
+                        if (json.status && json.status.toLowerCase() === 'pending') {
+                            Swal.fire({ 
+                                icon: 'info', 
+                                title: 'Course Under Review', 
+                                text: 'Because you modified a published course, it has been set back to Pending Review for admin approval.',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({ icon: 'success', title: 'Saved!', text: 'Course details updated successfully.', timer: 1500, showConfirmButton: false });
+                            document.querySelector('h1').textContent = title;
+                            document.getElementById('course-thumbnail-preview').src = thumb || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=200";
+                        }
                     } else {
                         Swal.fire('Error', json.message || 'Failed to update details', 'error');
                     }
@@ -742,6 +784,17 @@
                     if(res.ok) {
                         const json = await res.json();
                         if(json.success && json.data) {
+                            if (json.data.courseStatus && json.data.courseStatus.toLowerCase() === 'pending') {
+                                Swal.fire({ 
+                                    icon: 'info', 
+                                    title: 'Course Under Review', 
+                                    text: 'Because you added a lesson to a published course, it has been set back to Pending Review.',
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                                return;
+                            }
                             lessonsData.push(json.data);
                             renderCourseStructure();
                             // Select the newly added lesson
@@ -935,6 +988,17 @@
                 if(res.ok) {
                     const json = await res.json();
                     if(json.success) {
+                        if (json.status && json.status.toLowerCase() === 'pending') {
+                            Swal.fire({ 
+                                icon: 'info', 
+                                title: 'Course Under Review', 
+                                text: 'Because you added video content to a published course, it has been set back to Pending Review.',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                location.reload();
+                            });
+                            return;
+                        }
                         Swal.fire({ icon: 'success', title: 'Saved!', text: 'Video content saved successfully.', timer: 1500, showConfirmButton: false });
                         if (json.data) updateLocalMaterials(lessonId, json.data, 'video');
                     } else { Swal.fire({ icon: 'error', title: 'Error', text: "Failed to save: " + (json.message || "Unknown error") }); }
@@ -973,6 +1037,17 @@
                 if(res.ok) {
                     const json = await res.json();
                     if(json.success) {
+                        if (json.status && json.status.toLowerCase() === 'pending') {
+                            Swal.fire({ 
+                                icon: 'info', 
+                                title: 'Course Under Review', 
+                                text: 'Because you added resources to a published course, it has been set back to Pending Review.',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                location.reload();
+                            });
+                            return;
+                        }
                         Swal.fire({ icon: 'success', title: 'Added!', text: 'Resource added successfully.', timer: 1500, showConfirmButton: false });
                         
                         // Clear form
@@ -1022,7 +1097,7 @@
                         const res = await fetch('/InstructorCourse/UpdateCourseStatus', { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: new URLSearchParams({ courseId: courseId, status: 'published' })
+                            body: new URLSearchParams({ courseId: courseId, status: 'pending' })
                         });
                         
                         if (res.ok) {

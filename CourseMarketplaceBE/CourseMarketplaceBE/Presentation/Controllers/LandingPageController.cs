@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CourseMarketplaceBE.Controllers;
+namespace CourseMarketplaceBE.Presentation.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

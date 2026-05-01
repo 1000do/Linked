@@ -215,6 +215,7 @@ namespace CourseMarketplaceFE.Controllers
                         ViewBag.CategoryId = data.TryGetProperty("categoryId", out var c) ? c.GetInt32() : 0;
                         ViewBag.Price = data.TryGetProperty("price", out var p) ? p.GetDecimal() : 0;
                         ViewBag.ThumbnailUrl = data.TryGetProperty("courseThumbnailUrl", out var t) ? t.GetString() : "";
+                        ViewBag.ModerationFeedback = data.TryGetProperty("moderationFeedback", out var mf) ? mf.GetString() : "";
 
                         // Parse lessons
                         if (data.TryGetProperty("lessons", out var lessonsEl) && lessonsEl.ValueKind == JsonValueKind.Array)
@@ -285,9 +286,9 @@ namespace CourseMarketplaceFE.Controllers
                 {
                     var json = await resp.Content.ReadAsStringAsync();
                     using var doc = JsonDocument.Parse(json);
-                    // Clone the element so it survives after doc is disposed
-                    var data = doc.RootElement.GetProperty("data").Clone();
-                    return Json(new { success = true, data = data });
+                    var data = doc.RootElement.GetProperty("data");
+                    var newStatus = data.TryGetProperty("courseStatus", out var s) ? s.GetString() : null;
+                    return Json(new { success = true, data = data.Clone(), status = newStatus });
                 }
                 var error = await resp.Content.ReadAsStringAsync();
                 return Json(new { success = false, message = error });
@@ -321,8 +322,9 @@ namespace CourseMarketplaceFE.Controllers
                 {
                     var json = await resp.Content.ReadAsStringAsync();
                     using var doc = JsonDocument.Parse(json);
-                    var data = doc.RootElement.GetProperty("data").Clone();
-                    return Json(new { success = true, data = data });
+                    var data = doc.RootElement.GetProperty("data");
+                    var newStatus = data.TryGetProperty("courseStatus", out var s) ? s.GetString() : null;
+                    return Json(new { success = true, data = data.Clone(), status = newStatus });
                 }
                 var error = await resp.Content.ReadAsStringAsync();
                 return Json(new { success = false, message = error });
@@ -374,7 +376,11 @@ namespace CourseMarketplaceFE.Controllers
 
                 if (resp.IsSuccessStatusCode)
                 {
-                    return Json(new { success = true });
+                    var json = await resp.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    var data = doc.RootElement.GetProperty("data");
+                    var newStatus = data.GetProperty("courseStatus").GetString();
+                    return Json(new { success = true, status = newStatus });
                 }
                 var error = await resp.Content.ReadAsStringAsync();
                 return Json(new { success = false, message = error });

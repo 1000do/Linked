@@ -33,6 +33,7 @@ public class LessonResponse
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public string? LessonStatus { get; set; }
+    public string? CourseStatus { get; set; }
     
     public List<MaterialResponse> LearningMaterials { get; set; } = new List<MaterialResponse>();
 }
@@ -47,4 +48,5 @@ public class MaterialResponse
     public MaterialMetadata? MaterialMetadata { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public string? CourseStatus { get; set; }
 }

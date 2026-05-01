@@ -55,4 +55,7 @@ public partial class Account
 
     public virtual ICollection<Transaction> TransactionTos { get; set; } = new List<Transaction>();
 
+    public virtual ICollection<ChatParticipant> ChatParticipants { get; set; } = new List<ChatParticipant>();
+
+    public virtual ICollection<Message> Messages { get; set; } = new List<Message>();
 }

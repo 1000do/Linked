@@ -165,9 +165,8 @@ CREATE TABLE courses (
     course_status VARCHAR(50), -- VD: 'draft', 'published', 'archived'
     course_flag_count INT DEFAULT 0, -- Theo dõi số lần course bị report (1 lần, 2 lần , 3 lần sẽ có mức phạt ngày càng nặng, cần lên Udemy tham khảo thêm)
     what_you_will_learn TEXT, -- mô tả mục tiêu đạt được ở trang detail khóa học
-    requirements TEXT -- mô tả yêu cầu để học khóa học ở trang detail khóa học
-    
-	
+    requirements TEXT, -- mô tả yêu cầu để học khóa học ở trang detail khóa học
+    moderation_feedback TEXT -- phản hồi từ admin khi duyệt/từ chối
 );
 
 
@@ -339,21 +338,36 @@ CREATE TABLE instructor_payouts (
 -- 5. NHÓM GIAO TIẾP & HỖ TRỢ (Communication & Reports)
 -- ==============================================================================
 
+-- ==============================================================================
+-- 5. NHÓM GIAO TIẾP & HỖ TRỢ (Communication & Reports)
+-- ==============================================================================
+
 CREATE TABLE chats (
     chat_id SERIAL PRIMARY KEY,
+    chat_name VARCHAR(255),           -- Tên nhóm (nếu là Group Chat)
+    chat_type VARCHAR(50) DEFAULT 'private', -- 'private' (1-1) hoặc 'group'
+    context_type VARCHAR(50),         -- 'course', 'order', 'system'
+    context_id INT,                   -- ID của khóa học hoặc đơn hàng liên quan
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_message_at TIMESTAMP
 );
 
+CREATE TABLE chat_participants (
+    chat_id INT REFERENCES chats(chat_id) ON DELETE CASCADE,
+    account_id INT REFERENCES accounts(account_id) ON DELETE CASCADE,
+    role VARCHAR(50) DEFAULT 'member', -- 'member', 'admin', 'observer'
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (chat_id, account_id)
+);
+
 CREATE TABLE messages (
     message_id SERIAL PRIMARY KEY,
-    chat_id INT REFERENCES chats(chat_id) ON DELETE SET NULL,
+    chat_id INT REFERENCES chats(chat_id) ON DELETE CASCADE,
     sender_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
-    receiver_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
     content TEXT NOT NULL,
     is_seen BOOLEAN DEFAULT FALSE,
+    message_status VARCHAR(50) DEFAULT 'ok', -- 'ok', 'flagged', 'hidden'
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	message_status TEXT NOT NULL DEFAULT 'ok', --- ok, hidden, auditting
     received_at TIMESTAMP
 );
 
@@ -379,6 +393,8 @@ CREATE TABLE user_reports (
     user_reports_status VARCHAR(50), -- VD: 'pending', 'resolved', 'dismissed'
     resolution_note TEXT,
     resolved_at TIMESTAMP,
+    chat_id INT REFERENCES chats(chat_id), -- Liên kết với cuộc chat bị khiếu nại
+    access_granted_until TIMESTAMP,        -- Staff chỉ được xem đến thời điểm này
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -677,6 +693,8 @@ SELECT setval(pg_get_serial_sequence('categories', 'category_id'), (SELECT MAX(c
 SELECT setval(pg_get_serial_sequence('courses', 'course_id'), (SELECT MAX(course_id) FROM courses));
 SELECT setval(pg_get_serial_sequence('lessons', 'lesson_id'), (SELECT MAX(lesson_id) FROM lessons));
 SELECT setval(pg_get_serial_sequence('learning_materials', 'material_id'), (SELECT MAX(material_id) FROM learning_materials));
+SELECT setval(pg_get_serial_sequence('chats', 'chat_id'), (SELECT COALESCE(MAX(chat_id), 1) FROM chats));
+SELECT setval(pg_get_serial_sequence('messages', 'message_id'), (SELECT COALESCE(MAX(message_id), 1) FROM messages));
 
 DO $$
 DECLARE

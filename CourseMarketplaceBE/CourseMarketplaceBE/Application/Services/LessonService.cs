@@ -58,6 +58,14 @@ public class LessonService : ILessonService
         };
 
         await _lessonRepository.AddAsync(lesson);
+        
+        if (course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        {
+            course.CourseStatus = "pending";
+            course.ModerationFeedback = null;
+            _courseRepository.Update(course);
+        }
+
         await _lessonRepository.SaveChangesAsync();
 
         return new LessonResponse
@@ -69,7 +77,8 @@ public class LessonService : ILessonService
             ThumbnailUrl = lesson.ThumbnailUrl,
             CreatedAt = lesson.CreatedAt,
             UpdatedAt = lesson.UpdatedAt,
-            LessonStatus = lesson.LessonStatus
+            LessonStatus = lesson.LessonStatus,
+            CourseStatus = course.CourseStatus
         };
     }
 
@@ -141,6 +150,14 @@ public class LessonService : ILessonService
 
         await _materialRepository.SaveChangesAsync();
 
+        if (lesson.Course != null && lesson.Course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        {
+            lesson.Course.CourseStatus = "pending";
+            lesson.Course.ModerationFeedback = null;
+            _courseRepository.Update(lesson.Course);
+            await _courseRepository.SaveChangesAsync();
+        }
+
         return new MaterialResponse
         {
             MaterialId = material.MaterialId,
@@ -150,7 +167,8 @@ public class LessonService : ILessonService
             MaterialUrl = material.MaterialUrl,
             MaterialMetadata = material.MaterialMetadata,
             CreatedAt = material.CreatedAt,
-            UpdatedAt = material.UpdatedAt
+            UpdatedAt = material.UpdatedAt,
+            CourseStatus = lesson.Course?.CourseStatus
         };
     }
 

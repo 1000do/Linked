@@ -55,10 +55,106 @@
         .hero-gradient {
             background: linear-gradient(135deg, #006a62 0%, #43e8d8 100%);
         }
+
+        /* Floating Chat Button - Emerald Style */
+        .floating-chat-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            background: #059669; /* Emerald 600 */
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(5, 150, 105, 0.4);
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+        }
+
+        .floating-chat-btn:hover {
+            transform: scale(1.1) rotate(5deg);
+            background: #047857;
+        }
+
+        /* Support Popup */
+        .support-popup {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 350px;
+            max-height: 500px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            z-index: 1001;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            animation: slideUp 0.3s ease;
+        }
+
+        @@keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .support-header {
+            background: #059669;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .support-content {
+            padding: 15px;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+
+        .quick-question {
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quick-question:hover {
+            border-color: #059669;
+            color: #059669;
+            background: #f0fdf4;
+        }
+
+        .chat-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 10px;
+            border: 2px solid white;
+        }
     </style>
 
     <!-- GOOGLE LOGIN SCRIPT -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 
 <body class="bg-surface font-body text-on-surface antialiased">
@@ -74,15 +170,72 @@
     <!-- FOOTER -->
     @await Html.PartialAsync("_Footer")
 
+    <!-- SUPPORT POPUP -->
+    <div id="support-chat-popup" class="support-popup">
+        <div class="support-header">
+            <h5 class="mb-1 fw-bold">Hỗ trợ trực tuyến</h5>
+            <p class="mb-0 text-xs opacity-75">Chào bạn, chúng tôi có thể giúp gì?</p>
+        </div>
+        <div class="support-content">
+            <p class="text-xs text-slate-500 mb-3 fw-bold uppercase">Câu hỏi thường gặp</p>
+            <div class="quick-question" onclick="askSupport('Làm sao để đăng ký khóa học?')">
+                <i class="material-symbols-outlined text-sm">payments</i>
+                Cách thức đăng ký khóa học?
+            </div>
+            <div class="quick-question" onclick="askSupport('Tôi bị quên mật khẩu')">
+                <i class="material-symbols-outlined text-sm">lock_reset</i>
+                Tôi bị quên mật khẩu
+            </div>
+            <div class="quick-question" onclick="askSupport('Chính sách hoàn tiền như thế nào?')">
+                <i class="material-symbols-outlined text-sm">reusable_item</i>
+                Chính sách hoàn tiền
+            </div>
+            <div class="quick-question" onclick="askSupport('Báo lỗi kỹ thuật')">
+                <i class="material-symbols-outlined text-sm">bug_report</i>
+                Báo lỗi kỹ thuật
+            </div>
+            
+            <hr class="my-3 border-slate-200">
+            
+            <div class="text-center">
+                <a href="/Chat" class="btn btn-sm btn-outline-success w-100 rounded-pill">
+                    Kết nối với nhân viên hỗ trợ
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOATING CHAT BUTTON -->
+    <button class="floating-chat-btn" onclick="toggleSupportPopup()" title="Hỗ trợ">
+        <i class="material-symbols-outlined" style="font-size: 28px;">support_agent</i>
+        <span class="chat-badge" style="display: none;" id="global-chat-badge">1</span>
+    </button>
+
 
    
 
     @await RenderSectionAsync("Scripts", required: false)
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <script>
-        // 1. Lấy token an toàn từ Server-side (Razor)
+        function toggleSupportPopup() {
+            const popup = document.getElementById('support-chat-popup');
+            const isVisible = popup.style.display === 'flex';
+            popup.style.display = isVisible ? 'none' : 'flex';
+            
+            // Ẩn chấm đỏ khi đã mở
+            if (!isVisible) {
+                const badge = document.getElementById('global-chat-badge');
+                if (badge) badge.style.display = 'none';
+            }
+        }
 
-               // Dùng thêm .trim() để đảm bảo chuỗi sạch
+        async function askSupport(question) {
+            alert("Hệ thống đang chuyển yêu cầu: " + question);
+            // Sau này sẽ tích hợp tự động gửi tin nhắn vào Chat chính
+            window.location.href = "/Chat?autoMessage=" + encodeURIComponent(question);
+        }
+
+        // 1. Lấy token an toàn từ Server-side (Razor)
         const currentToken = `@Html.Raw(tokenForLayout ?? "")`.trim();
 
         // Hàm bổ trợ tính thời gian
@@ -183,6 +336,24 @@
             });
 
             connection.start().catch(err => console.error("SignalR Error: ", err));
+
+            // 4. Kết nối tới ChatHub để hiện chấm đỏ
+            const chatConn = new signalR.HubConnectionBuilder()
+                .withUrl("http://localhost:5207/chatHub", {
+                    accessTokenFactory: () => currentToken
+                })
+                .withAutomaticReconnect()
+                .build();
+
+            chatConn.on("ReceiveMessage", function (message) {
+                // Nếu không ở trang chat thì hiện chấm đỏ
+                if (window.location.pathname.toLowerCase() !== "/chat") {
+                    const chatBadge = document.getElementById('global-chat-badge');
+                    if (chatBadge) chatBadge.style.display = 'block';
+                }
+            });
+
+            chatConn.start().catch(err => console.error("Chat SignalR Error: ", err));
         }
 
         // Wishlist Toggle AJAX

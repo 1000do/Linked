@@ -23,6 +23,9 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<LessonReviewModerationLog> LessonReviewModerationLogs { get; set; }
     public virtual DbSet<AiModel> AiModels { get; set; }
     public virtual DbSet<AiModelsCourse> AiModelsCourses { get; set; }
+    public virtual DbSet<Chat> Chats { get; set; }
+    public virtual DbSet<ChatParticipant> ChatParticipants { get; set; }
+    public virtual DbSet<Message> Messages { get; set; }
     public virtual DbSet<CartItem> CartItems { get; set; }
     public virtual DbSet<Category> Categories { get; set; }
 
@@ -309,6 +312,10 @@ public partial class AppDbContext : DbContext
             entity.ToTable("chats");
 
             entity.Property(e => e.ChatId).HasColumnName("chat_id");
+            entity.Property(e => e.ChatName).HasMaxLength(255).HasColumnName("chat_name");
+            entity.Property(e => e.ChatType).HasMaxLength(50).HasDefaultValue("private").HasColumnName("chat_type");
+            entity.Property(e => e.ContextType).HasMaxLength(50).HasColumnName("context_type");
+            entity.Property(e => e.ContextId).HasColumnName("context_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
@@ -316,6 +323,62 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.LastMessageAt)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("last_message_at");
+        });
+
+        // ── chat_participants ─────────────────────────────────────────────────
+        modelBuilder.Entity<ChatParticipant>(entity =>
+        {
+            entity.HasKey(e => new { e.ChatId, e.AccountId }).HasName("chat_participants_pkey");
+            entity.ToTable("chat_participants");
+
+            entity.Property(e => e.ChatId).HasColumnName("chat_id");
+            entity.Property(e => e.AccountId).HasColumnName("account_id");
+            entity.Property(e => e.Role).HasMaxLength(50).HasDefaultValue("member").HasColumnName("role");
+            entity.Property(e => e.JoinedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("joined_at");
+
+            entity.HasOne(d => d.Account).WithMany(p => p.ChatParticipants)
+                .HasForeignKey(d => d.AccountId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("chat_participants_account_id_fkey");
+
+            entity.HasOne(d => d.Chat).WithMany(p => p.ChatParticipants)
+                .HasForeignKey(d => d.ChatId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("chat_participants_chat_id_fkey");
+        });
+
+        // ── messages ──────────────────────────────────────────────────────────
+        modelBuilder.Entity<Message>(entity =>
+        {
+            entity.HasKey(e => e.MessageId).HasName("messages_pkey");
+            entity.ToTable("messages");
+
+            entity.Property(e => e.MessageId).HasColumnName("message_id");
+            entity.Property(e => e.ChatId).HasColumnName("chat_id");
+            entity.Property(e => e.SenderId).HasColumnName("sender_id");
+            entity.Property(e => e.Content).HasColumnName("content");
+            entity.Property(e => e.IsSeen).HasDefaultValue(false).HasColumnName("is_seen");
+            entity.Property(e => e.MessageStatus).HasMaxLength(50).HasDefaultValue("ok").HasColumnName("message_status");
+            entity.Property(e => e.SentAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("sent_at");
+            entity.Property(e => e.ReceivedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("received_at");
+
+            entity.HasOne(d => d.Chat).WithMany(p => p.Messages)
+                .HasForeignKey(d => d.ChatId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("messages_chat_id_fkey");
+
+            entity.HasOne(d => d.Sender).WithMany(p => p.Messages)
+                .HasForeignKey(d => d.SenderId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("messages_sender_id_fkey");
         });
 
         // ── coupons ───────────────────────────────────────────────────────────
@@ -373,6 +436,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("updated_at");
             entity.Property(e => e.WhatYouWillLearn).HasColumnName("what_you_will_learn");
             entity.Property(e => e.Requirements).HasColumnName("requirements");
+            entity.Property(e => e.ModerationFeedback).HasColumnName("moderation_feedback");
             // ★ total_lessons, rating_average, total_students ĐÃ BỊ XÓA → dùng view_course_stats
 
             entity.HasOne(d => d.Category).WithMany(p => p.Courses)
@@ -816,10 +880,20 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.ResolvedAt)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("resolved_at");
+            entity.Property(e => e.ChatId)
+                .HasColumnName("chat_id");
+            entity.Property(e => e.AccessGrantedUntil)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("access_granted_until");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Chat).WithMany(p => p.UserReports)
+                .HasForeignKey(d => d.ChatId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("user_reports_chat_id_fkey");
 
             entity.HasOne(d => d.Reporter).WithMany(p => p.UserReportReporters)
                 .HasForeignKey(d => d.ReporterId)
