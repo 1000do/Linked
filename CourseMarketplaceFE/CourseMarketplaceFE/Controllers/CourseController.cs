@@ -230,6 +230,19 @@ namespace CourseMarketplaceFE.Controllers
             return Json(new { success = false, data = new List<object>() });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetLessonReviews(int id)
+        {
+            var response = await _apiClient.GetAsync($"review/lesson/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(content);
+                return Json(new { success = true, data = json.RootElement.GetProperty("data") });
+            }
+            return Json(new { success = false, data = new List<object>() });
+        }
+
         /// <summary>Thống kê phân bổ sao (dynamic từ DB)</summary>
         [HttpGet]
         public async Task<IActionResult> GetReviewStats(int id)
@@ -278,6 +291,16 @@ namespace CourseMarketplaceFE.Controllers
             {
                 return Json(new { success = false, message = "Lỗi gửi đánh giá." });
             }
+        }
+        [HttpPost]
+        public async Task<IActionResult> ReportReview([FromBody] JsonElement body)
+        {
+            var response = await _apiClient.PostJsonAsync("review/report", body);
+            if (response.IsSuccessStatusCode)
+            {
+                return Json(new { success = true });
+            }
+            return Json(new { success = false });
         }
     }
 }

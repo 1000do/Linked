@@ -17,12 +17,18 @@ public partial class AppDbContext : DbContext
     // ─── DbSets ───────────────────────────────────────────────────────────────
 
     public virtual DbSet<Account> Accounts { get; set; }
-    public virtual DbSet<AiActivityLog> AiActivityLogs { get; set; }
+    public virtual DbSet<CourseAiUsageLog> CourseAiUsageLogs { get; set; }
+
+    public virtual DbSet<CourseReviewModerationLog> CourseReviewModerationLogs { get; set; }
+    public virtual DbSet<LessonReviewModerationLog> LessonReviewModerationLogs { get; set; }
     public virtual DbSet<AiModel> AiModels { get; set; }
     public virtual DbSet<AiModelsCourse> AiModelsCourses { get; set; }
+    public virtual DbSet<Chat> Chats { get; set; }
+    public virtual DbSet<ChatParticipant> ChatParticipants { get; set; }
+    public virtual DbSet<Message> Messages { get; set; }
     public virtual DbSet<CartItem> CartItems { get; set; }
     public virtual DbSet<Category> Categories { get; set; }
-    public virtual DbSet<Chat> Chats { get; set; }
+
     public virtual DbSet<Coupon> Coupons { get; set; }
     public virtual DbSet<Course> Courses { get; set; }
     public virtual DbSet<Enrollment> Enrollments { get; set; }
@@ -32,11 +38,12 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<LearningMaterial> LearningMaterials { get; set; }
     public virtual DbSet<Lesson> Lessons { get; set; }
     public virtual DbSet<Manager> Managers { get; set; }
-    public virtual DbSet<Message> Messages { get; set; }
+
     public virtual DbSet<Notification> Notifications { get; set; }
     public virtual DbSet<OrderInfo> OrderInfos { get; set; }
     public virtual DbSet<OrderItem> OrderItems { get; set; }
-    public virtual DbSet<Review> Reviews { get; set; }
+    public virtual DbSet<CourseReview> CourseReviews { get; set; }
+    public virtual DbSet<LessonReview> LessonReviews { get; set; }
     public virtual DbSet<SystemConfig> SystemConfigs { get; set; }
     public virtual DbSet<Transaction> Transactions { get; set; }
     public virtual DbSet<User> Users { get; set; }
@@ -112,15 +119,14 @@ public partial class AppDbContext : DbContext
     .HasColumnName("is_verified");
         });
 
-        // ── ai_activity_logs ──────────────────────────────────────────────────
-        modelBuilder.Entity<AiActivityLog>(entity =>
+        // ── course_ai_usage_logs ──────────────────────────────────────────────
+        modelBuilder.Entity<CourseAiUsageLog>(entity =>
         {
-            entity.HasKey(e => e.LogId).HasName("ai_activity_logs_pkey");
-            entity.ToTable("ai_activity_logs");
+            entity.HasKey(e => e.LogId).HasName("course_ai_usage_logs_pkey");
+            entity.ToTable("course_ai_usage_logs");
 
             entity.Property(e => e.LogId).HasColumnName("log_id");
             entity.Property(e => e.AiModelCourseId).HasColumnName("ai_model_course_id");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.InteractionType).HasMaxLength(50).HasColumnName("interaction_type");
             entity.Property(e => e.InputJson).HasColumnType("jsonb").HasColumnName("input_json");
             entity.Property(e => e.OutputJson).HasColumnType("jsonb").HasColumnName("output_json");
@@ -133,15 +139,71 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("log_created_at");
 
-            entity.HasOne(d => d.AiModelCourse).WithMany(p => p.AiActivityLogs)
+            entity.HasOne(d => d.AiModelCourse).WithMany(p => p.CourseAiUsageLogs)
                 .HasForeignKey(d => d.AiModelCourseId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("ai_activity_logs_ai_model_course_id_fkey");
+                .HasConstraintName("course_ai_usage_logs_ai_model_course_id_fkey");
+        });
 
-            entity.HasOne(d => d.User).WithMany(p => p.AiActivityLogs)
-                .HasForeignKey(d => d.UserId)
+
+        // ── course_review_moderation_logs ─────────────────────────────────────
+        modelBuilder.Entity<CourseReviewModerationLog>(entity =>
+        {
+            entity.HasKey(e => e.LogId).HasName("course_review_moderation_logs_pkey");
+            entity.ToTable("course_review_moderation_logs");
+
+            entity.Property(e => e.LogId).HasColumnName("log_id");
+            entity.Property(e => e.ModelId).HasColumnName("model_id");
+            entity.Property(e => e.CourseReviewId).HasColumnName("course_review_id");
+            entity.Property(e => e.InputJson).HasColumnType("jsonb").HasColumnName("input_json");
+            entity.Property(e => e.OutputJson).HasColumnType("jsonb").HasColumnName("output_json");
+            entity.Property(e => e.LatencyMs).HasColumnName("latency_ms");
+            entity.Property(e => e.LogStatus).HasMaxLength(50).HasColumnName("log_status");
+            entity.Property(e => e.ErrorMessage).HasColumnName("error_message");
+            entity.Property(e => e.LogCreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("log_created_at");
+
+            entity.HasOne(d => d.Model).WithMany(p => p.CourseReviewModerationLogs)
+                .HasForeignKey(d => d.ModelId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("ai_activity_logs_user_id_fkey");
+                .HasConstraintName("course_review_moderation_logs_model_id_fkey");
+
+            entity.HasOne(d => d.CourseReview).WithMany()
+                .HasForeignKey(d => d.CourseReviewId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("course_review_moderation_logs_course_review_id_fkey");
+        });
+
+        // ── lesson_review_moderation_logs ─────────────────────────────────────
+        modelBuilder.Entity<LessonReviewModerationLog>(entity =>
+        {
+            entity.HasKey(e => e.LogId).HasName("lesson_review_moderation_logs_pkey");
+            entity.ToTable("lesson_review_moderation_logs");
+
+            entity.Property(e => e.LogId).HasColumnName("log_id");
+            entity.Property(e => e.ModelId).HasColumnName("model_id");
+            entity.Property(e => e.LessonReviewId).HasColumnName("lesson_review_id");
+            entity.Property(e => e.InputJson).HasColumnType("jsonb").HasColumnName("input_json");
+            entity.Property(e => e.OutputJson).HasColumnType("jsonb").HasColumnName("output_json");
+            entity.Property(e => e.LatencyMs).HasColumnName("latency_ms");
+            entity.Property(e => e.LogStatus).HasMaxLength(50).HasColumnName("log_status");
+            entity.Property(e => e.ErrorMessage).HasColumnName("error_message");
+            entity.Property(e => e.LogCreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("log_created_at");
+
+            entity.HasOne(d => d.Model).WithMany(p => p.LessonReviewModerationLogs)
+                .HasForeignKey(d => d.ModelId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("lesson_review_moderation_logs_model_id_fkey");
+
+            entity.HasOne(d => d.LessonReview).WithMany()
+                .HasForeignKey(d => d.LessonReviewId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("lesson_review_moderation_logs_lesson_review_id_fkey");
         });
 
         // ── ai_models ─────────────────────────────────────────────────────────
@@ -250,6 +312,10 @@ public partial class AppDbContext : DbContext
             entity.ToTable("chats");
 
             entity.Property(e => e.ChatId).HasColumnName("chat_id");
+            entity.Property(e => e.ChatName).HasMaxLength(255).HasColumnName("chat_name");
+            entity.Property(e => e.ChatType).HasMaxLength(50).HasDefaultValue("private").HasColumnName("chat_type");
+            entity.Property(e => e.ContextType).HasMaxLength(50).HasColumnName("context_type");
+            entity.Property(e => e.ContextId).HasColumnName("context_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
@@ -257,6 +323,62 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.LastMessageAt)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("last_message_at");
+        });
+
+        // ── chat_participants ─────────────────────────────────────────────────
+        modelBuilder.Entity<ChatParticipant>(entity =>
+        {
+            entity.HasKey(e => new { e.ChatId, e.AccountId }).HasName("chat_participants_pkey");
+            entity.ToTable("chat_participants");
+
+            entity.Property(e => e.ChatId).HasColumnName("chat_id");
+            entity.Property(e => e.AccountId).HasColumnName("account_id");
+            entity.Property(e => e.Role).HasMaxLength(50).HasDefaultValue("member").HasColumnName("role");
+            entity.Property(e => e.JoinedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("joined_at");
+
+            entity.HasOne(d => d.Account).WithMany(p => p.ChatParticipants)
+                .HasForeignKey(d => d.AccountId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("chat_participants_account_id_fkey");
+
+            entity.HasOne(d => d.Chat).WithMany(p => p.ChatParticipants)
+                .HasForeignKey(d => d.ChatId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("chat_participants_chat_id_fkey");
+        });
+
+        // ── messages ──────────────────────────────────────────────────────────
+        modelBuilder.Entity<Message>(entity =>
+        {
+            entity.HasKey(e => e.MessageId).HasName("messages_pkey");
+            entity.ToTable("messages");
+
+            entity.Property(e => e.MessageId).HasColumnName("message_id");
+            entity.Property(e => e.ChatId).HasColumnName("chat_id");
+            entity.Property(e => e.SenderId).HasColumnName("sender_id");
+            entity.Property(e => e.Content).HasColumnName("content");
+            entity.Property(e => e.IsSeen).HasDefaultValue(false).HasColumnName("is_seen");
+            entity.Property(e => e.MessageStatus).HasMaxLength(50).HasDefaultValue("ok").HasColumnName("message_status");
+            entity.Property(e => e.SentAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("sent_at");
+            entity.Property(e => e.ReceivedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("received_at");
+
+            entity.HasOne(d => d.Chat).WithMany(p => p.Messages)
+                .HasForeignKey(d => d.ChatId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("messages_chat_id_fkey");
+
+            entity.HasOne(d => d.Sender).WithMany(p => p.Messages)
+                .HasForeignKey(d => d.SenderId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("messages_sender_id_fkey");
         });
 
         // ── coupons ───────────────────────────────────────────────────────────
@@ -314,6 +436,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("updated_at");
             entity.Property(e => e.WhatYouWillLearn).HasColumnName("what_you_will_learn");
             entity.Property(e => e.Requirements).HasColumnName("requirements");
+            entity.Property(e => e.ModerationFeedback).HasColumnName("moderation_feedback");
             // ★ total_lessons, rating_average, total_students ĐÃ BỊ XÓA → dùng view_course_stats
 
             entity.HasOne(d => d.Category).WithMany(p => p.Courses)
@@ -515,41 +638,6 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("managers_manager_id_fkey");
         });
 
-        // ── messages ──────────────────────────────────────────────────────────
-        modelBuilder.Entity<Message>(entity =>
-        {
-            entity.HasKey(e => e.MessageId).HasName("messages_pkey");
-            entity.ToTable("messages");
-
-            entity.Property(e => e.MessageId).HasColumnName("message_id");
-            entity.Property(e => e.ChatId).HasColumnName("chat_id");
-            entity.Property(e => e.SenderId).HasColumnName("sender_id");
-            entity.Property(e => e.ReceiverId).HasColumnName("receiver_id");
-            entity.Property(e => e.Content).HasColumnName("content");
-            entity.Property(e => e.IsSeen).HasDefaultValue(false).HasColumnName("is_seen");
-            entity.Property(e => e.SentAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("sent_at");
-            entity.Property(e => e.ReceivedAt)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("received_at");
-
-            entity.HasOne(d => d.Chat).WithMany(p => p.Messages)
-                .HasForeignKey(d => d.ChatId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("messages_chat_id_fkey");
-
-            entity.HasOne(d => d.Sender).WithMany(p => p.MessageSenders)
-                .HasForeignKey(d => d.SenderId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("messages_sender_id_fkey");
-
-            entity.HasOne(d => d.Receiver).WithMany(p => p.MessageReceivers)
-                .HasForeignKey(d => d.ReceiverId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("messages_receiver_id_fkey");
-        });
 
         // ── notifications ─────────────────────────────────────────────────────
         modelBuilder.Entity<Notification>(entity =>
@@ -630,18 +718,17 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("order_items_order_id_fkey");
         });
 
-        // ── reviews ───────────────────────────────────────────────────────────
-        modelBuilder.Entity<Review>(entity =>
+        // ── course_reviews ────────────────────────────────────────────────────
+        modelBuilder.Entity<CourseReview>(entity =>
         {
-            entity.HasKey(e => e.ReviewId).HasName("reviews_pkey");
-            entity.ToTable("reviews");
+            entity.HasKey(e => e.CourseReviewId).HasName("course_reviews_pkey");
+            entity.ToTable("course_reviews");
 
-            entity.Property(e => e.ReviewId).HasColumnName("review_id");
+            entity.Property(e => e.CourseReviewId).HasColumnName("course_review_id");
             entity.Property(e => e.EnrollmentId).HasColumnName("enrollment_id");
             entity.Property(e => e.Rating).HasColumnName("rating");
             entity.Property(e => e.Comment).HasColumnName("comment");
-            entity.Property(e => e.ReviewSource).HasMaxLength(20).HasDefaultValue("detail").HasColumnName("review_source");
-            entity.Property(e => e.LessonId).HasColumnName("lesson_id");
+            entity.Property(e => e.CourseReviewStatus).HasDefaultValue("ok").HasColumnName("course_review_status");
             entity.Property(e => e.IsRemoved).HasDefaultValue(false).HasColumnName("is_removed");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -652,15 +739,43 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
 
-            entity.HasOne(d => d.Enrollment).WithMany(p => p.Reviews)
+            entity.HasOne(d => d.Enrollment).WithMany(p => p.CourseReviews)
                 .HasForeignKey(d => d.EnrollmentId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("reviews_enrollment_id_fkey");
+                .HasConstraintName("course_reviews_enrollment_id_fkey");
+        });
 
-            entity.HasOne(d => d.Lesson).WithMany(p => p.Reviews)
+        // ── lesson_reviews ────────────────────────────────────────────────────
+        modelBuilder.Entity<LessonReview>(entity =>
+        {
+            entity.HasKey(e => e.LessonReviewId).HasName("lesson_reviews_pkey");
+            entity.ToTable("lesson_reviews");
+
+            entity.Property(e => e.LessonReviewId).HasColumnName("lesson_review_id");
+            entity.Property(e => e.EnrollmentId).HasColumnName("enrollment_id");
+            entity.Property(e => e.LessonId).HasColumnName("lesson_id");
+            entity.Property(e => e.Rating).HasColumnName("rating");
+            entity.Property(e => e.Comment).HasColumnName("comment");
+            entity.Property(e => e.LessonReviewStatus).HasDefaultValue("ok").HasColumnName("lesson_review_status");
+            entity.Property(e => e.IsRemoved).HasDefaultValue(false).HasColumnName("is_removed");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updated_at");
+
+            entity.HasOne(d => d.Enrollment).WithMany(p => p.LessonReviews)
+                .HasForeignKey(d => d.EnrollmentId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("lesson_reviews_enrollment_id_fkey");
+
+            entity.HasOne(d => d.Lesson).WithMany(p => p.LessonReviews)
                 .HasForeignKey(d => d.LessonId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("reviews_lesson_id_fkey");
+                .HasConstraintName("lesson_reviews_lesson_id_fkey");
         });
 
         // ── system_configs ────────────────────────────────────────────────────
@@ -765,10 +880,20 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.ResolvedAt)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("resolved_at");
+            entity.Property(e => e.ChatId)
+                .HasColumnName("chat_id");
+            entity.Property(e => e.AccessGrantedUntil)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("access_granted_until");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Chat).WithMany(p => p.UserReports)
+                .HasForeignKey(d => d.ChatId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("user_reports_chat_id_fkey");
 
             entity.HasOne(d => d.Reporter).WithMany(p => p.UserReportReporters)
                 .HasForeignKey(d => d.ReporterId)

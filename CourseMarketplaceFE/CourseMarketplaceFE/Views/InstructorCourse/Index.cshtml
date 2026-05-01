@@ -29,7 +29,9 @@
                 <select id="status-filter" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors outline-none text-sm cursor-pointer">
                     <option value="All" selected="@(Model.FilterStatus == "All")">All Status</option>
                     <option value="Draft" selected="@(Model.FilterStatus == "Draft")">Draft</option>
+                    <option value="Pending" selected="@(Model.FilterStatus == "Pending")">Pending Review</option>
                     <option value="Published" selected="@(Model.FilterStatus == "Published")">Published</option>
+                    <option value="Rejected" selected="@(Model.FilterStatus == "Rejected")">Rejected</option>
                 </select>
             </div>
         </div>
@@ -130,17 +132,25 @@
                             }
                         </td>
                         <td class="px-6 py-4">
-                            @if (course.Status == "Published")
+                            @if (course.Status.Equals("Published", StringComparison.OrdinalIgnoreCase))
                             {
                                 <span class="px-3 py-1 bg-primary-container/20 text-primary border border-primary-container rounded-full text-xs font-bold">Published</span>
                             }
-                            else if (course.Status == "Draft")
+                            else if (course.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-full text-xs font-bold">Pending Review</span>
+                            }
+                            else if (course.Status.Equals("Rejected", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="px-3 py-1 bg-red-50 text-red-600 border border-red-200 rounded-full text-xs font-bold">Rejected</span>
+                            }
+                            else if (course.Status.Equals("Draft", StringComparison.OrdinalIgnoreCase))
                             {
                                 <span class="px-3 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded-full text-xs font-bold">Draft</span>
                             }
                             else
                             {
-                                <span class="px-3 py-1 bg-orange-50 text-orange-600 border border-orange-200 rounded-full text-xs font-bold">@course.Status</span>
+                                <span class="px-3 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-full text-xs font-bold">@course.Status</span>
                             }
                         </td>
                         <td class="px-6 py-4 text-right">
@@ -204,9 +214,17 @@
                         <div class="w-full h-full bg-gradient-to-br from-primary to-primary-container opacity-80 group-hover:opacity-100 transition-opacity"></div>
                     }
                     <div class="absolute top-3 right-3">
-                        @if (course.Status == "Published")
+                        @if (course.Status.Equals("Published", StringComparison.OrdinalIgnoreCase))
                         {
                             <span class="px-2 py-1 bg-white/90 text-primary rounded text-[10px] font-bold">Published</span>
+                        }
+                        else if (course.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span class="px-2 py-1 bg-white/90 text-amber-600 rounded text-[10px] font-bold">Pending Review</span>
+                        }
+                        else if (course.Status.Equals("Rejected", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span class="px-2 py-1 bg-white/90 text-red-600 rounded text-[10px] font-bold">Rejected</span>
                         }
                         else
                         {

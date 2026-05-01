@@ -65,9 +65,7 @@ public class CloudinaryUploadService : IFileUploadService
 
             if (result?.Error != null)
             {
-                _logger.LogError("❌ Upload lỗi: {msg} | {desc}",
-                    result.Error.Message
-                   );
+                _logger.LogError("❌ Upload lỗi: {msg}", result.Error.Message);
                 return null;
             }
 
@@ -108,9 +106,7 @@ public class CloudinaryUploadService : IFileUploadService
 
             if (result?.Error != null)
             {
-                _logger.LogError("❌ Upload video lỗi: {msg} | {desc}",
-                    result.Error.Message
-                   );
+                _logger.LogError("❌ Upload video lỗi: {msg}", result.Error.Message);
                 return null;
             }
 

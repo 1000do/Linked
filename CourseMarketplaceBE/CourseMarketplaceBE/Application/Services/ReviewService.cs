@@ -80,22 +80,49 @@ public class ReviewService : IReviewService
             .FirstOrDefaultAsync(c => c.CourseId == courseId);
         var instructorId = course?.InstructorId;
 
-        return await _context.Reviews
+        return await _context.CourseReviews
             .Include(r => r.Enrollment)
                 .ThenInclude(e => e!.User)
                     .ThenInclude(u => u!.UserNavigation)
-            .Include(r => r.Lesson)
             .Where(r => r.Enrollment != null && r.Enrollment.CourseId == courseId && r.IsRemoved != true)
             .OrderByDescending(r => r.CreatedAt)
             .Select(r => new ReviewResponse
             {
-                ReviewId = r.ReviewId,
+                ReviewId = r.CourseReviewId,
                 UserFullName = r.Enrollment!.User!.FullName ?? "Anonymous",
                 UserAvatarUrl = r.Enrollment!.User!.UserNavigation.AvatarUrl,
                 Rating = r.Rating ?? 0,
                 Comment = r.Comment ?? "",
                 CreatedAt = r.CreatedAt ?? DateTime.Now,
-                ReviewSource = r.ReviewSource ?? "detail",
+                LessonTitle = null,
+                LessonId = null,
+                IsInstructor = r.Enrollment.UserId == instructorId
+            })
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<ReviewResponse>> GetLessonReviewsAsync(int lessonId)
+    {
+        var lesson = await _context.Lessons.AsNoTracking()
+            .Include(l => l.Course)
+            .FirstOrDefaultAsync(l => l.LessonId == lessonId);
+        var instructorId = lesson?.Course?.InstructorId;
+
+        return await _context.LessonReviews
+            .Include(r => r.Enrollment)
+                .ThenInclude(e => e!.User)
+                    .ThenInclude(u => u!.UserNavigation)
+            .Include(r => r.Lesson)
+            .Where(r => r.LessonId == lessonId && r.IsRemoved != true)
+            .OrderByDescending(r => r.CreatedAt)
+            .Select(r => new ReviewResponse
+            {
+                ReviewId = r.LessonReviewId,
+                UserFullName = r.Enrollment!.User!.FullName ?? "Anonymous",
+                UserAvatarUrl = r.Enrollment!.User!.UserNavigation.AvatarUrl,
+                Rating = r.Rating ?? 0,
+                Comment = r.Comment ?? "",
+                CreatedAt = r.CreatedAt ?? DateTime.Now,
                 LessonTitle = r.Lesson != null ? r.Lesson.Title : null,
                 LessonId = r.LessonId,
                 IsInstructor = r.Enrollment.UserId == instructorId
@@ -107,7 +134,7 @@ public class ReviewService : IReviewService
 
     public async Task<ReviewStatsResponse> GetReviewStatsAsync(int courseId)
     {
-        var reviews = await _context.Reviews
+        var reviews = await _context.CourseReviews
             .Include(r => r.Enrollment)
             .Where(r => r.Enrollment != null && r.Enrollment.CourseId == courseId && r.IsRemoved != true && r.Rating != null)
             .Select(r => r.Rating!.Value)
@@ -136,7 +163,7 @@ public class ReviewService : IReviewService
         if (isOwner)
         {
             var ownerEnrollment = await GetOrCreateOwnerEnrollmentAsync(userId, courseId);
-            var hasReviewed = await _context.Reviews
+            var hasReviewed = await _context.CourseReviews
                 .AnyAsync(r => r.EnrollmentId == ownerEnrollment.EnrollmentId && r.IsRemoved != true);
 
             return new EnrollmentStatusResponse
@@ -174,7 +201,7 @@ public class ReviewService : IReviewService
         var pct = totalMaterials > 0 ? (double)learnedCount / totalMaterials * 100 : 0;
         var isCompleted = enrollment.IsCompleted == true;
 
-        var hasReviewedNormal = await _context.Reviews
+        var hasReviewedNormal = await _context.CourseReviews
             .AnyAsync(r => r.EnrollmentId == enrollment.EnrollmentId && r.IsRemoved != true);
 
         return new EnrollmentStatusResponse
@@ -232,54 +259,88 @@ public class ReviewService : IReviewService
         if (string.IsNullOrWhiteSpace(request.Comment))
             throw new InvalidOperationException("Nội dung đánh giá không được để trống.");
 
-        // Xác định review source
-        string source = requireCompletion ? "detail" : "learn";
-
         // ── Upsert logic ──
-        // Cho phép mỗi enrollment có nhiều review (1 review tổng + N review per-lesson)
-        // Nhưng mỗi lesson chỉ 1 review, và chỉ 1 review tổng
-        Review? existingReview;
-
         if (request.LessonId.HasValue)
         {
-            // Review cho lesson cụ thể → tìm theo enrollment + lessonId
-            existingReview = await _context.Reviews
+            // Review cho lesson cụ thể
+            var existingReview = await _context.LessonReviews
                 .FirstOrDefaultAsync(r => r.EnrollmentId == enrollment.EnrollmentId 
                     && r.LessonId == request.LessonId.Value
                     && r.IsRemoved != true);
-        }
-        else
-        {
-            // Review tổng (detail page) → tìm theo enrollment + LessonId = null
-            existingReview = await _context.Reviews
-                .FirstOrDefaultAsync(r => r.EnrollmentId == enrollment.EnrollmentId 
-                    && r.LessonId == null
-                    && r.IsRemoved != true);
-        }
 
-        if (existingReview != null)
-        {
-            existingReview.Rating = request.Rating;
-            existingReview.Comment = request.Comment;
-            existingReview.ReviewSource = source;
-            existingReview.UpdatedAt = DateTime.Now;
-        }
-        else
-        {
-            var review = new Review
+            if (existingReview != null)
             {
-                EnrollmentId = enrollment.EnrollmentId,
-                Rating = request.Rating,
-                Comment = request.Comment,
-                ReviewSource = source,
-                LessonId = request.LessonId,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now,
-                IsRemoved = false
-            };
-            await _context.Reviews.AddAsync(review);
+                existingReview.Rating = request.Rating;
+                existingReview.Comment = request.Comment;
+                existingReview.UpdatedAt = DateTime.Now;
+            }
+            else
+            {
+                var review = new LessonReview
+                {
+                    EnrollmentId = enrollment.EnrollmentId,
+                    LessonId = request.LessonId.Value,
+                    Rating = request.Rating,
+                    Comment = request.Comment,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    IsRemoved = false
+                };
+                await _context.LessonReviews.AddAsync(review);
+            }
+        }
+        else
+        {
+            // Review cho khóa học
+            var existingReview = await _context.CourseReviews
+                .FirstOrDefaultAsync(r => r.EnrollmentId == enrollment.EnrollmentId 
+                    && r.IsRemoved != true);
+
+            if (existingReview != null)
+            {
+                existingReview.Rating = request.Rating;
+                existingReview.Comment = request.Comment;
+                existingReview.UpdatedAt = DateTime.Now;
+            }
+            else
+            {
+                var review = new CourseReview
+                {
+                    EnrollmentId = enrollment.EnrollmentId,
+                    Rating = request.Rating,
+                    Comment = request.Comment,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    IsRemoved = false
+                };
+                await _context.CourseReviews.AddAsync(review);
+            }
         }
 
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task ReportReviewAsync(int userId, int reviewId, string type, string reason)
+    {
+        if (type.ToLower() == "course")
+        {
+            var review = await _context.CourseReviews.FindAsync(reviewId);
+            if (review != null)
+            {
+                review.CourseReviewStatus = "flagged";
+                review.UpdatedAt = DateTime.Now;
+                // Có thể lưu thêm reason vào bảng log nếu cần
+            }
+        }
+        else
+        {
+            var review = await _context.LessonReviews.FindAsync(reviewId);
+            if (review != null)
+            {
+                review.LessonReviewStatus = "flagged";
+                review.UpdatedAt = DateTime.Now;
+            }
+        }
         await _context.SaveChangesAsync();
     }
 }

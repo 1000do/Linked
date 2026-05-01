@@ -23,9 +23,9 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#0ea5e9', // Sky 500
-                        secondary: '#0284c7', // Sky 600
-                        accent: '#0f172a', // Slate 900
+                        primary: '#10b981', // Emerald 500
+                        secondary: '#059669', // Emerald 600
+                        accent: '#064e3b', // Emerald 900 (Deep)
                     },
                     fontFamily: { 
                         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -56,7 +56,7 @@
         }
         .nav-link-active .material-symbols-outlined {
             font-variation-settings: 'FILL' 1;
-            color: #0ea5e9;
+            color: #10b981;
         }
     </style>
     @await RenderSectionAsync("Styles", required: false)
@@ -79,17 +79,28 @@
             
             <a href="/AdminApproval" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
                 <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">how_to_reg</span> 
-                Xét duyệt
+                Duyệt Giảng viên
+            </a>
+            <a href="/AdminModeration/Courses" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
+                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">school</span> 
+                Duyệt Khóa học
+            </a>
+            <a href="/AdminModeration/Reports" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
+                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">report</span> 
+                Khiếu nại
             </a>
             <a href="/Notification/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group relative">
                 <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">notifications</span> 
                 Thông báo
-                <!-- Badge (Optional) -->
                 <span class="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-red-500 hidden" id="admin-noti-badge"></span>
             </a>
             <a href="/Coupon/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
                 <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">local_activity</span> 
                 Coupon & Khuyến mãi
+            </a>
+            <a href="/Chat/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
+                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">forum</span> 
+                Giám sát Chat
             </a>
 
             <div class="px-3 mb-3 mt-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tài chính & Giao dịch</div>

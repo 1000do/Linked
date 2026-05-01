@@ -73,6 +73,16 @@ namespace CourseMarketplaceFE.Controllers
                 ViewBag.Categories = JsonSerializer.Deserialize<List<CategoryViewModel>>(catData, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             }
 
+
+
+            // Fetch Stats
+            var statsResponse = await _apiClient.GetAsync("landingpage/stats");
+            if (statsResponse.IsSuccessStatusCode)
+            {
+                var statsContent = await statsResponse.Content.ReadAsStringAsync();
+                ViewBag.PlatformStats = JsonSerializer.Deserialize<PlatformStatsViewModel>(statsContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+
             return View(courses);
         }
 

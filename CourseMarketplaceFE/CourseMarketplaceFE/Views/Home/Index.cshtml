@@ -5,11 +5,11 @@
 
 @* 
   THIẾT KẾ BỞI IMPECCABLE SKILL - UI/UX SENIOR DESIGNER
-  - Layout: 12-column grid system
-  - Palette: Deep Slate (Trust) + Emerald/Primary Accent (Action)
-  - Typography: Modern Sans-serif, High Contrast Hierarchy
-  - Spacing: Generous padding to reduce cognitive load
 *@
+
+@{
+    var stats = ViewBag.PlatformStats as CourseMarketplaceFE.Models.PlatformStatsViewModel ?? new CourseMarketplaceFE.Models.PlatformStatsViewModel();
+}
 
 <style>
     /* Custom Ease cho micro-interactions mượt mà */
@@ -34,13 +34,13 @@
     <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-40"></div>
     
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-16">
-        <div class="flex-1 max-w-3xl">
-            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-bold mb-6">
+        <div class="flex-1 max-w-3xl text-center lg:text-left">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-bold mb-6 mx-auto lg:mx-0">
                 <span class="relative flex h-2.5 w-2.5">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
                 </span>
-                Hơn 2 triệu học viên đã tham gia
+                Hơn @stats.TotalStudents.ToString("N0") học viên đã tham gia
             </div>
 
             <h1 class="text-5xl lg:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-8">
@@ -48,11 +48,11 @@
                 <span class="text-primary">Kiến tạo tương lai.</span>
             </h1>
             
-            <p class="text-lg lg:text-xl text-slate-600 leading-relaxed mb-10 max-w-2xl">
+            <p class="text-lg lg:text-xl text-slate-600 leading-relaxed mb-10 max-w-2xl mx-auto lg:mx-0">
                 Nền tảng học tập trực tuyến hàng đầu với hàng ngàn khóa học chất lượng cao từ các chuyên gia thực chiến. Học mọi lúc, mọi nơi.
             </p>
 
-            <div class="flex flex-col sm:flex-row gap-4 max-w-xl">
+            <div class="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto lg:mx-0">
                 <div class="relative flex-1 group">
                     <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
                     <input type="text" 
@@ -66,22 +66,54 @@
         </div>
 
         <div class="flex-1 w-full relative hidden lg:block">
-            <div class="relative aspect-square max-w-md mx-auto">
-                <div class="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent rounded-full blur-3xl"></div>
-                <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1000&auto=format&fit=crop" 
-                     class="relative z-10 w-full h-full object-cover rounded-[2rem] shadow-2xl border-4 border-white/50" 
-                     alt="Students collaborating" />
+            <div class="relative w-full max-w-lg mx-auto aspect-square flex items-center justify-center">
+                @* Phông nền Blob trừu tượng *@
+                <div class="absolute inset-0 bg-primary/10 rounded-[30%_70%_70%_30%_/_30%_30%_70%_70%] animate-[spin_15s_linear_infinite] blur-2xl"></div>
+                <div class="absolute inset-10 bg-emerald-400/20 rounded-[70%_30%_30%_70%_/_70%_70%_30%_30%] animate-[spin_20s_linear_infinite_reverse] blur-2xl"></div>
                 
-                @* Floating UI Element cho cảm giác dynamic *@
-                <div class="absolute -bottom-6 -left-6 z-20 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-4 animate-bounce" style="animation-duration: 3s;">
-                    <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center text-amber-500">
-                        <span class="material-symbols-outlined" style='font-variation-settings:"FILL" 1;'>star</span>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Đánh giá trung bình</p>
-                        <p class="text-xl font-extrabold text-slate-900">4.8 / 5.0</p>
-                    </div>
+                @* Hình ảnh với Organic Mask (Blob Shape) *@
+                <div class="relative z-10 w-[90%] h-[90%] overflow-hidden shadow-2xl transition-all duration-700 hover:scale-105" 
+                     style="border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;">
+                    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1000&auto=format&fit=crop" 
+                         class="w-full h-full object-cover scale-110" 
+                         alt="Students collaborating" />
+                    <div class="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent"></div>
                 </div>
+
+                @* Trang trí nổi *@
+                <div class="absolute top-0 right-0 w-24 h-24 bg-amber-400/10 rounded-full blur-xl animate-pulse"></div>
+                <div class="absolute -bottom-8 -left-8 w-32 h-32 bg-primary/10 rounded-full blur-xl animate-pulse" style="animation-delay: 2s;"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@* ─── IMPACT COUNTERS ─────────────────────────────────────────────────── *@
+<section class="py-8 bg-white -mt-12 relative z-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-950 rounded-[2rem] p-6 lg:p-8 shadow-xl shadow-emerald-900/30 flex flex-wrap items-center justify-around gap-8 text-center border border-emerald-400/20">
+
+            <div class="flex flex-col items-center">
+                <div class="text-3xl lg:text-4xl font-black text-white mb-1 tracking-tighter">@stats.TotalStudents.ToString("N0")+</div>
+                <div class="text-[10px] lg:text-xs font-bold text-emerald-200/60 uppercase tracking-widest">Học viên tin dùng</div>
+            </div>
+            <div class="w-px h-10 bg-white/10 hidden lg:block"></div>
+            <div class="flex flex-col items-center">
+                <div class="text-3xl lg:text-4xl font-black text-white mb-1 tracking-tighter">@stats.TotalCourses.ToString("N0")+</div>
+                <div class="text-[10px] lg:text-xs font-bold text-emerald-200/60 uppercase tracking-widest">Khóa học</div>
+            </div>
+            <div class="w-px h-10 bg-white/10 hidden lg:block"></div>
+            <div class="flex flex-col items-center">
+                <div class="text-3xl lg:text-4xl font-black text-white mb-1 tracking-tighter">@stats.TotalInstructors.ToString("N0")+</div>
+                <div class="text-[10px] lg:text-xs font-bold text-emerald-200/60 uppercase tracking-widest">Giảng viên tham gia</div>
+            </div>
+            <div class="w-px h-10 bg-white/10 hidden lg:block"></div>
+            <div class="flex flex-col items-center">
+                <div class="text-3xl lg:text-4xl font-black text-amber-300 mb-1 tracking-tighter">@stats.SatisfactionRate.ToString("F1")</div>
+                <div class="flex gap-0.5 mb-0.5">
+                    @for(int i=0; i<5; i++) { <span class="material-symbols-outlined text-[12px] text-amber-300 @(i < Math.Floor((double)stats.SatisfactionRate) ? "fill-current" : "")">star</span> }
+                </div>
+                <div class="text-[10px] lg:text-xs font-bold text-emerald-200/60 uppercase tracking-widest">Đánh giá trung bình</div>
             </div>
         </div>
     </div>
@@ -269,7 +301,6 @@
                 </div>
             }
         </div>
-        </div>
     </div>
 </section>
 
@@ -309,7 +340,6 @@
                     <h3 class="font-bold text-slate-800 text-sm">@cat.CategoriesName</h3>
                 </a>
             }
-        </div>
         </div>
     </div>
 </section>

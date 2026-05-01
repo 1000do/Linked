@@ -55,4 +55,6 @@ public partial class Course
     public string? WhatYouWillLearn { get; set; }
 
     public string? Requirements { get; set; }
+
+    public string? ModerationFeedback { get; set; }
 }

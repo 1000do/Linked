@@ -1,0 +1,242 @@
+/* Chat & Support UI - Premium Material Design 3 */
+
+:root {
+    --primary-color: #006a62;
+    --primary-container: #43e8d8;
+    --surface: #f8fafc;
+    --on-surface: #1e293b;
+    --outline-variant: #e2e8f0;
+}
+
+.chat-container {
+    display: flex;
+    height: calc(100vh - 80px);
+    background: #ffffff;
+    overflow: hidden;
+}
+
+/* Sidebar Styling */
+.chat-sidebar {
+    width: 380px;
+    border-right: 1px solid var(--outline-variant);
+    display: flex;
+    flex-direction: column;
+    background: #fcfdfe;
+}
+
+.chat-sidebar-header {
+    padding: 24px;
+    border-bottom: 1px solid rgba(0,0,0,0.03);
+}
+
+.chat-list-section-title {
+    padding: 0 24px;
+    margin: 20px 0 10px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #64748b;
+    opacity: 0.7;
+}
+
+.chat-item {
+    padding: 12px 20px;
+    margin: 4px 12px;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 16px;
+    transition: all 0.2s ease;
+}
+
+.chat-item:hover {
+    background: #f1f5f9;
+}
+
+.chat-item.active {
+    background: #f1f5f9;
+}
+
+.chat-item .avatar-wrapper {
+    position: relative;
+}
+
+.chat-item img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.online-dot {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    background: #22c55e;
+    border: 2.5px solid #ffffff;
+    border-radius: 50%;
+}
+
+/* Main Chat Area */
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    position: relative;
+}
+
+.chat-header {
+    height: 72px;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--outline-variant);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 10;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+    background-size: 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Date Separator */
+.date-separator {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.date-separator span {
+    background: #f1f5f9;
+    padding: 4px 16px;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Bubbles */
+.msg-wrapper {
+    display: flex;
+    gap: 10px;
+    max-width: 80%;
+}
+
+.msg-wrapper.me {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.msg-bubble {
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.msg-them .msg-bubble {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-radius: 20px 20px 20px 4px;
+}
+
+.msg-me .msg-bubble {
+    background: var(--primary-container);
+    color: #003733;
+    border-radius: 20px 20px 4px 20px;
+    font-weight: 500;
+}
+
+.msg-meta {
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.msg-me .msg-meta {
+    justify-content: flex-end;
+}
+
+/* Input Area */
+.chat-footer {
+    padding: 20px 24px 30px;
+}
+
+.input-container {
+    background: #f1f5f9;
+    border-radius: 24px;
+    padding: 8px 8px 8px 16px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.input-container:focus-within {
+    background: #ffffff;
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.chat-textarea {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 8px 0;
+    resize: none;
+    max-height: 120px;
+    font-size: 14px;
+    outline: none;
+}
+
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: #e2e8f0;
+}
+
+.btn-send-main {
+    background: var(--primary-color);
+    color: white !important;
+}
+
+.btn-send-main:hover {
+    background: #00504a;
+    transform: scale(1.05);
+}
+
+/* Special Banner */
+.alert-emerald {
+    background: #ecfdf5;
+    border-radius: 16px;
+    border: 1px solid #d1fae5;
+}

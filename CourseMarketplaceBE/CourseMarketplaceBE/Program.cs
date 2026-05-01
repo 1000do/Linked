@@ -141,7 +141,9 @@ public class Program
         builder.Services.AddScoped<ILessonService, LessonService>();
         builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
         builder.Services.AddScoped<IReviewService, CourseMarketplaceBE.Application.Services.ReviewService>();
+        builder.Services.AddScoped<ILandingPageService, LandingPageService>();
 
+        builder.Services.AddScoped<IChatRepository, ChatRepository>();
         builder.Services.AddSignalR(); // Đăng ký SignalR
         builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
         builder.Services.AddScoped<INotificationService, NotificationService>();
@@ -195,6 +197,8 @@ public class Program
         // 📊 Transactions (UC-114, UC-115)
         builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
         builder.Services.AddScoped<ITransactionService, TransactionService>();
+        builder.Services.AddScoped<IChatService, ChatService>();
+        builder.Services.AddScoped<IModerationService, ModerationService>();
 
         builder.Services.AddHttpClient();
 
@@ -244,7 +248,8 @@ public class Program
                     // 2. Nếu là SignalR, nó thường gửi token qua query string "access_token"
                     var accessToken = context.Request.Query["access_token"];
                     var path = context.HttpContext.Request.Path;
-                    if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/notificationHub"))
+                    if (!string.IsNullOrEmpty(accessToken) && 
+                        (path.StartsWithSegments("/notificationHub") || path.StartsWithSegments("/chatHub")))
                     {
                         context.Token = accessToken;
                         return Task.CompletedTask;
@@ -339,6 +344,7 @@ public class Program
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapHub<NotificationHub>("/notificationHub");
+        app.MapHub<ChatHub>("/chatHub");
 
         app.MapControllers();
 

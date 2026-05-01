@@ -116,6 +116,7 @@ namespace CourseMarketplaceFE.Controllers
                 Response.Cookies.Append("UserName", result.FullName ?? model.Identifier, displayOpts);
                 Response.Cookies.Append("AvatarUrl", result.AvatarUrl ?? "", displayOpts);
                 Response.Cookies.Append("UserRole", result.Role ?? "user", displayOpts);
+                Response.Cookies.Append("UserId", result.AccountId.ToString(), displayOpts);
 
                 if (string.IsNullOrEmpty(result.Role))
                 {
@@ -149,6 +150,7 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Delete("UserName", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("UserRole", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("UserId", new CookieOptions { Path = "/" });
 
             return RedirectToAction("Index", "Home");
         }
@@ -164,6 +166,7 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Delete("UserName", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("UserRole", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("UserId", new CookieOptions { Path = "/" });
 
             return RedirectToAction("Login");
         }
@@ -364,6 +367,7 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Append("UserName", result?.FullName ?? "User", cookieOptions);
             Response.Cookies.Append("AvatarUrl", result?.AvatarUrl ?? "", cookieOptions);
             Response.Cookies.Append("UserRole", result?.Role ?? "user", cookieOptions);
+            Response.Cookies.Append("UserId", result?.AccountId.ToString() ?? "0", cookieOptions);
 
             return Ok();
         }
