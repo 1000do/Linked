@@ -141,6 +141,7 @@ public class Program
         builder.Services.AddScoped<ILessonService, LessonService>();
         builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
         builder.Services.AddScoped<IReviewService, CourseMarketplaceBE.Application.Services.ReviewService>();
+        builder.Services.AddScoped<ILandingPageService, LandingPageService>();
 
         builder.Services.AddSignalR(); // Đăng ký SignalR
         builder.Services.AddScoped<INotificationRepository, NotificationRepository>();

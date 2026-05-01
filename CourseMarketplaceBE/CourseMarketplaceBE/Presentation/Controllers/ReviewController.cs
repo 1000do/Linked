@@ -31,7 +31,16 @@ public class ReviewController : ControllerBase
     public async Task<IActionResult> GetCourseReviews(int courseId)
     {
         var reviews = await _reviewService.GetCourseReviewsAsync(courseId);
-        return Ok(ApiResponse<object>.SuccessResponse(reviews, "Retrieved reviews successfully."));
+        return Ok(ApiResponse<object>.SuccessResponse(reviews, "Retrieved course reviews successfully."));
+    }
+
+    /// <summary>Lấy danh sách reviews của lesson (public)</summary>
+    [HttpGet("lesson/{lessonId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetLessonReviews(int lessonId)
+    {
+        var reviews = await _reviewService.GetLessonReviewsAsync(lessonId);
+        return Ok(ApiResponse<object>.SuccessResponse(reviews, "Retrieved lesson reviews successfully."));
     }
 
     /// <summary>Thống kê phân bổ sao (public)</summary>
@@ -82,4 +91,27 @@ public class ReviewController : ControllerBase
             return StatusCode(500, ApiResponse<string>.ErrorResponse(ex.Message));
         }
     }
+    [HttpPost("report")]
+    public async Task<IActionResult> Report([FromBody] ReportRequest request)
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized();
+
+        try
+        {
+            await _reviewService.ReportReviewAsync(userId.Value, request.ReviewId, request.Type, request.Reason);
+            return Ok(ApiResponse<string>.SuccessResponse("Đã gửi báo cáo đánh giá."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+    }
+}
+
+public class ReportRequest
+{
+    public int ReviewId { get; set; }
+    public string Type { get; set; } // "course" or "lesson"
+    public string Reason { get; set; }
 }

@@ -37,9 +37,6 @@ public partial class Account
     public virtual Manager? Manager { get; set; }
   
 
-    public virtual ICollection<Message> MessageReceivers { get; set; } = new List<Message>();
-
-    public virtual ICollection<Message> MessageSenders { get; set; } = new List<Message>();
 
     public virtual ICollection<Notification> NotificationReceivers { get; set; } = new List<Notification>();
 
@@ -57,4 +54,5 @@ public partial class Account
     public virtual ICollection<Transaction> TransactionFroms { get; set; } = new List<Transaction>();
 
     public virtual ICollection<Transaction> TransactionTos { get; set; } = new List<Transaction>();
+
 }

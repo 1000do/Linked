@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS chats CASCADE;
 DROP TABLE IF EXISTS transactions CASCADE;
 DROP TABLE IF EXISTS order_items CASCADE;
 DROP TABLE IF EXISTS order_info CASCADE;
-DROP TABLE IF EXISTS reviews CASCADE;
+DROP TABLE IF EXISTS course_reviews CASCADE;
 DROP TABLE IF EXISTS cart_items CASCADE;
 DROP TABLE IF EXISTS wishlist_items CASCADE;
 DROP TABLE IF EXISTS enrollment CASCADE;
@@ -29,7 +29,12 @@ DROP TABLE IF EXISTS accounts CASCADE;
 DROP TABLE IF EXISTS material_embeddings CASCADE;
 DROP TABLE IF EXISTS course_exts CASCADE;
 DROP TABLE IF EXISTS lesson_exts CASCADE;
+DROP TABLE IF EXISTS lesson_reviews CASCADE;
+DROP TABLE IF EXISTS course_ai_usage_logs CASCADE;
+DROP TABLE IF EXISTS message_moderation_logs CASCADE;
 
+DROP TABLE IF EXISTS lesson_review_moderation_logs CASCADE;
+DROP TABLE IF EXISTS course_review_moderation_logs CASCADE;
 
 -- ==============================================================================
 -- Drop indexes if they exist
@@ -46,6 +51,10 @@ DROP INDEX IF EXISTS idx_reviews_active;
 DROP INDEX IF EXISTS idx_order_paid;
 DROP INDEX IF EXISTS idx_material_duration;
 DROP INDEX IF EXISTS idx_metadata_gin;
+DROP INDEX IF EXISTS idx_course_reviews_enrollment;
+DROP INDEX IF EXISTS idx_lesson_reviews_enrollment;
+DROP INDEX IF EXISTS idx_lesson_reviews_lesson;
+DROP INDEX IF EXISTS idx_course_reviews_active;
 
 
 -- ==============================================================================
@@ -195,7 +204,8 @@ CREATE TABLE course_exts (
 	description_hash CHAR(32),
 	thumbnail_hash CHAR(32)
    
-);CREATE TABLE lesson_exts (
+);
+CREATE TABLE lesson_exts (
     lesson_id INT PRIMARY KEY REFERENCES lessons(lesson_id) ON DELETE CASCADE,
     title_hash CHAR(32),
 	description_hash CHAR(32),
@@ -243,13 +253,24 @@ CREATE TABLE wishlist_items (
     added_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE reviews (
-    review_id SERIAL PRIMARY KEY,
-	enrollment_id INT REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
+CREATE TABLE course_reviews (
+    course_review_id SERIAL PRIMARY KEY,
+	enrollment_id INT NOT NULL REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
     rating NUMERIC(3,2) CHECK (rating >= 0 AND rating <= 5),
     comment TEXT,
-    review_source VARCHAR(20) DEFAULT 'detail', -- 'detail' = tổng hợp từ trang chi tiết, 'learn' = từ trang học (lesson cụ thể)
-    lesson_id INT REFERENCES lessons(lesson_id) ON DELETE SET NULL, -- NULL = review tổng, có giá trị = review cho lesson cụ thể
+	course_review_status TEXT NOT NULL DEFAULT 'ok', --- ok, hidden, auditting
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_removed BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE lesson_reviews (
+    lesson_review_id SERIAL PRIMARY KEY,
+	enrollment_id INT NOT NULL REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
+	lesson_id INT REFERENCES lessons(lesson_id) ON DELETE SET NULL,
+    rating NUMERIC(3,2) CHECK (rating >= 0 AND rating <= 5),
+    comment TEXT,
+	lesson_review_status TEXT NOT NULL DEFAULT 'ok', --- ok, hidden, auditting
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_removed BOOLEAN DEFAULT FALSE
@@ -288,7 +309,7 @@ CREATE TABLE order_items (
 
 CREATE TABLE transactions (
     transaction_id SERIAL PRIMARY KEY,
-    order_item_id INT REFERENCES order_items(id) ON DELETE SET NULL, -- Mỗi transaction tương ứng với 1 item trong order thay vì cả order
+    order_item_id INT REFERENCES order_items(id) ON DELETE SET NULL, -- Mỗi transaction tương ứng with 1 item trong order thay vì cả order
 	account_from INT REFERENCES accounts(account_id) ON DELETE SET NULL,
 	account_to INT REFERENCES accounts(account_id) ON DELETE SET NULL,
     amount NUMERIC(10, 2) NOT NULL,
@@ -329,6 +350,7 @@ CREATE TABLE messages (
     content TEXT NOT NULL,
     is_seen BOOLEAN DEFAULT FALSE,
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	message_status TEXT NOT NULL DEFAULT 'ok', --- ok, hidden, auditting
     received_at TIMESTAMP
 );
 
@@ -393,10 +415,9 @@ CREATE TABLE ai_models_courses (
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE ai_activity_logs (
+CREATE TABLE course_ai_usage_logs (
     log_id SERIAL PRIMARY KEY,
     ai_model_course_id INT REFERENCES ai_models_courses(id) ON DELETE SET NULL,
-    user_id INT REFERENCES users(user_id) ON DELETE SET NULL,
     interaction_type VARCHAR(50), -- VD: 'moderation', 'grading', 'question'
     input_json JSONB,
     output_json JSONB,
@@ -407,8 +428,44 @@ CREATE TABLE ai_activity_logs (
     log_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE message_moderation_logs (
+    log_id SERIAL PRIMARY KEY,
+	model_id INT REFERENCES ai_models(model_id) ON DELETE SET NULL,
+    message_id INT REFERENCES messages(message_id) ON DELETE SET NULL,
+    input_json JSONB,
+    output_json JSONB,
+    latency_ms REAL,
+    log_status VARCHAR(50),
+    error_message TEXT,
+    log_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE course_review_moderation_logs (
+    log_id SERIAL PRIMARY KEY,
+    model_id INT REFERENCES ai_models(model_id) ON DELETE SET NULL,
+    course_review_id INT REFERENCES course_reviews (course_review_id) ON DELETE SET NULL,
+    input_json JSONB,
+    output_json JSONB,
+    latency_ms REAL,
+    log_status VARCHAR(50),
+    error_message TEXT,
+    log_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE lesson_review_moderation_logs (
+    log_id SERIAL PRIMARY KEY,
+    model_id INT REFERENCES ai_models(model_id) ON DELETE SET NULL,
+    lesson_review_id INT REFERENCES lesson_reviews(lesson_review_id) ON DELETE SET NULL,
+    input_json JSONB,
+    output_json JSONB,
+    latency_ms REAL,
+    log_status VARCHAR(50),
+    error_message TEXT,
+    log_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ==============================================================================
--- 7. VIEWS FOR DATA CONSISTENCY (The "Utmost Normalized" Part)
+-- 7. VIEWS FOR DATA CONSISTENCY (The \"Utmost Normalized\" Part)
 -- ==============================================================================
 
 -- View to get Lesson Stats 
@@ -434,11 +491,11 @@ CREATE OR REPLACE VIEW view_course_stats AS
 SELECT 
     c.course_id,
 
-    COALESCE(AVG(r.rating), 0) AS rating_average,
+    COALESCE(AVG(cr.rating), 0) AS rating_average,
 
     COUNT(DISTINCT e.enrollment_id) AS total_students,
 
-    COUNT(DISTINCT r.review_id) AS total_reviews,
+    COUNT(DISTINCT cr.course_review_id) AS total_reviews,
 
     COUNT(DISTINCT l.lesson_id) AS total_lessons,
 
@@ -451,9 +508,7 @@ FROM courses c
 LEFT JOIN enrollments e 
     ON e.course_id = c.course_id
 
-LEFT JOIN reviews r 
-    ON r.enrollment_id = e.enrollment_id
-   AND r.is_removed = FALSE
+LEFT JOIN course_reviews cr ON cr.enrollment_id = e.enrollment_id AND cr.is_removed = FALSE
 
 LEFT JOIN lessons l 
     ON l.course_id = c.course_id
@@ -508,7 +563,7 @@ CREATE OR REPLACE VIEW view_instructor_stats AS
 SELECT 
     i.instructor_id,
 
-    COALESCE(AVG(r.rating), 0) AS instructor_rating,
+    COALESCE(AVG(cr.rating), 0) AS instructor_rating,
 
     COALESCE(SUM(ip.payout_amount), 0) AS total_revenue,
 
@@ -522,9 +577,7 @@ LEFT JOIN courses c
 LEFT JOIN enrollments e 
     ON e.course_id = c.course_id
 
-LEFT JOIN reviews r 
-    ON r.enrollment_id = e.enrollment_id
-   AND r.is_removed = FALSE
+LEFT JOIN course_reviews cr ON cr.enrollment_id = e.enrollment_id AND cr.is_removed = FALSE
 
 LEFT JOIN instructor_payouts ip 
     ON ip.instructor_id = i.instructor_id
@@ -532,7 +585,9 @@ LEFT JOIN instructor_payouts ip
 GROUP BY i.instructor_id;
 
 --Indexing
-CREATE INDEX idx_reviews_enrollment ON reviews(enrollment_id);
+CREATE INDEX idx_course_reviews_enrollment ON course_reviews(enrollment_id);
+CREATE INDEX idx_lesson_reviews_enrollment ON lesson_reviews(enrollment_id);
+CREATE INDEX idx_lesson_reviews_lesson ON lesson_reviews(lesson_id);
 CREATE INDEX idx_enrollments_course ON enrollments(course_id);
 CREATE INDEX idx_enrollments_user ON enrollments(user_id);
 CREATE INDEX idx_courses_instructor ON courses(instructor_id);
@@ -540,7 +595,7 @@ CREATE INDEX idx_lessons_course ON lessons(course_id);
 CREATE INDEX idx_materials_lesson ON learning_materials(lesson_id);
 CREATE INDEX idx_order_info_user ON order_info(user_id);
 CREATE INDEX idx_order_items_order ON order_items(order_id);
-CREATE INDEX idx_reviews_active ON reviews(enrollment_id) WHERE is_removed = FALSE;
+CREATE INDEX idx_course_reviews_active ON course_reviews(enrollment_id) WHERE is_removed = FALSE;
 CREATE INDEX idx_order_paid ON order_info(user_id) WHERE order_status = 'paid';
 CREATE INDEX idx_material_duration 
 ON learning_materials (

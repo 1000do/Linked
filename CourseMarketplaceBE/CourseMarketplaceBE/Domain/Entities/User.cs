@@ -16,7 +16,7 @@ public partial class User
     // total_spent & enrolled_courses_count đã bị xóa khỏi bảng users trong SQL v2
     // Dùng VIEW view_user_stats để lấy các giá trị này (tính động qua SQL)
 
-    public virtual ICollection<AiActivityLog> AiActivityLogs { get; set; } = new List<AiActivityLog>();
+
 
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 
