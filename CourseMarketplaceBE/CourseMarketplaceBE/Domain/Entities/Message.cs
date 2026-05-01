@@ -23,4 +23,6 @@ public partial class Message
     public virtual Chat Chat { get; set; } = null!;
 
     public virtual Account? Sender { get; set; }
+
+    public virtual ICollection<MessageAttachment> Attachments { get; set; } = new List<MessageAttachment>();
 }

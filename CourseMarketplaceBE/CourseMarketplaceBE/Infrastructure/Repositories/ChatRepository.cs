@@ -50,6 +50,17 @@ public class ChatRepository : IChatRepository
     public async Task AddMessageAsync(Message message)
     {
         _context.Messages.Add(message);
+        
+        // Tăng unread count cho những người khác trong phòng
+        var otherParticipants = await _context.ChatParticipants
+            .Where(p => p.ChatId == message.ChatId && p.AccountId != message.SenderId)
+            .ToListAsync();
+
+        foreach (var p in otherParticipants)
+        {
+            p.UnreadCount++;
+        }
+
         await _context.SaveChangesAsync();
     }
 
@@ -118,5 +129,31 @@ public class ChatRepository : IChatRepository
     {
         _context.UserReports.Add(report);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task AddAuditLogAsync(AuditLog log)
+    {
+        _context.AuditLogs.Add(log);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task MarkAsReadAsync(int chatId, int accountId)
+    {
+        var participant = await _context.ChatParticipants
+            .FirstOrDefaultAsync(p => p.ChatId == chatId && p.AccountId == accountId);
+
+        if (participant != null)
+        {
+            participant.UnreadCount = 0;
+            participant.LastReadAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<int> GetTotalUnreadCountAsync(int accountId)
+    {
+        return await _context.ChatParticipants
+            .Where(p => p.AccountId == accountId)
+            .SumAsync(p => p.UnreadCount);
     }
 }

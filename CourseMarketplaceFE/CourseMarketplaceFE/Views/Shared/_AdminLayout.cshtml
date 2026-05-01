@@ -2,6 +2,8 @@
 @{
     var managerName = Context.Request.Cookies["UserName"] ?? "Admin";
     var token = Context.Request.Cookies["AccessToken"] ?? "";
+    var userRole = (Context.Request.Cookies["UserRole"] ?? "admin").ToLower();
+    var isStaff = userRole == "staff";
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -94,25 +96,29 @@
                 Thông báo
                 <span class="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-red-500 hidden" id="admin-noti-badge"></span>
             </a>
-            <a href="/Coupon/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
-                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">local_activity</span> 
-                Coupon & Khuyến mãi
-            </a>
+            @if (!isStaff) {
+                <a href="/Coupon/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
+                    <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">local_activity</span> 
+                    Coupon & Khuyến mãi
+                </a>
+            }
             <a href="/Chat/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
                 <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">forum</span> 
                 Giám sát Chat
             </a>
 
-            <div class="px-3 mb-3 mt-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tài chính & Giao dịch</div>
-            
-            <a href="/AdminFinance" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
-                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">monitoring</span> 
-                Tổng quan doanh thu
-            </a>
-            <a href="/Transaction/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
-                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">receipt_long</span> 
-                Lịch sử giao dịch
-            </a>
+            @if (!isStaff) {
+                <div class="px-3 mb-3 mt-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tài chính & Giao dịch</div>
+                
+                <a href="/AdminFinance" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
+                    <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">monitoring</span> 
+                    Tổng quan doanh thu
+                </a>
+                <a href="/Transaction/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
+                    <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">receipt_long</span> 
+                    Lịch sử giao dịch
+                </a>
+            }
             
             <div class="px-3 mb-3 mt-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hệ thống</div>
             
@@ -146,7 +152,7 @@
                 <div class="flex items-center gap-3 pl-5 border-l border-slate-200">
                     <div class="flex flex-col items-end">
                         <span class="text-xs font-bold text-slate-900">@managerName</span>
-                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Super Admin</span>
+                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">@(isStaff ? "Support Staff" : "Super Admin")</span>
                     </div>
                     <div class="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center font-bold text-sm shadow-sm">
                         @(managerName.Length > 0 ? managerName[..1].ToUpper() : "A")

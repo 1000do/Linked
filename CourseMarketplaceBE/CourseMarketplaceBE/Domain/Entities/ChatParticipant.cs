@@ -10,6 +10,10 @@ public partial class ChatParticipant
 
     public string Role { get; set; } = "member";
 
+    public int UnreadCount { get; set; }
+
+    public DateTime? LastReadAt { get; set; }
+
     public DateTime? JoinedAt { get; set; }
 
     public virtual Account Account { get; set; } = null!;

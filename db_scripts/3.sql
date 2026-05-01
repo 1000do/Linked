@@ -35,6 +35,8 @@ DROP TABLE IF EXISTS message_moderation_logs CASCADE;
 
 DROP TABLE IF EXISTS lesson_review_moderation_logs CASCADE;
 DROP TABLE IF EXISTS course_review_moderation_logs CASCADE;
+DROP TABLE IF EXISTS audit_logs CASCADE;
+DROP TABLE IF EXISTS message_attachments CASCADE;
 
 -- ==============================================================================
 -- Drop indexes if they exist
@@ -356,6 +358,8 @@ CREATE TABLE chat_participants (
     chat_id INT REFERENCES chats(chat_id) ON DELETE CASCADE,
     account_id INT REFERENCES accounts(account_id) ON DELETE CASCADE,
     role VARCHAR(50) DEFAULT 'member', -- 'member', 'admin', 'observer'
+    unread_count INT DEFAULT 0,
+    last_read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (chat_id, account_id)
 );
@@ -369,6 +373,16 @@ CREATE TABLE messages (
     message_status VARCHAR(50) DEFAULT 'ok', -- 'ok', 'flagged', 'hidden'
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     received_at TIMESTAMP
+);
+
+CREATE TABLE message_attachments (
+    attachment_id SERIAL PRIMARY KEY,
+    message_id INT REFERENCES messages(message_id) ON DELETE CASCADE,
+    file_url TEXT NOT NULL,
+    file_name VARCHAR(255),
+    file_type VARCHAR(50), -- 'image', 'video', 'document'
+    file_size BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE notifications (
@@ -395,6 +409,17 @@ CREATE TABLE user_reports (
     resolved_at TIMESTAMP,
     chat_id INT REFERENCES chats(chat_id), -- Liên kết với cuộc chat bị khiếu nại
     access_granted_until TIMESTAMP,        -- Staff chỉ được xem đến thời điểm này
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE audit_logs (
+    log_id SERIAL PRIMARY KEY,
+    actor_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
+    action_type VARCHAR(100) NOT NULL, -- 'join_room', 'monitor_room', 'broadcast', 'delete_message'
+    target_type VARCHAR(100), -- 'chat_room', 'message', 'user'
+    target_id INT,
+    details TEXT,
+    ip_address VARCHAR(45),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -624,6 +649,9 @@ CREATE INDEX idx_metadata_gin
 ON learning_materials 
 USING GIN (material_metadata);
 
+CREATE INDEX idx_audit_logs_actor ON audit_logs(actor_id);
+CREATE INDEX idx_chat_participants_read ON chat_participants(account_id, last_read_at);
+
 -- ==============================================================================
 -- 8. SAMPLE DATA (EXCLUDING ACCOUNTS)
 -- ==============================================================================
@@ -700,7 +728,7 @@ DO $$
 DECLARE
     new_account_id INT;
 BEGIN
-    -- Tạo account
+    -- 1. Tạo account Admin
     INSERT INTO accounts (
         email, password_hash, phone_number, account_status, 
         auth_provider, is_verified, account_created_at, account_updated_at
@@ -720,5 +748,25 @@ BEGIN
     INSERT INTO managers (manager_id, role, display_name)
     VALUES (new_account_id, 'admin', 'Super Administrator');
 
-    RAISE NOTICE 'Tạo Admin thành công! Account ID = %', new_account_id;
+    -- 2. Tạo account Staff
+    INSERT INTO accounts (
+        email, password_hash, phone_number, account_status, 
+        auth_provider, is_verified, account_created_at, account_updated_at
+    ) VALUES (
+        'staff@gmail.com',
+        '$2a$11$O7PrVmv/I5yxkexhkdrY2OB2tQf5c6Gy9P8hvqLIAF2NO34wt9C3i',
+        '+84987654321',
+        'active',
+        'local',
+        TRUE,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    )
+    RETURNING account_id INTO new_account_id;
+
+    -- Tạo manager (Staff)
+    INSERT INTO managers (manager_id, role, display_name)
+    VALUES (new_account_id, 'staff', 'Hỗ trợ kỹ thuật');
+
+    RAISE NOTICE 'Seeding Admin & Staff hoàn tất!';
 END $$;

@@ -18,4 +18,7 @@ public interface IChatRepository
     Task<bool> HasActiveReportForChatAsync(int chatId);
     Task UpdateAdminAccessAsync(int chatId, DateTime expiry);
     Task AddReportAsync(UserReport report);
+    Task AddAuditLogAsync(AuditLog log);
+    Task MarkAsReadAsync(int chatId, int accountId);
+    Task<int> GetTotalUnreadCountAsync(int accountId);
 }

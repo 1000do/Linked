@@ -14,6 +14,7 @@ public class ChatListDto
     public string? PartnerAvatar { get; set; }
     public string? ContextType { get; set; }
     public int? ContextId { get; set; }
+    public int UnreadCount { get; set; }
 }
 
 public class MessageDto

@@ -54,6 +54,8 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<MaterialEmbedding> MaterialEmbeddings { get; set; }
     public virtual DbSet<InstructorStats> InstructorStats { get; set; }
     public virtual DbSet<CourseStats> CourseStats { get; set; }
+    public virtual DbSet<AuditLog> AuditLogs { get; set; }
+    public virtual DbSet<MessageAttachment> MessageAttachments { get; set; }
 
     // ─── OnConfiguring ────────────────────────────────────────────────────────
 
@@ -334,6 +336,11 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.ChatId).HasColumnName("chat_id");
             entity.Property(e => e.AccountId).HasColumnName("account_id");
             entity.Property(e => e.Role).HasMaxLength(50).HasDefaultValue("member").HasColumnName("role");
+            entity.Property(e => e.UnreadCount).HasDefaultValue(0).HasColumnName("unread_count");
+            entity.Property(e => e.LastReadAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("last_read_at");
             entity.Property(e => e.JoinedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
@@ -1002,6 +1009,53 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.MaterialId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("material_embeddings_material_id_fkey");
+        });
+
+        // ── audit_logs ────────────────────────────────────────────────────────
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.HasKey(e => e.LogId).HasName("audit_logs_pkey");
+            entity.ToTable("audit_logs");
+
+            entity.Property(e => e.LogId).HasColumnName("log_id");
+            entity.Property(e => e.ActorId).HasColumnName("actor_id");
+            entity.Property(e => e.ActionType).HasMaxLength(100).HasColumnName("action_type");
+            entity.Property(e => e.TargetType).HasMaxLength(100).HasColumnName("target_type");
+            entity.Property(e => e.TargetId).HasColumnName("target_id");
+            entity.Property(e => e.Details).HasColumnName("details");
+            entity.Property(e => e.IpAddress).HasMaxLength(45).HasColumnName("ip_address");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Actor).WithMany()
+                .HasForeignKey(d => d.ActorId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("audit_logs_actor_id_fkey");
+        });
+
+        // ── message_attachments ───────────────────────────────────────────────
+        modelBuilder.Entity<MessageAttachment>(entity =>
+        {
+            entity.HasKey(e => e.AttachmentId).HasName("message_attachments_pkey");
+            entity.ToTable("message_attachments");
+
+            entity.Property(e => e.AttachmentId).HasColumnName("attachment_id");
+            entity.Property(e => e.MessageId).HasColumnName("message_id");
+            entity.Property(e => e.FileUrl).HasColumnName("file_url");
+            entity.Property(e => e.FileName).HasMaxLength(255).HasColumnName("file_name");
+            entity.Property(e => e.FileType).HasMaxLength(50).HasColumnName("file_type");
+            entity.Property(e => e.FileSize).HasColumnName("file_size");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Message).WithMany(p => p.Attachments)
+                .HasForeignKey(d => d.MessageId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("message_attachments_message_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);
