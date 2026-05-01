@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Stripe;
+using StackExchange.Redis;
 
 
 namespace CourseMarketplaceBE;
@@ -199,6 +200,14 @@ public class Program
         builder.Services.AddScoped<ITransactionService, TransactionService>();
         builder.Services.AddScoped<IChatService, ChatService>();
         builder.Services.AddScoped<IModerationService, ModerationService>();
+        
+        // Redis Configuration
+        builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "localhost:6379";
+            return ConnectionMultiplexer.Connect(redisHost);
+        });
+        builder.Services.AddScoped<IRedisService, RedisService>();
 
         builder.Services.AddHttpClient();
 
@@ -305,13 +314,11 @@ public class Program
         // 🔥 8. CORS — cho phép FE MVC gọi BE API (dev: allow all origins)
         builder.Services.AddCors(options =>
         {
-            options.AddPolicy("AllowAll", policy =>
-                policy.AllowAnyOrigin()   // Cho phép mọi origin (FE port bất kỳ)
+            options.AddPolicy("AllowFE", policy =>
+                policy.SetIsOriginAllowed(origin => true) // Cho phép mọi origin năng động
                       .AllowAnyMethod()
-                      .AllowAnyHeader());
-            // NOTE: AllowAnyOrigin() không tương thích với AllowCredentials().
-            // Cookie/JWT vẫn hoạt động vì FE truyền Bearer Token qua Authorization header,
-            // không phụ thuộc vào CORS credentials.
+                      .AllowAnyHeader()
+                      .AllowCredentials()); // Bắt buộc cho SignalR
         });
 
         var app = builder.Build();
@@ -340,7 +347,7 @@ public class Program
             c.RoutePrefix = "swagger";
         });
 
-        app.UseCors("AllowAll");
+        app.UseCors("AllowFE");
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapHub<NotificationHub>("/notificationHub");

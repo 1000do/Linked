@@ -107,36 +107,61 @@
         .support-header {
             background: #059669;
             color: white;
-            padding: 20px;
+            padding: 15px;
             text-align: center;
         }
 
         .support-content {
+            height: 300px;
             padding: 15px;
             overflow-y: auto;
-            background: #f8fafc;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        .quick-question {
-            background: white;
-            border: 1px solid #e2e8f0;
+        .support-footer {
             padding: 10px 15px;
-            border-radius: 10px;
-            margin-bottom: 8px;
-            cursor: pointer;
+            border-top: 1px solid #e2e8f0;
+            background: white;
+            display: flex;
+            gap: 8px;
+        }
+
+        .support-input {
+            flex: 1;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 8px 15px;
             font-size: 13px;
-            transition: all 0.2s;
-            color: #475569;
+            outline: none;
+        }
+
+        .support-input:focus { border-color: #059669; }
+
+        .support-send {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #059669;
+            color: white;
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
         }
 
-        .quick-question:hover {
-            border-color: #059669;
-            color: #059669;
-            background: #f0fdf4;
+        .mini-msg {
+            max-width: 85%;
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 13px;
+            line-height: 1.4;
         }
+        .mini-msg.them { background: #f1f5f9; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .mini-msg.me { background: #059669; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
 
         .chat-badge {
             position: absolute;
@@ -170,46 +195,52 @@
     <!-- FOOTER -->
     @await Html.PartialAsync("_Footer")
 
-    <!-- SUPPORT POPUP -->
+    <!-- SUPPORT POPUP (Mini Chat) -->
     <div id="support-chat-popup" class="support-popup">
         <div class="support-header">
-            <h5 class="mb-1 fw-bold">Hỗ trợ trực tuyến</h5>
-            <p class="mb-0 text-xs opacity-75">Chào bạn, chúng tôi có thể giúp gì?</p>
-        </div>
-        <div class="support-content">
-            <p class="text-xs text-slate-500 mb-3 fw-bold uppercase">Câu hỏi thường gặp</p>
-            <div class="quick-question" onclick="askSupport('Làm sao để đăng ký khóa học?')">
-                <i class="material-symbols-outlined text-sm">payments</i>
-                Cách thức đăng ký khóa học?
-            </div>
-            <div class="quick-question" onclick="askSupport('Tôi bị quên mật khẩu')">
-                <i class="material-symbols-outlined text-sm">lock_reset</i>
-                Tôi bị quên mật khẩu
-            </div>
-            <div class="quick-question" onclick="askSupport('Chính sách hoàn tiền như thế nào?')">
-                <i class="material-symbols-outlined text-sm">reusable_item</i>
-                Chính sách hoàn tiền
-            </div>
-            <div class="quick-question" onclick="askSupport('Báo lỗi kỹ thuật')">
-                <i class="material-symbols-outlined text-sm">bug_report</i>
-                Báo lỗi kỹ thuật
-            </div>
-            
-            <hr class="my-3 border-slate-200">
-            
-            <div class="text-center">
-                <a href="/Chat" class="btn btn-sm btn-outline-success w-100 rounded-pill">
-                    Kết nối với nhân viên hỗ trợ
-                </a>
+            <h6 class="mb-0 fw-bold">Hỗ trợ trực tuyến</h6>
+            <div class="d-flex align-items-center justify-content-center gap-1 text-[10px] opacity-75 mt-1">
+                <span class="w-1.5 h-1.5 rounded-circle bg-emerald-300"></span>
+                Sẵn sàng hỗ trợ
             </div>
         </div>
-    </div>
+        <div class="support-content" id="mini-chat-content">
+            <div class="text-center py-4">
+                <p class="text-xs text-slate-400">Đang tải lịch sử hỗ trợ...</p>
+            </div>
+        </div>
+        <div class="support-footer">
+            <input type="text" id="mini-chat-input" class="support-input" placeholder="Nhập tin nhắn..." onkeypress="if(event.key === 'Enter') sendMiniMsg()">
+            <button class="support-send" onclick="sendMiniMsg()">
+    @if (ViewData["Title"]?.ToString() != "Tin nhắn & Hỗ trợ")
+    {
+        <div id="support-chat-popup" class="support-popup">
+            <div class="support-header">
+                <h6 class="mb-0 fw-bold">Hỗ trợ trực tuyến</h6>
+                <div class="d-flex align-items-center justify-content-center gap-1 text-[10px] opacity-75 mt-1">
+                    <span class="w-1.5 h-1.5 rounded-circle bg-emerald-300"></span>
+                    Sẵn sàng hỗ trợ
+                </div>
+            </div>
+            <div class="support-content" id="mini-chat-content">
+                <div class="text-center py-4">
+                    <p class="text-xs text-slate-400">Đang tải lịch sử hỗ trợ...</p>
+                </div>
+            </div>
+            <div class="support-footer">
+                <input type="text" id="mini-chat-input" class="support-input" placeholder="Nhập tin nhắn..." onkeypress="if(event.key === 'Enter') sendMiniMsg()">
+                <button class="support-send" onclick="sendMiniMsg()">
+                    <i class="material-symbols-outlined text-sm">send</i>
+                </button>
+            </div>
+        </div>
 
-    <!-- FLOATING CHAT BUTTON -->
-    <button class="floating-chat-btn" onclick="toggleSupportPopup()" title="Hỗ trợ">
-        <i class="material-symbols-outlined" style="font-size: 28px;">support_agent</i>
-        <span class="chat-badge" style="display: none;" id="global-chat-badge">1</span>
-    </button>
+        <!-- FLOATING CHAT BUTTON -->
+        <button class="floating-chat-btn" onclick="toggleSupportPopup()" title="Hỗ trợ">
+            <i class="material-symbols-outlined" style="font-size: 28px;">support_agent</i>
+            <span class="chat-badge" style="display: none;" id="global-chat-badge">1</span>
+        </button>
+    }
 
 
    
@@ -217,28 +248,102 @@
     @await RenderSectionAsync("Scripts", required: false)
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <script>
+        // 1. Khởi tạo biến toàn cục
+        const currentToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`.trim();
+        const currentUserId = `@Html.Raw(Context.Request.Cookies["UserId"] ?? "0")`.trim();
+        
+        let miniChatId = null;
+        let miniChatConn = null;
+
+        // 2. Logic cho Support Popup (Mini Chat)
         function toggleSupportPopup() {
             const popup = document.getElementById('support-chat-popup');
+            if (!popup) return;
             const isVisible = popup.style.display === 'flex';
             popup.style.display = isVisible ? 'none' : 'flex';
             
-            // Ẩn chấm đỏ khi đã mở
             if (!isVisible) {
                 const badge = document.getElementById('global-chat-badge');
                 if (badge) badge.style.display = 'none';
+                initMiniChat();
             }
         }
 
-        async function askSupport(question) {
-            alert("Hệ thống đang chuyển yêu cầu: " + question);
-            // Sau này sẽ tích hợp tự động gửi tin nhắn vào Chat chính
-            window.location.href = "/Chat?autoMessage=" + encodeURIComponent(question);
+        async function initMiniChat() {
+            if (!currentToken) {
+                window.location.href = "/Account/Login";
+                return;
+            }
+            if (miniChatId) return;
+
+            try {
+                // Lấy ID nhân viên hỗ trợ
+                const staffRes = await fetch("http://localhost:5207/api/chat/support-account", {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const staff = await staffRes.json();
+                
+                // Tạo/Lấy phòng chat
+                const createRes = await fetch("http://localhost:5207/api/chat/create", {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ targetAccountId: staff.accountId, contextType: 'system' })
+                });
+                const chatData = await createRes.json();
+                miniChatId = chatData.chatId;
+
+                loadMiniHistory();
+            } catch (err) {
+                console.error("Init mini chat error:", err);
+                document.getElementById('mini-chat-content').innerHTML = `<div class="text-center py-4 text-xs text-red-500">Không thể kết nối hỗ trợ.</div>`;
+            }
         }
 
-        // 1. Lấy token an toàn từ Server-side (Razor)
-        const currentToken = `@Html.Raw(tokenForLayout ?? "")`.trim();
+        async function loadMiniHistory() {
+            if (!miniChatId) return;
+            try {
+                const res = await fetch(`http://localhost:5207/api/chat/history?roomId=${miniChatId}`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const msgs = await res.json();
+                const container = document.getElementById('mini-chat-content');
+                container.innerHTML = msgs.map(m => `
+                    <div class="mini-msg ${m.senderId == currentUserId ? 'me' : 'them'}">${m.content}</div>
+                `).join('');
+                container.scrollTop = container.scrollHeight;
+            } catch (err) {
+                console.error("Load mini history error:", err);
+            }
+        }
 
-        // Hàm bổ trợ tính thời gian
+        async function sendMiniMsg() {
+            const input = document.getElementById('mini-chat-input');
+            const content = input.value.trim();
+            if (!content || !miniChatId || !miniChatConn) return;
+
+            try {
+                await miniChatConn.invoke("SendMessage", {
+                    chatId: miniChatId,
+                    content: content
+                });
+                input.value = "";
+            } catch (err) {
+                console.error("Send mini msg error:", err);
+            }
+        }
+
+        function appendMiniMsg(m) {
+            const container = document.getElementById('mini-chat-content');
+            if (!container) return;
+            const html = `<div class="mini-msg ${m.senderId == currentUserId ? 'me' : 'them'}">${m.content}</div>`;
+            container.insertAdjacentHTML('beforeend', html);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 3. Logic Thông báo & SignalR Global
         function timeSince(date) {
             const seconds = Math.floor((new Date() - date) / 1000);
             if (seconds < 60) return "Vừa xong";
@@ -249,172 +354,78 @@
             return date.toLocaleDateString('vi-VN');
         }
 
-        // 2. Hàm load danh sách thông báo và cập nhật giao diện
         async function loadTopNotifications() {
             const container = document.getElementById('notification-items-container');
             const badge = document.getElementById('noti-badge');
-            if (!container) return;
-
-            // Nếu không có token, báo đăng nhập
-            if (!currentToken || currentToken === "") {
-                container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">Vui lòng đăng nhập</div>`;
-                if (badge) badge.classList.add('hidden');
-                return;
-            }
+            if (!container || !currentToken) return;
 
             try {
                 const response = await fetch("http://localhost:5207/api/Notification", {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${currentToken}`,
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
                 });
-
-                   if (response.ok) {
-        const result = await response.json();
-
-        // Kiểm tra: nếu result là mảng thì dùng luôn, nếu là object có .data thì lấy .data
-        const notifications = Array.isArray(result) ? result : (result.data || []);
-
-        // 1. Cập nhật chấm đỏ
-        const hasUnread = notifications.some(n => n.isRead === false);
-        if (badge) {
-            if (hasUnread) badge.classList.remove('hidden');
-            else badge.classList.add('hidden');
-        }
-
-        // 2. Lấy Top 3 để hiện dropdown
-        const top3 = notifications.slice(0, 3);
-        if (top3.length === 0) {
-            container.innerHTML = `<div class="px-4 py-8 text-center text-slate-400 text-sm italic">Không có thông báo mới</div>`;
-            return;
-        }
-
-                    container.innerHTML = top3.map(n => `
-                        <div class="p-4 border-b border-slate-50 hover:bg-emerald-50/50 transition-all cursor-pointer"
-                             onclick="location.href='/Notification'">
-                            <div class="flex gap-3">
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center gap-2">
-                                        ${!n.isRead ? '<span class="w-1.5 h-1.5 bg-primary rounded-full shrink-0"></span>' : ''}
-                                        <p class="text-xs font-bold text-slate-800 truncate">${n.title}</p>
-                                    </div>
-                                    <p class="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">${n.content}</p>
-                                    <div class="flex justify-between items-center mt-2">
-                                        <p class="text-[9px] text-slate-300 font-bold uppercase tracking-wider">
-                                            ${timeSince(new Date(n.createdAt))}
-                                        </p>
-                                        ${!n.isRead ? '<span class="text-[9px] text-primary font-bold">Mới</span>' : ''}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    console.error("API trả lỗi:", response.status);
-                }
-            } catch (err) {
-                console.error("Lỗi fetch:", err);
-                container.innerHTML = `<div class="p-4 text-center text-xs text-red-400">Lỗi đồng bộ dữ liệu</div>`;
-            }
-        }
-
-        // 3. Khởi tạo SignalR (Dùng luôn currentToken đã lấy ở trên)
-        if (currentToken) {
-            const connection = new signalR.HubConnectionBuilder()
-                .withUrl("http://localhost:5207/notificationHub", {
-                    accessTokenFactory: () => currentToken // Dùng trực tiếp biến const
-                })
-                .withAutomaticReconnect()
-                .build();
-
-            connection.on("ReceiveNotification", function (noti) {
-                loadTopNotifications();
-                if (typeof loadHistory === "function") loadHistory();
-                if (typeof loadNotifications === "function") loadNotifications();
-            });
-
-            connection.start().catch(err => console.error("SignalR Error: ", err));
-
-            // 4. Kết nối tới ChatHub để hiện chấm đỏ
-            const chatConn = new signalR.HubConnectionBuilder()
-                .withUrl("http://localhost:5207/chatHub", {
-                    accessTokenFactory: () => currentToken
-                })
-                .withAutomaticReconnect()
-                .build();
-
-            chatConn.on("ReceiveMessage", function (message) {
-                // Nếu không ở trang chat thì hiện chấm đỏ
-                if (window.location.pathname.toLowerCase() !== "/chat") {
-                    const chatBadge = document.getElementById('global-chat-badge');
-                    if (chatBadge) chatBadge.style.display = 'block';
-                }
-            });
-
-            chatConn.start().catch(err => console.error("Chat SignalR Error: ", err));
-        }
-
-        // Wishlist Toggle AJAX
-        async function toggleWishlist(btn, courseId) {
-            if (!currentToken || currentToken === "") {
-                window.location.href = "/Account/Login";
-                return;
-            }
-
-            try {
-                // Thêm hiệu ứng loading
-                const icon = btn.querySelector('.material-symbols-outlined');
-                const originalFill = icon.style.fontVariationSettings;
-                btn.style.pointerEvents = 'none';
-                btn.style.opacity = '0.5';
-
-                const response = await fetch(`/Wishlist/ToggleAjax?courseId=${courseId}`, {
-                    method: 'POST',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                });
-
                 if (response.ok) {
                     const result = await response.json();
-                    if (result.success) {
-                        // Cập nhật UI
-                        const textEl = btn.querySelector('.wishlist-text');
-                        if (result.isInWishlist) {
-                            btn.classList.remove('text-slate-400', 'text-slate-700');
-                            btn.classList.add('text-red-500');
-                            icon.style.fontVariationSettings = '"FILL" 1';
-                            if (textEl) textEl.textContent = "Saved to Wishlist";
-                        } else {
-                            btn.classList.remove('text-red-500');
-                            btn.classList.add('text-slate-400', 'text-slate-700');
-                            icon.style.fontVariationSettings = '"FILL" 0';
-                            if (textEl) textEl.textContent = "Add to Wishlist";
-                        }
-                        
-                        // Nếu đang ở trang wishlist mà xóa thì ẩn item đó luôn
-                        if (window.location.pathname.toLowerCase() === "/wishlist") {
-                            const card = btn.closest('.group');
-                            if (card) {
-                                card.style.opacity = '0';
-                                setTimeout(() => card.remove(), 300);
-                            }
-                        }
+                    const notifications = Array.isArray(result) ? result : (result.data || []);
+                    const hasUnread = notifications.some(n => n.isRead === false);
+                    if (badge) hasUnread ? badge.classList.remove('hidden') : badge.classList.add('hidden');
+
+                    const top3 = notifications.slice(0, 3);
+                    if (top3.length === 0) {
+                        container.innerHTML = `<div class="px-4 py-8 text-center text-slate-400 text-sm italic">Không có thông báo mới</div>`;
+                        return;
                     }
+                    container.innerHTML = top3.map(n => `
+                        <div class="p-4 border-b border-slate-50 hover:bg-emerald-50/50 transition-all cursor-pointer" onclick="location.href='/Notification'">
+                            <p class="text-xs font-bold text-slate-800 truncate">${n.title}</p>
+                            <p class="text-[11px] text-slate-500 mt-1 line-clamp-2">${n.content}</p>
+                            <p class="text-[9px] text-slate-300 mt-2 uppercase font-bold">${timeSince(new Date(n.createdAt))}</p>
+                        </div>
+                    `).join('');
                 }
-            } catch (err) {
-                console.error("Wishlist error:", err);
-            } finally {
-                btn.style.pointerEvents = 'auto';
-                btn.style.opacity = '1';
-            }
+            } catch (err) { console.error("Noti error:", err); }
         }
 
-
-
-        // Chạy khi load trang
         document.addEventListener("DOMContentLoaded", () => {
             loadTopNotifications();
+            
+            if (currentToken) {
+                // SignalR Noti
+                const notiConn = new signalR.HubConnectionBuilder()
+                    .withUrl("http://localhost:5207/notificationHub", { accessTokenFactory: () => currentToken })
+                    .withAutomaticReconnect().build();
+                notiConn.on("ReceiveNotification", () => loadTopNotifications());
+                notiConn.start().catch(err => console.error("Noti Hub Error", err));
+
+                // SignalR Chat
+                miniChatConn = new signalR.HubConnectionBuilder()
+                    .withUrl("http://localhost:5207/chatHub", { accessTokenFactory: () => currentToken })
+                    .withAutomaticReconnect().build();
+
+                miniChatConn.on("ReceiveMessage", function (message) {
+                    const popup = document.getElementById('support-chat-popup');
+                    if (popup && popup.style.display === 'flex' && message.chatId == miniChatId) {
+                        appendMiniMsg(message);
+                    } else if (window.location.pathname.toLowerCase() !== "/chat") {
+                        const chatBadge = document.getElementById('global-chat-badge');
+                        if (chatBadge) {
+                            chatBadge.style.display = 'block';
+                            const current = parseInt(chatBadge.innerText || "0");
+                            chatBadge.innerText = current + 1;
+                        }
+                    }
+                });
+
+                miniChatConn.start().then(() => {
+                    fetch("http://localhost:5207/api/chat/unread-count", {
+                        headers: { 'Authorization': `Bearer ${currentToken}` }
+                    }).then(res => res.json()).then(data => {
+                        if (data.count > 0 && window.location.pathname.toLowerCase() !== "/chat") {
+                            const b = document.getElementById('global-chat-badge');
+                            if (b) { b.style.display = 'block'; b.innerText = data.count; }
+                        }
+                    });
+                }).catch(err => console.error("Chat Hub Error", err));
+            }
         });
     </script>
 </body>

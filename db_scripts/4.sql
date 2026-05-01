@@ -35,6 +35,8 @@ DROP TABLE IF EXISTS message_moderation_logs CASCADE;
 
 DROP TABLE IF EXISTS lesson_review_moderation_logs CASCADE;
 DROP TABLE IF EXISTS course_review_moderation_logs CASCADE;
+DROP TABLE IF EXISTS audit_logs CASCADE;
+DROP TABLE IF EXISTS message_attachments CASCADE;
 
 -- ==============================================================================
 -- Drop indexes if they exist
@@ -338,10 +340,6 @@ CREATE TABLE instructor_payouts (
 -- 5. NHÓM GIAO TIẾP & HỖ TRỢ (Communication & Reports)
 -- ==============================================================================
 
--- ==============================================================================
--- 5. NHÓM GIAO TIẾP & HỖ TRỢ (Communication & Reports)
--- ==============================================================================
-
 CREATE TABLE chats (
     chat_id SERIAL PRIMARY KEY,
     chat_name VARCHAR(255),           -- Tên nhóm (nếu là Group Chat)
@@ -356,6 +354,8 @@ CREATE TABLE chat_participants (
     chat_id INT REFERENCES chats(chat_id) ON DELETE CASCADE,
     account_id INT REFERENCES accounts(account_id) ON DELETE CASCADE,
     role VARCHAR(50) DEFAULT 'member', -- 'member', 'admin', 'observer'
+    unread_count INT DEFAULT 0,
+    last_read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (chat_id, account_id)
 );
@@ -369,6 +369,16 @@ CREATE TABLE messages (
     message_status VARCHAR(50) DEFAULT 'ok', -- 'ok', 'flagged', 'hidden'
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     received_at TIMESTAMP
+);
+
+CREATE TABLE message_attachments (
+    attachment_id SERIAL PRIMARY KEY,
+    message_id INT REFERENCES messages(message_id) ON DELETE CASCADE,
+    file_url TEXT NOT NULL,
+    file_name VARCHAR(255),
+    file_type VARCHAR(50), -- 'image', 'video', 'document'
+    file_size BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE notifications (
@@ -395,6 +405,17 @@ CREATE TABLE user_reports (
     resolved_at TIMESTAMP,
     chat_id INT REFERENCES chats(chat_id), -- Liên kết với cuộc chat bị khiếu nại
     access_granted_until TIMESTAMP,        -- Staff chỉ được xem đến thời điểm này
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE audit_logs (
+    log_id SERIAL PRIMARY KEY,
+    actor_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
+    action_type VARCHAR(100) NOT NULL, -- 'join_room', 'monitor_room', 'broadcast', 'delete_message'
+    target_type VARCHAR(100), -- 'chat_room', 'message', 'user'
+    target_id INT,
+    details TEXT,
+    ip_address VARCHAR(45),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -623,6 +644,9 @@ ON learning_materials (
 CREATE INDEX idx_metadata_gin 
 ON learning_materials 
 USING GIN (material_metadata);
+
+CREATE INDEX idx_audit_logs_actor ON audit_logs(actor_id);
+CREATE INDEX idx_chat_participants_read ON chat_participants(account_id, last_read_at);
 
 -- ==============================================================================
 -- 8. SAMPLE DATA (EXCLUDING ACCOUNTS)

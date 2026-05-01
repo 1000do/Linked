@@ -13,4 +13,6 @@ public interface IChatService
     Task<bool> HasAccessToChatAsync(int accountId, int chatId);
     Task<bool> GrantAdminAccessAsync(int chatId, int hours);
     Task<bool> SubmitReportAsync(int reporterId, int chatId, string reason, string description);
+    Task<int> GetTotalUnreadCountAsync(int accountId);
+    Task LogActionAsync(int actorId, string action, string targetType, int? targetId, string details);
 }
