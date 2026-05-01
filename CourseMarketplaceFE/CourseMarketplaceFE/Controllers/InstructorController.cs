@@ -66,6 +66,7 @@ public class InstructorController : Controller
 
                         // Kiểm tra email đã xác thực
                         await LoadEmailVerifiedAsync();
+                        model.AvailableCountries = await LoadStripeCountriesAsync();
                         return View(model);
                     }
                 }
@@ -79,7 +80,9 @@ public class InstructorController : Controller
         // Kiểm tra email đã xác thực chưa
         await LoadEmailVerifiedAsync();
 
-        return View(new InstructorApplyViewModel());
+        var applyModel = new InstructorApplyViewModel();
+        applyModel.AvailableCountries = await LoadStripeCountriesAsync();
+        return View(applyModel);
     }
 
     /// <summary>Load ViewBag.IsEmailVerified từ API Profile.</summary>
@@ -104,12 +107,60 @@ public class InstructorController : Controller
         ViewBag.IsEmailVerified = false;
     }
 
+    /// <summary>Load danh sách quốc gia Stripe hỗ trợ.</summary>
+    private async Task<List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>> LoadStripeCountriesAsync()
+    {
+        var items = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+        try
+        {
+            var response = await _api.GetAsync("instructor/stripe-countries");
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("data", out var data))
+                {
+                    foreach (var country in data.EnumerateArray())
+                    {
+                        var code = country.GetProperty("code").GetString();
+                        var name = country.GetProperty("name").GetString();
+                        if (code != null && name != null)
+                        {
+                            items.Add(new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                            {
+                                Value = code,
+                                Text = $"{name} ({code})"
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        catch { }
+
+        // Fallback default
+        if (items.Count == 0)
+        {
+            items.Add(new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = "SG", Text = "Singapore (SG)" });
+            items.Add(new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = "US", Text = "United States (US)" });
+        }
+
+        // Ưu tiên SG nếu có
+        var sg = items.FirstOrDefault(x => x.Value == "SG");
+        if (sg != null) sg.Selected = true;
+
+        return items;
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Apply(InstructorApplyViewModel model)
     {
         if (!ModelState.IsValid)
+        {
+            model.AvailableCountries = await LoadStripeCountriesAsync();
             return View(model);
+        }
 
         try
         {
@@ -118,6 +169,7 @@ public class InstructorController : Controller
             content.Add(new StringContent(model.ProfessionalTitle ?? ""), "ProfessionalTitle");
             content.Add(new StringContent(model.ExpertiseCategories ?? ""), "ExpertiseCategories");
             content.Add(new StringContent(model.LinkedinUrl ?? ""), "LinkedinUrl");
+            content.Add(new StringContent(model.StripeCountry ?? "SG"), "StripeCountry");
 
             if (model.DocumentFile != null)
             {
@@ -154,6 +206,7 @@ public class InstructorController : Controller
             ModelState.AddModelError("", $"Lỗi: {ex.Message}");
         }
 
+        model.AvailableCountries = await LoadStripeCountriesAsync();
         return View(model);
     }
 

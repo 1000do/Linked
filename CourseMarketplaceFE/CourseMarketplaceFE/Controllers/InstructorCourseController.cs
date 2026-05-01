@@ -186,6 +186,7 @@ namespace CourseMarketplaceFE.Controllers
                 ModelState.AddModelError("", "Failed to create course: " + ex.Message);
             }
 
+            model.AvailableCategories = await GetCategoriesAsync();
             return View(model);
         }
 

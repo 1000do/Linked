@@ -135,6 +135,20 @@
                                class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm" />
                     </div>
 
+                    @* Stripe Country Selection *@
+                    <div class="mb-5">
+                        <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
+                            <span class="material-symbols-outlined text-lg text-primary">public</span>
+                            Quốc gia Stripe Connect <span class="text-red-500">*</span>
+                        </label>
+                        <p class="text-xs text-slate-500 mb-2">Chọn quốc gia nơi bạn mở tài khoản ngân hàng để nhận tiền từ LinkedLearn.</p>
+                        <select asp-for="StripeCountry" asp-items="Model.AvailableCountries"
+                                class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm bg-white cursor-pointer">
+                            <option value="">-- Chọn Quốc Gia --</option>
+                        </select>
+                        <span asp-validation-for="StripeCountry" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+
                     @* Document Upload *@
                     <div class="mb-8">
                         <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">

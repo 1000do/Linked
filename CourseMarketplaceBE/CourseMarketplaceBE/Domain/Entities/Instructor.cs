@@ -37,6 +37,12 @@ public partial class Instructor
     /// </summary>
     public bool? ChargesEnabled { get; set; }
 
+    /// <summary>
+    /// Mã quốc gia ISO 2 ký tự mà giảng viên chọn khi đăng ký Stripe Connect.
+    /// VD: "SG", "AU", "US", "JP". Phải nằm trong danh sách StripeCountries ở system_configs.
+    /// </summary>
+    public string? StripeCountry { get; set; }
+
     // instructor_rating & total_revenue đã bị xóa khỏi bảng instructors trong SQL v2
     // Dùng VIEW view_instructor_stats để lấy các giá trị này (tính động qua SQL)
 

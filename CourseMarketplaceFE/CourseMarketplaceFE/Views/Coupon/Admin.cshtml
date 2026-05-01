@@ -7,121 +7,155 @@
 
 @section HeaderActions {
     <div class="flex items-center gap-3">
-        <div class="relative">
-            <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
-            <input id="search" placeholder="Tìm mã..." oninput="applyFilter()" class="pl-9 pr-3 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow w-48 bg-slate-50 focus:bg-white" />
+        <div class="relative group">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-[20px]">search</span>
+            <input id="search" placeholder="Tìm theo mã..." oninput="applyFilter()" class="pl-10 pr-4 py-2 text-sm font-medium border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all w-56 bg-slate-50 focus:bg-white text-slate-800 placeholder:text-slate-400 shadow-sm" />
         </div>
 
-        <select id="filter" onchange="applyFilter()" class="border border-slate-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow text-slate-700">
-            <option value="">Tất cả</option>
-            <option value="active">Đang hiệu lực</option>
-            <option value="inactive">Đã đóng</option>
-            <option value="percentage">Theo %</option>
-            <option value="fixed">Cố định</option>
-        </select>
+        <div class="relative">
+            <select id="filter" onchange="applyFilter()" class="appearance-none border border-slate-200 rounded-lg pl-4 pr-10 py-2 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow text-slate-700 shadow-sm cursor-pointer">
+                <option value="">Tất cả trạng thái</option>
+                <option value="active">Đang hoạt động</option>
+                <option value="inactive">Đã tạm dừng</option>
+                <option value="percentage">Loại % (Phần trăm)</option>
+                <option value="fixed">Loại $ (Cố định)</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
+        </div>
 
-        <button onclick="openModal()" class="flex items-center gap-2 px-3 py-1.5 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-md transition-colors shadow-sm">
-            <span class="material-symbols-outlined text-[18px]">add</span>
-            Tạo Coupon
+        <button onclick="openModal()" class="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-secondary text-white text-sm font-bold rounded-lg transition-all shadow-md shadow-primary/20 active:scale-95">
+            <span class="material-symbols-outlined text-[20px]">add</span>
+            Tạo Coupon mới
         </button>
     </div>
 }
 
-<div class="bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col h-[calc(100vh-8rem)]">
-    <div class="flex-1 overflow-auto">
+<div class="bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col h-[calc(100vh-8.5rem)] overflow-hidden">
+    <div class="flex-1 overflow-auto custom-scrollbar">
         <table class="w-full text-left border-collapse">
-            <thead class="sticky top-0 bg-slate-50/90 backdrop-blur-sm z-10 border-b border-slate-200">
-                <tr>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Mã (Code)</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Loại</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Giá trị</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Hiệu lực</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Đơn tối thiểu</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Lượt dùng</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Trạng thái</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Thao tác</th>
+            <thead class="sticky top-0 bg-white/95 backdrop-blur-md z-10 border-b border-slate-200 shadow-sm">
+                <tr class="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">
+                    <th class="px-6 py-4">Mã Coupon</th>
+                    <th class="px-6 py-4">Loại</th>
+                    <th class="px-6 py-4 text-right">Mức giảm</th>
+                    <th class="px-6 py-4">Thời gian áp dụng</th>
+                    <th class="px-6 py-4 text-right">Đơn tối thiểu</th>
+                    <th class="px-6 py-4 text-center">Lượt dùng</th>
+                    <th class="px-6 py-4 text-center">Trạng thái</th>
+                    <th class="px-6 py-4 text-right">Thao tác</th>
                 </tr>
             </thead>
             <tbody id="table-body" class="divide-y divide-slate-100 text-sm">
-                <!-- Populated by JS -->
+                <!-- Data populated by JS -->
             </tbody>
         </table>
     </div>
 </div>
 
-<!-- Modal Coupon -->
+<!-- Modal Create / Edit Coupon -->
 <div id="modal-coupon" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
 
-    <div class="bg-white w-full max-w-md rounded-xl shadow-xl relative z-10 flex flex-col overflow-hidden border border-slate-200">
-        <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-            <h3 class="font-semibold text-slate-900" id="modal-title">Tạo mã giảm giá</h3>
-            <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl relative z-10 flex flex-col overflow-hidden border border-slate-200 transform transition-all">
+        <!-- Modal Header -->
+        <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary text-[20px]">local_activity</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-extrabold text-slate-900 tracking-tight" id="modal-title">Tạo mã giảm giá</h3>
+                    <p class="text-xs font-medium text-slate-500 mt-0.5">Thiết lập điều kiện áp dụng mã cho học viên</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
                 <span class="material-symbols-outlined text-[20px]">close</span>
             </button>
         </div>
 
-        <form id="coupon-form" class="p-5 space-y-4">
+        <!-- Modal Body -->
+        <form id="coupon-form" class="p-6 space-y-5">
+            <!-- Code Input -->
             <div>
-                <label class="text-xs font-medium text-slate-700 block mb-1">Mã giảm giá</label>
-                <input id="code" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase transition-shadow" placeholder="VD: SUMMER2026" />
-                <p id="err-code" class="text-red-500 text-xs mt-1 hidden"></p>
+                <label class="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wide">Mã giảm giá <span class="text-red-500">*</span></label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">tag</span>
+                    <input id="code" class="w-full border border-slate-200 rounded-lg pl-9 pr-3 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase transition-all bg-slate-50 focus:bg-white placeholder:font-medium placeholder:normal-case" placeholder="Nhập mã (VD: SUMMER2026)" />
+                </div>
+                <p id="err-code" class="text-red-500 text-[11px] font-bold mt-1.5 hidden flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span> Bắt buộc nhập mã</p>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <!-- Type & Value -->
+            <div class="grid grid-cols-2 gap-5">
                 <div>
-                    <label class="text-xs font-medium text-slate-700 block mb-1">Loại</label>
-                    <select id="type" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow">
-                        <option value="percentage">Theo phần trăm (%)</option>
-                        <option value="fixed">Số tiền cố định (VNĐ)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-slate-700 block mb-1">Giá trị</label>
-                    <input id="value" type="number" step="0.01" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow" placeholder="0" />
-                    <p id="err-value" class="text-red-500 text-xs mt-1 hidden"></p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-xs font-medium text-slate-700 block mb-1">Ngày bắt đầu</label>
-                    <input id="startDate" type="date" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow text-slate-600" />
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-slate-700 block mb-1">Ngày kết thúc</label>
-                    <input id="endDate" type="date" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow text-slate-600" />
-                    <p id="err-date" class="text-red-500 text-xs mt-1 hidden"></p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-xs font-medium text-slate-700 block mb-1">Giá trị đơn tối thiểu</label>
+                    <label class="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wide">Loại giảm</label>
                     <div class="relative">
-                        <input id="minOrderValue" type="number" min="0" step="1000" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow pr-10" placeholder="0" />
-                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">VND</span>
+                        <select id="type" class="w-full appearance-none border border-slate-200 rounded-lg pl-3 pr-8 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white cursor-pointer">
+                            <option value="percentage">Theo phần trăm (%)</option>
+                            <option value="fixed">Tiền mặt (VNĐ)</option>
+                        </select>
+                        <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">arrow_drop_down</span>
                     </div>
-                    <p class="text-[10px] text-slate-400 mt-0.5">Bỏ trống = không yêu cầu</p>
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-slate-700 block mb-1">Giới hạn số lần dùng</label>
-                    <input id="usageLimit" type="number" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow" placeholder="Không giới hạn" />
-                    <p id="err-usage" class="text-red-500 text-xs mt-1 hidden"></p>
+                    <label class="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wide">Mức giảm <span class="text-red-500">*</span></label>
+                    <input id="value" type="number" step="0.01" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 focus:bg-white" placeholder="0" />
+                    <p id="err-value" class="text-red-500 text-[11px] font-bold mt-1.5 hidden flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span> Giá trị không hợp lệ</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 pt-1">
-                <input type="checkbox" id="isActive" class="rounded border-slate-300 text-primary focus:ring-primary/20 h-4 w-4 cursor-pointer" />
-                <label for="isActive" class="text-sm text-slate-700 cursor-pointer font-medium">Kích hoạt ngay</label>
+            <div class="h-px bg-slate-100 my-2"></div>
+
+            <!-- Dates -->
+            <div class="grid grid-cols-2 gap-5">
+                <div>
+                    <label class="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wide">Ngày bắt đầu</label>
+                    <input id="startDate" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 focus:bg-white" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wide">Ngày kết thúc</label>
+                    <input id="endDate" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 focus:bg-white" />
+                    <p id="err-date" class="text-red-500 text-[11px] font-bold mt-1.5 hidden flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span> Sai ngày</p>
+                </div>
             </div>
 
-            <div class="pt-3 flex justify-end gap-2 border-t border-slate-100 mt-5">
-                <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-md transition-colors">
-                    Hủy
+            <!-- Conditions -->
+            <div class="grid grid-cols-2 gap-5">
+                <div>
+                    <label class="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wide">Đơn tối thiểu</label>
+                    <div class="relative">
+                        <input id="minOrderValue" type="number" min="0" step="1000" class="w-full border border-slate-200 rounded-lg pl-3 pr-12 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 focus:bg-white" placeholder="0" />
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">VNĐ</span>
+                    </div>
+                    <p class="text-[10px] font-medium text-slate-400 mt-1">Bỏ trống nếu không yêu cầu</p>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wide">Lượt dùng tối đa</label>
+                    <input id="usageLimit" type="number" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 focus:bg-white placeholder:font-medium" placeholder="Không giới hạn (∞)" />
+                    <p id="err-usage" class="text-red-500 text-[11px] font-bold mt-1.5 hidden flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span> Phải ≥ 0</p>
+                </div>
+            </div>
+
+            <!-- Active Toggle -->
+            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100 mt-2">
+                <div>
+                    <p class="text-sm font-bold text-slate-900">Trạng thái kích hoạt</p>
+                    <p class="text-[11px] font-medium text-slate-500 mt-0.5">Mã có thể sử dụng ngay sau khi lưu</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="isActive" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary transition-colors"></div>
+                </label>
+            </div>
+
+            <!-- Actions -->
+            <div class="pt-2 flex justify-end gap-3 mt-4">
+                <button type="button" onclick="closeModal()" class="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                    Hủy bỏ
                 </button>
-                <button type="submit" id="btnSubmit" class="px-4 py-2 text-sm font-medium bg-primary hover:bg-secondary text-white rounded-md transition-colors shadow-sm">
-                    Lưu mã giảm giá
+                <button type="submit" id="btnSubmit" class="px-6 py-2.5 text-sm font-bold bg-primary hover:bg-secondary text-white rounded-lg transition-all shadow-md shadow-primary/20 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">save</span>
+                    Lưu cấu hình
                 </button>
             </div>
         </form>
@@ -146,51 +180,77 @@
                 
                 const tbody = document.getElementById("table-body");
                 if (data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-12 text-center">
+                    tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-24 text-center bg-slate-50/30">
                         <div class="flex flex-col items-center justify-center text-slate-400">
-                            <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">local_activity</span>
-                            <p class="text-sm">Không tìm thấy mã giảm giá nào</p>
+                            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 mb-4">
+                                <span class="material-symbols-outlined text-3xl text-slate-300">local_activity</span>
+                            </div>
+                            <p class="text-base font-bold text-slate-700">Chưa có mã giảm giá nào</p>
+                            <p class="text-sm text-slate-500 mt-1 max-w-sm">Tạo mã giảm giá để thu hút học viên và tăng trưởng doanh thu.</p>
+                            <button onclick="openModal()" class="mt-4 px-4 py-2 text-sm font-bold text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors">Tạo ngay</button>
                         </div>
                     </td></tr>`;
                     return;
                 }
 
                 tbody.innerHTML = data.map(x => `
-                    <tr class="hover:bg-slate-50/50 transition-colors group">
-                        <td class="px-5 py-3 align-middle">
-                            <div class="font-mono font-medium text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 inline-block">${x.couponCode}</div>
+                    <tr class="hover:bg-slate-50/80 transition-colors group">
+                        <td class="px-6 py-4 align-middle">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-md bg-slate-100 flex items-center justify-center border border-slate-200">
+                                    <span class="material-symbols-outlined text-[16px] text-slate-500">sell</span>
+                                </div>
+                                <span class="font-mono font-extrabold text-slate-900 text-sm tracking-wide uppercase">${x.couponCode}</span>
+                            </div>
                         </td>
-                        <td class="px-5 py-3 align-middle">
-                            <span class="text-xs font-medium text-slate-600 uppercase tracking-wider">${x.couponType}</span>
+                        <td class="px-6 py-4 align-middle">
+                            ${x.couponType === 'percentage' 
+                                ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold uppercase tracking-wide"><span class="material-symbols-outlined text-[12px]">percent</span> Theo %</span>`
+                                : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold uppercase tracking-wide"><span class="material-symbols-outlined text-[12px]">payments</span> Cố định</span>`
+                            }
                         </td>
-                        <td class="px-5 py-3 align-middle text-right font-medium text-slate-900">
-                            ${x.couponType === 'percentage' ? x.discountValue + '%' : new Intl.NumberFormat('vi-VN').format(x.discountValue) + ' đ'}
+                        <td class="px-6 py-4 align-middle text-right">
+                            <span class="font-extrabold text-slate-900 text-sm">
+                                ${x.couponType === 'percentage' ? x.discountValue + '%' : new Intl.NumberFormat('vi-VN').format(x.discountValue) + ' đ'}
+                            </span>
                         </td>
-                        <td class="px-5 py-3 align-middle">
-                            <div class="text-xs text-slate-600">Từ: ${x.startDate ? x.startDate.split("T")[0] : "—"}</div>
-                            <div class="text-xs text-slate-600 mt-0.5">Đến: ${x.endDate ? x.endDate.split("T")[0] : "—"}</div>
+                        <td class="px-6 py-4 align-middle">
+                            <div class="flex flex-col gap-0.5">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-[14px] text-emerald-500">play_circle</span>
+                                    <span class="text-xs font-semibold text-slate-700">${x.startDate ? x.startDate.split("T")[0] : "Bất kỳ"}</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-[14px] text-red-400">stop_circle</span>
+                                    <span class="text-xs font-semibold text-slate-700">${x.endDate ? x.endDate.split("T")[0] : "Vô thời hạn"}</span>
+                                </div>
+                            </div>
                         </td>
-                        <td class="px-5 py-3 align-middle text-right">
+                        <td class="px-6 py-4 align-middle text-right">
                             ${x.minOrderValue > 0
-                                ? `<span class="text-xs font-medium text-slate-700">${new Intl.NumberFormat('vi-VN').format(x.minOrderValue)}đ</span>`
-                                : `<span class="text-xs text-slate-400">—</span>`
+                                ? `<span class="text-sm font-bold text-slate-700">${new Intl.NumberFormat('vi-VN').format(x.minOrderValue)} đ</span>`
+                                : `<span class="text-xs font-medium text-slate-400 px-2 py-0.5 rounded bg-slate-100">Không yêu cầu</span>`
                             }
                         </td>
-                        <td class="px-5 py-3 align-middle text-center text-slate-600">
-                            <span class="font-medium">${x.usedCount || 0}</span> / ${x.usageLimit ?? "∞"}
+                        <td class="px-6 py-4 align-middle text-center">
+                            <div class="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
+                                <span class="font-extrabold text-slate-900">${x.usedCount || 0}</span>
+                                <span class="text-slate-400 text-xs">/</span>
+                                <span class="font-bold text-slate-600 text-xs">${x.usageLimit ?? "∞"}</span>
+                            </div>
                         </td>
-                        <td class="px-5 py-3 align-middle text-center">
+                        <td class="px-6 py-4 align-middle text-center">
                             ${x.isActive 
-                                ? `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Hoạt động</span>`
-                                : `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Đã đóng</span>`
+                                ? `<span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Đang chạy</span>`
+                                : `<span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-slate-500 bg-slate-100 px-2.5 py-1 rounded border border-slate-200"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Đã dừng</span>`
                             }
                         </td>
-                        <td class="px-5 py-3 align-middle text-right">
-                            <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button type="button" onclick="edit(${x.couponId})" class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded transition-all" title="Sửa">
+                        <td class="px-6 py-4 align-middle text-right">
+                            <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button type="button" onclick="edit(${x.couponId})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-lg transition-all" title="Chỉnh sửa">
                                     <span class="material-symbols-outlined text-[18px]">edit</span>
                                 </button>
-                                <button type="button" onclick="del(${x.couponId})" class="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded transition-all" title="Xóa">
+                                <button type="button" onclick="del(${x.couponId})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-lg transition-all" title="Xóa mã">
                                     <span class="material-symbols-outlined text-[18px]">delete</span>
                                 </button>
                             </div>
@@ -203,11 +263,24 @@
         }
 
         async function del(id) {
-            if (!confirm("Bạn có chắc chắn muốn xóa mã này?")) return;
-            try {
-                await fetch(`${API}/${id}`, { method: "DELETE", headers: { 'Authorization': `Bearer ${TOKEN}` } });
-                applyFilter();
-            } catch (e) {}
+            Swal.fire({
+                title: 'Xóa mã giảm giá?',
+                text: "Hành động này không thể hoàn tác!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Đồng ý xóa',
+                cancelButtonText: 'Hủy'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        await fetch(`${API}/${id}`, { method: "DELETE", headers: { 'Authorization': `Bearer ${TOKEN}` } });
+                        applyFilter();
+                        Swal.fire({ title: 'Đã xóa!', text: 'Mã giảm giá đã bị xóa thành công.', icon: 'success', timer: 1500, showConfirmButton: false });
+                    } catch (e) {}
+                }
+            });
         }
 
         async function edit(id) {
@@ -216,7 +289,7 @@
                 const x = await res.json();
                 
                 editId = id;
-                document.getElementById("modal-title").innerText = "Sửa mã giảm giá";
+                document.getElementById("modal-title").innerText = "Chỉnh sửa Coupon";
                 openModal(true);
 
                 code.value = x.couponCode;
@@ -232,7 +305,7 @@
 
         function openModal(isEdit = false) {
             if (!isEdit) {
-                document.getElementById("modal-title").innerText = "Tạo mã giảm giá mới";
+                document.getElementById("modal-title").innerText = "Tạo mã giảm giá";
                 document.getElementById("coupon-form").reset();
                 document.getElementById("isActive").checked = true;
                 editId = null;
@@ -249,7 +322,7 @@
         
         function showError(id, message) {
             const el = document.getElementById(id);
-            el.innerText = message;
+            el.innerHTML = `<span class="material-symbols-outlined text-[14px]">error</span> ${message}`;
             el.classList.remove("hidden");
         }
 
@@ -265,12 +338,12 @@
             document.querySelectorAll("[id^='err-']").forEach(e => e.classList.add("hidden"));
 
             if (!codeVal) { showError("err-code", "Bắt buộc nhập mã"); isValid = false; }
-            if (isNaN(valueVal) || valueVal <= 0) { showError("err-value", "Giá trị phải > 0"); isValid = false; }
-            if (typeVal === "percentage" && valueVal > 100) { showError("err-value", "Phần trăm không được > 100"); isValid = false; }
-            if (startVal && endVal && new Date(startVal) > new Date(endVal)) { showError("err-date", "Ngày kết thúc phải sau ngày bắt đầu"); isValid = false; }
+            if (isNaN(valueVal) || valueVal <= 0) { showError("err-value", "Giá trị > 0"); isValid = false; }
+            if (typeVal === "percentage" && valueVal > 100) { showError("err-value", "Phần trăm ≤ 100"); isValid = false; }
+            if (startVal && endVal && new Date(startVal) > new Date(endVal)) { showError("err-date", "Kết thúc > bắt đầu"); isValid = false; }
             if (usageVal !== "") {
                 const usageNum = parseInt(usageVal);
-                if (isNaN(usageNum) || usageNum < 0) { showError("err-usage", "Lượt dùng phải ≥ 0"); isValid = false; }
+                if (isNaN(usageNum) || usageNum < 0) { showError("err-usage", "Lượt dùng ≥ 0"); isValid = false; }
             }
             return isValid;
         }
@@ -280,9 +353,9 @@
             if (!validateForm()) return;
 
             const btn = document.getElementById("btnSubmit");
-            const originalText = btn.innerText;
+            const originalText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerText = "Đang xử lý...";
+            btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> Đang lưu...`;
 
             const body = {
                 couponCode: code.value.trim(),
@@ -302,17 +375,19 @@
             try {
                 if (editId == null) {
                     await fetch(API, { method: "POST", headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                    Swal.fire({ title: 'Thành công', text: 'Tạo mã giảm giá thành công!', icon: 'success', timer: 1500, showConfirmButton: false });
                 } else {
                     await fetch(`${API}/${editId}`, { method: "PUT", headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                    Swal.fire({ title: 'Thành công', text: 'Cập nhật mã giảm giá thành công!', icon: 'success', timer: 1500, showConfirmButton: false });
                 }
                 closeModal();
                 applyFilter();
             } catch {
-                alert("Đã xảy ra lỗi.");
+                Swal.fire('Lỗi', 'Đã xảy ra lỗi, vui lòng thử lại', 'error');
             }
 
             btn.disabled = false;
-            btn.innerText = originalText;
+            btn.innerHTML = originalText;
         };
 
         function formatDateLocal(dateStr) {

@@ -93,6 +93,31 @@ public class TransactionController : Controller
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // GET /Transaction/Instructor?page=1&pageSize=20
+    // Lịch sử giao dịch cho Giảng viên
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpGet]
+    public async Task<IActionResult> Instructor(int page = 1, int pageSize = 20)
+    {
+        var vm = new TransactionPagedVM { Page = page, PageSize = pageSize };
+
+        var resp = await _api.GetAsync($"transactions/instructor?page={page}&pageSize={pageSize}");
+        if (resp.IsSuccessStatusCode)
+        {
+            var json = await resp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<TransactionPagedVM>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+                vm = parsed.Data;
+        }
+        else if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        return View(vm);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // GET /Transaction/Detail/{id}
     // UC-114: Chi tiết giao dịch
     // ═══════════════════════════════════════════════════════════════════════

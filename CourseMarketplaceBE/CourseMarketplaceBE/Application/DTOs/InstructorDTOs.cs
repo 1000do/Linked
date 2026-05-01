@@ -21,6 +21,10 @@ public class InstructorApplicationRequest
 
     /// <summary>File CV/CMND upload lên Cloudinary</summary>
     public IFormFile? DocumentFile { get; set; }
+
+    [Required(ErrorMessage = "Vui lòng chọn quốc gia cho tài khoản Stripe.")]
+    [StringLength(2)]
+    public string StripeCountry { get; set; } = null!;
 }
 
 /// <summary>
@@ -47,6 +51,7 @@ public class InstructorDashboardDto
     public string? StripeOnboardingStatus { get; set; }
     public bool PayoutsEnabled { get; set; }
     public bool ChargesEnabled { get; set; }
+    public string? StripeCountry { get; set; }
     public string? FullName { get; set; }
     public string? Email { get; set; }
 
