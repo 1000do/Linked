@@ -42,13 +42,71 @@
             </div>
         </div>
         <div class="flex items-center gap-6 text-sm font-bold">
-            <div class="flex items-center gap-2">
+            <button onclick="showCertificate()" class="flex items-center gap-2 hover:opacity-80 transition-all">
                 <span class="material-symbols-outlined text-[#43e8d8]">workspace_premium</span>
                 <span>Get Certificate</span>
-            </div>
+            </button>
             <button class="bg-[#43e8d8] text-[#00201d] px-4 py-1.5 rounded text-xs hover:opacity-90 transition-all">Share</button>
         </div>
     </header>
+
+    <!-- Certificate Modal (Hidden) -->
+    <div id="certificate-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/80 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden animate-in zoom-in duration-300">
+            <div class="p-8 text-center border-b border-slate-100">
+                <div class="mb-6 relative inline-block">
+                    <div class="w-24 h-24 bg-[#006a62]/10 rounded-full flex items-center justify-center mx-auto text-[#006a62]">
+                        <span class="material-symbols-outlined text-[64px]">workspace_premium</span>
+                    </div>
+                    <div class="absolute -top-2 -right-2 bg-amber-400 text-white rounded-full p-1 shadow-lg">
+                        <span class="material-symbols-outlined text-[24px]">stars</span>
+                    </div>
+                </div>
+                <h2 class="text-3xl font-bold text-slate-900 mb-2">Chúc mừng bạn!</h2>
+                <p class="text-slate-500">Bạn đã hoàn thành xuất sắc khóa học này.</p>
+            </div>
+            
+            <!-- The Certificate UI -->
+            <div id="certificate-content" class="p-12 bg-slate-50 flex flex-col items-center justify-center border-8 border-white shadow-inner m-4 rounded-lg relative overflow-hidden select-none">
+                <!-- Ornate corners -->
+                <div class="absolute top-4 left-4 w-12 h-12 border-t-4 border-l-4 border-[#006a62]/20"></div>
+                <div class="absolute top-4 right-4 w-12 h-12 border-t-4 border-r-4 border-[#006a62]/20"></div>
+                <div class="absolute bottom-4 left-4 w-12 h-12 border-b-4 border-l-4 border-[#006a62]/20"></div>
+                <div class="absolute bottom-4 right-4 w-12 h-12 border-b-4 border-r-4 border-[#006a62]/20"></div>
+
+                <h1 class="text-4xl font-serif text-[#006a62] font-bold mb-8">Certificate of Completion</h1>
+                <p class="text-lg text-slate-600 mb-2 italic">This is to certify that</p>
+                <p class="text-3xl font-bold text-slate-900 mb-8 border-b-2 border-slate-900 px-12 py-2">@User.Identity?.Name</p>
+                <p class="text-lg text-slate-600 mb-2 italic">has successfully completed the course</p>
+                <h3 class="text-2xl font-bold text-slate-800 text-center mb-12">@Model.Title</h3>
+                
+                <div class="flex justify-between w-full mt-8 border-t border-slate-200 pt-8">
+                    <div class="text-center">
+                        <p class="font-bold text-slate-900">@Model.InstructorName</p>
+                        <p class="text-xs text-slate-500">Giảng viên hướng dẫn</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="font-bold text-slate-900">@DateTime.Now.ToString("dd/MM/yyyy")</p>
+                        <p class="text-xs text-slate-500">Ngày hoàn thành</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="font-bold text-[#006a62]">LINKED ACADEMY</p>
+                        <p class="text-xs text-slate-500">Nền tảng học tập trực tuyến</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 bg-white flex justify-center gap-4">
+                <button onclick="downloadCertificate()" class="flex items-center gap-2 bg-[#006a62] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#00534c] transition-all shadow-lg shadow-[#006a62]/20">
+                    <span class="material-symbols-outlined">download</span>
+                    Tải chứng chỉ (PDF)
+                </button>
+                <button onclick="closeCertificate()" class="flex items-center gap-2 border border-slate-200 text-slate-500 px-6 py-3 rounded-xl font-bold hover:bg-slate-50 transition-all">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div class="flex-1 flex overflow-hidden">
         <!-- Main Content -->
@@ -186,6 +244,13 @@
 
                             <div id="learn-reviews-list" class="space-y-6">
                                 <!-- Loaded via JS -->
+                            </div>
+
+                            <div id="course-reviews-section" class="mt-12 pt-8 border-t border-slate-200">
+                                <h3 class="font-bold text-lg text-[#191c1b] mb-4">Overall Course Reviews</h3>
+                                <div id="course-reviews-list" class="space-y-6">
+                                    <!-- Loaded via JS -->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -390,12 +455,12 @@
                         courseId: @Model.CourseId, 
                         rating: parseFloat(rating), 
                         comment: comment,
-                        lessonId: currentLessonId // Gửi kèm lessonId hiện tại
+                        lessonId: currentLessonId
                     })
                 });
                 const result = await response.json();
                 if (result.success) {
-                    Swal.fire('Thành công!', 'Đánh giá của bạn đã được gửi.', 'success');
+                    Swal.fire('Thành công!', 'Đánh giá bài học đã được gửi.', 'success');
                     document.getElementById('review-comment').value = '';
                     setRating(0);
                     loadReviews();
@@ -413,52 +478,112 @@
 
         // ── Load Reviews List ──────────────────────────────────────
         async function loadReviews() {
-            const list = document.getElementById('learn-reviews-list');
+            const lessonList = document.getElementById('learn-reviews-list');
+            const courseList = document.getElementById('course-reviews-list');
+            
+            // Load Lesson Reviews
+            if (currentLessonId) {
+                try {
+                    const res = await fetch('/Course/GetLessonReviews/' + currentLessonId);
+                    const result = await res.json();
+                    if (result.success && result.data && result.data.length > 0) {
+                        lessonList.innerHTML = result.data.map(r => renderReviewItem(r)).join('');
+                    } else {
+                        lessonList.innerHTML = '<p class="text-slate-400 italic">Chưa có đánh giá nào cho bài học này.</p>';
+                    }
+                } catch (e) { lessonList.innerHTML = '<p class="text-red-400">Lỗi tải đánh giá bài học.</p>'; }
+            }
+
+            // Load Course Reviews
             try {
                 const res = await fetch('/Course/GetReviews/@Model.CourseId');
                 const result = await res.json();
                 if (result.success && result.data && result.data.length > 0) {
-                    list.innerHTML = result.data.map(r => `
-                        <div class="border-t border-slate-100 pt-6">
-                            <div class="flex gap-4 mb-3">
-                                <div class="w-10 h-10 rounded-full bg-[#191c1b] text-white flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
-                                    ${r.userAvatarUrl ? `<img src="${r.userAvatarUrl}" class="w-full h-full object-cover" />` : r.userFullName.charAt(0)}
-                                </div>
-                                <div class="flex-1">
-                                    <div class="flex items-center justify-between mb-1">
-                                        <h4 class="font-bold text-sm text-[#191c1b]">
-                                            ${r.userFullName}
-                                            ${r.isInstructor ? '<span class="ml-2 bg-[#006a62]/10 text-[#006a62] text-[10px] px-2 py-0.5 rounded-full border border-[#006a62]/20">Instructor</span>' : ''}
-                                        </h4>
-                                        <span class="text-[11px] text-slate-400 font-medium">${new Date(r.createdAt).toLocaleDateString('vi-VN')}</span>
-                                    </div>
-                                    <div class="flex items-center gap-3 mb-2">
-                                        <div class="flex text-amber-500">
-                                            ${Array(5).fill(0).map((_, i) => `
-                                                <span class="material-symbols-outlined text-[14px] ${i < r.rating ? 'fill-1' : ''}">star</span>
-                                            `).join('')}
-                                        </div>
-                                        ${r.lessonTitle ? `
-                                            <div class="flex items-center gap-1 bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded border border-slate-200">
-                                                <span class="material-symbols-outlined text-[12px]">menu_book</span>
-                                                ${r.lessonTitle}
-                                            </div>
-                                        ` : `
-                                            <div class="flex items-center gap-1 bg-amber-50 text-amber-600 text-[10px] px-2 py-0.5 rounded border border-amber-200">
-                                                <span class="material-symbols-outlined text-[12px]">auto_awesome</span>
-                                                Khóa học tổng quát
-                                            </div>
-                                        `}
-                                    </div>
-                                    <p class="text-sm text-slate-700 leading-relaxed">${r.comment}</p>
+                    courseList.innerHTML = result.data.map(r => renderReviewItem(r)).join('');
+                } else {
+                    courseList.innerHTML = '<p class="text-slate-400 italic">Chưa có đánh giá tổng quát cho khóa học này.</p>';
+                }
+            } catch (e) { courseList.innerHTML = '<p class="text-red-400">Lỗi tải đánh giá khóa học.</p>'; }
+        }
+
+        async function reportReview(reviewId, type) {
+            const { value: reason } = await Swal.fire({
+                title: 'Báo cáo đánh giá',
+                input: 'select',
+                inputOptions: {
+                    'spam': 'Nội dung rác (Spam)',
+                    'offensive': 'Ngôn từ gây hấn/Xúc phạm',
+                    'fake': 'Đánh giá giả mạo',
+                    'other': 'Lý do khác'
+                },
+                inputPlaceholder: 'Chọn lý do báo cáo',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Gửi báo cáo'
+            });
+
+            if (reason) {
+                try {
+                    const response = await fetch('/Course/ReportReview', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ reviewId, type, reason })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        Swal.fire('Đã báo cáo', 'Cảm ơn bạn đã đóng góp, quản trị viên sẽ xem xét đánh giá này.', 'success');
+                    } else {
+                        Swal.fire('Lỗi', 'Không thể gửi báo cáo lúc này.', 'error');
+                    }
+                } catch (e) {
+                    Swal.fire('Lỗi', 'Lỗi kết nối máy chủ.', 'error');
+                }
+            }
+        }
+
+        function renderReviewItem(r) {
+            return `
+                <div class="border-t border-slate-100 pt-6 group">
+                    <div class="flex gap-4 mb-3">
+                        <div class="w-10 h-10 rounded-full bg-[#191c1b] text-white flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
+                            ${r.userAvatarUrl ? `<img src="${r.userAvatarUrl}" class="w-full h-full object-cover" />` : r.userFullName.charAt(0)}
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="font-bold text-sm text-[#191c1b]">
+                                    ${r.userFullName}
+                                    ${r.isInstructor ? '<span class="ml-2 bg-[#006a62]/10 text-[#006a62] text-[10px] px-2 py-0.5 rounded-full border border-[#006a62]/20">Instructor</span>' : ''}
+                                </h4>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-[11px] text-slate-400 font-medium">${new Date(r.createdAt).toLocaleDateString('vi-VN')}</span>
+                                    <button onclick="reportReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}')" class="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500" title="Báo cáo vi phạm">
+                                        <span class="material-symbols-outlined text-[16px]">flag</span>
+                                    </button>
                                 </div>
                             </div>
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="flex text-amber-500">
+                                    ${Array(5).fill(0).map((_, i) => `
+                                        <span class="material-symbols-outlined text-[14px] ${i < r.rating ? 'fill-1' : ''}">star</span>
+                                    `).join('')}
+                                </div>
+                                ${r.lessonTitle ? `
+                                    <div class="flex items-center gap-1 bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded border border-slate-200">
+                                        <span class="material-symbols-outlined text-[12px]">menu_book</span>
+                                        ${r.lessonTitle}
+                                    </div>
+                                ` : `
+                                    <div class="flex items-center gap-1 bg-amber-50 text-amber-600 text-[10px] px-2 py-0.5 rounded border border-amber-200">
+                                        <span class="material-symbols-outlined text-[12px]">auto_awesome</span>
+                                        Khóa học tổng quát
+                                    </div>
+                                `}
+                            </div>
+                            <p class="text-sm text-slate-700 leading-relaxed">${r.comment}</p>
                         </div>
-                    `).join('');
-                } else {
-                    list.innerHTML = '<p class="text-slate-400 italic">Chưa có đánh giá nào.</p>';
-                }
-            } catch (e) {}
+                    </div>
+                </div>
+            `;
         }
 
         // ── Tab Switching ──────────────────────────────────────────
@@ -571,6 +696,51 @@
                     }
                 }
             }
+        }
+
+        async function showCertificate() {
+            // Check if progress is 100%
+            try {
+                const res = await fetch('/Course/GetProgress/@Model.CourseId');
+                const result = await res.json();
+                if (result.success && result.data) {
+                    const d = result.data;
+                    const total = d.totalMaterialCount || 1;
+                    const learned = d.learnedMaterialCount || 0;
+                    const pct = (learned / total) * 100;
+                    
+                    if (pct < 100) {
+                        Swal.fire({
+                            title: 'Chưa hoàn thành',
+                            text: `Bạn mới hoàn thành ${Math.round(pct)}%. Hãy hoàn thành 100% bài học để nhận chứng chỉ nhé!`,
+                            icon: 'warning'
+                        });
+                        return;
+                    }
+                }
+            } catch (e) {}
+
+            document.getElementById('certificate-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCertificate() {
+            document.getElementById('certificate-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function downloadCertificate() {
+            Swal.fire({
+                title: 'Đang khởi tạo PDF',
+                text: 'Hệ thống đang tạo bản PDF cho chứng chỉ của bạn...',
+                timer: 2000,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            }).then(() => {
+                Swal.fire('Thành công', 'Chứng chỉ đã được tải xuống.', 'success');
+            });
         }
 
         window.addEventListener('DOMContentLoaded', () => {

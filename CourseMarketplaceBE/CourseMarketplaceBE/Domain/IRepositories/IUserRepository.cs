@@ -1,4 +1,6 @@
 using CourseMarketplaceBE.Domain.Entities;
+using System;
+using System.Threading.Tasks;
 
 namespace CourseMarketplaceBE.Domain.IRepositories;
 
@@ -6,6 +8,7 @@ public interface IUserRepository
 {
     Task<bool> IsEmailExistsAsync(string email);
     Task<Account?> GetAccountByEmailAsync(string email);
+    Task<Account?> GetAccountByIdAsync(int accountId);
     Task<User?> GetUserByIdAsync(int userId);
     Task UpdateLastLoginAsync(int accountId);
     Task<bool> RegisterUserAsync(Account account, User user);
@@ -17,4 +20,5 @@ public interface IUserRepository
     Task<string> GetRoleByAccountIdAsync(int accountId);
     Task<bool> UpdateEmailVerifiedAsync(string email);
     Task<bool> UpdateAccountAsync(Account account);
+    Task<int?> GetStaffAccountIdAsync();
 }

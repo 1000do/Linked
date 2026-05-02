@@ -7,7 +7,7 @@ public class ReviewRequest
     public int CourseId { get; set; }
     public float Rating { get; set; }
     public string Comment { get; set; } = null!;
-    /// <summary>ID của lesson nếu review từ trang Learn (nullable = review tổng)</summary>
+    /// <summary>ID của lesson nếu review cho lesson cụ thể. Nếu NULL thì là review khóa học.</summary>
     public int? LessonId { get; set; }
 }
 
@@ -19,8 +19,6 @@ public class ReviewResponse
     public float Rating { get; set; }
     public string Comment { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
-    /// <summary>'detail' hoặc 'learn'</summary>
-    public string ReviewSource { get; set; } = "detail";
     /// <summary>Tên lesson nếu là review lesson cụ thể</summary>
     public string? LessonTitle { get; set; }
     public int? LessonId { get; set; }

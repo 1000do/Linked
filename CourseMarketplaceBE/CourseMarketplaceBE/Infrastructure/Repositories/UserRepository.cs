@@ -2,6 +2,8 @@ using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Threading.Tasks;
 
 namespace CourseMarketplaceBE.Infrastructure.Repositories;
 
@@ -33,41 +35,26 @@ public class UserRepository : IUserRepository
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // 🔥 LẤY USER + ACCOUNT CÙNG LÚC (FIX BUG SAI ID)
             var user = await _context.Users
-                .Include(u => u.UserNavigation) // navigation sang Account
+                .Include(u => u.UserNavigation) 
                 .FirstOrDefaultAsync(u => u.UserId == userId);
 
             if (user == null) return false;
 
-            // ✅ UPDATE USER
             user.FullName = fullName;
             user.Bio = bio;
             user.DateOfBirth = dob;
 
-            // 🔥 LẤY ACCOUNT ĐÚNG CÁCH
             var account = user.UserNavigation;
 
             if (account != null)
             {
-                // ✅ Avatar: chỉ update khi upload thành công
                 if (!string.IsNullOrWhiteSpace(avatarUrl))
                 {
                     account.AvatarUrl = avatarUrl;
-                    Console.WriteLine("Avatar updated: " + avatarUrl);
                 }
-                else
-                {
-                    Console.WriteLine("Avatar NULL -> không update");
-                }
-
-                // ✅ Phone luôn update
                 account.PhoneNumber = phoneNumber;
                 account.AccountUpdatedAt = DateTime.Now;
-            }
-            else
-            {
-                Console.WriteLine("Account NULL (mapping lỗi)");
             }
 
             await _context.SaveChangesAsync();
@@ -77,7 +64,6 @@ public class UserRepository : IUserRepository
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"DB Update Error: {ex.Message}");
             await transaction.RollbackAsync();
             return false;
         }
@@ -89,6 +75,12 @@ public class UserRepository : IUserRepository
             .Include(a => a.User)
             .Include(a => a.Manager)
             .FirstOrDefaultAsync(a => a.Email == email);
+            
+    public async Task<Account?> GetAccountByIdAsync(int accountId) =>
+        await _context.Accounts
+            .Include(a => a.User)
+            .Include(a => a.Manager)
+            .FirstOrDefaultAsync(a => a.AccountId == accountId);
 
     public async Task UpdateLastLoginAsync(int accountId)
     {
@@ -118,13 +110,11 @@ public class UserRepository : IUserRepository
         if (a != null)
         {
             a.RefreshToken = refreshToken;
-            // Npgsql yêu cầu Kind=Unspecified cho cột timestamp without time zone
             a.RefreshTokenExpiryTime = Unspec(expiry);
             await _context.SaveChangesAsync();
         }
     }
 
-    /// <summary>Strip DateTimeKind về Unspecified để tương thích PostgreSQL timestamp without time zone.</summary>
     private static DateTime Unspec(DateTime dt) => DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
 
     public async Task<Account?> GetAccountByRefreshTokenAsync(string refreshToken) =>
@@ -146,13 +136,9 @@ public class UserRepository : IUserRepository
 
     public async Task<string> GetRoleByAccountIdAsync(int accountId)
     {
-        // Kiểm tra bảng managers — nếu tồn tại → manager
-        var isManager = await _context.Managers.AnyAsync(m => m.ManagerId == accountId);
-        if (isManager) return "manager";
+        var manager = await _context.Managers.FirstOrDefaultAsync(m => m.ManagerId == accountId);
+        if (manager != null) return manager.Role; 
 
-        // Kiểm tra bảng instructors:
-        // - ApprovalStatus == 'Approved' (Admin đã duyệt)
-        // - StripeOnboardingStatus == 'Active' (Stripe hoàn tất, PayoutsEnabled + ChargesEnabled)
         var isInstructor = await _context.Instructors.AnyAsync(i =>
             i.InstructorId == accountId
             && i.ApprovalStatus == "Approved"
@@ -166,12 +152,9 @@ public class UserRepository : IUserRepository
     public async Task<bool> UpdateEmailVerifiedAsync(string email)
     {
         var acc = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == email);
-
         if (acc == null) return false;
-
         acc.IsVerified = true;
         await _context.SaveChangesAsync();
-
         return true;
     }
 
@@ -183,10 +166,17 @@ public class UserRepository : IUserRepository
             await _context.SaveChangesAsync();
             return true;
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"UpdateAccount Error: {ex.Message}");
             return false;
         }
+    }
+
+    public async Task<int?> GetStaffAccountIdAsync()
+    {
+        var staff = await _context.Managers.FirstOrDefaultAsync(m => m.Role == "staff");
+        if (staff != null) return staff.ManagerId;
+        var admin = await _context.Managers.FirstOrDefaultAsync(m => m.Role == "admin");
+        return admin?.ManagerId;
     }
 }

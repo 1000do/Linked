@@ -1,0 +1,264 @@
+@{
+    var actor = ViewBag.Actor as string ?? "Learner";
+    if (actor == "Admin") { Layout = "_AdminLayout"; }
+    else if (actor == "Instructor") { Layout = "_InstructorLayout"; }
+    else { Layout = "_Layout"; }
+    
+    ViewData["Title"] = "Tin nhắn & Hỗ trợ";
+    
+    // Lấy Token từ Cookie
+    var token = Context.Request.Cookies["AccessToken"] ?? "";
+    
+    // Lấy ID người dùng trực tiếp từ Claims (Chính xác 100% hơn dùng Cookie)
+    var currentAccountId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/chat.css" asp-append-version="true" />
+}
+
+<div class="chat-wrapper shadow-sm" style="height: @(actor == "Admin" ? "calc(100vh - 120px)" : "calc(100vh - 80px)"); margin: @(actor == "Admin" ? "0" : "-20px -15px");">
+    <!-- SIDEBAR -->
+    <aside class="chat-sidebar">
+        <div class="sidebar-header">
+            <h4 class="m-0 font-bold text-slate-800">Trò chuyện</h4>
+            <div class="search-box">
+                <span class="material-symbols-outlined">search</span>
+                <input type="text" id="search-chats" placeholder="Tìm kiếm người dùng...">
+            </div>
+        </div>
+        <div id="chat-list" class="chat-list-container custom-scroll">
+            <!-- Render JS -->
+        </div>
+    </aside>
+
+    <!-- MAIN CHAT -->
+    <main class="chat-main-area">
+        <div id="empty-state" class="empty-chat">
+            <div class="p-5 bg-white rounded-circle shadow-sm mb-4">
+                <span class="material-symbols-outlined text-4xl text-emerald-500">forum</span>
+            </div>
+            <h5 class="font-bold text-slate-700">Chào mừng trở lại!</h5>
+            <p class="text-sm">Chọn một cuộc hội thoại để bắt đầu kết nối.</p>
+        </div>
+
+        <div id="chat-content" class="flex-1 flex flex-col" style="display:none;">
+            <header class="chat-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar-wrapper">
+                        <img id="header-avatar" src="" class="avatar-img shadow-sm">
+                        <div class="status-dot"></div>
+                    </div>
+                    <div>
+                        <h6 id="header-name" class="m-0 font-bold text-slate-800">...</h6>
+                        <span id="header-status" class="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Đang trực tuyến</span>
+                    </div>
+                </div>
+            </header>
+
+            <div id="message-list" class="message-viewport custom-scroll">
+                <!-- Tin nhắn -->
+            </div>
+
+            <div id="typing-box" class="px-4 py-2 text-[11px] text-emerald-600 italic" style="display:none;">...</div>
+
+            <footer class="chat-footer">
+                <div class="input-group-premium">
+                    <span class="material-symbols-outlined text-slate-400">attach_file</span>
+                    <textarea id="msg-input" class="chat-input-area custom-scroll" placeholder="Viết gì đó cho đối phương..." rows="1"></textarea>
+                    <button id="btn-send" class="btn-chat-send">
+                        <span class="material-symbols-outlined">send</span>
+                    </button>
+                </div>
+            </footer>
+        </div>
+    </main>
+</div>
+
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script>
+        const API_URL = "http://localhost:5207";
+        const token = "@token";
+        const myAccountId = parseInt("@currentAccountId");
+        let activeChatId = null;
+        let connection = null;
+
+        // 1. Khởi tạo SignalR
+        async function initSignalR() {
+            if (!token) return;
+
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl(`${API_URL}/chatHub`, {
+                    accessTokenFactory: () => token
+                })
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("ReceiveMessage", (msg) => {
+                if (activeChatId === msg.chatId) {
+                    appendMessage(msg);
+                }
+                loadChats(); 
+            });
+
+            connection.on("UserTyping", (data) => {
+                const typingBox = document.getElementById('typing-box');
+                if (activeChatId === data.chatId && data.accountId !== myAccountId) {
+                    typingBox.innerText = `${data.name} đang soạn tin...`;
+                    typingBox.style.display = data.isTyping ? 'block' : 'none';
+                }
+            });
+
+            try {
+                await connection.start();
+                console.log("SignalR Connected.");
+            } catch (err) {
+                console.error("SignalR Connection Error: ", err);
+            }
+        }
+
+        // 2. Load danh sách chat
+        async function loadChats() {
+            try {
+                const res = await fetch(`${API_URL}/api/chat/list`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const chats = await res.json();
+                
+                const container = document.getElementById('chat-list');
+                container.innerHTML = chats.map(c => `
+                    <div class="chat-card ${activeChatId === c.chatId ? 'active' : ''}" 
+                         onclick="selectChat(${c.chatId}, '${c.partnerName}', '${c.partnerAvatar}')">
+                        <div class="avatar-wrapper">
+                            <img src="${c.partnerAvatar || '/img/default-avatar.png'}" class="avatar-img">
+                            <div class="status-dot" style="background: #10b981"></div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="text-sm font-bold m-0 truncate">${c.partnerName}</h6>
+                                <span class="text-[10px] text-slate-400">${c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-1">
+                                <p class="text-xs text-slate-500 m-0 truncate">${c.lastMessage || 'Bắt đầu trò chuyện...'}</p>
+                                ${c.unreadCount > 0 ? `<span class="unread-count">${c.unreadCount}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error("Load chats error:", err);
+            }
+        }
+
+        // 3. Chọn cuộc hội thoại
+        async function selectChat(chatId, name, avatar) {
+            if (activeChatId === chatId) return;
+            activeChatId = chatId;
+            
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('chat-content').style.display = 'flex';
+            document.getElementById('header-name').innerText = name;
+            document.getElementById('header-avatar').src = avatar || '/img/default-avatar.png';
+
+            loadChats(); // Update active class
+
+            try {
+                const res = await fetch(`${API_URL}/api/chat/history?roomId=${chatId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const messages = await res.json();
+                
+                const list = document.getElementById('message-list');
+                list.innerHTML = "";
+                messages.forEach(m => appendMessage(m));
+                scrollToBottom();
+            } catch (err) {
+                console.error("Load history error:", err);
+            }
+        }
+
+        function appendMessage(m) {
+            const list = document.getElementById('message-list');
+            const isMe = parseInt(m.senderId) === myAccountId;
+            
+            console.log(`Msg: ${m.content}, Sender: ${m.senderId}, Me: ${myAccountId}, isMe: ${isMe}`);
+
+            const html = `
+                <div class="msg-row ${isMe ? 'me' : 'them'}">
+                    <img src="${m.senderAvatar || '/img/default-avatar.png'}" class="bubble-avatar shadow-sm">
+                    <div class="bubble-container">
+                        <div class="sender-name">${isMe ? 'Bạn' : m.senderName}</div>
+                        <div class="bubble shadow-sm">
+                            <div>${m.content}</div>
+                            <div class="msg-time">${new Date(m.sentAt || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            list.insertAdjacentHTML('beforeend', html);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            const list = document.getElementById('message-list');
+            list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
+        }
+
+        async function sendMsg() {
+            const input = document.getElementById('msg-input');
+            const content = input.value.trim();
+            if (!content || !activeChatId) return;
+
+            try {
+                await connection.invoke("SendMessage", {
+                    chatId: activeChatId,
+                    content: content
+                });
+                input.value = "";
+                await connection.invoke("Typing", activeChatId, false);
+            } catch (err) {
+                console.error("Send message error:", err);
+            }
+        }
+
+        // Typing & Auto-resize logic
+        const msgInput = document.getElementById('msg-input');
+        let typingTimeout;
+
+        msgInput.addEventListener('input', function() {
+            // Auto resize
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+
+            if (!activeChatId) return;
+            connection.invoke("Typing", activeChatId, true);
+            
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                connection.invoke("Typing", activeChatId, false);
+            }, 3000);
+        });
+
+        msgInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMsg();
+            }
+        });
+
+        document.getElementById('btn-send').addEventListener('click', sendMsg);
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initSignalR();
+            await loadChats();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const chatId = urlParams.get('chatId');
+            if (chatId) {
+                selectChat(parseInt(chatId), "Hỗ trợ kỹ thuật", "");
+            }
+        });
+    </script>
+}

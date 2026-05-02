@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace CourseMarketplaceBE.Domain.Entities;
@@ -23,7 +23,13 @@ public partial class UserReport
 
     public DateTime? ResolvedAt { get; set; }
 
+    public int? ChatId { get; set; }
+
+    public DateTime? AccessGrantedUntil { get; set; }
+
     public DateTime? CreatedAt { get; set; }
+
+    public virtual Chat? Chat { get; set; }
 
     public virtual Account? Reporter { get; set; }
 

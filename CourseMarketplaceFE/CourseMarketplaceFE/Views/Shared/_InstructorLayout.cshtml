@@ -58,6 +58,7 @@
         .ql-toolbar.ql-snow { border-radius: 0.5rem 0.5rem 0 0; border-color: #e2e8f0; background-color: #f8fafc; }
         .ql-container.ql-snow { border-radius: 0 0 0.5rem 0.5rem; border-color: #e2e8f0; min-height: 150px; font-family: 'Inter', sans-serif; }
     </style>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 
 <body class="bg-slate-50 font-body text-on-surface antialiased flex h-screen overflow-hidden">
@@ -114,6 +115,19 @@
                 }
                 <span class="material-symbols-outlined text-[20px]">notifications</span>
                 <span class="text-sm @(isNotifications ? "font-bold" : "font-semibold")">Notifications</span>
+            </a>
+
+            @{
+                bool isChat = currentController == "Chat";
+            }
+            <a href="/Chat/Instructor"
+               class="flex items-center gap-3 px-4 py-3 @(isChat ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative">
+                @if (isChat)
+                {
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></span>
+                }
+                <span class="material-symbols-outlined text-[20px]">chat_bubble</span>
+                <span class="text-sm @(isChat ? "font-bold" : "font-semibold")">Messages</span>
             </a>
             
             <div class="h-px bg-slate-200 my-4 mx-2"></div>

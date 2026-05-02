@@ -85,7 +85,7 @@
                         }
                     </div>
                     <div id="enrollment-actions" class="flex flex-col gap-3">
-                        @if (Model.IsEnrolled || Model.IsOwner)
+                        @if (Model.IsEnrolled || Model.IsOwner || User.IsInRole("manager"))
                         {
                             <a href="/Course/Learn/@Model.CourseId" class="w-full bg-slate-900 text-white text-center font-bold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
                                 <span class="material-symbols-outlined">play_circle</span>
@@ -235,7 +235,7 @@
                             @foreach (var material in lesson.LearningMaterials)
                             {
                                 var isFirstMaterial = materialIndex == 0 && lesson == Model.Lessons.First();
-                                var isLocked = !Model.IsEnrolled && !isFirstMaterial;
+                                var isLocked = !Model.IsEnrolled && !isFirstMaterial && !User.IsInRole("manager");
                                 
                                 <div class="flex items-center justify-between text-sm py-3 @(isLocked ? "opacity-60" : "")">
                                     <div class="flex items-center gap-3 text-slate-700 flex-1">
@@ -348,6 +348,14 @@
                             <span class="material-symbols-outlined text-[18px]">play_circle</span>
                             <span class="font-bold">@Model.InstructorCoursesCount Courses</span>
                         </div>
+                        @if (!Model.IsOwner)
+                        {
+                            <button onclick="startChatWithInstructor(@Model.InstructorId)" 
+                                    class="mt-4 px-6 py-2.5 bg-primary/10 text-primary rounded-xl font-bold text-sm hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2 group border border-primary/20">
+                                <span class="material-symbols-outlined text-sm group-hover:rotate-12 transition-transform">chat</span>
+                                Nhắn tin cho giảng viên
+                            </button>
+                        }
                     </div>
                 </div>
                 <div class="text-sm text-slate-700 mt-2 leading-relaxed prose max-w-none">
@@ -411,6 +419,21 @@
                         <p id="detail-blocked-msg" class="text-sm font-medium text-amber-800"></p>
                         <p class="text-xs text-amber-600 mt-1">Hoàn thành tất cả bài học để mở khóa chức năng đánh giá.</p>
                     </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
+                <h3 class="text-xl font-bold text-slate-900">Đánh giá từ học viên</h3>
+                <div class="flex items-center gap-3">
+                    <span class="text-sm text-slate-500 font-medium">Lọc theo:</span>
+                    <select id="review-star-filter" onchange="loadReviews()" class="bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#a435f0]/20">
+                        <option value="">Tất cả xếp hạng</option>
+                        <option value="5">5 sao</option>
+                        <option value="4">4 sao</option>
+                        <option value="3">3 sao</option>
+                        <option value="2">2 sao</option>
+                        <option value="1">1 sao</option>
+                    </select>
                 </div>
             </div>
 
@@ -784,13 +807,24 @@
 
     async function loadReviews() {
         const list = document.getElementById('reviews-list');
+        const filter = document.getElementById('review-star-filter').value;
         try {
             const res = await fetch('/Course/GetReviews/@Model.CourseId');
             const result = await res.json();
             
             if (result.success && result.data && result.data.length > 0) {
-                list.innerHTML = result.data.map(r => `
-                    <div class="border-t border-slate-100 pt-6">
+                let data = result.data;
+                if (filter) {
+                    data = data.filter(r => Math.round(r.rating) == parseInt(filter));
+                }
+                
+                if (data.length === 0) {
+                    list.innerHTML = `<p class="text-slate-400 italic text-center py-10">Không tìm thấy đánh giá ${filter} sao nào.</p>`;
+                    return;
+                }
+
+                list.innerHTML = data.map(r => `
+                    <div class="border-t border-slate-100 pt-6 group">
                         <div class="flex gap-4 mb-3">
                             <div class="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
                                 ${r.userAvatarUrl ? `<img src="${r.userAvatarUrl}" class="w-full h-full object-cover" />` : r.userFullName.charAt(0)}
@@ -801,7 +835,12 @@
                                         ${r.userFullName}
                                         ${r.isInstructor ? '<span class="ml-2 bg-[#a435f0]/10 text-[#a435f0] text-[10px] px-2 py-0.5 rounded-full border border-[#a435f0]/20">Instructor</span>' : ''}
                                     </h4>
-                                    <span class="text-[11px] text-slate-400 font-medium">${new Date(r.createdAt).toLocaleDateString('vi-VN')}</span>
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-[11px] text-slate-400 font-medium">${new Date(r.createdAt).toLocaleDateString('vi-VN')}</span>
+                                        <button onclick="reportReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}')" class="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500" title="Báo cáo vi phạm">
+                                            <span class="material-symbols-outlined text-[16px]">flag</span>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="flex items-center gap-3 mb-2">
                                     <div class="flex text-amber-500">
@@ -839,4 +878,39 @@
         loadReviewStats();
         loadReviewEligibility();
     });
+    async function reportReview(reviewId, type) {
+        const { value: reason } = await Swal.fire({
+            title: 'Báo cáo đánh giá',
+            input: 'select',
+            inputOptions: {
+                'spam': 'Nội dung rác (Spam)',
+                'offensive': 'Ngôn từ gây hấn/Xúc phạm',
+                'fake': 'Đánh giá giả mạo',
+                'other': 'Lý do khác'
+            },
+            inputPlaceholder: 'Chọn lý do báo cáo',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Gửi báo cáo'
+        });
+
+        if (reason) {
+            try {
+                const response = await fetch('/Course/ReportReview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reviewId, type, reason })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    Swal.fire('Đã báo cáo', 'Cảm ơn bạn đã đóng góp, quản trị viên sẽ xem xét đánh giá này.', 'success');
+                } else {
+                    Swal.fire('Lỗi', 'Không thể gửi báo cáo lúc này.', 'error');
+                }
+            } catch (e) {
+                Swal.fire('Lỗi', 'Lỗi kết nối máy chủ.', 'error');
+            }
+        }
+    }
+
 </script>
