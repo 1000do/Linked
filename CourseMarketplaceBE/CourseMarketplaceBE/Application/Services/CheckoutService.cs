@@ -135,6 +135,13 @@ public class CheckoutService : ICheckoutService
 
             await _repo.SaveChangesAsync(); // Lấy OrderItem.Id
 
+            // ── Lấy currency dựa vào quốc gia giảng viên (lấy giảng viên đầu tiên) ──
+            var firstInstructorId = cartItems.FirstOrDefault()?.Course?.InstructorId;
+            var instructorCountry = firstInstructorId.HasValue 
+                ? await _repo.GetInstructorStripeCountryAsync(firstInstructorId.Value) 
+                : null;
+            var sessionCurrency = GetCurrencyFromCountry(instructorCountry);
+
             // ── 1.7 Gọi Payment Gateway (Stripe) ────────────────────────────
             // ★ Truyền transferGroup để Stripe nhóm các Transfer sau khi thanh toán
             var paymentResult = await _paymentGateway.CreateCheckoutSessionAsync(
@@ -142,7 +149,8 @@ public class CheckoutService : ICheckoutService
                 successUrl,
                 cancelUrl,
                 userEmail,
-                transferGroup);  // ← NEW: transfer_group liên kết với order
+                transferGroup,  // ← NEW: transfer_group liên kết với order
+                sessionCurrency); // Truyền currency động
 
             // ── 1.8 INSERT transactions (mỗi order_item 1 transaction) ──────
             foreach (var orderItem in orderItems)
@@ -159,7 +167,7 @@ public class CheckoutService : ICheckoutService
                     Amount = orderItem.PurchasePrice,
                     TransferRate = DefaultTransferRate,
                     StripeSessionId = paymentResult.SessionId,
-                    Currency = "USD",
+                    Currency = sessionCurrency,
                     TransactionsStatus = "pending",
                     TransactionType = "payment",
                     TransactionCreatedAt = DateTime.Now
@@ -335,10 +343,9 @@ public class CheckoutService : ICheckoutService
 
                         // ★ Currency PHẢI trùng với currency của Checkout Session (usd)
                         // Khi dùng source_transaction, Stripe yêu cầu currency = charge's currency
-                        // Stripe sẽ tự convert sang connected account's local currency nếu khác
                         await _paymentGateway.CreateTransferAsync(
                             payoutAmount,
-                            "usd",
+                            txn.Currency ?? "usd",
                             stripeAccountId,
                             transferGroup,
                             $"Payout for course: {txn.OrderItem?.Course?.Title}",
@@ -395,4 +402,31 @@ public class CheckoutService : ICheckoutService
             throw;
         }
     }
+    private string GetCurrencyFromCountry(string? countryCode)
+    {
+        if (string.IsNullOrWhiteSpace(countryCode)) return "USD";
+        return countryCode.ToUpper() switch
+        {
+            "GB" => "GBP",
+            "CA" => "CAD",
+            "CH" => "CHF",
+            "AT" or "BE" or "CY" or "EE" or "FI" or "FR" or "DE" or "GR" or 
+            "IE" or "IT" or "LV" or "LT" or "LU" or "MT" or "NL" or "PT" or 
+            "SK" or "SI" or "ES" => "EUR",
+            "BG" => "BGN",
+            "HR" => "EUR", // Croatia uses EUR since 2023
+            "CZ" => "CZK",
+            "DK" => "DKK",
+            "HU" => "HUF",
+            "IS" => "ISK",
+            "NO" => "NOK",
+            "PL" => "PLN",
+            "RO" => "RON",
+            "SE" => "SEK",
+            "AU" => "AUD",
+            "VN" => "VND",
+            _ => "USD"
+        };
+    }
 }
+

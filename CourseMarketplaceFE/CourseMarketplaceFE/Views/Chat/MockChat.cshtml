@@ -9,8 +9,10 @@
     // Lấy Token từ Cookie
     var token = Context.Request.Cookies["AccessToken"] ?? "";
     
-    // Lấy ID người dùng trực tiếp từ Claims (Chính xác 100% hơn dùng Cookie)
-    var currentAccountId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
+    // FE không map JWT vào User — AccountId lấy từ cookie UserId (set khi login), fallback claim nếu có
+    var currentAccountId = Context.Request.Cookies["UserId"]
+        ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+        ?? "0";
 }
 
 @section Styles {
@@ -42,7 +44,7 @@
             <p class="text-sm">Chọn một cuộc hội thoại để bắt đầu kết nối.</p>
         </div>
 
-        <div id="chat-content" class="flex-1 flex flex-col" style="display:none;">
+        <div id="chat-content" class="chat-content-panel flex-1 flex flex-col min-h-0 overflow-hidden" style="display:none;">
             <header class="chat-header">
                 <div class="d-flex align-items-center gap-3">
                     <div class="avatar-wrapper">
@@ -81,7 +83,33 @@
     <script>
         const API_URL = "http://localhost:5207";
         const token = "@token";
-        const myAccountId = parseInt("@currentAccountId");
+
+        // ★ Lấy AccountId từ JWT token (đáng tin hơn cookie UserId)
+        function getAccountIdFromToken(jwt) {
+            try {
+                if (!jwt) return 0;
+                const payload = JSON.parse(atob(jwt.split('.')[1]));
+                // .NET dùng ClaimTypes.NameIdentifier → serialize thành key dài
+                const sid = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']
+                         ?? payload['sub']
+                         ?? payload['nameid']
+                         ?? payload['nameidentifier']
+                         ?? 0;
+                return parseInt(sid, 10) || 0;
+            } catch(e) { return 0; }
+        }
+
+        // Fallback: cookie
+        const cookieUserId = parseInt("@currentAccountId", 10) || 0;
+        const myAccountId = getAccountIdFromToken(token) || cookieUserId;
+
+        console.log('[Chat Debug] myAccountId =', myAccountId, '| cookieUserId =', cookieUserId);
+
+        function senderIdOf(m) {
+            const v = m.senderId ?? m.SenderId;
+            const n = Number(v);
+            return Number.isFinite(n) ? n : NaN;
+        }
         let activeChatId = null;
         let connection = null;
 
@@ -181,10 +209,9 @@
 
         function appendMessage(m) {
             const list = document.getElementById('message-list');
-            const isMe = parseInt(m.senderId) === myAccountId;
+            const sid = senderIdOf(m);
+            const isMe = sid === myAccountId && myAccountId > 0;
             
-            console.log(`Msg: ${m.content}, Sender: ${m.senderId}, Me: ${myAccountId}, isMe: ${isMe}`);
-
             const html = `
                 <div class="msg-row ${isMe ? 'me' : 'them'}">
                     <img src="${m.senderAvatar || '/img/default-avatar.png'}" class="bubble-avatar shadow-sm">

@@ -30,7 +30,8 @@ public class StripePaymentService : IPaymentGatewayService
         string successUrl,
         string cancelUrl,
         string? customerEmail = null,
-        string? orderReference = null)
+        string? orderReference = null,
+        string currency = "usd")
     {
         // Map DTO sang Stripe LineItem format
         // USD là two-decimal currency → Stripe yêu cầu giá tính bằng CENTS
@@ -39,7 +40,7 @@ public class StripePaymentService : IPaymentGatewayService
         {
             PriceData = new SessionLineItemPriceDataOptions
             {
-                Currency = "usd",
+                Currency = currency.ToLower(),
                 UnitAmount = (long)Math.Round(item.UnitPrice * 100), // Đổi sang cents
                 ProductData = new SessionLineItemPriceDataProductDataOptions
                 {

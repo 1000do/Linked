@@ -138,6 +138,12 @@
     overflow: hidden;
 }
 
+/* Cho phép khối tin nhắn co và cuộn bên trong (flex column + flex-1 child) */
+.chat-content-panel {
+    min-height: 0;
+    overflow: hidden;
+}
+
 .chat-header {
     padding: 20px 32px;
     background: #fff;
@@ -151,16 +157,34 @@
 .message-viewport {
     flex: 1 1 0%;
     overflow-y: auto;
-    padding: 32px;
+    overflow-x: hidden;
+    padding: 24px 28px 16px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
     min-height: 0;
+    scrollbar-gutter: stable;
 }
 
-.msg-row { display: flex; width: 100%; gap: 16px; }
-.msg-row.me { flex-direction: row-reverse; align-self: flex-end; }
-.msg-row.them { flex-direction: row; align-self: flex-start; }
+/* Tin nhắn đối phương trái, của mình phải — hàng chỉ rộng theo nội dung */
+.msg-row {
+    display: flex;
+    gap: 12px;
+    width: fit-content;
+    max-width: min(520px, 88%);
+}
+
+.msg-row.them {
+    flex-direction: row;
+    align-self: flex-start;
+    margin-right: auto;
+}
+
+.msg-row.me {
+    flex-direction: row-reverse;
+    align-self: flex-end;
+    margin-left: auto;
+}
 
 .bubble-avatar {
     width: 40px; height: 40px;
@@ -171,7 +195,8 @@
 }
 
 .bubble-container {
-    max-width: 70%;
+    max-width: 100%;
+    min-width: 0;
     display: flex;
     flex-direction: column;
 }
@@ -211,7 +236,10 @@
     color: var(--chat-text-muted);
     opacity: 0.8;
 }
-.me .msg-time { text-align: right; }
+.msg-row.me .msg-time {
+    text-align: right;
+    color: rgba(255, 255, 255, 0.82);
+}
 
 .chat-footer {
     padding: 24px 32px 32px;
@@ -275,8 +303,30 @@
     padding: 40px;
 }
 
-/* Scrollbar */
-.custom-scroll::-webkit-scrollbar { width: 4px; }
-.custom-scroll::-webkit-scrollbar-track { background: transparent; }
-.custom-scroll::-webkit-scrollbar-thumb { background: var(--chat-border); border-radius: 10px; }
-.custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--chat-text-muted); }
+/* Scrollbar — danh sách chat + ô nhập vẫn mảnh; khung hội thoại dễ thấy hơn */
+.custom-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+    background: oklch(97% 0.008 var(--brand-hue));
+    border-radius: 10px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: oklch(82% 0.02 var(--brand-hue));
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+    background: oklch(72% 0.03 var(--brand-hue));
+    background-clip: padding-box;
+}
+
+/* Chỉ vùng tin nhắn: luôn chừng chỗ cho thanh cuộn khi nội dung dài */
+.message-viewport.custom-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(78% 0.025 var(--brand-hue)) oklch(97% 0.008 var(--brand-hue));
+}

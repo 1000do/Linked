@@ -34,6 +34,9 @@ public interface ICheckoutRepository
     /// <summary>Lấy Stripe Connected Account ID của instructor (cần để tạo Transfer).</summary>
     Task<string?> GetInstructorStripeAccountIdAsync(int instructorId);
 
+    /// <summary>Lấy Stripe Country của instructor để tính toán tiền tệ.</summary>
+    Task<string?> GetInstructorStripeCountryAsync(int instructorId);
+
     // ── Ghi dữ liệu ─────────────────────────────────────────────────────────
     Task AddOrderAsync(OrderInfo order);
     Task AddOrderItemAsync(OrderItem item);
