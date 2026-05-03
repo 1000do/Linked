@@ -52,7 +52,7 @@
                     </div>
                 </div>
                 <div class="relative z-10">
-                    <p class="text-4xl font-headline font-extrabold">A$@totalAmountThisPage.ToString("N2")</p>
+                    <p class="text-4xl font-headline font-extrabold">@((Model.Items?.FirstOrDefault()?.Currency ?? "USD").ToUpper()) @totalAmountThisPage.ToString("N2")</p>
                     <p class="text-sm font-medium opacity-80 mt-2 flex items-center gap-1.5">
                         <span class="material-symbols-outlined text-[14px]">arrow_upward</span>
                         Thực nhận sau phí Sàn
@@ -156,7 +156,7 @@
                                 <!-- Amount (Net Payout for Instructor) -->
                                 <td class="px-6 py-4 text-right align-top">
                                     <span class="text-base font-extrabold text-slate-900 tracking-tight">
-                                        A$@item.Amount.ToString("N2")
+                                        @((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
                                     </span>
                                 </td>
 
@@ -258,8 +258,9 @@
             const items = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
                 Model.Items?.OrderBy(x => x.Date).Select(x => new {
                     date = x.Date?.ToString("dd/MM"),
-                    amount = x.Amount
-                }).ToList() ?? new List<object>().Select(x => new { date = "", amount = 0m }).ToList()
+                    amount = x.Amount,
+                    currency = x.Currency
+                }).ToList() ?? new List<object>().Select(x => new { date = "", amount = 0m, currency = "USD" }).ToList()
             ));
 
             if (items.length === 0) {
@@ -311,7 +312,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Lợi nhuận (A$)',
+                        label: `Lợi nhuận (${items.length > 0 && items[0] && items[0].currency ? items[0].currency.toUpperCase() : 'USD'})`,
                         data: dataValues,
                         borderColor: '#006a62', // primary color
                         borderWidth: 3,
@@ -343,7 +344,8 @@
                             displayColors: false,
                             callbacks: {
                                 label: function(context) {
-                                    return 'A$' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2});
+                                    const curr = items.length > 0 && items[0] && items[0].currency ? items[0].currency.toUpperCase() : 'USD';
+                                    return curr + ' ' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2});
                                 }
                             }
                         }
@@ -359,7 +361,8 @@
                                 font: { family: 'Inter', size: 11, weight: '600' },
                                 color: '#94a3b8', // slate-400
                                 callback: function(value) {
-                                    return 'A$' + value;
+                                    const curr = items.length > 0 && items[0] && items[0].currency ? items[0].currency.toUpperCase() : 'USD';
+                                    return curr + ' ' + value;
                                 }
                             },
                             border: { display: false }

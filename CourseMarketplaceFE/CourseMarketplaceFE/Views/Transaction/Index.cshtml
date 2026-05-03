@@ -87,7 +87,7 @@
 
                             
                             <td class="px-5 py-3.5 text-right font-semibold text-slate-800">
-                                A$@item.Amount.ToString("N2")
+                                @((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
                             </td>
 
                             

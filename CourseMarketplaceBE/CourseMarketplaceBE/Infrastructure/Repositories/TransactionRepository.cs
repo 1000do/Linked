@@ -45,6 +45,7 @@ public class TransactionRepository : ITransactionRepository
                 StripeSessionId = t.StripeSessionId,
                 Date           = t.TransactionCreatedAt,
                 Amount         = t.Amount,
+                Currency       = t.Currency ?? "USD",
                 Status         = t.TransactionsStatus,
 
                 // ★ Tên người mua: account_from → account → user
@@ -152,6 +153,7 @@ public class TransactionRepository : ITransactionRepository
                 // hoặc vẫn hiển thị Gross Amount. Dựa theo yêu cầu "tổng tiền trừ phí còn nhiêu",
                 // ta sẽ truyền PayoutAmount qua cột Amount.
                 Amount         = t.InstructorPayouts.FirstOrDefault(p => p.InstructorId == instructorId)!.PayoutAmount,
+                Currency       = t.Currency ?? "USD",
                 Status         = t.TransactionsStatus,
 
                 BuyerName = t.AccountFromNavigation != null && t.AccountFromNavigation.User != null

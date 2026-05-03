@@ -81,6 +81,12 @@ public class CheckoutRepository : ICheckoutRepository
             .Select(i => i.StripeAccountId)
             .FirstOrDefaultAsync();
 
+    public async Task<string?> GetInstructorStripeCountryAsync(int instructorId)
+        => await _context.Instructors
+            .Where(i => i.InstructorId == instructorId)
+            .Select(i => i.StripeCountry)
+            .FirstOrDefaultAsync();
+
     // ── Ghi dữ liệu ─────────────────────────────────────────────────────────
 
     public async Task AddOrderAsync(OrderInfo order)

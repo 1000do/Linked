@@ -195,23 +195,7 @@
     <!-- FOOTER -->
     @await Html.PartialAsync("_Footer")
 
-    <!-- SUPPORT POPUP (Mini Chat) -->
-    <div id="support-chat-popup" class="support-popup">
-        <div class="support-header">
-            <h6 class="mb-0 fw-bold">Hỗ trợ trực tuyến</h6>
-            <div class="d-flex align-items-center justify-content-center gap-1 text-[10px] opacity-75 mt-1">
-                <span class="w-1.5 h-1.5 rounded-circle bg-emerald-300"></span>
-                Sẵn sàng hỗ trợ
-            </div>
-        </div>
-        <div class="support-content" id="mini-chat-content">
-            <div class="text-center py-4">
-                <p class="text-xs text-slate-400">Đang tải lịch sử hỗ trợ...</p>
-            </div>
-        </div>
-        <div class="support-footer">
-            <input type="text" id="mini-chat-input" class="support-input" placeholder="Nhập tin nhắn..." onkeypress="if(event.key === 'Enter') sendMiniMsg()">
-            <button class="support-send" onclick="sendMiniMsg()">
+
     @if (ViewData["Title"]?.ToString() != "Tin nhắn & Hỗ trợ")
     {
         <div id="support-chat-popup" class="support-popup">
@@ -250,7 +234,27 @@
     <script>
         // 1. Khởi tạo biến toàn cục
         const currentToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`.trim();
-        const currentUserId = `@Html.Raw(Context.Request.Cookies["UserId"] ?? "0")`.trim();
+
+        // ★ Decode AccountId từ JWT token (tin cậy hơn cookie)
+        function getAccountIdFromJwt(jwt) {
+            try {
+                if (!jwt) return 0;
+                const payload = JSON.parse(atob(jwt.split('.')[1]));
+                const sid = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']
+                         ?? payload['sub'] ?? payload['nameid'] ?? 0;
+                return parseInt(sid, 10) || 0;
+            } catch(e) { return 0; }
+        }
+
+        const cookieUserId = parseInt(`@Html.Raw(Context.Request.Cookies["UserId"] ?? "0")`.trim(), 10) || 0;
+        const currentUserId = getAccountIdFromJwt(currentToken) || cookieUserId;
+        console.log('[MiniChat] currentUserId =', currentUserId);
+
+        function getMiniSenderId(m) {
+            const v = m.senderId ?? m.SenderId;
+            const n = Number(v);
+            return Number.isFinite(n) ? n : NaN;
+        }
         
         let miniChatId = null;
         let miniChatConn = null;
@@ -310,9 +314,11 @@
                 });
                 const msgs = await res.json();
                 const container = document.getElementById('mini-chat-content');
-                container.innerHTML = msgs.map(m => `
-                    <div class="mini-msg ${m.senderId == currentUserId ? 'me' : 'them'}">${m.content}</div>
-                `).join('');
+                container.innerHTML = msgs.map(m => {
+                    const sid = getMiniSenderId(m);
+                    const isMe = sid === currentUserId && currentUserId > 0;
+                    return `<div class="mini-msg ${isMe ? 'me' : 'them'}">${m.content}</div>`;
+                }).join('');
                 container.scrollTop = container.scrollHeight;
             } catch (err) {
                 console.error("Load mini history error:", err);
@@ -338,7 +344,9 @@
         function appendMiniMsg(m) {
             const container = document.getElementById('mini-chat-content');
             if (!container) return;
-            const html = `<div class="mini-msg ${m.senderId == currentUserId ? 'me' : 'them'}">${m.content}</div>`;
+            const sid = getMiniSenderId(m);
+            const isMe = sid === currentUserId && currentUserId > 0;
+            const html = `<div class="mini-msg ${isMe ? 'me' : 'them'}">${m.content}</div>`;
             container.insertAdjacentHTML('beforeend', html);
             container.scrollTop = container.scrollHeight;
         }
