@@ -27,7 +27,22 @@ public interface IAdminFinanceService
     Task<List<PayoutDetailResponse>> GetInstructorPayoutsAsync();
 
     /// <summary>
+    /// Đánh dấu một khoản nợ giảng viên là đã thanh toán thủ công.
+    /// </summary>
+    Task MarkPayoutAsPaidAsync(int payoutId);
+
+    /// <summary>
     /// Lấy tỷ lệ chia sẻ hiện tại từ system_configs.
     /// </summary>
     Task<decimal> GetCurrentTransferRateAsync();
+
+    /// <summary>
+    /// Thực hiện chuyển tiền thật từ ví Sàn sang ví Giảng viên qua Stripe Connect.
+    /// </summary>
+    Task<string> PerformStripeTransferAsync(int payoutId);
+
+    /// <summary>
+    /// Quét và thanh toán tất cả công nợ đang chờ qua Stripe.
+    /// </summary>
+    Task<BulkPayoutResult> BulkPayAllViaStripeAsync();
 }

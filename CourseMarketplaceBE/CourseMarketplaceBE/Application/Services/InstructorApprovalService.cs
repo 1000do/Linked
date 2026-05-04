@@ -1,4 +1,4 @@
-﻿using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.IRepositories;
 
@@ -21,11 +21,10 @@ namespace CourseMarketplaceBE.Application.Services
             return list.Select(i => new InstructorApprovalDto
             {
                 InstructorId = i.InstructorId,
-                FullName = i.InstructorNavigation.FullName,
-                Email = i.InstructorNavigation.UserNavigation.Email,
-                AvatarUrl = i.InstructorNavigation.UserNavigation.AvatarUrl,
+                FullName = i.InstructorNavigation?.FullName ?? "N/A",
+                Email = i.InstructorNavigation?.UserNavigation?.Email ?? "N/A",
+                AvatarUrl = i.InstructorNavigation?.UserNavigation?.AvatarUrl,
                 ProfessionalTitle = i.ProfessionalTitle,
-                // Lấy đúng dữ liệu từ DB thay vì gán cứng
                 DocumentUrl = i.DocumentUrl,
                 LinkedInUrl = i.LinkedinUrl,
                 ApprovalStatus = i.ApprovalStatus,

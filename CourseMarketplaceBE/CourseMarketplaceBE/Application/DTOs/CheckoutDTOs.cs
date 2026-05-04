@@ -15,6 +15,11 @@ public class CheckoutRequest
     public string CancelUrl { get; set; } = string.Empty;
 }
 
+public class DirectCheckoutRequest : CheckoutRequest
+{
+    public int CourseId { get; set; }
+}
+
 /// <summary>
 /// Response trả về Stripe Session URL để FE redirect.
 /// </summary>

@@ -31,7 +31,9 @@ public class StripePaymentService : IPaymentGatewayService
         string cancelUrl,
         string? customerEmail = null,
         string? orderReference = null,
-        string currency = "usd")
+        string currency = "usd",
+        string? destinationAccountId = null,
+        decimal? applicationFee = null)
     {
         // Map DTO sang Stripe LineItem format
         // USD là two-decimal currency → Stripe yêu cầu giá tính bằng CENTS
@@ -53,6 +55,28 @@ public class StripePaymentService : IPaymentGatewayService
             Quantity = 1
         }).ToList();
 
+        var paymentIntentData = new SessionPaymentIntentDataOptions();
+        
+        // Cấu hình theo kiểu Transfer_Group (Separate Charges and Transfers)
+        if (!string.IsNullOrEmpty(orderReference) && string.IsNullOrEmpty(destinationAccountId))
+        {
+            paymentIntentData.TransferGroup = orderReference;
+        }
+
+        // Cấu hình theo kiểu Destination Charges (Tự động chia tiền)
+        if (!string.IsNullOrEmpty(destinationAccountId))
+        {
+            paymentIntentData.TransferData = new SessionPaymentIntentDataTransferDataOptions
+            {
+                Destination = destinationAccountId
+            };
+
+            if (applicationFee.HasValue)
+            {
+                paymentIntentData.ApplicationFeeAmount = (long)Math.Round(applicationFee.Value * 100);
+            }
+        }
+
         var options = new SessionCreateOptions
         {
             PaymentMethodTypes = new List<string> { "card" },
@@ -61,10 +85,8 @@ public class StripePaymentService : IPaymentGatewayService
             SuccessUrl = successUrl,
             CancelUrl = cancelUrl,
             CustomerEmail = customerEmail,
-            // ★ transfer_group: nhóm các Transfer theo đơn hàng
-            // Sau khi thanh toán xong, dùng group này để tạo Transfer cho từng instructor
-            PaymentIntentData = !string.IsNullOrEmpty(orderReference)
-                ? new SessionPaymentIntentDataOptions { TransferGroup = orderReference }
+            PaymentIntentData = paymentIntentData.TransferData != null || !string.IsNullOrEmpty(paymentIntentData.TransferGroup) 
+                ? paymentIntentData 
                 : null
         };
 

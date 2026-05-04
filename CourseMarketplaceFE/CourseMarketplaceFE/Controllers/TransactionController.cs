@@ -36,6 +36,7 @@ public class TransactionController : Controller
         public string CourseTitle { get; set; } = "";
         public string InstructorName { get; set; } = "";
         public string? Currency { get; set; }
+        public string? PayoutCurrency { get; set; }
     }
 
     public class TransactionPagedVM

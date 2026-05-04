@@ -11,6 +11,7 @@ using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using CourseMarketplaceBE.Application.BackgroundTasks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Stripe;
@@ -200,6 +201,9 @@ public class Program
         builder.Services.AddScoped<ITransactionService, TransactionService>();
         builder.Services.AddScoped<IChatService, ChatService>();
         builder.Services.AddScoped<IModerationService, ModerationService>();
+        
+        // 🔥 Background Tasks
+        builder.Services.AddHostedService<PayoutScheduleTask>();
         
         // Redis Configuration
         builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>

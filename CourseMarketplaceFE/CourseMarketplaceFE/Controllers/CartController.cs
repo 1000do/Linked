@@ -265,6 +265,55 @@ public class CartController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // ─── 6.5. DIRECT CHECKOUT (MUA NGAY KHÔNG QUA GIỎ HÀNG) ──────────────
+    [HttpPost]
+    public async Task<IActionResult> DirectCheckout(int id)
+    {
+        if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
+            return Json(new { success = false, message = "Vui lòng đăng nhập trước khi mua." });
+
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        
+        var response = await _api.PostJsonAsync("checkout/direct", new
+        {
+            courseId = id,
+            successUrl = $"{baseUrl}/Cart/CheckoutSuccess?session_id={{CHECKOUT_SESSION_ID}}",
+            cancelUrl = $"{baseUrl}/Course/Details/{id}"
+        });
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorJson = await response.Content.ReadAsStringAsync();
+            string errorMsg = "Có lỗi xảy ra khi tạo phiên thanh toán.";
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(errorJson);
+                if (doc.RootElement.TryGetProperty("message", out var m))
+                    errorMsg = m.GetString() ?? errorMsg;
+            }
+            catch { }
+            return Json(new { success = false, message = errorMsg });
+        }
+
+        var json = await response.Content.ReadAsStringAsync();
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            if (doc.RootElement.TryGetProperty("data", out var dataEl) &&
+                dataEl.TryGetProperty("sessionUrl", out var urlEl))
+            {
+                var sessionUrl = urlEl.GetString();
+                if (!string.IsNullOrEmpty(sessionUrl))
+                {
+                    return Json(new { success = true, sessionUrl = sessionUrl });
+                }
+            }
+        }
+        catch { }
+
+        return Json(new { success = false, message = "Không thể đọc dữ liệu phản hồi từ máy chủ." });
+    }
+
     // ─── 7. CHECKOUT SUCCESS — STRIPE REDIRECT VỀ ĐÂY ───────────────────
     /// <summary>
     /// GET /Cart/CheckoutSuccess?session_id=cs_xxx

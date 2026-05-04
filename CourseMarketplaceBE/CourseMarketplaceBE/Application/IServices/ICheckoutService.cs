@@ -24,9 +24,21 @@ public interface ICheckoutService
         string cancelUrl);
 
     /// <summary>
+    /// Tạo Order trực tiếp cho 1 khóa học (không qua giỏ hàng) sử dụng Destination Charges.
+    /// </summary>
+    Task<CheckoutResponse> InitiateDirectCheckoutAsync(
+        int userId,
+        int courseId,
+        string? couponCode,
+        string successUrl,
+        string cancelUrl);
+
+    /// <summary>
     /// Bước 2: Xử lý khi Stripe báo thành công.
     /// Update Transaction → Update Order → Tạo Enrollment → Tính Payout → Xóa Cart.
     /// </summary>
     /// <param name="sessionId">Stripe Session ID từ success callback.</param>
-    Task ProcessPaymentSuccessAsync(string sessionId);
+    /// <param name="failOnTransferFailure">Nếu true thì ném exception khi transfers không thành công.
+    /// Nếu false thì vẫn tiếp tục hoàn tất order/enrollment nhưng ghi payout thất bại để retry sau.</param>
+    Task ProcessPaymentSuccessAsync(string sessionId, bool failOnTransferFailure = false);
 }

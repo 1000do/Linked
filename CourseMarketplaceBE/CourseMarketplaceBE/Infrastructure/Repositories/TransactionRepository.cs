@@ -154,6 +154,13 @@ public class TransactionRepository : ITransactionRepository
                 // ta sẽ truyền PayoutAmount qua cột Amount.
                 Amount         = t.InstructorPayouts.FirstOrDefault(p => p.InstructorId == instructorId)!.PayoutAmount,
                 Currency       = t.Currency ?? "USD",
+                PayoutCurrency = t.InstructorPayouts.Any(p => p.InstructorId == instructorId && p.IsPaid)
+                    ? (t.OrderItem!.Course!.Instructor!.StripeCountry == "GB" ? "GBP" :
+                       t.OrderItem!.Course!.Instructor!.StripeCountry == "VN" ? "VND" :
+                       t.OrderItem!.Course!.Instructor!.StripeCountry == "AU" ? "AUD" :
+                       t.OrderItem!.Course!.Instructor!.StripeCountry == "CA" ? "CAD" :
+                       t.OrderItem!.Course!.Instructor!.StripeCountry == "SG" ? "SGD" : "USD")
+                    : (t.Currency ?? "USD"),
                 Status         = t.TransactionsStatus,
 
                 BuyerName = t.AccountFromNavigation != null && t.AccountFromNavigation.User != null

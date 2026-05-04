@@ -25,7 +25,9 @@ public interface IPaymentGatewayService
         string cancelUrl,
         string? customerEmail = null,
         string? orderReference = null,
-        string currency = "usd");
+        string currency = "usd",
+        string? destinationAccountId = null,
+        decimal? applicationFee = null);
 
     /// <summary>
     /// Lấy mã giao dịch thanh toán từ phiên đã hoàn tất (Stripe: PaymentIntent ID từ Session).
