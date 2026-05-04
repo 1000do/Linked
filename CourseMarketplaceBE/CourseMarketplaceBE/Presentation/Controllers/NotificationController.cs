@@ -30,7 +30,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpGet("all")]
-        [Authorize(Roles = "manager")]
+        [Authorize(Roles = "admin,manager")]
         public async Task<IActionResult> GetAllNotifications()
         {
             //var data = await _notiService.GetAllNotificationsAsync();
@@ -71,14 +71,14 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             var emails = await _notiService.SearchEmailsAsync(query);
             return Ok(emails);
         }
-        [Authorize(Roles = "manager")]
+        [Authorize(Roles = "admin,manager")]
         [HttpPost("send-test")]
         public async Task<IActionResult> SendTest([FromBody] NotificationSendDto dto)
         {
             await _notiService.SendNotificationAsync(dto.ReceiverId, dto.Title, dto.Content, null);
             return Ok("Đã gửi thành công");
         }
-        [Authorize(Roles = "manager")]
+        [Authorize(Roles = "admin,manager")]
         [HttpPost("send-advanced")]
         public async Task<IActionResult> SendAdvanced([FromBody] NotificationAdvancedDto dto)
         {

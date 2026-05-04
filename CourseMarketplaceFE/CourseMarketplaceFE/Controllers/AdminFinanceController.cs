@@ -117,4 +117,61 @@ public class AdminFinanceController : Controller
 
         return RedirectToAction(nameof(Index));
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // POST /AdminFinance/MarkAsPaid/{payoutId}
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarkAsPaid(int payoutId)
+    {
+        var response = await _api.PostAsync($"admin/finance/payouts/{payoutId}/mark-paid");
+
+        if (response.IsSuccessStatusCode)
+        {
+            TempData["FinanceSuccess"] = "✅ Đã đánh dấu thanh toán thành công.";
+        }
+        else
+        {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            TempData["FinanceError"] = $"❌ Lỗi: {errorBody}";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // POST /AdminFinance/PayViaStripe/{payoutId}
+    // Chuyển tiền thật qua Stripe Connect API
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PayViaStripe(int payoutId)
+    {
+        var response = await _api.PostAsync($"admin/finance/payouts/{payoutId}/stripe-transfer");
+
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            var transferId = doc.RootElement.GetProperty("data").GetString();
+            TempData["FinanceSuccess"] = $"✅ Đã chuyển tiền thành công qua Stripe! (Mã GD: {transferId})";
+        }
+        else
+        {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            // Parse lỗi nếu là JSON ApiResponse
+            try
+            {
+                using var doc = JsonDocument.Parse(errorBody);
+                if (doc.RootElement.TryGetProperty("message", out var m))
+                    errorBody = m.GetString();
+            }
+            catch { }
+            
+            TempData["FinanceError"] = $"❌ Lỗi Stripe: {errorBody}";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
 }

@@ -33,6 +33,9 @@ public class TransactionListDto
     public string InstructorName { get; set; } = string.Empty;
 
     public string? Currency { get; set; }
+
+    /// <summary>Loại tiền thực tế giảng viên nhận (sau khi quy đổi)</summary>
+    public string? PayoutCurrency { get; set; }
 }
 
 /// <summary>

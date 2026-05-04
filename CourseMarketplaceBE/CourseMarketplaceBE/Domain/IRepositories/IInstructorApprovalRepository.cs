@@ -29,6 +29,7 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         Task<InstructorDashboardDto?> GetRejectedApplicationDtoAsync(int userId);
         Task<InstructorStats?> GetStatsAsync(int userId);
         Task<int> CountActiveCoursesAsync(int instructorId);
+        Task<List<InstructorPayoutDto>> GetPayoutsAsync(int instructorId);
 
         // ── Persistence ────────────────────────────────────────────────────────
         Task SaveChangesAsync();

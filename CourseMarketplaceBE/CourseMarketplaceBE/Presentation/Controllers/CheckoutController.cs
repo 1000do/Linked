@@ -76,6 +76,41 @@ public class CheckoutController : ControllerBase
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/checkout/direct
+    // Mua trực tiếp 1 khóa học sử dụng Destination Charges (bỏ giỏ hàng)
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("direct")]
+    public async Task<IActionResult> DirectProcess([FromBody] DirectCheckoutRequest request)
+    {
+        var userId = GetUserId();
+        if (userId == null)
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.SuccessUrl) || string.IsNullOrWhiteSpace(request.CancelUrl))
+                return BadRequest(ApiResponse<string>.ErrorResponse("Thiếu SuccessUrl hoặc CancelUrl."));
+
+            var result = await _checkoutService.InitiateDirectCheckoutAsync(
+                userId.Value,
+                request.CourseId,
+                request.CouponCode,
+                request.SuccessUrl,
+                request.CancelUrl);
+
+            return Ok(ApiResponse<CheckoutResponse>.SuccessResponse(result, "Đã tạo phiên thanh toán."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi server: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // POST /api/checkout/success?session_id=cs_xxx
     // Frontend gọi API này sau khi nhận callback từ Stripe.
     // ═══════════════════════════════════════════════════════════════════════
@@ -128,7 +163,7 @@ public class CheckoutController : ControllerBase
 
         try
         {
-            await _checkoutService.ProcessPaymentSuccessAsync(sessionId);
+            await _checkoutService.ProcessPaymentSuccessAsync(sessionId, true);
             return Ok(ApiResponse<string>.SuccessResponse("Đã retry xử lý transfers thành công."));
         }
         catch (Exception ex)

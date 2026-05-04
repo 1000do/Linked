@@ -1,4 +1,4 @@
-﻿using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -9,7 +9,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "manager")] 
+    [Authorize(Roles = "admin,manager")] 
     public class CouponController : ControllerBase
     {
         private readonly ICouponService _service;

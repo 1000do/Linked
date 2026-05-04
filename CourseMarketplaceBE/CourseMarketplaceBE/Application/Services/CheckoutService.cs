@@ -195,11 +195,132 @@ public class CheckoutService : ICheckoutService
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // BƯỚC 1.5: INITIATE DIRECT CHECKOUT (Không qua giỏ hàng)
+    // ═══════════════════════════════════════════════════════════════════════════
+    public async Task<CheckoutResponse> InitiateDirectCheckoutAsync(
+        int userId,
+        int courseId,
+        string? couponCode,
+        string successUrl,
+        string cancelUrl)
+    {
+        var course = await _repo.GetCourseWithInstructorAsync(courseId);
+        if (course == null)
+            throw new InvalidOperationException("Khóa học không tồn tại.");
+
+        if (await _repo.IsEnrolledAsync(userId, courseId))
+            throw new InvalidOperationException($"Bạn đã mua khóa học \"{course.Title}\" rồi.");
+
+        var stripeAccountId = await _repo.GetInstructorStripeAccountIdAsync(course.InstructorId ?? 0);
+        if (string.IsNullOrEmpty(stripeAccountId))
+            throw new InvalidOperationException("Giảng viên chưa kết nối tài khoản thanh toán Stripe.");
+
+        Coupon? coupon = null;
+        decimal discountAmount = 0m;
+        decimal originalPrice = course.Price;
+        
+        if (!string.IsNullOrWhiteSpace(couponCode))
+        {
+            coupon = await _repo.GetValidCouponAsync(couponCode, DateTime.Now);
+            if (coupon != null && originalPrice >= coupon.MinOrderValue)
+            {
+                discountAmount = coupon.CouponType == "percentage"
+                    ? originalPrice * (coupon.DiscountValue / 100m)
+                    : coupon.DiscountValue;
+                discountAmount = Math.Round(Math.Min(discountAmount, originalPrice), 2);
+            }
+        }
+
+        var purchasePrice = Math.Max(originalPrice - discountAmount, 0m);
+        var userEmail = await _repo.GetUserEmailAsync(userId);
+
+        // Tính toán platform fee (30%)
+        var platformFee = Math.Round(purchasePrice * ((100m - DefaultTransferRate) / 100m), 2);
+
+        await using var dbTransaction = await _repo.BeginTransactionAsync();
+        try
+        {
+            var order = new OrderInfo
+            {
+                UserId = userId,
+                OrderDate = DateTime.Now,
+                OrderStatus = "pending",
+                PaymentMethod = "stripe_direct"
+            };
+            await _repo.AddOrderAsync(order);
+            await _repo.SaveChangesAsync();
+
+            var orderItem = new OrderItem
+            {
+                OrderId = order.OrderId,
+                CourseId = courseId,
+                PurchasePrice = purchasePrice,
+                CouponUsed = coupon != null && discountAmount > 0
+            };
+            await _repo.AddOrderItemAsync(orderItem);
+            await _repo.SaveChangesAsync();
+
+            var paymentLineItems = new List<PaymentLineItem>
+            {
+                new PaymentLineItem
+                {
+                    CourseName = course.Title ?? "Khóa học",
+                    ThumbnailUrl = course.CourseThumbnailUrl,
+                    UnitPrice = purchasePrice
+                }
+            };
+
+            var instructorCountry = await _repo.GetInstructorStripeCountryAsync(course.InstructorId ?? 0);
+            var sessionCurrency = GetCurrencyFromCountry(instructorCountry);
+
+            // Gọi Stripe (Standard Charges - Platform thu hết 100%)
+            var paymentResult = await _paymentGateway.CreateCheckoutSessionAsync(
+                paymentLineItems,
+                successUrl,
+                cancelUrl,
+                userEmail,
+                null, // transfer_group
+                sessionCurrency,
+                null, // destinationAccountId
+                null); // platformFee
+
+            var transaction = new Transaction
+            {
+                OrderItemId = orderItem.Id,
+                AccountFrom = userId,
+                AccountTo = course.InstructorId,
+                Amount = purchasePrice,
+                TransferRate = DefaultTransferRate,
+                StripeSessionId = paymentResult.SessionId,
+                Currency = sessionCurrency,
+                TransactionsStatus = "pending",
+                TransactionType = "payment",
+                TransactionCreatedAt = DateTime.Now
+            };
+            await _repo.AddTransactionAsync(transaction);
+            await _repo.SaveChangesAsync();
+
+            await dbTransaction.CommitAsync();
+
+            return new CheckoutResponse
+            {
+                SessionUrl = paymentResult.SessionUrl,
+                SessionId = paymentResult.SessionId
+            };
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync();
+            throw;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // BƯỚC 2: PROCESS PAYMENT SUCCESS
     // Stripe báo thành công → Update trạng thái → Cấp enrollment →
     // ★ TẠO STRIPE TRANSFERS (chia tiền cho instructor) → Ghi payout record
     // ═══════════════════════════════════════════════════════════════════════════
-    public async Task ProcessPaymentSuccessAsync(string sessionId)
+    public async Task ProcessPaymentSuccessAsync(string sessionId, bool failOnTransferFailure = false)
     {
         Console.WriteLine($"[CHECKOUT] ═══ ProcessPaymentSuccess START ═══ SessionId={sessionId}");
 
@@ -211,15 +332,17 @@ public class CheckoutService : ICheckoutService
         Console.WriteLine($"[CHECKOUT] Tìm thấy {transactions.Count} transactions cho session {sessionId}");
 
         var allSucceeded = transactions.All(t => t.TransactionsStatus == "succeeded");
-        var allHavePayouts = transactions.All(t => t.InstructorPayouts.Any());
+        var allPayoutsPaid = transactions.All(t => t.InstructorPayouts.Any(p => p.IsPaid));
 
-        Console.WriteLine($"[CHECKOUT] allSucceeded={allSucceeded}, allHavePayouts={allHavePayouts}");
+        Console.WriteLine($"[CHECKOUT] allSucceeded={allSucceeded}, allPayoutsPaid={allPayoutsPaid}");
 
-        if (allSucceeded && allHavePayouts)
+        if (allSucceeded && allPayoutsPaid)
         {
             Console.WriteLine("[CHECKOUT] Đã xử lý hoàn tất, skip.");
             return;
         }
+
+        var transferFailures = new List<string>();
 
         // Lấy order từ transaction đầu tiên
         var firstTransaction = transactions.First();
@@ -311,10 +434,10 @@ public class CheckoutService : ICheckoutService
             // ═════════════════════════════════════════════════════════════════
             foreach (var txn in transactions)
             {
-                // ★ Skip nếu đã có payout record (tránh duplicate transfer)
-                if (txn.InstructorPayouts.Any())
+                // ★ Skip nếu đã có payout thành công (đã chia tiền xong)
+                if (txn.InstructorPayouts.Any(p => p.IsPaid))
                 {
-                    Console.WriteLine($"[CHECKOUT] Transaction {txn.TransactionId}: đã có payout, skip.");
+                    Console.WriteLine($"[CHECKOUT] Transaction {txn.TransactionId}: đã có payout thành công, skip.");
                     continue;
                 }
 
@@ -333,49 +456,23 @@ public class CheckoutService : ICheckoutService
                     txn.Amount * (txn.TransferRate / 100m), 2);
                 Console.WriteLine($"[CHECKOUT] PayoutAmount={payoutAmount} (Amount={txn.Amount} × TransferRate={txn.TransferRate}%)");
 
-                // ★ Tạo Stripe Transfer nếu instructor có connected account
-                var transferSucceeded = false;
-                if (!string.IsNullOrEmpty(stripeAccountId))
-                {
-                    try
-                    {
-                        Console.WriteLine($"[CHECKOUT] ★ Creating Stripe Transfer: ${payoutAmount} USD → {stripeAccountId} (group={transferGroup}, charge={chargeId ?? "NULL"})");
+                // TÍNH TOÁN THEO MÔ HÌNH MERCHANT OF RECORD (UDEMY)
+                // KHÔNG chia tiền ngay lập tức. Platform giữ 100% tiền.
+                // Cuối tháng (hoặc định kỳ) Platform mới trả cho giảng viên bằng tay từ Dashboard.
+                
+                var transferSucceeded = false; // Luôn false, vì chưa trả tiền
 
-                        // ★ Currency PHẢI trùng với currency của Checkout Session (usd)
-                        // Khi dùng source_transaction, Stripe yêu cầu currency = charge's currency
-                        await _paymentGateway.CreateTransferAsync(
-                            payoutAmount,
-                            txn.Currency ?? "usd",
-                            stripeAccountId,
-                            transferGroup,
-                            $"Payout for course: {txn.OrderItem?.Course?.Title}",
-                            chargeId);  // ★ source_transaction: cho phép transfer từ pending balance
-                        transferSucceeded = true;
-
-                        Console.WriteLine($"[CHECKOUT] ✅ Transfer SUCCEEDED for instructor {instructorId.Value}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"[CHECKOUT] ❌ Transfer FAILED for instructor {instructorId.Value}: {ex.Message}");
-                        Console.WriteLine($"[CHECKOUT] ❌ Full exception: {ex}");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"[CHECKOUT] ⚠️ Instructor {instructorId.Value} has NO StripeAccountId — transfer skipped!");
-                }
-
-                // Ghi payout record — IsPaid phản ánh chính xác kết quả transfer
+                // Ghi payout record — IsPaid = false, chờ thanh toán sau
                 var payout = new InstructorPayout
                 {
                     TransactionId = txn.TransactionId,
                     InstructorId = instructorId.Value,
                     PayoutAmount = payoutAmount,
-                    PayoutDate = DateTime.Now.AddDays(14),
+                    PayoutDate = DateTime.Now.AddDays(14), // Ví dụ: Có thể rút tiền sau 14 ngày
                     IsPaid = transferSucceeded
                 };
                 await _repo.AddInstructorPayoutAsync(payout);
-                Console.WriteLine($"[CHECKOUT] 📝 Payout record created: TxnId={txn.TransactionId}, IsPaid={transferSucceeded}");
+                Console.WriteLine($"[CHECKOUT] 📝 Payout record created: TxnId={txn.TransactionId}, IsPaid={transferSucceeded} (MoR pattern)");
             }
 
             // ── 2.6 UPDATE coupon.used_count (chỉ khi lần đầu xử lý) ───────
@@ -400,6 +497,11 @@ public class CheckoutService : ICheckoutService
         {
             await dbTransaction.RollbackAsync();
             throw;
+        }
+
+        if (failOnTransferFailure && transferFailures.Any())
+        {
+            throw new InvalidOperationException($"Transfer errors: {string.Join(" | ", transferFailures)}");
         }
     }
     private string GetCurrencyFromCountry(string? countryCode)

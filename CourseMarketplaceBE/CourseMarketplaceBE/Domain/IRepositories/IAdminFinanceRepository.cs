@@ -43,6 +43,9 @@ public interface IAdminFinanceRepository
     /// </summary>
     Task<List<PayoutDetailProjection>> GetPayoutDetailsAsync();
 
+    /// <summary>Lấy thông tin payout theo Id.</summary>
+    Task<Domain.Entities.InstructorPayout?> GetPayoutByIdAsync(int payoutId);
+
     /// <summary>Commit changes.</summary>
     Task SaveChangesAsync();
 }

@@ -1,0 +1,200 @@
+@using CourseMarketplaceFE.Controllers
+@model CourseMarketplaceFE.Controllers.AdminFinanceController.FinanceDashboardVM
+@{
+    ViewData["Title"] = "Quản lý Tài chính & Thanh toán";
+    Layout = "_AdminLayout";
+}
+
+<!-- Header -->
+<div class="mb-8">
+    <h1 class="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">Tài chính & Thanh toán</h1>
+    <p class="text-slate-500">Quản lý doanh thu, thiết lập tỷ lệ chia sẻ và thanh toán cho giảng viên.</p>
+</div>
+
+@if (TempData["FinanceSuccess"] != null)
+{
+    <div class="mb-6 p-4 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl font-medium">
+        @TempData["FinanceSuccess"]
+    </div>
+}
+@if (TempData["FinanceError"] != null)
+{
+    <div class="mb-6 p-4 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl font-medium">
+        @TempData["FinanceError"]
+    </div>
+}
+
+<!-- Thống kê tổng quan -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+        <div class="absolute right-0 top-0 w-24 h-24 bg-primary/5 rounded-bl-[100px] -z-0"></div>
+        <div class="relative z-10">
+            <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Tổng doanh thu</p>
+            <p class="text-3xl font-black text-slate-900">@Model.Summary.GrossRevenue.ToString("C")</p>
+            <p class="text-xs text-slate-400 mt-2">Từ @Model.Summary.TotalTransactions giao dịch</p>
+        </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+        <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-500/5 rounded-bl-[100px] -z-0"></div>
+        <div class="relative z-10">
+            <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Đã thanh toán (GV)</p>
+            <p class="text-3xl font-black text-emerald-600">@Model.Summary.TotalPaidOut.ToString("C")</p>
+            <p class="text-xs text-slate-400 mt-2">Đã chuyển cho giảng viên</p>
+        </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+        <div class="absolute right-0 top-0 w-24 h-24 bg-amber-500/5 rounded-bl-[100px] -z-0"></div>
+        <div class="relative z-10">
+            <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Đang nợ (GV)</p>
+            <p class="text-3xl font-black text-amber-500">@Model.Summary.PendingEscrow.ToString("C")</p>
+            <p class="text-xs text-slate-400 mt-2">Cần thanh toán</p>
+        </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+        <div class="relative z-10">
+            <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Lợi nhuận Sàn</p>
+            <p class="text-3xl font-black text-white">@Model.Summary.PlatformNetProfit.ToString("C")</p>
+            <p class="text-xs text-slate-400 mt-2">Sau khi trừ chi phí GV</p>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Bảng danh sách nợ -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                <h2 class="text-lg font-bold text-slate-900">Danh sách cần thanh toán</h2>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs text-slate-500 bg-slate-50 border-b border-slate-200 uppercase font-bold">
+                        <tr>
+                            <th class="px-6 py-4">Mã GD</th>
+                            <th class="px-6 py-4">Giảng viên</th>
+                            <th class="px-6 py-4">Số tiền (GV)</th>
+                            <th class="px-6 py-4">Trạng thái</th>
+                            <th class="px-6 py-4 text-right">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @if (Model.Payouts.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5" class="px-6 py-8 text-center text-slate-500">
+                                    Không có giao dịch nào.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var p in Model.Payouts)
+                            {
+                                <tr class="hover:bg-slate-50 transition-colors group">
+                                    <td class="px-6 py-4 font-mono text-slate-500">#@p.TransactionId</td>
+                                    <td class="px-6 py-4">
+                                        <p class="font-bold text-slate-900">@p.InstructorName</p>
+                                        <p class="text-xs text-slate-500 truncate w-40" title="@p.CourseTitle">@p.CourseTitle</p>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <p class="font-bold text-slate-900">@p.InstructorReceived.ToString("C")</p>
+                                        <p class="text-xs text-slate-500">Tỷ lệ: @p.TransferRate%</p>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if (p.IsPaid)
+                                        {
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Đã thanh toán
+                                            </span>
+                                            <p class="text-[10px] text-slate-400 mt-1">@p.PayoutDate.ToString("dd/MM/yyyy")</p>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Chưa thanh toán
+                                            </span>
+                                            <p class="text-[10px] text-slate-400 mt-1">Hạn: @p.PayoutDate.ToString("dd/MM/yyyy")</p>
+                                        }
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        @if (!p.IsPaid)
+                                        {
+                                            <div class="flex justify-end gap-2">
+                                                <form action="/AdminFinance/PayViaStripe" method="post" onsubmit="return confirm('Xác nhận lệnh CHUYỂN TIỀN THẬT qua Stripe Connect API?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="payoutId" value="@p.PayoutId" />
+                                                    <button type="submit" class="text-xs font-bold px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-sm flex items-center gap-1">
+                                                        <span class="material-symbols-outlined text-sm">bolt</span>
+                                                        Pay via Stripe
+                                                    </button>
+                                                </form>
+
+                                                <form action="/AdminFinance/MarkAsPaid" method="post" onsubmit="return confirm('Xác nhận bạn đã chuyển tiền cho giảng viên này qua kênh ngoài?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="payoutId" value="@p.PayoutId" />
+                                                    <button type="submit" class="text-xs font-bold px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all shadow-sm">
+                                                        Manual Paid
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-slate-300 text-xs font-medium cursor-not-allowed">Hoàn tất</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cài đặt tỷ lệ -->
+    <div class="lg:col-span-1 space-y-6">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">tune</span>
+                Cài đặt Tỷ lệ chia sẻ
+            </h3>
+            
+            <form action="/AdminFinance/SetTransferRate" method="post" class="space-y-4">
+                @Html.AntiForgeryToken()
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Giảng viên nhận (%)</label>
+                    <div class="relative">
+                        <input type="number" name="rate" min="1" max="100" step="0.01" value="@Model.Summary.CurrentTransferRate" 
+                               class="w-full pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-mono font-bold text-slate-900" />
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2">
+                        Tỷ lệ mặc định hiện tại là <strong>@Model.Summary.CurrentTransferRate%</strong>. Sàn sẽ nhận phần còn lại (<strong>@(100 - Model.Summary.CurrentTransferRate)%</strong>).
+                    </p>
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-sm">
+                    Lưu cài đặt
+                </button>
+            </form>
+        </div>
+        
+        <div class="bg-primary/5 rounded-2xl border border-primary/20 p-6">
+            <h3 class="text-sm font-bold text-primary mb-2 uppercase tracking-wider">Lưu ý hoạt động</h3>
+            <ul class="text-sm text-slate-700 space-y-3">
+                <li class="flex items-start gap-2">
+                    <span class="material-symbols-outlined text-[18px] text-primary shrink-0 mt-0.5">info</span>
+                    <span>Tỷ lệ mới chỉ áp dụng cho các giao dịch <strong>kể từ thời điểm cập nhật</strong>.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="material-symbols-outlined text-[18px] text-primary shrink-0 mt-0.5">payments</span>
+                    <span>Hãy đảm bảo bạn đã thực sự chuyển tiền cho giảng viên qua ngân hàng trước khi nhấn nút <strong>Mark as Paid</strong>.</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

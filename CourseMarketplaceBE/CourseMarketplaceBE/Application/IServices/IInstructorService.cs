@@ -56,4 +56,9 @@ public interface IInstructorService
     /// Lưu vào cột stripe_country trong bảng instructors.
     /// </summary>
     Task SetStripeCountryAsync(int userId, string countryCode);
+
+    /// <summary>
+    /// Lấy danh sách lịch sử thanh toán của giảng viên.
+    /// </summary>
+    Task<List<InstructorPayoutDto>> GetPayoutsAsync(int userId);
 }
