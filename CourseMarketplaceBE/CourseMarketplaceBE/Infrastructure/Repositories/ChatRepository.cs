@@ -156,4 +156,22 @@ public class ChatRepository : IChatRepository
             .Where(p => p.AccountId == accountId)
             .SumAsync(p => p.UnreadCount);
     }
+
+    public async Task<List<UserReport>> GetAllReportsAsync()
+    {
+        return await _context.UserReports
+            .Include(r => r.Reporter)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+    }
+
+    public async Task<UserReport?> GetReportByIdAsync(int reportId)
+    {
+        return await _context.UserReports.FindAsync(reportId);
+    }
+
+    public async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
+    }
 }

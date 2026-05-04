@@ -1,8 +1,7 @@
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
-using CourseMarketplaceBE.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
+using CourseMarketplaceBE.Domain.IRepositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,45 +11,33 @@ namespace CourseMarketplaceBE.Application.Services
 {
     public class ModerationService : IModerationService
     {
-        private readonly AppDbContext _context;
+        private readonly ICourseRepository _courseRepository;
+        private readonly IChatRepository _chatRepository;
         private readonly INotificationService _notificationService;
 
-        public ModerationService(AppDbContext context, INotificationService notificationService)
+        public ModerationService(ICourseRepository courseRepository, IChatRepository chatRepository, INotificationService notificationService)
         {
-            _context = context;
+            _courseRepository = courseRepository;
+            _chatRepository = chatRepository;
             _notificationService = notificationService;
         }
 
         public async Task<List<CourseModerationDto>> GetPendingCoursesAsync()
         {
-            return await _context.Courses
-                .Include(c => c.Instructor).ThenInclude(i => i.InstructorNavigation)
-                .Include(c => c.Category)
-                .Where(c => c.CourseStatus == "pending")
-                .Select(c => new CourseModerationDto
-                {
-                    CourseId = c.CourseId,
-                    Title = c.Title,
-                    InstructorName = c.Instructor.InstructorNavigation.FullName,
-                    CategoryName = c.Category.CategoriesName,
-                    Price = c.Price,
-                    CreatedAt = c.CreatedAt,
-                    CourseStatus = c.CourseStatus,
-                    CourseThumbnailUrl = c.CourseThumbnailUrl
-                })
-                .ToListAsync();
+            return await _courseRepository.GetPendingCoursesModerationAsync();
         }
 
         public async Task<bool> ApproveCourseAsync(int courseId, string? feedback)
         {
-            var course = await _context.Courses.FindAsync(courseId);
+            var course = await _courseRepository.GetByIdAsync(courseId);
             if (course == null) return false;
 
             course.CourseStatus = "published";
             course.ModerationFeedback = feedback;
             course.UpdatedAt = DateTime.Now;
 
-            await _context.SaveChangesAsync();
+            _courseRepository.Update(course);
+            await _courseRepository.SaveChangesAsync();
 
             if (course.InstructorId.HasValue)
             {
@@ -67,14 +54,15 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task<bool> RejectCourseAsync(int courseId, string reason)
         {
-            var course = await _context.Courses.FindAsync(courseId);
+            var course = await _courseRepository.GetByIdAsync(courseId);
             if (course == null) return false;
 
             course.CourseStatus = "rejected";
             course.ModerationFeedback = reason;
             course.UpdatedAt = DateTime.Now;
 
-            await _context.SaveChangesAsync();
+            _courseRepository.Update(course);
+            await _courseRepository.SaveChangesAsync();
 
             if (course.InstructorId.HasValue)
             {
@@ -91,7 +79,7 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task<bool> FlagCourseAsync(int courseId, string reason)
         {
-            var course = await _context.Courses.FindAsync(courseId);
+            var course = await _courseRepository.GetByIdAsync(courseId);
             if (course == null) return false;
 
             // Flagged course is usually moved to rejected or a blocked state
@@ -99,7 +87,8 @@ namespace CourseMarketplaceBE.Application.Services
             course.ModerationFeedback = $"[VIOLATION FLAG] {reason}";
             course.UpdatedAt = DateTime.Now;
 
-            await _context.SaveChangesAsync();
+            _courseRepository.Update(course);
+            await _courseRepository.SaveChangesAsync();
 
             if (course.InstructorId.HasValue)
             {
@@ -116,31 +105,29 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task<List<UserReportModerationDto>> GetAllReportsAsync()
         {
-            return await _context.UserReports
-                .Include(r => r.Reporter)
-                .OrderByDescending(r => r.CreatedAt)
-                .Select(r => new UserReportModerationDto
-                {
-                    ReportId = r.ReportId,
-                    ReporterName = r.Reporter.Email,
-                    Reason = r.Reason,
-                    Description = r.Description,
-                    ChatId = r.ChatId,
-                    Status = r.UserReportsStatus,
-                    CreatedAt = r.CreatedAt
-                })
-                .ToListAsync();
+            var reports = await _chatRepository.GetAllReportsAsync();
+            return reports.Select(r => new UserReportModerationDto
+            {
+                ReportId = r.ReportId,
+                ReporterName = r.Reporter?.Email ?? "Unknown",
+                Reason = r.Reason,
+                Description = r.Description,
+                ChatId = r.ChatId,
+                Status = r.UserReportsStatus,
+                CreatedAt = r.CreatedAt
+            }).ToList();
         }
 
         public async Task<bool> ResolveReportAsync(ResolveReportDto dto)
         {
-            var report = await _context.UserReports.FindAsync(dto.ReportId);
+            var report = await _chatRepository.GetReportByIdAsync(dto.ReportId);
             if (report == null) return false;
 
             report.UserReportsStatus = dto.Status;
             report.ResolutionNote = dto.ResolutionNote;
             report.ResolvedAt = DateTime.Now;
-            await _context.SaveChangesAsync();
+            
+            await _chatRepository.SaveChangesAsync();
             return true;
         }
     }

@@ -7,4 +7,5 @@ public interface IEnrollmentService
     Task EnrollFreeAsync(int userId, int courseId);
     Task<DTOs.ProgressResponse> GetProgressAsync(int userId, int courseId);
     Task UpdateProgressAsync(int userId, int courseId, int materialId);
+    Task<IEnumerable<DTOs.EnrolledCourseResponse>> GetMyEnrolledCoursesAsync(int userId);
 }

@@ -163,6 +163,22 @@
         .mini-msg.them { background: #f1f5f9; align-self: flex-start; border-bottom-left-radius: 2px; }
         .mini-msg.me { background: #059669; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
 
+        .mini-sender-name {
+            font-size: 10px;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 2px;
+            padding: 0 4px;
+        }
+        .mini-msg-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
+        }
+        .mini-msg-container.me { align-self: flex-end; }
+        .mini-msg-container.them { align-self: flex-start; }
+        .mini-msg-container.me .mini-sender-name { text-align: right; }
+
         .chat-badge {
             position: absolute;
             top: -2px;
@@ -255,6 +271,10 @@
             const n = Number(v);
             return Number.isFinite(n) ? n : NaN;
         }
+
+        function getMiniSenderName(m) {
+            return m.senderName ?? m.SenderName ?? m.fullName ?? m.FullName ?? "Người dùng";
+        }
         
         let miniChatId = null;
         let miniChatConn = null;
@@ -281,6 +301,20 @@
             if (miniChatId) return;
 
             try {
+                // Đảm bảo kết nối SignalR sẵn sàng
+                if (!miniChatConn || miniChatConn.state !== signalR.HubConnectionState.Connected) {
+                    console.log("[MiniChat] Waiting for connection...");
+                    await new Promise(resolve => {
+                        const interval = setInterval(() => {
+                            if (miniChatConn && miniChatConn.state === signalR.HubConnectionState.Connected) {
+                                clearInterval(interval);
+                                resolve();
+                            }
+                        }, 500);
+                        setTimeout(() => { clearInterval(interval); resolve(); }, 5000); // Timeout 5s
+                    });
+                }
+
                 // Lấy ID nhân viên hỗ trợ
                 const staffRes = await fetch("http://localhost:5207/api/chat/support-account", {
                     headers: { 'Authorization': `Bearer ${currentToken}` }
@@ -299,7 +333,12 @@
                 const chatData = await createRes.json();
                 miniChatId = chatData.chatId;
 
-                loadMiniHistory();
+                // Join vào group SignalR
+                if (miniChatConn && miniChatConn.state === signalR.HubConnectionState.Connected) {
+                    await miniChatConn.invoke("JoinChat", miniChatId);
+                }
+
+                await loadMiniHistory();
             } catch (err) {
                 console.error("Init mini chat error:", err);
                 document.getElementById('mini-chat-content').innerHTML = `<div class="text-center py-4 text-xs text-red-500">Không thể kết nối hỗ trợ.</div>`;
@@ -317,7 +356,12 @@
                 container.innerHTML = msgs.map(m => {
                     const sid = getMiniSenderId(m);
                     const isMe = sid === currentUserId && currentUserId > 0;
-                    return `<div class="mini-msg ${isMe ? 'me' : 'them'}">${m.content}</div>`;
+                    const name = getMiniSenderName(m);
+                    return `
+                        <div class="mini-msg-container ${isMe ? 'me' : 'them'}">
+                            <div class="mini-sender-name">${isMe ? 'Bạn' : name}</div>
+                            <div class="mini-msg ${isMe ? 'me' : 'them'}">${m.content}</div>
+                        </div>`;
                 }).join('');
                 container.scrollTop = container.scrollHeight;
             } catch (err) {
@@ -346,7 +390,12 @@
             if (!container) return;
             const sid = getMiniSenderId(m);
             const isMe = sid === currentUserId && currentUserId > 0;
-            const html = `<div class="mini-msg ${isMe ? 'me' : 'them'}">${m.content}</div>`;
+            const name = getMiniSenderName(m);
+            const html = `
+                <div class="mini-msg-container ${isMe ? 'me' : 'them'}">
+                    <div class="mini-sender-name">${isMe ? 'Bạn' : name}</div>
+                    <div class="mini-msg ${isMe ? 'me' : 'them'}">${m.content}</div>
+                </div>`;
             container.insertAdjacentHTML('beforeend', html);
             container.scrollTop = container.scrollHeight;
         }
@@ -411,7 +460,8 @@
 
                 miniChatConn.on("ReceiveMessage", function (message) {
                     const popup = document.getElementById('support-chat-popup');
-                    if (popup && popup.style.display === 'flex' && message.chatId == miniChatId) {
+                    const msgChatId = message.chatId ?? message.ChatId;
+                    if (popup && popup.style.display === 'flex' && msgChatId == miniChatId) {
                         appendMiniMsg(message);
                     } else if (window.location.pathname.toLowerCase() !== "/chat") {
                         const chatBadge = document.getElementById('global-chat-badge');

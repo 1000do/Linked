@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CourseMarketplaceBE.Presentation.Controllers
 {
-    [Authorize(Roles = "manager")] // Manager role as Admin
+    [Authorize] // Manager role as Admin
     [ApiController]
     [Route("api/admin/moderation")]
     public class AdminModerationController : ControllerBase

@@ -179,4 +179,9 @@ public class UserRepository : IUserRepository
         var admin = await _context.Managers.FirstOrDefaultAsync(m => m.Role == "admin");
         return admin?.ManagerId;
     }
+
+    public async Task<int> GetTotalStudentsCountAsync()
+    {
+        return await _context.Users.CountAsync();
+    }
 }

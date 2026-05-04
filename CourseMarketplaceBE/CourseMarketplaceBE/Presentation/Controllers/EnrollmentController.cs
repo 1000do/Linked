@@ -76,4 +76,22 @@ public class EnrollmentController : ControllerBase
             return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
     }
+
+    [HttpGet("my-courses")]
+    public async Task<IActionResult> GetMyCourses()
+    {
+        var userId = GetUserId();
+        if (userId == null)
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
+
+        try
+        {
+            var courses = await _enrollmentService.GetMyEnrolledCoursesAsync(userId.Value);
+            return Ok(ApiResponse<object>.SuccessResponse(courses, "Lấy danh sách khóa học thành công."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+        }
+    }
 }

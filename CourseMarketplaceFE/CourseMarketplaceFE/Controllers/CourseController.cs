@@ -14,6 +14,20 @@ namespace CourseMarketplaceFE.Controllers
             _apiClient = apiClient;
         }
 
+        public async Task<IActionResult> MyCourses()
+        {
+            var response = await _apiClient.GetAsync("enrollment/my-courses");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(content);
+                var data = json.RootElement.GetProperty("data").ToString();
+                var courses = JsonSerializer.Deserialize<List<EnrolledCourseViewModel>>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                return View(courses);
+            }
+            return RedirectToAction("Login", "Account");
+        }
+
         private async Task<List<int>> GetWishlistIdsAsync()
         {
             var response = await _apiClient.GetAsync("wishlist");

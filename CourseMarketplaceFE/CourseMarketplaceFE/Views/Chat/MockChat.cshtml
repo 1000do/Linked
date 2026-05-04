@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="~/css/chat.css" asp-append-version="true" />
 }
 
-<div class="chat-wrapper shadow-sm" style="height: @(actor == "Admin" ? "calc(100vh - 120px)" : "calc(100vh - 80px)"); margin: @(actor == "Admin" ? "0" : "-20px -15px");">
+<div class="chat-wrapper shadow-sm" style="height: @(actor == "Admin" ? "calc(100vh - 120px)" : "calc(100vh - 80px)"); margin: @(actor == "Admin" ? "0" : "-20px 0"); width: 100%; box-sizing: border-box;">
     <!-- SIDEBAR -->
     <aside class="chat-sidebar">
         <div class="sidebar-header">

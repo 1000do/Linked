@@ -50,6 +50,18 @@ public class CheckoutRepository : ICheckoutRepository
             .Include(e => e.Progress)
             .FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == courseId);
 
+    public async Task<List<Enrollment>> GetMyEnrolledCoursesAsync(int userId)
+    {
+        return await _context.Enrollments
+            .Where(e => e.UserId == userId)
+            .Include(e => e.Progress)
+            .Include(e => e.Course)
+                .ThenInclude(c => c!.Instructor)
+                    .ThenInclude(i => i!.InstructorNavigation)
+            .OrderByDescending(e => e.LastAccessedAt)
+            .ToListAsync();
+    }
+
     public async Task<string?> GetUserEmailAsync(int userId)
         => await _context.Accounts
             .Where(a => a.AccountId == userId)

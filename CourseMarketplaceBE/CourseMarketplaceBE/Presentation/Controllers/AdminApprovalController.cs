@@ -1,11 +1,11 @@
-﻿using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceBE.Presentation.Controllers
 {
-    [Authorize(Roles = "manager")]
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class AdminApprovalController : ControllerBase
