@@ -21,7 +21,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
             => await _context.Instructors
                 .Include(i => i.InstructorNavigation)
                     .ThenInclude(u => u!.UserNavigation)
-                .Where(i => i.ApprovalStatus == "Pending")
+                .Where(i => i.ApprovalStatus != null && i.ApprovalStatus.ToLower() == "pending")
                 .ToListAsync();
 
         // ── Lookup ────────────────────────────────────────────────────────────
@@ -68,8 +68,9 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                     PayoutsEnabled         = i.PayoutsEnabled ?? false,
                     ChargesEnabled         = i.ChargesEnabled ?? false,
                     StripeCountry          = i.StripeCountry,
-                    FullName               = i.InstructorNavigation!.FullName,
-                    Email                  = i.InstructorNavigation.UserNavigation!.Email
+                    FullName               = i.InstructorNavigation != null ? i.InstructorNavigation.FullName : "N/A",
+                    Email                  = i.InstructorNavigation != null && i.InstructorNavigation.UserNavigation != null 
+                                             ? i.InstructorNavigation.UserNavigation.Email : "N/A"
                 })
                 .ToListAsync();
 
@@ -117,6 +118,26 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
 
         public async Task<int> CountActiveCoursesAsync(int instructorId)
             => await _context.Courses.CountAsync(c => c.InstructorId == instructorId && c.CourseStatus == "published");
+
+        public async Task<List<InstructorPayoutDto>> GetPayoutsAsync(int instructorId)
+        {
+            return await _context.InstructorPayouts
+                .Where(p => p.InstructorId == instructorId)
+                .Include(p => p.Transaction)
+                    .ThenInclude(t => t!.OrderItem)
+                        .ThenInclude(oi => oi!.Course)
+                .OrderByDescending(p => p.PayoutDate)
+                .Select(p => new InstructorPayoutDto
+                {
+                    PayoutId = p.PayoutId,
+                    Amount = p.PayoutAmount,
+                    PayoutDate = p.PayoutDate,
+                    IsPaid = p.IsPaid,
+                    CourseTitle = p.Transaction!.OrderItem!.Course!.Title ?? "N/A",
+                    TotalAmount = p.Transaction.Amount
+                })
+                .ToListAsync();
+        }
 
         public async Task<int> GetTotalApprovedInstructorsCountAsync()
             => await _context.Instructors.CountAsync(i => i.ApprovalStatus == "Approved");

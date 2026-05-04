@@ -13,6 +13,9 @@ public interface ICheckoutRepository
     /// <summary>Lấy cart items kèm Course → Instructor navigation để tính payout.</summary>
     Task<List<CartItem>> GetCartItemsWithCourseAndInstructorAsync(int userId);
 
+    /// <summary>Lấy thông tin khóa học kèm Instructor để thanh toán trực tiếp.</summary>
+    Task<Course?> GetCourseWithInstructorAsync(int courseId);
+
     /// <summary>Lấy coupon hợp lệ theo code (kiểm tra active, thời hạn, usage).</summary>
     Task<Coupon?> GetValidCouponAsync(string couponCode, DateTime now);
 

@@ -100,6 +100,50 @@ public class AdminFinanceController : ControllerBase
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/admin/finance/payouts/{payoutId}/mark-paid
+    // Đánh dấu khoản thanh toán là đã thanh toán
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("payouts/{payoutId:int}/mark-paid")]
+    public async Task<IActionResult> MarkPayoutAsPaid(int payoutId)
+    {
+        try
+        {
+            await _financeService.MarkPayoutAsPaidAsync(payoutId);
+            return Ok(ApiResponse<string>.SuccessResponse("Đã đánh dấu khoản thanh toán này là Đã trả.", "Thành công."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/admin/finance/payouts/{payoutId}/stripe-transfer
+    // Chuyển tiền thật qua Stripe Connect
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("payouts/{payoutId:int}/stripe-transfer")]
+    public async Task<IActionResult> TransferViaStripe(int payoutId)
+    {
+        try
+        {
+            var transferId = await _financeService.PerformStripeTransferAsync(payoutId);
+            return Ok(ApiResponse<string>.SuccessResponse(transferId, "Chuyển tiền thành công qua Stripe."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi hệ thống: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // POST /api/admin/finance/reset-stripe/{instructorId}
     // ★ Reset Stripe account bị lỗi region → xóa account cũ, cho phép tạo lại
     // ═══════════════════════════════════════════════════════════════════════

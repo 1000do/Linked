@@ -29,6 +29,11 @@ public class CheckoutRepository : ICheckoutRepository
             .OrderBy(c => c.AddedDate)
             .ToListAsync();
 
+    public async Task<Course?> GetCourseWithInstructorAsync(int courseId)
+        => await _context.Courses
+            .Include(c => c.Instructor)
+            .FirstOrDefaultAsync(c => c.CourseId == courseId);
+
     public async Task<Coupon?> GetValidCouponAsync(string couponCode, DateTime now)
         => await _context.Coupons.FirstOrDefaultAsync(cp =>
             cp.CouponCode.ToLower() == couponCode.Trim().ToLower() &&

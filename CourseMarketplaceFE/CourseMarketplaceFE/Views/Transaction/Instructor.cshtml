@@ -52,7 +52,7 @@
                     </div>
                 </div>
                 <div class="relative z-10">
-                    <p class="text-4xl font-headline font-extrabold">@((Model.Items?.FirstOrDefault()?.Currency ?? "USD").ToUpper()) @totalAmountThisPage.ToString("N2")</p>
+                    <p class="text-4xl font-headline font-extrabold">@((Model.Items?.FirstOrDefault()?.PayoutCurrency ?? Model.Items?.FirstOrDefault()?.Currency ?? "USD").ToUpper()) @totalAmountThisPage.ToString("N2")</p>
                     <p class="text-sm font-medium opacity-80 mt-2 flex items-center gap-1.5">
                         <span class="material-symbols-outlined text-[14px]">arrow_upward</span>
                         Thực nhận sau phí Sàn
@@ -156,7 +156,7 @@
                                 <!-- Amount (Net Payout for Instructor) -->
                                 <td class="px-6 py-4 text-right align-top">
                                     <span class="text-base font-extrabold text-slate-900 tracking-tight">
-                                        @((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
+                                        @((item.PayoutCurrency ?? item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
                                     </span>
                                 </td>
 
@@ -259,7 +259,7 @@
                 Model.Items?.OrderBy(x => x.Date).Select(x => new {
                     date = x.Date?.ToString("dd/MM"),
                     amount = x.Amount,
-                    currency = x.Currency
+                    currency = x.PayoutCurrency ?? x.Currency
                 }).ToList() ?? new List<object>().Select(x => new { date = "", amount = 0m, currency = "USD" }).ToList()
             ));
 

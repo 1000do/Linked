@@ -61,3 +61,13 @@ public class InstructorDashboardDto
     public int ActiveCoursesCount { get; set; }
     public decimal TotalRevenue { get; set; }
 }
+
+public class InstructorPayoutDto
+{
+    public int PayoutId { get; set; }
+    public decimal Amount { get; set; }
+    public DateTime PayoutDate { get; set; }
+    public bool IsPaid { get; set; }
+    public string CourseTitle { get; set; } = "";
+    public decimal TotalAmount { get; set; }
+}

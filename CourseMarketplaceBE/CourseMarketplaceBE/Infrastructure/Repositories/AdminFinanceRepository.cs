@@ -133,5 +133,12 @@ public class AdminFinanceRepository : IAdminFinanceRepository
             .ToListAsync();
     }
 
+    public async Task<InstructorPayout?> GetPayoutByIdAsync(int payoutId)
+    {
+        return await _context.InstructorPayouts
+            .Include(p => p.Instructor)
+            .FirstOrDefaultAsync(p => p.PayoutId == payoutId);
+    }
+
     public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
 }

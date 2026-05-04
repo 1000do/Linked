@@ -78,7 +78,7 @@ public class InstructorController : ControllerBase
     /// Admin duyệt hoặc từ chối đơn. Yêu cầu Role = manager.
     /// </summary>
     [HttpPut("{id}/approve")]
-    [Authorize(Roles = "manager")]
+    [Authorize(Roles = "admin,manager")]
     public async Task<IActionResult> Approve(int id, [FromQuery] string status)
     {
         try
@@ -184,7 +184,7 @@ public class InstructorController : ControllerBase
 
     // ─── 5. ADMIN XEM DANH SÁCH ĐƠN ─────────────────────────────────
     [HttpGet("applications")]
-    [Authorize(Roles = "manager")]
+    [Authorize(Roles = "admin,manager")]
     public async Task<IActionResult> GetApplications()
     {
         var list = await _instructorService.GetAllApplicationsAsync();
@@ -251,6 +251,25 @@ public class InstructorController : ControllerBase
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { status = 400, message = ex.Message });
+        }
+    }
+
+    // ─── 9. LẤY LỊCH SỬ THANH TOÁN ───────────────────────────────────
+    [HttpGet("payouts")]
+    [Authorize]
+    public async Task<IActionResult> GetPayouts()
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+
+        try
+        {
+            var list = await _instructorService.GetPayoutsAsync(userId.Value);
+            return Ok(new { status = 200, data = list });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = 500, message = $"Lỗi server: {ex.Message}" });
         }
     }
 

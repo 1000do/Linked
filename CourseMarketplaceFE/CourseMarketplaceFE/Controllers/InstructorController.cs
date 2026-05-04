@@ -378,4 +378,39 @@ public class InstructorController : Controller
         if (response.IsSuccessStatusCode) return Ok();
         return BadRequest();
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // 6. LỊCH SỬ THANH TOÁN (PAYOUTS)
+    // ═══════════════════════════════════════════════════════════════════
+    public async Task<IActionResult> Payouts()
+    {
+        try
+        {
+            var response = await _api.GetAsync("instructor/payouts");
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("data", out var dataEl))
+                {
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var list = JsonSerializer.Deserialize<List<InstructorPayoutViewModel>>(dataEl.GetRawText(), options);
+                    return View(list ?? new List<InstructorPayoutViewModel>());
+                }
+            }
+        }
+        catch { }
+
+        return View(new List<InstructorPayoutViewModel>());
+    }
+
+    public class InstructorPayoutViewModel
+    {
+        public int PayoutId { get; set; }
+        public decimal Amount { get; set; }
+        public DateTime PayoutDate { get; set; }
+        public bool IsPaid { get; set; }
+        public string CourseTitle { get; set; } = "";
+        public decimal TotalAmount { get; set; }
+    }
 }

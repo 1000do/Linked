@@ -1,6 +1,7 @@
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.IRepositories;
+using Stripe;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -117,5 +118,103 @@ public class AdminFinanceService : IAdminFinanceService
     {
         var rateStr = await _repo.GetConfigValueAsync(TransferRateKey);
         return decimal.TryParse(rateStr, out var rate) ? rate : DefaultTransferRate;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // MARK PAYOUT AS PAID (Manual payout confirmation)
+    // ═══════════════════════════════════════════════════════════════════════
+    public async Task MarkPayoutAsPaidAsync(int payoutId)
+    {
+        var payout = await _repo.GetPayoutByIdAsync(payoutId);
+        if (payout == null)
+            throw new InvalidOperationException("Không tìm thấy khoản thanh toán này.");
+
+        if (payout.IsPaid)
+            throw new InvalidOperationException("Khoản thanh toán này đã được đánh dấu là Đã trả.");
+
+        payout.IsPaid = true;
+        // Có thể update PayoutDate = DateTime.Now nếu muốn ghi nhận ngày trả thực tế
+        payout.PayoutDate = DateTime.Now;
+
+        await _repo.SaveChangesAsync();
+    }
+
+    public async Task<string> PerformStripeTransferAsync(int payoutId)
+    {
+        var payout = await _repo.GetPayoutByIdAsync(payoutId);
+        if (payout == null)
+            throw new InvalidOperationException("Không tìm thấy khoản thanh toán.");
+
+        if (payout.IsPaid)
+            throw new InvalidOperationException("Khoản thanh toán này đã được trả trước đó.");
+
+        if (payout.Instructor == null || string.IsNullOrEmpty(payout.Instructor.StripeAccountId))
+            throw new InvalidOperationException("Giảng viên này chưa thiết lập tài khoản Stripe Connect.");
+
+        try
+        {
+            var transferService = new TransferService();
+            var transfer = await transferService.CreateAsync(new TransferCreateOptions
+            {
+                Amount = (long)(payout.PayoutAmount * 100), 
+                Currency = payout.Transaction?.Currency?.ToLower() ?? "usd",
+                Destination = payout.Instructor.StripeAccountId,
+                Description = $"Payout for PayoutId #{payoutId}",
+                Metadata = new Dictionary<string, string> { { "payout_id", payoutId.ToString() } }
+            });
+
+            // ★ Lấy thông tin số tiền thực tế giảng viên nhận được (sau khi Stripe chuyển đổi ngoại tệ)
+            // Lưu ý: Cần quyền truy cập vào Connected Account để đọc Charge
+            try 
+            {
+                var requestOptions = new RequestOptions { StripeAccount = payout.Instructor.StripeAccountId };
+                var chargeService = new ChargeService();
+                var destinationCharge = await chargeService.GetAsync(transfer.DestinationPaymentId, null, requestOptions);
+                
+                if (destinationCharge != null)
+                {
+                    // Cập nhật lại số tiền và có thể ghi chú loại tiền vào DB
+                    // Vì DB hiện tại chỉ có 1 cột PayoutAmount (decimal), ta sẽ lưu số tiền đã quy đổi.
+                    payout.PayoutAmount = (decimal)destinationCharge.Amount / 100m;
+                    // Nếu có cột Currency trong Payout thì tốt, nếu không ta lưu vào một field tạm hoặc ghi log.
+                }
+            }
+            catch { /* Thu thập lỗi nếu không có quyền xem charge, nhưng vẫn tiếp tục update trạng thái */ }
+
+            // Update DB
+            payout.IsPaid = true;
+            payout.PayoutDate = DateTime.Now;
+            await _repo.SaveChangesAsync();
+
+            return transfer.Id;
+        }
+        catch (StripeException ex)
+        {
+            throw new InvalidOperationException($"Lỗi Stripe Transfer: {ex.Message}");
+        }
+    }
+
+    public async Task<BulkPayoutResult> BulkPayAllViaStripeAsync()
+    {
+        var pendingPayouts = await _repo.GetPayoutDetailsAsync();
+        var toProcess = pendingPayouts.Where(p => !p.IsPaid).ToList();
+        
+        var result = new BulkPayoutResult { TotalProcessed = toProcess.Count };
+
+        foreach (var p in toProcess)
+        {
+            try
+            {
+                await PerformStripeTransferAsync(p.PayoutId);
+                result.SuccessCount++;
+            }
+            catch (Exception ex)
+            {
+                result.FailCount++;
+                result.Errors.Add($"Payout #{p.PayoutId} (GV: {p.InstructorName}): {ex.Message}");
+            }
+        }
+
+        return result;
     }
 }

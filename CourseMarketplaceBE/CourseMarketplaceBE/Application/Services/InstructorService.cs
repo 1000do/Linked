@@ -310,4 +310,9 @@ public class InstructorService : IInstructorService
         instructor.StripeCountry = countryCode.ToUpper();
         await _repo.SaveChangesAsync();
     }
+
+    public async Task<List<InstructorPayoutDto>> GetPayoutsAsync(int userId)
+    {
+        return await _repo.GetPayoutsAsync(userId);
+    }
 }
