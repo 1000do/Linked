@@ -30,6 +30,7 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         Task<InstructorStats?> GetStatsAsync(int userId);
         Task<int> CountActiveCoursesAsync(int instructorId);
         Task<List<InstructorPayoutDto>> GetPayoutsAsync(int instructorId);
+        Task<int> GetTotalApprovedInstructorsCountAsync();
 
         // ── Persistence ────────────────────────────────────────────────────────
         Task SaveChangesAsync();

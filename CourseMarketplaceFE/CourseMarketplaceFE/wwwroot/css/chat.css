@@ -200,6 +200,8 @@
     display: flex;
     flex-direction: column;
 }
+.them .bubble-container { align-items: flex-start; }
+.me .bubble-container { align-items: flex-end; }
 
 .sender-name {
     font-size: 12px;

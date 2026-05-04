@@ -139,6 +139,9 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<int> GetTotalApprovedInstructorsCountAsync()
+            => await _context.Instructors.CountAsync(i => i.ApprovalStatus == "Approved");
+
         // ── Persistence ───────────────────────────────────────────────────────
 
         public async Task SaveChangesAsync()

@@ -148,6 +148,10 @@
                             {
                                 <span class="px-3 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded-full text-xs font-bold">Draft</span>
                             }
+                            else if (course.Status.Equals("archived", StringComparison.OrdinalIgnoreCase) || course.Status.Equals("Hidden", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="px-3 py-1 bg-slate-200 text-slate-700 border border-slate-300 rounded-full text-xs font-bold">Hidden</span>
+                            }
                             else
                             {
                                 <span class="px-3 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-full text-xs font-bold">@course.Status</span>
@@ -158,10 +162,21 @@
                                 <a href="/InstructorCourse/Editor/@course.Id" title="Edit course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
                                     <span class="material-symbols-outlined text-[18px]">edit</span>
                                 </a>
-                                <a href="/InstructorCourse/Editor/@course.Id" title="View course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
-                                    <span class="material-symbols-outlined text-[18px]">visibility</span>
-                                </a>
-                                <button title="Delete course" onclick="confirmDelete(@course.Id, '@course.Title.Replace("'", "\\'")')" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
+                                
+                                @if (course.Status.Equals("archived", StringComparison.OrdinalIgnoreCase) || course.Status.Equals("Hidden", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <button onclick="toggleHide(@course.Id, 'published')" title="Unhide course" class="w-8 h-8 flex items-center justify-center text-emerald-500 hover:bg-emerald-50 rounded-full transition-colors">
+                                        <span class="material-symbols-outlined text-[18px]">visibility</span>
+                                    </button>
+                                }
+                                else if (course.Status.Equals("Published", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <button onclick="toggleHide(@course.Id, 'archived')" title="Hide course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors">
+                                        <span class="material-symbols-outlined text-[18px]">visibility_off</span>
+                                    </button>
+                                }
+
+                                <button title="Delete course" onclick="confirmDelete(@course.Id, '@course.Title.Replace("'", "\\'")', @course.Students)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
                                     <span class="material-symbols-outlined text-[18px]">delete</span>
                                 </button>
                             </div>
@@ -336,7 +351,16 @@
 
         // Delete modal
         let deleteTargetId = null;
-        function confirmDelete(id, name) {
+        function confirmDelete(id, name, students) {
+            if (students > 0) {
+                Swal.fire({
+                    title: 'Không thể xóa!',
+                    text: `Khóa học "${name}" đang có ${students} học viên đang theo học. Bạn không thể xóa khóa học này để bảo vệ quyền lợi của họ.`,
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+                return;
+            }
             deleteTargetId = id;
             document.getElementById('delete-course-name').textContent = name;
             document.getElementById('delete-modal').classList.remove('hidden');
@@ -362,6 +386,43 @@
                 closeDeleteModal();
             }
         });
+
+        // Toggle Hide/Show
+        async function toggleHide(id, newStatus) {
+            const confirmText = (newStatus === 'archived' || newStatus === 'Hidden') 
+                ? 'Bạn có chắc muốn ẩn khóa học này? Học viên mới sẽ không thể tìm thấy nó.' 
+                : 'Bạn muốn công khai lại khóa học này?';
+                
+            const { isConfirmed } = await Swal.fire({
+                title: 'Xác nhận thay đổi',
+                text: confirmText,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#006a62',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Đồng ý',
+                cancelButtonText: 'Hủy'
+            });
+
+            if (isConfirmed) {
+                try {
+                    const formData = new FormData();
+                    formData.append('courseId', id);
+                    formData.append('status', newStatus);
+
+                    const resp = await fetch('/InstructorCourse/UpdateCourseStatus', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await resp.json();
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        Swal.fire('Lỗi', result.message || 'Không thể cập nhật trạng thái', 'error');
+                    }
+                } catch(e) { Swal.fire('Lỗi', 'Có lỗi xảy ra: ' + e.message, 'error'); }
+            }
+        }
         // Close modal on backdrop click
         document.getElementById('delete-modal').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) closeDeleteModal();

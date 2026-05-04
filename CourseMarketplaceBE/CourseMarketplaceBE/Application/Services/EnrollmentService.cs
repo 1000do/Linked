@@ -1,8 +1,10 @@
 using System;
 using System.Threading.Tasks;
-using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Application.IServices;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -116,5 +118,32 @@ public class EnrollmentService : IEnrollmentService
 
             await _repo.SaveChangesAsync();
         }
+    }
+
+    public async Task<IEnumerable<DTOs.EnrolledCourseResponse>> GetMyEnrolledCoursesAsync(int userId)
+    {
+        var enrollments = await _repo.GetMyEnrolledCoursesAsync(userId);
+
+        var courseIds = enrollments.Select(e => e.CourseId ?? 0).Where(id => id > 0).ToList();
+        var stats = await _courseRepo.GetCourseStatsAsync(courseIds);
+
+        return enrollments.Select(e =>
+        {
+            var s = stats.FirstOrDefault(st => st.CourseId == e.CourseId);
+            var totalMaterials = s?.TotalMaterials ?? 0;
+            var learnedCount = e.Progress?.LearnedMaterialCount ?? 0;
+            var pct = totalMaterials > 0 ? (double)learnedCount / totalMaterials * 100 : 0;
+
+            return new DTOs.EnrolledCourseResponse
+            {
+                CourseId = e.CourseId ?? 0,
+                Title = e.Course?.Title ?? "Unknown Course",
+                CourseThumbnailUrl = e.Course?.CourseThumbnailUrl,
+                InstructorName = e.Course?.Instructor?.InstructorNavigation?.FullName ?? "Unknown Instructor",
+                ProgressPercentage = Math.Round(pct, 1),
+                IsCompleted = e.IsCompleted == true,
+                LastAccessedAt = e.LastAccessedAt
+            };
+        });
     }
 }

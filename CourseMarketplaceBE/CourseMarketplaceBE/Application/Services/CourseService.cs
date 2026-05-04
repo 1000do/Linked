@@ -177,7 +177,7 @@ public class CourseService : ICourseService
     public async Task<CourseResponse> CreateCourseAsync(CourseCreateRequest request, int instructorId)
     {
         var instructor = await _instructorRepository.GetByIdAsync(instructorId);
-        if (instructor == null || instructor.ApprovalStatus != "Approved")
+        if (instructor == null || !string.Equals(instructor.ApprovalStatus, "Approved", StringComparison.OrdinalIgnoreCase))
         {
             throw new BadRequestException("You must be an approved instructor to create a course.");
         }
@@ -295,11 +295,19 @@ public class CourseService : ICourseService
             throw new UnauthorizedAccessException("You do not have permission to modify this course.");
 
         // Instructor chỉ được gửi yêu cầu duyệt (pending) hoặc ẩn khóa học (archived)
-        // Việc chuyển sang "published" chỉ Admin mới được thực hiện (qua AdminModerationController)
-        if (status != "pending" && status != "archived")
-            throw new BadRequestException("Invalid status. Allowed values are 'pending' or 'archived'.");
+        // Việc chuyển sang "published" chỉ được phép nếu khóa học đang ở trạng thái "archived" (Unhide)
+        // Các trường hợp khác để lên "published" phải qua Admin
+        if (status.Equals("published", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!course.CourseStatus.Equals("archived", StringComparison.OrdinalIgnoreCase))
+                throw new BadRequestException("Only archived courses can be set back to published by instructor.");
+        }
+        else if (!status.Equals("pending", StringComparison.OrdinalIgnoreCase) && !status.Equals("archived", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new BadRequestException("Invalid status. Allowed values are 'pending', 'archived', or 'published' (for unarchiving).");
+        }
 
-        course.CourseStatus = status;
+        course.CourseStatus = status.ToLower();
         course.UpdatedAt = DateTime.UtcNow;
 
         _courseRepository.Update(course);
