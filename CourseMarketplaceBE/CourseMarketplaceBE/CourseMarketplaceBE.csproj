@@ -36,7 +36,6 @@
 	  <Folder Include="Domain\Enums\" />
 	  <Folder Include="Presentation\Middleware\" />
 	  <Folder Include="Share\Exceptions\" />
-	  <Folder Include="Domain\Entities\" />
 	</ItemGroup>
 
 </Project>

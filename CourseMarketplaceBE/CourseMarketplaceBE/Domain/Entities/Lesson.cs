@@ -28,4 +28,6 @@ public partial class Lesson
     public virtual LessonExt? LessonExt { get; set; }
 
     public virtual ICollection<LessonReview> LessonReviews { get; set; } = new List<LessonReview>();
+
+
 }
