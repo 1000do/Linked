@@ -64,6 +64,7 @@ services:
       BackendApiUrl: "http://backend:80/api/"
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       Stripe__PublishableKey: ${STRIPE_PUBLISHABLE_KEY}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       ASPNETCORE_URLS: "http://+:80"
     ports:
       - "5208:80"

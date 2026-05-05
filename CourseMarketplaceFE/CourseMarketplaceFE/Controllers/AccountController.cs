@@ -13,12 +13,14 @@ namespace CourseMarketplaceFE.Controllers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ApiClient _api;
         private readonly JsonSerializerOptions _jsonOptions;
+        private readonly IConfiguration _config;
 
-        public AccountController(IHttpClientFactory httpClientFactory, ApiClient api)
+        public AccountController(IHttpClientFactory httpClientFactory, ApiClient api, IConfiguration config)
         {
             _httpClientFactory = httpClientFactory;
             _api = api;
             _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            _config = config;
         }
 
         // ================= AUTHENTICATION =================
@@ -59,6 +61,8 @@ namespace CourseMarketplaceFE.Controllers
         {
             // Đã login (có AccessToken) → về Home
             if (Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Index", "Home");
+            ViewBag.GoogleClientId = _config["Authentication:Google:ClientId"];
+
             return View();
         }
 
