@@ -26,4 +26,7 @@ public partial class AiModel
     public virtual ICollection<AiModelsCourse> AiModelsCourses { get; set; } = new List<AiModelsCourse>();
     public virtual ICollection<CourseReviewModerationLog> CourseReviewModerationLogs { get; set; } = new List<CourseReviewModerationLog>();
     public virtual ICollection<LessonReviewModerationLog> LessonReviewModerationLogs { get; set; } = new List<LessonReviewModerationLog>();
+
+    // Added to match SQL relationship for message_moderation_logs
+    public virtual ICollection<MessageModerationLog> MessageModerationLogs { get; set; } = new List<MessageModerationLog>();
 }
