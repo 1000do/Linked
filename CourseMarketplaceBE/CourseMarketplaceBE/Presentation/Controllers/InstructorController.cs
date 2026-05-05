@@ -30,6 +30,7 @@ public class InstructorController : ControllerBase
     /// <summary>
     /// POST /api/instructor/apply
     /// Learner gửi form đăng ký Giảng viên (có upload file CV/ID).
+    /// Nếu bị Rejected trước đó sẽ UPDATE lại record cũ (không INSERT mới).
     /// </summary>
     [HttpPost("apply")]
     [Authorize]
@@ -53,13 +54,31 @@ public class InstructorController : ControllerBase
         }
     }
 
+    // ─── 1b. LẤY THÔNG TIN ĐƠN CŨ (Để ĐIỀN SẴN KHI BỊ REJECTED) ─────────
+    /// <summary>
+    /// GET /api/instructor/apply-info
+    /// Trả về thông tin đơn cũ khi user bị Rejected, dùng để FE điền sẵn vào form.
+    /// </summary>
+    [HttpGet("apply-info")]
+    [Authorize]
+    public async Task<IActionResult> GetApplyInfo()
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+
+        var info = await _instructorService.GetRejectedApplicationInfoAsync(userId.Value);
+        if (info == null) return NotFound(new { status = 404, message = "Không tìm thấy đơn bị từ chối." });
+
+        return Ok(new { status = 200, data = info });
+    }
+
     // ─── 2. ADMIN DUYỆT ĐƠN ─────────────────────────────────────────
     /// <summary>
     /// PUT /api/instructor/{id}/approve?status=Approved
     /// Admin duyệt hoặc từ chối đơn. Yêu cầu Role = manager.
     /// </summary>
     [HttpPut("{id}/approve")]
-    [Authorize(Roles = "manager")]
+    [Authorize(Roles = "admin,manager")]
     public async Task<IActionResult> Approve(int id, [FromQuery] string status)
     {
         try
@@ -165,7 +184,7 @@ public class InstructorController : ControllerBase
 
     // ─── 5. ADMIN XEM DANH SÁCH ĐƠN ─────────────────────────────────
     [HttpGet("applications")]
-    [Authorize(Roles = "manager")]
+    [Authorize(Roles = "admin,manager")]
     public async Task<IActionResult> GetApplications()
     {
         var list = await _instructorService.GetAllApplicationsAsync();
@@ -186,10 +205,86 @@ public class InstructorController : ControllerBase
         return Ok(new { status = 200, data });
     }
 
+    // ─── 7. LẤY DANH SÁCH QUỐC GIA STRIPE HỖ TRỢ ───────────────────
+    /// <summary>
+    /// GET /api/instructor/stripe-countries
+    /// Trả về danh sách quốc gia Stripe Connect hỗ trợ (từ system_configs.StripeCountries).
+    /// </summary>
+    [HttpGet("stripe-countries")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetStripeCountries(
+        [FromServices] CourseMarketplaceBE.Domain.IRepositories.IAdminFinanceRepository financeRepo)
+    {
+        try
+        {
+            var json = await financeRepo.GetConfigValueAsync("StripeCountries");
+            if (string.IsNullOrEmpty(json))
+                return Ok(new { status = 200, data = new List<object>() });
+
+            var countries = System.Text.Json.JsonSerializer.Deserialize<List<object>>(json);
+            return Ok(new { status = 200, data = countries });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = 500, message = ex.Message });
+        }
+    }
+
+    // ─── 8. GIẢNG VIÊN CHỌN QUỐC GIA STRIPE ─────────────────────────
+    /// <summary>
+    /// PUT /api/instructor/stripe-country
+    /// Giảng viên chọn quốc gia cho tài khoản Stripe Connect.
+    /// Phải gọi TRƯỚC khi setup-payout.
+    /// </summary>
+    [HttpPut("stripe-country")]
+    [Authorize]
+    public async Task<IActionResult> SetStripeCountry([FromBody] SetCountryRequest request)
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+
+        try
+        {
+            await _instructorService.SetStripeCountryAsync(userId.Value, request.CountryCode);
+            return Ok(new { status = 200, message = $"Đã lưu quốc gia Stripe: {request.CountryCode}" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { status = 400, message = ex.Message });
+        }
+    }
+
+    // ─── 9. LẤY LỊCH SỬ THANH TOÁN ───────────────────────────────────
+    [HttpGet("payouts")]
+    [Authorize]
+    public async Task<IActionResult> GetPayouts()
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+
+        try
+        {
+            var list = await _instructorService.GetPayoutsAsync(userId.Value);
+            return Ok(new { status = 200, data = list });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = 500, message = $"Lỗi server: {ex.Message}" });
+        }
+    }
+
     // ─── HELPER ──────────────────────────────────────────────────────
     private int? GetUserId()
     {
         var str = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return int.TryParse(str, out int id) ? id : null;
     }
+}
+
+/// <summary>
+/// Request body for PUT /api/instructor/stripe-country
+/// </summary>
+public class SetCountryRequest
+{
+    public string CountryCode { get; set; } = null!;
 }

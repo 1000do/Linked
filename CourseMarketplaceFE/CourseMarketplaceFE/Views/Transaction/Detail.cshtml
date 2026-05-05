@@ -1,0 +1,283 @@
+@using CourseMarketplaceFE.Controllers
+@model TransactionController.TransactionDetailVM
+@{
+    ViewData["Title"] = $"Giao dịch #{Model.TransactionId}";
+    ViewData["PageHeader"] = "Chi tiết Giao dịch";
+    Layout = "_AdminLayout";
+
+    var statusBg   = Model.Status == "succeeded" ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                   : Model.Status == "failed"    ? "bg-red-50 text-red-700 border-red-200"
+                   : "bg-amber-50 text-amber-700 border-amber-200";
+    var statusLabel = Model.Status == "succeeded" ? "Thành công"
+                    : Model.Status == "failed"    ? "Thất bại"
+                    : Model.Status == "pending"   ? "Đang xử lý"
+                    : Model.Status ?? "—";
+    var dotColor    = Model.Status == "succeeded" ? "bg-emerald-500"
+                    : Model.Status == "failed"    ? "bg-red-500"
+                    : "bg-amber-400";
+}
+
+
+<div class="mb-5 flex items-center gap-3">
+    <a href="@Url.Action("Index", "Transaction")"
+       class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors">
+        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+        Danh sách giao dịch
+    </a>
+    <span class="text-slate-300">/</span>
+    <span class="text-sm font-medium text-slate-700">Giao dịch #@Model.TransactionId</span>
+</div>
+
+
+<div class="bg-white border border-slate-200 rounded-lg shadow-sm p-5 mb-5 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+        <div class="w-11 h-11 rounded-full bg-indigo-100 flex items-center justify-center">
+            <span class="material-symbols-outlined text-indigo-600">receipt_long</span>
+        </div>
+        <div>
+            <p class="text-xs text-slate-500 mb-0.5">Mã giao dịch nội bộ</p>
+            <p class="text-xl font-bold text-slate-900 font-mono">#@Model.TransactionId</p>
+        </div>
+    </div>
+    <div class="flex items-center gap-3">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border @statusBg">
+            <span class="w-1.5 h-1.5 rounded-full @dotColor"></span>
+            @statusLabel
+        </span>
+        <div class="text-right">
+            <p class="text-xs text-slate-400">Ngày giao dịch</p>
+            <p class="text-sm font-medium text-slate-700">
+                @(Model.Date.HasValue ? Model.Date.Value.ToString("dd/MM/yyyy HH:mm") : "—")
+            </p>
+        </div>
+    </div>
+</div>
+
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+    {{!-- ══════════════════════════════════════════════════════════════
+         CỘT TRÁI — Thông tin đơn hàng & mã tham chiếu
+    ══════════════════════════════════════════════════════════════ --}}
+    <div class="flex flex-col gap-4">
+
+        
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm p-5">
+            <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[16px]">school</span>
+                Khóa học
+            </h3>
+            <div class="flex items-start gap-4">
+                @if (!string.IsNullOrEmpty(Model.CourseThumbnail))
+                {
+                    <img src="@Model.CourseThumbnail" alt="thumbnail"
+                         class="w-16 h-12 object-cover rounded-md border border-slate-100 flex-shrink-0" />
+                }
+                else
+                {
+                    <div class="w-16 h-12 bg-slate-100 rounded-md flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-slate-300">image</span>
+                    </div>
+                }
+                <div>
+                    <p class="font-semibold text-slate-800">@Model.CourseTitle</p>
+                    <p class="text-xs text-slate-500 mt-1">
+                        <span class="material-symbols-outlined text-[13px] align-text-bottom">person</span>
+                        @Model.InstructorName
+                    </p>
+                    <p class="text-xs text-slate-400">@Model.InstructorEmail</p>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm p-5">
+            <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[16px]">person</span>
+                Người mua
+            </h3>
+            <div class="space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-500">Họ tên</span>
+                    <span class="text-sm font-medium text-slate-800">@Model.BuyerName</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-500">Email</span>
+                    <span class="text-sm text-slate-700">@Model.BuyerEmail</span>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm p-5">
+            <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[16px]">tag</span>
+                Mã tham chiếu Stripe
+                <span class="ml-auto text-[10px] font-normal text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                    Chỉ để đối soát
+                </span>
+            </h3>
+            <div class="space-y-3">
+                <div>
+                    <p class="text-xs text-slate-400 mb-1">Session ID</p>
+                    <div class="flex items-center gap-2">
+                        <code class="text-[11px] font-mono text-slate-600 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded break-all flex-1">
+                            @(Model.StripeSessionId ?? "—")
+                        </code>
+                        @if (!string.IsNullOrEmpty(Model.StripeSessionId))
+                        {
+                            <button onclick="copyText('@Model.StripeSessionId')"
+                                    title="Sao chép"
+                                    class="text-slate-400 hover:text-slate-700 transition-colors flex-shrink-0">
+                                <span class="material-symbols-outlined text-[16px]">content_copy</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.StripePaymentIntentId))
+                {
+                    <div>
+                        <p class="text-xs text-slate-400 mb-1">Payment Intent ID</p>
+                        <div class="flex items-center gap-2">
+                            <code class="text-[11px] font-mono text-slate-600 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded break-all flex-1">
+                                @Model.StripePaymentIntentId
+                            </code>
+                            <button onclick="copyText('@Model.StripePaymentIntentId')"
+                                    title="Sao chép"
+                                    class="text-slate-400 hover:text-slate-700 transition-colors flex-shrink-0">
+                                <span class="material-symbols-outlined text-[16px]">content_copy</span>
+                            </button>
+                        </div>
+                    </div>
+                }
+                <div>
+                    <p class="text-xs text-slate-400 mb-1">Tiền tệ</p>
+                    <span class="text-sm font-mono font-semibold text-slate-700 uppercase">@Model.Currency</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{!-- ══════════════════════════════════════════════════════════════
+         CỘT PHẢI — Phân bổ tài chính
+    ══════════════════════════════════════════════════════════════ --}}
+    <div class="flex flex-col gap-4">
+
+        
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm p-5">
+            <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-5 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[16px]">account_balance_wallet</span>
+                Phân bổ tài chính
+            </h3>
+
+            
+            <div class="flex items-center justify-between py-3 border-b border-slate-100">
+                <div>
+                    <p class="text-sm font-medium text-slate-700">Tổng khách trả</p>
+                    <p class="text-xs text-slate-400 mt-0.5">Gross Amount</p>
+                </div>
+                <span class="text-lg font-bold text-slate-900">
+                    @Model.Currency.ToUpper() @Model.GrossAmount.ToString("N2")
+                </span>
+            </div>
+
+            
+            <div class="py-4 space-y-3">
+                
+                <div class="flex items-center justify-between rounded-lg bg-violet-50 border border-violet-100 px-4 py-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined text-violet-600 text-[15px]">storefront</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-violet-800">Sàn giữ lại</p>
+                            <p class="text-[11px] text-violet-500">@(100 - Model.TransferRate)% phí nền tảng</p>
+                        </div>
+                    </div>
+                    <span class="text-base font-bold text-violet-700">
+                        @Model.Currency.ToUpper() @Model.PlatformProfit.ToString("N2")
+                    </span>
+                </div>
+
+                
+                <div class="flex items-center justify-between rounded-lg @(Model.IsPaid ? "bg-emerald-50 border-emerald-100" : "bg-amber-50 border-amber-100") border px-4 py-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-7 h-7 rounded-full @(Model.IsPaid ? "bg-emerald-100" : "bg-amber-100") flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined @(Model.IsPaid ? "text-emerald-600" : "text-amber-600") text-[15px]">
+                                @(Model.IsPaid ? "check_circle" : "schedule")
+                            </span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold @(Model.IsPaid ? "text-emerald-800" : "text-amber-800")">
+                                Giảng viên nhận
+                            </p>
+                            <p class="text-[11px] @(Model.IsPaid ? "text-emerald-600" : "text-amber-600")">
+                                @Model.TransferRate% · @(Model.IsPaid ? "✅ Đã chuyển" : "⏳ Chờ chuyển")
+                            </p>
+                        </div>
+                    </div>
+                    <span class="text-base font-bold @(Model.IsPaid ? "text-emerald-700" : "text-amber-700")">
+                        @Model.Currency.ToUpper() @Model.InstructorPayout.ToString("N2")
+                    </span>
+                </div>
+            </div>
+
+            
+            <div class="mt-2 text-center text-xs text-slate-400">
+                Tỷ lệ chia tại thời điểm giao dịch:
+                <span class="font-semibold text-slate-600">@Model.TransferRate% GV / @(100 - Model.TransferRate)% Sàn</span>
+            </div>
+        </div>
+
+        
+        <div class="bg-white border border-slate-200 rounded-lg shadow-sm p-5">
+            <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[16px]">school</span>
+                Thông tin Giảng viên
+            </h3>
+            <div class="space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-500">Họ tên</span>
+                    <span class="text-sm font-medium text-slate-800">@Model.InstructorName</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-500">Email</span>
+                    <span class="text-sm text-slate-700">@Model.InstructorEmail</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-500">Trạng thái chuyển tiền</span>
+                    @if (Model.IsPaid)
+                    {
+                        <span class="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            <span class="material-symbols-outlined text-[12px]">check_circle</span>
+                            Đã chuyển
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                            <span class="material-symbols-outlined text-[12px]">schedule</span>
+                            Chờ chuyển
+                        </span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function copyText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Hiển thị toast nhỏ
+                const toast = document.createElement('div');
+                toast.textContent = '✅ Đã sao chép!';
+                toast.className = 'fixed bottom-5 right-5 z-50 bg-slate-800 text-white text-xs px-4 py-2 rounded-lg shadow-lg transition-opacity';
+                document.body.appendChild(toast);
+                setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2000);
+            });
+        }
+    </script>
+}
+

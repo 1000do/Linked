@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS chats CASCADE;
 DROP TABLE IF EXISTS transactions CASCADE;
 DROP TABLE IF EXISTS order_items CASCADE;
 DROP TABLE IF EXISTS order_info CASCADE;
-DROP TABLE IF EXISTS reviews CASCADE;
+DROP TABLE IF EXISTS course_reviews CASCADE;
 DROP TABLE IF EXISTS cart_items CASCADE;
 DROP TABLE IF EXISTS wishlist_items CASCADE;
 DROP TABLE IF EXISTS enrollment CASCADE;
@@ -26,9 +26,43 @@ DROP TABLE IF EXISTS instructors CASCADE;
 DROP TABLE IF EXISTS managers CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS accounts CASCADE;
-DROP TABLE IF EXISTS instructor_payouts CASCADE;
+DROP TABLE IF EXISTS material_embeddings CASCADE;
+DROP TABLE IF EXISTS course_exts CASCADE;
+DROP TABLE IF EXISTS lesson_exts CASCADE;
+DROP TABLE IF EXISTS lesson_reviews CASCADE;
+DROP TABLE IF EXISTS course_ai_usage_logs CASCADE;
+DROP TABLE IF EXISTS message_moderation_logs CASCADE;
+
+DROP TABLE IF EXISTS lesson_review_moderation_logs CASCADE;
+DROP TABLE IF EXISTS course_review_moderation_logs CASCADE;
+DROP TABLE IF EXISTS audit_logs CASCADE;
+DROP TABLE IF EXISTS message_attachments CASCADE;
+
+-- ==============================================================================
+-- Drop indexes if they exist
+-- ==============================================================================
+DROP INDEX IF EXISTS idx_reviews_enrollment;
+DROP INDEX IF EXISTS idx_enrollments_course;
+DROP INDEX IF EXISTS idx_enrollments_user;
+DROP INDEX IF EXISTS idx_courses_instructor;
+DROP INDEX IF EXISTS idx_lessons_course;
+DROP INDEX IF EXISTS idx_materials_lesson;
+DROP INDEX IF EXISTS idx_order_info_user;
+DROP INDEX IF EXISTS idx_order_items_order;
+DROP INDEX IF EXISTS idx_reviews_active;
+DROP INDEX IF EXISTS idx_order_paid;
+DROP INDEX IF EXISTS idx_material_duration;
+DROP INDEX IF EXISTS idx_metadata_gin;
+DROP INDEX IF EXISTS idx_course_reviews_enrollment;
+DROP INDEX IF EXISTS idx_lesson_reviews_enrollment;
+DROP INDEX IF EXISTS idx_lesson_reviews_lesson;
+DROP INDEX IF EXISTS idx_course_reviews_active;
 
 
+-- ==============================================================================
+-- Use pgvector extension
+-- ==============================================================================
+CREATE EXTENSION IF NOT EXISTS vector;
 
 -- ==============================================================================
 -- 1. NHÓM QUẢN LÝ TÀI KHOẢN (Account & User Management)
@@ -82,7 +116,10 @@ CREATE TABLE instructors (
     expertise_categories VARCHAR(255),
     linkedin_url TEXT,
     document_url TEXT,
-    approval_status VARCHAR(50) DEFAULT 'Pending'
+    approval_status VARCHAR(50) DEFAULT 'Pending',
+    
+    -- Quốc gia Stripe Connect (giảng viên tự chọn khi đăng ký Stripe)
+    stripe_country VARCHAR(2)
     
     -- instructor_rating NUMERIC(3,2) DEFAULT 0.0, -- AVERAGE of their courses.rating_average
     -- total_revenue NUMERIC(12, 2) DEFAULT 0.00 -- SUM of their instructor_payouts.payout_amount
@@ -108,6 +145,7 @@ CREATE TABLE coupons (
     coupon_code VARCHAR(50) UNIQUE NOT NULL,
     coupon_type VARCHAR(50), -- VD: 'percentage', 'fixed_amount'
     discount_value NUMERIC(10, 2) NOT NULL,
+    min_order_value NUMERIC(10, 2) NOT NULL DEFAULT 0,
     start_date TIMESTAMP,
     end_date TIMESTAMP,
     usage_limit INT, -- giới hạn số lần sử dụng của coupon này
@@ -127,14 +165,10 @@ CREATE TABLE courses (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     course_status VARCHAR(50), -- VD: 'draft', 'published', 'archived'
-    course_flag_count INT DEFAULT 0 -- Theo dõi số lần course bị report (1 lần, 2 lần , 3 lần sẽ có mức phạt ngày càng nặng, cần lên Udemy tham khảo thêm)
-    -- total_lessons INT DEFAULT 0, -- COUNT(*) of its lessons
-    -- rating_average NUMERIC(3,2) DEFAULT 0.0, -- AVG of its reviews.rating (JOIN via enrollments)
-    -- total_students INT DEFAULT 0, -- COUNT(*) of its enrollments
-	-- total_materials INT, -- SUM of its lessons.material_count
-	-- total_reviews INT DEFAULT 0, -- COUNT(*) of its reviews
-	-- total_duration INT -- SUM of its lessons.lesson_duration
-	
+    course_flag_count INT DEFAULT 0, -- Theo dõi số lần course bị report (1 lần, 2 lần , 3 lần sẽ có mức phạt ngày càng nặng, cần lên Udemy tham khảo thêm)
+    what_you_will_learn TEXT, -- mô tả mục tiêu đạt được ở trang detail khóa học
+    requirements TEXT, -- mô tả yêu cầu để học khóa học ở trang detail khóa học
+    moderation_feedback TEXT -- phản hồi từ admin khi duyệt/từ chối
 );
 
 
@@ -148,8 +182,7 @@ CREATE TABLE lessons (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     lesson_status VARCHAR(50)
-	-- material_count INT, -- COUNT(*) of its learning_material
-	-- lesson_duration INT -- SUM of its duration 
+	
 );
 
 CREATE TABLE learning_materials (
@@ -161,8 +194,35 @@ CREATE TABLE learning_materials (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     learning_status VARCHAR(50), -- Trạng thái của 1 cái learning_material ( vd: active, auditing, inactive)
     material_url TEXT,
-    -- duration VARCHAR(50)
-    duration INT -- Đổi thời lượng của một material sang INT (tính bằng giây) để cộng tổng thời lượng course (hiển thị trên UI cần quy đổi sang phút, giờ, ngày gì đó cho hợp lý)
+	--- Bỏ duration INT
+	--- Thêm 2 cái dưới
+	material_metadata JSONB, -- Lưu file_size, file_type, file_extension, duration và page_count (for PDF, Word, powerpoint)
+	material_hash CHAR(32) -- Hash MD5 để check duplication cho file ko qua chỉnh sửa
+	
+);
+   
+
+CREATE TABLE course_exts (
+    course_id INT PRIMARY KEY REFERENCES courses(course_id) ON DELETE CASCADE,
+    title_hash CHAR(32),
+	description_hash CHAR(32),
+	thumbnail_hash CHAR(32)
+   
+);
+CREATE TABLE lesson_exts (
+    lesson_id INT PRIMARY KEY REFERENCES lessons(lesson_id) ON DELETE CASCADE,
+    title_hash CHAR(32),
+	description_hash CHAR(32),
+	thumbnail_hash CHAR(32)
+   
+);
+
+-- Check duplication thông qua AI (tính cosine similarity của embedding) 
+CREATE TABLE material_embeddings (
+    embedding_id SERIAL PRIMARY KEY,
+    material_id INT REFERENCES learning_materials(material_id) ON DELETE CASCADE,
+    embedding vector(768),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ==============================================================================
@@ -197,11 +257,24 @@ CREATE TABLE wishlist_items (
     added_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE reviews (
-    review_id SERIAL PRIMARY KEY,
-	enrollment_id INT REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
+CREATE TABLE course_reviews (
+    course_review_id SERIAL PRIMARY KEY,
+	enrollment_id INT NOT NULL REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
     rating NUMERIC(3,2) CHECK (rating >= 0 AND rating <= 5),
     comment TEXT,
+	course_review_status TEXT NOT NULL, --- ok, hidden, auditting
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_removed BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE lesson_reviews (
+    lesson_review_id SERIAL PRIMARY KEY,
+	enrollment_id INT NOT NULL REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
+	lesson_id INT REFERENCES lessons(lesson_id) ON DELETE SET NULL,
+    rating NUMERIC(3,2) CHECK (rating >= 0 AND rating <= 5),
+    comment TEXT,
+	lesson_review_status TEXT NOT NULL, --- ok, hidden, auditting
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_removed BOOLEAN DEFAULT FALSE
@@ -269,19 +342,43 @@ CREATE TABLE instructor_payouts (
 
 CREATE TABLE chats (
     chat_id SERIAL PRIMARY KEY,
+    chat_name VARCHAR(255),           -- Tên nhóm (nếu là Group Chat)
+    chat_type VARCHAR(50) DEFAULT 'private', -- 'private' (1-1) hoặc 'group'
+    context_type VARCHAR(50),         -- 'course', 'order', 'system'
+    context_id INT,                   -- ID của khóa học hoặc đơn hàng liên quan
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_message_at TIMESTAMP
 );
 
+CREATE TABLE chat_participants (
+    chat_id INT REFERENCES chats(chat_id) ON DELETE CASCADE,
+    account_id INT REFERENCES accounts(account_id) ON DELETE CASCADE,
+    role VARCHAR(50) DEFAULT 'member', -- 'member', 'admin', 'observer'
+    unread_count INT DEFAULT 0,
+    last_read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (chat_id, account_id)
+);
+
 CREATE TABLE messages (
     message_id SERIAL PRIMARY KEY,
-    chat_id INT REFERENCES chats(chat_id) ON DELETE SET NULL,
+    chat_id INT REFERENCES chats(chat_id) ON DELETE CASCADE,
     sender_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
-    receiver_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
     content TEXT NOT NULL,
     is_seen BOOLEAN DEFAULT FALSE,
+    message_status VARCHAR(50) DEFAULT 'ok', -- 'ok', 'flagged', 'hidden'
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     received_at TIMESTAMP
+);
+
+CREATE TABLE message_attachments (
+    attachment_id SERIAL PRIMARY KEY,
+    message_id INT REFERENCES messages(message_id) ON DELETE CASCADE,
+    file_url TEXT NOT NULL,
+    file_name VARCHAR(255),
+    file_type VARCHAR(50), -- 'image', 'video', 'document'
+    file_size BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE notifications (
@@ -292,6 +389,7 @@ CREATE TABLE notifications (
     content TEXT,
     link_action TEXT,
     is_read BOOLEAN DEFAULT FALSE,
+	is_removed BOOLEAN DEFAULT FALSE, -- THÊM XÓA MỀM
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -305,6 +403,19 @@ CREATE TABLE user_reports (
     user_reports_status VARCHAR(50), -- VD: 'pending', 'resolved', 'dismissed'
     resolution_note TEXT,
     resolved_at TIMESTAMP,
+    chat_id INT REFERENCES chats(chat_id), -- Liên kết với cuộc chat bị khiếu nại
+    access_granted_until TIMESTAMP,        -- Staff chỉ được xem đến thời điểm này
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE audit_logs (
+    log_id SERIAL PRIMARY KEY,
+    actor_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
+    action_type VARCHAR(100) NOT NULL, -- 'join_room', 'monitor_room', 'broadcast', 'delete_message'
+    target_type VARCHAR(100), -- 'chat_room', 'message', 'user'
+    target_id INT,
+    details TEXT,
+    ip_address VARCHAR(45),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -344,15 +455,50 @@ CREATE TABLE ai_models_courses (
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE ai_activity_logs (
+CREATE TABLE course_ai_usage_logs (
     log_id SERIAL PRIMARY KEY,
     ai_model_course_id INT REFERENCES ai_models_courses(id) ON DELETE SET NULL,
-    user_id INT REFERENCES users(user_id) ON DELETE SET NULL,
     interaction_type VARCHAR(50), -- VD: 'moderation', 'grading', 'question'
     input_json JSONB,
     output_json JSONB,
     latency_ms REAL,
     token_usage REAL,
+    log_status VARCHAR(50),
+    error_message TEXT,
+    log_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE message_moderation_logs (
+    log_id SERIAL PRIMARY KEY,
+	model_id INT REFERENCES ai_models(model_id) ON DELETE SET NULL,
+    message_id INT REFERENCES messages(message_id) ON DELETE SET NULL,
+    input_json JSONB,
+    output_json JSONB,
+    latency_ms REAL,
+    log_status VARCHAR(50),
+    error_message TEXT,
+    log_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE course_review_moderation_logs (
+    log_id SERIAL PRIMARY KEY,
+    model_id INT REFERENCES ai_models(model_id) ON DELETE SET NULL,
+    course_review_id INT REFERENCES course_reviews (course_review_id) ON DELETE SET NULL,
+    input_json JSONB,
+    output_json JSONB,
+    latency_ms REAL,
+    log_status VARCHAR(50),
+    error_message TEXT,
+    log_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE lesson_review_moderation_logs (
+    log_id SERIAL PRIMARY KEY,
+    model_id INT REFERENCES ai_models(model_id) ON DELETE SET NULL,
+    lesson_review_id INT REFERENCES lesson_reviews(lesson_review_id) ON DELETE SET NULL,
+    input_json JSONB,
+    output_json JSONB,
+    latency_ms REAL,
     log_status VARCHAR(50),
     error_message TEXT,
     log_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -366,76 +512,141 @@ CREATE TABLE ai_activity_logs (
 CREATE OR REPLACE VIEW view_lesson_stats AS
 SELECT 
     l.lesson_id,
-	l.course_id,
-    (SELECT COUNT(*) 
-     FROM learning_materials lm 
-     WHERE lm.lesson_id = l.lesson_id) AS material_count,
-    (SELECT COALESCE(SUM(duration), 0) 
-     FROM learning_materials lm 
-     WHERE lm.lesson_id = l.lesson_id) AS lesson_duration
-FROM lessons l;
+    l.course_id,
+
+    COUNT(lm.material_id) AS material_count,
+
+    COALESCE(SUM(
+        (lm.material_metadata->>'duration')::INT
+    ), 0) AS lesson_duration
+
+FROM lessons l
+LEFT JOIN learning_materials lm 
+    ON lm.lesson_id = l.lesson_id
+
+GROUP BY l.lesson_id, l.course_id;
 
 -- View for Course Stats
 CREATE OR REPLACE VIEW view_course_stats AS
 SELECT 
     c.course_id,
-	(SELECT COALESCE(AVG(r.rating), 0) 
-     FROM reviews r JOIN enrollments e ON r.enrollment_id = e.enrollment_id 
-     WHERE e.course_id = c.course_id) AS rating_average,
-    (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.course_id) AS total_students,
-    (SELECT COUNT(*) FROM reviews r JOIN enrollments e ON r.enrollment_id = e.enrollment_id 
-     WHERE e.course_id = c.course_id) AS total_reviews,
-    (SELECT COUNT(*) FROM lessons WHERE course_id = c.course_id) as total_lessons,
-    (SELECT SUM(material_count) FROM view_lesson_stats vls 
-     WHERE vls.course_id = c.course_id) as total_materials,
-    (SELECT SUM(lesson_duration) FROM view_lesson_stats vls 
-     WHERE vls.course_id = c.course_id) as total_duration
-FROM courses c;
 
+    COALESCE(AVG(cr.rating), 0) AS rating_average,
+
+    COUNT(DISTINCT e.enrollment_id) AS total_students,
+
+    COUNT(DISTINCT cr.course_review_id) AS total_reviews,
+
+    COUNT(DISTINCT l.lesson_id) AS total_lessons,
+
+    COALESCE(SUM(vls.material_count), 0) AS total_materials,
+
+    COALESCE(SUM(vls.lesson_duration), 0) AS total_duration
+
+FROM courses c
+
+LEFT JOIN enrollments e 
+    ON e.course_id = c.course_id
+
+LEFT JOIN course_reviews cr ON cr.enrollment_id = e.enrollment_id AND cr.is_removed = FALSE
+
+LEFT JOIN lessons l 
+    ON l.course_id = c.course_id
+
+LEFT JOIN view_lesson_stats vls 
+    ON vls.course_id = c.course_id
+
+GROUP BY c.course_id;
 
 
 -- View for User Stats
 CREATE OR REPLACE VIEW view_user_stats AS
 SELECT 
     u.user_id,
-    (SELECT COUNT(*) FROM enrollments WHERE user_id = u.user_id) as enrolled_courses_count,
-    (SELECT SUM(purchase_price) FROM order_items oi 
-     JOIN order_info o ON oi.order_id = o.order_id 
-     WHERE o.user_id = u.user_id AND o.order_status = 'paid') as total_spent
-FROM users u;
+
+    COUNT(DISTINCT e.enrollment_id) AS enrolled_courses_count,
+
+    COALESCE(SUM(oi.purchase_price), 0) AS total_spent
+
+FROM users u
+
+LEFT JOIN enrollments e 
+    ON e.user_id = u.user_id
+
+LEFT JOIN order_info o 
+    ON o.user_id = u.user_id
+   AND o.order_status = 'paid'
+
+LEFT JOIN order_items oi 
+    ON oi.order_id = o.order_id
+
+GROUP BY u.user_id;
 
 
 -- View for Order Stats
 CREATE OR REPLACE VIEW view_order_stats AS
 SELECT 
-	o.order_id,
+    o.order_id,
     o.user_id,
-    (SELECT SUM(purchase_price) FROM order_items oi 
-     WHERE o.order_id = oi.order_id) as total_amount
-FROM order_info o;
+
+    COALESCE(SUM(oi.purchase_price), 0) AS total_amount
+
+FROM order_info o
+
+LEFT JOIN order_items oi 
+    ON oi.order_id = o.order_id
+
+GROUP BY o.order_id, o.user_id;
 
 -- View for Instructor Stats
 CREATE OR REPLACE VIEW view_instructor_stats AS
 SELECT 
     i.instructor_id,
-    -- Calculate Average Rating from all courses owned by this instructor
-    (SELECT COALESCE(AVG(rating), 0) 
-     FROM reviews r 
-     JOIN enrollments e ON r.enrollment_id = e.enrollment_id 
-     JOIN courses c ON e.course_id = c.course_id 
-     WHERE c.instructor_id = i.instructor_id) AS instructor_rating,
 
-    -- Calculate Total Revenue from the Payouts table
-    (SELECT COALESCE(SUM(payout_amount), 0) 
-     FROM instructor_payouts ip 
-     WHERE ip.instructor_id = i.instructor_id) AS total_revenue,
+    COALESCE(AVG(cr.rating), 0) AS instructor_rating,
 
-    -- Additional helpful stat: Total students across all their courses
-    (SELECT COUNT(e.enrollment_id) 
-     FROM enrollments e 
-     JOIN courses c ON e.course_id = c.course_id 
-     WHERE c.instructor_id = i.instructor_id) AS total_students_count
-FROM instructors i;
+    COALESCE(SUM(ip.payout_amount), 0) AS total_revenue,
+
+    COUNT(DISTINCT e.enrollment_id) AS total_students_count
+
+FROM instructors i
+
+LEFT JOIN courses c 
+    ON c.instructor_id = i.instructor_id
+
+LEFT JOIN enrollments e 
+    ON e.course_id = c.course_id
+
+LEFT JOIN course_reviews cr ON cr.enrollment_id = e.enrollment_id AND cr.is_removed = FALSE
+
+LEFT JOIN instructor_payouts ip 
+    ON ip.instructor_id = i.instructor_id
+
+GROUP BY i.instructor_id;
+
+--Indexing
+CREATE INDEX idx_course_reviews_enrollment ON course_reviews(enrollment_id);
+CREATE INDEX idx_lesson_reviews_enrollment ON lesson_reviews(enrollment_id);
+CREATE INDEX idx_lesson_reviews_lesson ON lesson_reviews(lesson_id);
+CREATE INDEX idx_enrollments_course ON enrollments(course_id);
+CREATE INDEX idx_enrollments_user ON enrollments(user_id);
+CREATE INDEX idx_courses_instructor ON courses(instructor_id);
+CREATE INDEX idx_lessons_course ON lessons(course_id);
+CREATE INDEX idx_materials_lesson ON learning_materials(lesson_id);
+CREATE INDEX idx_order_info_user ON order_info(user_id);
+CREATE INDEX idx_order_items_order ON order_items(order_id);
+CREATE INDEX idx_course_reviews_active ON course_reviews(enrollment_id) WHERE is_removed = FALSE;
+CREATE INDEX idx_order_paid ON order_info(user_id) WHERE order_status = 'paid';
+CREATE INDEX idx_material_duration 
+ON learning_materials (
+    ((material_metadata->>'duration')::INT)
+);
+CREATE INDEX idx_metadata_gin 
+ON learning_materials 
+USING GIN (material_metadata);
+
+CREATE INDEX idx_audit_logs_actor ON audit_logs(actor_id);
+CREATE INDEX idx_chat_participants_read ON chat_participants(account_id, last_read_at);
 
 -- ==============================================================================
 -- 8. SAMPLE DATA (EXCLUDING ACCOUNTS)
@@ -443,17 +654,23 @@ FROM instructors i;
 
 INSERT INTO categories (category_id, categories_name, description, category_status) 
 VALUES 
-(1, 'Design & Creative', 'Courses related to design, UX/UI, 3D modeling, and creative arts.', 'active'), 
-(2, 'Development', 'Software development, programming languages, web & mobile dev.', 'active'), 
-(3, 'Business', 'Business management, finance, marketing, and entrepreneurship.', 'active')
-ON CONFLICT DO NOTHING;
+(1, 'Thiết kế', 'Courses related to design, UX/UI, 3D modeling, and creative arts.', 'active'), 
+(2, 'Lập trình', 'Software development, programming languages, web & mobile dev.', 'active'), 
+(3, 'Kinh doanh', 'Business management, finance, marketing, and entrepreneurship.', 'active'),
+(4, 'Marketing', 'Digital marketing, SEO, social media, and content strategy.', 'active'),
+(5, 'Nhiếp ảnh', 'Photography, video editing, and digital imaging.', 'active'),
+(6, 'Âm nhạc', 'Music theory, instrument playing, and audio production.', 'active'),
+(7, 'Ngoại ngữ', 'Learn English, Japanese, Chinese, and other languages.', 'active'),
+(8, 'Sức khỏe & Đời sống', 'Fitness, nutrition, meditation, and personal well-being.', 'active'),
+(9, 'Khoa học dữ liệu', 'Data science, machine learning, and artificial intelligence.', 'active')
+ON CONFLICT (category_id) DO UPDATE SET categories_name = EXCLUDED.categories_name, description = EXCLUDED.description;
 
 -- ==============================================================================
 -- 9. SAMPLE DATA FOR PRIMARY ACCOUNT (phuoctai228)
 -- ==============================================================================
 
 INSERT INTO accounts (account_id, email, password_hash, account_status, auth_provider, is_verified)
-VALUES (1, 'instructor@gmail.com', '$2a$11$w/itTk1gtGMzyoG6pw0Sxe2aNOjeKAGDdyW9BA/HdhUUK6HHGUoRG', 'active', 'local', TRUE)
+VALUES (1, 'instructor@gmail.com', '$2a$11$O7PrVmv/I5yxkexhkdrY2OB2tQf5c6Gy9P8hvqLIAF2NO34wt9C3i', 'active', 'local', TRUE)
 ON CONFLICT (account_id) DO NOTHING;
 
 INSERT INTO users (user_id, full_name)
@@ -465,8 +682,66 @@ VALUES (1)
 ON CONFLICT (instructor_id) DO NOTHING;
 
 -- ==============================================================================
--- 10. SYNC SEQUENCES (Prevent duplicate key errors)
+-- 9B. SEED SYSTEM CONFIGS
+-- ==============================================================================
+-- Tỉ lệ phần trăm (%) Sàn ăn từ mỗi giao dịch (VD: 20 = Sàn giữ 20%, Giảng viên nhận 80%)
+INSERT INTO system_configs (config_key, config_value, description)
+VALUES ('TransferRate', '80', 'Phần trăm (%) giảng viên nhận được từ mỗi giao dịch. VD: 80 = GV nhận 80%, Sàn giữ 20%.')
+ON CONFLICT (config_key) DO UPDATE SET config_value = EXCLUDED.config_value, description = EXCLUDED.description;
+
+-- Ngày chia tiền hàng tháng cho giảng viên (VD: 15 = ngày 15 hàng tháng)
+INSERT INTO system_configs (config_key, config_value, description)
+VALUES ('PayoutDay', '15', 'Ngày trong tháng thực hiện chia tiền cho giảng viên. VD: 15 = ngày 15 hàng tháng.')
+ON CONFLICT (config_key) DO UPDATE SET config_value = EXCLUDED.config_value, description = EXCLUDED.description;
+
+-- Danh sách quốc gia Stripe Connect hỗ trợ (JSON array)
+INSERT INTO system_configs (config_key, config_value, description)
+VALUES ('StripeCountries', 
+'[
+   {"code":"US","name":"United States"},{"code":"GB","name":"United Kingdom"}
+]', 'Danh sách quốc gia mà Stripe Connect hỗ trợ đăng ký tài khoản Express. Giảng viên chọn 1 trong số này khi đăng ký Stripe.')
+ON CONFLICT (config_key) DO UPDATE SET config_value = EXCLUDED.config_value, description = EXCLUDED.description;
+
+-- ==============================================================================
+-- 10. SAMPLE DATA FOR COURSES, LESSONS, MATERIALS
+-- ==============================================================================
+
+
+
+-- ==============================================================================
+-- 11. SYNC SEQUENCES (Prevent duplicate key errors)
 -- ==============================================================================
 
 SELECT setval(pg_get_serial_sequence('accounts', 'account_id'), (SELECT MAX(account_id) FROM accounts));
 SELECT setval(pg_get_serial_sequence('categories', 'category_id'), (SELECT MAX(category_id) FROM categories));
+SELECT setval(pg_get_serial_sequence('courses', 'course_id'), (SELECT MAX(course_id) FROM courses));
+SELECT setval(pg_get_serial_sequence('lessons', 'lesson_id'), (SELECT MAX(lesson_id) FROM lessons));
+SELECT setval(pg_get_serial_sequence('learning_materials', 'material_id'), (SELECT MAX(material_id) FROM learning_materials));
+SELECT setval(pg_get_serial_sequence('chats', 'chat_id'), (SELECT COALESCE(MAX(chat_id), 1) FROM chats));
+SELECT setval(pg_get_serial_sequence('messages', 'message_id'), (SELECT COALESCE(MAX(message_id), 1) FROM messages));
+DO $$
+DECLARE
+    new_account_id INT;
+BEGIN
+    -- Tạo account
+    INSERT INTO accounts (
+        email, password_hash, phone_number, account_status, 
+        auth_provider, is_verified, account_created_at, account_updated_at
+    ) VALUES (
+        'admin@gmail.com',
+        '$2a$11$O7PrVmv/I5yxkexhkdrY2OB2tQf5c6Gy9P8hvqLIAF2NO34wt9C3i',
+        '+84123456789',
+        'active',
+        'local',
+        TRUE,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    )
+    RETURNING account_id INTO new_account_id;
+
+    -- Tạo manager (Admin)
+    INSERT INTO managers (manager_id, role, display_name)
+    VALUES (new_account_id, 'admin', 'Super Administrator');
+
+    RAISE NOTICE 'Tạo Admin thành công! Account ID = %', new_account_id;
+END $$;

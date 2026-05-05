@@ -56,6 +56,7 @@ public class AuthService : IAuthService
         {
             AccessToken = accessToken,
             RefreshToken = refreshToken,
+            AccountId = a.AccountId,
             FullName = fullName,
             AvatarUrl = avatar,
             Role = role
@@ -85,6 +86,7 @@ public class AuthService : IAuthService
         {
             AccessToken = newAccessToken,
             RefreshToken = newRefreshToken,
+            AccountId = a.AccountId,
             FullName = fullName,
           
             Role = role,
@@ -216,6 +218,7 @@ public class AuthService : IAuthService
         {
             AccessToken = accessToken,
             RefreshToken = refreshToken,
+            AccountId = account.AccountId,
             FullName = fullName,
             Role = role,
             AvatarUrl = avatar,

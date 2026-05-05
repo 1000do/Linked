@@ -37,13 +37,57 @@ public class InstructorController : Controller
             var response = await _api.GetAsync("instructor/dashboard");
             if (response.IsSuccessStatusCode)
             {
-                // Đã có đơn (Pending/Approved/...) -> chuyển sang Dashboard xem trạng thái
+                var dashJson = await response.Content.ReadAsStringAsync();
+                using var dashDoc = JsonDocument.Parse(dashJson);
+                if (dashDoc.RootElement.TryGetProperty("data", out var dashData) &&
+                    dashData.TryGetProperty("approvalStatus", out var statusEl))
+                {
+                    var approvalStatus = statusEl.GetString();
+
+                    // Nếu đơn bị từ chối → hiển form điền sẵn thông tin cũ để nộp lại
+                    if (approvalStatus == "Rejected")
+                    {
+                        var model = new InstructorApplyViewModel { IsResubmit = true };
+
+                        // Gọi API lấy thông tin đơn cũ
+                        var infoResponse = await _api.GetAsync("instructor/apply-info");
+                        if (infoResponse.IsSuccessStatusCode)
+                        {
+                            var infoJson = await infoResponse.Content.ReadAsStringAsync();
+                            using var infoDoc = JsonDocument.Parse(infoJson);
+                            if (infoDoc.RootElement.TryGetProperty("data", out var info))
+                            {
+                                model.ProfessionalTitle = info.TryGetProperty("professionalTitle", out var pt) ? pt.GetString() ?? "" : "";
+                                model.ExpertiseCategories = info.TryGetProperty("expertiseCategories", out var ec) ? ec.GetString() ?? "" : "";
+                                model.LinkedinUrl = info.TryGetProperty("linkedinUrl", out var li) ? li.GetString() : null;
+                                model.ExistingDocumentUrl = info.TryGetProperty("documentUrl", out var doc) ? doc.GetString() : null;
+                            }
+                        }
+
+                        // Kiểm tra email đã xác thực
+                        await LoadEmailVerifiedAsync();
+                        model.AvailableCountries = await LoadStripeCountriesAsync();
+                        return View(model);
+                    }
+                }
+
+                // Pending hoặc Approved → redirect Dashboard xem trạng thái
                 return RedirectToAction("Dashboard");
             }
         }
         catch { }
 
         // Kiểm tra email đã xác thực chưa
+        await LoadEmailVerifiedAsync();
+
+        var applyModel = new InstructorApplyViewModel();
+        applyModel.AvailableCountries = await LoadStripeCountriesAsync();
+        return View(applyModel);
+    }
+
+    /// <summary>Load ViewBag.IsEmailVerified từ API Profile.</summary>
+    private async Task LoadEmailVerifiedAsync()
+    {
         try
         {
             var profileResponse = await _api.GetAsync("Profile");
@@ -55,23 +99,57 @@ public class InstructorController : Controller
                     data.TryGetProperty("isVerified", out var isVerifiedProp))
                 {
                     ViewBag.IsEmailVerified = isVerifiedProp.GetBoolean();
+                    return;
                 }
-                else
-                {
-                    ViewBag.IsEmailVerified = false;
-                }
-            }
-            else
-            {
-                ViewBag.IsEmailVerified = false;
             }
         }
-        catch
+        catch { }
+        ViewBag.IsEmailVerified = false;
+    }
+
+    /// <summary>Load danh sách quốc gia Stripe hỗ trợ.</summary>
+    private async Task<List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>> LoadStripeCountriesAsync()
+    {
+        var items = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+        try
         {
-            ViewBag.IsEmailVerified = false;
+            var response = await _api.GetAsync("instructor/stripe-countries");
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("data", out var data))
+                {
+                    foreach (var country in data.EnumerateArray())
+                    {
+                        var code = country.GetProperty("code").GetString();
+                        var name = country.GetProperty("name").GetString();
+                        if (code != null && name != null)
+                        {
+                            items.Add(new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                            {
+                                Value = code,
+                                Text = $"{name} ({code})"
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        catch { }
+
+        // Fallback default
+        if (items.Count == 0)
+        {
+            items.Add(new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = "SG", Text = "Singapore (SG)" });
+            items.Add(new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = "US", Text = "United States (US)" });
         }
 
-        return View(new InstructorApplyViewModel());
+        // Ưu tiên SG nếu có
+        var sg = items.FirstOrDefault(x => x.Value == "SG");
+        if (sg != null) sg.Selected = true;
+
+        return items;
     }
 
     [HttpPost]
@@ -79,7 +157,10 @@ public class InstructorController : Controller
     public async Task<IActionResult> Apply(InstructorApplyViewModel model)
     {
         if (!ModelState.IsValid)
+        {
+            model.AvailableCountries = await LoadStripeCountriesAsync();
             return View(model);
+        }
 
         try
         {
@@ -88,6 +169,7 @@ public class InstructorController : Controller
             content.Add(new StringContent(model.ProfessionalTitle ?? ""), "ProfessionalTitle");
             content.Add(new StringContent(model.ExpertiseCategories ?? ""), "ExpertiseCategories");
             content.Add(new StringContent(model.LinkedinUrl ?? ""), "LinkedinUrl");
+            content.Add(new StringContent(model.StripeCountry ?? "SG"), "StripeCountry");
 
             if (model.DocumentFile != null)
             {
@@ -124,6 +206,7 @@ public class InstructorController : Controller
             ModelState.AddModelError("", $"Lỗi: {ex.Message}");
         }
 
+        model.AvailableCountries = await LoadStripeCountriesAsync();
         return View(model);
     }
 
@@ -278,22 +361,56 @@ public class InstructorController : Controller
         return View(new List<NotificationViewModel>());
     }
     [HttpPost]
+    [IgnoreAntiforgeryToken] // Diệt lỗi 400 khi gọi AJAX
     public async Task<IActionResult> MarkAsRead(int id)
     {
-        // SỬA: Đưa id vào chuỗi URL để khớp với [HttpPut("mark-as-read/{id}")] bên BE
+        // Gọi trực tiếp đến Backend API từ Server
         var response = await _api.PutAsync($"notification/mark-as-read/{id}", null);
-
         if (response.IsSuccessStatusCode) return Ok();
         return BadRequest();
     }
 
     [HttpPost]
-    public async Task<IActionResult> Delete(int id)
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> DeleteNotification(int id)
     {
-        // SỬA: Đưa id vào chuỗi URL để khớp với [HttpDelete("{id}")] bên BE
         var response = await _api.DeleteAsync($"notification/{id}");
-
         if (response.IsSuccessStatusCode) return Ok();
         return BadRequest();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // 6. LỊCH SỬ THANH TOÁN (PAYOUTS)
+    // ═══════════════════════════════════════════════════════════════════
+    public async Task<IActionResult> Payouts()
+    {
+        try
+        {
+            var response = await _api.GetAsync("instructor/payouts");
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("data", out var dataEl))
+                {
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var list = JsonSerializer.Deserialize<List<InstructorPayoutViewModel>>(dataEl.GetRawText(), options);
+                    return View(list ?? new List<InstructorPayoutViewModel>());
+                }
+            }
+        }
+        catch { }
+
+        return View(new List<InstructorPayoutViewModel>());
+    }
+
+    public class InstructorPayoutViewModel
+    {
+        public int PayoutId { get; set; }
+        public decimal Amount { get; set; }
+        public DateTime PayoutDate { get; set; }
+        public bool IsPaid { get; set; }
+        public string CourseTitle { get; set; } = "";
+        public decimal TotalAmount { get; set; }
     }
 }

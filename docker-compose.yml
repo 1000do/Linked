@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: pgvector/pgvector:pg15
@@ -17,6 +15,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
 
   backend:
     build:
@@ -42,9 +46,12 @@ services:
       EMAIL_EMAIL: ${EMAIL_EMAIL}
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      REDIS_HOST: ${REDIS_HOST}
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     ports:
       - "5207:80"
     restart: unless-stopped

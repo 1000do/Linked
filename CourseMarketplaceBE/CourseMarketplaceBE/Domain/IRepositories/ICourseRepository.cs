@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Application.DTOs;
 
 namespace CourseMarketplaceBE.Domain.IRepositories;
 
@@ -10,8 +11,18 @@ public interface ICourseRepository
     Task<Course?> GetCourseWithDetailsAsync(int courseId);
     Task<Course?> GetByIdAsync(int courseId);
     Task<bool> HasEnrollmentsAsync(int courseId);
+    Task<IEnumerable<Course>> GetAllPublishedCoursesAsync();
+    Task<bool> IsEnrolledAsync(int userId, int courseId);
+    Task<IEnumerable<Course>> GetEnrolledCoursesAsync(int userId);
+    Task<IEnumerable<Category>> GetCategoriesAsync();
+    Task<IEnumerable<CourseStats>> GetCourseStatsAsync(IEnumerable<int> courseIds);
+    Task<CourseStats?> GetCourseStatsAsync(int courseId);
     Task AddAsync(Course course);
     void Update(Course course);
     void Delete(Course course);
+    Task<int> GetTotalPublishedCoursesCountAsync();
+    Task<decimal> GetAveragePlatformRatingAsync();
+    Task<List<CourseModerationDto>> GetPendingCoursesModerationAsync();
+    Task<bool> IsOwnerAsync(int userId, int courseId);
     Task SaveChangesAsync();
 }

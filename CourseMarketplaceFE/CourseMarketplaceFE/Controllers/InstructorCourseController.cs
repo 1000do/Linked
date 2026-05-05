@@ -8,7 +8,6 @@ using System.Text.Json;
 
 namespace CourseMarketplaceFE.Controllers
 {
-    // [Authorize(Roles = "Instructor")] // TODO: Enable when FE auth is configured
     public class InstructorCourseController : Controller
     {
         private readonly ApiClient _api;
@@ -30,12 +29,32 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // ─── LIST COURSES ─────────────────────────────────────────────────
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? searchTerm, string? status, int page = 1)
         {
-            var courses = new List<CourseListViewModel>();
+            var viewModel = new InstructorStudioViewModel
+            {
+                CurrentPage = page,
+                SearchTerm = searchTerm,
+                FilterStatus = status
+            };
 
             try
             {
+                // 1. Fetch Stats
+                var statsResp = await _api.GetAsync("instructor/dashboard");
+                if (statsResp.IsSuccessStatusCode)
+                {
+                    var statsJson = await statsResp.Content.ReadAsStringAsync();
+                    using var statsDoc = JsonDocument.Parse(statsJson);
+                    var statsData = statsDoc.RootElement.GetProperty("data");
+                    
+                    viewModel.TotalStudents = statsData.GetProperty("totalStudents").GetInt32();
+                    viewModel.AverageRating = (double)statsData.GetProperty("averageRating").GetDecimal();
+                    viewModel.ActiveCoursesCount = statsData.GetProperty("activeCoursesCount").GetInt32();
+                    viewModel.TotalRevenue = statsData.GetProperty("totalRevenue").GetDecimal();
+                }
+
+                // 2. Fetch Courses
                 var resp = await _api.GetAsync("courses/my-courses");
                 if (resp.IsSuccessStatusCode)
                 {
@@ -45,35 +64,78 @@ namespace CourseMarketplaceFE.Controllers
 
                     if (root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array)
                     {
+                        var allCourses = new List<CourseListViewModel>();
                         foreach (var item in dataEl.EnumerateArray())
                         {
-                            courses.Add(new CourseListViewModel
+                            allCourses.Add(new CourseListViewModel
                             {
                                 Id = item.GetProperty("courseId").GetInt32(),
                                 Title = item.GetProperty("title").GetString() ?? "Untitled",
-                                Students = 0, // Backend doesn't return student count yet
-                                Rating = 0,
+                                Students = item.TryGetProperty("totalStudents", out var s) ? s.GetInt32() : 0, 
+                                Rating = item.TryGetProperty("ratingAverage", out var r) ? (double)r.GetDecimal() : 0,
                                 Status = item.GetProperty("courseStatus").GetString() ?? "Draft",
                                 ThumbnailUrl = item.TryGetProperty("courseThumbnailUrl", out var t) ? t.GetString() ?? "" : "",
                                 UpdatedAt = item.TryGetProperty("updatedAt", out var u) && u.ValueKind != JsonValueKind.Null
                                     ? u.GetDateTime() : DateTime.Now
                             });
                         }
+
+                        // Apply Search & Filter
+                        var filtered = allCourses.AsQueryable();
+                        if (!string.IsNullOrEmpty(searchTerm))
+                        {
+                            filtered = filtered.Where(c => c.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+                        }
+                        if (!string.IsNullOrEmpty(status) && status != "All")
+                        {
+                            filtered = filtered.Where(c => c.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+                        }
+
+                        // Pagination
+                        int pageSize = 6;
+                        var final = filtered.ToList();
+                        viewModel.TotalItems = final.Count;
+                        viewModel.TotalPages = (int)Math.Ceiling(viewModel.TotalItems / (double)pageSize);
+                        
+                        viewModel.Courses = final
+                            .OrderByDescending(c => c.UpdatedAt)
+                            .Skip((page - 1) * pageSize)
+                            .Take(pageSize)
+                            .ToList();
                     }
                 }
             }
             catch (Exception ex)
             {
-                ViewBag.Error = "Failed to load courses: " + ex.Message;
+                ViewBag.Error = "Failed to load dashboard: " + ex.Message;
             }
 
-            return View(courses);
+            return View(viewModel);
+        }
+
+        private async Task<List<CategoryViewModel>> GetCategoriesAsync()
+        {
+            var resp = await _api.GetAsync("public/courses/categories");
+            if (resp.IsSuccessStatusCode)
+            {
+                var content = await resp.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(content);
+                if (json.RootElement.TryGetProperty("data", out var data))
+                {
+                    return JsonSerializer.Deserialize<List<CategoryViewModel>>(data.ToString(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<CategoryViewModel>();
+                }
+            }
+            return new List<CategoryViewModel>();
         }
 
         // ─── CREATE (GET) ─────────────────────────────────────────────────
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View(new CreateCourseViewModel());
+            var model = new CreateCourseViewModel
+            {
+                AvailableCategories = await GetCategoriesAsync()
+            };
+            return View(model);
         }
 
         // ─── CREATE (POST) ────────────────────────────────────────────────
@@ -82,6 +144,7 @@ namespace CourseMarketplaceFE.Controllers
         {
             if (!ModelState.IsValid)
             {
+                model.AvailableCategories = await GetCategoriesAsync();
                 return View(model);
             }
 
@@ -123,6 +186,7 @@ namespace CourseMarketplaceFE.Controllers
                 ModelState.AddModelError("", "Failed to create course: " + ex.Message);
             }
 
+            model.AvailableCategories = await GetCategoriesAsync();
             return View(model);
         }
 
@@ -130,12 +194,11 @@ namespace CourseMarketplaceFE.Controllers
         public async Task<IActionResult> Editor(int id)
         {
             ViewBag.CourseId = id;
+            ViewBag.AvailableCategories = await GetCategoriesAsync();
 
             try
             {
                 var resp = await _api.GetAsync($"courses/{id}");
-                Console.WriteLine($"[Editor] GET courses/{id} => StatusCode: {(int)resp.StatusCode}");
-
                 if (resp.IsSuccessStatusCode)
                 {
                     var json = await resp.Content.ReadAsStringAsync();
@@ -146,17 +209,19 @@ namespace CourseMarketplaceFE.Controllers
                     {
                         ViewBag.CourseTitle = data.GetProperty("title").GetString();
                         ViewBag.CourseStatus = data.TryGetProperty("courseStatus", out var s) ? s.GetString() : "Draft";
+                        ViewBag.Description = data.TryGetProperty("description", out var d) ? d.GetString() : "";
+                        ViewBag.WhatYouWillLearn = data.TryGetProperty("whatYouWillLearn", out var w) ? w.GetString() : "";
+                        ViewBag.Requirements = data.TryGetProperty("requirements", out var r) ? r.GetString() : "";
+                        ViewBag.CategoryId = data.TryGetProperty("categoryId", out var c) ? c.GetInt32() : 0;
+                        ViewBag.Price = data.TryGetProperty("price", out var p) ? p.GetDecimal() : 0;
+                        ViewBag.ThumbnailUrl = data.TryGetProperty("courseThumbnailUrl", out var t) ? t.GetString() : "";
+                        ViewBag.ModerationFeedback = data.TryGetProperty("moderationFeedback", out var mf) ? mf.GetString() : "";
 
                         // Parse lessons
                         if (data.TryGetProperty("lessons", out var lessonsEl) && lessonsEl.ValueKind == JsonValueKind.Array)
                         {
                             var rawJson = lessonsEl.GetRawText();
-                            Console.WriteLine("[Editor] LESSONS JSON length: " + rawJson.Length);
                             ViewBag.LessonsJson = rawJson;
-                        }
-                        else
-                        {
-                            Console.WriteLine("[Editor] WARNING: 'lessons' property not found in API response.");
                         }
                     }
                     else
@@ -167,8 +232,6 @@ namespace CourseMarketplaceFE.Controllers
                 else
                 {
                     var errorBody = await resp.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[Editor] API FAILED: {(int)resp.StatusCode} - {errorBody}");
-                    
                     // If 401/403 after auto-refresh attempt, session is dead — force re-login
                     if ((int)resp.StatusCode == 401 || (int)resp.StatusCode == 403)
                     {
@@ -223,9 +286,9 @@ namespace CourseMarketplaceFE.Controllers
                 {
                     var json = await resp.Content.ReadAsStringAsync();
                     using var doc = JsonDocument.Parse(json);
-                    // Clone the element so it survives after doc is disposed
-                    var data = doc.RootElement.GetProperty("data").Clone();
-                    return Json(new { success = true, data = data });
+                    var data = doc.RootElement.GetProperty("data");
+                    var newStatus = data.TryGetProperty("courseStatus", out var s) ? s.GetString() : null;
+                    return Json(new { success = true, data = data.Clone(), status = newStatus });
                 }
                 var error = await resp.Content.ReadAsStringAsync();
                 return Json(new { success = false, message = error });
@@ -237,43 +300,33 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── ADD MATERIAL (AJAX) ──────────────────────────────────────────
         [HttpPost]
-        public async Task<IActionResult> AddMaterial([FromForm] int lessonId, [FromForm] string title, [FromForm] string description, [FromForm] string materialUrl, [FromForm] string resourceUrl, [FromForm] string resourceName)
+        public async Task<IActionResult> AddMaterial([FromForm] int lessonId, [FromForm] string title, [FromForm] string description, [FromForm] string materialUrl, [FromForm] string type, [FromForm] int? duration, [FromForm] long? fileSize, [FromForm] string? fileExtension)
         {
             try
             {
-                // Send Video Material
-                var videoData = new MultipartFormDataContent();
-                videoData.Add(new StringContent(title ?? "Untitled Lesson"), "Title");
+                var formData = new MultipartFormDataContent();
+                formData.Add(new StringContent(title ?? "Untitled Material"), "Title");
                 if (!string.IsNullOrEmpty(description))
-                    videoData.Add(new StringContent(description), "Description");
+                    formData.Add(new StringContent(description), "Description");
                 if (!string.IsNullOrEmpty(materialUrl))
-                    videoData.Add(new StringContent(materialUrl), "MaterialUrl");
+                    formData.Add(new StringContent(materialUrl), "MaterialUrl");
                 
-                // Add MaterialMetadata properties directly for ASP.NET Core binding
-                videoData.Add(new StringContent("video"), "MaterialMetadata.FileType");
+                formData.Add(new StringContent(type ?? "video"), "MaterialMetadata.FileType");
+                if (duration.HasValue) formData.Add(new StringContent(duration.Value.ToString()), "MaterialMetadata.Duration");
+                if (fileSize.HasValue) formData.Add(new StringContent(fileSize.Value.ToString()), "MaterialMetadata.FileSize");
+                if (!string.IsNullOrEmpty(fileExtension)) formData.Add(new StringContent(fileExtension), "MaterialMetadata.FileExtension");
 
-                var resp1 = await _api.PostFormDataAsync($"lessons/{lessonId}/materials", videoData);
+                var resp = await _api.PostFormDataAsync($"lessons/{lessonId}/materials", formData);
 
-                // Send Resource Material if exists
-                if (!string.IsNullOrEmpty(resourceUrl))
+                if (resp.IsSuccessStatusCode)
                 {
-                    var resData = new MultipartFormDataContent();
-                    resData.Add(new StringContent(resourceName ?? "Resource File"), "Title");
-                    resData.Add(new StringContent(resourceUrl), "MaterialUrl");
-                    
-                    resData.Add(new StringContent("document"), "MaterialMetadata.FileType");
-
-                    await _api.PostFormDataAsync($"lessons/{lessonId}/materials", resData);
-                }
-
-                if (resp1.IsSuccessStatusCode)
-                {
-                    var json = await resp1.Content.ReadAsStringAsync();
+                    var json = await resp.Content.ReadAsStringAsync();
                     using var doc = JsonDocument.Parse(json);
-                    var data = doc.RootElement.GetProperty("data").Clone();
-                    return Json(new { success = true, data = data });
+                    var data = doc.RootElement.GetProperty("data");
+                    var newStatus = data.TryGetProperty("courseStatus", out var s) ? s.GetString() : null;
+                    return Json(new { success = true, data = data.Clone(), status = newStatus });
                 }
-                var error = await resp1.Content.ReadAsStringAsync();
+                var error = await resp.Content.ReadAsStringAsync();
                 return Json(new { success = false, message = error });
             }
             catch (Exception ex)
@@ -302,14 +355,41 @@ namespace CourseMarketplaceFE.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
-
-        [HttpGet("TestCourse/{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> TestCourse(int id)
+        
+        // ─── UPDATE COURSE DETAILS (AJAX) ─────────────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> UpdateDetails([FromForm] int courseId, [FromForm] string title, [FromForm] string description, [FromForm] decimal price, [FromForm] int categoryId, [FromForm] string whatYouWillLearn, [FromForm] string requirements, [FromForm] string thumbnailUrl)
         {
-            var materials = await _api.GetAsync($"courses/{id}");
-            var json = await materials.Content.ReadAsStringAsync();
-            return Content(json, "application/json");
+            try
+            {
+                var formData = new MultipartFormDataContent();
+                formData.Add(new StringContent(courseId.ToString()), "CourseId");
+                formData.Add(new StringContent(title), "Title");
+                formData.Add(new StringContent(description ?? ""), "Description");
+                formData.Add(new StringContent(price.ToString()), "Price");
+                formData.Add(new StringContent(categoryId.ToString()), "CategoryId");
+                formData.Add(new StringContent(whatYouWillLearn ?? ""), "WhatYouWillLearn");
+                formData.Add(new StringContent(requirements ?? ""), "Requirements");
+                formData.Add(new StringContent(thumbnailUrl ?? ""), "CourseThumbnailUrl");
+
+                var resp = await _api.PutFormDataAsync($"courses/{courseId}", formData);
+
+                if (resp.IsSuccessStatusCode)
+                {
+                    var json = await resp.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    var data = doc.RootElement.GetProperty("data");
+                    var newStatus = data.GetProperty("courseStatus").GetString();
+                    return Json(new { success = true, status = newStatus });
+                }
+                var error = await resp.Content.ReadAsStringAsync();
+                return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
+
     }
 }

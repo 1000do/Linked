@@ -11,9 +11,11 @@ using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using CourseMarketplaceBE.Application.BackgroundTasks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Stripe;
+using StackExchange.Redis;
 
 
 namespace CourseMarketplaceBE;
@@ -135,11 +137,16 @@ public class Program
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+        builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
         builder.Services.AddScoped<ILessonRepository, LessonRepository>();
         builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
         builder.Services.AddScoped<ICourseService, CourseService>();
         builder.Services.AddScoped<ILessonService, LessonService>();
+        builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+        builder.Services.AddScoped<IReviewService, CourseMarketplaceBE.Application.Services.ReviewService>();
+        builder.Services.AddScoped<ILandingPageService, LandingPageService>();
 
+        builder.Services.AddScoped<IChatRepository, ChatRepository>();
         builder.Services.AddSignalR(); // Đăng ký SignalR
         builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
         builder.Services.AddScoped<INotificationService, NotificationService>();
@@ -175,6 +182,37 @@ public class Program
 
         builder.Services.AddScoped<IUserProfileService, UserProfileService>();
         builder.Services.AddScoped<IInstructorService, InstructorService>();
+
+        // 🛒 Cart & Coupon
+        builder.Services.AddScoped<ICartRepository, CartRepository>();
+        builder.Services.AddScoped<ICartService, CartService>();
+
+        // 💳 Checkout & Payment (UC-19)
+        builder.Services.AddScoped<ICheckoutRepository, CheckoutRepository>();
+        builder.Services.AddScoped<ICheckoutService, CourseMarketplaceBE.Application.Services.CheckoutService>();
+        builder.Services.AddScoped<IPaymentGatewayService, StripePaymentService>();
+        // OCP: Đổi sang VNPay chỉ cần tạo VNPayPaymentService và đổi dòng trên.
+
+        // 💰 Admin Finance (UC-112, UC-120)
+        builder.Services.AddScoped<IAdminFinanceRepository, AdminFinanceRepository>();
+        builder.Services.AddScoped<IAdminFinanceService, AdminFinanceService>();
+
+        // 📊 Transactions (UC-114, UC-115)
+        builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+        builder.Services.AddScoped<ITransactionService, TransactionService>();
+        builder.Services.AddScoped<IChatService, ChatService>();
+        builder.Services.AddScoped<IModerationService, ModerationService>();
+        
+        // 🔥 Background Tasks
+        builder.Services.AddHostedService<PayoutScheduleTask>();
+        
+        // Redis Configuration
+        builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "localhost:6379";
+            return ConnectionMultiplexer.Connect(redisHost);
+        });
+        builder.Services.AddScoped<IRedisService, RedisService>();
 
         builder.Services.AddHttpClient();
 
@@ -224,7 +262,8 @@ public class Program
                     // 2. Nếu là SignalR, nó thường gửi token qua query string "access_token"
                     var accessToken = context.Request.Query["access_token"];
                     var path = context.HttpContext.Request.Path;
-                    if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/notificationHub"))
+                    if (!string.IsNullOrEmpty(accessToken) && 
+                        (path.StartsWithSegments("/notificationHub") || path.StartsWithSegments("/chatHub")))
                     {
                         context.Token = accessToken;
                         return Task.CompletedTask;
@@ -277,17 +316,14 @@ public class Program
             });
         });
 
-        // 🔥 8. CORS
-        var allowedOrigins = configuration.GetValue<string>("AllowedOrigins")?.Split(',')
-                     ?? new[] { "http://localhost:5207" };
-
+        // 🔥 8. CORS — cho phép FE MVC gọi BE API (dev: allow all origins)
         builder.Services.AddCors(options =>
         {
-            options.AddPolicy("AllowAll", policy =>
-                policy.WithOrigins(allowedOrigins)
+            options.AddPolicy("AllowFE", policy =>
+                policy.SetIsOriginAllowed(origin => true) // Cho phép mọi origin năng động
                       .AllowAnyMethod()
                       .AllowAnyHeader()
-                      .AllowCredentials()); // Bắt buộc phải có để gửi Cookie/Token
+                      .AllowCredentials()); // Bắt buộc cho SignalR
         });
 
         var app = builder.Build();
@@ -316,10 +352,11 @@ public class Program
             c.RoutePrefix = "swagger";
         });
 
-        app.UseCors("AllowAll");
+        app.UseCors("AllowFE");
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapHub<NotificationHub>("/notificationHub");
+        app.MapHub<ChatHub>("/chatHub");
 
         app.MapControllers();
 

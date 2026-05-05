@@ -1,4 +1,4 @@
-﻿using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
@@ -54,14 +54,16 @@ namespace CourseMarketplaceBE.Application.Services
 
             return data.Select(x => new CouponResponse
             {
-                CouponId = x.CouponId,
-                CouponCode = x.CouponCode,
-                CouponType = x.CouponType,
+                CouponId      = x.CouponId,
+                CouponCode    = x.CouponCode,
+                CouponType    = x.CouponType ?? "fixed",
                 DiscountValue = x.DiscountValue,
-                StartDate = x.StartDate,
-                EndDate = x.EndDate,
-                UsageLimit = x.UsageLimit,
-                IsActive = x.IsActive
+                MinOrderValue = x.MinOrderValue,
+                StartDate     = x.StartDate,
+                EndDate       = x.EndDate,
+                UsageLimit    = x.UsageLimit,
+                UsedCount     = x.UsedCount,
+                IsActive      = x.IsActive
             }).ToList();
         }
 
@@ -72,14 +74,16 @@ namespace CourseMarketplaceBE.Application.Services
 
             return new CouponResponse
             {
-                CouponId = x.CouponId,
-                CouponCode = x.CouponCode,
-                CouponType = x.CouponType,
+                CouponId      = x.CouponId,
+                CouponCode    = x.CouponCode,
+                CouponType    = x.CouponType ?? "fixed",
                 DiscountValue = x.DiscountValue,
-                StartDate = x.StartDate,
-                EndDate = x.EndDate,
-                UsageLimit = x.UsageLimit,
-                IsActive = x.IsActive
+                MinOrderValue = x.MinOrderValue,
+                StartDate     = x.StartDate,
+                EndDate       = x.EndDate,
+                UsageLimit    = x.UsageLimit,
+                UsedCount     = x.UsedCount,
+                IsActive      = x.IsActive
             };
         }
 
@@ -91,15 +95,16 @@ namespace CourseMarketplaceBE.Application.Services
 
             var coupon = new Coupon
             {
-                CouponCode = req.CouponCode.Trim(),
-                CouponType = type,
+                CouponCode    = req.CouponCode.Trim(),
+                CouponType    = type,
                 DiscountValue = req.DiscountValue,
-                StartDate = req.StartDate,
-                EndDate = req.EndDate,
-                UsageLimit = req.UsageLimit,
-                UsedCount = 0,
-                IsActive = true,
-                ManagerId = managerId
+                MinOrderValue = req.MinOrderValue < 0 ? 0 : req.MinOrderValue,
+                StartDate     = req.StartDate,
+                EndDate       = req.EndDate,
+                UsageLimit    = req.UsageLimit,
+                UsedCount     = 0,
+                IsActive      = req.IsActive,
+                ManagerId     = managerId
             };
 
             await _repo.AddAsync(coupon);
@@ -112,13 +117,10 @@ namespace CourseMarketplaceBE.Application.Services
             if (coupon == null) throw new Exception("Coupon not found");
 
             // giữ type cũ nếu không update
-            var newType = req.CouponType != null
-                ? NormalizeType(req.CouponType)
-                : coupon.CouponType!;
-
+            var newType  = req.CouponType != null ? NormalizeType(req.CouponType) : coupon.CouponType!;
             var newValue = req.DiscountValue ?? coupon.DiscountValue;
             var newStart = req.StartDate ?? coupon.StartDate;
-            var newEnd = req.EndDate ?? coupon.EndDate;
+            var newEnd   = req.EndDate ?? coupon.EndDate;
             var newUsage = req.UsageLimit ?? coupon.UsageLimit;
 
             ValidateCoupon(newType, newValue, newStart, newEnd, newUsage);
@@ -126,10 +128,13 @@ namespace CourseMarketplaceBE.Application.Services
             if (req.CouponCode != null)
                 coupon.CouponCode = req.CouponCode.Trim();
 
-            coupon.CouponType = newType;
+            coupon.CouponType    = newType;
             coupon.DiscountValue = newValue;
-            coupon.StartDate = newStart;
-            coupon.EndDate = newEnd;
+            coupon.MinOrderValue = req.MinOrderValue.HasValue
+                ? Math.Max(0, req.MinOrderValue.Value)
+                : coupon.MinOrderValue;
+            coupon.StartDate  = newStart;
+            coupon.EndDate    = newEnd;
             coupon.UsageLimit = newUsage;
 
             if (req.IsActive.HasValue)
@@ -162,6 +167,10 @@ namespace CourseMarketplaceBE.Application.Services
 
             if (coupon.UsageLimit.HasValue && coupon.UsedCount >= coupon.UsageLimit)
                 throw new Exception("Coupon usage limit reached");
+
+            // Kiểm tra giá trị đơn tối thiểu
+            if (coupon.MinOrderValue > 0 && originalPrice < coupon.MinOrderValue)
+                throw new Exception($"Giá trị đơn hàng tối thiểu để dùng mã này là {coupon.MinOrderValue:N0} VND.");
 
             decimal finalPrice;
 

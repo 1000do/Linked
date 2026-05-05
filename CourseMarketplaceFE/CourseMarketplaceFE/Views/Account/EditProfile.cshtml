@@ -1,4 +1,4 @@
-﻿@model LinkedLearn.Models.UserVM.UpdateProfileViewModel
+@model LinkedLearn.Models.UserVM.UpdateProfileViewModel
 @{
     ViewData["Title"] = "Edit Profile";
 }
@@ -16,6 +16,10 @@
                     <a href="/Account/EditProfile" class="flex items-center gap-4 px-4 py-3 rounded-2xl bg-primary-container/30 text-primary font-bold transition-all">
                         <span class="material-symbols-outlined" style='font-variation-settings: "FILL" 1;'>edit_square</span>
                         <span>Edit Profile</span>
+                    </a>
+                    <a href="/Account/ChangePassword" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all mt-2 border-t border-slate-100 pt-4">
+                        <span class="material-symbols-outlined">lock</span>
+                        <span>Đổi mật khẩu</span>
                     </a>
                 </nav>
             </div>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace CourseMarketplaceBE.Domain.Entities;
@@ -24,4 +24,6 @@ public partial class AiModel
     public DateTime? ModelUpdatedAt { get; set; }
 
     public virtual ICollection<AiModelsCourse> AiModelsCourses { get; set; } = new List<AiModelsCourse>();
+    public virtual ICollection<CourseReviewModerationLog> CourseReviewModerationLogs { get; set; } = new List<CourseReviewModerationLog>();
+    public virtual ICollection<LessonReviewModerationLog> LessonReviewModerationLogs { get; set; } = new List<LessonReviewModerationLog>();
 }

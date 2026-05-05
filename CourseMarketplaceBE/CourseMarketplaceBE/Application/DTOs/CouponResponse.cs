@@ -1,4 +1,4 @@
-﻿namespace CourseMarketplaceBE.Application.DTOs
+namespace CourseMarketplaceBE.Application.DTOs
 {
     public class CouponResponse
     {
@@ -6,9 +6,11 @@
         public string CouponCode { get; set; } = null!;
         public string CouponType { get; set; } = null!;
         public decimal DiscountValue { get; set; }
-        public DateTime? StartDate { get; set; } 
-        public DateTime? EndDate { get; set; }  
-        public int? UsageLimit { get; set; }    
+        public decimal MinOrderValue { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public int? UsageLimit { get; set; }
+        public int? UsedCount { get; set; }
         public bool? IsActive { get; set; }
     }
 }

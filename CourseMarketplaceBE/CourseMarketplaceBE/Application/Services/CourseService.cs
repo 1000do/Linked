@@ -13,39 +13,111 @@ namespace CourseMarketplaceBE.Application.Services;
 public class CourseService : ICourseService
 {
     private readonly ICourseRepository _courseRepository;
+    private readonly IInstructorRepository _instructorRepository;
     private readonly IFileUploadService _uploadService;
 
-    public CourseService(ICourseRepository courseRepository, IFileUploadService uploadService)
+    public CourseService(ICourseRepository courseRepository, IInstructorRepository instructorRepository, IFileUploadService uploadService)
     {
         _courseRepository = courseRepository;
+        _instructorRepository = instructorRepository;
         _uploadService = uploadService;
+    }
+
+    public async Task<IEnumerable<CourseResponse>> GetAllPublishedCoursesAsync(int? userId = null)
+    {
+        var courses = await _courseRepository.GetAllPublishedCoursesAsync();
+        var courseIds = courses.Select(c => c.CourseId).ToList();
+
+        // Fetch stats for these courses
+        var stats = await _courseRepository.GetCourseStatsAsync(courseIds);
+
+        // Check enrollment if user is logged in
+        var enrolledCourseIds = new List<int>();
+        if (userId.HasValue)
+        {
+            foreach (var cid in courseIds)
+            {
+                if (await _courseRepository.IsEnrolledAsync(userId.Value, cid))
+                {
+                    enrolledCourseIds.Add(cid);
+                }
+            }
+        }
+
+        return courses.Select(c =>
+        {
+            var s = stats.FirstOrDefault(st => st.CourseId == c.CourseId);
+            return new CourseResponse
+            {
+                CourseId = c.CourseId,
+                InstructorId = c.InstructorId,
+                CategoryId = c.CategoryId,
+                Title = c.Title,
+                Description = c.Description,
+                Price = c.Price,
+                CourseThumbnailUrl = c.CourseThumbnailUrl,
+                CourseStatus = c.CourseStatus,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt,
+                WhatYouWillLearn = c.WhatYouWillLearn,
+                Requirements = c.Requirements,
+                CategoryName = c.Category?.CategoriesName,
+                InstructorName = c.Instructor?.InstructorNavigation?.FullName ?? "Unknown Instructor",
+                InstructorAvatarUrl = c.Instructor?.InstructorNavigation?.UserNavigation?.AvatarUrl,
+                TotalStudents = s?.TotalStudents ?? 0,
+                RatingAverage = (decimal)(s?.RatingAverage ?? 0),
+                IsEnrolled = enrolledCourseIds.Contains(c.CourseId),
+                IsOwner = userId.HasValue && c.InstructorId == userId.Value,
+                TotalReviews = s?.TotalReviews ?? 0
+            };
+        });
+    }
+
+    public async Task<bool> IsEnrolledAsync(int userId, int courseId)
+    {
+        return await _courseRepository.IsEnrolledAsync(userId, courseId);
     }
 
     public async Task<IEnumerable<CourseResponse>> GetInstructorCoursesAsync(int instructorId)
     {
         var courses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
-        return courses.Select(c => new CourseResponse
+        var courseIds = courses.Select(c => c.CourseId).ToList();
+
+        // Fetch stats for these courses
+        var stats = await _courseRepository.GetCourseStatsAsync(courseIds);
+
+        return courses.Select(c =>
         {
-            CourseId = c.CourseId,
-            InstructorId = c.InstructorId,
-            CategoryId = c.CategoryId,
-            Title = c.Title,
-            Description = c.Description,
-            Price = c.Price,
-            CourseThumbnailUrl = c.CourseThumbnailUrl,
-            CourseStatus = c.CourseStatus,
-            CreatedAt = c.CreatedAt,
-            UpdatedAt = c.UpdatedAt
+            var s = stats.FirstOrDefault(st => st.CourseId == c.CourseId);
+            return new CourseResponse
+            {
+                CourseId = c.CourseId,
+                InstructorId = c.InstructorId,
+                CategoryId = c.CategoryId,
+                Title = c.Title,
+                Description = c.Description,
+                Price = c.Price,
+                CourseThumbnailUrl = c.CourseThumbnailUrl,
+                CourseStatus = c.CourseStatus,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt,
+                WhatYouWillLearn = c.WhatYouWillLearn,
+                Requirements = c.Requirements,
+                TotalStudents = s?.TotalStudents ?? 0,
+                RatingAverage = (decimal)(s?.RatingAverage ?? 0)
+            };
         });
     }
 
-    public async Task<CourseDetailResponse?> GetCourseWithDetailsAsync(int courseId, int instructorId)
+    public async Task<CourseDetailResponse?> GetCourseWithDetailsAsync(int courseId, int instructorId, int? userId = null)
     {
         var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
         if (course == null) return null;
 
-        // Optionally, if only the instructor can view it:
-        // if (course.InstructorId != instructorId) throw new UnauthorizedAccessException();
+        var courseStats = await _courseRepository.GetCourseStatsAsync(courseId);
+        var instructorStats = course.InstructorId.HasValue 
+            ? await _instructorRepository.GetStatsAsync(course.InstructorId.Value) 
+            : null;
 
         var response = new CourseDetailResponse
         {
@@ -59,6 +131,21 @@ public class CourseService : ICourseService
             CourseStatus = course.CourseStatus,
             CreatedAt = course.CreatedAt,
             UpdatedAt = course.UpdatedAt,
+            WhatYouWillLearn = course.WhatYouWillLearn,
+            Requirements = course.Requirements,
+            CategoryName = course.Category?.CategoriesName,
+            InstructorName = course.Instructor?.InstructorNavigation?.FullName ?? "Unknown Instructor",
+            InstructorAvatarUrl = course.Instructor?.InstructorNavigation?.UserNavigation?.AvatarUrl,
+            InstructorBio = course.Instructor?.InstructorNavigation?.Bio,
+            InstructorProfessionalTitle = course.Instructor?.ProfessionalTitle,
+            InstructorCoursesCount = course.Instructor?.Courses?.Count ?? 0,
+            InstructorReviewCount = 0, 
+            InstructorStudentsCount = instructorStats?.TotalStudentsCount ?? 0,
+            TotalStudents = courseStats?.TotalStudents ?? 0,
+            TotalReviews = courseStats?.TotalReviews ?? 0,
+            RatingAverage = (decimal)(courseStats?.RatingAverage ?? 0),
+            IsEnrolled = userId.HasValue && await _courseRepository.IsEnrolledAsync(userId.Value, courseId),
+            IsOwner = userId.HasValue && course.InstructorId == userId.Value,
             Lessons = course.Lessons.Select(l => new LessonResponse
             {
                 LessonId = l.LessonId,
@@ -86,8 +173,15 @@ public class CourseService : ICourseService
         return response;
     }
 
+
     public async Task<CourseResponse> CreateCourseAsync(CourseCreateRequest request, int instructorId)
     {
+        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        if (instructor == null || !string.Equals(instructor.ApprovalStatus, "Approved", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new BadRequestException("You must be an approved instructor to create a course.");
+        }
+
         string? thumbnailUrl = request.CourseThumbnailUrl;
 
         if (request.ThumbnailFile != null)
@@ -107,6 +201,8 @@ public class CourseService : ICourseService
             Description = request.Description,
             Price = request.Price,
             CourseThumbnailUrl = thumbnailUrl,
+            WhatYouWillLearn = request.WhatYouWillLearn,
+            Requirements = request.Requirements,
             CourseStatus = "draft", // Default status
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -126,7 +222,9 @@ public class CourseService : ICourseService
             CourseThumbnailUrl = course.CourseThumbnailUrl,
             CourseStatus = course.CourseStatus,
             CreatedAt = course.CreatedAt,
-            UpdatedAt = course.UpdatedAt
+            UpdatedAt = course.UpdatedAt,
+            WhatYouWillLearn = course.WhatYouWillLearn,
+            Requirements = course.Requirements
         };
     }
 
@@ -155,7 +253,17 @@ public class CourseService : ICourseService
         course.Description = request.Description;
         course.Price = request.Price;
         course.CourseThumbnailUrl = thumbnailUrl;
+        course.WhatYouWillLearn = request.WhatYouWillLearn;
+        course.Requirements = request.Requirements;
         course.UpdatedAt = DateTime.UtcNow;
+
+        // Nếu khóa học đang ở trạng thái Published, chuyển về Pending để kiểm duyệt lại
+        if (course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        {
+            course.CourseStatus = "pending";
+            // Tùy chọn: Xóa feedback cũ khi có thay đổi mới
+            course.ModerationFeedback = null;
+        }
 
         _courseRepository.Update(course);
         await _courseRepository.SaveChangesAsync();
@@ -171,7 +279,9 @@ public class CourseService : ICourseService
             CourseThumbnailUrl = course.CourseThumbnailUrl,
             CourseStatus = course.CourseStatus,
             CreatedAt = course.CreatedAt,
-            UpdatedAt = course.UpdatedAt
+            UpdatedAt = course.UpdatedAt,
+            WhatYouWillLearn = course.WhatYouWillLearn,
+            Requirements = course.Requirements
         };
     }
 
@@ -184,10 +294,20 @@ public class CourseService : ICourseService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to modify this course.");
 
-        if (status != "published" && status != "archived")
-            throw new BadRequestException("Invalid status. Allowed values are 'published' or 'archived'.");
+        // Instructor chỉ được gửi yêu cầu duyệt (pending) hoặc ẩn khóa học (archived)
+        // Việc chuyển sang "published" chỉ được phép nếu khóa học đang ở trạng thái "archived" (Unhide)
+        // Các trường hợp khác để lên "published" phải qua Admin
+        if (status.Equals("published", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!course.CourseStatus.Equals("archived", StringComparison.OrdinalIgnoreCase))
+                throw new BadRequestException("Only archived courses can be set back to published by instructor.");
+        }
+        else if (!status.Equals("pending", StringComparison.OrdinalIgnoreCase) && !status.Equals("archived", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new BadRequestException("Invalid status. Allowed values are 'pending', 'archived', or 'published' (for unarchiving).");
+        }
 
-        course.CourseStatus = status;
+        course.CourseStatus = status.ToLower();
         course.UpdatedAt = DateTime.UtcNow;
 
         _courseRepository.Update(course);
@@ -209,5 +329,15 @@ public class CourseService : ICourseService
 
         _courseRepository.Delete(course);
         await _courseRepository.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<CategoryResponse>> GetCategoriesAsync()
+    {
+        var categories = await _courseRepository.GetCategoriesAsync();
+        return categories.Select(c => new CategoryResponse
+        {
+            CategoryId = c.CategoryId,
+            CategoriesName = c.CategoriesName
+        });
     }
 }

@@ -21,6 +21,10 @@ public class InstructorApplicationRequest
 
     /// <summary>File CV/CMND upload lên Cloudinary</summary>
     public IFormFile? DocumentFile { get; set; }
+
+    [Required(ErrorMessage = "Vui lòng chọn quốc gia cho tài khoản Stripe.")]
+    [StringLength(2)]
+    public string StripeCountry { get; set; } = null!;
 }
 
 /// <summary>
@@ -40,11 +44,30 @@ public class InstructorDashboardDto
     public int InstructorId { get; set; }
     public string? ProfessionalTitle { get; set; }
     public string? ExpertiseCategories { get; set; }
+    public string? LinkedinUrl { get; set; }
+    public string? DocumentUrl { get; set; }
     public string? ApprovalStatus { get; set; }
     public string? StripeAccountId { get; set; }
     public string? StripeOnboardingStatus { get; set; }
     public bool PayoutsEnabled { get; set; }
     public bool ChargesEnabled { get; set; }
+    public string? StripeCountry { get; set; }
     public string? FullName { get; set; }
     public string? Email { get; set; }
+
+    // Statistics from Views
+    public int TotalStudents { get; set; }
+    public decimal AverageRating { get; set; }
+    public int ActiveCoursesCount { get; set; }
+    public decimal TotalRevenue { get; set; }
+}
+
+public class InstructorPayoutDto
+{
+    public int PayoutId { get; set; }
+    public decimal Amount { get; set; }
+    public DateTime PayoutDate { get; set; }
+    public bool IsPaid { get; set; }
+    public string CourseTitle { get; set; } = "";
+    public decimal TotalAmount { get; set; }
 }

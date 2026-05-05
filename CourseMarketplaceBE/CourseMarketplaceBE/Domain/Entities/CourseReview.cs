@@ -1,17 +1,19 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace CourseMarketplaceBE.Domain.Entities;
 
-public partial class Review
+public partial class CourseReview
 {
-    public int ReviewId { get; set; }
+    public int CourseReviewId { get; set; }
 
-    public int? EnrollmentId { get; set; }
+    public int EnrollmentId { get; set; }
 
     public float? Rating { get; set; }
 
     public string? Comment { get; set; }
+
+    public string CourseReviewStatus { get; set; } = "ok";
 
     public DateTime? CreatedAt { get; set; }
 
@@ -19,5 +21,5 @@ public partial class Review
 
     public bool? IsRemoved { get; set; }
 
-    public virtual Enrollment? Enrollment { get; set; }
+    public virtual Enrollment Enrollment { get; set; } = null!;
 }

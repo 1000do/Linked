@@ -58,6 +58,14 @@ public class LessonService : ILessonService
         };
 
         await _lessonRepository.AddAsync(lesson);
+        
+        if (course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        {
+            course.CourseStatus = "pending";
+            course.ModerationFeedback = null;
+            _courseRepository.Update(course);
+        }
+
         await _lessonRepository.SaveChangesAsync();
 
         return new LessonResponse
@@ -69,7 +77,8 @@ public class LessonService : ILessonService
             ThumbnailUrl = lesson.ThumbnailUrl,
             CreatedAt = lesson.CreatedAt,
             UpdatedAt = lesson.UpdatedAt,
-            LessonStatus = lesson.LessonStatus
+            LessonStatus = lesson.LessonStatus,
+            CourseStatus = course.CourseStatus
         };
     }
 
@@ -95,9 +104,15 @@ public class LessonService : ILessonService
 
         var existingMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
         var fileType = request.MaterialMetadata?.FileType ?? "video";
-        var existingMaterial = existingMaterials.FirstOrDefault(m => 
-            (m.MaterialMetadata != null && m.MaterialMetadata.FileType == fileType) || 
-            (fileType == "video" && m.MaterialMetadata == null));
+        
+        LearningMaterial? existingMaterial = null;
+        // Only enforce 1-to-1 for videos. For documents, allow multiple by creating new.
+        if (fileType == "video")
+        {
+            existingMaterial = existingMaterials.FirstOrDefault(m => 
+                (m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || 
+                (m.MaterialMetadata == null));
+        }
 
         LearningMaterial material;
         if (existingMaterial != null)
@@ -135,6 +150,14 @@ public class LessonService : ILessonService
 
         await _materialRepository.SaveChangesAsync();
 
+        if (lesson.Course != null && lesson.Course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        {
+            lesson.Course.CourseStatus = "pending";
+            lesson.Course.ModerationFeedback = null;
+            _courseRepository.Update(lesson.Course);
+            await _courseRepository.SaveChangesAsync();
+        }
+
         return new MaterialResponse
         {
             MaterialId = material.MaterialId,
@@ -144,7 +167,8 @@ public class LessonService : ILessonService
             MaterialUrl = material.MaterialUrl,
             MaterialMetadata = material.MaterialMetadata,
             CreatedAt = material.CreatedAt,
-            UpdatedAt = material.UpdatedAt
+            UpdatedAt = material.UpdatedAt,
+            CourseStatus = lesson.Course?.CourseStatus
         };
     }
 

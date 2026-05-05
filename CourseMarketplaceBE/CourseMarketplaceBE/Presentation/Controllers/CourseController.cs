@@ -84,6 +84,10 @@ public class CourseController : ControllerBase
             var result = await _courseService.CreateCourseAsync(request, instructorId);
             return StatusCode(201, ApiResponse<object>.SuccessResponse(result, "Course created successfully."));
         }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
         catch (UnauthorizedAccessException ex)
         {
             return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));

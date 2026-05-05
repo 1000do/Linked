@@ -82,13 +82,14 @@ namespace CourseMarketplaceFE.Controllers
                     return View(model);
                 }
 
-                // ── 1. Lưu AccessToken (HttpOnly, 15 phút) ──────────────────────
+                // ── 1. Lưu AccessToken (HttpOnly, 24 giờ — khớp JWT expiration) ──────
+                var tokenExpiry = DateTimeOffset.UtcNow.AddHours(24);
                 Response.Cookies.Append("AccessToken", result.AccessToken ?? "", new CookieOptions
                 {
                     HttpOnly = true,
                     Secure = Request.IsHttps,
                     SameSite = SameSiteMode.Lax,
-                    Expires = DateTimeOffset.UtcNow.AddMinutes(15),
+                    Expires = tokenExpiry,
                     Path = "/"
                 });
 
@@ -106,15 +107,16 @@ namespace CourseMarketplaceFE.Controllers
                     });
                 }
 
-                // ── 3. Lưu display info (không HttpOnly) ─────────────────────────
+                // ── 3. Lưu display info (cùng thời hạn với AccessToken) ───────────
                 var displayOpts = new CookieOptions
                 {
-                    Expires = DateTimeOffset.UtcNow.AddDays(7),
+                    Expires = tokenExpiry,
                     Path = "/"
                 };
                 Response.Cookies.Append("UserName", result.FullName ?? model.Identifier, displayOpts);
                 Response.Cookies.Append("AvatarUrl", result.AvatarUrl ?? "", displayOpts);
                 Response.Cookies.Append("UserRole", result.Role ?? "user", displayOpts);
+                Response.Cookies.Append("UserId", result.AccountId.ToString(), displayOpts);
 
                 if (string.IsNullOrEmpty(result.Role))
                 {
@@ -122,7 +124,8 @@ namespace CourseMarketplaceFE.Controllers
                 }
 
                 // ── 4. Redirect theo role ──────────────────────────────────────────
-                if (result.Role.Trim().ToLower() == "manager")
+                var roleLower = result.Role.Trim().ToLower();
+                if (roleLower == "manager" || roleLower == "admin" || roleLower == "staff")
                     return RedirectToAction("Admin", "Notification");
 
                 return RedirectToAction("Index", "Home", new { debug = "is_user" });
@@ -147,6 +150,8 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Delete("RefreshToken", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("UserName", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("UserRole", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("UserId", new CookieOptions { Path = "/" });
 
             return RedirectToAction("Index", "Home");
         }
@@ -161,6 +166,8 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Delete("RefreshToken", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("UserName", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("UserRole", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("UserId", new CookieOptions { Path = "/" });
 
             return RedirectToAction("Login");
         }
@@ -252,6 +259,51 @@ namespace CourseMarketplaceFE.Controllers
             return View(model);
         }
 
+        [HttpGet]
+        public IActionResult ChangePassword()
+        {
+            if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login");
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmNewPassword)
+        {
+            if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login");
+
+            if (newPassword != confirmNewPassword)
+            {
+                ViewBag.ErrorMessage = "Mật khẩu xác nhận không khớp.";
+                return View();
+            }
+
+            var response = await _api.PostJsonAsync("Profile/change-password", new
+            {
+                CurrentPassword = currentPassword,
+                NewPassword = newPassword
+            });
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Gọi BE logout để dọn token nếu cần
+                await _api.PostAsync("Auth/logout");
+
+                // Xoá cookie FE để force đăng nhập lại
+                Response.Cookies.Delete("AccessToken", new CookieOptions { Path = "/" });
+                Response.Cookies.Delete("RefreshToken", new CookieOptions { Path = "/" });
+                Response.Cookies.Delete("UserName", new CookieOptions { Path = "/" });
+                Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
+                Response.Cookies.Delete("UserRole", new CookieOptions { Path = "/" });
+
+                TempData["SuccessMessage"] = "Đổi mật khẩu thành công! Vui lòng đăng nhập lại.";
+                return RedirectToAction("Login");
+            }
+
+            var errorJson = await response.Content.ReadAsStringAsync();
+            ViewBag.ErrorMessage = ParseErrorMessage(errorJson, "Lỗi khi đổi mật khẩu.");
+            return View();
+        }
+
         // ─── Helpers ──────────────────────────────────────────────────────
 
         private async Task HandleApiError(HttpResponseMessage response)
@@ -284,16 +336,20 @@ namespace CourseMarketplaceFE.Controllers
 
             var result = await response.Content.ReadFromJsonAsync<LoginResponse>(_jsonOptions);
 
+            var tokenExpiry = DateTimeOffset.UtcNow.AddHours(24);
+
             var cookieOptions = new CookieOptions
             {
-                Expires = DateTimeOffset.UtcNow.AddDays(7),
+                Expires = tokenExpiry,
                 Path = "/"
             };
 
             Response.Cookies.Append("AccessToken", result?.AccessToken ?? "", new CookieOptions
             {
                 HttpOnly = true,
-                Expires = cookieOptions.Expires,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
+                Expires = tokenExpiry,
                 Path = "/"
             });
 
@@ -302,6 +358,8 @@ namespace CourseMarketplaceFE.Controllers
                 Response.Cookies.Append("RefreshToken", result.RefreshToken, new CookieOptions
                 {
                     HttpOnly = true,
+                    Secure = Request.IsHttps,
+                    SameSite = SameSiteMode.Lax,
                     Expires = DateTimeOffset.UtcNow.AddDays(7),
                     Path = "/"
                 });
@@ -310,6 +368,7 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Append("UserName", result?.FullName ?? "User", cookieOptions);
             Response.Cookies.Append("AvatarUrl", result?.AvatarUrl ?? "", cookieOptions);
             Response.Cookies.Append("UserRole", result?.Role ?? "user", cookieOptions);
+            Response.Cookies.Append("UserId", result?.AccountId.ToString() ?? "0", cookieOptions);
 
             return Ok();
         }

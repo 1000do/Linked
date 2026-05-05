@@ -1,17 +1,46 @@
 @using Microsoft.AspNetCore.Http
 <nav class="fixed top-0 w-full z-50 bg-[#f0fcfb]/40 border-b border-primary/10 glass-nav">
-    <div class="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
-        <div class="flex items-center gap-8">
+    <div class="flex items-center px-8 py-2 w-full">
+        <div class="flex items-center gap-6">
             <a href="/" class="text-2xl font-headline font-extrabold tracking-tight text-primary">LinkedLearn</a>
+            
+            @* 🧭 CATEGORIES DROPDOWN *@
+            <div class="relative hidden md:block" id="categories-dropdown">
+                <button onclick="toggleCategories()" 
+                        class="px-4 py-2 text-sm font-bold text-slate-700 hover:text-primary transition-colors flex items-center gap-1">
+                    Chủ Đề Tôi Cần
+                    <span class="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
+                </button>
+                <div id="categories-box" 
+                     class="hidden absolute left-0 mt-3 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-[60] py-2">
+                    <div id="categories-items-container" class="max-h-96 overflow-y-auto">
+                        <div class="px-4 py-3 text-xs text-slate-400">Đang tải danh mục...</div>
+                    </div>
+                </div>
+            </div>
+
+            @* 🔍 GLOBAL SEARCH BAR *@
+            <div class="hidden lg:flex items-center flex-1 max-w-5xl px-12 group">
+                <div class="relative w-full">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+                    <form action="/Course" method="get">
+                        <input type="text" name="query" 
+                               class="w-full h-10 pl-12 pr-4 bg-slate-100 border border-slate-200 rounded-full text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+                               placeholder="Tìm kiếm nội dung bất kỳ..." />
+                    </form>
+                </div>
+            </div>
         </div>
 
-        <div class="flex items-center gap-4">
-            @{
+        <div class="flex items-center gap-2 ml-auto shrink-0">
+        @{
+                var accessTokenExists = !string.IsNullOrEmpty(Context.Request.Cookies["AccessToken"]);
                 var userName = Context.Request.Cookies["UserName"];
                 var avatarUrl = Context.Request.Cookies["AvatarUrl"];
+                var isLoggedIn = accessTokenExists && !string.IsNullOrEmpty(userName);
             }
 
-            @if (string.IsNullOrEmpty(userName))
+            @if (!isLoggedIn)
             {
                 <a href="/Account/Login" class="px-6 py-2 text-sm font-semibold text-primary rounded-full hover:bg-primary/5 transition-colors">Login</a>
                 <a href="/Account/Register" class="px-6 py-2 text-sm font-semibold bg-primary text-white rounded-full shadow-md shadow-primary/20 hover:opacity-90 transition-all">Register</a>
@@ -52,6 +81,56 @@
                         </a>
                         <div class="w-px h-6 bg-slate-200 mx-2"></div>
                     }
+
+                    @* 🛒 GIỎ HÀNG mini-dropdown *@
+                    <div class="relative" id="cart-dropdown">
+                        <button onclick="toggleCart()"
+                                class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative">
+                            <span class="material-symbols-outlined text-[24px]" style='font-variation-settings:"FILL" 1;'>shopping_cart</span>
+                            <span id="cart-badge"
+                                  class="hidden absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
+                            </span>
+                        </button>
+
+                        <div id="cart-box"
+                             class="hidden absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[60]">
+                            @* Header dropdown *@
+                            <div class="p-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                                <span class="font-bold text-slate-800 text-sm">Giỏ hàng</span>
+                                <a href="/Cart" class="text-[11px] text-primary font-bold hover:underline">Xem tất cả</a>
+                            </div>
+
+                            @* Danh sách item (render bằng JS) *@
+                            <div id="cart-items-container" class="max-h-72 overflow-y-auto">
+                                <div class="p-4 text-center text-slate-400 text-xs">Đang tải...</div>
+                            </div>
+
+                            @* Footer: nút Xem giỏ hàng *@
+                            <div class="p-3 border-t border-slate-100">
+                                <a href="/Cart"
+                                   class="flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-primary to-secondary text-white text-xs font-bold rounded-xl hover:shadow-md transition-all">
+                                    <span class="material-symbols-outlined text-sm">shopping_cart_checkout</span>
+                                    Đến Giỏ hàng
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* 📚 MY COURSES ICON *@
+                    <a href="/Course/MyCourses" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Khóa học của tôi">
+                        <span class="material-symbols-outlined text-[24px]">school</span>
+                    </a>
+
+                    @* ❤️ WISHLIST ICON *@
+                    <a href="/Wishlist" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Danh sách yêu thích">
+                        <span class="material-symbols-outlined text-[24px]">favorite</span>
+                    </a>
+
+                    @* 💬 CHAT ICON *@
+                    <a href="/Chat/Learner" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Tin nhắn">
+                        <span class="material-symbols-outlined text-[24px]">chat_bubble</span>
+                        <span class="absolute top-2 right-2 w-2 h-2 bg-indigo-500 rounded-full border-2 border-white"></span>
+                    </a>
 
                     <div class="relative" id="notification-dropdown">
                         <button onclick="toggleNoti()" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative">
@@ -116,3 +195,159 @@
         }
     });
 </script>
+
+<script>
+    // ─── CART MINI DROPDOWN ───
+    const cartApiUrl = "http://localhost:5207/api/cart/summary";
+    const accessToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`;
+
+    function toggleCart() {
+        const box = document.getElementById('cart-box');
+        const isHidden = box.classList.contains('hidden');
+        // Đóng notification nếu đang mở
+        document.getElementById('noti-box')?.classList.add('hidden');
+        box.classList.toggle('hidden');
+        if (isHidden) loadCartPreview();
+    }
+
+    async function loadCartPreview() {
+        const container = document.getElementById('cart-items-container');
+        const badge    = document.getElementById('cart-badge');
+        if (!container) return;
+
+        if (!accessToken) {
+            container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">Vui lòng đăng nhập</div>`;
+            return;
+        }
+
+        try {
+            const res = await fetch(cartApiUrl, {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+
+            if (!res.ok) {
+                container.innerHTML = `<div class="p-4 text-center text-xs text-red-400">Lỗi tải giỏ hàng</div>`;
+                return;
+            }
+
+            const result = await res.json();
+            const items  = result?.data?.items ?? [];
+
+            // Cập nhật số lượng trên badge
+            if (items.length > 0) {
+                badge.textContent = items.length > 9 ? '9+' : items.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="py-8 flex flex-col items-center gap-2 text-slate-400">
+                        <span class="material-symbols-outlined text-4xl text-slate-200">shopping_cart</span>
+                        <p class="text-xs">Giỏ hàng đang trống</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = items.map(item => `
+                <a href="/Course/Details/${item.courseId}"
+                   class="flex items-center gap-3 px-4 py-3 hover:bg-emerald-50/50 transition-colors border-b border-slate-50 last:border-0">
+                    ${ item.thumbnailUrl
+                        ? `<img src="${item.thumbnailUrl}" alt="${item.title}"
+                               class="w-14 h-10 object-cover rounded-lg shrink-0 bg-slate-100" loading="lazy" />`
+                        : `<div class="w-14 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shrink-0">
+                               <span class="material-symbols-outlined text-primary text-lg">school</span>
+                           </div>`
+                    }
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-semibold text-slate-800 line-clamp-2 leading-snug">${item.title}</p>
+                        <p class="text-xs font-bold text-primary mt-1">${item.price.toLocaleString('vi-VN')} VND</p>
+                    </div>
+                </a>`).join('');
+
+        } catch (err) {
+            container.innerHTML = `<div class="p-4 text-center text-xs text-red-400">Lỗi kết nối</div>`;
+        }
+    }
+
+    // Load badge ngay khi trang load (không cần mở dropdown)
+    async function initCartBadge() {
+        const badge = document.getElementById('cart-badge');
+        if (!badge || !accessToken) return;
+        try {
+            const res = await fetch(cartApiUrl, {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            if (!res.ok) return;
+            const result = await res.json();
+            const count  = result?.data?.items?.length ?? 0;
+            if (count > 0) {
+                badge.textContent = count > 9 ? '9+' : count;
+                badge.classList.remove('hidden');
+            }
+        } catch { }
+    }
+
+    // Đóng cart khi click ra ngoài
+    window.addEventListener('click', function(e) {
+        const cartEl = document.getElementById('cart-dropdown');
+        if (cartEl && !cartEl.contains(e.target))
+            document.getElementById('cart-box')?.classList.add('hidden');
+    });
+
+    document.addEventListener('DOMContentLoaded', initCartBadge);
+
+    // ─── CATEGORIES DROPDOWN ───
+    function toggleCategories() {
+        const box = document.getElementById('categories-box');
+        const isHidden = box.classList.contains('hidden');
+        
+        // Đóng các dropdown khác
+        document.getElementById('cart-box')?.classList.add('hidden');
+        document.getElementById('noti-box')?.classList.add('hidden');
+        
+        box.classList.toggle('hidden');
+        if (isHidden) loadCategories();
+    }
+
+    async function loadCategories() {
+        const container = document.getElementById('categories-items-container');
+        if (!container) return;
+
+        try {
+            const res = await fetch("http://localhost:5207/api/public/courses/categories");
+            if (!res.ok) {
+                container.innerHTML = `<div class="px-4 py-3 text-xs text-red-400">Không thể tải danh mục</div>`;
+                return;
+            }
+
+            const result = await res.json();
+            const categories = result?.data ?? [];
+
+            if (categories.length === 0) {
+                container.innerHTML = `<div class="px-4 py-3 text-xs text-slate-400">Chưa có danh mục nào</div>`;
+                return;
+            }
+
+            container.innerHTML = categories.map(cat => `
+                <a href="/Course?category=${encodeURIComponent(cat.categoriesName)}" 
+                   class="flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition-colors group">
+                    <span class="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors">${cat.categoriesName}</span>
+                    <span class="material-symbols-outlined text-[18px] text-slate-300 group-hover:text-primary transition-transform group-hover:translate-x-1">chevron_right</span>
+                </a>
+            `).join('');
+
+        } catch (err) {
+            container.innerHTML = `<div class="px-4 py-3 text-xs text-red-400">Lỗi kết nối</div>`;
+        }
+    }
+
+    // Đóng dropdown khi click ra ngoài
+    window.addEventListener('click', function(e) {
+        const catDropdown = document.getElementById('categories-dropdown');
+        if (catDropdown && !catDropdown.contains(e.target)) {
+            document.getElementById('categories-box')?.classList.add('hidden');
+        }
+    });
+</script>

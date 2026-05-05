@@ -1,11 +1,12 @@
-@model IEnumerable<CourseMarketplaceFE.Models.CourseListViewModel>
+@model CourseMarketplaceFE.Models.InstructorStudioViewModel
 @{
-    ViewData["Title"] = "My Courses";
+    ViewData["Title"] = "Instructor Studio";
     Layout = "_InstructorLayout";
-    var courseList = Model.ToList();
-    var totalStudents = courseList.Sum(c => c.Students);
-    var publishedCount = courseList.Count(c => c.Status == "Published");
-    var avgRating = courseList.Where(c => c.Rating > 0).Select(c => c.Rating).DefaultIfEmpty(0).Average();
+    var courseList = Model.Courses;
+    var totalStudents = Model.TotalStudents;
+    var activeCourses = Model.ActiveCoursesCount;
+    var avgRating = Model.AverageRating;
+    var totalRevenue = Model.TotalRevenue;
 }
 
 <div class="p-8 max-w-7xl mx-auto">
@@ -23,9 +24,16 @@
                     <span class="material-symbols-outlined text-[18px]">grid_view</span> Grid
                 </button>
             </div>
-            <button id="filter-btn" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 text-sm">
-                <span class="material-symbols-outlined text-[18px]">filter_list</span> Filters
-            </button>
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Status:</label>
+                <select id="status-filter" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors outline-none text-sm cursor-pointer">
+                    <option value="All" selected="@(Model.FilterStatus == "All")">All Status</option>
+                    <option value="Draft" selected="@(Model.FilterStatus == "Draft")">Draft</option>
+                    <option value="Pending" selected="@(Model.FilterStatus == "Pending")">Pending Review</option>
+                    <option value="Published" selected="@(Model.FilterStatus == "Published")">Published</option>
+                    <option value="Rejected" selected="@(Model.FilterStatus == "Rejected")">Rejected</option>
+                </select>
+            </div>
         </div>
     </div>
 
@@ -47,13 +55,13 @@
         </div>
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
             <h3 class="text-sm font-semibold text-slate-500 mb-1">Active Courses</h3>
-            <p class="text-3xl font-headline font-extrabold text-slate-900">@publishedCount</p>
-            <p class="text-xs font-medium text-slate-500 mt-2">@(courseList.Count - publishedCount) Pending / Draft</p>
+            <p class="text-3xl font-headline font-extrabold text-slate-900">@activeCourses</p>
+            <p class="text-xs font-medium text-slate-500 mt-2">@(courseList.Count - activeCourses) Pending / Draft</p>
         </div>
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
             <h3 class="text-sm font-semibold text-slate-500 mb-1">Total Revenue</h3>
-            <p class="text-3xl font-headline font-extrabold text-slate-900">$48.2k</p>
-            <p class="text-xs font-medium text-slate-500 mt-2">Payout in 4 days</p>
+            <p class="text-3xl font-headline font-extrabold text-slate-900">@totalRevenue.ToString("C0")</p>
+            <p class="text-xs font-medium text-slate-500 mt-2">All time earnings</p>
         </div>
     </div>
 
@@ -61,7 +69,7 @@
     <div class="flex items-center justify-between mb-6">
         <div class="w-96 relative">
             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
-            <input type="text" placeholder="Search courses or resources..." class="w-full bg-white border border-slate-200 rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-slate-400" />
+            <input type="text" id="course-search-input" placeholder="Search courses by title..." value="@Model.SearchTerm" class="w-full bg-white border border-slate-200 rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-slate-400" />
         </div>
         <a href="/InstructorCourse/Create" class="px-5 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/20 flex items-center gap-2">
             <span class="material-symbols-outlined text-[18px]">add</span>
@@ -82,7 +90,7 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-                @foreach (var course in Model)
+                @foreach (var course in courseList)
                 {
                     <tr class="hover:bg-slate-50/50 transition-colors group">
                         <td class="px-6 py-4">
@@ -124,17 +132,29 @@
                             }
                         </td>
                         <td class="px-6 py-4">
-                            @if (course.Status == "Published")
+                            @if (course.Status.Equals("Published", StringComparison.OrdinalIgnoreCase))
                             {
                                 <span class="px-3 py-1 bg-primary-container/20 text-primary border border-primary-container rounded-full text-xs font-bold">Published</span>
                             }
-                            else if (course.Status == "Draft")
+                            else if (course.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-full text-xs font-bold">Pending Review</span>
+                            }
+                            else if (course.Status.Equals("Rejected", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="px-3 py-1 bg-red-50 text-red-600 border border-red-200 rounded-full text-xs font-bold">Rejected</span>
+                            }
+                            else if (course.Status.Equals("Draft", StringComparison.OrdinalIgnoreCase))
                             {
                                 <span class="px-3 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded-full text-xs font-bold">Draft</span>
                             }
+                            else if (course.Status.Equals("archived", StringComparison.OrdinalIgnoreCase) || course.Status.Equals("Hidden", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="px-3 py-1 bg-slate-200 text-slate-700 border border-slate-300 rounded-full text-xs font-bold">Hidden</span>
+                            }
                             else
                             {
-                                <span class="px-3 py-1 bg-orange-50 text-orange-600 border border-orange-200 rounded-full text-xs font-bold">@course.Status</span>
+                                <span class="px-3 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-full text-xs font-bold">@course.Status</span>
                             }
                         </td>
                         <td class="px-6 py-4 text-right">
@@ -142,10 +162,21 @@
                                 <a href="/InstructorCourse/Editor/@course.Id" title="Edit course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
                                     <span class="material-symbols-outlined text-[18px]">edit</span>
                                 </a>
-                                <a href="/InstructorCourse/Editor/@course.Id" title="View course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
-                                    <span class="material-symbols-outlined text-[18px]">visibility</span>
-                                </a>
-                                <button title="Delete course" onclick="confirmDelete(@course.Id, '@course.Title.Replace("'", "\\'")')" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
+                                
+                                @if (course.Status.Equals("archived", StringComparison.OrdinalIgnoreCase) || course.Status.Equals("Hidden", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <button onclick="toggleHide(@course.Id, 'published')" title="Unhide course" class="w-8 h-8 flex items-center justify-center text-emerald-500 hover:bg-emerald-50 rounded-full transition-colors">
+                                        <span class="material-symbols-outlined text-[18px]">visibility</span>
+                                    </button>
+                                }
+                                else if (course.Status.Equals("Published", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <button onclick="toggleHide(@course.Id, 'archived')" title="Hide course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors">
+                                        <span class="material-symbols-outlined text-[18px]">visibility_off</span>
+                                    </button>
+                                }
+
+                                <button title="Delete course" onclick="confirmDelete(@course.Id, '@course.Title.Replace("'", "\\'")', @course.Students)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
                                     <span class="material-symbols-outlined text-[18px]">delete</span>
                                 </button>
                             </div>
@@ -156,13 +187,36 @@
         </table>
         
         <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50/30">
-            <p class="text-sm text-slate-500">Showing <span class="font-bold text-slate-700">1-@courseList.Count</span> of <span class="font-bold text-slate-700">@courseList.Count</span> courses</p>
+            <p class="text-sm text-slate-500">
+                Showing <span class="font-bold text-slate-700">@((Model.CurrentPage - 1) * 6 + 1) - @Math.Min(Model.CurrentPage * 6, Model.TotalItems)</span> of <span class="font-bold text-slate-700">@Model.TotalItems</span> courses
+            </p>
+            
+            <!-- Pagination Controls -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="flex items-center gap-1">
+                    <button onclick="changePage(@(Model.CurrentPage - 1))" @(Model.CurrentPage == 1 ? "disabled" : "") class="p-2 rounded-lg border border-slate-200 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                    </button>
+                    
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <button onclick="changePage(@i)" class="w-10 h-10 rounded-lg border @(Model.CurrentPage == i ? "bg-primary text-white border-primary font-bold" : "border-slate-200 hover:bg-white text-slate-600 font-semibold") transition-all">
+                            @i
+                        </button>
+                    }
+
+                    <button onclick="changePage(@(Model.CurrentPage + 1))" @(Model.CurrentPage == Model.TotalPages ? "disabled" : "") class="p-2 rounded-lg border border-slate-200 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                    </button>
+                </div>
+            }
         </div>
     </div>
 
     <!-- COURSES GRID (Grid View - hidden by default) -->
     <div id="grid-view" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        @foreach (var course in Model)
+        @foreach (var course in courseList)
         {
             <a href="/InstructorCourse/Editor/@course.Id" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block">
                 <div class="w-full h-40 bg-slate-200 relative overflow-hidden">
@@ -175,9 +229,17 @@
                         <div class="w-full h-full bg-gradient-to-br from-primary to-primary-container opacity-80 group-hover:opacity-100 transition-opacity"></div>
                     }
                     <div class="absolute top-3 right-3">
-                        @if (course.Status == "Published")
+                        @if (course.Status.Equals("Published", StringComparison.OrdinalIgnoreCase))
                         {
                             <span class="px-2 py-1 bg-white/90 text-primary rounded text-[10px] font-bold">Published</span>
+                        }
+                        else if (course.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span class="px-2 py-1 bg-white/90 text-amber-600 rounded text-[10px] font-bold">Pending Review</span>
+                        }
+                        else if (course.Status.Equals("Rejected", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span class="px-2 py-1 bg-white/90 text-red-600 rounded text-[10px] font-bold">Rejected</span>
                         }
                         else
                         {
@@ -258,9 +320,47 @@
             });
         });
 
+        // Search and Filter Logic
+        const searchInput = document.getElementById('course-search-input');
+        const statusFilter = document.getElementById('status-filter');
+
+        function updateFilters(newPage = 1) {
+            const searchTerm = searchInput.value.trim();
+            const status = statusFilter.value;
+            
+            let url = new URL(window.location.origin + window.location.pathname);
+            if (searchTerm) url.searchParams.set('searchTerm', searchTerm);
+            if (status && status !== 'All') url.searchParams.set('status', status);
+            if (newPage > 1) url.searchParams.set('page', newPage);
+            
+            window.location.href = url.toString();
+        }
+
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') updateFilters(1);
+        });
+
+        statusFilter.addEventListener('change', () => {
+            updateFilters(1);
+        });
+
+        window.changePage = function(page) {
+            if (page < 1 || page > @Model.TotalPages) return;
+            updateFilters(page);
+        };
+
         // Delete modal
         let deleteTargetId = null;
-        function confirmDelete(id, name) {
+        function confirmDelete(id, name, students) {
+            if (students > 0) {
+                Swal.fire({
+                    title: 'Không thể xóa!',
+                    text: `Khóa học "${name}" đang có ${students} học viên đang theo học. Bạn không thể xóa khóa học này để bảo vệ quyền lợi của họ.`,
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+                return;
+            }
             deleteTargetId = id;
             document.getElementById('delete-course-name').textContent = name;
             document.getElementById('delete-modal').classList.remove('hidden');
@@ -279,13 +379,50 @@
                     if (result.success) {
                         location.reload();
                     } else {
-                        alert('Delete failed: ' + (result.message || 'Unknown error'));
+                        Swal.fire('Error', 'Delete failed: ' + (result.message || 'Unknown error'), 'error');
                     }
-                } catch(e) { alert('Error: ' + e.message); }
+                } catch(e) { Swal.fire('Error', 'An error occurred: ' + e.message, 'error'); }
                 btn.disabled = false; btn.textContent = 'Delete';
                 closeDeleteModal();
             }
         });
+
+        // Toggle Hide/Show
+        async function toggleHide(id, newStatus) {
+            const confirmText = (newStatus === 'archived' || newStatus === 'Hidden') 
+                ? 'Bạn có chắc muốn ẩn khóa học này? Học viên mới sẽ không thể tìm thấy nó.' 
+                : 'Bạn muốn công khai lại khóa học này?';
+                
+            const { isConfirmed } = await Swal.fire({
+                title: 'Xác nhận thay đổi',
+                text: confirmText,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#006a62',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Đồng ý',
+                cancelButtonText: 'Hủy'
+            });
+
+            if (isConfirmed) {
+                try {
+                    const formData = new FormData();
+                    formData.append('courseId', id);
+                    formData.append('status', newStatus);
+
+                    const resp = await fetch('/InstructorCourse/UpdateCourseStatus', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await resp.json();
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        Swal.fire('Lỗi', result.message || 'Không thể cập nhật trạng thái', 'error');
+                    }
+                } catch(e) { Swal.fire('Lỗi', 'Có lỗi xảy ra: ' + e.message, 'error'); }
+            }
+        }
         // Close modal on backdrop click
         document.getElementById('delete-modal').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) closeDeleteModal();

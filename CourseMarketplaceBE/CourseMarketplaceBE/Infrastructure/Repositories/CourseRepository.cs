@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,9 +26,50 @@ public class CourseRepository : ICourseRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Course>> GetAllPublishedCoursesAsync()
+    {
+        return await _context.Courses
+            .Include(c => c.Category)
+            .Include(c => c.Instructor)
+                .ThenInclude(i => i!.InstructorNavigation)
+            .Where(c => c.CourseStatus == "published")
+            .OrderByDescending(c => c.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Category>> GetCategoriesAsync()
+    {
+        return await _context.Categories.AsNoTracking().ToListAsync();
+    }
+
+    public async Task<bool> IsEnrolledAsync(int userId, int courseId)
+    {
+        return await _context.Enrollments
+            .AnyAsync(e => e.UserId == userId && e.CourseId == courseId);
+    }
+
+    public async Task<IEnumerable<Course>> GetEnrolledCoursesAsync(int userId)
+    {
+        return await _context.Enrollments
+            .Where(e => e.UserId == userId)
+            .Include(e => e.Course)
+                .ThenInclude(c => c!.Instructor)
+                    .ThenInclude(i => i!.InstructorNavigation)
+            .Include(e => e.Course)
+                .ThenInclude(c => c!.Category)
+            .Select(e => e.Course!)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
     public async Task<Course?> GetCourseWithDetailsAsync(int courseId)
     {
         return await _context.Courses
+            .Include(c => c.Category)
+            .Include(c => c.Instructor)
+                .ThenInclude(i => i!.InstructorNavigation)
+                    .ThenInclude(u => u.UserNavigation)
             .Include(c => c.Lessons)
                 .ThenInclude(l => l.LearningMaterials)
             .AsNoTracking()
@@ -44,6 +86,18 @@ public class CourseRepository : ICourseRepository
         return await _context.Enrollments.AnyAsync(e => e.CourseId == courseId);
     }
 
+    public async Task<IEnumerable<CourseStats>> GetCourseStatsAsync(IEnumerable<int> courseIds)
+    {
+        return await _context.CourseStats
+            .Where(s => courseIds.Contains(s.CourseId))
+            .ToListAsync();
+    }
+
+    public async Task<CourseStats?> GetCourseStatsAsync(int courseId)
+    {
+        return await _context.CourseStats.FirstOrDefaultAsync(s => s.CourseId == courseId);
+    }
+
     public async Task AddAsync(Course course)
     {
         await _context.Courses.AddAsync(course);
@@ -57,6 +111,45 @@ public class CourseRepository : ICourseRepository
     public void Delete(Course course)
     {
         _context.Courses.Remove(course);
+    }
+
+    public async Task<int> GetTotalPublishedCoursesCountAsync()
+    {
+        return await _context.Courses.CountAsync(c => c.CourseStatus == "published");
+    }
+
+    public async Task<decimal> GetAveragePlatformRatingAsync()
+    {
+        return await _context.CourseStats
+            .Where(s => s.RatingAverage > 0)
+            .Select(s => (decimal)s.RatingAverage)
+            .DefaultIfEmpty(0)
+            .AverageAsync();
+    }
+
+    public async Task<List<CourseModerationDto>> GetPendingCoursesModerationAsync()
+    {
+        return await _context.Courses
+            .Include(c => c.Instructor).ThenInclude(i => i.InstructorNavigation)
+            .Include(c => c.Category)
+            .Where(c => c.CourseStatus == "pending")
+            .Select(c => new CourseModerationDto
+            {
+                CourseId = c.CourseId,
+                Title = c.Title,
+                InstructorName = c.Instructor!.InstructorNavigation!.FullName,
+                CategoryName = c.Category!.CategoriesName,
+                Price = c.Price,
+                CreatedAt = c.CreatedAt,
+                CourseStatus = c.CourseStatus,
+                CourseThumbnailUrl = c.CourseThumbnailUrl
+            })
+            .ToListAsync();
+    }
+
+    public async Task<bool> IsOwnerAsync(int userId, int courseId)
+    {
+        return await _context.Courses.AnyAsync(c => c.CourseId == courseId && c.InstructorId == userId);
     }
 
     public async Task SaveChangesAsync()

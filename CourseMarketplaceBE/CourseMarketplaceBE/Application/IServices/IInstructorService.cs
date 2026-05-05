@@ -36,7 +36,29 @@ public interface IInstructorService
     Task<List<InstructorDashboardDto>> GetAllApplicationsAsync();
 
     /// <summary>
+    /// Lấy thông tin đơn cũ của user (chỉ khi status = Rejected), dùng để điền sẵn vào form nộp lại.
+    /// </summary>
+    Task<InstructorDashboardDto?> GetRejectedApplicationInfoAsync(int userId);
+
+    /// <summary>
     /// Lấy thông tin instructor dashboard cho user.
     /// </summary>
     Task<InstructorDashboardDto?> GetInstructorDashboardAsync(int userId);
+
+    /// <summary>
+    /// ★ Reset Stripe Connected Account (xóa account cũ, cho phép tạo lại).
+    /// Dùng khi account cũ bị lỗi region mismatch.
+    /// </summary>
+    Task<string> ResetStripeAccountAsync(int instructorId);
+
+    /// <summary>
+    /// Giảng viên chọn quốc gia cho tài khoản Stripe Connect.
+    /// Lưu vào cột stripe_country trong bảng instructors.
+    /// </summary>
+    Task SetStripeCountryAsync(int userId, string countryCode);
+
+    /// <summary>
+    /// Lấy danh sách lịch sử thanh toán của giảng viên.
+    /// </summary>
+    Task<List<InstructorPayoutDto>> GetPayoutsAsync(int userId);
 }

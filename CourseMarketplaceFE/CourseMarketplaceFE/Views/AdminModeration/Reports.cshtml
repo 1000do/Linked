@@ -1,0 +1,186 @@
+@model List<CourseMarketplaceFE.Models.UserReportModerationViewModel>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Khiếu nại";
+    ViewData["PageHeader"] = "Quản lý Khiếu nại";
+}
+
+<div class="space-y-6">
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-red-600">report_problem</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Khiếu nại mới</p>
+                <h3 class="text-2xl font-display font-extrabold text-slate-900">@Model.Count(@r => r.Status == "pending")</h3>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Đã giải quyết</p>
+                <h3 class="text-2xl font-display font-extrabold text-slate-900">@Model.Count(@r => r.Status != "pending")</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/50 border-b border-slate-100">
+                        <th class="px-8 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Người báo cáo</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Lý do & Chi tiết</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Ngày gửi</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Trạng thái</th>
+                        <th class="px-8 py-5 text-right text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="px-8 py-20 text-center">
+                                <div class="flex flex-col items-center">
+                                    <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                        <span class="material-symbols-outlined text-slate-300 text-4xl">thumb_up</span>
+                                    </div>
+                                    <h4 class="text-slate-900 font-display font-bold">Sạch bóng khiếu nại!</h4>
+                                    <p class="text-slate-400 text-sm">Hiện không có báo cáo vi phạm nào cần xử lý.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var item in Model)
+                    {
+                        <tr class="group hover:bg-slate-50/80 transition-colors @(item.Status == "pending" ? "bg-amber-50/30" : "")">
+                            <td class="px-8 py-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
+                                        @item.ReporterName[..1].ToUpper()
+                                    </div>
+                                    <span class="font-bold text-slate-900">@item.ReporterName</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-6">
+                                <div class="space-y-1">
+                                    <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[10px] font-black uppercase tracking-wider">@item.Reason</span>
+                                    <p class="text-sm text-slate-600 line-clamp-1 max-w-[300px]">@item.Description</p>
+                                </div>
+                            </td>
+                            <td class="px-6 py-6">
+                                <p class="text-sm text-slate-500 font-medium">@item.CreatedAt?.ToString("dd/MM/yyyy")</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">@item.CreatedAt?.ToString("HH:mm")</p>
+                            </td>
+                            <td class="px-6 py-6">
+                                @if (item.Status == "pending")
+                                {
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[11px] font-bold uppercase tracking-wider">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                        Chờ xử lý
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-bold uppercase tracking-wider">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                        @item.Status
+                                    </span>
+                                }
+                            </td>
+                            <td class="px-8 py-6 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    @if (item.ChatId.HasValue)
+                                    {
+                                        <a href="/Chat/MockChat?actor=Admin" class="flex items-center justify-center w-9 h-9 bg-white text-slate-400 hover:text-primary hover:bg-primary/5 border border-slate-100 rounded-xl transition-all" title="Xem hội thoại">
+                                            <span class="material-symbols-outlined text-[20px]">forum</span>
+                                        </a>
+                                    }
+                                    @if (item.Status == "pending")
+                                    {
+                                        <button onclick="resolveReport(@item.ReportId)" class="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-900/20 active:scale-95">
+                                            <span class="material-symbols-outlined text-[18px]">verified_user</span> Xử lý
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    async function resolveReport(id) {
+        const { value: formValues } = await Swal.fire({
+            title: 'Giải quyết khiếu nại',
+            html:
+                '<div class="text-left space-y-4 px-1">' +
+                '<div>' +
+                '<label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Kết quả xử lý</label>' +
+                '<select id="swal-status" class="w-full rounded-xl border-slate-200 focus:ring-emerald-500 text-sm">' +
+                '<option value="resolved">Chấp nhận khiếu nại (Hợp lệ)</option>' +
+                '<option value="rejected">Bác bỏ khiếu nại (Không hợp lệ)</option>' +
+                '</select>' +
+                '</div>' +
+                '<div>' +
+                '<label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Ghi chú phản hồi</label>' +
+                '<textarea id="swal-note" class="w-full rounded-xl border-slate-200 focus:ring-emerald-500 text-sm h-24" placeholder="Nhập lý do hoặc hướng giải quyết..."></textarea>' +
+                '</div>' +
+                '</div>',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Hoàn tất xử lý',
+            confirmButtonColor: '#10b981',
+            cancelButtonText: 'Đóng',
+            customClass: {
+                popup: 'rounded-[32px] p-8',
+                title: 'font-display font-extrabold text-slate-900 mb-6',
+                confirmButton: 'rounded-xl font-bold px-8 py-3',
+                cancelButton: 'rounded-xl font-bold px-8 py-3'
+            },
+            preConfirm: () => {
+                return {
+                    status: document.getElementById('swal-status').value,
+                    note: document.getElementById('swal-note').value
+                }
+            }
+        });
+
+        if (formValues) {
+            Swal.showLoading();
+            const response = await fetch('/AdminModeration/ResolveReport', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `reportId=${id}&status=${formValues.status}&note=${encodeURIComponent(formValues.note)}`
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Đã giải quyết',
+                    text: 'Trạng thái khiếu nại đã được cập nhật.',
+                    confirmButtonColor: '#10b981',
+                    customClass: { popup: 'rounded-3xl' }
+                }).then(() => location.reload());
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi',
+                    text: 'Có lỗi xảy ra khi xử lý khiếu nại.',
+                    confirmButtonColor: '#ef4444'
+                });
+            }
+        }
+    }
+</script>
+}
