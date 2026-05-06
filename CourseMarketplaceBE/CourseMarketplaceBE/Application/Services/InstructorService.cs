@@ -45,6 +45,8 @@ public class InstructorService : IInstructorService
             // Upload file mới nếu có, không thì giữ file cũ
             if (request.DocumentFile != null && request.DocumentFile.Length > 0)
                 existing.DocumentUrl = await _uploadService.UploadImageAsync(request.DocumentFile);
+            else if (string.IsNullOrEmpty(existing.DocumentUrl))
+                throw new InvalidOperationException("Vui lòng tải lên CV / Chứng chỉ / CMND.");
 
             existing.ProfessionalTitle   = request.ProfessionalTitle;
             existing.ExpertiseCategories = request.ExpertiseCategories;
@@ -56,10 +58,11 @@ public class InstructorService : IInstructorService
             return "Đơn đăng ký đã được gửi lại. Vui lòng chờ Admin xét duyệt.";
         }
 
-        // Upload file CV/ID lên Cloudinary (nếu có)
-        string? documentUrl = null;
-        if (request.DocumentFile != null && request.DocumentFile.Length > 0)
-            documentUrl = await _uploadService.UploadImageAsync(request.DocumentFile);
+        // ★ CV/Document bắt buộc cho đơn mới
+        if (request.DocumentFile == null || request.DocumentFile.Length == 0)
+            throw new InvalidOperationException("Vui lòng tải lên CV / Chứng chỉ / CMND.");
+
+        string? documentUrl = await _uploadService.UploadImageAsync(request.DocumentFile);
 
         var instructor = new Instructor
         {

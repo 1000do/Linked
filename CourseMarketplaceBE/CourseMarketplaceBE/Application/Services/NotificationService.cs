@@ -80,6 +80,9 @@ namespace CourseMarketplaceBE.Application.Services
         }
         public async Task<List<NotificationAdminResponseDto>> GetAllNotificationsForAdminAsync()
         {
+            // Tự động dọn dẹp các thông báo đã đọc và cũ hơn 30 ngày
+            await _repo.AutoCleanupAdminNotificationsAsync();
+
             // Sử dụng Repository để lấy data đã bao gồm Include(n => n.Receiver).ThenInclude(u => u.User)
             var notifications = await _repo.GetAllAsync();
 

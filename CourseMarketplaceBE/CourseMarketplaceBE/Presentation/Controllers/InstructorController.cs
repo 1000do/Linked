@@ -273,6 +273,34 @@ public class InstructorController : ControllerBase
         }
     }
 
+    // ─── 10. KIỂM TRA STRIPE STATUS ────────────────────────────────
+    /// <summary>
+    /// GET /api/instructor/stripe-status
+    /// Trả về trạng thái Stripe của giảng viên hiện tại.
+    /// FE dùng để quyết định cho phép đặt giá hay chỉ tạo khóa Free.
+    /// </summary>
+    [HttpGet("stripe-status")]
+    [Authorize]
+    public async Task<IActionResult> GetStripeStatus()
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+
+        var data = await _instructorService.GetInstructorDashboardAsync(userId.Value);
+        if (data == null) return NotFound(new { status = 404, message = "Chưa đăng ký Giảng viên." });
+
+        var isStripeActive = !string.IsNullOrEmpty(data.StripeAccountId)
+            && string.Equals(data.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+
+        return Ok(new
+        {
+            status = 200,
+            isStripeActive,
+            stripeOnboardingStatus = data.StripeOnboardingStatus,
+            stripeAccountId = data.StripeAccountId
+        });
+    }
+
     // ─── HELPER ──────────────────────────────────────────────────────
     private int? GetUserId()
     {

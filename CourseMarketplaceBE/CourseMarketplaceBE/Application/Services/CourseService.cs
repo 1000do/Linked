@@ -182,6 +182,11 @@ public class CourseService : ICourseService
             throw new BadRequestException("You must be an approved instructor to create a course.");
         }
 
+        // ★ Nếu chưa hoàn tất Stripe → ép giá = 0 (chỉ tạo khóa free)
+        var isStripeActive = !string.IsNullOrEmpty(instructor.StripeAccountId)
+            && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+        var coursePrice = isStripeActive ? request.Price : 0m;
+
         string? thumbnailUrl = request.CourseThumbnailUrl;
 
         if (request.ThumbnailFile != null)
@@ -199,7 +204,7 @@ public class CourseService : ICourseService
             CategoryId = request.CategoryId,
             Title = request.Title,
             Description = request.Description,
-            Price = request.Price,
+            Price = coursePrice,
             CourseThumbnailUrl = thumbnailUrl,
             WhatYouWillLearn = request.WhatYouWillLearn,
             Requirements = request.Requirements,
@@ -251,7 +256,14 @@ public class CourseService : ICourseService
         course.CategoryId = request.CategoryId;
         course.Title = request.Title;
         course.Description = request.Description;
-        course.Price = request.Price;
+
+        // ★ Nếu chưa hoàn tất Stripe → ép giá = 0
+        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        var isStripeActive = instructor != null
+            && !string.IsNullOrEmpty(instructor.StripeAccountId)
+            && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+        course.Price = isStripeActive ? request.Price : 0m;
+
         course.CourseThumbnailUrl = thumbnailUrl;
         course.WhatYouWillLearn = request.WhatYouWillLearn;
         course.Requirements = request.Requirements;

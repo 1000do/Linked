@@ -101,12 +101,13 @@
                 </div>
                 <div class="flex-1 h-px @(step3Done ? "bg-emerald-400" : "bg-slate-200") mx-3"></div>
 
-                @* Step 3: Stripe *@
+                @* Step 3: Stripe (Tùy chọn — chỉ cần cho khóa có phí) *@
                 <div class="flex flex-col items-center gap-1">
                     <div class="w-10 h-10 rounded-full @(step3Done ? "bg-emerald-500" : "bg-slate-200") @(step3Done ? "text-white" : "text-slate-400") flex items-center justify-center">
                         <span class="material-symbols-outlined text-lg">@(step3Done ? "check" : "account_balance")</span>
                     </div>
                     <span class="text-xs font-semibold @(step3Done ? "text-emerald-600" : "text-slate-400")">Stripe</span>
+                    <span class="text-[9px] text-slate-400">(Tùy chọn)</span>
                 </div>
             </div>
 
@@ -126,37 +127,53 @@
                     <p class="text-sm font-medium text-red-700">Đơn đăng ký đã bị từ chối. Vui lòng liên hệ Admin để biết thêm chi tiết.</p>
                 </div>
             }
-            else if (Model.ApprovalStatus == "Approved" && !Model.PayoutsEnabled)
+            else if (Model.ApprovalStatus == "Approved")
             {
-                @* ★ ĐÃ DUYỆT nhưng chưa setup Stripe hoặc Pending → Hiện nút "Set up Payout Method" *@
-                <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
-                    <span class="material-symbols-outlined text-blue-500 text-3xl mb-2">account_balance</span>
-                    <p class="text-sm font-medium text-blue-700 mb-4">
-                        Đơn đã được duyệt! Thiết lập phương thức thanh toán qua Stripe để bắt đầu nhận tiền.
-                    </p>
-                    <form asp-action="SetupPayout" asp-controller="Instructor" method="post">
-                        @Html.AntiForgeryToken()
-                        <button type="submit"
-                                class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-sm">
-                            <span class="material-symbols-outlined text-lg">credit_card</span>
-                            Set up Payout Method
-                        </button>
-                    </form>
-                </div>
-            }
-            else if (Model.PayoutsEnabled && Model.ChargesEnabled)
-            {
-                @* ✅ Hoàn tất tất cả *@
-                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-6 text-center">
+                @* ✅ ĐÃ DUYỆT → Hiện nút tạo khóa học (luôn luôn) *@
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-6 text-center mb-4">
                     <span class="material-symbols-outlined text-emerald-500 text-3xl mb-2">verified</span>
-                    <p class="text-sm font-medium text-emerald-700 mb-1">Tất cả đã hoàn tất!</p>
-                    <p class="text-xs text-emerald-600">PayoutsEnabled ✅ · ChargesEnabled ✅ · Stripe Active</p>
+                    <p class="text-sm font-medium text-emerald-700 mb-1">Đơn đăng ký đã được duyệt! Bạn có thể bắt đầu tạo khóa học ngay.</p>
+                    @if (Model.PayoutsEnabled && Model.ChargesEnabled)
+                    {
+                        <p class="text-xs text-emerald-600 mb-3">PayoutsEnabled ✅ · ChargesEnabled ✅ · Stripe Active — Bạn có thể tạo khóa học có phí.</p>
+                    }
+                    else
+                    {
+                        <p class="text-xs text-amber-600 mb-3">⚡ Hiện tại bạn chỉ có thể tạo khóa học <strong>miễn phí</strong>. Đăng ký Stripe để bán khóa học có phí.</p>
+                    }
                     <a href="/InstructorCourse"
-                       class="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-primary text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all text-sm">
+                       class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all text-sm">
                         <span class="material-symbols-outlined text-lg">play_arrow</span>
                         Bắt đầu tạo khóa học
                     </a>
                 </div>
+
+                @if (!Model.PayoutsEnabled)
+                {
+                    @* ★ Chưa setup Stripe → Hiện banner khuyến khích đăng ký Stripe *@
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 text-center">
+                        <div class="flex items-start gap-4 text-left">
+                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[28px]">credit_card</span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-bold text-blue-900 mb-1">Mở khóa tính năng bán khóa học có phí</h3>
+                                <p class="text-sm text-blue-700 mb-3">
+                                    Thiết lập tài khoản Stripe để nhận thanh toán từ học viên. 
+                                    Bạn sẽ nhận <strong>70% doanh thu</strong> từ mỗi khóa học bán ra.
+                                </p>
+                                <form asp-action="SetupPayout" asp-controller="Instructor" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit"
+                                            class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-sm">
+                                        <span class="material-symbols-outlined text-lg">credit_card</span>
+                                        Đăng ký Stripe — Mở khóa bán hàng
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
             }
         </div>
 

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<CourseMarketplaceFE.Models.NotificationViewModel>
+@model IEnumerable<CourseMarketplaceFE.Models.NotificationViewModel>
 @{
     ViewData["Title"] = "Thông báo của tôi";
     var tokenFromServer = Context.Request.Cookies["AccessToken"]
@@ -55,6 +55,13 @@
             <div id="modal-time" class="flex items-center gap-2 mb-6 text-slate-400 text-xs uppercase tracking-tighter"></div>
             <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
                 <p id="modal-content" class="text-slate-600 leading-relaxed whitespace-pre-wrap break-words"></p>
+            </div>
+            <div id="modal-link" class="hidden mt-4">
+                <a id="modal-link-btn" href="#" 
+                   class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-sm">
+                    <span class="material-symbols-outlined text-lg">open_in_new</span>
+                    <span id="modal-link-text">Xem chi tiết</span>
+                </a>
             </div>
         </div>
         <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
@@ -133,6 +140,13 @@
                             <p class="text-sm text-slate-600 mt-1 line-clamp-2 break-words">
                                 ${noti.content}
                             </p>
+                            ${noti.linkAction ? `
+                                <a href="${noti.linkAction}" 
+                                   class="inline-flex items-center gap-1.5 mt-2 px-4 py-1.5 bg-primary/10 text-primary text-xs font-bold rounded-lg hover:bg-primary/20 transition-colors"
+                                   onclick="event.stopPropagation()">
+                                    <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+                                    Xem chi tiết
+                                </a>` : ''}
 
                             <div class="flex items-center justify-between mt-4">
                                 <div class="flex items-center gap-2">
@@ -209,6 +223,16 @@
 
             document.getElementById('modal-detail').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+
+            // Hiển thị nút link nếu có linkAction
+            const linkContainer = document.getElementById('modal-link');
+            const linkBtn = document.getElementById('modal-link-btn');
+            if (noti.linkAction) {
+                linkBtn.href = noti.linkAction;
+                linkContainer.classList.remove('hidden');
+            } else {
+                linkContainer.classList.add('hidden');
+            }
 
             // Tự động mark as read khi mở xem
             if(!noti.isRead) markAsRead(id);

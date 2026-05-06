@@ -432,7 +432,7 @@
                         return;
                     }
                     container.innerHTML = top3.map(n => `
-                        <div class="p-4 border-b border-slate-50 hover:bg-emerald-50/50 transition-all cursor-pointer" onclick="location.href='/Notification'">
+                        <div class="p-4 border-b border-slate-50 hover:bg-emerald-50/50 transition-all cursor-pointer" onclick="location.href='${n.linkAction ? n.linkAction : '/Notification'}'">
                             <p class="text-xs font-bold text-slate-800 truncate">${n.title}</p>
                             <p class="text-[11px] text-slate-500 mt-1 line-clamp-2">${n.content}</p>
                             <p class="text-[9px] text-slate-300 mt-2 uppercase font-bold">${timeSince(new Date(n.createdAt))}</p>
