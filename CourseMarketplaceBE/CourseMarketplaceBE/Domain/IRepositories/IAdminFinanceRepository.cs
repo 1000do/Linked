@@ -46,6 +46,18 @@ public interface IAdminFinanceRepository
     /// <summary>Lấy thông tin payout theo Id.</summary>
     Task<Domain.Entities.InstructorPayout?> GetPayoutByIdAsync(int payoutId);
 
+    /// <summary>
+    /// Tìm TẤT CẢ payout theo Stripe Payout ID (po_xxx).
+    /// Dùng trong Webhook payout.paid / payout.failed để match bản ghi DB.
+    /// </summary>
+    Task<List<Domain.Entities.InstructorPayout>> GetPayoutsByStripePayoutIdAsync(string stripePayoutId);
+
+    /// <summary>
+    /// Tìm TẤT CẢ payout đang ở trạng thái 'transferred' của một Connected Account cụ thể.
+    /// Dùng trong Webhook payout.created để lưu stripe_payout_id cho toàn bộ các khoản tiền đang chờ.
+    /// </summary>
+    Task<List<Domain.Entities.InstructorPayout>> GetTransferredPayoutsByAccountAsync(string stripeAccountId);
+
     /// <summary>Commit changes.</summary>
     Task SaveChangesAsync();
 }
@@ -67,4 +79,10 @@ public class PayoutDetailProjection
     public bool IsPaid { get; set; }
     public DateTime? TransactionDate { get; set; }
     public DateTime PayoutDate { get; set; }
+
+    // ★ Cột bổ sung cho Webhook tracking
+    public string? PayoutStatus { get; set; }
+    public string? StripeTransferId { get; set; }
+    public string? StripePayoutId { get; set; }
+    public DateTime? PaidToBankAt { get; set; }
 }

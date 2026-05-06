@@ -557,6 +557,14 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("payout_date");
             entity.Property(e => e.IsPaid).HasDefaultValue(false).HasColumnName("is_paid");
 
+            // ★ MAPPING CHO WEBHOOK & TRẠNG THÁI END-TO-END
+            entity.Property(e => e.PayoutStatus).HasMaxLength(20).HasDefaultValue("pending").HasColumnName("payout_status");
+            entity.Property(e => e.StripeTransferId).HasMaxLength(255).HasColumnName("stripe_transfer_id");
+            entity.Property(e => e.StripePayoutId).HasMaxLength(255).HasColumnName("stripe_payout_id");
+            entity.Property(e => e.PaidToBankAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("paid_to_bank_at");
+
             entity.HasOne(d => d.Transaction).WithMany(p => p.InstructorPayouts)
                 .HasForeignKey(d => d.TransactionId)
                 .OnDelete(DeleteBehavior.SetNull)

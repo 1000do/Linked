@@ -333,7 +333,18 @@ CREATE TABLE instructor_payouts (
 	instructor_id INT REFERENCES instructors(instructor_id) ON DELETE SET NULL,
 	payout_amount NUMERIC(10,2) NOT NULL, -- Số tiền sẽ chuyển cho instructor (đã trừ bớt phần sàn ăn)
 	payout_date TIMESTAMP NOT NULL, -- Ngày mà hệ thống sẽ chuyển tiền cho instructor (theo lịch đã lên) 
-	is_paid BOOLEAN NOT NULL DEFAULT FALSE
+	is_paid BOOLEAN NOT NULL DEFAULT FALSE,
+	-- ★ PAYOUT STATUS: Track trạng thái thanh toán end-to-end
+	-- 'pending'        → Chưa chuyển tiền
+	-- 'transferred'    → Đã chuyển sang ví Stripe của giảng viên (Transfer thành công)
+	-- 'in_transit'     → Stripe đang chuyển từ ví về ngân hàng
+	-- 'paid'           → Đã về tài khoản ngân hàng thật (Webhook payout.paid xác nhận)
+	-- 'failed'         → Lỗi trong quá trình chuyển tiền
+	payout_status VARCHAR(20) NOT NULL DEFAULT 'pending'
+		CHECK (payout_status IN ('pending', 'transferred', 'in_transit', 'paid', 'failed')),
+	stripe_transfer_id VARCHAR(255),    -- ID lệnh Transfer từ Sàn → Connected Account (tx_xxx)
+	stripe_payout_id VARCHAR(255),      -- ID lệnh Payout từ Connected Account → Bank (po_xxx)
+	paid_to_bank_at TIMESTAMP           -- Thời điểm Stripe confirm tiền đã về ngân hàng
 );
 
 -- ==============================================================================

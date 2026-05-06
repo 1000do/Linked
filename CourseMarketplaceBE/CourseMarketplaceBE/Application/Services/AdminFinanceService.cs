@@ -107,7 +107,11 @@ public class AdminFinanceService : IAdminFinanceService
             TransferRate = p.TransferRate,
             IsPaid = p.IsPaid,
             TransactionDate = p.TransactionDate,
-            PayoutDate = p.PayoutDate
+            PayoutDate = p.PayoutDate,
+            PayoutStatus = p.PayoutStatus ?? "pending",
+            StripeTransferId = p.StripeTransferId,
+            StripePayoutId = p.StripePayoutId,
+            PaidToBankAt = p.PaidToBankAt
         }).ToList();
     }
 
@@ -164,32 +168,30 @@ public class AdminFinanceService : IAdminFinanceService
             });
 
             // ★ Lấy thông tin số tiền thực tế giảng viên nhận được (sau khi Stripe chuyển đổi ngoại tệ)
-            // Lưu ý: Cần quyền truy cập vào Connected Account để đọc Charge
             try 
             {
                 var requestOptions = new RequestOptions { StripeAccount = payout.Instructor.StripeAccountId };
                 var chargeService = new ChargeService();
                 var destinationCharge = await chargeService.GetAsync(transfer.DestinationPaymentId, null, requestOptions);
-                
                 if (destinationCharge != null)
-                {
-                    // Cập nhật lại số tiền và có thể ghi chú loại tiền vào DB
-                    // Vì DB hiện tại chỉ có 1 cột PayoutAmount (decimal), ta sẽ lưu số tiền đã quy đổi.
                     payout.PayoutAmount = (decimal)destinationCharge.Amount / 100m;
-                    // Nếu có cột Currency trong Payout thì tốt, nếu không ta lưu vào một field tạm hoặc ghi log.
-                }
             }
-            catch { /* Thu thập lỗi nếu không có quyền xem charge, nhưng vẫn tiếp tục update trạng thái */ }
+            catch { /* Nếu không có quyền xem charge, bỏ qua và giữ nguyên số tiền gốc */ }
 
-            // Update DB
+            // ★ Cập nhật trạng thái: transferred (đã vào ví Stripe của GV, chờ về ngân hàng)
             payout.IsPaid = true;
-            payout.PayoutDate = DateTime.Now;
+            payout.PayoutStatus = "transferred";
+            payout.StripeTransferId = transfer.Id;
+            payout.PayoutDate = DateTime.UtcNow;
             await _repo.SaveChangesAsync();
 
             return transfer.Id;
         }
         catch (StripeException ex)
         {
+            // ★ Đánh dấu thất bại vào DB để Admin biết
+            payout.PayoutStatus = "failed";
+            await _repo.SaveChangesAsync();
             throw new InvalidOperationException($"Lỗi Stripe Transfer: {ex.Message}");
         }
     }

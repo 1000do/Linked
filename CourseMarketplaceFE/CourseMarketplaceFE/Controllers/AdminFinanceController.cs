@@ -49,6 +49,13 @@ public class AdminFinanceController : Controller
         public bool IsPaid { get; set; }
         public DateTime? TransactionDate { get; set; }
         public DateTime PayoutDate { get; set; }
+
+        // ★ Webhook tracking fields
+        /// <summary>pending | transferred | in_transit | paid | failed</summary>
+        public string? PayoutStatus { get; set; }
+        public string? StripeTransferId { get; set; }
+        public string? StripePayoutId { get; set; }
+        public DateTime? PaidToBankAt { get; set; }
     }
 
     public class FinanceDashboardVM
