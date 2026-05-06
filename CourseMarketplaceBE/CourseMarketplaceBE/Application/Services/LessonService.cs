@@ -96,7 +96,7 @@ public class LessonService : ILessonService
         if (request.MaterialFile != null)
         {
             var uploadedUrl = await _uploadService.UploadVideoAsync(request.MaterialFile);
-            if (uploadedUrl != null)
+                if (uploadedUrl != null)
             {
                 materialUrl = uploadedUrl;
             }
