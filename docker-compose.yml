@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./db_scripts/3.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db_scripts/4.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     healthcheck:
@@ -65,6 +65,7 @@ services:
       BackendApiUrl: "http://backend:80/api/"
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       Stripe__PublishableKey: ${STRIPE_PUBLISHABLE_KEY}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       ASPNETCORE_URLS: "http://+:80"
     ports:
       - "5208:80"

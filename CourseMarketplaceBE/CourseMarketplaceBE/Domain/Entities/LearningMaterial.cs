@@ -20,6 +20,8 @@ public partial class LearningMaterial
 
     public string? LearningStatus { get; set; }
 
+    public string? ModerationFeedback { get; set; }
+
     public string? MaterialUrl { get; set; }
 
     public MaterialMetadata? MaterialMetadata { get; set; }

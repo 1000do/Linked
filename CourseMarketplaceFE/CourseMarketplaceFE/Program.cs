@@ -15,6 +15,13 @@ namespace CourseMarketplaceFE
                 builder.Configuration["Stripe:PublishableKey"] = stripePublishableKey;
             }
 
+            // 🔥 Google ClientId – đọc từ biến môi trường
+            var googleClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
+            if (!string.IsNullOrWhiteSpace(googleClientId))
+            {
+                builder.Configuration["Authentication:Google:ClientId"] = googleClientId;
+            }
+
             // 1. Đăng ký HttpClient để FE có thể gọi API Backend
             builder.Services.AddHttpClient("BackendApi", client =>
             {

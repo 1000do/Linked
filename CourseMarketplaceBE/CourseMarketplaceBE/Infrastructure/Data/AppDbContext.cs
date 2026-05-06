@@ -56,6 +56,7 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<CourseStats> CourseStats { get; set; }
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
     public virtual DbSet<MessageAttachment> MessageAttachments { get; set; }
+    public virtual DbSet<MessageModerationLog> MessageModerationLogs { get; set; }
 
     // ─── OnConfiguring ────────────────────────────────────────────────────────
 
@@ -587,6 +588,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Title).HasMaxLength(255).HasColumnName("title");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.LearningStatus).HasMaxLength(50).HasColumnName("learning_status");
+            entity.Property(e => e.ModerationFeedback).HasColumnName("moderation_feedback");
             entity.Property(e => e.MaterialUrl).HasColumnName("material_url");
             // ★ duration đổi từ VARCHAR → INT (giây) -> XÓA THEO V3
             entity.Property(e => e.MaterialMetadata)
@@ -623,6 +625,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.ThumbnailUrl).HasColumnName("thumbnail_url");
             entity.Property(e => e.LessonStatus).HasMaxLength(50).HasColumnName("lesson_status");
+            
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
@@ -1064,6 +1067,36 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.MessageId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("message_attachments_message_id_fkey");
+        });
+
+        // ── message_moderation_logs ───────────────────────────────────────────
+        modelBuilder.Entity<MessageModerationLog>(entity =>
+        {
+            entity.HasKey(e => e.LogId).HasName("message_moderation_logs_pkey");
+            entity.ToTable("message_moderation_logs");
+
+            entity.Property(e => e.LogId).HasColumnName("log_id");
+            entity.Property(e => e.ModelId).HasColumnName("model_id");
+            entity.Property(e => e.MessageId).HasColumnName("message_id");
+            entity.Property(e => e.InputJson).HasColumnType("jsonb").HasColumnName("input_json");
+            entity.Property(e => e.OutputJson).HasColumnType("jsonb").HasColumnName("output_json");
+            entity.Property(e => e.LatencyMs).HasColumnName("latency_ms");
+            entity.Property(e => e.LogStatus).HasMaxLength(50).HasColumnName("log_status");
+            entity.Property(e => e.ErrorMessage).HasColumnName("error_message");
+            entity.Property(e => e.LogCreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("log_created_at");
+
+            entity.HasOne(d => d.Model).WithMany(p => p.MessageModerationLogs)
+                .HasForeignKey(d => d.ModelId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("message_moderation_logs_model_id_fkey");
+
+            entity.HasOne(d => d.Message).WithMany()
+                .HasForeignKey(d => d.MessageId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("message_moderation_logs_message_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);

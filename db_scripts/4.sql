@@ -193,6 +193,7 @@ CREATE TABLE learning_materials (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     learning_status VARCHAR(50), -- Trạng thái của 1 cái learning_material ( vd: active, auditing, inactive)
+	moderation_feedback TEXT, -- phản hồi từ admin khi duyệt/từ chối
     material_url TEXT,
 	--- Bỏ duration INT
 	--- Thêm 2 cái dưới
@@ -262,7 +263,7 @@ CREATE TABLE course_reviews (
 	enrollment_id INT NOT NULL REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
     rating NUMERIC(3,2) CHECK (rating >= 0 AND rating <= 5),
     comment TEXT,
-	course_review_status TEXT NOT NULL, --- ok, hidden, auditting
+	course_review_status TEXT NOT NULL DEFAULT 'ok', --- ok, hidden, auditting
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_removed BOOLEAN DEFAULT FALSE
@@ -274,7 +275,7 @@ CREATE TABLE lesson_reviews (
 	lesson_id INT REFERENCES lessons(lesson_id) ON DELETE SET NULL,
     rating NUMERIC(3,2) CHECK (rating >= 0 AND rating <= 5),
     comment TEXT,
-	lesson_review_status TEXT NOT NULL, --- ok, hidden, auditting
+	lesson_review_status TEXT NOT NULL DEFAULT 'ok', --- ok, hidden, auditting
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_removed BOOLEAN DEFAULT FALSE
@@ -313,7 +314,7 @@ CREATE TABLE order_items (
 
 CREATE TABLE transactions (
     transaction_id SERIAL PRIMARY KEY,
-    order_item_id INT REFERENCES order_items(id) ON DELETE SET NULL, -- Mỗi transaction tương ứng với 1 item trong order thay vì cả order
+    order_item_id INT REFERENCES order_items(id) ON DELETE SET NULL, -- Mỗi transaction tương ứng with 1 item trong order thay vì cả order
 	account_from INT REFERENCES accounts(account_id) ON DELETE SET NULL,
 	account_to INT REFERENCES accounts(account_id) ON DELETE SET NULL,
     amount NUMERIC(10, 2) NOT NULL,
@@ -335,6 +336,10 @@ CREATE TABLE instructor_payouts (
 	payout_date TIMESTAMP NOT NULL, -- Ngày mà hệ thống sẽ chuyển tiền cho instructor (theo lịch đã lên) 
 	is_paid BOOLEAN NOT NULL DEFAULT FALSE
 );
+
+-- ==============================================================================
+-- 5. NHÓM GIAO TIẾP & HỖ TRỢ (Communication & Reports)
+-- ==============================================================================
 
 -- ==============================================================================
 -- 5. NHÓM GIAO TIẾP & HỖ TRỢ (Communication & Reports)
@@ -505,7 +510,7 @@ CREATE TABLE lesson_review_moderation_logs (
 );
 
 -- ==============================================================================
--- 7. VIEWS FOR DATA CONSISTENCY (The "Utmost Normalized" Part)
+-- 7. VIEWS FOR DATA CONSISTENCY (The \"Utmost Normalized\" Part)
 -- ==============================================================================
 
 -- View to get Lesson Stats 
@@ -698,7 +703,7 @@ ON CONFLICT (config_key) DO UPDATE SET config_value = EXCLUDED.config_value, des
 INSERT INTO system_configs (config_key, config_value, description)
 VALUES ('StripeCountries', 
 '[
-   {"code":"US","name":"United States"},{"code":"GB","name":"United Kingdom"}
+    {"code":"US","name":"United States"},{"code":"GB","name":"United Kingdom"}
 ]', 'Danh sách quốc gia mà Stripe Connect hỗ trợ đăng ký tài khoản Express. Giảng viên chọn 1 trong số này khi đăng ký Stripe.')
 ON CONFLICT (config_key) DO UPDATE SET config_value = EXCLUDED.config_value, description = EXCLUDED.description;
 
@@ -719,11 +724,12 @@ SELECT setval(pg_get_serial_sequence('lessons', 'lesson_id'), (SELECT MAX(lesson
 SELECT setval(pg_get_serial_sequence('learning_materials', 'material_id'), (SELECT MAX(material_id) FROM learning_materials));
 SELECT setval(pg_get_serial_sequence('chats', 'chat_id'), (SELECT COALESCE(MAX(chat_id), 1) FROM chats));
 SELECT setval(pg_get_serial_sequence('messages', 'message_id'), (SELECT COALESCE(MAX(message_id), 1) FROM messages));
+
 DO $$
 DECLARE
     new_account_id INT;
 BEGIN
-    -- Tạo account
+    -- 1. Tạo account Admin
     INSERT INTO accounts (
         email, password_hash, phone_number, account_status, 
         auth_provider, is_verified, account_created_at, account_updated_at
@@ -743,5 +749,25 @@ BEGIN
     INSERT INTO managers (manager_id, role, display_name)
     VALUES (new_account_id, 'admin', 'Super Administrator');
 
-    RAISE NOTICE 'Tạo Admin thành công! Account ID = %', new_account_id;
+    -- 2. Tạo account Staff
+    INSERT INTO accounts (
+        email, password_hash, phone_number, account_status, 
+        auth_provider, is_verified, account_created_at, account_updated_at
+    ) VALUES (
+        'staff@gmail.com',
+        '$2a$11$O7PrVmv/I5yxkexhkdrY2OB2tQf5c6Gy9P8hvqLIAF2NO34wt9C3i',
+        '+84987654321',
+        'active',
+        'local',
+        TRUE,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    )
+    RETURNING account_id INTO new_account_id;
+
+    -- Tạo manager (Staff)
+    INSERT INTO managers (manager_id, role, display_name)
+    VALUES (new_account_id, 'staff', 'Hỗ trợ kỹ thuật');
+
+    RAISE NOTICE 'Seeding Admin & Staff hoàn tất!';
 END $$;
