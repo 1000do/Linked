@@ -5,4 +5,4 @@
 # These owners will be the default owners for everything in the repo.
 # Unless a later match takes precedence, @1000do and @kien4nt
 # will be requested for review on every pull request.
-*       @1000do @kien4nt @Phuoctai228
+*       @kien4nt @Phuoctai228

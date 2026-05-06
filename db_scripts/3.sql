@@ -468,8 +468,9 @@ CREATE TABLE ai_models_courses (
     is_enabled BOOLEAN DEFAULT TRUE,
     config_json JSONB,
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	
 );
-
+--test
 CREATE TABLE course_ai_usage_logs (
     log_id SERIAL PRIMARY KEY,
     ai_model_course_id INT REFERENCES ai_models_courses(id) ON DELETE SET NULL,
