@@ -459,7 +459,7 @@ CREATE TABLE ai_models_courses (
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	
 );
-
+--test
 CREATE TABLE course_ai_usage_logs (
     log_id SERIAL PRIMARY KEY,
     ai_model_course_id INT REFERENCES ai_models_courses(id) ON DELETE SET NULL,
