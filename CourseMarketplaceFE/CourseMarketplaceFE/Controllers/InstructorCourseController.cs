@@ -131,6 +131,9 @@ namespace CourseMarketplaceFE.Controllers
         // ─── CREATE (GET) ─────────────────────────────────────────────────
         public async Task<IActionResult> Create()
         {
+            // Kiểm tra Stripe status
+            await LoadStripeStatusAsync();
+
             var model = new CreateCourseViewModel
             {
                 AvailableCategories = await GetCategoriesAsync()
@@ -195,6 +198,9 @@ namespace CourseMarketplaceFE.Controllers
         {
             ViewBag.CourseId = id;
             ViewBag.AvailableCategories = await GetCategoriesAsync();
+
+            // Kiểm tra Stripe status
+            await LoadStripeStatusAsync();
 
             try
             {
@@ -389,6 +395,52 @@ namespace CourseMarketplaceFE.Controllers
             {
                 return Json(new { success = false, message = ex.Message });
             }
+        }
+        // ─── CHECK STRIPE STATUS (AJAX) ───────────────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> CheckStripeStatus()
+        {
+            try
+            {
+                var resp = await _api.GetAsync("instructor/stripe-status");
+                if (resp.IsSuccessStatusCode)
+                {
+                    var json = await resp.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    var root = doc.RootElement;
+                    return Json(new
+                    {
+                        success = true,
+                        isStripeActive = root.TryGetProperty("isStripeActive", out var sa) && sa.GetBoolean()
+                    });
+                }
+                return Json(new { success = false, isStripeActive = false });
+            }
+            catch
+            {
+                return Json(new { success = false, isStripeActive = false });
+            }
+        }
+
+        /// <summary>
+        /// Load Stripe status vào ViewBag cho Create/Editor views.
+        /// </summary>
+        private async Task LoadStripeStatusAsync()
+        {
+            try
+            {
+                var resp = await _api.GetAsync("instructor/stripe-status");
+                if (resp.IsSuccessStatusCode)
+                {
+                    var json = await resp.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    var root = doc.RootElement;
+                    ViewBag.IsStripeActive = root.TryGetProperty("isStripeActive", out var sa) && sa.GetBoolean();
+                    return;
+                }
+            }
+            catch { }
+            ViewBag.IsStripeActive = false;
         }
 
     }

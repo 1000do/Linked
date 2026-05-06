@@ -17,5 +17,6 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         Task<List<string>> SearchEmailsByQueryAsync(string query, int take = 5);
         Task<List<int>> GetAllUserIdsAsync();
         Task<int?> GetUserIdByEmailAsync(string email);
+        Task AutoCleanupAdminNotificationsAsync();
     }
 }

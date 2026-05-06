@@ -103,34 +103,92 @@
                 <div class="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm">4</div>
                 <h2 class="text-xl font-headline font-bold text-slate-900">Access & Pricing</h2>
             </div>
-            <div class="grid grid-cols-2 gap-6">
-                <div>
-                    <label asp-for="Price" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Course Price (USD)</label>
-                    <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-500 material-symbols-outlined text-[18px]">attach_money</span>
-                        <input asp-for="Price" min="0" step="0.01" placeholder="0.00" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-4 pl-11 pr-4 text-slate-800 font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-colors" onblur="formatPrice(this)" />
+
+            @{
+                var isStripeActive = (bool)(ViewBag.IsStripeActive ?? false);
+            }
+
+            @if (!isStripeActive)
+            {
+                <!-- ★ Stripe chưa kích hoạt → Chỉ cho tạo khóa Free -->
+                <input type="hidden" asp-for="Price" value="0" />
+                <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-6 mb-4">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-[28px]">lock</span>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-amber-900 mb-1">Khóa học miễn phí</h3>
+                            <p class="text-sm text-amber-700 mb-3">
+                                Bạn chưa đăng ký Stripe nên chỉ có thể tạo khóa học <strong>miễn phí (Free)</strong>. 
+                                Để bán khóa học có phí, vui lòng đăng ký tài khoản Stripe trước.
+                            </p>
+                            <a href="/Instructor/Dashboard" 
+                               class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-sm">
+                                <span class="material-symbols-outlined text-lg">credit_card</span>
+                                Đăng ký Stripe ngay
+                            </a>
+                        </div>
                     </div>
-                    <!-- Quick Price Tiers -->
-                    <div class="flex flex-wrap gap-2 mt-3">
-                        <button type="button" onclick="setPrice(0)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">Free</button>
-                        <button type="button" onclick="setPrice(9.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$9.99</button>
-                        <button type="button" onclick="setPrice(19.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$19.99</button>
-                        <button type="button" onclick="setPrice(49.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$49.99</button>
-                        <button type="button" onclick="setPrice(99.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$99.99</button>
-                    </div>
-                    <span asp-validation-for="Price" class="text-red-500 text-xs mt-1 block"></span>
                 </div>
-                <div class="bg-slate-50 rounded-xl p-4 flex gap-4 border border-slate-100">
-                    <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white shrink-0 mt-1">
-                        <span class="material-symbols-outlined text-[14px]">info</span>
-                    </div>
+                <div class="grid grid-cols-2 gap-6">
                     <div>
-                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Instructor Revenue</p>
-                        <p class="font-bold text-slate-900 text-lg">70% Share</p>
-                        <p class="text-[10px] text-slate-500 mt-1">Estimated payout per sale: <span id="payout-estimate">$0.00</span></p>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Course Price (USD)</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 material-symbols-outlined text-[18px]">attach_money</span>
+                            <input type="text" value="0.00 — Free" disabled class="w-full bg-slate-100 border border-slate-200 rounded-xl py-4 pl-11 pr-4 text-slate-400 font-bold cursor-not-allowed" />
+                        </div>
+                        <div class="flex flex-wrap gap-2 mt-3">
+                            <span class="px-3 py-1.5 text-xs font-bold rounded-lg border border-primary bg-primary/10 text-primary">Free ✓</span>
+                            <span class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed" title="Vui lòng đăng ký Stripe để mở khóa">$9.99 🔒</span>
+                            <span class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed" title="Vui lòng đăng ký Stripe để mở khóa">$19.99 🔒</span>
+                            <span class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed" title="Vui lòng đăng ký Stripe để mở khóa">$49.99 🔒</span>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 flex gap-4 border border-slate-100">
+                        <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white shrink-0 mt-1">
+                            <span class="material-symbols-outlined text-[14px]">info</span>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Instructor Revenue</p>
+                            <p class="font-bold text-slate-900 text-lg">Free Course</p>
+                            <p class="text-[10px] text-slate-500 mt-1">Đăng ký Stripe để bán khóa học với giá tùy chọn</p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            }
+            else
+            {
+                <!-- ✅ Stripe đã kích hoạt → Cho phép đặt giá thoải mái -->
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label asp-for="Price" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Course Price (USD)</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-500 material-symbols-outlined text-[18px]">attach_money</span>
+                            <input asp-for="Price" min="0" step="0.01" placeholder="0.00" class="w-full bg-slate-50 border border-slate-200 rounded-xl py-4 pl-11 pr-4 text-slate-800 font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-colors" onblur="formatPrice(this)" />
+                        </div>
+                        <!-- Quick Price Tiers -->
+                        <div class="flex flex-wrap gap-2 mt-3">
+                            <button type="button" onclick="setPrice(0)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">Free</button>
+                            <button type="button" onclick="setPrice(9.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$9.99</button>
+                            <button type="button" onclick="setPrice(19.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$19.99</button>
+                            <button type="button" onclick="setPrice(49.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$49.99</button>
+                            <button type="button" onclick="setPrice(99.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$99.99</button>
+                        </div>
+                        <span asp-validation-for="Price" class="text-red-500 text-xs mt-1 block"></span>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 flex gap-4 border border-slate-100">
+                        <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white shrink-0 mt-1">
+                            <span class="material-symbols-outlined text-[14px]">info</span>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Instructor Revenue</p>
+                            <p class="font-bold text-slate-900 text-lg">70% Share</p>
+                            <p class="text-[10px] text-slate-500 mt-1">Estimated payout per sale: <span id="payout-estimate">$0.00</span></p>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
     </form>
 </div>
@@ -224,13 +282,16 @@
 
         // Price calc and formatting
         const priceInput = document.getElementById('Price');
+        const payoutEstimateEl = document.getElementById('payout-estimate');
         
         function updatePayout(val) {
-            document.getElementById('payout-estimate').textContent = '$' + ((parseFloat(val)||0)*0.7).toFixed(2);
+            if (payoutEstimateEl) {
+                payoutEstimateEl.textContent = '$' + ((parseFloat(val)||0)*0.7).toFixed(2);
+            }
         }
 
         window.formatPrice = function(input) {
-            if (!input.value) { input.value = "0.00"; }
+            if (!input || !input.value) { if(input) input.value = "0.00"; return; }
             let val = parseFloat(input.value);
             if (isNaN(val) || val < 0) val = 0;
             input.value = val.toFixed(2);

@@ -237,6 +237,14 @@ public class InstructorController : Controller
                         ChargesEnabled = dataEl.TryGetProperty("chargesEnabled", out var ce) && ce.GetBoolean(),
                         FullName = dataEl.TryGetProperty("fullName", out var fn) ? fn.GetString() : null
                     };
+
+                    // ★ Set cookie UserRole = instructor ngay khi Approved (không chờ Stripe)
+                    if (model.ApprovalStatus == "Approved")
+                    {
+                        var cookieOpts = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7), Path = "/" };
+                        Response.Cookies.Append("UserRole", "instructor", cookieOpts);
+                    }
+
                     return View(model);
                 }
             }

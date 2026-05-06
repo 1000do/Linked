@@ -278,7 +278,7 @@
                         return;
                     }
                     container.innerHTML = top3.map(n => `
-                        <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer" onclick="location.href='/Notification'">
+                        <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer" onclick="location.href='${n.linkAction ? n.linkAction : '/Notification'}'">
                             <div class="flex gap-3">
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2">

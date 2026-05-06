@@ -1,4 +1,4 @@
-﻿using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -76,6 +76,23 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .FirstOrDefaultAsync(a => a.Email == email.Trim());
 
             return account?.User?.UserId;
+        }
+
+        public async Task AutoCleanupAdminNotificationsAsync()
+        {
+            var cutoffDate = DateTime.UtcNow.AddDays(-30);
+            var oldNotifications = await _context.Notifications
+                .Where(n => n.IsRead == true && n.CreatedAt < cutoffDate && n.IsRemoved != true)
+                .ToListAsync();
+
+            if (oldNotifications.Any())
+            {
+                foreach (var n in oldNotifications)
+                {
+                    n.IsRemoved = true;
+                }
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }
