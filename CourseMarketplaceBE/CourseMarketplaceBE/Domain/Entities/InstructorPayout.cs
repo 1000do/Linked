@@ -21,6 +21,21 @@ public partial class InstructorPayout
 
     public bool IsPaid { get; set; }
 
+    /// <summary>
+    /// Trạng thái thanh toán end-to-end:
+    /// pending | transferred | in_transit | paid | failed
+    /// </summary>
+    public string PayoutStatus { get; set; } = "pending";
+
+    /// <summary>ID lệnh Transfer (tx_xxx): Sàn → Connected Account</summary>
+    public string? StripeTransferId { get; set; }
+
+    /// <summary>ID lệnh Payout (po_xxx): Connected Account → Bank</summary>
+    public string? StripePayoutId { get; set; }
+
+    /// <summary>Thời điểm Stripe confirm tiền đã về ngân hàng (payout.paid webhook)</summary>
+    public DateTime? PaidToBankAt { get; set; }
+
     public virtual Transaction? Transaction { get; set; }
 
     public virtual Instructor? Instructor { get; set; }

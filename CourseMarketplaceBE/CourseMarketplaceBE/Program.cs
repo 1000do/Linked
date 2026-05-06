@@ -357,6 +357,7 @@ public class Program
         app.UseAuthorization();
         app.MapHub<NotificationHub>("/notificationHub");
         app.MapHub<ChatHub>("/chatHub");
+        app.MapHub<FinanceHub>("/financeHub");
 
         app.MapControllers();
 

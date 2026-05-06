@@ -67,6 +67,21 @@ public class PayoutDetailResponse
     /// <summary>Đã chuyển tiền qua Stripe chưa</summary>
     public bool IsPaid { get; set; }
 
+    /// <summary>
+    /// Trạng thái thanh toán end-to-end:
+    /// pending | transferred | in_transit | paid | failed
+    /// </summary>
+    public string PayoutStatus { get; set; } = "pending";
+
+    /// <summary>Mã Transfer Stripe (tx_xxx): Sàn → Connected Account</summary>
+    public string? StripeTransferId { get; set; }
+
+    /// <summary>Mã Payout Stripe (po_xxx): Connected Account → Bank</summary>
+    public string? StripePayoutId { get; set; }
+
+    /// <summary>Thời điểm tiền đã về ngân hàng giảng viên</summary>
+    public DateTime? PaidToBankAt { get; set; }
+
     /// <summary>Ngày giao dịch</summary>
     public DateTime? TransactionDate { get; set; }
 

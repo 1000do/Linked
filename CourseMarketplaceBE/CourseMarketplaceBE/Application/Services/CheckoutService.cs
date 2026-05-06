@@ -2,6 +2,8 @@ using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
 namespace CourseMarketplaceBE.Application.Services;
@@ -25,6 +27,7 @@ public class CheckoutService : ICheckoutService
     private readonly ICheckoutRepository _repo;
     private readonly IPaymentGatewayService _paymentGateway;
     private readonly ILogger<CheckoutService> _logger;
+    private readonly IHubContext<FinanceHub> _hubContext;
 
     // ── Tỷ lệ instructor nhận được (có thể chuyển sang system_configs sau) ──
     private const decimal DefaultTransferRate = 70.00m; // 70% cho instructor, 30% cho sàn
@@ -32,11 +35,13 @@ public class CheckoutService : ICheckoutService
     public CheckoutService(
         ICheckoutRepository repo,
         IPaymentGatewayService paymentGateway,
-        ILogger<CheckoutService> logger)
+        ILogger<CheckoutService> logger,
+        IHubContext<FinanceHub> hubContext)
     {
         _repo = repo;
         _paymentGateway = paymentGateway;
         _logger = logger;
+        _hubContext = hubContext;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -280,9 +285,7 @@ public class CheckoutService : ICheckoutService
                 cancelUrl,
                 userEmail,
                 null, // transfer_group
-                sessionCurrency,
-                null, // destinationAccountId
-                null); // platformFee
+                sessionCurrency);
 
             var transaction = new Transaction
             {
@@ -322,186 +325,155 @@ public class CheckoutService : ICheckoutService
     // ═══════════════════════════════════════════════════════════════════════════
     public async Task ProcessPaymentSuccessAsync(string sessionId, bool failOnTransferFailure = false)
     {
-        Console.WriteLine($"[CHECKOUT] ═══ ProcessPaymentSuccess START ═══ SessionId={sessionId}");
+        Console.WriteLine($"[CHECKOUT-DEBUG] ═══ ProcessPaymentSuccess START ═══ SessionId={sessionId}");
 
-        // ── 2.1 Tìm transactions theo Stripe session ID ─────────────────────
-        var transactions = await _repo.GetTransactionsBySessionIdAsync(sessionId);
-        if (!transactions.Any())
-            throw new InvalidOperationException("Không tìm thấy giao dịch cho session này.");
-
-        Console.WriteLine($"[CHECKOUT] Tìm thấy {transactions.Count} transactions cho session {sessionId}");
-
-        var allSucceeded = transactions.All(t => t.TransactionsStatus == "succeeded");
-        var allPayoutsPaid = transactions.All(t => t.InstructorPayouts.Any(p => p.IsPaid));
-
-        Console.WriteLine($"[CHECKOUT] allSucceeded={allSucceeded}, allPayoutsPaid={allPayoutsPaid}");
-
-        if (allSucceeded && allPayoutsPaid)
+        try 
         {
-            Console.WriteLine("[CHECKOUT] Đã xử lý hoàn tất, skip.");
-            return;
-        }
-
-        var transferFailures = new List<string>();
-
-        // Lấy order từ transaction đầu tiên
-        var firstTransaction = transactions.First();
-        var orderId = firstTransaction.OrderItem?.OrderId;
-        if (!orderId.HasValue)
-            throw new InvalidOperationException("Không tìm thấy đơn hàng liên kết.");
-
-        var order = await _repo.GetOrderWithDetailsAsync(orderId.Value);
-        if (order == null)
-            throw new InvalidOperationException("Đơn hàng không tồn tại.");
-
-        var userId = order.UserId;
-        if (!userId.HasValue)
-            throw new InvalidOperationException("Không xác định được người mua.");
-
-        // ★ Lấy PaymentIntent ID từ Stripe Session
-        var paymentIntentId = await _paymentGateway.GetPaymentReferenceAsync(sessionId);
-        var transferGroup = $"order_{orderId.Value}";
-
-        // ★ Lấy Charge ID để dùng làm source_transaction
-        // Khi có source_transaction, Stripe cho phép transfer từ PENDING balance
-        // (không cần đợi available balance — fix lỗi "insufficient funds" trong test mode)
-        string? chargeId = null;
-        if (!string.IsNullOrEmpty(paymentIntentId))
-        {
-            chargeId = await _paymentGateway.GetChargeIdFromPaymentIntentAsync(paymentIntentId);
-            Console.WriteLine($"[CHECKOUT] PaymentIntentId={paymentIntentId}, ChargeId={chargeId ?? "NULL"}");
-        }
-
-        // ════ BẮT ĐẦU DB TRANSACTION ════════════════════════════════════════
-        await using var dbTransaction = await _repo.BeginTransactionAsync();
-        try
-        {
-            // ── 2.2 UPDATE transactions → 'succeeded' (idempotent) ──────────
-            if (!allSucceeded)
+            // ── 2.1 Tìm transactions theo Stripe session ID ─────────────────────
+            var transactions = await _repo.GetTransactionsBySessionIdAsync(sessionId);
+            if (!transactions.Any())
             {
+                Console.WriteLine($"[CHECKOUT-DEBUG] ❌ ERROR: Không tìm thấy transactions cho session {sessionId}");
+                throw new InvalidOperationException("Không tìm thấy giao dịch cho session này.");
+            }
+
+            Console.WriteLine($"[CHECKOUT-DEBUG] Found {transactions.Count} transactions.");
+
+            var allSucceeded = transactions.All(t => t.TransactionsStatus == "succeeded");
+            var allPayoutsPaid = transactions.All(t => t.InstructorPayouts.Any(p => p.IsPaid));
+
+            if (allSucceeded && allPayoutsPaid)
+            {
+                Console.WriteLine("[CHECKOUT-DEBUG] Already processed. Skipping.");
+                return;
+            }
+
+            // Lấy order từ transaction đầu tiên
+            var firstTransaction = transactions.First();
+            var orderId = firstTransaction.OrderItem?.OrderId;
+            if (!orderId.HasValue) throw new InvalidOperationException("Không tìm thấy đơn hàng.");
+
+            var order = await _repo.GetOrderWithDetailsAsync(orderId.Value);
+            if (order == null) throw new InvalidOperationException("Đơn hàng không tồn tại.");
+
+            var userId = order.UserId;
+            if (!userId.HasValue) throw new InvalidOperationException("Không xác định người mua.");
+
+            // ★ Lấy PaymentIntent ID từ Stripe Session
+            Console.WriteLine("[CHECKOUT-DEBUG] Fetching Stripe PaymentIntent...");
+            var paymentIntentId = await _paymentGateway.GetPaymentReferenceAsync(sessionId);
+            Console.WriteLine($"[CHECKOUT-DEBUG] PaymentIntentId={paymentIntentId ?? "NULL"}");
+
+            // ════ BẮT ĐẦU DB TRANSACTION ════════════════════════════════════════
+            Console.WriteLine("[CHECKOUT-DEBUG] 🔄 Starting DB Transaction...");
+            await using var dbTransaction = await _repo.BeginTransactionAsync();
+            try
+            {
+                // ── 2.2 UPDATE transactions ──────────────────────────────────
+                if (!allSucceeded)
+                {
+                    Console.WriteLine("[CHECKOUT-DEBUG] 🔄 Updating Transactions & Order status...");
+                    foreach (var txn in transactions)
+                    {
+                        txn.TransactionsStatus = "succeeded";
+                        if (!string.IsNullOrEmpty(paymentIntentId))
+                            txn.StripePaymentintentId = paymentIntentId;
+                    }
+                    order.OrderStatus = "paid";
+                    await _repo.SaveChangesAsync();
+                }
+
+                // ── 2.4 INSERT enrollments ───────────────────────────────────
+                Console.WriteLine("[CHECKOUT-DEBUG] 🔄 Processing Enrollments...");
                 foreach (var txn in transactions)
                 {
-                    txn.TransactionsStatus = "succeeded";
-                    if (!string.IsNullOrEmpty(paymentIntentId))
-                        txn.StripePaymentintentId = paymentIntentId;
+                    var courseId = txn.OrderItem?.CourseId;
+                    if (!courseId.HasValue) continue;
+
+                    if (await _repo.IsEnrolledAsync(userId.Value, courseId.Value))
+                    {
+                        Console.WriteLine($"[CHECKOUT-DEBUG] User already enrolled in course {courseId}. Skipping.");
+                        continue;
+                    }
+
+                    var enrollment = new Enrollment
+                    {
+                        UserId = userId.Value,
+                        CourseId = courseId.Value,
+                        Title = txn.OrderItem?.Course?.Title,
+                        EnrollDate = DateOnly.FromDateTime(DateTime.Now),
+                        IsCompleted = false,
+                        EnrollmentStatus = "active",
+                        LastAccessedAt = DateTime.Now
+                    };
+                    await _repo.AddEnrollmentAsync(enrollment);
+                    await _repo.SaveChangesAsync(); 
+
+                    var progress = new EnrollmentProgress
+                    {
+                        EnrollmentId = enrollment.EnrollmentId,
+                        LearnedMaterialCount = 0,
+                        LastModifiedAt = DateTime.Now
+                    };
+                    await _repo.AddEnrollmentProgressAsync(progress);
                 }
 
-                // ── 2.3 UPDATE order_info → 'paid' ─────────────────────────
-                order.OrderStatus = "paid";
+                // ── 2.5 GHI PAYOUT RECORDS ────────────────────────────────────
+                Console.WriteLine("[CHECKOUT-DEBUG] 🔄 Creating Payout records (MoR pattern)...");
+                foreach (var txn in transactions)
+                {
+                    if (txn.InstructorPayouts.Any()) 
+                    {
+                        Console.WriteLine($"[CHECKOUT-DEBUG] Payout record already exists for txn {txn.TransactionId}. Skipping.");
+                        continue;
+                    }
+
+                    var instructorId = txn.OrderItem?.Course?.InstructorId;
+                    if (!instructorId.HasValue) continue;
+
+                    var payoutAmount = Math.Round(txn.Amount * (txn.TransferRate / 100m), 2);
+                    
+                    var payout = new InstructorPayout
+                    {
+                        TransactionId = txn.TransactionId,
+                        InstructorId = instructorId.Value,
+                        PayoutAmount = payoutAmount,
+                        PayoutDate = DateTime.Now.AddDays(14),
+                        IsPaid = false, // ★ PHƯƠNG ÁN B: CHƯA THANH TOÁN (Admin duyệt mới chuyển)
+                        PayoutStatus = "pending", // Trạng thái: Chờ thanh toán
+                        StripeTransferId = null // Sẽ có sau khi Admin bấm Pay via Stripe
+                    };
+                    await _repo.AddInstructorPayoutAsync(payout);
+                    Console.WriteLine($"[CHECKOUT-DEBUG] 📝 Payout record created: TxnId={txn.TransactionId}, Status=pending");
+                }
+
+                // ── 2.6 CLEAR CART ───────────────────────────────────────────
+                Console.WriteLine("[CHECKOUT-DEBUG] 🔄 Clearing cart...");
+                await _repo.ClearCartAsync(userId.Value);
 
                 await _repo.SaveChangesAsync();
-            }
 
-            // ── 2.4 INSERT enrollments + enrollment_progress (idempotent) ───
-            foreach (var txn in transactions)
+                Console.WriteLine("[CHECKOUT-DEBUG] 🏁 Committing Transaction...");
+                await dbTransaction.CommitAsync();
+                Console.WriteLine("[CHECKOUT-DEBUG] ✅ SUCCESS!");
+
+                // 🔥 Gửi SignalR báo cho Admin (vì trạng thái mặc định là transferred)
+                await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new {
+                    refresh = true // Báo Admin load lại cả bảng để thấy dòng mới
+                });
+            }
+            catch (Exception ex)
             {
-                var courseId = txn.OrderItem?.CourseId;
-                if (!courseId.HasValue) continue;
-
-                // Kiểm tra chưa enrolled (idempotent)
-                if (await _repo.IsEnrolledAsync(userId.Value, courseId.Value))
-                    continue;
-
-                var enrollment = new Enrollment
-                {
-                    UserId = userId.Value,
-                    CourseId = courseId.Value,
-                    Title = txn.OrderItem?.Course?.Title,
-                    EnrollDate = DateOnly.FromDateTime(DateTime.Now),
-                    IsCompleted = false,
-                    EnrollmentStatus = "active",
-                    LastAccessedAt = DateTime.Now
-                };
-                await _repo.AddEnrollmentAsync(enrollment);
-                await _repo.SaveChangesAsync(); // Lấy EnrollmentId
-
-                var progress = new EnrollmentProgress
-                {
-                    EnrollmentId = enrollment.EnrollmentId,
-                    LearnedMaterialCount = 0,
-                    LastModifiedAt = DateTime.Now
-                };
-                await _repo.AddEnrollmentProgressAsync(progress);
+                Console.WriteLine($"[CHECKOUT-DEBUG] ❌ INNER EXCEPTION: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                await dbTransaction.RollbackAsync();
+                throw;
             }
-
-            // ═════════════════════════════════════════════════════════════════
-            // ★ 2.5 TẠO STRIPE TRANSFERS — Chia tiền cho từng instructor
-            //
-            // IDEMPOTENT: Chỉ tạo transfer nếu chưa có InstructorPayout record.
-            // Điều này xử lý cả trường hợp:
-            //   - Lần đầu xử lý payment
-            //   - Retry khi code cũ đã mark "succeeded" nhưng chưa tạo transfer
-            // ═════════════════════════════════════════════════════════════════
-            foreach (var txn in transactions)
-            {
-                // ★ Skip nếu đã có payout thành công (đã chia tiền xong)
-                if (txn.InstructorPayouts.Any(p => p.IsPaid))
-                {
-                    Console.WriteLine($"[CHECKOUT] Transaction {txn.TransactionId}: đã có payout thành công, skip.");
-                    continue;
-                }
-
-                var instructorId = txn.OrderItem?.Course?.InstructorId;
-                if (!instructorId.HasValue)
-                {
-                    Console.WriteLine($"[CHECKOUT] Transaction {txn.TransactionId}: InstructorId is NULL! Course={txn.OrderItem?.CourseId}");
-                    continue;
-                }
-
-                var stripeAccountId = await _repo.GetInstructorStripeAccountIdAsync(instructorId.Value);
-                Console.WriteLine($"[CHECKOUT] Transaction {txn.TransactionId}: InstructorId={instructorId.Value}, StripeAccountId={stripeAccountId ?? "NULL"}");
-
-                // Tính payout: amount * (transfer_rate / 100)
-                var payoutAmount = Math.Round(
-                    txn.Amount * (txn.TransferRate / 100m), 2);
-                Console.WriteLine($"[CHECKOUT] PayoutAmount={payoutAmount} (Amount={txn.Amount} × TransferRate={txn.TransferRate}%)");
-
-                // TÍNH TOÁN THEO MÔ HÌNH MERCHANT OF RECORD (UDEMY)
-                // KHÔNG chia tiền ngay lập tức. Platform giữ 100% tiền.
-                // Cuối tháng (hoặc định kỳ) Platform mới trả cho giảng viên bằng tay từ Dashboard.
-                
-                var transferSucceeded = false; // Luôn false, vì chưa trả tiền
-
-                // Ghi payout record — IsPaid = false, chờ thanh toán sau
-                var payout = new InstructorPayout
-                {
-                    TransactionId = txn.TransactionId,
-                    InstructorId = instructorId.Value,
-                    PayoutAmount = payoutAmount,
-                    PayoutDate = DateTime.Now.AddDays(14), // Ví dụ: Có thể rút tiền sau 14 ngày
-                    IsPaid = transferSucceeded
-                };
-                await _repo.AddInstructorPayoutAsync(payout);
-                Console.WriteLine($"[CHECKOUT] 📝 Payout record created: TxnId={txn.TransactionId}, IsPaid={transferSucceeded} (MoR pattern)");
-            }
-
-            // ── 2.6 UPDATE coupon.used_count (chỉ khi lần đầu xử lý) ───────
-            if (!allSucceeded)
-            {
-                var firstItemWithCoupon = order.OrderItems.FirstOrDefault(oi => oi.CouponUsed == true);
-                if (firstItemWithCoupon?.Course?.CouponId != null)
-                {
-                    await _repo.IncrementCouponUsageAsync(firstItemWithCoupon.Course.CouponId.Value);
-                }
-
-                // ── 2.7 DELETE cart_items ────────────────────────────────────
-                await _repo.ClearCartAsync(userId.Value);
-            }
-
-            await _repo.SaveChangesAsync();
-
-            // ════ COMMIT ════════════════════════════════════════════════════
-            await dbTransaction.CommitAsync();
         }
-        catch
+        catch (Exception ex)
         {
-            await dbTransaction.RollbackAsync();
+            Console.WriteLine($"[CHECKOUT-DEBUG] ❌ TOP-LEVEL EXCEPTION: {ex.Message}");
             throw;
-        }
-
-        if (failOnTransferFailure && transferFailures.Any())
-        {
-            throw new InvalidOperationException($"Transfer errors: {string.Join(" | ", transferFailures)}");
         }
     }
     private string GetCurrencyFromCountry(string? countryCode)

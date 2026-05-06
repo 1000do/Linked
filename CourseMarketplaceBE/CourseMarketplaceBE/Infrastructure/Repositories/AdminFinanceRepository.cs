@@ -128,7 +128,11 @@ public class AdminFinanceRepository : IAdminFinanceRepository
                 TransferRate = p.Transaction != null ? p.Transaction.TransferRate : 0,
                 IsPaid = p.IsPaid,
                 TransactionDate = p.Transaction != null ? p.Transaction.TransactionCreatedAt : null,
-                PayoutDate = p.PayoutDate
+                PayoutDate = p.PayoutDate,
+                PayoutStatus = p.PayoutStatus,
+                StripeTransferId = p.StripeTransferId,
+                StripePayoutId = p.StripePayoutId,
+                PaidToBankAt = p.PaidToBankAt
             })
             .ToListAsync();
     }
@@ -137,7 +141,32 @@ public class AdminFinanceRepository : IAdminFinanceRepository
     {
         return await _context.InstructorPayouts
             .Include(p => p.Instructor)
+            .Include(p => p.Transaction)
             .FirstOrDefaultAsync(p => p.PayoutId == payoutId);
+    }
+
+    /// <summary>
+    /// Tìm TẤT CẢ payout theo StripePayoutId (po_xxx) — dùng trong webhook payout.paid / payout.failed.
+    /// </summary>
+    public async Task<List<InstructorPayout>> GetPayoutsByStripePayoutIdAsync(string stripePayoutId)
+    {
+        return await _context.InstructorPayouts
+            .Where(p => p.StripePayoutId == stripePayoutId)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Tìm tất cả payout đang ở trạng thái 'transferred' của một Connected Account.
+    /// Dùng trong webhook payout.created để lưu stripe_payout_id cho toàn bộ các khoản giao dịch.
+    /// </summary>
+    public async Task<List<InstructorPayout>> GetTransferredPayoutsByAccountAsync(string stripeAccountId)
+    {
+        return await _context.InstructorPayouts
+            .Include(p => p.Instructor)
+            .Where(p => p.PayoutStatus == "transferred"
+                     && p.Instructor != null
+                     && p.Instructor.StripeAccountId == stripeAccountId)
+            .ToListAsync();
     }
 
     public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
