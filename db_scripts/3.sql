@@ -457,6 +457,7 @@ CREATE TABLE ai_models_courses (
     is_enabled BOOLEAN DEFAULT TRUE,
     config_json JSONB,
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	
 );
 
 CREATE TABLE course_ai_usage_logs (
