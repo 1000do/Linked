@@ -12,10 +12,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers
     public class NotificationController : ControllerBase
     {
         private readonly INotificationService _notiService;
+        private readonly IChatService _chatService;
 
-        public NotificationController(INotificationService notiService)
+        public NotificationController(INotificationService notiService, IChatService chatService)
         {
             _notiService = notiService;
+            _chatService = chatService;
         }
 
         [HttpGet]
@@ -30,7 +32,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpGet("all")]
-        [Authorize(Roles = "admin,manager")]
+        [Authorize(Roles = "admin,staff")]
         public async Task<IActionResult> GetAllNotifications()
         {
             //var data = await _notiService.GetAllNotificationsAsync();
@@ -71,14 +73,14 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             var emails = await _notiService.SearchEmailsAsync(query);
             return Ok(emails);
         }
-        [Authorize(Roles = "admin,manager")]
+        [Authorize(Roles = "admin,staff")]
         [HttpPost("send-test")]
         public async Task<IActionResult> SendTest([FromBody] NotificationSendDto dto)
         {
             await _notiService.SendNotificationAsync(dto.ReceiverId, dto.Title, dto.Content, null);
             return Ok("Đã gửi thành công");
         }
-        [Authorize(Roles = "admin,manager")]
+        [Authorize(Roles = "admin,staff")]
         [HttpPost("send-advanced")]
         public async Task<IActionResult> SendAdvanced([FromBody] NotificationAdvancedDto dto)
         {
@@ -89,6 +91,23 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             var count = await _notiService.SendAdvancedAsync(dto);
             if (count < 0) return BadRequest("Dữ liệu không hợp lệ");
             return Ok(new { message = "Gửi thành công", count });
+        }
+
+        [HttpGet("unread-summary")]
+        public async Task<IActionResult> GetUnreadSummary()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim)) return Unauthorized();
+
+            var userId = int.Parse(userIdClaim);
+            var notiCount = await _notiService.GetUnreadCountAsync(userId);
+            var chatCount = await _chatService.GetTotalUnreadCountAsync(userId);
+
+            return Ok(new
+            {
+                NotificationCount = notiCount,
+                ChatCount = chatCount
+            });
         }
     }
 }

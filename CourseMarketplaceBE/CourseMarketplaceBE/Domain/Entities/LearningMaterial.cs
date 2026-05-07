@@ -31,6 +31,8 @@ public partial class LearningMaterial
     public virtual Lesson? Lesson { get; set; }
     
     public virtual ICollection<MaterialEmbedding> MaterialEmbeddings { get; set; } = new List<MaterialEmbedding>();
+
+    public virtual ICollection<MaterialCompletion> MaterialCompletions { get; set; } = new List<MaterialCompletion>();
 }
 
 public class MaterialMetadata

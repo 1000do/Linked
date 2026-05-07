@@ -22,7 +22,7 @@ public interface ICourseRepository
     void Delete(Course course);
     Task<int> GetTotalPublishedCoursesCountAsync();
     Task<decimal> GetAveragePlatformRatingAsync();
-    Task<List<CourseModerationDto>> GetPendingCoursesModerationAsync();
+    Task<List<CourseModerationDto>> GetPendingCoursesModerationAsync(ModerationFilterDto filter);
     Task<bool> IsOwnerAsync(int userId, int courseId);
     Task SaveChangesAsync();
 }

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceBE.Presentation.Controllers
 {
-    [Authorize(Roles = "admin,manager")]
+    [Authorize(Roles = "admin,staff")]
     [ApiController]
     [Route("api/[controller]")]
     public class AdminApprovalController : ControllerBase

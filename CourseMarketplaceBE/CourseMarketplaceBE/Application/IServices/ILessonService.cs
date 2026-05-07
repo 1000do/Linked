@@ -7,5 +7,6 @@ public interface ILessonService
 {
     Task<LessonResponse> CreateLessonAsync(LessonCreateRequest request, int instructorId);
     Task<MaterialResponse> AddMaterialToLessonAsync(int lessonId, MaterialCreateRequest request, int instructorId);
+    Task RemoveMaterialAsync(int materialId, int instructorId);
     Task DeleteLessonAsync(int lessonId, int instructorId);
 }

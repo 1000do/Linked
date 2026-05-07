@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS cart_items CASCADE;
 DROP TABLE IF EXISTS wishlist_items CASCADE;
 DROP TABLE IF EXISTS enrollment CASCADE;
 DROP TABLE IF EXISTS enrollments CASCADE;
+DROP TABLE IF EXISTS material_completions CASCADE;
 DROP TABLE IF EXISTS learning_materials CASCADE;
 DROP TABLE IF EXISTS lessons CASCADE;
 DROP TABLE IF EXISTS courses CASCADE;
@@ -168,7 +169,8 @@ CREATE TABLE courses (
     course_flag_count INT DEFAULT 0, -- Theo dõi số lần course bị report (1 lần, 2 lần , 3 lần sẽ có mức phạt ngày càng nặng, cần lên Udemy tham khảo thêm)
     what_you_will_learn TEXT, -- mô tả mục tiêu đạt được ở trang detail khóa học
     requirements TEXT, -- mô tả yêu cầu để học khóa học ở trang detail khóa học
-    moderation_feedback TEXT -- phản hồi từ admin khi duyệt/từ chối
+    moderation_feedback TEXT, -- phản hồi từ admin khi duyệt/từ chối
+    last_approved_at TIMESTAMP -- thời điểm cuối cùng khóa học được phê duyệt thành công
 );
 
 
@@ -248,6 +250,14 @@ CREATE TABLE enrollment_progress (
 	enrollment_id INT PRIMARY KEY REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
 	learned_material_count INT NOT NULL DEFAULT 0, -- Lưu số lượng material đã học qua trong course, dùng để hiển thị progress bar trên UI = learned_material_count/courses.total_materials
 	last_modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE material_completions (
+    id SERIAL PRIMARY KEY,
+    enrollment_id INT NOT NULL REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
+    material_id INT NOT NULL REFERENCES learning_materials(material_id) ON DELETE CASCADE,
+    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(enrollment_id, material_id)
 );
 
 CREATE TABLE wishlist_items (
@@ -735,6 +745,7 @@ SELECT setval(pg_get_serial_sequence('lessons', 'lesson_id'), (SELECT MAX(lesson
 SELECT setval(pg_get_serial_sequence('learning_materials', 'material_id'), (SELECT MAX(material_id) FROM learning_materials));
 SELECT setval(pg_get_serial_sequence('chats', 'chat_id'), (SELECT COALESCE(MAX(chat_id), 1) FROM chats));
 SELECT setval(pg_get_serial_sequence('messages', 'message_id'), (SELECT COALESCE(MAX(message_id), 1) FROM messages));
+SELECT setval(pg_get_serial_sequence('material_completions', 'id'), (SELECT COALESCE(MAX(id), 1) FROM material_completions));
 
 DO $$
 DECLARE

@@ -1,4 +1,6 @@
 using System;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
@@ -34,6 +36,9 @@ public class LessonService : ILessonService
 
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to add a lesson to this course.");
+
+        if (course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cannot add lessons while the course is pending review.");
 
         string? thumbnailUrl = request.ThumbnailUrl;
 
@@ -91,6 +96,9 @@ public class LessonService : ILessonService
         if (lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to add material to this lesson.");
 
+        if (lesson.Course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cannot add materials while the course is pending review.");
+
         string? materialUrl = request.MaterialUrl;
 
         if (request.MaterialFile != null)
@@ -106,7 +114,7 @@ public class LessonService : ILessonService
         var fileType = request.MaterialMetadata?.FileType ?? "video";
         
         LearningMaterial? existingMaterial = null;
-        // Only enforce 1-to-1 for videos. For documents, allow multiple by creating new.
+        // For videos: enforce one-per-lesson (replace). For documents: allow multiple.
         if (fileType == "video")
         {
             existingMaterial = existingMaterials.FirstOrDefault(m => 
@@ -121,6 +129,11 @@ public class LessonService : ILessonService
             material.Title = request.Title;
             material.Description = request.Description;
             if (!string.IsNullOrEmpty(materialUrl)) {
+                // Xóa file cũ trên Cloudinary trước khi cập nhật link mới
+                if (!string.IsNullOrEmpty(material.MaterialUrl))
+                {
+                    await _uploadService.DeleteFileAsync(material.MaterialUrl);
+                }
                 material.MaterialUrl = materialUrl;
             }
             if (request.MaterialMetadata != null) {
@@ -150,14 +163,6 @@ public class LessonService : ILessonService
 
         await _materialRepository.SaveChangesAsync();
 
-        if (lesson.Course != null && lesson.Course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
-        {
-            lesson.Course.CourseStatus = "pending";
-            lesson.Course.ModerationFeedback = null;
-            _courseRepository.Update(lesson.Course);
-            await _courseRepository.SaveChangesAsync();
-        }
-
         return new MaterialResponse
         {
             MaterialId = material.MaterialId,
@@ -172,6 +177,31 @@ public class LessonService : ILessonService
         };
     }
 
+    public async Task RemoveMaterialAsync(int materialId, int instructorId)
+    {
+        var material = await _materialRepository.GetByIdAsync(materialId);
+        if (material == null)
+            throw new Exception("Material not found.");
+
+        var lesson = await _lessonRepository.GetByIdAsync(material.LessonId ?? 0);
+        if (lesson == null || lesson.Course == null || lesson.Course.InstructorId != instructorId)
+            throw new UnauthorizedAccessException("You do not have permission to remove this material.");
+
+        if (lesson.Course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cannot remove materials while the course is pending review.");
+
+        // Xóa file trên Cloudinary
+        if (!string.IsNullOrEmpty(material.MaterialUrl))
+        {
+            await _uploadService.DeleteFileAsync(material.MaterialUrl);
+        }
+
+        material.LearningStatus = "removed";
+        material.UpdatedAt = DateTime.UtcNow;
+        _materialRepository.Update(material);
+        await _materialRepository.SaveChangesAsync();
+    }
+
     public async Task DeleteLessonAsync(int lessonId, int instructorId)
     {
         var lesson = await _lessonRepository.GetByIdAsync(lessonId);
@@ -180,6 +210,19 @@ public class LessonService : ILessonService
 
         if (lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to delete this lesson.");
+
+        if (lesson.Course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cannot delete lessons while the course is pending review.");
+
+        // Xóa tất cả các file materials của lesson này trên Cloudinary
+        var materials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
+        foreach (var m in materials)
+        {
+            if (!string.IsNullOrEmpty(m.MaterialUrl))
+            {
+                await _uploadService.DeleteFileAsync(m.MaterialUrl);
+            }
+        }
 
         _lessonRepository.Delete(lesson);
         await _lessonRepository.SaveChangesAsync();

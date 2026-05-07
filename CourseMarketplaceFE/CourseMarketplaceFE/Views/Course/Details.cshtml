@@ -1,6 +1,8 @@
 @model CourseMarketplaceFE.Models.CourseDetailViewModel
 @{
     ViewData["Title"] = Model.Title;
+    var userRole = Context.Request.Cookies["UserRole"]?.ToLower();
+    var isManager = userRole == "admin" || userRole == "staff" || userRole == "manager";
 }
 
 <style>
@@ -85,11 +87,22 @@
                         }
                     </div>
                     <div id="enrollment-actions" class="flex flex-col gap-3">
-                        @if (Model.IsEnrolled || Model.IsOwner || User.IsInRole("manager"))
+                        @if (Model.IsEnrolled && !Model.IsOwner)
                         {
                             <a href="/Course/Learn/@Model.CourseId" class="w-full bg-slate-900 text-white text-center font-bold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
                                 <span class="material-symbols-outlined">play_circle</span>
                                 Go to learning
+                            </a>
+                            <button onclick="startChatWithInstructor(@Model.InstructorId)" class="w-full bg-primary/10 text-primary border border-primary/20 font-bold py-3 rounded-lg hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined">chat</span>
+                                Message Instructor
+                            </button>
+                        }
+                        else if (Model.IsOwner || isManager)
+                        {
+                            <a href="/Course/Learn/@Model.CourseId" class="w-full bg-slate-900 text-white text-center font-bold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined">play_circle</span>
+                                @(Model.IsOwner ? "Preview your course" : "Preview course")
                             </a>
                         }
                         else if (Model.Price == 0)
@@ -108,14 +121,20 @@
                             <button onclick="buyNow(@Model.CourseId)" class="w-full border-2 border-slate-900 font-bold py-3 rounded-lg hover:bg-slate-50 transition-all">Buy now</button>
                         }
                         
-                        <button type="button" 
-                                onclick="toggleWishlist(this, @Model.CourseId);"
-                                class="w-full border border-slate-200 font-bold py-3 rounded-lg hover:bg-slate-50 transition-all flex items-center justify-center gap-2 @(Model.IsInWishlist ? "text-red-500" : "text-slate-700")">
-                            <span class="material-symbols-outlined @(Model.IsInWishlist ? "text-red-500" : "text-slate-400")" style='font-variation-settings: "FILL" @(Model.IsInWishlist ? "1" : "0");'>favorite</span>
-                            <span class="wishlist-text">@(Model.IsInWishlist ? "Saved to Wishlist" : "Add to Wishlist")</span>
-                        </button>
+                        @if (!Model.IsOwner && !isManager)
+                        {
+                            <button type="button" 
+                                    onclick="toggleWishlist(this, @Model.CourseId);"
+                                    class="w-full border border-slate-200 font-bold py-3 rounded-lg hover:bg-slate-50 transition-all flex items-center justify-center gap-2 @(Model.IsInWishlist ? "text-red-500" : "text-slate-700")">
+                                <span class="material-symbols-outlined @(Model.IsInWishlist ? "text-red-500" : "text-slate-400")" style='font-variation-settings: "FILL" @(Model.IsInWishlist ? "1" : "0");'>favorite</span>
+                                <span class="wishlist-text">@(Model.IsInWishlist ? "Saved to Wishlist" : "Add to Wishlist")</span>
+                            </button>
+                        }
                     </div>
-                    <p class="text-[11px] text-slate-500 text-center mt-4">30-Day Money-Back Guarantee</p>
+                    @if (!Model.IsOwner && !isManager)
+                    {
+                        <p class="text-[11px] text-slate-500 text-center mt-4">30-Day Money-Back Guarantee</p>
+                    }
                     
                     <div class="mt-6">
                         <p class="font-bold text-sm mb-3">This course includes:</p>
@@ -227,6 +246,10 @@
                             <div class="flex items-center gap-3">
                                 <span class="material-symbols-outlined text-slate-500 text-[20px]">expand_more</span>
                                 <span class="font-bold text-slate-800">@lesson.Title</span>
+                                @if (isManager && Model.LastApprovedAt.HasValue && lesson.UpdatedAt > Model.LastApprovedAt)
+                                {
+                                    <span class="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full border border-amber-200 font-bold uppercase tracking-wider ml-1">Edited Section</span>
+                                }
                             </div>
                             <span class="text-sm text-slate-600">@lesson.LearningMaterials.Count lectures • @lessonDurationDisplay</span>
                         </button>
@@ -235,7 +258,7 @@
                             @foreach (var material in lesson.LearningMaterials)
                             {
                                 var isFirstMaterial = materialIndex == 0 && lesson == Model.Lessons.First();
-                                var isLocked = !Model.IsEnrolled && !isFirstMaterial && !User.IsInRole("manager");
+                                var isLocked = !Model.IsEnrolled && !isFirstMaterial && !isManager && !Model.IsOwner;
                                 
                                 <div class="flex items-center justify-between text-sm py-3 @(isLocked ? "opacity-60" : "")">
                                     <div class="flex items-center gap-3 text-slate-700 flex-1">
@@ -262,6 +285,11 @@
                                         else
                                         {
                                             <a href="/Course/Learn/@Model.CourseId" class="hover:text-[#a435f0] hover:underline cursor-pointer">@material.Title</a>
+                                        }
+
+                                        @if (isManager && Model.LastApprovedAt.HasValue && material.UpdatedAt > Model.LastApprovedAt)
+                                        {
+                                            <span class="bg-orange-100 text-orange-700 text-[10px] px-2 py-0.5 rounded border border-orange-200 font-black uppercase tracking-tighter ml-1">New Content</span>
                                         }
                                     </div>
                                     <div class="flex items-center gap-8">
@@ -348,14 +376,7 @@
                             <span class="material-symbols-outlined text-[18px]">play_circle</span>
                             <span class="font-bold">@Model.InstructorCoursesCount Courses</span>
                         </div>
-                        @if (!Model.IsOwner)
-                        {
-                            <button onclick="startChatWithInstructor(@Model.InstructorId)" 
-                                    class="mt-4 px-6 py-2.5 bg-primary/10 text-primary rounded-xl font-bold text-sm hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2 group border border-primary/20">
-                                <span class="material-symbols-outlined text-sm group-hover:rotate-12 transition-transform">chat</span>
-                                Nhắn tin cho giảng viên
-                            </button>
-                        }
+                        @* Đã chuyển lên sidebar *@
                     </div>
                 </div>
                 <div class="text-sm text-slate-700 mt-2 leading-relaxed prose max-w-none">
@@ -913,4 +934,51 @@
         }
     }
 
+    async function startChatWithInstructor(instructorId) {
+        const token = "@(Context.Request.Cookies["AccessToken"] ?? "")";
+        if (!token) {
+            Swal.fire({
+                title: 'Vui lòng đăng nhập',
+                text: 'Bạn cần đăng nhập để nhắn tin cho giảng viên.',
+                icon: 'info',
+                confirmButtonText: 'Đăng nhập',
+                showCancelButton: true
+            }).then((result) => {
+                if (result.isConfirmed) window.location.href = '/Auth/Login';
+            });
+            return;
+        }
+
+        try {
+            // Hiển thị loading
+            Swal.fire({
+                title: 'Đang kết nối...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const response = await fetch('http://localhost:5207/api/chat/get-or-create', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    partnerId: instructorId,
+                    contextType: 'course',
+                    contextId: @Model.CourseId
+                })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                Swal.close();
+                window.location.href = `/Chat/Index?chatId=${result.chatId}`;
+            } else {
+                Swal.fire('Lỗi', result.message || 'Không thể tạo cuộc trò chuyện.', 'error');
+            }
+        } catch (e) {
+            Swal.fire('Lỗi', 'Lỗi kết nối server chat.', 'error');
+        }
+    }
 </script>

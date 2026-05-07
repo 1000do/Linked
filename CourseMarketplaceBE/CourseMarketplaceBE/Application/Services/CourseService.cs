@@ -15,12 +15,16 @@ public class CourseService : ICourseService
     private readonly ICourseRepository _courseRepository;
     private readonly IInstructorRepository _instructorRepository;
     private readonly IFileUploadService _uploadService;
+    private readonly IMaterialRepository _materialRepository;
+    private readonly ILessonRepository _lessonRepository;
 
-    public CourseService(ICourseRepository courseRepository, IInstructorRepository instructorRepository, IFileUploadService uploadService)
+    public CourseService(ICourseRepository courseRepository, IInstructorRepository instructorRepository, IFileUploadService uploadService, IMaterialRepository materialRepository, ILessonRepository lessonRepository)
     {
         _courseRepository = courseRepository;
         _instructorRepository = instructorRepository;
         _uploadService = uploadService;
+        _materialRepository = materialRepository;
+        _lessonRepository = lessonRepository;
     }
 
     public async Task<IEnumerable<CourseResponse>> GetAllPublishedCoursesAsync(int? userId = null)
@@ -146,6 +150,7 @@ public class CourseService : ICourseService
             RatingAverage = (decimal)(courseStats?.RatingAverage ?? 0),
             IsEnrolled = userId.HasValue && await _courseRepository.IsEnrolledAsync(userId.Value, courseId),
             IsOwner = userId.HasValue && course.InstructorId == userId.Value,
+            LastApprovedAt = course.LastApprovedAt,
             Lessons = course.Lessons.Select(l => new LessonResponse
             {
                 LessonId = l.LessonId,
@@ -165,7 +170,9 @@ public class CourseService : ICourseService
                     MaterialUrl = m.MaterialUrl,
                     MaterialMetadata = m.MaterialMetadata,
                     CreatedAt = m.CreatedAt,
-                    UpdatedAt = m.UpdatedAt
+                    UpdatedAt = m.UpdatedAt,
+                    LearningStatus = m.LearningStatus,
+                    ModerationFeedback = m.ModerationFeedback
                 }).ToList()
             }).ToList()
         };
@@ -241,6 +248,9 @@ public class CourseService : ICourseService
 
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to modify this course.");
+
+        if (course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cannot modify course while it is pending review.");
 
         string? thumbnailUrl = request.CourseThumbnailUrl ?? course.CourseThumbnailUrl;
 
@@ -322,6 +332,37 @@ public class CourseService : ICourseService
         course.CourseStatus = status.ToLower();
         course.UpdatedAt = DateTime.UtcNow;
 
+        if (status.Equals("pending", StringComparison.OrdinalIgnoreCase))
+        {
+            // Clear moderation feedback when resubmitting
+            course.ModerationFeedback = null;
+            
+            var materials = await _materialRepository.GetByCourseIdAsync(courseId);
+            if (materials != null)
+            {
+                foreach (var material in materials)
+                {
+                    material.ModerationFeedback = null;
+                    if (material.LearningStatus == "rejected")
+                    {
+                        material.LearningStatus = "active";
+                    }
+                    _materialRepository.Update(material);
+                }
+            }
+
+            // Clear lesson status when resubmitting
+            var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
+            if (lessons != null)
+            {
+                foreach (var lesson in lessons)
+                {
+                    lesson.LessonStatus = "active";
+                    _lessonRepository.Update(lesson);
+                }
+            }
+        }
+
         _courseRepository.Update(course);
         await _courseRepository.SaveChangesAsync();
     }
@@ -334,6 +375,9 @@ public class CourseService : ICourseService
 
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to delete this course.");
+
+        if (course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cannot delete course while it is pending review.");
 
         var hasEnrollments = await _courseRepository.HasEnrollmentsAsync(courseId);
         if (hasEnrollments)

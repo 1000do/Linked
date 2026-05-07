@@ -66,6 +66,27 @@ public class CheckoutRepository : ICheckoutRepository
             .OrderByDescending(e => e.LastAccessedAt)
             .ToListAsync();
     }
+    public async Task<bool> IsMaterialCompletedAsync(int enrollmentId, int materialId)
+        => await _context.MaterialCompletions.AnyAsync(mc => mc.EnrollmentId == enrollmentId && mc.MaterialId == materialId);
+
+    public async Task<int> GetCompletedMaterialCountAsync(int enrollmentId)
+        => await _context.MaterialCompletions.CountAsync(mc => mc.EnrollmentId == enrollmentId);
+
+    public async Task<List<int>> GetCompletedMaterialIdsAsync(int enrollmentId)
+        => await _context.MaterialCompletions
+            .Where(mc => mc.EnrollmentId == enrollmentId)
+            .Select(mc => mc.MaterialId)
+            .ToListAsync();
+
+    public async Task<List<int>> GetEnrolledUserIdsAsync(int courseId)
+    {
+        return await _context.Enrollments
+            .Where(e => e.CourseId == courseId)
+            .Select(e => e.UserId ?? 0)
+            .Where(id => id != 0)
+            .Distinct()
+            .ToListAsync();
+    }
 
     public async Task<string?> GetUserEmailAsync(int userId)
         => await _context.Accounts
@@ -120,6 +141,9 @@ public class CheckoutRepository : ICheckoutRepository
 
     public async Task AddEnrollmentProgressAsync(EnrollmentProgress progress)
         => await _context.EnrollmentProgresses.AddAsync(progress);
+
+    public async Task AddMaterialCompletionAsync(MaterialCompletion completion)
+        => await _context.MaterialCompletions.AddAsync(completion);
 
     public async Task AddInstructorPayoutAsync(InstructorPayout payout)
         => await _context.InstructorPayouts.AddAsync(payout);

@@ -10,5 +10,6 @@ public interface IMaterialRepository
     Task AddAsync(LearningMaterial material);
     void Update(LearningMaterial material);
     void Delete(LearningMaterial material);
+    Task<List<LearningMaterial>> GetByCourseIdAsync(int courseId);
     Task SaveChangesAsync();
 }
