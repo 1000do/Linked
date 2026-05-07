@@ -28,6 +28,7 @@ namespace CourseMarketplaceFE.Models
         public bool IsEnrolled { get; set; }
         public bool IsOwner { get; set; }
         public int TotalReviews { get; set; }
+        public DateTime? LastApprovedAt { get; set; }
     }
 
     public class CourseDetailViewModel : PublicCourseViewModel
@@ -41,8 +42,11 @@ namespace CourseMarketplaceFE.Models
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
         public string? ThumbnailUrl { get; set; }
+        public string? LessonStatus { get; set; }
+        public DateTime? UpdatedAt { get; set; }
         public List<MaterialViewModel> LearningMaterials { get; set; } = new List<MaterialViewModel>();
         public int TotalSeconds => LearningMaterials.Sum(m => m.MaterialMetadata?.Duration ?? 0);
+        public bool HasRejectedMaterial => LearningMaterials.Any(m => string.Equals(m.LearningStatus, "rejected", StringComparison.OrdinalIgnoreCase));
     }
 
     public class MaterialViewModel
@@ -52,6 +56,9 @@ namespace CourseMarketplaceFE.Models
         public string? Description { get; set; }
         public string? MaterialUrl { get; set; }
         public MaterialMetadata? MaterialMetadata { get; set; }
+        public string? LearningStatus { get; set; }
+        public string? ModerationFeedback { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
 
     public class MaterialMetadata

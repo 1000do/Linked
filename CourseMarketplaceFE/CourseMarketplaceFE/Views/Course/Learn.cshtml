@@ -297,12 +297,17 @@
                                         </div>
                                         <div class="flex-1">
                                             <p class="text-sm font-medium leading-tight mb-1 group-hover:text-[#006a62] transition-colors">@material.Title</p>
-                                            <div class="flex items-center gap-2 text-[11px] text-slate-400">
-                                                @{
-                                                    bool isVid = mFileType.StartsWith("video") || mFileType == "mp4";
-                                                }
-                                                <span class="material-symbols-outlined text-[14px]">@(isVid ? "ondemand_video" : "description")</span>
-                                                <span>@(isVid ? $"{(material.MaterialMetadata?.Duration / 60 ?? 0)} min" : "Document")</span>
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2 text-[11px] text-slate-400">
+                                                    @{
+                                                        bool isVid = mFileType.StartsWith("video") || mFileType == "mp4";
+                                                    }
+                                                    <span class="material-symbols-outlined text-[14px]">@(isVid ? "ondemand_video" : "description")</span>
+                                                    <span>@(isVid ? $"{(material.MaterialMetadata?.Duration / 60 ?? 0)} min" : "Document")</span>
+                                                </div>
+                                                <div id="check-@material.MaterialId" class="hidden text-emerald-500">
+                                                    <span class="material-symbols-outlined fill-1 text-[18px]">check_circle</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -337,9 +342,18 @@
                 const res = await fetch('/Course/GetProgress/@Model.CourseId');
                 const result = await res.json();
                 if (result.success) {
-                    const pct = Math.round(result.data.progressPercentage);
+                    const data = result.data;
+                    const pct = Math.round(data.progressPercentage);
                     document.getElementById('top-progress-bar').style.width = pct + '%';
                     document.getElementById('top-progress-text').textContent = pct + '% complete';
+
+                    // Update checkmarks in sidebar
+                    if (data.completedMaterialIds) {
+                        data.completedMaterialIds.forEach(id => {
+                            const checkIcon = document.getElementById('check-' + id);
+                            if (checkIcon) checkIcon.classList.remove('hidden');
+                        });
+                    }
                 }
             } catch (e) {}
         }

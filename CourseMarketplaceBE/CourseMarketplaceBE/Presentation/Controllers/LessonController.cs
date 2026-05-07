@@ -10,7 +10,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 
 [ApiController]
 [Route("api/lessons")]
-[Authorize] // Requires authentication
+[Authorize]
 public class LessonController : ControllerBase
 {
     private readonly ILessonService _lessonService;
@@ -57,6 +57,25 @@ public class LessonController : ControllerBase
             var instructorId = GetInstructorId();
             var result = await _lessonService.AddMaterialToLessonAsync(lessonId, request, instructorId);
             return StatusCode(201, ApiResponse<object>.SuccessResponse(result, "Material added successfully."));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
+    [HttpPatch("materials/{materialId}/remove")]
+    public async Task<IActionResult> RemoveMaterial(int materialId)
+    {
+        try
+        {
+            var instructorId = GetInstructorId();
+            await _lessonService.RemoveMaterialAsync(materialId, instructorId);
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Material removed successfully."));
         }
         catch (UnauthorizedAccessException ex)
         {

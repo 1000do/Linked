@@ -340,6 +340,23 @@ namespace CourseMarketplaceFE.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
+        // ─── REMOVE MATERIAL (soft-delete, AJAX) ─────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> RemoveMaterial([FromForm] int materialId)
+        {
+            try
+            {
+                var resp = await _api.PatchAsync($"lessons/materials/{materialId}/remove");
+                if (resp.IsSuccessStatusCode)
+                    return Json(new { success = true });
+                var error = await resp.Content.ReadAsStringAsync();
+                return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
         // ─── UPDATE COURSE STATUS (AJAX) ──────────────────────────────────
         [HttpPost]
         public async Task<IActionResult> UpdateCourseStatus([FromForm] int courseId, [FromForm] string status)

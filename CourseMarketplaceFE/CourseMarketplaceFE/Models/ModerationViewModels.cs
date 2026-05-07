@@ -13,6 +13,8 @@ namespace CourseMarketplaceFE.Models
         public string? CourseStatus { get; set; }
         [System.Text.Json.Serialization.JsonPropertyName("course_thumbnail_url")]
         public string? CourseThumbnailUrl { get; set; }
+        public string UrgencyLevel { get; set; } = "Normal";
+        public string UrgencyColor { get; set; } = "slate";
     }
 
     public class UserReportModerationViewModel

@@ -36,6 +36,7 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<Instructor> Instructors { get; set; }
     public virtual DbSet<InstructorPayout> InstructorPayouts { get; set; }
     public virtual DbSet<LearningMaterial> LearningMaterials { get; set; }
+    public virtual DbSet<MaterialCompletion> MaterialCompletions { get; set; }
     public virtual DbSet<Lesson> Lessons { get; set; }
     public virtual DbSet<Manager> Managers { get; set; }
 
@@ -445,6 +446,9 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.WhatYouWillLearn).HasColumnName("what_you_will_learn");
             entity.Property(e => e.Requirements).HasColumnName("requirements");
             entity.Property(e => e.ModerationFeedback).HasColumnName("moderation_feedback");
+            entity.Property(e => e.LastApprovedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("last_approved_at");
             // ★ total_lessons, rating_average, total_students ĐÃ BỊ XÓA → dùng view_course_stats
 
             entity.HasOne(d => d.Category).WithMany(p => p.Courses)
@@ -513,6 +517,32 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey<EnrollmentProgress>(d => d.EnrollmentId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("enrollment_progress_enrollment_id_fkey");
+        });
+
+        // ── material_completions ─────────────────────────────────────────────
+        modelBuilder.Entity<MaterialCompletion>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("material_completions_pkey");
+            entity.ToTable("material_completions");
+            entity.HasIndex(e => new { e.EnrollmentId, e.MaterialId }, "material_completions_enrollment_id_material_id_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.EnrollmentId).HasColumnName("enrollment_id");
+            entity.Property(e => e.MaterialId).HasColumnName("material_id");
+            entity.Property(e => e.CompletedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("completed_at");
+
+            entity.HasOne(d => d.Enrollment).WithMany(p => p.MaterialCompletions)
+                .HasForeignKey(d => d.EnrollmentId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("material_completions_enrollment_id_fkey");
+
+            entity.HasOne(d => d.Material).WithMany(p => p.MaterialCompletions)
+                .HasForeignKey(d => d.MaterialId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("material_completions_material_id_fkey");
         });
 
         // ── instructors ───────────────────────────────────────────────────────

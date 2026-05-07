@@ -57,6 +57,12 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
             return true;
         }
 
+        public async Task<int> GetUnreadCountAsync(int userId)
+        {
+            return await _context.Notifications
+                .CountAsync(n => n.ReceiverId == userId && (n.IsRead == false || n.IsRead == null));
+        }
+
         public async Task<List<string>> SearchEmailsByQueryAsync(string query, int take = 5) =>
             await _context.Accounts
                 .Where(a => a.Email.Contains(query))

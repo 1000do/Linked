@@ -9,7 +9,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "admin,manager")] 
+    [Authorize(Roles = "admin")] 
     public class CouponController : ControllerBase
     {
         private readonly ICouponService _service;

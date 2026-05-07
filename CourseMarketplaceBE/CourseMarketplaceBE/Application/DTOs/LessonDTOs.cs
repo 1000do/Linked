@@ -49,4 +49,6 @@ public class MaterialResponse
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public string? CourseStatus { get; set; }
+    public string? LearningStatus { get; set; }
+    public string? ModerationFeedback { get; set; }
 }

@@ -26,9 +26,10 @@
             <a href="/Course/Details/@courseId" target="_blank" class="px-4 py-2 bg-white text-slate-700 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2">
                 <span class="material-symbols-outlined text-[18px]">visibility</span> Preview
             </a>
-            @if (!courseStatus.Equals("Published", StringComparison.OrdinalIgnoreCase) && !courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase)) {
+            @if (!courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase)) {
                 <button class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()">
-                    <span class="material-symbols-outlined text-[18px]">send</span> Submit for Review
+                    <span class="material-symbols-outlined text-[18px]">send</span> 
+                    @(courseStatus.Equals("Published", StringComparison.OrdinalIgnoreCase) ? "Submit Changes" : "Submit for Review")
                 </button>
             }
         </div>
@@ -223,11 +224,39 @@
 
                         <!-- Thumbnail -->
                         <div class="space-y-4">
-                            <label class="text-sm font-bold text-slate-900 block">Course Thumbnail URL</label>
-                            <div class="flex gap-4">
-                                <input type="text" id="course-thumbnail-input" class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary" value="@ViewBag.ThumbnailUrl" />
-                                <div class="w-24 h-16 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
-                                    <img id="course-thumbnail-preview" src="@(string.IsNullOrEmpty(ViewBag.ThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=200" : ViewBag.ThumbnailUrl)" class="w-full h-full object-cover" />
+                            <label class="text-sm font-bold text-slate-900 block">Course Thumbnail</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-3">
+                                    <div id="thumb-drop-area" class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:bg-slate-50 transition-all cursor-pointer group relative overflow-hidden">
+                                        <div class="py-4">
+                                            <span class="material-symbols-outlined text-[32px] text-slate-300 group-hover:text-primary transition-colors">image</span>
+                                            <p class="text-xs font-bold text-slate-500 mt-2">Click or drag to upload</p>
+                                            <p class="text-[10px] text-slate-400">JPG, PNG or WebP (16:9 recommended)</p>
+                                        </div>
+                                        <input type="file" id="thumb-file-input" accept="image/*" class="hidden" />
+                                        
+                                        <!-- Mini Progress Overlay -->
+                                        <div id="thumb-upload-progress" class="hidden absolute inset-0 bg-white/90 flex flex-col items-center justify-center">
+                                            <div class="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-2"></div>
+                                            <p class="text-[10px] font-bold text-primary">Uploading...</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <input type="hidden" id="course-thumbnail-input" value="@ViewBag.ThumbnailUrl" />
+                                </div>
+                                
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Preview & Alignment</label>
+                                        <select id="thumb-fit-input" class="text-[10px] font-bold bg-slate-100 border-none rounded px-2 py-1 cursor-pointer focus:ring-0">
+                                            <option value="cover">Cover (Fill)</option>
+                                            <option value="contain">Contain (Fit)</option>
+                                            <option value="fill">Stretch</option>
+                                        </select>
+                                    </div>
+                                    <div class="aspect-video bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-inner flex items-center justify-center">
+                                        <img id="course-thumbnail-preview" src="@(string.IsNullOrEmpty(ViewBag.ThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400" : ViewBag.ThumbnailUrl)" class="w-full h-full object-cover transition-all duration-300" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -318,10 +347,12 @@
                                         </div>
                                         <div>
                                             <h4 class="font-bold text-slate-900" id="uploaded-filename"></h4>
-                                            <p class="text-xs text-slate-500">Video successfully processed</p>
+                                            <p class="text-xs text-slate-500" id="video-save-status">Video successfully processed</p>
                                         </div>
                                     </div>
-                                    <button class="text-slate-400 hover:text-red-500 transition-colors" onclick="resetVideoUpload()"><span class="material-symbols-outlined">delete</span></button>
+                                    <button class="text-slate-400 hover:text-primary transition-colors" title="Replace video" onclick="document.getElementById('video-input').click()">
+                                        <span class="material-symbols-outlined">edit</span>
+                                    </button>
                                 </div>
                             </div>
                             
@@ -333,19 +364,12 @@
                             </div>
                         </div>
                         <div class="space-y-6">
-                            <button class="w-full px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/20" onclick="saveVideoMaterial()" id="save-video-btn">Save Video Content</button>
-                            
-                            <div class="bg-white rounded-xl p-5 border border-slate-200">
-                                <label class="block text-sm font-bold text-slate-900 mb-4">Visibility & Access</label>
-                                <label id="downloadable-label" class="toggle-card flex items-start gap-4 p-4 rounded-xl border-2 border-primary bg-primary/5 cursor-pointer transition-all">
-                                    <div class="mt-0.5 text-primary"><span class="material-symbols-outlined text-[20px]">download</span></div>
-                                    <div class="flex-1">
-                                        <p class="font-bold text-slate-900 text-sm">Downloadable</p>
-                                        <p class="text-[10px] text-slate-500 mt-1">Allow students to save offline</p>
-                                    </div>
-                                    <div class="mt-1"><input type="checkbox" id="cb-downloadable" checked class="w-5 h-5 border-2 border-primary rounded text-primary focus:ring-primary" /></div>
-                                </label>
+                            <!-- Auto-save status indicator -->
+                            <div id="video-autosave-status" class="hidden text-xs text-center font-semibold text-slate-400 flex items-center justify-center gap-1">
+                                <span class="material-symbols-outlined text-[14px] animate-spin">sync</span> Saving...
                             </div>
+                            
+
                         </div>
                     </div>
                 </div>
@@ -393,18 +417,20 @@
                             </div>
                         </div>
                         <div class="space-y-6">
-                            <button class="w-full px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/20" onclick="saveResourceMaterial()" id="save-resource-btn">Save Resource</button>
+                            <!-- Auto-save indicator replaces manual Save button -->
+                            <div id="resource-autosave-status" class="hidden text-xs text-center font-semibold text-emerald-600 flex items-center justify-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">check_circle</span> <span id="resource-autosave-text">Saved!</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    </div>
 </div>
 
 <!-- Add Lesson Modal -->
-<div id="add-lesson-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+<div id="add-lesson-modal" class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 transform scale-95 transition-transform duration-300">
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-xl font-headline font-extrabold text-slate-900">Add New Lesson</h3>
@@ -430,8 +456,49 @@
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 </style>
 
+@if (courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+{
+    <div class="fixed top-24 left-1/2 -translate-x-1/2 z-[60] animate-in slide-in-from-top-4 duration-500">
+        <div class="bg-white/80 backdrop-blur-md border border-amber-200 px-6 py-3 rounded-full shadow-xl flex items-center gap-3">
+            <div class="w-8 h-8 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center">
+                <span class="material-symbols-outlined text-[20px]">lock</span>
+            </div>
+            <p class="text-sm font-bold text-slate-900">Khóa học đang chờ duyệt — Chế độ chỉ đọc</p>
+        </div>
+    </div>
+}
+
 @section Scripts {
     <script>
+        console.log("Editor Scripts Initializing...");
+
+        // Define functions globally at the TOP to ensure they are available
+        window.addNewLesson = function() {
+            console.log("Add New Lesson clicked");
+            const modal = document.getElementById('add-lesson-modal');
+            const input = document.getElementById('new-lesson-title');
+            if (!modal) { console.error("Modal not found!"); return; }
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+                if (input) {
+                    input.value = '';
+                    input.focus();
+                }
+            }, 10);
+        };
+
+        window.closeLessonModal = function() {
+            const modal = document.getElementById('add-lesson-modal');
+            if (!modal) return;
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        };
+
         // ─── Quill ───
         const quillConfig = {
             theme: 'snow',
@@ -529,14 +596,7 @@
                     const json = await res.json();
                     if (json.success) {
                         if (json.status && json.status.toLowerCase() === 'pending') {
-                            Swal.fire({ 
-                                icon: 'info', 
-                                title: 'Course Under Review', 
-                                text: 'Because you modified a published course, it has been set back to Pending Review for admin approval.',
-                                confirmButtonText: 'OK'
-                            }).then(() => {
-                                location.reload();
-                            });
+                            location.reload();
                         } else {
                             Swal.fire({ icon: 'success', title: 'Saved!', text: 'Course details updated successfully.', timer: 1500, showConfirmButton: false });
                             document.querySelector('h1').textContent = title;
@@ -558,8 +618,55 @@
 
         // Thumbnail preview sync
         document.getElementById('course-thumbnail-input').addEventListener('input', function(e) {
-            document.getElementById('course-thumbnail-preview').src = e.target.value || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=200";
+            document.getElementById('course-thumbnail-preview').src = e.target.value || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400";
         });
+
+        document.getElementById('thumb-fit-input').addEventListener('change', function(e) {
+            document.getElementById('course-thumbnail-preview').style.objectFit = e.target.value;
+        });
+
+        // ─── Thumbnail Upload ───
+        const thumbDropArea = document.getElementById('thumb-drop-area');
+        const thumbInput = document.getElementById('thumb-file-input');
+        const thumbProgress = document.getElementById('thumb-upload-progress');
+        const thumbPreview = document.getElementById('course-thumbnail-preview');
+        const thumbUrlInput = document.getElementById('course-thumbnail-input');
+
+        thumbDropArea.addEventListener('click', () => thumbInput.click());
+        thumbInput.addEventListener('change', function() { handleThumbUpload(this.files); });
+        
+        async function handleThumbUpload(files) {
+            if (!files.length) return;
+            const file = files[0];
+            if (!file.type.startsWith('image/')) { 
+                Swal.fire('Invalid File', 'Please upload an image.', 'warning');
+                return; 
+            }
+
+            thumbProgress.classList.remove('hidden');
+            
+            const CLOUD_NAME = 'df8i0azc5';
+            const UPLOAD_PRESET = 'course_marketplace_preset';
+            const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+            
+            const fd = new FormData();
+            fd.append('upload_preset', UPLOAD_PRESET);
+            fd.append('file', file);
+            
+            try {
+                const res = await fetch(url, { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.secure_url) {
+                    thumbUrlInput.value = data.secure_url;
+                    thumbPreview.src = data.secure_url;
+                    Swal.fire({ icon: 'success', title: 'Image Uploaded', text: 'Thumbnail updated successfully.', timer: 1500, showConfirmButton: false });
+                }
+            } catch (err) {
+                Swal.fire('Upload Failed', 'Error uploading image to server.', 'error');
+            } finally {
+                thumbProgress.classList.add('hidden');
+            }
+        }
 
         // ─── Tabs ───
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -635,18 +742,30 @@
                 // Safely get lesson properties (handle both PascalCase and camelCase)
                 const lId = lesson.lessonId || lesson.LessonId;
                 const lTitle = lesson.title || lesson.Title;
+                const lStatus = (lesson.lessonStatus || lesson.LessonStatus || '').toLowerCase();
+                
+                // Check if lesson has any rejected materials
+                const materials = lesson.learningMaterials || lesson.LearningMaterials || [];
+                const hasRejected = lStatus === 'rejected' || materials.some(m => (m.learningStatus || m.LearningStatus || '').toLowerCase() === 'rejected');
                 
                 const currentEditingId = document.getElementById('editing-lesson-id').textContent;
                 const isSelected = currentEditingId == num;
-                const activeClasses = isSelected ? 'border-primary ring-1 ring-primary/20 shadow-sm' : 'border-slate-100 hover:border-slate-300';
+                let activeClasses = isSelected ? 'border-primary ring-1 ring-primary/20 shadow-sm' : 'border-slate-100 hover:border-slate-300';
+                if (hasRejected && !isSelected) activeClasses = 'border-red-200 hover:border-red-300 bg-red-50/30';
+                
+                const iconName = hasRejected ? 'cancel' : 'play_circle';
+                const iconColor = hasRejected ? 'red-500' : (isSelected ? 'primary' : 'slate-400');
+                const statusLabel = hasRejected 
+                    ? '<span class="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">error</span> Rejected</span>'
+                    : '<p class="text-[10px] text-slate-500 mt-1">Video Lesson</p>';
                 
                 sectionHtml += `
                     <div class="lesson-item p-3 bg-white border rounded-lg flex items-start gap-3 cursor-pointer transition-colors ${activeClasses}" 
                          data-lesson-id="${lId}" data-num="${num}" data-title="${lTitle}" onclick="selectLesson(this)">
-                        <span class="material-symbols-outlined text-${isSelected ? 'primary' : 'slate-400'} text-[20px] mt-0.5" ${isSelected ? "style='font-variation-settings: \"FILL\" 1;'" : ""}>play_circle</span>
+                        <span class="material-symbols-outlined text-${iconColor} text-[20px] mt-0.5" ${isSelected && !hasRejected ? "style='font-variation-settings: \"FILL\" 1;'" : ""}>${iconName}</span>
                         <div class="flex-1">
                             <p class="font-bold text-slate-900 text-sm">${num}. ${lTitle}</p>
-                            <p class="text-[10px] text-slate-500 mt-1">Video Lesson</p>
+                            ${statusLabel}
                         </div>
                     </div>
                 `;
@@ -683,12 +802,10 @@
             emptyState.style.display = 'none';
             emptyState.classList.add('hidden');
             emptyState.classList.remove('z-10');
-            emptyState.style.pointerEvents = 'none';
             
             editor.style.display = 'flex';
             editor.classList.remove('hidden');
             editor.classList.add('z-20');
-            editor.style.pointerEvents = 'auto';
             setTimeout(() => editor.classList.remove('opacity-0'), 10);
             
             document.querySelectorAll('.lesson-item').forEach(i => {
@@ -722,6 +839,10 @@
                 statusBadge.className = "flex items-center gap-1 text-primary";
                 statusBadge.querySelector('.material-symbols-outlined').textContent = "check_circle";
                 statusText.textContent = "Published";
+            } else if (lStatus === 'rejected') {
+                statusBadge.className = "flex items-center gap-1 text-red-500";
+                statusBadge.querySelector('.material-symbols-outlined').textContent = "cancel";
+                statusText.textContent = "Rejected";
             } else {
                 statusBadge.className = "flex items-center gap-1 text-slate-400";
                 statusBadge.querySelector('.material-symbols-outlined').textContent = "pending_actions";
@@ -758,6 +879,8 @@
                         const mUrl = material.materialUrl || material.MaterialUrl;
                         const mDesc = material.description || material.Description;
                         const mTitle = material.title || material.Title;
+                        const mLearningStatus = (material.learningStatus || material.LearningStatus || '').toLowerCase();
+                        const mModerationFeedback = material.moderationFeedback || material.ModerationFeedback || '';
 
                         if (type === 'video') {
                             // Populate video description
@@ -775,22 +898,62 @@
                                 const mins = Math.floor(totalSeconds / 60);
                                 durationDisplay = (mins > 0 ? mins : 0) + " mins";
                             }
-                        } else if (type === 'document' || type === 'file') {
-                            // Populate resource UI list
-                            if (mUrl) {
-                                hasResources = true;
-                                resourcesList.innerHTML += `
-                                    <div class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg shadow-sm">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 bg-[#006a62]/10 text-[#006a62] rounded flex items-center justify-center">
-                                                <span class="material-symbols-outlined">description</span>
-                                            </div>
+                            // Show moderation feedback for rejected video
+                            if (mLearningStatus === 'rejected' && mModerationFeedback) {
+                                const videoSuccessEl = document.getElementById('video-success');
+                                if (videoSuccessEl) {
+                                    videoSuccessEl.insertAdjacentHTML('afterend', `
+                                        <div class="mt-3 bg-red-50 border border-red-200 p-3 rounded-xl flex items-start gap-2">
+                                            <span class="material-symbols-outlined text-red-500 text-[18px] mt-0.5">error</span>
                                             <div>
-                                                <p class="font-bold text-slate-900 text-sm">${mTitle || "Resource File"}</p>
-                                                <p class="text-xs text-slate-500 truncate max-w-xs">${mDesc ? mDesc.replace(/<[^>]*>?/gm, '').substring(0, 50) + "..." : "No description"}</p>
+                                                <p class="text-xs font-bold text-red-700 mb-0.5">Phản hồi kiểm duyệt:</p>
+                                                <p class="text-xs text-red-600">${mModerationFeedback}</p>
                                             </div>
                                         </div>
-                                        <a href="${mUrl}" target="_blank" class="text-[#006a62] hover:bg-[#006a62]/10 p-2 rounded-full transition-colors"><span class="material-symbols-outlined text-[20px]">open_in_new</span></a>
+                                    `);
+                                }
+                            }
+                        } else if (type === 'document' || type === 'file') {
+                            // Skip soft-removed materials
+                            if (mLearningStatus === 'removed') return;
+                            // Populate resource UI list
+                            if (mUrl) {
+                                const mId = material.materialId || material.MaterialId;
+                                hasResources = true;
+                                const isRejected = mLearningStatus === 'rejected';
+                                const borderColor = isRejected ? 'border-red-200' : 'border-slate-200';
+                                const bgColor = isRejected ? 'bg-red-50/50' : 'bg-white';
+                                const iconBg = isRejected ? 'bg-red-100 text-red-500' : 'bg-[#006a62]/10 text-[#006a62]';
+                                const iconName = isRejected ? 'cancel' : 'description';
+                                const rejectedHint = (isRejected && mModerationFeedback) ? `
+                                    <div class="mt-2 bg-red-50 border border-red-200 p-2.5 rounded-lg flex items-start gap-2">
+                                        <span class="material-symbols-outlined text-red-500 text-[16px] mt-0.5">error</span>
+                                        <div>
+                                            <p class="text-[11px] font-bold text-red-700 mb-0.5">Phản hồi kiểm duyệt:</p>
+                                            <p class="text-[11px] text-red-600">${mModerationFeedback}</p>
+                                        </div>
+                                    </div>` : '';
+                                
+                                resourcesList.innerHTML += `
+                                    <div class="p-3 ${bgColor} border ${borderColor} rounded-lg shadow-sm" data-material-id="${mId}">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-10 h-10 ${iconBg} rounded flex items-center justify-center">
+                                                    <span class="material-symbols-outlined">${iconName}</span>
+                                                </div>
+                                                <div>
+                                                    <p class="font-bold text-slate-900 text-sm">${mTitle || "Resource File"}</p>
+                                                    <p class="text-xs text-slate-500 truncate max-w-xs">${mDesc ? mDesc.replace(/<[^>]*>?/gm, '').substring(0, 50) + "..." : "No description"}</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <a href="${mUrl}" target="_blank" class="text-[#006a62] hover:bg-[#006a62]/10 p-2 rounded-full transition-colors"><span class="material-symbols-outlined text-[20px]">open_in_new</span></a>
+                                                <button onclick="removeMaterial(${mId}, this)" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Remove">
+                                                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        ${rejectedHint}
                                     </div>
                                 `;
                             }
@@ -805,27 +968,7 @@
             if(durationEl) durationEl.textContent = durationDisplay;
         };
 
-        window.addNewLesson = function() {
-            const modal = document.getElementById('add-lesson-modal');
-            const input = document.getElementById('new-lesson-title');
-            modal.classList.remove('hidden');
-            // small delay to allow display block to apply before animating opacity
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modal.querySelector('div').classList.remove('scale-95');
-                input.value = '';
-                input.focus();
-            }, 10);
-        };
 
-        window.closeLessonModal = function() {
-            const modal = document.getElementById('add-lesson-modal');
-            modal.classList.add('opacity-0');
-            modal.querySelector('div').classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
-        };
 
         window.submitNewLesson = async function() {
             const input = document.getElementById('new-lesson-title');
@@ -845,14 +988,7 @@
                         const json = await res.json();
                         if(json.success && json.data) {
                             if (json.data.courseStatus && json.data.courseStatus.toLowerCase() === 'pending') {
-                                Swal.fire({ 
-                                    icon: 'info', 
-                                    title: 'Course Under Review', 
-                                    text: 'Because you added a lesson to a published course, it has been set back to Pending Review.',
-                                    confirmButtonText: 'OK'
-                                }).then(() => {
-                                    location.reload();
-                                });
+                                location.reload();
                                 return;
                             }
                             lessonsData.push(json.data);
@@ -903,7 +1039,7 @@
                 }
             });
         }
-        updateToggleCard('cb-downloadable', 'downloadable-label');
+
 
 
 
@@ -939,6 +1075,7 @@
 
             videoDropArea.classList.add('hidden');
             uiProgress.classList.remove('hidden');
+            uiSuccess.classList.add('hidden');
             document.getElementById('upload-filename-display').textContent = `Uploading "${file.name}"`;
             progressBarFill.style.width = '0%'; progressText.textContent = '0';
 
@@ -991,7 +1128,7 @@
                     
                     const result = await promise;
                     if (i === totalChunks - 1) {
-                        // Last chunk returns the final object
+                        // Last chunk — finalize
                         setTimeout(() => {
                             uiProgress.classList.add('hidden');
                             uiSuccess.classList.remove('hidden');
@@ -1001,6 +1138,8 @@
                             materialUrlInput.dataset.duration = Math.round(result.duration || 0);
                             materialUrlInput.dataset.fileSize = result.bytes || 0;
                             materialUrlInput.dataset.format = result.format || '';
+                            // Auto-save immediately after upload
+                            saveVideoMaterial();
                         }, 400);
                     }
                 }
@@ -1014,22 +1153,23 @@
             Swal.fire('Upload Failed', msg, 'error');
             resetVideoUpload(); 
         }
-        function resetVideoUpload() { videoDropArea.classList.remove('hidden'); uiProgress.classList.add('hidden'); uiSuccess.classList.add('hidden'); videoInput.value=''; materialUrlInput.value=''; }
+        function resetVideoUpload() { videoDropArea.classList.remove('hidden'); uiProgress.classList.add('hidden'); uiSuccess.classList.add('hidden'); videoInput.value=''; materialUrlInput.value=''; document.querySelectorAll('#tab-video .bg-red-50.border-red-200').forEach(el => el.remove()); }
         window.resetVideoUpload = resetVideoUpload;
 
-        // ─── Save Draft / Submit ───
+        // ─── Auto-Save Video Material ───
         window.saveVideoMaterial = async function() {
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
-            if (!lessonIdEl) { Swal.fire({ icon: 'warning', title: 'Oops...', text: 'Please select a lesson first.' }); return; }
+            if (!lessonIdEl) return;
             const lessonId = lessonIdEl.dataset.lessonId;
             const title = lessonIdEl.dataset.title;
             const description = window.videoQuill.root.innerHTML;
             const materialUrl = document.getElementById('MaterialUrl').value;
-            
-            if (!materialUrl) { Swal.fire({ icon: 'warning', title: 'Oops...', text: 'Please upload a video first.' }); return; }
+            if (!materialUrl) return;
 
-            const btn = document.getElementById('save-video-btn');
-            btn.disabled = true; btn.textContent = 'Saving...';
+            const statusEl = document.getElementById('video-save-status');
+            const autoSaveEl = document.getElementById('video-autosave-status');
+            if (autoSaveEl) { autoSaveEl.classList.remove('hidden'); }
+            if (statusEl) statusEl.textContent = 'Saving...';
             
             try {
                 const fd = new FormData();
@@ -1038,8 +1178,6 @@
                 if(description && description !== '<p><br></p>') fd.append('description', description);
                 fd.append('materialUrl', materialUrl);
                 fd.append('type', 'video');
-                
-                // Pass metadata captured from Cloudinary
                 if (materialUrlInput.dataset.duration) fd.append('duration', materialUrlInput.dataset.duration);
                 if (materialUrlInput.dataset.fileSize) fd.append('fileSize', materialUrlInput.dataset.fileSize);
                 if (materialUrlInput.dataset.format) fd.append('fileExtension', materialUrlInput.dataset.format);
@@ -1047,81 +1185,171 @@
                 const res = await fetch('/InstructorCourse/AddMaterial', { method: 'POST', body: fd });
                 if(res.ok) {
                     const json = await res.json();
-                    if(json.success) {
-                        if (json.status && json.status.toLowerCase() === 'pending') {
-                            Swal.fire({ 
-                                icon: 'info', 
-                                title: 'Course Under Review', 
-                                text: 'Because you added video content to a published course, it has been set back to Pending Review.',
-                                confirmButtonText: 'OK'
-                            }).then(() => {
-                                location.reload();
-                            });
-                            return;
-                        }
-                        Swal.fire({ icon: 'success', title: 'Saved!', text: 'Video content saved successfully.', timer: 1500, showConfirmButton: false });
-                        if (json.data) updateLocalMaterials(lessonId, json.data, 'video');
-                    } else { Swal.fire({ icon: 'error', title: 'Error', text: "Failed to save: " + (json.message || "Unknown error") }); }
-                } else { Swal.fire({ icon: 'error', title: 'Error', text: "Failed to save video content." }); }
-            } catch(e) { Swal.fire({ icon: 'error', title: 'Error', text: "Error saving video." }); } 
-            finally { btn.disabled = false; btn.textContent = 'Save Video Content'; }
+                        if(json.success) {
+                            if (statusEl) statusEl.textContent = '✓ Saved automatically';
+                            if (json.data) updateLocalMaterials(lessonId, json.data, 'video');
+                        } else {
+                        if (statusEl) statusEl.textContent = '✗ ' + (json.message || 'Save failed');
+                    }
+                } else {
+                    const errText = await res.text();
+                    if (statusEl) statusEl.textContent = '✗ HTTP ' + res.status;
+                }
+            } catch(e) {
+                if (statusEl) statusEl.textContent = '✗ Error saving';
+            } finally {
+                if (autoSaveEl) setTimeout(() => autoSaveEl.classList.add('hidden'), 2000);
+            }
         };
 
-        window.saveResourceMaterial = async function() {
+        // ─── Auto-Save Resource Material ───
+        window.saveResourceMaterial = async function(resourceUrl, resourceName, fileSize, fileExtension) {
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
-            if (!lessonIdEl) { Swal.fire({ icon: 'warning', title: 'Oops...', text: 'Please select a lesson first.' }); return; }
+            if (!lessonIdEl) return;
             const lessonId = lessonIdEl.dataset.lessonId;
-            const description = window.resourceQuill.root.innerHTML;
-            const resourceUrl = document.getElementById('ResourceUrl').value;
-            const resourceName = document.getElementById('resource-title-input').value || "Resource File";
-            
-            if (!resourceUrl) { Swal.fire({ icon: 'warning', title: 'Oops...', text: 'Please upload a resource file first.' }); return; }
+            const description = window.resourceQuill?.root.innerHTML || '';
 
-            const btn = document.getElementById('save-resource-btn');
-            btn.disabled = true; btn.textContent = 'Adding...';
-            
+            const autoSaveEl = document.getElementById('resource-autosave-status');
+            const autoSaveText = document.getElementById('resource-autosave-text');
+            if (autoSaveEl) {
+                autoSaveEl.classList.remove('hidden');
+                autoSaveEl.className = autoSaveEl.className.replace('text-emerald-600','text-slate-400');
+                if (autoSaveText) autoSaveText.textContent = 'Saving...';
+                autoSaveEl.querySelector('.material-symbols-outlined').textContent = 'sync';
+                autoSaveEl.querySelector('.material-symbols-outlined').classList.add('animate-spin');
+            }
+
             try {
                 const fd = new FormData();
                 fd.append('lessonId', lessonId);
-                fd.append('title', resourceName);
+                fd.append('title', resourceName || 'Resource File');
                 if(description && description !== '<p><br></p>') fd.append('description', description);
                 fd.append('materialUrl', resourceUrl);
                 fd.append('type', 'document');
-                
-                // Pass metadata
-                const resUrlInput = document.getElementById('ResourceUrl');
-                if (resUrlInput.dataset.fileSize) fd.append('fileSize', resUrlInput.dataset.fileSize);
-                if (resUrlInput.dataset.format) fd.append('fileExtension', resUrlInput.dataset.format);
+                if (fileSize) fd.append('fileSize', fileSize);
+                if (fileExtension) fd.append('fileExtension', fileExtension);
                 
                 const res = await fetch('/InstructorCourse/AddMaterial', { method: 'POST', body: fd });
                 if(res.ok) {
                     const json = await res.json();
                     if(json.success) {
-                        if (json.status && json.status.toLowerCase() === 'pending') {
-                            Swal.fire({ 
-                                icon: 'info', 
-                                title: 'Course Under Review', 
-                                text: 'Because you added resources to a published course, it has been set back to Pending Review.',
-                                confirmButtonText: 'OK'
-                            }).then(() => {
-                                location.reload();
-                            });
-                            return;
-                        }
-                        Swal.fire({ icon: 'success', title: 'Added!', text: 'Resource added successfully.', timer: 1500, showConfirmButton: false });
-                        
-                        // Clear form
+                        // Clear upload form
                         document.getElementById('ResourceUrl').value = '';
                         document.getElementById('resource-title-input').value = '';
-                        window.resourceQuill.root.innerHTML = '';
+                        if (window.resourceQuill) window.resourceQuill.root.innerHTML = '';
                         document.getElementById('resource-file-name').textContent = 'No file chosen';
+                        document.getElementById('upload-resource-btn').innerHTML = 'Choose File';
                         
-                        if (json.data) updateLocalMaterials(lessonId, json.data, 'document', true); // true to append, not replace
-                    } else { Swal.fire({ icon: 'error', title: 'Error', text: "Failed to add: " + (json.message || "Unknown error") }); }
-                } else { Swal.fire({ icon: 'error', title: 'Error', text: "Failed to add resource." }); }
-            } catch(e) { Swal.fire({ icon: 'error', title: 'Error', text: "Error adding resource." }); } 
-            finally { btn.disabled = false; btn.textContent = 'Add Resource'; }
+                        if (json.data) updateLocalMaterials(lessonId, json.data, 'document', true);
+                        
+                        if (autoSaveEl) {
+                            autoSaveEl.querySelector('.material-symbols-outlined').textContent = 'check_circle';
+                            autoSaveEl.querySelector('.material-symbols-outlined').classList.remove('animate-spin');
+                            autoSaveEl.className = autoSaveEl.className.replace('text-slate-400','text-emerald-600');
+                            if (autoSaveText) autoSaveText.textContent = 'Saved!';
+                            setTimeout(() => autoSaveEl.classList.add('hidden'), 3000);
+                        }
+                    } else {
+                        if (autoSaveEl && autoSaveText) { autoSaveText.textContent = json.message || 'Save failed'; setTimeout(() => autoSaveEl.classList.add('hidden'), 3000); }
+                    }
+                } else {
+                    if (autoSaveEl && autoSaveText) { autoSaveText.textContent = 'HTTP ' + res.status; setTimeout(() => autoSaveEl.classList.add('hidden'), 3000); }
+                }
+            } catch(e) {
+                if (autoSaveEl && autoSaveText) { autoSaveText.textContent = 'Error saving'; setTimeout(() => autoSaveEl.classList.add('hidden'), 3000); }
+            }
         };
+
+        // ─── Remove Material (soft-delete) ───
+        window.removeMaterial = async function(materialId, btn) {
+            const result = await Swal.fire({
+                title: 'Remove this file?',
+                text: 'The file will be marked as removed. You can re-upload it later.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Remove'
+            });
+            if (!result.isConfirmed) return;
+
+            try {
+                const fd = new FormData();
+                fd.append('materialId', materialId);
+                const res = await fetch('/InstructorCourse/RemoveMaterial', { method: 'POST', body: fd });
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json.success) {
+                        const card = btn.closest('[data-material-id]');
+                        if (card) card.remove();
+                        // Update local data
+                        const lessonIdEl = document.querySelector('.lesson-item.border-primary');
+                        if (lessonIdEl) {
+                            const lessonId = lessonIdEl.dataset.lessonId;
+                            const lesson = lessonsData.find(l => (l.lessonId || l.LessonId) == lessonId);
+                            if (lesson && lesson.learningMaterials) {
+                                const mat = lesson.learningMaterials.find(m => (m.materialId || m.MaterialId) == materialId);
+                                if (mat) mat.learningStatus = 'removed';
+                            }
+                        }
+                    } else {
+                        Swal.fire('Error', json.message || 'Failed to remove material.', 'error');
+                    }
+                }
+            } catch(e) {
+                Swal.fire('Error', 'An error occurred.', 'error');
+            }
+        };
+
+        function appendResourceToUI(material) {
+            const resourcesList = document.getElementById('resources-list');
+            const emptyState = resourcesList.querySelector('.text-slate-500.italic');
+            if (emptyState) emptyState.remove();
+
+            const mUrl = material.materialUrl || material.MaterialUrl;
+            const mId = material.materialId || material.MaterialId;
+            const mTitle = material.title || material.Title || "Resource File";
+            const mDesc = material.description || material.Description;
+            const mLearningStatus = (material.learningStatus || material.LearningStatus || '').toLowerCase();
+            const mModerationFeedback = material.moderationFeedback || material.ModerationFeedback || '';
+
+            const isRejected = mLearningStatus === 'rejected';
+            const borderColor = isRejected ? 'border-red-200' : 'border-slate-200';
+            const bgColor = isRejected ? 'bg-red-50/50' : 'bg-white';
+            const iconBg = isRejected ? 'bg-red-100 text-red-500' : 'bg-[#006a62]/10 text-[#006a62]';
+            const iconName = isRejected ? 'cancel' : 'description';
+            const rejectedHint = (isRejected && mModerationFeedback) ? `
+                <div class="mt-2 bg-red-50 border border-red-200 p-2.5 rounded-lg flex items-start gap-2">
+                    <span class="material-symbols-outlined text-red-500 text-[16px] mt-0.5">error</span>
+                    <div>
+                        <p class="text-[11px] font-bold text-red-700 mb-0.5">Phản hồi kiểm duyệt:</p>
+                        <p class="text-[11px] text-red-600">${mModerationFeedback}</p>
+                    </div>
+                </div>` : '';
+            
+            const html = `
+                <div class="p-3 ${bgColor} border ${borderColor} rounded-lg shadow-sm" data-material-id="${mId}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 ${iconBg} rounded flex items-center justify-center">
+                                <span class="material-symbols-outlined">${iconName}</span>
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-900 text-sm">${mTitle}</p>
+                                <p class="text-xs text-slate-500 truncate max-w-xs">${mDesc ? mDesc.replace(/<[^>]*>?/gm, '').substring(0, 50) + "..." : "No description"}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <a href="${mUrl}" target="_blank" class="text-[#006a62] hover:bg-[#006a62]/10 p-2 rounded-full transition-colors"><span class="material-symbols-outlined text-[20px]">open_in_new</span></a>
+                            <button onclick="removeMaterial(${mId}, this)" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Remove">
+                                <span class="material-symbols-outlined text-[20px]">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    ${rejectedHint}
+                </div>
+            `;
+            resourcesList.insertAdjacentHTML('afterbegin', html);
+        }
 
         function updateLocalMaterials(lessonId, newMat, type, append = false) {
             const lesson = lessonsData.find(l => (l.lessonId || l.LessonId) == lessonId);
@@ -1129,16 +1357,18 @@
                 if (!lesson.learningMaterials) lesson.learningMaterials = [];
                 if (append) {
                     lesson.learningMaterials.push(newMat);
+                    if (type === 'document') appendResourceToUI(newMat);
                 } else {
                     const existingIdx = lesson.learningMaterials.findIndex(m => {
                         const mType = m.materialMetadata?.file_type || 'video';
                         return mType === type;
                     });
                     if (existingIdx !== -1) lesson.learningMaterials[existingIdx] = newMat;
-                    else lesson.learningMaterials.push(newMat);
+                    else {
+                        lesson.learningMaterials.push(newMat);
+                        if (type === 'document') appendResourceToUI(newMat);
+                    }
                 }
-                const lessonIdEl = document.querySelector('.lesson-item.border-primary');
-                if (lessonIdEl) selectLesson(lessonIdEl);
             }
         }
 
@@ -1162,8 +1392,28 @@
                         
                         if (res.ok) {
                             const json = await res.json();
-                            if (json.success) {
-                                Swal.fire('Submitted!', 'Course submitted for review successfully! Status changed to Pending Review.', 'success');
+                        if (json.success) {
+                            Swal.fire({
+                                title: 'Đã gửi xét duyệt!',
+                                    html: `
+                                        <div class="text-left space-y-3">
+                                            <p class="text-slate-600">Khóa học của bạn đã được gửi đến đội ngũ quản trị viên.</p>
+                                            <div class="bg-primary/5 border border-primary/10 p-4 rounded-xl">
+                                                <div class="flex items-center gap-2 text-primary mb-1">
+                                                    <span class="material-symbols-outlined text-[20px]">schedule</span>
+                                                    <span class="font-bold">Thời gian dự kiến: 3-5 ngày làm việc</span>
+                                                </div>
+                                                <p class="text-xs text-slate-500">Chúng tôi sẽ thông báo cho bạn ngay khi có kết quả xét duyệt.</p>
+                                            </div>
+                                            <p class="text-xs text-amber-600 font-medium italic">Lưu ý: Khóa học sẽ bị khóa chỉnh sửa trong lúc chờ duyệt.</p>
+                                        </div>
+                                    `,
+                                    icon: 'success',
+                                    confirmButtonText: 'Đã hiểu',
+                                    confirmButtonColor: '#006a62'
+                                }).then(() => {
+                                    location.reload();
+                                });
                                 const badge = document.querySelector('span.bg-primary-container\\/20');
                                 if(badge) {
                                     badge.textContent = 'PENDING REVIEW';
@@ -1248,12 +1498,12 @@
                         document.getElementById('resource-title-input').value = file.name;
                         const resUrlInput = document.getElementById('ResourceUrl');
                         resUrlInput.value = data.secure_url;
-                        
-                        // Capture metadata
                         resUrlInput.dataset.fileSize = data.bytes || 0;
                         resUrlInput.dataset.format = data.format || '';
-                        
                         resourceBtnEl.innerHTML = 'Change File';
+                        
+                        // Auto-save immediately after upload
+                        saveResourceMaterial(data.secure_url, file.name, data.bytes || 0, data.format || '');
                     }
                 })
                 .catch(err => {

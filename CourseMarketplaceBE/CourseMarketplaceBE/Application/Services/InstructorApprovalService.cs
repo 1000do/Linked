@@ -46,7 +46,8 @@ namespace CourseMarketplaceBE.Application.Services
                 ? "Chúc mừng! Đơn đăng ký giảng viên của bạn đã được duyệt."
                 : "Rất tiếc, đơn đăng ký giảng viên của bạn không được chấp nhận.";
 
-            await _notiService.SendNotificationAsync(instructor.InstructorId, "Kết quả xét duyệt", message, "/Instructor/Dashboard");
+            string link = dto.Status == "Approved" ? "/InstructorCourse/Create" : "/Instructor/Dashboard";
+            await _notiService.SendNotificationAsync(instructor.InstructorId, "Kết quả xét duyệt", message, link);
 
             return true;
         }

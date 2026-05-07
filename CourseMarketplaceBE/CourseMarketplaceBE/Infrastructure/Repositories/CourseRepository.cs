@@ -127,24 +127,84 @@ public class CourseRepository : ICourseRepository
             .AverageAsync();
     }
 
-    public async Task<List<CourseModerationDto>> GetPendingCoursesModerationAsync()
+    public async Task<List<CourseModerationDto>> GetPendingCoursesModerationAsync(ModerationFilterDto filter)
     {
-        return await _context.Courses
+        var query = _context.Courses
             .Include(c => c.Instructor).ThenInclude(i => i.InstructorNavigation)
             .Include(c => c.Category)
-            .Where(c => c.CourseStatus == "pending")
-            .Select(c => new CourseModerationDto
+            .AsQueryable();
+
+        // 1. Filter by Status (Default is pending)
+        var statusFilter = string.IsNullOrEmpty(filter.Status) ? "pending" : filter.Status;
+        if (statusFilter != "all")
+        {
+            query = query.Where(c => c.CourseStatus == statusFilter);
+        }
+
+        // 2. Search (Title or Instructor)
+        if (!string.IsNullOrEmpty(filter.Search))
+        {
+            var search = filter.Search.ToLower();
+            query = query.Where(c => c.Title.ToLower().Contains(search) || 
+                                   c.Instructor!.InstructorNavigation!.FullName.ToLower().Contains(search));
+        }
+
+        // 3. Category Filter
+        if (!string.IsNullOrEmpty(filter.Category) && filter.Category != "0")
+        {
+            query = query.Where(c => c.Category!.CategoriesName == filter.Category || c.CategoryId.ToString() == filter.Category);
+        }
+
+        // 4. Sorting (Urgency: oldest first)
+        if (filter.SortBy == "newest")
+        {
+            query = query.OrderByDescending(c => c.CreatedAt);
+        }
+        else
+        {
+            // default: oldest first (more urgent)
+            query = query.OrderBy(c => c.CreatedAt);
+        }
+
+        var courses = await query.ToListAsync();
+        var now = DateTime.Now;
+
+        return courses.Select(c => {
+            var dto = new CourseModerationDto
             {
                 CourseId = c.CourseId,
                 Title = c.Title,
-                InstructorName = c.Instructor!.InstructorNavigation!.FullName,
-                CategoryName = c.Category!.CategoriesName,
+                InstructorName = c.Instructor?.InstructorNavigation?.FullName ?? "Unknown",
+                CategoryName = c.Category?.CategoriesName,
                 Price = c.Price,
                 CreatedAt = c.CreatedAt,
                 CourseStatus = c.CourseStatus,
                 CourseThumbnailUrl = c.CourseThumbnailUrl
-            })
-            .ToListAsync();
+            };
+
+            // Calculate Urgency
+            if (c.CreatedAt.HasValue && c.CourseStatus == "pending")
+            {
+                var diff = now - c.CreatedAt.Value;
+                if (diff.TotalHours > 72)
+                {
+                    dto.UrgencyLevel = "High";
+                    dto.UrgencyColor = "red";
+                }
+                else if (diff.TotalHours > 24)
+                {
+                    dto.UrgencyLevel = "Medium";
+                    dto.UrgencyColor = "amber";
+                }
+                else
+                {
+                    dto.UrgencyLevel = "Normal";
+                    dto.UrgencyColor = "slate";
+                }
+            }
+
+            return dto;
+        }).ToList();
     }
 
     public async Task<bool> IsOwnerAsync(int userId, int courseId)

@@ -10,7 +10,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 /// </summary>
 [Route("api/admin/finance")]
 [ApiController]
-[Authorize]
+[Authorize(Roles = "admin")]
 public class AdminFinanceController : ControllerBase
 {
     private readonly IAdminFinanceService _financeService;

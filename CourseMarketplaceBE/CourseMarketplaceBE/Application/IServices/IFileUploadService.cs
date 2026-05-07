@@ -7,4 +7,5 @@ public interface IFileUploadService
 {
     Task<string?> UploadImageAsync(IFormFile file);
     Task<string?> UploadVideoAsync(IFormFile file);
+    Task<bool> DeleteFileAsync(string fileUrl);
 }

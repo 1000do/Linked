@@ -37,6 +37,13 @@ public class LessonRepository : ILessonRepository
         _context.Lessons.Remove(lesson);
     }
 
+    public async Task<List<Lesson>> GetByCourseIdAsync(int courseId)
+    {
+        return await _context.Lessons
+            .Where(l => l.CourseId == courseId)
+            .ToListAsync();
+    }
+
     public async Task SaveChangesAsync()
     {
         await _context.SaveChangesAsync();

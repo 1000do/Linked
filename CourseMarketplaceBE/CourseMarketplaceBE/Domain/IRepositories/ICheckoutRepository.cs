@@ -24,6 +24,10 @@ public interface ICheckoutRepository
     Task<Enrollment?> GetEnrollmentAsync(int userId, int courseId);
     Task<Enrollment?> GetEnrollmentWithProgressAsync(int userId, int courseId);
     Task<List<Enrollment>> GetMyEnrolledCoursesAsync(int userId);
+    Task<bool> IsMaterialCompletedAsync(int enrollmentId, int materialId);
+    Task<int> GetCompletedMaterialCountAsync(int enrollmentId);
+    Task<List<int>> GetCompletedMaterialIdsAsync(int enrollmentId);
+    Task<List<int>> GetEnrolledUserIdsAsync(int courseId);
 
     /// <summary>Lấy email của user từ account (gửi cho Stripe).</summary>
     Task<string?> GetUserEmailAsync(int userId);
@@ -47,6 +51,7 @@ public interface ICheckoutRepository
     Task AddTransactionAsync(Transaction transaction);
     Task AddEnrollmentAsync(Enrollment enrollment);
     Task AddEnrollmentProgressAsync(EnrollmentProgress progress);
+    Task AddMaterialCompletionAsync(MaterialCompletion completion);
     Task AddInstructorPayoutAsync(InstructorPayout payout);
 
     /// <summary>Xóa toàn bộ cart items của user sau khi thanh toán thành công.</summary>

@@ -18,24 +18,24 @@ public class ChatController : Controller
     public IActionResult Index()
     {
         ViewBag.Actor = GetActorFromCookie();
-        return View("MockChat");
+        return View("Index");
     }
 
     public IActionResult Learner()
     {
         ViewBag.Actor = "Learner";
-        return View("MockChat");
+        return View("Index");
     }
 
     public IActionResult Instructor()
     {
         ViewBag.Actor = "Instructor";
-        return View("MockChat");
+        return View("Index");
     }
 
     public IActionResult Admin()
     {
         ViewBag.Actor = "Admin";
-        return View("MockChat");
+        return View("Index");
     }
 }

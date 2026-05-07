@@ -14,17 +14,29 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly ICourseRepository _courseRepository;
         private readonly IChatRepository _chatRepository;
         private readonly INotificationService _notificationService;
+        private readonly IMaterialRepository _materialRepository;
+        private readonly ILessonRepository _lessonRepository;
+        private readonly ICheckoutRepository _checkoutRepository;
 
-        public ModerationService(ICourseRepository courseRepository, IChatRepository chatRepository, INotificationService notificationService)
+        public ModerationService(
+            ICourseRepository courseRepository, 
+            IChatRepository chatRepository, 
+            INotificationService notificationService,
+            IMaterialRepository materialRepository,
+            ILessonRepository lessonRepository,
+            ICheckoutRepository checkoutRepository)
         {
             _courseRepository = courseRepository;
             _chatRepository = chatRepository;
             _notificationService = notificationService;
+            _materialRepository = materialRepository;
+            _lessonRepository = lessonRepository;
+            _checkoutRepository = checkoutRepository;
         }
 
-        public async Task<List<CourseModerationDto>> GetPendingCoursesAsync()
+        public async Task<List<CourseModerationDto>> GetPendingCoursesAsync(ModerationFilterDto filter)
         {
-            return await _courseRepository.GetPendingCoursesModerationAsync();
+            return await _courseRepository.GetPendingCoursesModerationAsync(filter);
         }
 
         public async Task<bool> ApproveCourseAsync(int courseId, string? feedback)
@@ -33,8 +45,32 @@ namespace CourseMarketplaceBE.Application.Services
             if (course == null) return false;
 
             course.CourseStatus = "published";
-            course.ModerationFeedback = feedback;
+            course.ModerationFeedback = null; // Clear old course feedback
             course.UpdatedAt = DateTime.Now;
+            course.LastApprovedAt = DateTime.Now;
+
+            // Clear moderation feedback for all materials in this course
+            var materials = await _materialRepository.GetByCourseIdAsync(courseId);
+            if (materials != null && materials.Any())
+            {
+                foreach (var material in materials)
+                {
+                    material.ModerationFeedback = null;
+                    material.LearningStatus = "active"; // Ensure materials are active
+                    _materialRepository.Update(material);
+                }
+            }
+
+            // ALSO: Clear status for all lessons in this course
+            var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
+            if (lessons != null && lessons.Any())
+            {
+                foreach (var lesson in lessons)
+                {
+                    lesson.LessonStatus = "active";
+                    _lessonRepository.Update(lesson);
+                }
+            }
 
             _courseRepository.Update(course);
             await _courseRepository.SaveChangesAsync();
@@ -47,6 +83,21 @@ namespace CourseMarketplaceBE.Application.Services
                     $"Khóa học '{course.Title}' của bạn đã được phê duyệt và hiện đã hiển thị trên cửa hàng. {feedback}",
                     $"/Course/Details/{courseId}"
                 );
+
+                // NEW: Thông báo cho học viên đã tham gia nếu khóa học có cập nhật
+                var enrolledUserIds = await _checkoutRepository.GetEnrolledUserIdsAsync(courseId);
+                if (enrolledUserIds.Any())
+                {
+                    foreach (var studentId in enrolledUserIds)
+                    {
+                        await _notificationService.SendNotificationAsync(
+                            studentId,
+                            "Khóa học đã có nội dung mới",
+                            $"Khóa học '{course.Title}' bạn đang tham gia vừa được giảng viên cập nhật nội dung mới. Hãy vào xem ngay!",
+                            $"/Course/Learn?id={courseId}"
+                        );
+                    }
+                }
             }
 
             return true;
@@ -70,7 +121,7 @@ namespace CourseMarketplaceBE.Application.Services
                     course.InstructorId.Value,
                     "Khóa học bị từ chối",
                     $"Khóa học '{course.Title}' của bạn không được phê duyệt. Lý do: {reason}",
-                    $"/InstructorCourse/Editor?courseId={courseId}"
+                    $"/InstructorCourse/Editor?id={courseId}"
                 );
             }
 
@@ -96,7 +147,117 @@ namespace CourseMarketplaceBE.Application.Services
                     course.InstructorId.Value,
                     "Cảnh báo vi phạm khóa học",
                     $"Khóa học '{course.Title}' của bạn đã bị gắn cờ vi phạm và tạm ẩn. Lý do: {reason}. Vui lòng kiểm tra lại nội dung.",
-                    $"/InstructorCourse/Editor?courseId={courseId}"
+                    $"/InstructorCourse/Editor?id={courseId}"
+                );
+            }
+
+            return true;
+        }
+
+        public async Task<bool> RejectCourseDetailedAsync(RejectCourseDetailedRequest request)
+        {
+            var course = await _courseRepository.GetByIdAsync(request.CourseId);
+            if (course == null) return false;
+
+            var courseFeedbackParts = new List<string>();
+            var rejectedLessonIds = new HashSet<int>();
+
+            // FIRST: Clear ALL old feedback to ensure only new feedback persists
+            course.ModerationFeedback = null;
+            var allMaterials = await _materialRepository.GetByCourseIdAsync(request.CourseId);
+            if (allMaterials != null)
+            {
+                foreach (var m in allMaterials)
+                {
+                    m.ModerationFeedback = null;
+                    m.LearningStatus = "active"; // Reset to active before applying new rejections
+                    _materialRepository.Update(m);
+                }
+            }
+
+            // Also reset all lessons of this course to active before applying rejections
+            var lessons = await _lessonRepository.GetByCourseIdAsync(request.CourseId);
+            if (lessons != null)
+            {
+                foreach (var l in lessons)
+                {
+                    l.LessonStatus = "active";
+                    _lessonRepository.Update(l);
+                }
+            }
+
+            foreach (var item in request.Items)
+            {
+                if (item.Target == "file" && item.MaterialId.HasValue)
+                {
+                    // Update material learning_status = "rejected" and moderation_feedback
+                    var material = await _materialRepository.GetByIdAsync(item.MaterialId.Value);
+                    if (material != null)
+                    {
+                        material.LearningStatus = "rejected";
+                        material.ModerationFeedback = item.Reason;
+                        material.UpdatedAt = DateTime.Now;
+                        _materialRepository.Update(material);
+
+                        // Mark the parent lesson as rejected
+                        if (material.LessonId.HasValue)
+                        {
+                            rejectedLessonIds.Add(material.LessonId.Value);
+                        }
+                    }
+                }
+                else if (item.Target == "lesson.title" && item.LessonId.HasValue)
+                {
+                    // Mark lesson as rejected
+                    rejectedLessonIds.Add(item.LessonId.Value);
+                    courseFeedbackParts.Add($"[Lesson: {item.LessonTitle ?? $"#{item.LessonId}"}] {item.Reason}");
+                }
+                else if (item.Target.StartsWith("course."))
+                {
+                    // Aggregate course-level feedback
+                    var label = item.Target switch
+                    {
+                        "course.title" => "Tiêu đề",
+                        "course.description" => "Mô tả",
+                        "course.thumbnail" => "Thumbnail",
+                        "course.what_you_will_learn" => "Nội dung học được",
+                        "course.requirements" => "Yêu cầu",
+                        _ => item.Target
+                    };
+                    courseFeedbackParts.Add($"[@{label}] {item.Reason}");
+                }
+            }
+
+            // Update rejected lessons
+            foreach (var lessonId in rejectedLessonIds)
+            {
+                var lesson = await _lessonRepository.GetByIdAsync(lessonId);
+                if (lesson != null)
+                {
+                    lesson.LessonStatus = "rejected";
+                    lesson.UpdatedAt = DateTime.Now;
+                    _lessonRepository.Update(lesson);
+                }
+            }
+
+            // Update course status
+            course.CourseStatus = "rejected";
+            course.ModerationFeedback = courseFeedbackParts.Count > 0
+                ? string.Join("\n", courseFeedbackParts)
+                : "Khóa học bị từ chối. Vui lòng kiểm tra các file bị đánh dấu.";
+            course.UpdatedAt = DateTime.Now;
+
+            _courseRepository.Update(course);
+            await _courseRepository.SaveChangesAsync();
+
+            // Send notification
+            if (course.InstructorId.HasValue)
+            {
+                await _notificationService.SendNotificationAsync(
+                    course.InstructorId.Value,
+                    "Khóa học bị từ chối",
+                    $"Khóa học '{course.Title}' của bạn không được phê duyệt. Vui lòng kiểm tra chi tiết trong trang chỉnh sửa.",
+                    $"/InstructorCourse/Editor?id={request.CourseId}"
                 );
             }
 

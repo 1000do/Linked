@@ -5,6 +5,7 @@ public class ProgressResponse
     public int EnrollmentId { get; set; }
     public int LearnedMaterialCount { get; set; }
     public int TotalMaterialCount { get; set; }
+    public List<int> CompletedMaterialIds { get; set; } = new();
     public double ProgressPercentage => TotalMaterialCount > 0 
         ? (double)LearnedMaterialCount / TotalMaterialCount * 100 
         : 0;

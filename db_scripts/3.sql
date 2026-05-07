@@ -168,7 +168,8 @@ CREATE TABLE courses (
     course_flag_count INT DEFAULT 0, -- Theo dõi số lần course bị report (1 lần, 2 lần , 3 lần sẽ có mức phạt ngày càng nặng, cần lên Udemy tham khảo thêm)
     what_you_will_learn TEXT, -- mô tả mục tiêu đạt được ở trang detail khóa học
     requirements TEXT, -- mô tả yêu cầu để học khóa học ở trang detail khóa học
-    moderation_feedback TEXT -- phản hồi từ admin khi duyệt/từ chối
+    moderation_feedback TEXT, -- phản hồi từ admin khi duyệt/từ chối
+    last_approved_at TIMESTAMP -- thời điểm cuối cùng khóa học được phê duyệt thành công
 );
 
 
@@ -247,6 +248,14 @@ CREATE TABLE enrollment_progress (
 	enrollment_id INT PRIMARY KEY REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
 	learned_material_count INT NOT NULL DEFAULT 0, -- Lưu số lượng material đã học qua trong course, dùng để hiển thị progress bar trên UI = learned_material_count/courses.total_materials
 	last_modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE material_completions (
+    id SERIAL PRIMARY KEY,
+    enrollment_id INT NOT NULL REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
+    material_id INT NOT NULL REFERENCES learning_materials(material_id) ON DELETE CASCADE,
+    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(enrollment_id, material_id)
 );
 
 CREATE TABLE wishlist_items (
