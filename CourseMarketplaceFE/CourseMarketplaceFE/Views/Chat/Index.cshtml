@@ -257,12 +257,24 @@
                 return '/img/default-learner.png';
             };
 
+            const getFrameClass = (role) => {
+                const r = (role || "").toLowerCase();
+                if (r === 'admin') return 'frame-admin';
+                if (r === 'staff') return 'frame-staff';
+                if (r === 'instructor') return 'frame-instructor';
+                return 'frame-learner';
+            };
+
             const fallback = getFallbackAvatar(m.senderRole);
+            const frameClass = getFrameClass(m.senderRole);
             const html = `
                 <div class="msg-row ${isMe ? 'me' : 'them'}">
-                    <img src="${m.senderAvatar || fallback}" 
-                         onerror="this.src='${fallback}'"
-                         class="bubble-avatar shadow-sm">
+                    <div class="avatar-container ${frameClass}">
+                        <img src="${m.senderAvatar || fallback}" 
+                             onerror="this.src='${fallback}'"
+                             class="bubble-avatar shadow-sm">
+                        <div class="avatar-frame ${frameClass}"></div>
+                    </div>
                     <div class="bubble-container">
                         <div class="sender-name">${isMe ? 'Bạn' : m.senderName}</div>
                         <div class="bubble shadow-sm">

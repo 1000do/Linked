@@ -32,6 +32,8 @@ DROP TABLE IF EXISTS lesson_exts CASCADE;
 DROP TABLE IF EXISTS lesson_reviews CASCADE;
 DROP TABLE IF EXISTS course_ai_usage_logs CASCADE;
 DROP TABLE IF EXISTS message_moderation_logs CASCADE;
+DROP TABLE IF EXISTS user_avatar_frames CASCADE;
+DROP TABLE IF EXISTS avatar_frames CASCADE;
 
 DROP TABLE IF EXISTS lesson_review_moderation_logs CASCADE;
 DROP TABLE IF EXISTS course_review_moderation_logs CASCADE;
@@ -102,6 +104,26 @@ CREATE TABLE managers (
     display_name VARCHAR(255) NOT NULL
 );
 
+-- ─── AVATAR FRAMES SYSTEM ────────────────────────────────────────────────
+CREATE TABLE avatar_frames (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    image_url TEXT NOT NULL,
+    description TEXT,
+    requirement_type VARCHAR(50),
+    requirement_value INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_avatar_frames (
+    user_id INT REFERENCES accounts(account_id) ON DELETE CASCADE,
+    frame_id INT REFERENCES avatar_frames(id) ON DELETE CASCADE,
+    unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_equipped BOOLEAN DEFAULT FALSE,
+    PRIMARY KEY (user_id, frame_id)
+);
+
 CREATE TABLE instructors (
     instructor_id INT PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
     
@@ -166,6 +188,7 @@ CREATE TABLE courses (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     course_status VARCHAR(50), -- VD: 'draft', 'published', 'archived'
     course_flag_count INT DEFAULT 0, -- Theo dõi số lần course bị report (1 lần, 2 lần , 3 lần sẽ có mức phạt ngày càng nặng, cần lên Udemy tham khảo thêm)
+    what_you_will_learn TEXT, -- nội dung "Bạn sẽ học được gì" ở trang detail khóa học
     requirements TEXT, -- mô tả yêu cầu để học khóa học ở trang detail khóa học
     moderation_feedback TEXT, -- phản hồi từ admin khi duyệt/từ chối
     last_approved_at TIMESTAMP, -- thời điểm cuối cùng khóa học được phê duyệt thành công
@@ -744,6 +767,7 @@ SELECT setval(pg_get_serial_sequence('lessons', 'lesson_id'), (SELECT MAX(lesson
 SELECT setval(pg_get_serial_sequence('learning_materials', 'material_id'), (SELECT MAX(material_id) FROM learning_materials));
 SELECT setval(pg_get_serial_sequence('chats', 'chat_id'), (SELECT COALESCE(MAX(chat_id), 1) FROM chats));
 SELECT setval(pg_get_serial_sequence('messages', 'message_id'), (SELECT COALESCE(MAX(message_id), 1) FROM messages));
+SELECT setval(pg_get_serial_sequence('avatar_frames', 'id'), (SELECT COALESCE(MAX(id), 1) FROM avatar_frames));
 
 DO $$
 DECLARE

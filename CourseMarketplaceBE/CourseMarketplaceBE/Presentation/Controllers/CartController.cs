@@ -104,7 +104,10 @@ public class CartController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi server: {ex.Message}"));
+            var fullError = ex.InnerException != null
+                ? $"{ex.Message} → {ex.InnerException.Message}"
+                : ex.Message;
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi server: {fullError} | StackTrace: {ex.StackTrace}"));
         }
     }
 }

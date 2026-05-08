@@ -58,6 +58,8 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
     public virtual DbSet<MessageAttachment> MessageAttachments { get; set; }
     public virtual DbSet<MessageModerationLog> MessageModerationLogs { get; set; }
+    public virtual DbSet<AvatarFrame> AvatarFrames { get; set; }
+    public virtual DbSet<UserAvatarFrame> UserAvatarFrames { get; set; }
 
     // ─── OnConfiguring ────────────────────────────────────────────────────────
 
@@ -1142,27 +1144,38 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("message_moderation_logs_message_id_fkey");
         });
 
-        // ── message_attachments (★ DLC Chat) ──────────────────────────────
-        modelBuilder.Entity<MessageAttachment>(entity =>
+
+        // ── avatar_frames ────────────────────────────────────────────────────
+        modelBuilder.Entity<AvatarFrame>(entity =>
         {
-            entity.HasKey(e => e.AttachmentId).HasName("message_attachments_pkey");
-            entity.ToTable("message_attachments");
+            entity.HasKey(e => e.Id).HasName("avatar_frames_pkey");
+            entity.ToTable("avatar_frames");
 
-            entity.Property(e => e.AttachmentId).HasColumnName("attachment_id");
-            entity.Property(e => e.MessageId).HasColumnName("message_id");
-            entity.Property(e => e.FileUrl).HasColumnName("file_url");
-            entity.Property(e => e.FileName).HasMaxLength(255).HasColumnName("file_name");
-            entity.Property(e => e.FileType).HasMaxLength(50).HasColumnName("file_type");
-            entity.Property(e => e.FileSize).HasColumnName("file_size");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("created_at");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
+            entity.Property(e => e.ImageUrl).HasColumnName("image_url");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.RequirementType).HasMaxLength(50).HasColumnName("requirement_type");
+            entity.Property(e => e.RequirementValue).HasDefaultValue(0).HasColumnName("requirement_value");
+            entity.Property(e => e.IsActive).HasDefaultValue(true).HasColumnName("is_active");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
+        });
 
-            entity.HasOne(d => d.Message).WithMany(p => p.Attachments)
-                .HasForeignKey(d => d.MessageId)
+        // ── user_avatar_frames ────────────────────────────────────────────────
+        modelBuilder.Entity<UserAvatarFrame>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.FrameId }).HasName("user_avatar_frames_pkey");
+            entity.ToTable("user_avatar_frames");
+
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.FrameId).HasColumnName("frame_id");
+            entity.Property(e => e.IsEquipped).HasDefaultValue(false).HasColumnName("is_equipped");
+            entity.Property(e => e.UnlockedAt).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("unlocked_at");
+
+            entity.HasOne(d => d.Frame).WithMany()
+                .HasForeignKey(d => d.FrameId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("message_attachments_message_id_fkey");
+                .HasConstraintName("user_avatar_frames_frame_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);
