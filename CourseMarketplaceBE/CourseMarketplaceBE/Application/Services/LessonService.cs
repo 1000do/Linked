@@ -320,8 +320,15 @@ public class LessonService : ILessonService
         if (lesson == null || lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to restore this material.");
 
-        if (lesson.Course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Cannot restore materials while the course is pending review.");
+        var course = lesson.Course;
+
+        // If course is published, move it back to pending as this is an update
+        if (course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        {
+            course.CourseStatus = "pending";
+            course.ModerationFeedback = null;
+            _courseRepository.Update(course);
+        }
 
         // Check if restoring a video and an active video already exists
         var fileType = material.MaterialMetadata?.FileType ?? "video";

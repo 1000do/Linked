@@ -135,7 +135,10 @@ public class CloudinaryUploadService : IFileUploadService
             var publicId = GetPublicIdFromUrl(fileUrl);
             if (publicId == null) return false;
 
-            var resourceType = fileUrl.Contains("/video/") ? ResourceType.Video : ResourceType.Image;
+            var resourceType = ResourceType.Image;
+            if (fileUrl.Contains("/video/")) resourceType = ResourceType.Video;
+            else if (fileUrl.Contains("/raw/")) resourceType = ResourceType.Raw;
+
             var deletionParams = new DeletionParams(publicId) { ResourceType = resourceType };
 
             var result = await _cloudinary.DestroyAsync(deletionParams);
@@ -155,7 +158,9 @@ public class CloudinaryUploadService : IFileUploadService
             var publicId = GetPublicIdFromUrl(fileUrl);
             if (publicId == null) return null;
 
-            var resourceType = fileUrl.Contains("/video/") ? ResourceType.Video : ResourceType.Image;
+            var resourceType = ResourceType.Image;
+            if (fileUrl.Contains("/video/")) resourceType = ResourceType.Video;
+            else if (fileUrl.Contains("/raw/")) resourceType = ResourceType.Raw;
             
             var newPublicId = $"trash/{publicId}";
             var renameParams = new RenameParams(publicId, newPublicId)
@@ -250,7 +255,10 @@ public class CloudinaryUploadService : IFileUploadService
         {
             if (string.IsNullOrWhiteSpace(publicId)) return null;
 
-            var resType = resourceType.ToLower() == "video" ? ResourceType.Video : ResourceType.Image;
+            var resType = ResourceType.Image;
+            var typeLower = resourceType.ToLower();
+            if (typeLower == "video") resType = ResourceType.Video;
+            else if (typeLower == "raw" || typeLower == "document" || typeLower == "file") resType = ResourceType.Raw;
             
             // The file is currently at trash/{publicId}
             var currentPublicId = $"trash/{publicId}";
@@ -266,7 +274,19 @@ public class CloudinaryUploadService : IFileUploadService
             
             if (result.Error != null)
             {
-                _logger.LogError("❌ Restore from trash lỗi: {msg}", result.Error.Message);
+                _logger.LogWarning("⚠️ Restore từ trash folder không được, thử kiểm tra vị trí gốc: {msg}", result.Error.Message);
+                
+                // Thử kiểm tra xem file có đang ở vị trí gốc (không có prefix trash/) không
+                var getParams = new GetResourceParams(newPublicId) { ResourceType = resType };
+                var getResult = await _cloudinary.GetResourceAsync(getParams);
+                
+                if (getResult.Error == null && getResult.SecureUrl != null)
+                {
+                    _logger.LogInformation("✅ Tìm thấy file ở vị trí gốc, khôi phục URL.");
+                    return getResult.SecureUrl.ToString();
+                }
+
+                _logger.LogError("❌ Không tìm thấy file ở cả trash và vị trí gốc: {id}", publicId);
                 return null;
             }
 
