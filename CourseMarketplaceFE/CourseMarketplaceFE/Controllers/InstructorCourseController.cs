@@ -500,5 +500,22 @@ namespace CourseMarketplaceFE.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
+        // ─── RESTORE MATERIAL (AJAX) ─────────────────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> RestoreMaterial(int materialId)
+        {
+            try
+            {
+                var resp = await _api.PostAsync($"lessons/materials/{materialId}/restore");
+                if (resp.IsSuccessStatusCode)
+                    return Json(new { success = true });
+                var error = await resp.Content.ReadAsStringAsync();
+                return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
     }
 }

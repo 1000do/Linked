@@ -244,5 +244,39 @@ public class CloudinaryUploadService : IFileUploadService
         }
         catch { return null; }
     }
+    public async Task<string?> RestoreFromTrashAsync(string publicId, string resourceType)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(publicId)) return null;
+
+            var resType = resourceType.ToLower() == "video" ? ResourceType.Video : ResourceType.Image;
+            
+            // The file is currently at trash/{publicId}
+            var currentPublicId = $"trash/{publicId}";
+            var newPublicId = publicId;
+
+            var renameParams = new RenameParams(currentPublicId, newPublicId)
+            {
+                ResourceType = resType,
+                Overwrite = true
+            };
+
+            var result = await _cloudinary.RenameAsync(renameParams);
+            
+            if (result.Error != null)
+            {
+                _logger.LogError("❌ Restore from trash lỗi: {msg}", result.Error.Message);
+                return null;
+            }
+
+            return result.SecureUrl?.ToString();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "🔥 Exception khi restore file từ trash: {id}", publicId);
+            return null;
+        }
+    }
 }
 

@@ -42,4 +42,9 @@ public class NoopFileUploadService : IFileUploadService
     {
         return Task.FromResult<string?>(null);
     }
+
+    public Task<string?> RestoreFromTrashAsync(string publicId, string resourceType)
+    {
+        return Task.FromResult<string?>(null);
+    }
 }

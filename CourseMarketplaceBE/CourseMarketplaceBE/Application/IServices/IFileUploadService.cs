@@ -12,4 +12,5 @@ public interface IFileUploadService
     string? GetPublicIdFromUrl(string fileUrl);
     Task<bool> DeleteFileByPublicIdAsync(string publicId, string resourceType);
     Task<string?> UploadFileAsync(IFormFile file);
+    Task<string?> RestoreFromTrashAsync(string publicId, string resourceType);
 }

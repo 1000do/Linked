@@ -11,4 +11,5 @@ public interface ILessonService
     Task DeleteLessonAsync(int lessonId, int instructorId);
     Task<IEnumerable<MaterialTrashResponse>> GetTrashMaterialsAsync(int instructorId);
     Task PermanentDeleteMaterialAsync(int materialId, int instructorId);
+    Task RestoreMaterialAsync(int materialId, int instructorId);
 }

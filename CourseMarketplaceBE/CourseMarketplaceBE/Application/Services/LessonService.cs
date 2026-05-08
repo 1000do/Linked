@@ -310,4 +310,54 @@ public class LessonService : ILessonService
             await _redisService.RemoveCacheAsync($"course:detail:{courseId.Value}");
         }
     }
+
+    public async Task RestoreMaterialAsync(int materialId, int instructorId)
+    {
+        var material = await _materialRepository.GetByIdAsync(materialId);
+        if (material == null) throw new Exception("Material not found.");
+
+        var lesson = await _lessonRepository.GetByIdAsync(material.LessonId ?? 0);
+        if (lesson == null || lesson.Course == null || lesson.Course.InstructorId != instructorId)
+            throw new UnauthorizedAccessException("You do not have permission to restore this material.");
+
+        if (lesson.Course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cannot restore materials while the course is pending review.");
+
+        // Check if restoring a video and an active video already exists
+        var fileType = material.MaterialMetadata?.FileType ?? "video";
+        if (fileType == "video")
+        {
+            var existingMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lesson.LessonId);
+            var activeVideo = existingMaterials.FirstOrDefault(m => 
+                m.LearningStatus == "active" && 
+                ((m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || m.MaterialMetadata == null));
+            
+            if (activeVideo != null)
+            {
+                throw new InvalidOperationException("Bài học này đã có một video đang hoạt động. Vui lòng xóa video hiện tại trước khi khôi phục video này.");
+            }
+        }
+
+        // 1. Restore from Cloudinary trash
+        if (!string.IsNullOrEmpty(material.CloudPublicId))
+        {
+            var restoredUrl = await _uploadService.RestoreFromTrashAsync(material.CloudPublicId, fileType);
+            if (restoredUrl != null)
+            {
+                material.MaterialUrl = restoredUrl;
+                material.CloudPublicId = null;
+            }
+        }
+
+        material.LearningStatus = "active";
+        material.UpdatedAt = DateTime.UtcNow;
+        _materialRepository.Update(material);
+        await _materialRepository.SaveChangesAsync();
+
+        // Invalidate Course Cache
+        if (lesson.CourseId.HasValue)
+        {
+            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+        }
+    }
 }

@@ -139,4 +139,27 @@ public class LessonController : ControllerBase
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
         }
     }
+
+    [HttpPost("materials/{materialId}/restore")]
+    public async Task<IActionResult> RestoreMaterial(int materialId)
+    {
+        try
+        {
+            var instructorId = GetInstructorId();
+            await _lessonService.RestoreMaterialAsync(materialId, instructorId);
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Material restored successfully."));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
 }
