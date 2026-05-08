@@ -348,7 +348,19 @@ public class LessonService : ILessonService
         // 1. Restore from Cloudinary trash
         if (!string.IsNullOrEmpty(material.CloudPublicId))
         {
-            var restoredUrl = await _uploadService.RestoreFromTrashAsync(material.CloudPublicId, fileType);
+            var publicId = material.CloudPublicId;
+            var fileTypeLower = fileType.ToLower();
+            bool isRaw = fileTypeLower == "raw" || fileTypeLower == "document" || fileTypeLower == "file";
+
+            // Fix for legacy materials that had their extension stripped from CloudPublicId
+            if (isRaw && !publicId.Contains('.') && material.MaterialMetadata != null && !string.IsNullOrEmpty(material.MaterialMetadata.FileExtension))
+            {
+                var ext = material.MaterialMetadata.FileExtension;
+                if (!ext.StartsWith('.')) ext = "." + ext;
+                publicId += ext;
+            }
+
+            var restoredUrl = await _uploadService.RestoreFromTrashAsync(publicId, fileType);
             if (restoredUrl != null)
             {
                 material.MaterialUrl = restoredUrl;

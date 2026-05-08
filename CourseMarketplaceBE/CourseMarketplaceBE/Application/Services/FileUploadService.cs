@@ -199,12 +199,28 @@ public class CloudinaryUploadService : IFileUploadService
             int uploadIndex = Array.IndexOf(segments, "upload");
             if (uploadIndex == -1) return null;
 
-            var publicIdSegments = segments.Skip(uploadIndex + 2).ToList();
-            var lastSegment = publicIdSegments.Last();
-            var dotIndex = lastSegment.LastIndexOf('.');
-            if (dotIndex != -1)
+            // Kiểm tra xem segment tiếp theo có phải là version (v1234567...) không
+            int startIdx = uploadIndex + 1;
+            if (startIdx < segments.Length && segments[startIdx].StartsWith("v") && segments[startIdx].Length > 1 && char.IsDigit(segments[startIdx][1]))
             {
-                publicIdSegments[publicIdSegments.Count - 1] = lastSegment.Substring(0, dotIndex);
+                startIdx++;
+            }
+
+            var publicIdSegments = segments.Skip(startIdx).ToList();
+            if (publicIdSegments.Count == 0) return null;
+
+            // Đối với file raw, public ID BAO GỒM cả extension. 
+            // Đối với image/video, public ID KHÔNG BAO GỒM extension.
+            bool isRaw = fileUrl.Contains("/raw/");
+            
+            if (!isRaw)
+            {
+                var lastSegment = publicIdSegments.Last();
+                var dotIndex = lastSegment.LastIndexOf('.');
+                if (dotIndex != -1)
+                {
+                    publicIdSegments[publicIdSegments.Count - 1] = lastSegment.Substring(0, dotIndex);
+                }
             }
 
             return string.Join("/", publicIdSegments);
@@ -274,19 +290,32 @@ public class CloudinaryUploadService : IFileUploadService
             
             if (result.Error != null)
             {
-                _logger.LogWarning("⚠️ Restore từ trash folder không được, thử kiểm tra vị trí gốc: {msg}", result.Error.Message);
+                _logger.LogWarning("⚠️ Restore với type {type} thất bại, thử các type khác...", resType);
                 
-                // Thử kiểm tra xem file có đang ở vị trí gốc (không có prefix trash/) không
-                var getParams = new GetResourceParams(newPublicId) { ResourceType = resType };
-                var getResult = await _cloudinary.GetResourceAsync(getParams);
-                
-                if (getResult.Error == null && getResult.SecureUrl != null)
+                // Danh sách các type để thử lần lượt
+                var typesToTry = new List<ResourceType> { ResourceType.Image, ResourceType.Video, ResourceType.Raw };
+                typesToTry.Remove(resType); // Bỏ qua type đã thử
+
+                foreach (var tryType in typesToTry)
                 {
-                    _logger.LogInformation("✅ Tìm thấy file ở vị trí gốc, khôi phục URL.");
-                    return getResult.SecureUrl.ToString();
+                    // 1. Thử rename từ trash
+                    var retryParams = new RenameParams(currentPublicId, newPublicId) { ResourceType = tryType, Overwrite = true };
+                    var retryResult = await _cloudinary.RenameAsync(retryParams);
+                    if (retryResult.Error == null && retryResult.SecureUrl != null)
+                    {
+                        return retryResult.SecureUrl.ToString();
+                    }
+
+                    // 2. Thử lấy từ vị trí gốc
+                    var getParams = new GetResourceParams(newPublicId) { ResourceType = tryType };
+                    var getResult = await _cloudinary.GetResourceAsync(getParams);
+                    if (getResult.Error == null && getResult.SecureUrl != null)
+                    {
+                        return getResult.SecureUrl.ToString();
+                    }
                 }
 
-                _logger.LogError("❌ Không tìm thấy file ở cả trash và vị trí gốc: {id}", publicId);
+                _logger.LogError("❌ Không thể khôi phục file {id} sau khi thử mọi loại ResourceType.", publicId);
                 return null;
             }
 
