@@ -15,17 +15,20 @@ public class LessonService : ILessonService
     private readonly ICourseRepository _courseRepository;
     private readonly IMaterialRepository _materialRepository;
     private readonly IFileUploadService _uploadService;
+    private readonly IRedisService _redisService;
 
     public LessonService(
         ILessonRepository lessonRepository, 
         ICourseRepository courseRepository,
         IMaterialRepository materialRepository,
-        IFileUploadService uploadService)
+        IFileUploadService uploadService,
+        IRedisService redisService)
     {
         _lessonRepository = lessonRepository;
         _courseRepository = courseRepository;
         _materialRepository = materialRepository;
         _uploadService = uploadService;
+        _redisService = redisService;
     }
 
     public async Task<LessonResponse> CreateLessonAsync(LessonCreateRequest request, int instructorId)
@@ -72,6 +75,9 @@ public class LessonService : ILessonService
         }
 
         await _lessonRepository.SaveChangesAsync();
+
+        // Invalidate Course Cache
+        await _redisService.RemoveCacheAsync($"course:detail:{request.CourseId}");
 
         return new LessonResponse
         {
@@ -163,6 +169,12 @@ public class LessonService : ILessonService
 
         await _materialRepository.SaveChangesAsync();
 
+        // Invalidate Course Cache
+        if (lesson.CourseId.HasValue)
+        {
+            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+        }
+
         return new MaterialResponse
         {
             MaterialId = material.MaterialId,
@@ -203,6 +215,12 @@ public class LessonService : ILessonService
         material.UpdatedAt = DateTime.UtcNow;
         _materialRepository.Update(material);
         await _materialRepository.SaveChangesAsync();
+
+        // Invalidate Course Cache
+        if (lesson.CourseId.HasValue)
+        {
+            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+        }
     }
 
     public async Task DeleteLessonAsync(int lessonId, int instructorId)
@@ -237,6 +255,12 @@ public class LessonService : ILessonService
         lesson.UpdatedAt = DateTime.UtcNow;
         _lessonRepository.Update(lesson);
         await _lessonRepository.SaveChangesAsync();
+
+        // Invalidate Course Cache
+        if (lesson.CourseId.HasValue)
+        {
+            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+        }
     }
 
     public async Task<IEnumerable<MaterialTrashResponse>> GetTrashMaterialsAsync(int instructorId)
@@ -276,7 +300,14 @@ public class LessonService : ILessonService
         }
 
         // 2. Delete from DB
+        int? courseId = material.Lesson?.CourseId;
         _materialRepository.Delete(material);
         await _materialRepository.SaveChangesAsync();
+
+        // Invalidate Course Cache
+        if (courseId.HasValue)
+        {
+            await _redisService.RemoveCacheAsync($"course:detail:{courseId.Value}");
+        }
     }
 }

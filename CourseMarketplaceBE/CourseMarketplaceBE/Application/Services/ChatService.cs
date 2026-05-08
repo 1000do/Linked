@@ -117,8 +117,15 @@ public class ChatService : IChatService
             chat.LastMessageAt = message.SentAt;
             await _chatRepository.UpdateChatAsync(chat);
 
-            // Giả sử lấy list participants để tăng unread trong Redis
-            // (Trong thực tế nên dùng Repository để lấy list ID nhanh hơn)
+            // Tăng unread count trong Redis cho các người nhận
+            var participantIds = await _chatRepository.GetParticipantIdsAsync(dto.ChatId);
+            foreach (var accountId in participantIds)
+            {
+                if (accountId != senderId)
+                {
+                    await _redisService.IncrementUnreadCountAsync(accountId, dto.ChatId);
+                }
+            }
         }
 
         // Lấy thông tin sender để trả về DTO đầy đủ
