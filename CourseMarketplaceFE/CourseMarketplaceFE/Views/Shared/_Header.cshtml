@@ -158,16 +158,23 @@
                         </form>
                     </div>
 
+                    @{
+                        var r = (userRole ?? "").ToLower();
+                        var defaultAvatar = "/img/default-learner.png";
+                        if (r == "admin") defaultAvatar = "/img/default-admin.png";
+                        else if (r == "staff") defaultAvatar = "/img/default-staff.png";
+                        else if (r == "instructor") defaultAvatar = "/img/default-instructor.png";
+                    }
                     <a asp-controller="Account" asp-action="Profile"
                        class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 hover:border-primary hover:scale-105 transition-all shadow-sm">
                         @if (!string.IsNullOrEmpty(avatarUrl) && avatarUrl != "null")
                         {
                             <img class="w-full h-full object-cover" src="@avatarUrl" alt="User avatar"
-                                 onerror="this.src='https://ui-avatars.com/api/?name=@Uri.EscapeDataString(userName)&background=006a62&color=fff'" />
+                                 onerror="this.src='@defaultAvatar'" />
                         }
                         else
                         {
-                            <img class="w-full h-full object-cover" src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(userName)&background=006a62&color=fff" alt="Default avatar" />
+                            <img class="w-full h-full object-cover" src="@defaultAvatar" alt="Default avatar" />
                         }
                     </a>
                 </div>

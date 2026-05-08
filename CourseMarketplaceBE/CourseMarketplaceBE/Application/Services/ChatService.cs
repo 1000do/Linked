@@ -233,7 +233,7 @@ public class ChatService : IChatService
         if (await _chatRepository.IsParticipantAsync(chatId, accountId)) return true;
 
         var role = await _userRepository.GetRoleByAccountIdAsync(accountId);
-        if (role == "manager") // Kiểm tra Admin/Staff có đang xử lý report không
+        if (role == "admin" || role == "staff")
         {
              return await _chatRepository.HasActiveReportForChatAsync(chatId);
         }

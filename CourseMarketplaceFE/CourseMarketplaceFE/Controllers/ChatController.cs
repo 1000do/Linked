@@ -16,7 +16,8 @@ public class ChatController : Controller
         var role = HttpContext.Request.Cookies["UserRole"] ?? "";
         return role.ToLower() switch
         {
-            "manager" => "Admin",
+            "admin" => "Admin",
+            "staff" => "Admin", // Dùng chung layout _AdminLayout nhưng sẽ tự ẩn tính năng bên trong dựa trên role thực tế
             "instructor" => "Instructor",
             _ => "Learner"
         };

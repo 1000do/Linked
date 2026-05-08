@@ -249,9 +249,20 @@
                 `;
             }
             
+            const getFallbackAvatar = (role) => {
+                const r = (role || "").toLowerCase();
+                if (r === 'admin') return '/img/default-admin.png';
+                if (r === 'staff') return '/img/default-staff.png';
+                if (r === 'instructor') return '/img/default-instructor.png';
+                return '/img/default-learner.png';
+            };
+
+            const fallback = getFallbackAvatar(m.senderRole);
             const html = `
                 <div class="msg-row ${isMe ? 'me' : 'them'}">
-                    <img src="${m.senderAvatar || '/img/default-avatar.png'}" class="bubble-avatar shadow-sm">
+                    <img src="${m.senderAvatar || fallback}" 
+                         onerror="this.src='${fallback}'"
+                         class="bubble-avatar shadow-sm">
                     <div class="bubble-container">
                         <div class="sender-name">${isMe ? 'Bạn' : m.senderName}</div>
                         <div class="bubble shadow-sm">

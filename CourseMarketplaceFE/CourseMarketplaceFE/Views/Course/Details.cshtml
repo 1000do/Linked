@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = Model.Title;
     var userRole = Context.Request.Cookies["UserRole"]?.ToLower();
-    var isManager = userRole == "admin" || userRole == "staff" || userRole == "manager";
+    var isManager = userRole == "admin" || userRole == "staff";
 }
 
 <style>
@@ -362,8 +362,10 @@
                         }
                     </div>
                 <div class="flex gap-4 items-start">
-                    <div class="w-32 h-32 rounded-full bg-slate-200 shrink-0 overflow-hidden">
-                        <img src="@(string.IsNullOrEmpty(Model.InstructorAvatarUrl) ? $"https://ui-avatars.com/api/?name={Model.InstructorName?.Replace(" ", "+")}&background=random" : Model.InstructorAvatarUrl)" class="w-full h-full object-cover" />
+                    <div class="w-32 h-32 rounded-full bg-slate-200 shrink-0 overflow-hidden border-4 border-white shadow-md">
+                        <img src="@(string.IsNullOrEmpty(Model.InstructorAvatarUrl) ? "/img/default-instructor.png" : Model.InstructorAvatarUrl)" 
+                             onerror="this.src='/img/default-instructor.png'"
+                             class="w-full h-full object-cover" />
                     </div>
                     <div class="space-y-2 text-sm text-slate-700">
                         <div class="flex items-center gap-3">
