@@ -460,5 +460,45 @@ namespace CourseMarketplaceFE.Controllers
             ViewBag.IsStripeActive = false;
         }
 
+        // ─── TRASH VIEW ──────────────────────────────────────────────────
+        public async Task<IActionResult> Trash()
+        {
+            try
+            {
+                var resp = await _api.GetAsync("lessons/materials/trash");
+                if (resp.IsSuccessStatusCode)
+                {
+                    var json = await resp.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    var data = doc.RootElement.GetProperty("data");
+                    
+                    var materials = JsonSerializer.Deserialize<List<MaterialTrashViewModel>>(data.GetRawText(), _jsonOpts);
+                    return View(materials);
+                }
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = "Failed to load trash: " + ex.Message;
+            }
+            return View(new List<MaterialTrashViewModel>());
+        }
+
+        // ─── PERMANENT DELETE MATERIAL (AJAX) ────────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> PermanentDeleteMaterial(int materialId)
+        {
+            try
+            {
+                var resp = await _api.DeleteAsync($"lessons/materials/{materialId}/permanent");
+                if (resp.IsSuccessStatusCode)
+                    return Json(new { success = true });
+                var error = await resp.Content.ReadAsStringAsync();
+                return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
     }
 }

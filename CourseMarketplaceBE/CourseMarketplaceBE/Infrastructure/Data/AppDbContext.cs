@@ -449,6 +449,11 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.LastApprovedAt)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("last_approved_at");
+            entity.Property(e => e.IsRemoved)
+                .HasDefaultValue(false)
+                .HasColumnName("is_removed");
+
+            entity.HasQueryFilter(c => !c.IsRemoved);
             // ★ total_lessons, rating_average, total_students ĐÃ BỊ XÓA → dùng view_course_stats
 
             entity.HasOne(d => d.Category).WithMany(p => p.Courses)
@@ -628,6 +633,8 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.MaterialHash)
                 .HasMaxLength(32)
                 .HasColumnName("material_hash");
+            entity.Property(e => e.CloudPublicId)
+                .HasColumnName("cloud_public_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
@@ -664,6 +671,12 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
+
+            entity.Property(e => e.IsRemoved)
+                .HasDefaultValue(false)
+                .HasColumnName("is_removed");
+
+            entity.HasQueryFilter(l => !l.IsRemoved);
 
             entity.HasOne(d => d.Course).WithMany(p => p.Lessons)
                 .HasForeignKey(d => d.CourseId)

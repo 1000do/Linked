@@ -166,10 +166,10 @@ CREATE TABLE courses (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     course_status VARCHAR(50), -- VD: 'draft', 'published', 'archived'
     course_flag_count INT DEFAULT 0, -- Theo dõi số lần course bị report (1 lần, 2 lần , 3 lần sẽ có mức phạt ngày càng nặng, cần lên Udemy tham khảo thêm)
-    what_you_will_learn TEXT, -- mô tả mục tiêu đạt được ở trang detail khóa học
     requirements TEXT, -- mô tả yêu cầu để học khóa học ở trang detail khóa học
     moderation_feedback TEXT, -- phản hồi từ admin khi duyệt/từ chối
-    last_approved_at TIMESTAMP -- thời điểm cuối cùng khóa học được phê duyệt thành công
+    last_approved_at TIMESTAMP, -- thời điểm cuối cùng khóa học được phê duyệt thành công
+    is_removed BOOLEAN DEFAULT FALSE
 );
 
 
@@ -182,8 +182,8 @@ CREATE TABLE lessons (
     thumbnail_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    lesson_status VARCHAR(50)
-	
+    lesson_status VARCHAR(50),
+    is_removed BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE learning_materials (
@@ -198,8 +198,8 @@ CREATE TABLE learning_materials (
 	--- Bỏ duration INT
 	--- Thêm 2 cái dưới
 	material_metadata JSONB, -- Lưu file_size, file_type, file_extension, duration và page_count (for PDF, Word, powerpoint)
-	material_hash CHAR(32) -- Hash MD5 để check duplication cho file ko qua chỉnh sửa
-	
+	material_hash CHAR(32), -- Hash MD5 để check duplication cho file ko qua chỉnh sửa
+	cloud_public_id TEXT -- Lưu public_id của Cloudinary khi file bị move vô trash
 );
    
 

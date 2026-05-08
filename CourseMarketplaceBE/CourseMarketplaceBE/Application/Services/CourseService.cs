@@ -383,7 +383,19 @@ public class CourseService : ICourseService
         if (hasEnrollments)
             throw new BadRequestException("Cannot delete a course with active students. Please archive it instead.");
 
-        _courseRepository.Delete(course);
+        course.IsRemoved = true;
+        course.UpdatedAt = DateTime.UtcNow;
+
+        // Optional: Soft delete all lessons in the course as well
+        var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
+        foreach (var lesson in lessons)
+        {
+            lesson.IsRemoved = true;
+            lesson.UpdatedAt = DateTime.UtcNow;
+            _lessonRepository.Update(lesson);
+        }
+
+        _courseRepository.Update(course);
         await _courseRepository.SaveChangesAsync();
     }
 

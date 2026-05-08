@@ -1,0 +1,157 @@
+@model IEnumerable<CourseMarketplaceFE.Models.MaterialTrashViewModel>
+@{
+    ViewData["Title"] = "Trash - Instructor Studio";
+    Layout = "_InstructorLayout";
+}
+
+<div class="p-8 max-w-7xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <div class="flex items-center gap-2 text-slate-500 mb-2">
+                <a href="/InstructorCourse" class="hover:text-primary transition-colors flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                    Back to Studio
+                </a>
+            </div>
+            <h1 class="text-3xl font-headline font-extrabold text-slate-900">Trash Bin</h1>
+            <p class="text-slate-500 mt-2">Manage your recently removed learning materials. Items are automatically deleted after 30 days.</p>
+        </div>
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 max-w-md">
+            <span class="material-symbols-outlined text-amber-600 mt-0.5">info</span>
+            <p class="text-xs text-amber-700 leading-relaxed">
+                <strong>Notice:</strong> Moving files to trash renames them on Cloudinary and hides them from students. 
+                Permanent deletion is irreversible.
+            </p>
+        </div>
+    </div>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl mb-6">
+            @ViewBag.Error
+        </div>
+    }
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th class="px-6 py-4">Material Details</th>
+                    <th class="px-6 py-4">Source</th>
+                    <th class="px-6 py-4">Deleted At</th>
+                    <th class="px-6 py-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                @if (Model == null || !Model.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="px-6 py-20 text-center">
+                            <div class="flex flex-col items-center">
+                                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                                    <span class="material-symbols-outlined text-slate-400 text-[32px]">delete_sweep</span>
+                                </div>
+                                <h3 class="font-bold text-slate-900 mb-1">Your trash is empty</h3>
+                                <p class="text-sm text-slate-500">Deleted materials will appear here for 30 days.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var material in Model)
+                    {
+                        <tr class="hover:bg-slate-50/50 transition-colors group">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 bg-slate-100 rounded flex items-center justify-center text-slate-500">
+                                        @if (material.FileType == "video")
+                                        {
+                                            <span class="material-symbols-outlined">movie</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="material-symbols-outlined">description</span>
+                                        }
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 text-sm">@material.Title</h4>
+                                        <p class="text-[10px] text-slate-400 font-mono uppercase">ID: @material.CloudPublicId</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm">
+                                    <p class="font-semibold text-slate-700">@material.LessonTitle</p>
+                                    <p class="text-xs text-slate-500">@material.CourseTitle</p>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-sm text-slate-900">@(material.DeletedAt?.ToString("MMM dd, yyyy HH:mm") ?? "--")</p>
+                                <p class="text-xs text-slate-500">
+                                    @{
+                                        var daysRemaining = 30 - (DateTime.UtcNow - (material.DeletedAt ?? DateTime.UtcNow)).Days;
+                                        <span>@Math.Max(0, daysRemaining) days remaining</span>
+                                    }
+                                </p>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    @* <button title="Restore" class="px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary-container/20 rounded-lg transition-colors">
+                                        Restore
+                                    </button> *@
+                                    <button onclick="confirmPermanentDelete(@material.MaterialId, '@material.Title.Replace("'", "\\'")')" class="px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-[16px]">delete_forever</span>
+                                        Delete Forever
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function confirmPermanentDelete(id, name) {
+            const { isConfirmed } = await Swal.fire({
+                title: 'Delete Permanently?',
+                text: `You are about to permanently delete "${name}" from Cloudinary and our database. This cannot be undone.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, delete forever',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (isConfirmed) {
+                try {
+                    const formData = new FormData();
+                    formData.append('materialId', id);
+
+                    const resp = await fetch('/InstructorCourse/PermanentDeleteMaterial', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await resp.json();
+                    if (result.success) {
+                        Swal.fire({
+                            title: 'Deleted!',
+                            text: 'Material has been permanently removed.',
+                            icon: 'success',
+                            confirmButtonColor: '#006a62'
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire('Error', result.message || 'Failed to delete material', 'error');
+                    }
+                } catch(e) { 
+                    Swal.fire('Error', 'An error occurred: ' + e.message, 'error'); 
+                }
+            }
+        }
+    </script>
+}

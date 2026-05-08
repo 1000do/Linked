@@ -1291,6 +1291,12 @@
                                 if (mat) mat.learningStatus = 'removed';
                             }
                         }
+                        Swal.fire({
+                            title: 'Removed!',
+                            text: 'Material moved to trash. You can restore or permanently delete it in the Trash Bin.',
+                            icon: 'success',
+                            confirmButtonColor: '#006a62'
+                        });
                     } else {
                         Swal.fire('Error', json.message || 'Failed to remove material.', 'error');
                     }

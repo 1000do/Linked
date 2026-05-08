@@ -132,14 +132,67 @@ public class CloudinaryUploadService : IFileUploadService
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(fileUrl)) return false;
+            var publicId = GetPublicIdFromUrl(fileUrl);
+            if (publicId == null) return false;
+
+            var resourceType = fileUrl.Contains("/video/") ? ResourceType.Video : ResourceType.Image;
+            var deletionParams = new DeletionParams(publicId) { ResourceType = resourceType };
+
+            var result = await _cloudinary.DestroyAsync(deletionParams);
+            return result.Result == "ok";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "🔥 Lỗi khi xóa file trên Cloudinary: {url}", fileUrl);
+            return false;
+        }
+    }
+
+    public async Task<string?> MoveToTrashAsync(string fileUrl)
+    {
+        try
+        {
+            var publicId = GetPublicIdFromUrl(fileUrl);
+            if (publicId == null) return null;
+
+            var resourceType = fileUrl.Contains("/video/") ? ResourceType.Video : ResourceType.Image;
+            
+            var newPublicId = $"trash/{publicId}";
+            var renameParams = new RenameParams(publicId, newPublicId)
+            {
+                ResourceType = resourceType,
+                Overwrite = true
+            };
+
+            var result = await _cloudinary.RenameAsync(renameParams);
+            
+            if (result.Error != null)
+            {
+                _logger.LogError("❌ Rename to trash lỗi: {msg}", result.Error.Message);
+                return null;
+            }
+
+            return result.SecureUrl?.ToString();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "🔥 Exception khi move file tới trash: {url}", fileUrl);
+            return null;
+        }
+    }
+
+    public string? GetPublicIdFromUrl(string fileUrl)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(fileUrl)) return null;
 
             var uri = new Uri(fileUrl);
             var path = uri.AbsolutePath;
             var segments = path.Split('/');
 
             int uploadIndex = Array.IndexOf(segments, "upload");
-            if (uploadIndex == -1) return false;
+            if (uploadIndex == -1) return null;
 
             var publicIdSegments = segments.Skip(uploadIndex + 2).ToList();
             var lastSegment = publicIdSegments.Last();
@@ -149,13 +202,24 @@ public class CloudinaryUploadService : IFileUploadService
                 publicIdSegments[publicIdSegments.Count - 1] = lastSegment.Substring(0, dotIndex);
             }
 
-            string publicId = string.Join("/", publicIdSegments);
-            
-            var resourceType = fileUrl.Contains("/video/") ? ResourceType.Video : ResourceType.Image;
-            
+            return string.Join("/", publicIdSegments);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<bool> DeleteFileByPublicIdAsync(string publicId, string resourceType)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(publicId)) return false;
+
+            var resType = resourceType.ToLower() == "video" ? ResourceType.Video : ResourceType.Image;
             var deletionParams = new DeletionParams(publicId)
             {
-                ResourceType = resourceType
+                ResourceType = resType
             };
 
             var result = await _cloudinary.DestroyAsync(deletionParams);
@@ -163,7 +227,7 @@ public class CloudinaryUploadService : IFileUploadService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "🔥 Lỗi khi xóa file trên Cloudinary: {url}", fileUrl);
+            _logger.LogError(ex, "🔥 Lỗi khi xóa file bằng publicId: {id}", publicId);
             return false;
         }
     }

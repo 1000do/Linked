@@ -205,6 +205,7 @@ public class Program
         
         // 🔥 Background Tasks
         builder.Services.AddHostedService<PayoutScheduleTask>();
+        builder.Services.AddHostedService<CourseMarketplaceBE.Infrastructure.BackgroundServices.CloudinaryCleanupService>();
         
         // Redis Configuration
         builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
