@@ -1142,6 +1142,29 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("message_moderation_logs_message_id_fkey");
         });
 
+        // ── message_attachments (★ DLC Chat) ──────────────────────────────
+        modelBuilder.Entity<MessageAttachment>(entity =>
+        {
+            entity.HasKey(e => e.AttachmentId).HasName("message_attachments_pkey");
+            entity.ToTable("message_attachments");
+
+            entity.Property(e => e.AttachmentId).HasColumnName("attachment_id");
+            entity.Property(e => e.MessageId).HasColumnName("message_id");
+            entity.Property(e => e.FileUrl).HasColumnName("file_url");
+            entity.Property(e => e.FileName).HasMaxLength(255).HasColumnName("file_name");
+            entity.Property(e => e.FileType).HasMaxLength(50).HasColumnName("file_type");
+            entity.Property(e => e.FileSize).HasColumnName("file_size");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Message).WithMany(p => p.Attachments)
+                .HasForeignKey(d => d.MessageId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("message_attachments_message_id_fkey");
+        });
+
         OnModelCreatingPartial(modelBuilder);
     }
 

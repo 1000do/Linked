@@ -4,6 +4,13 @@ namespace CourseMarketplaceFE.Controllers;
 
 public class ChatController : Controller
 {
+    private readonly IConfiguration _configuration;
+
+    public ChatController(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
     private string GetActorFromCookie()
     {
         var role = HttpContext.Request.Cookies["UserRole"] ?? "";
@@ -18,6 +25,7 @@ public class ChatController : Controller
     public IActionResult Index()
     {
         ViewBag.Actor = GetActorFromCookie();
+        ViewBag.EnableAttachments = _configuration.GetValue<bool>("ChatSettings:EnableAttachments");
         return View("Index");
     }
 

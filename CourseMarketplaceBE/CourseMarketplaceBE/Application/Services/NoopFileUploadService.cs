@@ -37,4 +37,9 @@ public class NoopFileUploadService : IFileUploadService
     {
         return Task.FromResult(true);
     }
+
+    public Task<string?> UploadFileAsync(IFormFile file)
+    {
+        return Task.FromResult<string?>(null);
+    }
 }

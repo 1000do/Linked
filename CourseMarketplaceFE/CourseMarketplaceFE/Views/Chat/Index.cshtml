@@ -66,7 +66,20 @@
 
             <footer class="chat-footer">
                 <div class="input-group-premium">
-                    <span class="material-symbols-outlined text-slate-400">attach_file</span>
+                    @if (ViewBag.EnableAttachments == true)
+                    {
+                        <input type="file" id="file-input" style="display:none;" onchange="handleFileSelect(this)" />
+                        <button type="button" class="btn-attach" onclick="document.getElementById('file-input').click()">
+                            <span class="material-symbols-outlined text-slate-400 hover:text-emerald-500 transition-colors">attach_file</span>
+                        </button>
+                    }
+                    else
+                    {
+                        <span class="material-symbols-outlined text-slate-200 cursor-not-allowed" title="Tính năng gửi file đang bị tắt">attach_file</span>
+                    }
+                    <div id="attachment-preview" class="hidden absolute bottom-full left-0 right-0 bg-white border-t border-slate-100 p-2 flex gap-2 overflow-x-auto shadow-lg rounded-t-xl">
+                        <!-- Preview selected files -->
+                    </div>
                     <textarea id="msg-input" class="chat-input-area custom-scroll" placeholder="Viết gì đó cho đối phương..." rows="1"></textarea>
                     <button id="btn-send" class="btn-chat-send">
                         <span class="material-symbols-outlined">send</span>
@@ -110,8 +123,10 @@
             const n = Number(v);
             return Number.isFinite(n) ? n : NaN;
         }
+
         let activeChatId = null;
         let connection = null;
+        let selectedFiles = []; // Danh sách file đang chờ gửi
 
         // 1. Khởi tạo SignalR
         async function initSignalR() {
@@ -211,6 +226,28 @@
             const list = document.getElementById('message-list');
             const sid = senderIdOf(m);
             const isMe = sid === myAccountId && myAccountId > 0;
+            const attachments = m.attachments || m.Attachments || [];
+            
+            let attachmentHtml = "";
+            if (attachments.length > 0) {
+                attachmentHtml = `
+                    <div class="msg-attachments mt-2 flex flex-col gap-2">
+                        ${attachments.map(a => {
+                            if (a.fileType === 'image') {
+                                return `<a href="${a.fileUrl}" target="_blank" class="block rounded-lg overflow-hidden border border-slate-100 shadow-sm max-w-[200px]">
+                                            <img src="${a.fileUrl}" class="w-full h-auto" />
+                                        </a>`;
+                            } else {
+                                return `<a href="${a.fileUrl}" target="_blank" class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100 hover:bg-slate-100 transition-colors text-xs text-slate-700 max-w-[250px]">
+                                            <span class="material-symbols-outlined text-slate-400">description</span>
+                                            <span class="truncate flex-1">${a.fileName || 'Tài liệu'}</span>
+                                            <span class="material-symbols-outlined text-slate-400 text-sm">download</span>
+                                        </a>`;
+                            }
+                        }).join('')}
+                    </div>
+                `;
+            }
             
             const html = `
                 <div class="msg-row ${isMe ? 'me' : 'them'}">
@@ -219,6 +256,7 @@
                         <div class="sender-name">${isMe ? 'Bạn' : m.senderName}</div>
                         <div class="bubble shadow-sm">
                             <div>${m.content}</div>
+                            ${attachmentHtml}
                             <div class="msg-time">${new Date(m.sentAt || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                         </div>
                     </div>
@@ -236,18 +274,77 @@
         async function sendMsg() {
             const input = document.getElementById('msg-input');
             const content = input.value.trim();
-            if (!content || !activeChatId) return;
+            if (!activeChatId) return;
+            if (!content && selectedFiles.length === 0) return;
+
+            // 1. Upload files trước nếu có
+            const attachments = [];
+            for (const file of selectedFiles) {
+                const uploaded = await uploadFile(file);
+                if (uploaded) attachments.push(uploaded);
+            }
 
             try {
                 await connection.invoke("SendMessage", {
                     chatId: activeChatId,
-                    content: content
+                    content: content || (attachments.length > 0 ? "Đã gửi tệp đính kèm" : ""),
+                    attachments: attachments
                 });
                 input.value = "";
+                selectedFiles = [];
+                renderAttachmentPreview();
                 await connection.invoke("Typing", activeChatId, false);
             } catch (err) {
                 console.error("Send message error:", err);
             }
+        }
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const res = await fetch(`${API_URL}/api/chatattachment/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                if (!res.ok) throw new Error("Upload failed");
+                return await res.json();
+            } catch (e) {
+                console.error("Upload error:", e);
+                return null;
+            }
+        }
+
+        function handleFileSelect(input) {
+            if (input.files && input.files[0]) {
+                selectedFiles.push(input.files[0]);
+                renderAttachmentPreview();
+                input.value = ""; // Reset để chọn lại cùng file
+            }
+        }
+
+        function renderAttachmentPreview() {
+            const preview = document.getElementById('attachment-preview');
+            if (selectedFiles.length === 0) {
+                preview.classList.add('hidden');
+                return;
+            }
+            preview.classList.remove('hidden');
+            preview.innerHTML = selectedFiles.map((f, i) => `
+                <div class="relative bg-slate-50 p-2 pr-8 rounded-lg border border-slate-200 text-xs flex items-center gap-2 min-w-[120px]">
+                    <span class="material-symbols-outlined text-slate-400">description</span>
+                    <span class="truncate max-w-[100px]">${f.name}</span>
+                    <button onclick="removeSelectedFile(${i})" class="absolute top-1 right-1 text-slate-400 hover:text-red-500">
+                        <span class="material-symbols-outlined text-sm">close</span>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeSelectedFile(index) {
+            selectedFiles.splice(index, 1);
+            renderAttachmentPreview();
         }
 
         // Typing & Auto-resize logic

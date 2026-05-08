@@ -93,10 +93,6 @@
                                 <span class="material-symbols-outlined">play_circle</span>
                                 Go to learning
                             </a>
-                            <button onclick="startChatWithInstructor(@Model.InstructorId)" class="w-full bg-primary/10 text-primary border border-primary/20 font-bold py-3 rounded-lg hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-2">
-                                <span class="material-symbols-outlined">chat</span>
-                                Message Instructor
-                            </button>
                         }
                         else if (Model.IsOwner || isManager)
                         {
@@ -351,10 +347,20 @@
         <div class="mb-12">
             <h2 class="text-2xl font-bold text-slate-900 mb-4">Instructor</h2>
             <div class="flex flex-col gap-4">
-                <div>
-                    <h3 class="text-[#a435f0] font-bold text-lg underline hover:text-[#8710d8] cursor-pointer">@Model.InstructorName</h3>
-                    <p class="text-slate-500 text-sm">@(string.IsNullOrEmpty(Model.InstructorProfessionalTitle) ? "Instructor" : Model.InstructorProfessionalTitle)</p>
-                </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-[#a435f0] font-bold text-lg underline hover:text-[#8710d8] cursor-pointer">@Model.InstructorName</h3>
+                            <p class="text-slate-500 text-sm">@(string.IsNullOrEmpty(Model.InstructorProfessionalTitle) ? "Instructor" : Model.InstructorProfessionalTitle)</p>
+                        </div>
+                        @if (!Model.IsOwner && !isManager)
+                        {
+                            <button onclick="startChatWithInstructor(@Model.InstructorId)" 
+                                    class="flex items-center gap-2 px-5 py-2 rounded-xl border-2 border-[#a435f0]/10 text-[#a435f0] text-sm font-bold hover:bg-[#a435f0] hover:text-white hover:border-[#a435f0] transition-all duration-300 group shadow-sm">
+                                <span class="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">chat_bubble</span>
+                                Nhắn tin cho giảng viên
+                            </button>
+                        }
+                    </div>
                 <div class="flex gap-4 items-start">
                     <div class="w-32 h-32 rounded-full bg-slate-200 shrink-0 overflow-hidden">
                         <img src="@(string.IsNullOrEmpty(Model.InstructorAvatarUrl) ? $"https://ui-avatars.com/api/?name={Model.InstructorName?.Replace(" ", "+")}&background=random" : Model.InstructorAvatarUrl)" class="w-full h-full object-cover" />
@@ -957,14 +963,14 @@
                 didOpen: () => { Swal.showLoading(); }
             });
 
-            const response = await fetch('http://localhost:5207/api/chat/get-or-create', {
+            const response = await fetch('http://localhost:5207/api/chat/create', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    partnerId: instructorId,
+                    TargetAccountId: instructorId,
                     contextType: 'course',
                     contextId: @Model.CourseId
                 })

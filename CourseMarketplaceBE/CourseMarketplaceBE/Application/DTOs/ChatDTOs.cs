@@ -28,12 +28,31 @@ public class MessageDto
     public bool IsSeen { get; set; }
     public string MessageStatus { get; set; } = null!;
     public DateTime? SentAt { get; set; }
+    public List<AttachmentDto> Attachments { get; set; } = new();
+}
+
+public class AttachmentDto
+{
+    public int AttachmentId { get; set; }
+    public string FileUrl { get; set; } = null!;
+    public string? FileName { get; set; }
+    public string? FileType { get; set; }
+    public long? FileSize { get; set; }
 }
 
 public class SendMessageDto
 {
     public int ChatId { get; set; }
     public string Content { get; set; } = null!;
+    public List<AttachmentInputDto>? Attachments { get; set; }
+}
+
+public class AttachmentInputDto
+{
+    public string FileUrl { get; set; } = null!;
+    public string? FileName { get; set; }
+    public string? FileType { get; set; }
+    public long? FileSize { get; set; }
 }
 
 public class CreateChatDto

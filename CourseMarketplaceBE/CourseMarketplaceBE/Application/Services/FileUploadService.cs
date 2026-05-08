@@ -231,4 +231,18 @@ public class CloudinaryUploadService : IFileUploadService
             return false;
         }
     }
+
+    public async Task<string?> UploadFileAsync(IFormFile file)
+    {
+        try
+        {
+            if (file == null || file.Length == 0) return null;
+            await using var stream = file.OpenReadStream();
+            var uploadParams = new CloudinaryDotNet.Actions.RawUploadParams { File = new CloudinaryDotNet.FileDescription(file.FileName, stream) };
+            var result = await _cloudinary.UploadAsync(uploadParams);
+            return result?.SecureUrl?.ToString();
+        }
+        catch { return null; }
+    }
 }
+

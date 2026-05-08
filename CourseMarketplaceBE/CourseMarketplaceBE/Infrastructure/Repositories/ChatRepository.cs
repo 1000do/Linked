@@ -43,6 +43,7 @@ public class ChatRepository : IChatRepository
                 .ThenInclude(a => a.User)
             .Include(m => m.Sender)
                 .ThenInclude(a => a.Manager)
+            .Include(m => m.Attachments)
             .OrderBy(m => m.SentAt)
             .ToListAsync();
     }
