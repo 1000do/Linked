@@ -1,0 +1,39 @@
+# --- Version Control ---
+**/.git
+**/.gitignore
+
+# --- Python Junk ---
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/*.so
+**/.Python
+**/env/
+**/venv/
+**/.venv/
+**/pip-log.txt
+**/pip-delete-this-directory.txt
+
+
+# --- Environment & Secrets ---
+**/.env
+.env.*
+**/secrets.json
+
+# --- Testing & Coverage ---
+**/.pytest_cache/
+**/.coverage
+**/htmlcov/
+**/tests/
+
+# --- IDEs & OS Junk ---
+**/.vscode/
+**/.idea/
+**/.DS_Store
+**/*.swp
+**/*.swo
+
+# --- Docker ---
+**/Dockerfile
+**/docker-compose.yml
+**/.dockerignore
