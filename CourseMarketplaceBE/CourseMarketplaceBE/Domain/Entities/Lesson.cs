@@ -29,5 +29,5 @@ public partial class Lesson
 
     public virtual ICollection<LessonReview> LessonReviews { get; set; } = new List<LessonReview>();
 
-
+    public bool IsRemoved { get; set; }
 }

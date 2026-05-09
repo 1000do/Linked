@@ -10,4 +10,9 @@ public interface IRedisService
     Task IncrementUnreadCountAsync(int accountId, int chatId);
     Task ClearUnreadCountAsync(int accountId, int chatId);
     Task<int> GetUnreadCountAsync(int accountId, int chatId);
+
+    // Generic Object Caching
+    Task SetCacheAsync<T>(string key, T value, TimeSpan? expiry = null);
+    Task<T?> GetCacheAsync<T>(string key);
+    Task RemoveCacheAsync(string key);
 }

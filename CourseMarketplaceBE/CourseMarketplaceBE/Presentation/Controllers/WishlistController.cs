@@ -1,9 +1,6 @@
-using CourseMarketplaceBE.Application.DTOs;
-using CourseMarketplaceBE.Domain.Entities;
-using CourseMarketplaceBE.Infrastructure.Data;
+using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
@@ -13,89 +10,95 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 [Authorize]
 public class WishlistController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly IWishlistService _wishlistService;
 
-    public WishlistController(AppDbContext context)
+    public WishlistController(IWishlistService wishlistService)
     {
-        _context = context;
+        _wishlistService = wishlistService;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetWishlist()
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!int.TryParse(userIdClaim, out var userId)) return Unauthorized();
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized();
 
-        var wishlist = await _context.WishlistItems
-            .Where(w => w.UserId == userId)
-            .Include(w => w.Course)
-            .ThenInclude(c => c.Instructor)
-            .Select(w => new WishlistResponse
-            {
-                Id = w.Id,
-                CourseId = w.CourseId ?? 0,
-                Title = w.Course!.Title,
-                CourseThumbnailUrl = w.Course.CourseThumbnailUrl,
-                Price = w.Course.Price,
-                InstructorName = w.Course.Instructor!.InstructorNavigation!.FullName, // Assuming instructor name is here
-                AddedDate = w.AddedDate ?? DateTime.UtcNow
-            })
-            .ToListAsync();
-
+        var wishlist = await _wishlistService.GetWishlistAsync(userId.Value);
         return Ok(new { data = wishlist });
     }
 
     [HttpPost("{courseId}")]
     public async Task<IActionResult> AddToWishlist(int courseId)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!int.TryParse(userIdClaim, out var userId)) return Unauthorized();
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized();
 
-        var existing = await _context.WishlistItems
-            .FirstOrDefaultAsync(w => w.UserId == userId && w.CourseId == courseId);
-
-        if (existing != null) return BadRequest(new { message = "Khóa học đã có trong danh sách yêu thích" });
-
-        var newItem = new WishlistItem
+        try
         {
-            UserId = userId,
-            CourseId = courseId,
-            AddedDate = DateTime.UtcNow
-        };
-
-        _context.WishlistItems.Add(newItem);
-        await _context.SaveChangesAsync();
-
-        return Ok(new { message = "Đã thêm vào danh sách yêu thích" });
+            await _wishlistService.AddToWishlistAsync(userId.Value, courseId);
+            return Ok(new { message = "Đã thêm vào danh sách yêu thích" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpDelete("{courseId}")]
     public async Task<IActionResult> RemoveFromWishlist(int courseId)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!int.TryParse(userIdClaim, out var userId)) return Unauthorized();
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized();
 
-        var item = await _context.WishlistItems
-            .FirstOrDefaultAsync(w => w.UserId == userId && w.CourseId == courseId);
+        try
+        {
+            await _wishlistService.RemoveFromWishlistAsync(userId.Value, courseId);
+            return Ok(new { message = "Đã xóa khỏi danh sách yêu thích" });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
 
-        if (item == null) return NotFound(new { message = "Không tìm thấy khóa học trong danh sách yêu thích" });
+    [HttpPost("toggle/{courseId}")]
+    public async Task<IActionResult> ToggleWishlist(int courseId)
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized();
 
-        _context.WishlistItems.Remove(item);
-        await _context.SaveChangesAsync();
-
-        return Ok(new { message = "Đã xóa khỏi danh sách yêu thích" });
+        var isInWishlist = await _wishlistService.ToggleWishlistAsync(userId.Value, courseId);
+        return Ok(new 
+        { 
+            message = isInWishlist ? "Đã thêm vào danh sách yêu thích" : "Đã xóa khỏi danh sách yêu thích", 
+            isInWishlist 
+        });
     }
 
     [HttpGet("check/{courseId}")]
     public async Task<IActionResult> CheckWishlist(int courseId)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!int.TryParse(userIdClaim, out var userId)) 
+        var userId = GetUserId();
+        if (userId == null) 
             return Ok(new { isInWishlist = false });
 
-        var exists = await _context.WishlistItems
-            .AnyAsync(w => w.UserId == userId && w.CourseId == courseId);
-
+        var exists = await _wishlistService.IsInWishlistAsync(userId.Value, courseId);
         return Ok(new { isInWishlist = exists });
+    }
+
+    [HttpGet("count")]
+    public async Task<IActionResult> GetWishlistCount()
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized();
+
+        var count = await _wishlistService.GetWishlistCountAsync(userId.Value);
+        return Ok(new { count });
+    }
+
+    private int? GetUserId()
+    {
+        var str = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return int.TryParse(str, out int id) ? id : null;
     }
 }

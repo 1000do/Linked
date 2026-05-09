@@ -21,6 +21,7 @@ public interface IChatRepository
     Task AddAuditLogAsync(AuditLog log);
     Task MarkAsReadAsync(int chatId, int accountId);
     Task<int> GetTotalUnreadCountAsync(int accountId);
+    Task<List<int>> GetParticipantIdsAsync(int chatId);
     Task<List<UserReport>> GetAllReportsAsync();
     Task<UserReport?> GetReportByIdAsync(int reportId);
     Task SaveChangesAsync();

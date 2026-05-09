@@ -132,31 +132,14 @@ public class CloudinaryUploadService : IFileUploadService
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(fileUrl)) return false;
+            var publicId = GetPublicIdFromUrl(fileUrl);
+            if (publicId == null) return false;
 
-            var uri = new Uri(fileUrl);
-            var path = uri.AbsolutePath;
-            var segments = path.Split('/');
+            var resourceType = ResourceType.Image;
+            if (fileUrl.Contains("/video/")) resourceType = ResourceType.Video;
+            else if (fileUrl.Contains("/raw/")) resourceType = ResourceType.Raw;
 
-            int uploadIndex = Array.IndexOf(segments, "upload");
-            if (uploadIndex == -1) return false;
-
-            var publicIdSegments = segments.Skip(uploadIndex + 2).ToList();
-            var lastSegment = publicIdSegments.Last();
-            var dotIndex = lastSegment.LastIndexOf('.');
-            if (dotIndex != -1)
-            {
-                publicIdSegments[publicIdSegments.Count - 1] = lastSegment.Substring(0, dotIndex);
-            }
-
-            string publicId = string.Join("/", publicIdSegments);
-            
-            var resourceType = fileUrl.Contains("/video/") ? ResourceType.Video : ResourceType.Image;
-            
-            var deletionParams = new DeletionParams(publicId)
-            {
-                ResourceType = resourceType
-            };
+            var deletionParams = new DeletionParams(publicId) { ResourceType = resourceType };
 
             var result = await _cloudinary.DestroyAsync(deletionParams);
             return result.Result == "ok";
@@ -167,4 +150,182 @@ public class CloudinaryUploadService : IFileUploadService
             return false;
         }
     }
+
+    public async Task<string?> MoveToTrashAsync(string fileUrl)
+    {
+        try
+        {
+            var publicId = GetPublicIdFromUrl(fileUrl);
+            if (publicId == null) return null;
+
+            var resourceType = ResourceType.Image;
+            if (fileUrl.Contains("/video/")) resourceType = ResourceType.Video;
+            else if (fileUrl.Contains("/raw/")) resourceType = ResourceType.Raw;
+            
+            var newPublicId = $"trash/{publicId}";
+            var renameParams = new RenameParams(publicId, newPublicId)
+            {
+                ResourceType = resourceType,
+                Overwrite = true
+            };
+
+            var result = await _cloudinary.RenameAsync(renameParams);
+            
+            if (result.Error != null)
+            {
+                _logger.LogError("❌ Rename to trash lỗi: {msg}", result.Error.Message);
+                return null;
+            }
+
+            return result.SecureUrl?.ToString();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "🔥 Exception khi move file tới trash: {url}", fileUrl);
+            return null;
+        }
+    }
+
+    public string? GetPublicIdFromUrl(string fileUrl)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(fileUrl)) return null;
+
+            var uri = new Uri(fileUrl);
+            var path = uri.AbsolutePath;
+            var segments = path.Split('/');
+
+            int uploadIndex = Array.IndexOf(segments, "upload");
+            if (uploadIndex == -1) return null;
+
+            // Kiểm tra xem segment tiếp theo có phải là version (v1234567...) không
+            int startIdx = uploadIndex + 1;
+            if (startIdx < segments.Length && segments[startIdx].StartsWith("v") && segments[startIdx].Length > 1 && char.IsDigit(segments[startIdx][1]))
+            {
+                startIdx++;
+            }
+
+            var publicIdSegments = segments.Skip(startIdx).ToList();
+            if (publicIdSegments.Count == 0) return null;
+
+            // Đối với file raw, public ID BAO GỒM cả extension. 
+            // Đối với image/video, public ID KHÔNG BAO GỒM extension.
+            bool isRaw = fileUrl.Contains("/raw/");
+            
+            if (!isRaw)
+            {
+                var lastSegment = publicIdSegments.Last();
+                var dotIndex = lastSegment.LastIndexOf('.');
+                if (dotIndex != -1)
+                {
+                    publicIdSegments[publicIdSegments.Count - 1] = lastSegment.Substring(0, dotIndex);
+                }
+            }
+
+            return string.Join("/", publicIdSegments);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<bool> DeleteFileByPublicIdAsync(string publicId, string resourceType)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(publicId)) return false;
+
+            var resType = resourceType.ToLower() == "video" ? ResourceType.Video : ResourceType.Image;
+            var deletionParams = new DeletionParams(publicId)
+            {
+                ResourceType = resType
+            };
+
+            var result = await _cloudinary.DestroyAsync(deletionParams);
+            return result.Result == "ok";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "🔥 Lỗi khi xóa file bằng publicId: {id}", publicId);
+            return false;
+        }
+    }
+
+    public async Task<string?> UploadFileAsync(IFormFile file)
+    {
+        try
+        {
+            if (file == null || file.Length == 0) return null;
+            await using var stream = file.OpenReadStream();
+            var uploadParams = new CloudinaryDotNet.Actions.RawUploadParams { File = new CloudinaryDotNet.FileDescription(file.FileName, stream) };
+            var result = await _cloudinary.UploadAsync(uploadParams);
+            return result?.SecureUrl?.ToString();
+        }
+        catch { return null; }
+    }
+    public async Task<string?> RestoreFromTrashAsync(string publicId, string resourceType)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(publicId)) return null;
+
+            var resType = ResourceType.Image;
+            var typeLower = resourceType.ToLower();
+            if (typeLower == "video") resType = ResourceType.Video;
+            else if (typeLower == "raw" || typeLower == "document" || typeLower == "file") resType = ResourceType.Raw;
+            
+            // The file is currently at trash/{publicId}
+            var currentPublicId = $"trash/{publicId}";
+            var newPublicId = publicId;
+
+            var renameParams = new RenameParams(currentPublicId, newPublicId)
+            {
+                ResourceType = resType,
+                Overwrite = true
+            };
+
+            var result = await _cloudinary.RenameAsync(renameParams);
+            
+            if (result.Error != null)
+            {
+                _logger.LogWarning("⚠️ Restore với type {type} thất bại, thử các type khác...", resType);
+                
+                // Danh sách các type để thử lần lượt
+                var typesToTry = new List<ResourceType> { ResourceType.Image, ResourceType.Video, ResourceType.Raw };
+                typesToTry.Remove(resType); // Bỏ qua type đã thử
+
+                foreach (var tryType in typesToTry)
+                {
+                    // 1. Thử rename từ trash
+                    var retryParams = new RenameParams(currentPublicId, newPublicId) { ResourceType = tryType, Overwrite = true };
+                    var retryResult = await _cloudinary.RenameAsync(retryParams);
+                    if (retryResult.Error == null && retryResult.SecureUrl != null)
+                    {
+                        return retryResult.SecureUrl.ToString();
+                    }
+
+                    // 2. Thử lấy từ vị trí gốc
+                    var getParams = new GetResourceParams(newPublicId) { ResourceType = tryType };
+                    var getResult = await _cloudinary.GetResourceAsync(getParams);
+                    if (getResult.Error == null && getResult.SecureUrl != null)
+                    {
+                        return getResult.SecureUrl.ToString();
+                    }
+                }
+
+                _logger.LogError("❌ Không thể khôi phục file {id} sau khi thử mọi loại ResourceType.", publicId);
+                return null;
+            }
+
+            return result.SecureUrl?.ToString();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "🔥 Exception khi restore file từ trash: {id}", publicId);
+            return null;
+        }
+    }
 }
+

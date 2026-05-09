@@ -15,17 +15,20 @@ public class LessonService : ILessonService
     private readonly ICourseRepository _courseRepository;
     private readonly IMaterialRepository _materialRepository;
     private readonly IFileUploadService _uploadService;
+    private readonly IRedisService _redisService;
 
     public LessonService(
         ILessonRepository lessonRepository, 
         ICourseRepository courseRepository,
         IMaterialRepository materialRepository,
-        IFileUploadService uploadService)
+        IFileUploadService uploadService,
+        IRedisService redisService)
     {
         _lessonRepository = lessonRepository;
         _courseRepository = courseRepository;
         _materialRepository = materialRepository;
         _uploadService = uploadService;
+        _redisService = redisService;
     }
 
     public async Task<LessonResponse> CreateLessonAsync(LessonCreateRequest request, int instructorId)
@@ -72,6 +75,9 @@ public class LessonService : ILessonService
         }
 
         await _lessonRepository.SaveChangesAsync();
+
+        // Invalidate Course Cache
+        await _redisService.RemoveCacheAsync($"course:detail:{request.CourseId}");
 
         return new LessonResponse
         {
@@ -163,6 +169,12 @@ public class LessonService : ILessonService
 
         await _materialRepository.SaveChangesAsync();
 
+        // Invalidate Course Cache
+        if (lesson.CourseId.HasValue)
+        {
+            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+        }
+
         return new MaterialResponse
         {
             MaterialId = material.MaterialId,
@@ -190,16 +202,25 @@ public class LessonService : ILessonService
         if (lesson.Course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot remove materials while the course is pending review.");
 
-        // Xóa file trên Cloudinary
+        // Move file to trash on Cloudinary instead of deleting
         if (!string.IsNullOrEmpty(material.MaterialUrl))
         {
-            await _uploadService.DeleteFileAsync(material.MaterialUrl);
+            var cloudPublicId = _uploadService.GetPublicIdFromUrl(material.MaterialUrl);
+            await _uploadService.MoveToTrashAsync(material.MaterialUrl);
+            material.CloudPublicId = cloudPublicId;
+            material.MaterialUrl = null; // Update to null as requested
         }
 
         material.LearningStatus = "removed";
         material.UpdatedAt = DateTime.UtcNow;
         _materialRepository.Update(material);
         await _materialRepository.SaveChangesAsync();
+
+        // Invalidate Course Cache
+        if (lesson.CourseId.HasValue)
+        {
+            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+        }
     }
 
     public async Task DeleteLessonAsync(int lessonId, int instructorId)
@@ -214,17 +235,148 @@ public class LessonService : ILessonService
         if (lesson.Course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot delete lessons while the course is pending review.");
 
-        // Xóa tất cả các file materials của lesson này trên Cloudinary
+        // Soft delete all materials of this lesson
         var materials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
         foreach (var m in materials)
         {
             if (!string.IsNullOrEmpty(m.MaterialUrl))
             {
-                await _uploadService.DeleteFileAsync(m.MaterialUrl);
+                var cloudPublicId = _uploadService.GetPublicIdFromUrl(m.MaterialUrl);
+                await _uploadService.MoveToTrashAsync(m.MaterialUrl);
+                m.CloudPublicId = cloudPublicId;
+                m.MaterialUrl = null;
+            }
+            m.LearningStatus = "removed";
+            m.UpdatedAt = DateTime.UtcNow;
+            _materialRepository.Update(m);
+        }
+
+        lesson.IsRemoved = true;
+        lesson.UpdatedAt = DateTime.UtcNow;
+        _lessonRepository.Update(lesson);
+        await _lessonRepository.SaveChangesAsync();
+
+        // Invalidate Course Cache
+        if (lesson.CourseId.HasValue)
+        {
+            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+        }
+    }
+
+    public async Task<IEnumerable<MaterialTrashResponse>> GetTrashMaterialsAsync(int instructorId)
+    {
+        var materials = await _materialRepository.GetTrashMaterialsAsync(instructorId);
+        
+        return materials.Select(m => new MaterialTrashResponse
+        {
+            MaterialId = m.MaterialId,
+            Title = m.Title,
+            LessonTitle = m.Lesson?.Title,
+            CourseTitle = m.Lesson?.Course?.Title,
+            DeletedAt = m.UpdatedAt,
+            FileType = m.MaterialMetadata?.FileType,
+            CloudPublicId = m.CloudPublicId
+        });
+    }
+
+    public async Task PermanentDeleteMaterialAsync(int materialId, int instructorId)
+    {
+        var material = await _materialRepository.GetByIdAsync(materialId);
+        if (material == null) throw new Exception("Material not found.");
+
+        // Check ownership (even if soft-deleted)
+        var materials = await _materialRepository.GetTrashMaterialsAsync(instructorId);
+        if (!materials.Any(m => m.MaterialId == materialId))
+        {
+             throw new UnauthorizedAccessException("You do not have permission to permanently delete this material.");
+        }
+
+        // 1. Delete from Cloudinary if public ID exists
+        if (!string.IsNullOrEmpty(material.CloudPublicId))
+        {
+            // Note: Since it was moved to trash/ prefix, we need to delete it using the trash prefix
+            var resourceType = material.MaterialMetadata?.FileType ?? "image";
+            await _uploadService.DeleteFileByPublicIdAsync($"trash/{material.CloudPublicId}", resourceType); 
+        }
+
+        // 2. Delete from DB
+        int? courseId = material.Lesson?.CourseId;
+        _materialRepository.Delete(material);
+        await _materialRepository.SaveChangesAsync();
+
+        // Invalidate Course Cache
+        if (courseId.HasValue)
+        {
+            await _redisService.RemoveCacheAsync($"course:detail:{courseId.Value}");
+        }
+    }
+
+    public async Task RestoreMaterialAsync(int materialId, int instructorId)
+    {
+        var material = await _materialRepository.GetByIdAsync(materialId);
+        if (material == null) throw new Exception("Material not found.");
+
+        var lesson = await _lessonRepository.GetByIdAsync(material.LessonId ?? 0);
+        if (lesson == null || lesson.Course == null || lesson.Course.InstructorId != instructorId)
+            throw new UnauthorizedAccessException("You do not have permission to restore this material.");
+
+        var course = lesson.Course;
+
+        // If course is published, move it back to pending as this is an update
+        if (course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        {
+            course.CourseStatus = "pending";
+            course.ModerationFeedback = null;
+            _courseRepository.Update(course);
+        }
+
+        // Check if restoring a video and an active video already exists
+        var fileType = material.MaterialMetadata?.FileType ?? "video";
+        if (fileType == "video")
+        {
+            var existingMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lesson.LessonId);
+            var activeVideo = existingMaterials.FirstOrDefault(m => 
+                m.LearningStatus == "active" && 
+                ((m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || m.MaterialMetadata == null));
+            
+            if (activeVideo != null)
+            {
+                throw new InvalidOperationException("Bài học này đã có một video đang hoạt động. Vui lòng xóa video hiện tại trước khi khôi phục video này.");
             }
         }
 
-        _lessonRepository.Delete(lesson);
-        await _lessonRepository.SaveChangesAsync();
+        // 1. Restore from Cloudinary trash
+        if (!string.IsNullOrEmpty(material.CloudPublicId))
+        {
+            var publicId = material.CloudPublicId;
+            var fileTypeLower = fileType.ToLower();
+            bool isRaw = fileTypeLower == "raw" || fileTypeLower == "document" || fileTypeLower == "file";
+
+            // Fix for legacy materials that had their extension stripped from CloudPublicId
+            if (isRaw && !publicId.Contains('.') && material.MaterialMetadata != null && !string.IsNullOrEmpty(material.MaterialMetadata.FileExtension))
+            {
+                var ext = material.MaterialMetadata.FileExtension;
+                if (!ext.StartsWith('.')) ext = "." + ext;
+                publicId += ext;
+            }
+
+            var restoredUrl = await _uploadService.RestoreFromTrashAsync(publicId, fileType);
+            if (restoredUrl != null)
+            {
+                material.MaterialUrl = restoredUrl;
+                material.CloudPublicId = null;
+            }
+        }
+
+        material.LearningStatus = "active";
+        material.UpdatedAt = DateTime.UtcNow;
+        _materialRepository.Update(material);
+        await _materialRepository.SaveChangesAsync();
+
+        // Invalidate Course Cache
+        if (lesson.CourseId.HasValue)
+        {
+            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+        }
     }
 }

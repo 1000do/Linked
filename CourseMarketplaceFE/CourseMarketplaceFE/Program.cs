@@ -1,4 +1,6 @@
 using CourseMarketplaceFE.Helpers;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
 
 namespace CourseMarketplaceFE
 {
@@ -42,6 +44,15 @@ namespace CourseMarketplaceFE
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
+            // 3. Cấu hình Authentication để [Authorize] hoạt động
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/Account/Login";
+                    options.AccessDeniedPath = "/Account/Login";
+                    options.Cookie.Name = "LinkedLearn.Auth";
+                });
+
             // Đăng ký ApiClient (auto-attach AccessToken + auto-refresh khi 401)
             builder.Services.AddScoped<ApiClient>();
 
@@ -76,8 +87,35 @@ namespace CourseMarketplaceFE
 
             app.UseRouting();
 
-            // Kích hoạt xác thực và phân quyền (nếu dùng Identity ở FE)
             app.UseAuthentication();
+
+            // Middleware tự động map Cookies (UserRole, UserId) sang ClaimsPrincipal 
+            // để [Authorize(Roles="...")] hoạt động mà không cần Identity phức tạp
+            app.Use(async (context, next) =>
+            {
+                if (context.User.Identity?.IsAuthenticated != true)
+                {
+                    var role = context.Request.Cookies["UserRole"];
+                    var userId = context.Request.Cookies["UserId"];
+                    var userName = context.Request.Cookies["UserName"];
+
+                    if (!string.IsNullOrEmpty(role) && !string.IsNullOrEmpty(userId))
+                    {
+                        var claims = new List<Claim>
+                        {
+                            new Claim(ClaimTypes.NameIdentifier, userId),
+                            new Claim(ClaimTypes.Role, role),
+                            new Claim(ClaimTypes.Name, userName ?? "User")
+                        };
+
+                        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                        context.User = new ClaimsPrincipal(identity);
+                    }
+                }
+
+                await next();
+            });
+
             app.UseAuthorization();
 
             app.MapControllerRoute(

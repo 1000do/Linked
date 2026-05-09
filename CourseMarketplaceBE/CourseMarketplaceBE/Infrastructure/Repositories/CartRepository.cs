@@ -52,8 +52,11 @@ public class CartRepository : ICartRepository
     // ── Coupon ────────────────────────────────────────────────────────────────
 
     public async Task<Coupon?> GetCouponByCodeAsync(string couponCode)
-        => await _context.Coupons
+    {
+        if (string.IsNullOrWhiteSpace(couponCode)) return null;
+        return await _context.Coupons
             .FirstOrDefaultAsync(cp => cp.CouponCode.ToLower() == couponCode.Trim().ToLower());
+    }
 
     public async Task<List<Coupon>> GetActiveAvailableCouponsAsync(DateTime now)
         => await _context.Coupons

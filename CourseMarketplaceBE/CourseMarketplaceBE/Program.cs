@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using CourseMarketplaceBE.Application.BackgroundTasks;
 using Microsoft.IdentityModel.Tokens;
+using CourseMarketplaceBE.Application.Interfaces;
 using Microsoft.OpenApi.Models;
 using Stripe;
 using StackExchange.Redis;
@@ -140,11 +141,14 @@ public class Program
         builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
         builder.Services.AddScoped<ILessonRepository, LessonRepository>();
         builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
+        builder.Services.AddScoped<IAvatarFrameRepository, AvatarFrameRepository>();
         builder.Services.AddScoped<ICourseService, CourseService>();
         builder.Services.AddScoped<ILessonService, LessonService>();
         builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
         builder.Services.AddScoped<IReviewService, CourseMarketplaceBE.Application.Services.ReviewService>();
         builder.Services.AddScoped<ILandingPageService, LandingPageService>();
+        builder.Services.AddScoped<IWishlistRepository, WishlistRepository>();
+        builder.Services.AddScoped<IWishlistService, WishlistService>();
 
         builder.Services.AddScoped<IChatRepository, ChatRepository>();
         builder.Services.AddSignalR(); // Đăng ký SignalR
@@ -202,9 +206,12 @@ public class Program
         builder.Services.AddScoped<ITransactionService, TransactionService>();
         builder.Services.AddScoped<IChatService, ChatService>();
         builder.Services.AddScoped<IModerationService, ModerationService>();
+        builder.Services.AddScoped<IAvatarFrameRepository, AvatarFrameRepository>();
+        builder.Services.AddScoped<IAvatarFrameService, AvatarFrameService>();
         
         // 🔥 Background Tasks
         builder.Services.AddHostedService<PayoutScheduleTask>();
+        builder.Services.AddHostedService<CourseMarketplaceBE.Infrastructure.BackgroundServices.CloudinaryCleanupService>();
         
         // Redis Configuration
         builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>

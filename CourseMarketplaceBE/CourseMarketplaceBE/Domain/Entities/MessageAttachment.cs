@@ -6,7 +6,7 @@ public partial class MessageAttachment
 {
     public int AttachmentId { get; set; }
 
-    public int? MessageId { get; set; }
+    public int MessageId { get; set; }
 
     public string FileUrl { get; set; } = null!;
 
@@ -18,5 +18,5 @@ public partial class MessageAttachment
 
     public DateTime? CreatedAt { get; set; }
 
-    public virtual Message? Message { get; set; }
+    public virtual Message Message { get; set; } = null!;
 }
