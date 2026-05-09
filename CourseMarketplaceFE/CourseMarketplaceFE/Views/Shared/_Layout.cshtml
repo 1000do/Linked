@@ -318,6 +318,87 @@
         // 1. Khởi tạo biến toàn cục
         const currentToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`.trim();
 
+        // --- GLOBAL LOGIC MOVED FROM SITE.JS ---
+        async function toggleWishlist(btn, courseId) {
+            if (!courseId) return;
+
+            if (typeof currentToken === 'undefined' || !currentToken) {
+                window.location.href = '/Account/Login';
+                return;
+            }
+
+            try {
+                btn.style.pointerEvents = 'none';
+                btn.style.opacity = '0.7';
+
+                const response = await fetch(`http://localhost:5207/api/Wishlist/toggle/${courseId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    const icon = btn.querySelector('.material-symbols-outlined');
+                    
+                    if (result.isInWishlist) {
+                        btn.classList.remove('text-slate-400', 'text-slate-700');
+                        btn.classList.add('text-red-500');
+                        if (icon) {
+                            icon.style.fontVariationSettings = "'FILL' 1";
+                            icon.classList.remove('text-slate-400');
+                            icon.classList.add('text-red-500');
+                        }
+                        const textSpan = btn.querySelector('.wishlist-text');
+                        if (textSpan) textSpan.innerText = "Saved to Wishlist";
+                    } else {
+                        btn.classList.remove('text-red-500');
+                        const textSpan = btn.querySelector('.wishlist-text');
+                        if (textSpan) {
+                            btn.classList.add('text-slate-700');
+                            textSpan.innerText = "Add to Wishlist";
+                            if (icon) {
+                                icon.classList.remove('text-red-500');
+                                icon.classList.add('text-slate-400');
+                            }
+                        } else {
+                            btn.classList.add('text-slate-400');
+                        }
+                        if (icon) icon.style.fontVariationSettings = "'FILL' 0";
+
+                        if (window.location.pathname.toLowerCase() === '/wishlist') {
+                            const card = btn.closest('.group');
+                            if (card) {
+                                card.style.transition = 'all 0.3s ease';
+                                card.style.opacity = '0';
+                                card.style.transform = 'scale(0.9)';
+                                setTimeout(() => card.remove(), 300);
+                            }
+                        }
+                    }
+                } else if (response.status === 401) {
+                    window.location.href = '/Account/Login';
+                } else {
+                    console.error('Failed to toggle wishlist:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error toggling wishlist:', error);
+            } finally {
+                btn.style.pointerEvents = 'auto';
+                btn.style.opacity = '1';
+            }
+        }
+
+        window.addEventListener('unhandledrejection', function(event) {
+            if (event.reason === undefined) {
+                console.warn('Caught undefined promise rejection.');
+                event.preventDefault();
+            }
+        });
+        // ----------------------------------------
+
         // ★ Decode AccountId từ JWT token (tin cậy hơn cookie)
         function getAccountIdFromJwt(jwt) {
             try {
@@ -518,6 +599,11 @@
                     .withUrl("http://localhost:5207/notificationHub", { accessTokenFactory: () => currentToken })
                     .withAutomaticReconnect().build();
                 notiConn.on("ReceiveNotification", () => loadTopNotifications());
+                notiConn.on("UpdateWishlistCount", () => {
+                    if (typeof updateWishlistBadge === 'function') {
+                        updateWishlistBadge();
+                    }
+                });
                 notiConn.start().catch(err => console.error("Noti Hub Error", err));
 
                 // SignalR Chat
