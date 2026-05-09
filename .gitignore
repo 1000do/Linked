@@ -22,6 +22,8 @@ secrets.json
 # Node / Frontend
 node_modules/
 private/
+ai_models/
+
 
 
 
