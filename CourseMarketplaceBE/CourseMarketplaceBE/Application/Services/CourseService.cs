@@ -223,6 +223,24 @@ public class CourseService : ICourseService
         await _courseRepository.AddAsync(course);
         await _courseRepository.SaveChangesAsync();
 
+        // ==========================================================
+
+        // // 2. Compute & store hashes in course_exts
+        // var courseExts = new CourseExt
+        // {
+        //     CourseId = course.Id,
+        //     TitleHash = await _contentHashService.ComputeMD5HashAsync(course.Title),
+        //     DescriptionHash = await _contentHashService.ComputeMD5HashAsync(course.Description),
+        //     // ThumbnailHash = await _contentHashService.ComputeFileHashAsync(course.ThumbnailPath)
+        // };
+        // await _courseExtRepository.AddAsync(courseExts);
+        // await _courseExtRepository.SaveChangesAsync();
+
+        // // 3. Cache in redis
+        // await _redisCacheService.CacheCourseForModerationAsync(course.Id);
+
+        // ==========================================================
+
         return new CourseResponse
         {
             CourseId = course.CourseId,
@@ -289,6 +307,17 @@ public class CourseService : ICourseService
 
         _courseRepository.Update(course);
         await _courseRepository.SaveChangesAsync();
+
+        // // 2. Compute & store hashes in course_exts
+        // var courseExts = new CourseExt
+        // {
+        //     CourseId = course.Id,
+        //     TitleHash = await _contentHashService.ComputeMD5HashAsync(course.Title),
+        //     DescriptionHash = await _contentHashService.ComputeMD5HashAsync(course.Description),
+        //     // ThumbnailHash = await _contentHashService.ComputeFileHashAsync(course.ThumbnailPath)
+        // };
+        // _courseExtRepository.Update(courseExts);
+        // await _courseExtRepository.SaveChangesAsync();
 
         return new CourseResponse
         {
