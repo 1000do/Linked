@@ -31,13 +31,13 @@
             </div>
             
             <div class="mb-6">
-                <label asp-for="Title" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Course Title</label>
+                <label asp-for="Title" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Course Title <span class="text-red-500">*</span></label>
                 <input asp-for="Title" placeholder="e.g. Advanced Architectural Principles in Modern UI" class="w-full bg-slate-50 border-none rounded-xl py-4 px-4 text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 outline-none font-medium" />
                 <span asp-validation-for="Title" class="text-red-500 text-xs mt-1 block"></span>
             </div>
             
             <div>
-                <label asp-for="CategoryId" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Category</label>
+                <label asp-for="CategoryId" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Category <span class="text-red-500">*</span></label>
                 <div class="relative">
                     <select asp-for="CategoryId" class="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-4 pr-10 text-slate-800 focus:ring-2 focus:ring-primary/20 outline-none font-medium appearance-none cursor-pointer transition-all">
                         <option value="0">Select Category</option>
@@ -74,7 +74,7 @@
                 <div class="w-16 h-16 bg-primary-container/30 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
                     <span class="material-symbols-outlined text-[32px]">cloud_upload</span>
                 </div>
-                <p class="font-bold text-slate-800 mb-2">Drag and drop your thumbnail here</p>
+                <p class="font-bold text-slate-800 mb-2">Drag and drop your thumbnail here <span class="text-red-500">*</span></p>
                 <p class="text-xs text-slate-500 mb-4">or <span class="text-primary hover:underline">Browse Files</span></p>
                 <input type="file" id="fileElem" accept="image/*" class="hidden" />
                 <div id="upload-progress" class="hidden absolute inset-0 bg-white/90 z-20 flex flex-col items-center justify-center">
@@ -90,7 +90,7 @@
                 <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-sm">3</div>
                 <h2 class="text-xl font-headline font-bold text-slate-900">Description & Curriculum</h2>
             </div>
-            <label asp-for="Description" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Rich Text Description</label>
+            <label asp-for="Description" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Rich Text Description <span class="text-red-500">*</span></label>
             <div class="bg-white rounded-xl">
                 <div id="editor" class="bg-slate-50"></div>
                 <input type="hidden" asp-for="Description" id="DescriptionInput" />
@@ -221,10 +221,32 @@
         const valSummary = document.querySelector('[data-valmsg-summary]') || document.querySelector('.text-red-500.bg-red-50');
         if (valSummary && valSummary.querySelector('li')) valSummary.style.display = 'block';
 
-        // Sync Quill + submit
+        // Sync Quill + submit with validation
         document.getElementById('createCourseForm').addEventListener('submit', function(e) {
             const html = quill.root.innerHTML;
-            descriptionInput.value = (html === '<p><br></p>') ? '' : html;
+            const title = document.getElementById('Title').value;
+            const catId = document.getElementById('CategoryId').value;
+            const thumb = document.getElementById('CourseThumbnailUrl').value;
+            const desc = (html === '<p><br></p>') ? '' : html;
+            
+            descriptionInput.value = desc;
+
+            // CLIENT-SIDE VALIDATION
+            let errors = [];
+            if (!title || title.trim() === '') errors.push("Tiêu đề khóa học");
+            if (!catId || catId === '0') errors.push("Danh mục");
+            if (!thumb || thumb === '') errors.push("Ảnh đại diện (Thumbnail)");
+            if (!desc || desc.trim() === '') errors.push("Mô tả khóa học");
+
+            if (errors.length > 0) {
+                e.preventDefault(); // Stop form submission
+                Swal.fire({
+                    title: 'Thông tin chưa đầy đủ',
+                    html: `<div class="text-left">Vui lòng hoàn thiện các mục sau:<ul class="list-disc ml-6 mt-2 text-red-600 font-semibold">${errors.map(err => `<li>${err}</li>`).join('')}</ul></div>`,
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+            }
         });
 
         // Progress bar

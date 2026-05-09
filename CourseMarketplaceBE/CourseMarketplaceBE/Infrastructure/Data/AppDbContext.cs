@@ -58,6 +58,8 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
     public virtual DbSet<MessageAttachment> MessageAttachments { get; set; }
     public virtual DbSet<MessageModerationLog> MessageModerationLogs { get; set; }
+    public virtual DbSet<AvatarFrame> AvatarFrames { get; set; }
+    public virtual DbSet<UserAvatarFrame> UserAvatarFrames { get; set; }
 
     // ─── OnConfiguring ────────────────────────────────────────────────────────
 
@@ -449,6 +451,11 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.LastApprovedAt)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("last_approved_at");
+            entity.Property(e => e.IsRemoved)
+                .HasDefaultValue(false)
+                .HasColumnName("is_removed");
+
+            entity.HasQueryFilter(c => !c.IsRemoved);
             // ★ total_lessons, rating_average, total_students ĐÃ BỊ XÓA → dùng view_course_stats
 
             entity.HasOne(d => d.Category).WithMany(p => p.Courses)
@@ -628,6 +635,8 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.MaterialHash)
                 .HasMaxLength(32)
                 .HasColumnName("material_hash");
+            entity.Property(e => e.CloudPublicId)
+                .HasColumnName("cloud_public_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
@@ -664,6 +673,12 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
+
+            entity.Property(e => e.IsRemoved)
+                .HasDefaultValue(false)
+                .HasColumnName("is_removed");
+
+            entity.HasQueryFilter(l => !l.IsRemoved);
 
             entity.HasOne(d => d.Course).WithMany(p => p.Lessons)
                 .HasForeignKey(d => d.CourseId)
@@ -1127,6 +1142,40 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.MessageId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("message_moderation_logs_message_id_fkey");
+        });
+
+
+        // ── avatar_frames ────────────────────────────────────────────────────
+        modelBuilder.Entity<AvatarFrame>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("avatar_frames_pkey");
+            entity.ToTable("avatar_frames");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
+            entity.Property(e => e.ImageUrl).HasColumnName("image_url");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.RequirementType).HasMaxLength(50).HasColumnName("requirement_type");
+            entity.Property(e => e.RequirementValue).HasDefaultValue(0).HasColumnName("requirement_value");
+            entity.Property(e => e.IsActive).HasDefaultValue(true).HasColumnName("is_active");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
+        });
+
+        // ── user_avatar_frames ────────────────────────────────────────────────
+        modelBuilder.Entity<UserAvatarFrame>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.FrameId }).HasName("user_avatar_frames_pkey");
+            entity.ToTable("user_avatar_frames");
+
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.FrameId).HasColumnName("frame_id");
+            entity.Property(e => e.IsEquipped).HasDefaultValue(false).HasColumnName("is_equipped");
+            entity.Property(e => e.UnlockedAt).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("unlocked_at");
+
+            entity.HasOne(d => d.Frame).WithMany()
+                .HasForeignKey(d => d.FrameId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("user_avatar_frames_frame_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);

@@ -27,6 +27,7 @@ public partial class LearningMaterial
     public MaterialMetadata? MaterialMetadata { get; set; }
 
     public string? MaterialHash { get; set; }
+    public string? CloudPublicId { get; set; }
 
     public virtual Lesson? Lesson { get; set; }
     

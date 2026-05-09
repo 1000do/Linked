@@ -191,6 +191,73 @@
             border-radius: 10px;
             border: 2px solid white;
         }
+        /* Avatar Frames System */
+        .avatar-container {
+            position: relative;
+            display: inline-block;
+            padding: 4px; /* Space for the frame */
+        }
+        
+        .avatar-frame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Admin Frame: Golden Animated Glow */
+        .frame-admin {
+            border: 3px solid transparent;
+            background: linear-gradient(white, white) padding-box,
+                        linear-gradient(45deg, #f59e0b, #fbbf24, #d97706, #f59e0b) border-box;
+            background-size: 200% 200%;
+            animation: frame-rotate 3s linear infinite;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+            border-radius: 2rem;
+        }
+
+        /* Staff Frame: Indigo Pulsing Glow */
+        .frame-staff {
+            border: 3px solid #6366f1;
+            animation: frame-pulse-indigo 2s ease-in-out infinite;
+            border-radius: 2rem;
+        }
+
+        /* Instructor Frame: Emerald Pulsing Glow */
+        .frame-instructor {
+            border: 3px solid #10b981;
+            animation: frame-pulse-emerald 2s ease-in-out infinite;
+            border-radius: 2rem;
+        }
+
+        /* Learner Frame: Static Teal Border */
+        .frame-learner {
+            border: 3px solid #2dd4bf;
+            border-radius: 2rem;
+            box-shadow: 0 2px 8px rgba(45, 212, 191, 0.2);
+        }
+
+        @@keyframes frame-rotate {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @@keyframes frame-pulse-indigo {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+
+        @@keyframes frame-pulse-emerald {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
     </style>
 
     <!-- GOOGLE LOGIN SCRIPT -->
@@ -250,6 +317,87 @@
     <script>
         // 1. Khởi tạo biến toàn cục
         const currentToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`.trim();
+
+        // --- GLOBAL LOGIC MOVED FROM SITE.JS ---
+        async function toggleWishlist(btn, courseId) {
+            if (!courseId) return;
+
+            if (typeof currentToken === 'undefined' || !currentToken) {
+                window.location.href = '/Account/Login';
+                return;
+            }
+
+            try {
+                btn.style.pointerEvents = 'none';
+                btn.style.opacity = '0.7';
+
+                const response = await fetch(`http://localhost:5207/api/Wishlist/toggle/${courseId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    const icon = btn.querySelector('.material-symbols-outlined');
+                    
+                    if (result.isInWishlist) {
+                        btn.classList.remove('text-slate-400', 'text-slate-700');
+                        btn.classList.add('text-red-500');
+                        if (icon) {
+                            icon.style.fontVariationSettings = "'FILL' 1";
+                            icon.classList.remove('text-slate-400');
+                            icon.classList.add('text-red-500');
+                        }
+                        const textSpan = btn.querySelector('.wishlist-text');
+                        if (textSpan) textSpan.innerText = "Saved to Wishlist";
+                    } else {
+                        btn.classList.remove('text-red-500');
+                        const textSpan = btn.querySelector('.wishlist-text');
+                        if (textSpan) {
+                            btn.classList.add('text-slate-700');
+                            textSpan.innerText = "Add to Wishlist";
+                            if (icon) {
+                                icon.classList.remove('text-red-500');
+                                icon.classList.add('text-slate-400');
+                            }
+                        } else {
+                            btn.classList.add('text-slate-400');
+                        }
+                        if (icon) icon.style.fontVariationSettings = "'FILL' 0";
+
+                        if (window.location.pathname.toLowerCase() === '/wishlist') {
+                            const card = btn.closest('.group');
+                            if (card) {
+                                card.style.transition = 'all 0.3s ease';
+                                card.style.opacity = '0';
+                                card.style.transform = 'scale(0.9)';
+                                setTimeout(() => card.remove(), 300);
+                            }
+                        }
+                    }
+                } else if (response.status === 401) {
+                    window.location.href = '/Account/Login';
+                } else {
+                    console.error('Failed to toggle wishlist:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error toggling wishlist:', error);
+            } finally {
+                btn.style.pointerEvents = 'auto';
+                btn.style.opacity = '1';
+            }
+        }
+
+        window.addEventListener('unhandledrejection', function(event) {
+            if (event.reason === undefined) {
+                console.warn('Caught undefined promise rejection.');
+                event.preventDefault();
+            }
+        });
+        // ----------------------------------------
 
         // ★ Decode AccountId từ JWT token (tin cậy hơn cookie)
         function getAccountIdFromJwt(jwt) {
@@ -451,6 +599,11 @@
                     .withUrl("http://localhost:5207/notificationHub", { accessTokenFactory: () => currentToken })
                     .withAutomaticReconnect().build();
                 notiConn.on("ReceiveNotification", () => loadTopNotifications());
+                notiConn.on("UpdateWishlistCount", () => {
+                    if (typeof updateWishlistBadge === 'function') {
+                        updateWishlistBadge();
+                    }
+                });
                 notiConn.start().catch(err => console.error("Noti Hub Error", err));
 
                 // SignalR Chat

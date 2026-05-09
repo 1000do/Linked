@@ -124,6 +124,9 @@
                     @* ❤️ WISHLIST ICON *@
                     <a href="/Wishlist" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Danh sách yêu thích">
                         <span class="material-symbols-outlined text-[24px]">favorite</span>
+                        <span id="wishlist-badge"
+                              class="hidden absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
+                        </span>
                     </a>
 
                     @* 💬 CHAT ICON *@
@@ -158,17 +161,15 @@
                         </form>
                     </div>
 
-                    <a asp-controller="Account" asp-action="Profile"
-                       class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 hover:border-primary hover:scale-105 transition-all shadow-sm">
-                        @if (!string.IsNullOrEmpty(avatarUrl) && avatarUrl != "null")
-                        {
-                            <img class="w-full h-full object-cover" src="@avatarUrl" alt="User avatar"
-                                 onerror="this.src='https://ui-avatars.com/api/?name=@Uri.EscapeDataString(userName)&background=006a62&color=fff'" />
-                        }
-                        else
-                        {
-                            <img class="w-full h-full object-cover" src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(userName)&background=006a62&color=fff" alt="Default avatar" />
-                        }
+                    <a asp-controller="Account" asp-action="Profile" class="hover:scale-105 transition-all">
+                        @await Html.PartialAsync("_UserAvatar", new { 
+                            Url = avatarUrl, 
+                            Role = userRole, 
+                            Name = userName, 
+                            Size = "md",
+                            ShowFrame = true,
+                            FrameUrl = ""
+                        })
                     </a>
                 </div>
             }
@@ -343,6 +344,25 @@
         }
     }
 
+    // ─── WISHLIST MINI BADGE ───
+    async function updateWishlistBadge() {
+        const badge = document.getElementById('wishlist-badge');
+        if (!badge || !accessToken) return;
+        try {
+            const res = await fetch("http://localhost:5207/api/Wishlist/count", {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.count > 0) {
+                badge.textContent = data.count > 9 ? '9+' : data.count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        } catch { }
+    }
+
     // Đóng dropdown khi click ra ngoài
     window.addEventListener('click', function(e) {
         const catDropdown = document.getElementById('categories-dropdown');
@@ -350,4 +370,9 @@
             document.getElementById('categories-box')?.classList.add('hidden');
         }
     });
-</script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initCartBadge();
+        updateWishlistBadge();
+    });
+</script>

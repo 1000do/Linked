@@ -12,6 +12,7 @@ namespace CourseMarketplaceBE.Application.DTOs
         public string? InstructorName { get; set; }
         public decimal RatingAverage { get; set; }
         public int TotalStudents { get; set; }
+        public bool IsEnrolled { get; set; }
         public DateTime AddedDate { get; set; }
     }
 }

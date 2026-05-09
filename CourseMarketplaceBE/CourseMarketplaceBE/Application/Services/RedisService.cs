@@ -1,6 +1,7 @@
 using CourseMarketplaceBE.Application.IServices;
 using StackExchange.Redis;
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace CourseMarketplaceBE.Application.Services;
@@ -45,5 +46,26 @@ public class RedisService : IRedisService
     {
         var count = await _db.HashGetAsync($"user:{accountId}:unread", chatId.ToString());
         return count.HasValue ? (int)count : 0;
+    }
+
+    public async Task SetCacheAsync<T>(string key, T value, TimeSpan? expiry = null)
+    {
+        var json = JsonSerializer.Serialize(value);
+        if (expiry.HasValue)
+            await _db.StringSetAsync(key, json, expiry.Value);
+        else
+            await _db.StringSetAsync(key, json);
+    }
+
+    public async Task<T?> GetCacheAsync<T>(string key)
+    {
+        var json = await _db.StringGetAsync(key);
+        if (json.IsNullOrEmpty) return default;
+        return JsonSerializer.Deserialize<T>(json!);
+    }
+
+    public async Task RemoveCacheAsync(string key)
+    {
+        await _db.KeyDeleteAsync(key);
     }
 }

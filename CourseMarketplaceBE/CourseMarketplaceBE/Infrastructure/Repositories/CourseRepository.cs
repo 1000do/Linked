@@ -58,6 +58,7 @@ public class CourseRepository : ICourseRepository
                     .ThenInclude(i => i!.InstructorNavigation)
             .Include(e => e.Course)
                 .ThenInclude(c => c!.Category)
+            .IgnoreQueryFilters() // Allow access to soft-deleted courses for enrolled students
             .Select(e => e.Course!)
             .AsNoTracking()
             .ToListAsync();
@@ -66,6 +67,7 @@ public class CourseRepository : ICourseRepository
     public async Task<Course?> GetCourseWithDetailsAsync(int courseId)
     {
         return await _context.Courses
+            .IgnoreQueryFilters()
             .Include(c => c.Category)
             .Include(c => c.Instructor)
                 .ThenInclude(i => i!.InstructorNavigation)
