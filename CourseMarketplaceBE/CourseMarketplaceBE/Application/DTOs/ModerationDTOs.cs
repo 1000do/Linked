@@ -15,8 +15,11 @@ namespace CourseMarketplaceBE.Application.DTOs
         public string? CourseThumbnailUrl { get; set; }
 
         // NEW: Urgency calculation
-        public string UrgencyLevel { get; set; } = "Normal"; // High, Medium, Normal
-        public string UrgencyColor { get; set; } = "slate"; // red, amber, slate
+        public string UrgencyLevel { get; set; } = "Normal"; 
+        public string UrgencyColor { get; set; } = "slate";
+
+        // NEW: Flagging tracking
+        public int FlagCount { get; set; }
     }
 
     public class ModerationFilterDto

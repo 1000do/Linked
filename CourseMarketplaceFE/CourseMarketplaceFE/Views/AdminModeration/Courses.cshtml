@@ -58,9 +58,11 @@
             <div class="w-40">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Trạng thái</label>
                 <select name="status" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer">
+                    <option value="all" selected="@(ViewBag.Status == "all" || string.IsNullOrEmpty(ViewBag.Status))">Tất cả</option>
                     <option value="pending" selected="@(ViewBag.Status == "pending")">Chờ duyệt</option>
                     <option value="published" selected="@(ViewBag.Status == "published")">Đã duyệt</option>
                     <option value="rejected" selected="@(ViewBag.Status == "rejected")">Đã từ chối</option>
+                    <option value="flagged" selected="@(ViewBag.Status == "flagged")">Đã gắn cờ</option>
                 </select>
             </div>
 
@@ -115,7 +117,10 @@
                     }
                     @foreach (var item in Model)
                     {
-                        <tr class="group hover:bg-slate-50/80 transition-colors">
+                        var isPending = item.CourseStatus?.Equals("pending", StringComparison.OrdinalIgnoreCase) ?? false;
+                        var rowOpacity = isPending ? "opacity-100" : "opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0";
+                        
+                        <tr class="group hover:bg-slate-50/80 transition-all duration-300 @rowOpacity">
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-4">
                                     <div class="w-14 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-100 shadow-sm">
@@ -134,7 +139,28 @@
                                         <a href="/Course/Details/@item.CourseId" target="_blank" class="font-display font-extrabold text-slate-900 leading-tight hover:text-primary transition-colors block">
                                             @item.Title
                                         </a>
-                                        <p class="text-[11px] text-slate-400 font-medium">ID: #@item.CourseId</p>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <p class="text-[11px] text-slate-400 font-medium">ID: #@item.CourseId</p>
+                                            @if (item.FlagCount > 0)
+                                            {
+                                                <div class="flex gap-0.5">
+                                                    @for (int i = 1; i <= 3; i++)
+                                                    {
+                                                        if (i <= item.FlagCount)
+                                                        {
+                                                            var flagColor = i == 1 ? "bg-amber-400" : i == 2 ? "bg-orange-500" : "bg-red-600";
+                                                            var flagTitle = i == 1 ? "Lần 1: Nhắc nhở" : i == 2 ? "Lần 2: Cảnh báo mạnh" : "Lần 3: Vi phạm nghiêm trọng";
+                                                            <div class="w-3 h-1 rounded-full @flagColor" title="@flagTitle"></div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="w-3 h-1 rounded-full bg-slate-200" title="Chưa vi phạm"></div>
+                                                        }
+                                                    }
+                                                </div>
+                                                <span class="text-[9px] font-black text-red-600 uppercase tracking-tighter">Violation Strike @item.FlagCount</span>
+                                            }
+                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -155,17 +181,39 @@
                                 @item.Price.ToString("N0")đ
                             </td>
                             <td class="px-6 py-6">
-                                @{
+                                @if (isPending)
+                                {
                                     var badgeColor = item.UrgencyColor == "red" ? "bg-red-50 text-red-600 border-red-100" :
                                                      item.UrgencyColor == "amber" ? "bg-amber-50 text-amber-600 border-amber-100" :
                                                      "bg-slate-50 text-slate-500 border-slate-100";
                                     var urgencyText = item.UrgencyLevel == "High" ? "Khẩn cấp" :
                                                       item.UrgencyLevel == "Medium" ? "Cần xử lý" : "Bình thường";
+                                    
+                                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border @badgeColor">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                        <span class="text-[10px] font-black uppercase tracking-wider">@urgencyText</span>
+                                    </div>
                                 }
-                                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border @badgeColor">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-                                    <span class="text-[10px] font-black uppercase tracking-wider">@urgencyText</span>
-                                </div>
+                                else
+                                {
+                                    var statusLabel = item.CourseStatus?.ToLower() switch {
+                                        "published" => "Đã duyệt",
+                                        "rejected" => "Từ chối",
+                                        "flagged" => "Gắn cờ",
+                                        "archived" => "Lưu trữ",
+                                        _ => item.CourseStatus
+                                    };
+                                    var statusColor = item.CourseStatus?.ToLower() switch {
+                                        "published" => "bg-emerald-500 text-white",
+                                        "rejected" => "bg-red-500 text-white",
+                                        "flagged" => "bg-slate-900 text-white",
+                                        "archived" => "bg-slate-500 text-white",
+                                        _ => "bg-slate-100 text-slate-600"
+                                    };
+                                    <span class="px-3 py-1 @statusColor rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
+                                        @statusLabel
+                                    </span>
+                                }
                             </td>
                             <td class="px-6 py-6">
                                 <p class="text-sm text-slate-500 font-medium">@item.CreatedAt?.ToString("dd/MM/yyyy")</p>
@@ -178,15 +226,34 @@
                             </td>
                             <td class="px-8 py-6 text-center">
                                 <div class="flex items-center justify-center gap-2">
-                                    <button onclick="approveCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
-                                        <span class="material-symbols-outlined text-[18px]">done</span> Duyệt
-                                    </button>
-                                    <button onclick="rejectCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-bold transition-all active:scale-95">
-                                        <span class="material-symbols-outlined text-[18px]">close</span> Từ chối
-                                    </button>
-                                    <button onclick="flagCourse(@item.CourseId)" class="flex items-center justify-center w-9 h-9 bg-accent text-white rounded-xl hover:bg-red-600 transition-all active:scale-95" title="Gắn cờ vi phạm">
-                                        <span class="material-symbols-outlined text-[18px]">flag</span>
-                                    </button>
+                                    @if (isPending || item.CourseStatus?.ToLower() == "rejected")
+                                    {
+                                        <button onclick="approveCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
+                                            <span class="material-symbols-outlined text-[18px]">done</span> Duyệt
+                                        </button>
+                                        <button onclick="rejectCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-bold transition-all active:scale-95">
+                                            <span class="material-symbols-outlined text-[18px]">close</span> Từ chối
+                                        </button>
+                                    }
+                                    
+                                    @if (item.CourseStatus?.ToLower() == "published")
+                                    {
+                                        <button onclick="flagCourse(@item.CourseId)" class="flex items-center justify-center gap-2 px-4 py-2 bg-accent text-white rounded-xl hover:bg-red-600 transition-all shadow-lg shadow-red-900/20 active:scale-95" title="Gắn cờ vi phạm">
+                                            <span class="material-symbols-outlined text-[18px]">flag</span> Gắn cờ
+                                        </button>
+                                    }
+                                    else if (item.CourseStatus?.ToLower() == "flagged")
+                                    {
+                                         <button onclick="approveCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
+                                            <span class="material-symbols-outlined text-[18px]">settings_backup_restore</span> Duyệt lại
+                                        </button>
+                                    }
+                                    else if (isPending)
+                                    {
+                                        <button onclick="flagCourse(@item.CourseId)" class="flex items-center justify-center w-9 h-9 bg-slate-100 text-slate-400 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all active:scale-95" title="Gắn cờ vi phạm">
+                                            <span class="material-symbols-outlined text-[18px]">flag</span>
+                                        </button>
+                                    }
                                 </div>
                             </td>
                         </tr>

@@ -50,7 +50,7 @@
                 var userRole = Context.Request.Cookies["UserRole"] ?? "User";
                 <div class="flex items-center gap-3 pl-4 border-l border-slate-200">
                     
-                    @if (userRole.Equals("instructor", StringComparison.OrdinalIgnoreCase) || userRole.Equals("manager", StringComparison.OrdinalIgnoreCase))
+                    @if (userRole.Equals("instructor", StringComparison.OrdinalIgnoreCase))
                     {
                         var currentPath = Context.Request.Path.ToString().ToLower();
                         var isInstructorView = currentPath.StartsWith("/instructorcourse") || currentPath.StartsWith("/lesson");
@@ -71,7 +71,7 @@
                         }
                         <div class="w-px h-6 bg-slate-200 mx-2"></div>
                     }
-                    else
+                    else if (!userRole.Equals("admin", StringComparison.OrdinalIgnoreCase) && !userRole.Equals("staff", StringComparison.OrdinalIgnoreCase))
                     {
                         @* 🎓 Nút đăng ký Giảng viên — chỉ hiện cho Learner (role = User) *@
                         <a href="/Instructor/Apply"
@@ -82,58 +82,58 @@
                         <div class="w-px h-6 bg-slate-200 mx-2"></div>
                     }
 
-                    @* 🛒 GIỎ HÀNG mini-dropdown *@
-                    <div class="relative" id="cart-dropdown">
-                        <button onclick="toggleCart()"
-                                class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative">
-                            <span class="material-symbols-outlined text-[24px]" style='font-variation-settings:"FILL" 1;'>shopping_cart</span>
-                            <span id="cart-badge"
-                                  class="hidden absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
-                            </span>
-                        </button>
+                    @if (!userRole.Equals("admin", StringComparison.OrdinalIgnoreCase) && !userRole.Equals("staff", StringComparison.OrdinalIgnoreCase))
+                    {
+                        @* 🛒 GIỎ HÀNG mini-dropdown *@
+                        <div class="relative" id="cart-dropdown">
+                            <button onclick="toggleCart()"
+                                    class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative">
+                                <span class="material-symbols-outlined text-[24px]" style='font-variation-settings:"FILL" 1;'>shopping_cart</span>
+                                <span id="cart-badge"
+                                      class="hidden absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
+                                </span>
+                            </button>
 
-                        <div id="cart-box"
-                             class="hidden absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[60]">
-                            @* Header dropdown *@
-                            <div class="p-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                                <span class="font-bold text-slate-800 text-sm">Giỏ hàng</span>
-                                <a href="/Cart" class="text-[11px] text-primary font-bold hover:underline">Xem tất cả</a>
-                            </div>
+                            <div id="cart-box"
+                                 class="hidden absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[60]">
+                                <div class="p-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                                    <span class="font-bold text-slate-800 text-sm">Giỏ hàng</span>
+                                    <a href="/Cart" class="text-[11px] text-primary font-bold hover:underline">Xem tất cả</a>
+                                </div>
 
-                            @* Danh sách item (render bằng JS) *@
-                            <div id="cart-items-container" class="max-h-72 overflow-y-auto">
-                                <div class="p-4 text-center text-slate-400 text-xs">Đang tải...</div>
-                            </div>
+                                <div id="cart-items-container" class="max-h-72 overflow-y-auto">
+                                    <div class="p-4 text-center text-slate-400 text-xs">Đang tải...</div>
+                                </div>
 
-                            @* Footer: nút Xem giỏ hàng *@
-                            <div class="p-3 border-t border-slate-100">
-                                <a href="/Cart"
-                                   class="flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-primary to-secondary text-white text-xs font-bold rounded-xl hover:shadow-md transition-all">
-                                    <span class="material-symbols-outlined text-sm">shopping_cart_checkout</span>
-                                    Đến Giỏ hàng
-                                </a>
+                                <div class="p-3 border-t border-slate-100">
+                                    <a href="/Cart"
+                                       class="flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-primary to-secondary text-white text-xs font-bold rounded-xl hover:shadow-md transition-all">
+                                        <span class="material-symbols-outlined text-sm">shopping_cart_checkout</span>
+                                        Đến Giỏ hàng
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    @* 📚 MY COURSES ICON *@
-                    <a href="/Course/MyCourses" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Khóa học của tôi">
-                        <span class="material-symbols-outlined text-[24px]">school</span>
-                    </a>
+                        @* 📚 MY COURSES ICON *@
+                        <a href="/Course/MyCourses" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Khóa học của tôi">
+                            <span class="material-symbols-outlined text-[24px]">school</span>
+                        </a>
 
-                    @* ❤️ WISHLIST ICON *@
-                    <a href="/Wishlist" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Danh sách yêu thích">
-                        <span class="material-symbols-outlined text-[24px]">favorite</span>
-                        <span id="wishlist-badge"
-                              class="hidden absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
-                        </span>
-                    </a>
+                        @* ❤️ WISHLIST ICON *@
+                        <a href="/Wishlist" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Danh sách yêu thích">
+                            <span class="material-symbols-outlined text-[24px]">favorite</span>
+                            <span id="wishlist-badge"
+                                  class="hidden absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
+                            </span>
+                        </a>
 
-                    @* 💬 CHAT ICON *@
-                    <a href="/Chat/Learner" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Tin nhắn">
-                        <span class="material-symbols-outlined text-[24px]">chat_bubble</span>
-                        <span class="absolute top-2 right-2 w-2 h-2 bg-indigo-500 rounded-full border-2 border-white"></span>
-                    </a>
+                        @* 💬 CHAT ICON *@
+                        <a href="/Chat/Learner" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Tin nhắn">
+                            <span class="material-symbols-outlined text-[24px]">chat_bubble</span>
+                            <span class="absolute top-2 right-2 w-2 h-2 bg-indigo-500 rounded-full border-2 border-white"></span>
+                        </a>
+                    }
 
                     <div class="relative" id="notification-dropdown">
                         <button onclick="toggleNoti()" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative">

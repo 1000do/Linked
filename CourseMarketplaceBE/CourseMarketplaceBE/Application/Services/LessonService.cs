@@ -6,6 +6,7 @@ using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Application.Exceptions;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -16,19 +17,22 @@ public class LessonService : ILessonService
     private readonly IMaterialRepository _materialRepository;
     private readonly IFileUploadService _uploadService;
     private readonly IRedisService _redisService;
+    private readonly IInstructorRepository _instructorRepository;
 
     public LessonService(
         ILessonRepository lessonRepository, 
         ICourseRepository courseRepository,
         IMaterialRepository materialRepository,
         IFileUploadService uploadService,
-        IRedisService redisService)
+        IRedisService redisService,
+        IInstructorRepository instructorRepository)
     {
         _lessonRepository = lessonRepository;
         _courseRepository = courseRepository;
         _materialRepository = materialRepository;
         _uploadService = uploadService;
         _redisService = redisService;
+        _instructorRepository = instructorRepository;
     }
 
     public async Task<LessonResponse> CreateLessonAsync(LessonCreateRequest request, int instructorId)
@@ -42,6 +46,22 @@ public class LessonService : ILessonService
 
         if (course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot add lessons while the course is pending review.");
+
+        // ★ Limit: Max 5 lessons for unlinked Stripe
+        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        var isStripeActive = instructor != null
+            && !string.IsNullOrEmpty(instructor.StripeAccountId)
+            && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+
+        if (!isStripeActive)
+        {
+            var currentLessons = await _lessonRepository.GetByCourseIdAsync(request.CourseId);
+            if (currentLessons.Count(l => !l.IsRemoved) >= 5)
+            {
+                throw new BadRequestException("Instructor chưa liên kết Stripe chỉ được phép tạo tối đa 5 bài học mỗi khóa học.");
+            }
+        }
+
 
         string? thumbnailUrl = request.ThumbnailUrl;
 
@@ -69,7 +89,7 @@ public class LessonService : ILessonService
         
         if (course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
         {
-            course.CourseStatus = "pending";
+            course.CourseStatus = "draft";
             course.ModerationFeedback = null;
             _courseRepository.Update(course);
         }
@@ -105,6 +125,23 @@ public class LessonService : ILessonService
         if (lesson.Course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot add materials while the course is pending review.");
 
+        // ★ Limit: Max 1 resource for unlinked Stripe
+        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        var isStripeActive = instructor != null
+            && !string.IsNullOrEmpty(instructor.StripeAccountId)
+            && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+
+        var fileType = request.MaterialMetadata?.FileType ?? "video";
+        if (!isStripeActive && (fileType == "document" || fileType == "file" || fileType == "raw"))
+        {
+            var existingMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
+            if (existingMaterials.Count(m => m.LearningStatus != "removed" && (m.MaterialMetadata?.FileType == "document" || m.MaterialMetadata?.FileType == "file" || m.MaterialMetadata?.FileType == "raw")) >= 1)
+            {
+                throw new BadRequestException("Instructor chưa liên kết Stripe chỉ được phép đính kèm tối đa 1 tài liệu mỗi bài học.");
+            }
+        }
+
+
         string? materialUrl = request.MaterialUrl;
 
         if (request.MaterialFile != null)
@@ -116,14 +153,14 @@ public class LessonService : ILessonService
             }
         }
 
-        var existingMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
-        var fileType = request.MaterialMetadata?.FileType ?? "video";
+        var allMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
+        fileType = request.MaterialMetadata?.FileType ?? "video";
         
         LearningMaterial? existingMaterial = null;
         // For videos: enforce one-per-lesson (replace). For documents: allow multiple.
         if (fileType == "video")
         {
-            existingMaterial = existingMaterials.FirstOrDefault(m => 
+            existingMaterial = allMaterials.FirstOrDefault(m => 
                 (m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || 
                 (m.MaterialMetadata == null));
         }
@@ -147,6 +184,7 @@ public class LessonService : ILessonService
                 material.MaterialMetadata.FileType = request.MaterialMetadata.FileType;
                 if (request.MaterialMetadata.Duration.HasValue) material.MaterialMetadata.Duration = request.MaterialMetadata.Duration;
             }
+            material.LearningStatus = "active";
             material.UpdatedAt = DateTime.UtcNow;
             
             _materialRepository.Update(material);
@@ -168,6 +206,14 @@ public class LessonService : ILessonService
         }
 
         await _materialRepository.SaveChangesAsync();
+        
+        if (lesson.Course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        {
+            lesson.Course.CourseStatus = "draft";
+            lesson.Course.ModerationFeedback = null;
+            _courseRepository.Update(lesson.Course);
+            await _courseRepository.SaveChangesAsync();
+        }
 
         // Invalidate Course Cache
         if (lesson.CourseId.HasValue)
@@ -216,6 +262,14 @@ public class LessonService : ILessonService
         _materialRepository.Update(material);
         await _materialRepository.SaveChangesAsync();
 
+        if (lesson.Course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        {
+            lesson.Course.CourseStatus = "draft";
+            lesson.Course.ModerationFeedback = null;
+            _courseRepository.Update(lesson.Course);
+            await _courseRepository.SaveChangesAsync();
+        }
+
         // Invalidate Course Cache
         if (lesson.CourseId.HasValue)
         {
@@ -256,6 +310,14 @@ public class LessonService : ILessonService
         _lessonRepository.Update(lesson);
         await _lessonRepository.SaveChangesAsync();
 
+        if (lesson.Course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        {
+            lesson.Course.CourseStatus = "draft";
+            lesson.Course.ModerationFeedback = null;
+            _courseRepository.Update(lesson.Course);
+            await _courseRepository.SaveChangesAsync();
+        }
+
         // Invalidate Course Cache
         if (lesson.CourseId.HasValue)
         {
@@ -291,6 +353,11 @@ public class LessonService : ILessonService
              throw new UnauthorizedAccessException("You do not have permission to permanently delete this material.");
         }
 
+        // Get course status to prevent deletion if pending
+        var courseStatus = material.Lesson?.Course?.CourseStatus;
+        if (courseStatus != null && courseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cannot permanently delete materials while the course is pending review.");
+
         // 1. Delete from Cloudinary if public ID exists
         if (!string.IsNullOrEmpty(material.CloudPublicId))
         {
@@ -320,12 +387,15 @@ public class LessonService : ILessonService
         if (lesson == null || lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to restore this material.");
 
+        if (lesson.Course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cannot restore materials while the course is pending review.");
+
         var course = lesson.Course;
 
-        // If course is published, move it back to pending as this is an update
+        // If course is published, move it back to draft as this is an update
         if (course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
         {
-            course.CourseStatus = "pending";
+            course.CourseStatus = "draft";
             course.ModerationFeedback = null;
             _courseRepository.Update(course);
         }

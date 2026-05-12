@@ -304,6 +304,23 @@ namespace CourseMarketplaceFE.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
+        // ─── REMOVE LESSON (AJAX) ────────────────────────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> RemoveLesson([FromForm] int lessonId)
+        {
+            try
+            {
+                var resp = await _api.DeleteAsync($"lessons/{lessonId}");
+                if (resp.IsSuccessStatusCode)
+                    return Json(new { success = true });
+                var error = await resp.Content.ReadAsStringAsync();
+                return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
         // ─── ADD MATERIAL (AJAX) ──────────────────────────────────────────
         [HttpPost]
         public async Task<IActionResult> AddMaterial([FromForm] int lessonId, [FromForm] string title, [FromForm] string description, [FromForm] string materialUrl, [FromForm] string type, [FromForm] int? duration, [FromForm] long? fileSize, [FromForm] string? fileExtension)

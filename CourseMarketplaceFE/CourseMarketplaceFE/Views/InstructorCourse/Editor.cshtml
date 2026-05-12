@@ -71,9 +71,63 @@
             
             <!-- Tab: Landing Page Editor (Hidden by default) -->
             <div id="landing-page-editor" class="hidden flex-1 flex-col h-full overflow-y-auto p-8 custom-scrollbar">
+                <!-- Limit Banner -->
+                @if (ViewBag.IsStripeActive == false)
+                {
+                    <div class="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-4 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined text-amber-600">info</span>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-amber-900">Tài khoản chưa liên kết Stripe</h3>
+                            <p class="text-amber-800 text-sm mt-1 leading-relaxed">
+                                Bạn đang ở chế độ giới hạn: Tối đa <strong>2 khóa học</strong>, <strong>5 bài học/khóa</strong>, <strong>1 tài liệu/bài học</strong> và <strong>30 phút video</strong> toàn khóa. 
+                                <a href="/Instructor/StripeOnboarding" class="font-bold underline hover:text-amber-700 ml-1">Liên kết Stripe ngay</a> để gỡ bỏ giới hạn và bắt đầu kiếm tiền.
+                            </p>
+                        </div>
+                    </div>
+                }
+                else if (ViewBag.Price == 0)
+                {
+                    <div class="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-4 shadow-sm">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined text-blue-600">info</span>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-blue-900">Khóa học Miễn phí</h3>
+                            <p class="text-blue-800 text-sm mt-1 leading-relaxed">
+                                Đối với khóa học miễn phí, tổng thời lượng video toàn khóa bị giới hạn tối đa là <strong>60 phút</strong>.
+                            </p>
+                        </div>
+                    </div>
+                }
+
                 <div class="max-w-4xl mx-auto space-y-12">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h2 class="text-3xl font-headline font-extrabold text-slate-900">Course Curriculum</h2>
+                            <p class="text-slate-500 mt-1">Design your learning path. Drag and drop to reorder.</p>
+                        </div>
+                        <div class="flex flex-col items-end gap-2">
+                            <div id="video-duration-counter" class="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 flex items-center gap-2 border border-slate-200">
+                                <span class="material-symbols-outlined text-[16px]">schedule</span>
+                                <span>Total Duration: 0m / @(ViewBag.IsStripeActive == false ? "30m" : (ViewBag.Price == 0 ? "60m" : "Unlimited"))</span>
+                            </div>
+                            <div id="lesson-count-counter" class="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 flex items-center gap-2 border border-slate-200">
+                                <span class="material-symbols-outlined text-[16px]">lists</span>
+                                <span id="lesson-count-text">0 / @(ViewBag.IsStripeActive == false ? "5" : "∞") Lessons</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
-                        <h2 class="text-3xl font-headline font-extrabold text-slate-900 mb-2">Course Landing Page</h2>
+                        <div class="flex items-center justify-between mb-2">
+                            <h2 class="text-3xl font-headline font-extrabold text-slate-900">Course Landing Page</h2>
+                            <div id="landing-autosave-status" class="hidden text-xs font-semibold text-slate-400 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px] animate-spin">sync</span> Saving...
+                            </div>
+                        </div>
+
                         <p class="text-slate-500">Your course landing page is crucial to your success. Make it stand out!</p>
                     </div>
 
@@ -261,11 +315,7 @@
                             </div>
                         </div>
                         
-                        <div class="pt-6 border-t border-slate-100 flex justify-end">
-                            <button class="px-8 py-3 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-all shadow-lg shadow-primary/20 flex items-center gap-2" onclick="saveCourseDetails()" id="save-course-details-btn">
-                                <span class="material-symbols-outlined text-[20px]">save</span> Save Course Details
-                            </button>
-                        </div>
+
                     </div>
                 </div>
             </div>
@@ -394,7 +444,7 @@
                                     <label class="text-sm font-bold text-slate-700 block mb-2">Resource File</label>
                                     <div class="flex items-center gap-4">
                                         <input type="hidden" id="ResourceUrl" name="ResourceUrl" />
-                                        <input type="file" id="resource-input" class="hidden" />
+                                        <input type="file" id="resource-input" accept=".pdf,.doc,.docx,.txt,.zip,.rar,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png" class="hidden" />
                                         <button id="upload-resource-btn" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-bold rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
                                             Choose File
                                         </button>
@@ -417,7 +467,20 @@
                             </div>
                         </div>
                         <div class="space-y-6">
-                            <!-- Auto-save indicator replaces manual Save button -->
+                            <!-- Usage Instructions -->
+                            <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl">
+                                <h5 class="text-xs font-bold text-amber-800 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[16px]">info</span> Cách thêm tài liệu
+                                </h5>
+                                <ul class="text-[11px] text-amber-700 space-y-1.5 leading-relaxed">
+                                    <li>1. Nhập <b>Tiêu đề/Mô tả</b> trước (nếu muốn).</li>
+                                    <li>2. Chọn file để bắt đầu tải lên.</li>
+                                    <li>3. Hệ thống sẽ <b>tự động lưu</b> ngay khi tải xong.</li>
+                                    <li>* Nếu để trống tiêu đề, hệ thống sẽ tự lấy theo tên file.</li>
+                                </ul>
+                            </div>
+
+                            <!-- Status indicator -->
                             <div id="resource-autosave-status" class="hidden text-xs text-center font-semibold text-emerald-600 flex items-center justify-center gap-1">
                                 <span class="material-symbols-outlined text-[14px]">check_circle</span> <span id="resource-autosave-text">Saved!</span>
                             </div>
@@ -470,9 +533,7 @@
 
 @section Scripts {
     <script>
-        console.log("Editor Scripts Initializing...");
-
-        // Define functions globally at the TOP to ensure they are available
+        // --- GLOBAL FUNCTIONS AT THE TOP ---
         window.addNewLesson = function() {
             console.log("Add New Lesson clicked");
             const modal = document.getElementById('add-lesson-modal');
@@ -498,6 +559,9 @@
                 modal.classList.add('hidden');
             }, 300);
         };
+
+        console.log("Editor Scripts Initializing...");
+
 
         // ─── Quill ───
         const quillConfig = {
@@ -564,7 +628,7 @@
             }
         };
 
-        window.saveCourseDetails = async function() {
+        window.saveCourseDetails = function(skipAlert = false) {
             const btn = document.getElementById('save-course-details-btn');
             const title = document.getElementById('course-title-input').value;
             const price = document.getElementById('course-price-input').value;
@@ -575,58 +639,112 @@
             const learn = window.courseLearnQuill.root.innerHTML;
             const req = window.courseReqQuill.root.innerHTML;
 
-            // Validation
+            const autoSaveEl = document.getElementById('landing-autosave-status');
+            const autoSaveText = autoSaveEl?.querySelector('span:last-child') || { textContent: '' };
+
+            // Validation (only alert if NOT auto-saving)
             if (!title || title.trim() === '') { 
-                Swal.fire('Thiếu thông tin', 'Vui lòng nhập Tiêu đề khóa học.', 'warning'); 
+                if (!skipAlert) Swal.fire('Thiếu thông tin', 'Vui lòng nhập Tiêu đề khóa học.', 'warning'); 
                 return; 
             }
             if (!desc || desc.trim() === '' || desc === '<p><br></p>') { 
-                Swal.fire('Thiếu thông tin', 'Vui lòng nhập Mô tả khóa học.', 'warning'); 
+                if (!skipAlert) Swal.fire('Thiếu thông tin', 'Vui lòng nhập Mô tả khóa học.', 'warning'); 
                 return; 
             }
             if (catId == "0") {
-                Swal.fire('Thiếu thông tin', 'Vui lòng chọn Danh mục khóa học.', 'warning');
+                if (!skipAlert) Swal.fire('Thiếu thông tin', 'Vui lòng chọn Danh mục khóa học.', 'warning');
                 return;
             }
 
-            btn.disabled = true;
-            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Saving...';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Saving...';
+            }
+            
+            if (autoSaveEl) {
+                autoSaveEl.classList.remove('hidden');
+                autoSaveEl.className = "text-xs font-semibold text-slate-400 flex items-center gap-1";
+                autoSaveEl.querySelector('.material-symbols-outlined').textContent = 'sync';
+                autoSaveEl.querySelector('.material-symbols-outlined').classList.add('animate-spin');
+                if (autoSaveText) autoSaveText.textContent = 'Saving...';
+            }
 
-            try {
-                const fd = new FormData();
-                fd.append('courseId', courseId);
-                fd.append('title', title);
-                fd.append('description', desc);
-                fd.append('price', price);
-                fd.append('categoryId', catId);
-                fd.append('thumbnailUrl', thumb);
-                fd.append('whatYouWillLearn', learn);
-                fd.append('requirements', req);
+            const fd = new FormData();
+            fd.append('courseId', courseId);
+            fd.append('title', title);
+            fd.append('description', desc);
+            fd.append('price', price);
+            fd.append('categoryId', catId);
+            fd.append('thumbnailUrl', thumb);
+            fd.append('whatYouWillLearn', learn);
+            fd.append('requirements', req);
 
-                const res = await fetch('/InstructorCourse/UpdateDetails', { method: 'POST', body: fd });
-                if (res.ok) {
-                    const json = await res.json();
+            fetch('/InstructorCourse/UpdateDetails', { method: 'POST', body: fd })
+                .then(res => res.json())
+                .then(json => {
                     if (json.success) {
                         if (json.status && json.status.toLowerCase() === 'pending') {
                             location.reload();
                         } else {
-                            Swal.fire({ icon: 'success', title: 'Saved!', text: 'Course details updated successfully.', timer: 1500, showConfirmButton: false });
-                            document.querySelector('h1').textContent = title;
-                            document.getElementById('course-thumbnail-preview').src = thumb || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=200";
+                            if (!skipAlert) {
+                                Swal.fire({ icon: 'success', title: 'Saved!', text: 'Course details updated successfully.', timer: 1500, showConfirmButton: false });
+                            }
+                            const h1El = document.querySelector('h1');
+                            if (h1El) h1El.textContent = title;
+                            const thumbPrevEl = document.getElementById('course-thumbnail-preview');
+                            if (thumbPrevEl) thumbPrevEl.src = thumb || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=200";
+                            
+                            // Update initial data so subsequent checks work correctly
+                            initialCourseData = { title, desc, price, catId, thumb, learn, req };
+
+                            if (autoSaveEl) {
+                                autoSaveEl.querySelector('.material-symbols-outlined').textContent = 'check_circle';
+                                autoSaveEl.querySelector('.material-symbols-outlined').classList.remove('animate-spin');
+                                autoSaveEl.className = "text-xs font-semibold text-emerald-600 flex items-center gap-1";
+                                if (autoSaveText) autoSaveText.textContent = 'Saved!';
+                                setTimeout(() => autoSaveEl.classList.add('hidden'), 3000);
+                            }
                         }
                     } else {
-                        Swal.fire('Error', json.message || 'Failed to update details', 'error');
+                        if (!skipAlert) Swal.fire('Error', json.message || 'Failed to update details', 'error');
+                        if (autoSaveEl) autoSaveEl.classList.add('hidden');
                     }
-                } else {
-                    Swal.fire('Error', 'Server error while updating details', 'error');
-                }
-            } catch (e) {
-                Swal.fire('Error', 'An error occurred', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">save</span> Save Course Details';
-            }
+                })
+                .catch(e => {
+                    if (!skipAlert) Swal.fire('Error', 'An error occurred', 'error');
+                    if (autoSaveEl) autoSaveEl.classList.add('hidden');
+                })
+                .finally(() => {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">save</span> Save Course Details';
+                    }
+                });
         };
+
+        // Debounce helper
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        const debouncedSaveLanding = debounce(() => {
+            saveCourseDetails(true);
+        }, 1500);
+
+        // Attach listeners for landing page fields
+        ['course-title-input', 'course-category-input', 'course-price-input', 'course-thumbnail-input'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', debouncedSaveLanding);
+        });
+
+        if (window.courseDescQuill) window.courseDescQuill.on('text-change', debouncedSaveLanding);
+        if (window.courseLearnQuill) window.courseLearnQuill.on('text-change', debouncedSaveLanding);
+        if (window.courseReqQuill) window.courseReqQuill.on('text-change', debouncedSaveLanding);
+
 
         // Thumbnail preview sync
         document.getElementById('course-thumbnail-input').addEventListener('input', function(e) {
@@ -647,7 +765,7 @@
         thumbDropArea.addEventListener('click', () => thumbInput.click());
         thumbInput.addEventListener('change', function() { handleThumbUpload(this.files); });
         
-        async function handleThumbUpload(files) {
+        function handleThumbUpload(files) {
             if (!files.length) return;
             const file = files[0];
             if (!file.type.startsWith('image/')) { 
@@ -665,20 +783,23 @@
             fd.append('upload_preset', UPLOAD_PRESET);
             fd.append('file', file);
             
-            try {
-                const res = await fetch(url, { method: 'POST', body: fd });
-                const data = await res.json();
-                if (data.secure_url) {
-                    thumbUrlInput.value = data.secure_url;
-                    thumbPreview.src = data.secure_url;
-                    Swal.fire({ icon: 'success', title: 'Image Uploaded', text: 'Thumbnail updated successfully.', timer: 1500, showConfirmButton: false });
-                }
-            } catch (err) {
-                Swal.fire('Upload Failed', 'Error uploading image to server.', 'error');
-            } finally {
-                thumbProgress.classList.add('hidden');
-            }
+            fetch(url, { method: 'POST', body: fd })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.secure_url) {
+                        thumbUrlInput.value = data.secure_url;
+                        thumbPreview.src = data.secure_url;
+                        Swal.fire({ icon: 'success', title: 'Image Uploaded', text: 'Thumbnail updated successfully.', timer: 1500, showConfirmButton: false });
+                    }
+                })
+                .catch(err => {
+                    Swal.fire('Upload Failed', 'Error uploading image to server.', 'error');
+                })
+                .finally(() => {
+                    thumbProgress.classList.add('hidden');
+                });
         }
+
 
         // ─── Tabs ───
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -695,6 +816,16 @@
         const courseId = @courseId;
         // Pass JSON directly as a JS object to avoid quote/newline issues
         let lessonsData = @Html.Raw(ViewBag.LessonsJson ?? "[]");
+
+        let initialCourseData = {
+            title: document.getElementById('course-title-input')?.value || '',
+            desc: window.courseDescQuill?.root.innerHTML || '',
+            price: document.getElementById('course-price-input')?.value || '0',
+            catId: document.getElementById('course-category-input')?.value || '0',
+            thumb: document.getElementById('course-thumbnail-input')?.value || '',
+            learn: window.courseLearnQuill?.root.innerHTML || '',
+            req: window.courseReqQuill?.root.innerHTML || ''
+        };
         
         // Show API error if any
         @if (ViewBag.ApiError != null) {
@@ -749,6 +880,13 @@
                 <div class="p-4 space-y-2">
             `;
             
+            let totalDurationSeconds = 0;
+            const isStripeActive = @Json.Serialize(ViewBag.IsStripeActive);
+            const coursePrice = @Json.Serialize(ViewBag.Price);
+            const durationLimitMin = isStripeActive === false ? 30 : (coursePrice == 0 ? 60 : Infinity);
+            const lessonLimit = isStripeActive === false ? 5 : Infinity;
+            const isPending = '@(ViewBag.CourseStatus as string ?? "Draft")'.toLowerCase() === 'pending';
+            
             lessonsData.forEach((lesson, index) => {
                 const num = index + 1;
                 // Safely get lesson properties (handle both PascalCase and camelCase)
@@ -758,6 +896,16 @@
                 
                 // Check if lesson has any rejected materials
                 const materials = lesson.learningMaterials || lesson.LearningMaterials || [];
+                materials.forEach(m => {
+                    let metadata = m.materialMetadata || m.MaterialMetadata;
+                    if (typeof metadata === 'string') {
+                        try { metadata = JSON.parse(metadata); } catch(e) { metadata = {}; }
+                    }
+                    if (metadata?.file_type === 'video' && (m.learningStatus || m.LearningStatus || '').toLowerCase() !== 'removed') {
+                        totalDurationSeconds += (metadata?.duration || 0);
+                    }
+                });
+
                 const hasRejected = lStatus === 'rejected' || materials.some(m => (m.learningStatus || m.LearningStatus || '').toLowerCase() === 'rejected');
                 
                 const currentEditingId = document.getElementById('editing-lesson-id').textContent;
@@ -771,6 +919,12 @@
                     ? '<span class="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">error</span> Rejected</span>'
                     : '<p class="text-[10px] text-slate-500 mt-1">Video Lesson</p>';
                 
+                const removeBtnHtml = isPending ? '' : `
+                    <button onclick="removeLesson(event, ${lId})" class="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50 self-center" title="Remove Lesson">
+                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                    </button>
+                `;
+
                 sectionHtml += `
                     <div class="lesson-item p-3 bg-white border rounded-lg flex items-start gap-3 cursor-pointer transition-colors ${activeClasses}" 
                          data-lesson-id="${lId}" data-num="${num}" data-title="${lTitle}" onclick="selectLesson(this)">
@@ -779,18 +933,56 @@
                             <p class="font-bold text-slate-900 text-sm">${num}. ${lTitle}</p>
                             ${statusLabel}
                         </div>
+                        ${removeBtnHtml}
                     </div>
                 `;
             });
             
-            sectionHtml += `
-                    <button class="w-full py-3 border-2 border-dashed border-slate-200 rounded-lg text-slate-500 hover:text-primary hover:border-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 text-xs font-bold mt-2" onclick="addNewLesson()">
+            if (!isPending) {
+                sectionHtml += `
+                    <button id="add-lesson-btn" class="w-full py-3 border-2 border-dashed border-slate-200 rounded-lg text-slate-500 hover:text-primary hover:border-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 text-xs font-bold mt-2" onclick="addNewLesson()">
                         <span class="material-symbols-outlined text-[16px]">add_circle</span> Add Lesson
                     </button>
+                `;
+            }
+
+            sectionHtml += `
                 </div>
             </div>`;
             
             container.innerHTML = sectionHtml;
+
+            // Update counters
+            const totalMinutes = Math.round(totalDurationSeconds / 60);
+            const durationCounter = document.getElementById('video-duration-counter');
+            if (durationCounter) {
+                const limitText = durationLimitMin === Infinity ? "Unlimited" : durationLimitMin + "m";
+                durationCounter.querySelector('span:last-child').textContent = `Total Duration: ${totalMinutes}m / ${limitText}`;
+                
+                if (durationLimitMin !== Infinity && totalMinutes >= durationLimitMin) {
+                    durationCounter.className = "text-xs font-bold px-3 py-1.5 rounded-full bg-rose-50 text-rose-600 flex items-center gap-2 border border-rose-200 animate-pulse";
+                } else if (durationLimitMin !== Infinity && totalMinutes >= durationLimitMin * 0.8) {
+                    durationCounter.className = "text-xs font-bold px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 flex items-center gap-2 border border-amber-200";
+                } else {
+                    durationCounter.className = "text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 flex items-center gap-2 border border-slate-200";
+                }
+            }
+
+            const lessonCounter = document.getElementById('lesson-count-counter');
+            if (lessonCounter) {
+                const limitText = lessonLimit === Infinity ? "∞" : lessonLimit;
+                document.getElementById('lesson-count-text').textContent = `${lessonsData.length} / ${limitText} Lessons`;
+                
+                if (lessonLimit !== Infinity && lessonsData.length >= lessonLimit) {
+                    lessonCounter.className = "text-xs font-bold px-3 py-1.5 rounded-full bg-rose-50 text-rose-600 flex items-center gap-2 border border-rose-200";
+                    const addBtn = document.getElementById('add-lesson-btn');
+                    if (addBtn) addBtn.classList.add('opacity-50', 'pointer-events-none');
+                } else {
+                    lessonCounter.className = "text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 flex items-center gap-2 border border-slate-200";
+                    const addBtn = document.getElementById('add-lesson-btn');
+                    if (addBtn) addBtn.classList.remove('opacity-50', 'pointer-events-none');
+                }
+            }
             
             // Auto-select first lesson if none selected and we have lessons
             if (lessonsData.length > 0) {
@@ -894,7 +1086,7 @@
                         const mLearningStatus = (material.learningStatus || material.LearningStatus || '').toLowerCase();
                         const mModerationFeedback = material.moderationFeedback || material.ModerationFeedback || '';
 
-                        if (type === 'video') {
+                        if (type === 'video' && mLearningStatus !== 'removed') {
                             // Populate video description
                             if (mDesc && window.videoQuill) {
                                 window.videoQuill.root.innerHTML = mDesc;
@@ -982,7 +1174,7 @@
 
 
 
-        window.submitNewLesson = async function() {
+        window.submitNewLesson = function() {
             const input = document.getElementById('new-lesson-title');
             const title = input.value;
             const btn = document.getElementById('submit-lesson-btn');
@@ -991,13 +1183,13 @@
                 btn.disabled = true;
                 btn.textContent = 'Creating...';
                 
-                try {
-                    const fd = new FormData();
-                    fd.append('courseId', courseId);
-                    fd.append('title', title);
-                    const res = await fetch('/InstructorCourse/AddLesson', { method: 'POST', body: fd });
-                    if(res.ok) {
-                        const json = await res.json();
+                const fd = new FormData();
+                fd.append('courseId', courseId);
+                fd.append('title', title);
+                
+                fetch('/InstructorCourse/AddLesson', { method: 'POST', body: fd })
+                    .then(res => res.json())
+                    .then(json => {
                         if(json.success && json.data) {
                             if (json.data.courseStatus && json.data.courseStatus.toLowerCase() === 'pending') {
                                 location.reload();
@@ -1014,21 +1206,56 @@
                         } else {
                             alert('Failed to add lesson: ' + (json.message || 'Unknown error'));
                         }
-                    } else {
-                        alert('Failed to add lesson');
-                    }
-                } catch(e) {
-                    alert('Error adding lesson');
-                } finally {
-                    btn.disabled = false;
-                    btn.textContent = 'Create Lesson';
-                }
+                    })
+                    .catch(e => {
+                        alert('Error adding lesson');
+                    })
+                    .finally(() => {
+                        btn.disabled = false;
+                        btn.textContent = 'Create Lesson';
+                    });
             } else {
                 input.focus();
                 input.classList.add('ring-2', 'ring-red-500/50', 'border-red-500');
                 setTimeout(() => input.classList.remove('ring-2', 'ring-red-500/50', 'border-red-500'), 2000);
             }
         };
+
+
+        window.removeLesson = function(event, lessonId) {
+            event.stopPropagation();
+            Swal.fire({
+                title: 'Remove Lesson?',
+                text: 'Are you sure you want to delete this lesson and all its materials? This cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Delete'
+            }).then(result => {
+                if (!result.isConfirmed) return;
+
+                const fd = new FormData();
+                fd.append('lessonId', lessonId);
+                fetch('/InstructorCourse/RemoveLesson', { method: 'POST', body: fd })
+                    .then(res => res.json())
+                    .then(json => {
+                        if (json.success) {
+                            lessonsData = lessonsData.filter(l => (l.lessonId || l.LessonId) != lessonId);
+                            renderCourseStructure();
+                            document.getElementById('lesson-editor-active').classList.add('hidden');
+                            document.getElementById('lesson-editor-empty').classList.remove('hidden');
+                            document.getElementById('lesson-editor-empty').style.display = 'flex';
+                            Swal.fire({ icon: 'success', title: 'Deleted!', text: 'Lesson deleted successfully.', timer: 1500, showConfirmButton: false });
+                        } else {
+                            Swal.fire('Error', json.message || 'Failed to delete lesson.', 'error');
+                        }
+                    })
+                    .catch(e => {
+                        Swal.fire('Error', 'An error occurred.', 'error');
+                    });
+            });
+        };
+
 
         // Render on init
         renderCourseStructure();
@@ -1169,7 +1396,7 @@
         window.resetVideoUpload = resetVideoUpload;
 
         // ─── Auto-Save Video Material ───
-        window.saveVideoMaterial = async function() {
+        window.saveVideoMaterial = function() {
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
             const lessonId = lessonIdEl.dataset.lessonId;
@@ -1183,43 +1410,47 @@
             if (autoSaveEl) { autoSaveEl.classList.remove('hidden'); }
             if (statusEl) statusEl.textContent = 'Saving...';
             
-            try {
-                const fd = new FormData();
-                fd.append('lessonId', lessonId);
-                fd.append('title', title + " Video");
-                if(description && description !== '<p><br></p>') fd.append('description', description);
-                fd.append('materialUrl', materialUrl);
-                fd.append('type', 'video');
-                if (materialUrlInput.dataset.duration) fd.append('duration', materialUrlInput.dataset.duration);
-                if (materialUrlInput.dataset.fileSize) fd.append('fileSize', materialUrlInput.dataset.fileSize);
-                if (materialUrlInput.dataset.format) fd.append('fileExtension', materialUrlInput.dataset.format);
-                
-                const res = await fetch('/InstructorCourse/AddMaterial', { method: 'POST', body: fd });
-                if(res.ok) {
-                    const json = await res.json();
-                        if(json.success) {
-                            if (statusEl) statusEl.textContent = '✓ Saved automatically';
-                            if (json.data) updateLocalMaterials(lessonId, json.data, 'video');
-                        } else {
+            const fd = new FormData();
+            fd.append('lessonId', lessonId);
+            fd.append('title', title + " Video");
+            if(description && description !== '<p><br></p>') fd.append('description', description);
+            fd.append('materialUrl', materialUrl);
+            fd.append('type', 'video');
+            
+            const matUrlInput = document.getElementById('MaterialUrl');
+            if (matUrlInput.dataset.duration) fd.append('duration', matUrlInput.dataset.duration);
+            if (matUrlInput.dataset.fileSize) fd.append('fileSize', matUrlInput.dataset.fileSize);
+            if (matUrlInput.dataset.format) fd.append('fileExtension', matUrlInput.dataset.format);
+            
+            fetch('/InstructorCourse/AddMaterial', { method: 'POST', body: fd })
+                .then(res => {
+                    if(res.ok) return res.json();
+                    throw new Error('HTTP ' + res.status);
+                })
+                .then(json => {
+                    if(json.success) {
+                        if (statusEl) statusEl.textContent = '✓ Saved automatically';
+                        if (json.data) updateLocalMaterials(lessonId, json.data, 'video');
+                    } else {
                         if (statusEl) statusEl.textContent = '✗ ' + (json.message || 'Save failed');
                     }
-                } else {
-                    const errText = await res.text();
-                    if (statusEl) statusEl.textContent = '✗ HTTP ' + res.status;
-                }
-            } catch(e) {
-                if (statusEl) statusEl.textContent = '✗ Error saving';
-            } finally {
-                if (autoSaveEl) setTimeout(() => autoSaveEl.classList.add('hidden'), 2000);
-            }
+                })
+                .catch(e => {
+                    if (statusEl) statusEl.textContent = '✗ Error saving';
+                })
+                .finally(() => {
+                    if (autoSaveEl) setTimeout(() => autoSaveEl.classList.add('hidden'), 2000);
+                });
         };
 
-        // ─── Auto-Save Resource Material ───
-        window.saveResourceMaterial = async function(resourceUrl, resourceName, fileSize, fileExtension) {
+        window.saveResourceMaterial = function(resourceUrl, resourceName, fileSize, fileExtension) {
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
             const lessonId = lessonIdEl.dataset.lessonId;
+            
+            // Read latest description from editor
             const description = window.resourceQuill?.root.innerHTML || '';
+            const title = resourceName || document.getElementById('resource-title-input').value || 'Resource File';
 
             const autoSaveEl = document.getElementById('resource-autosave-status');
             const autoSaveText = document.getElementById('resource-autosave-text');
@@ -1231,19 +1462,21 @@
                 autoSaveEl.querySelector('.material-symbols-outlined').classList.add('animate-spin');
             }
 
-            try {
-                const fd = new FormData();
-                fd.append('lessonId', lessonId);
-                fd.append('title', resourceName || 'Resource File');
-                if(description && description !== '<p><br></p>') fd.append('description', description);
-                fd.append('materialUrl', resourceUrl);
-                fd.append('type', 'document');
-                if (fileSize) fd.append('fileSize', fileSize);
-                if (fileExtension) fd.append('fileExtension', fileExtension);
-                
-                const res = await fetch('/InstructorCourse/AddMaterial', { method: 'POST', body: fd });
-                if(res.ok) {
-                    const json = await res.json();
+            const fd = new FormData();
+            fd.append('lessonId', lessonId);
+            fd.append('title', resourceName || 'Resource File');
+            if(description && description !== '<p><br></p>') fd.append('description', description);
+            fd.append('materialUrl', resourceUrl);
+            fd.append('type', 'document');
+            if (fileSize) fd.append('fileSize', fileSize);
+            if (fileExtension) fd.append('fileExtension', fileExtension);
+            
+            fetch('/InstructorCourse/AddMaterial', { method: 'POST', body: fd })
+                .then(res => {
+                    if(res.ok) return res.json();
+                    throw new Error('HTTP ' + res.status);
+                })
+                .then(json => {
                     if(json.success) {
                         // Clear upload form
                         document.getElementById('ResourceUrl').value = '';
@@ -1264,59 +1497,59 @@
                     } else {
                         if (autoSaveEl && autoSaveText) { autoSaveText.textContent = json.message || 'Save failed'; setTimeout(() => autoSaveEl.classList.add('hidden'), 3000); }
                     }
-                } else {
-                    if (autoSaveEl && autoSaveText) { autoSaveText.textContent = 'HTTP ' + res.status; setTimeout(() => autoSaveEl.classList.add('hidden'), 3000); }
-                }
-            } catch(e) {
-                if (autoSaveEl && autoSaveText) { autoSaveText.textContent = 'Error saving'; setTimeout(() => autoSaveEl.classList.add('hidden'), 3000); }
-            }
+                })
+                .catch(e => {
+                    if (autoSaveEl && autoSaveText) { autoSaveText.textContent = 'Error saving'; setTimeout(() => autoSaveEl.classList.add('hidden'), 3000); }
+                });
         };
 
+
         // ─── Remove Material (soft-delete) ───
-        window.removeMaterial = async function(materialId, btn) {
-            const result = await Swal.fire({
+        window.removeMaterial = function(materialId, btn) {
+            Swal.fire({
                 title: 'Remove this file?',
                 text: 'The file will be marked as removed. You can re-upload it later.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
                 confirmButtonText: 'Remove'
-            });
-            if (!result.isConfirmed) return;
+            }).then(result => {
+                if (!result.isConfirmed) return;
 
-            try {
                 const fd = new FormData();
                 fd.append('materialId', materialId);
-                const res = await fetch('/InstructorCourse/RemoveMaterial', { method: 'POST', body: fd });
-                if (res.ok) {
-                    const json = await res.json();
-                    if (json.success) {
-                        const card = btn.closest('[data-material-id]');
-                        if (card) card.remove();
-                        // Update local data
-                        const lessonIdEl = document.querySelector('.lesson-item.border-primary');
-                        if (lessonIdEl) {
-                            const lessonId = lessonIdEl.dataset.lessonId;
-                            const lesson = lessonsData.find(l => (l.lessonId || l.LessonId) == lessonId);
-                            if (lesson && lesson.learningMaterials) {
-                                const mat = lesson.learningMaterials.find(m => (m.materialId || m.MaterialId) == materialId);
-                                if (mat) mat.learningStatus = 'removed';
+                fetch('/InstructorCourse/RemoveMaterial', { method: 'POST', body: fd })
+                    .then(res => res.json())
+                    .then(json => {
+                        if (json.success) {
+                            const card = btn.closest('[data-material-id]');
+                            if (card) card.remove();
+                            // Update local data
+                            const lessonIdEl = document.querySelector('.lesson-item.border-primary');
+                            if (lessonIdEl) {
+                                const lessonId = lessonIdEl.dataset.lessonId;
+                                const lesson = lessonsData.find(l => (l.lessonId || l.LessonId) == lessonId);
+                                if (lesson && lesson.learningMaterials) {
+                                    const mat = lesson.learningMaterials.find(m => (m.materialId || m.MaterialId) == materialId);
+                                    if (mat) mat.learningStatus = 'removed';
+                                }
                             }
+                            Swal.fire({
+                                title: 'Removed!',
+                                text: 'Material moved to trash. You can restore or permanently delete it in the Trash Bin.',
+                                icon: 'success',
+                                confirmButtonColor: '#006a62'
+                            });
+                        } else {
+                            Swal.fire('Error', json.message || 'Failed to remove material.', 'error');
                         }
-                        Swal.fire({
-                            title: 'Removed!',
-                            text: 'Material moved to trash. You can restore or permanently delete it in the Trash Bin.',
-                            icon: 'success',
-                            confirmButtonColor: '#006a62'
-                        });
-                    } else {
-                        Swal.fire('Error', json.message || 'Failed to remove material.', 'error');
-                    }
-                }
-            } catch(e) {
-                Swal.fire('Error', 'An error occurred.', 'error');
-            }
+                    })
+                    .catch(e => {
+                        Swal.fire('Error', 'An error occurred.', 'error');
+                    });
+            });
         };
+
 
         function appendResourceToUI(material) {
             const resourcesList = document.getElementById('resources-list');
@@ -1396,10 +1629,13 @@
             const desc = window.courseDescQuill.root.innerHTML;
             const catId = document.getElementById('course-category-input').value;
             const thumb = document.getElementById('course-thumbnail-input').value;
+            const price = document.getElementById('course-price-input').value;
+            const learn = window.courseLearnQuill.root.innerHTML;
+            const req = window.courseReqQuill.root.innerHTML;
 
             // 1. Check basic info
             if (!title || title.trim() === '' || !desc || desc === '<p><br></p>' || catId == "0") {
-                switchMainTab('landing'); // Switch to landing tab so they see the errors
+                switchMainTab('landing'); 
                 Swal.fire({
                     title: 'Thông tin chưa đầy đủ',
                     text: 'Vui lòng hoàn thiện Tiêu đề, Mô tả và Danh mục tại tab "Course Landing Page" trước khi gửi duyệt.',
@@ -1421,45 +1657,56 @@
                 return;
             }
 
-            // 3. Check if all lessons have content (Optional but recommended)
-            const emptyLessons = lessonsData.filter(l => {
-                const materials = l.learningMaterials || l.LearningMaterials || [];
-                return materials.length === 0;
-            });
-            
-            if (emptyLessons.length > 0) {
-                switchMainTab('curriculum');
-                Swal.fire({
-                    title: 'Bài học chưa có nội dung',
-                    text: `Bạn có ${emptyLessons.length} bài học chưa tải video hoặc tài liệu. Vui lòng bổ sung nội dung trước khi gửi duyệt.`,
-                    icon: 'warning',
-                    confirmButtonColor: '#006a62'
-                });
-                return;
+            // Unsaved changes check
+            let hasUnsavedChanges = false;
+            if (title !== initialCourseData.title ||
+                desc !== initialCourseData.desc ||
+                catId !== initialCourseData.catId ||
+                price !== initialCourseData.price ||
+                thumb !== initialCourseData.thumb ||
+                learn !== initialCourseData.learn ||
+                req !== initialCourseData.req) {
+                hasUnsavedChanges = true;
             }
+            
+            const proceedWithSubmit = () => {
+                // 3. Check if all lessons have content
+                const emptyLessons = lessonsData.filter(l => {
+                    const materials = l.learningMaterials || l.LearningMaterials || [];
+                    return materials.length === 0;
+                });
+                
+                if (emptyLessons.length > 0) {
+                    switchMainTab('curriculum');
+                    Swal.fire({
+                        title: 'Bài học chưa có nội dung',
+                        text: `Bạn có ${emptyLessons.length} bài học chưa tải video hoặc tài liệu. Vui lòng bổ sung nội dung trước khi gửi duyệt.`,
+                        icon: 'warning',
+                        confirmButtonColor: '#006a62'
+                    });
+                    return;
+                }
 
-            Swal.fire({
-                title: 'Submit for review?',
-                text: "Are you sure you want to submit this course for review? Once submitted, administrators will review your content before it is published to students.",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#006a62',
-                cancelButtonColor: '#cbd5e1',
-                confirmButtonText: 'Yes, submit it!'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    try {
-                        const res = await fetch('/InstructorCourse/UpdateCourseStatus', { 
+                Swal.fire({
+                    title: 'Submit for review?',
+                    text: "Are you sure you want to submit this course for review? Once submitted, administrators will review your content before it is published to students.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#006a62',
+                    cancelButtonColor: '#cbd5e1',
+                    confirmButtonText: 'Yes, submit it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch('/InstructorCourse/UpdateCourseStatus', { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                             body: new URLSearchParams({ courseId: courseId, status: 'pending' })
-                        });
-                        
-                        if (res.ok) {
-                            const json = await res.json();
-                        if (json.success) {
-                            Swal.fire({
-                                title: 'Đã gửi xét duyệt!',
+                        })
+                        .then(res => res.json())
+                        .then(json => {
+                            if (json.success) {
+                                Swal.fire({
+                                    title: 'Đã gửi xét duyệt!',
                                     html: `
                                         <div class="text-left space-y-3">
                                             <p class="text-slate-600">Khóa học của bạn đã được gửi đến đội ngũ quản trị viên.</p>
@@ -1479,23 +1726,41 @@
                                 }).then(() => {
                                     location.reload();
                                 });
-                                const badge = document.querySelector('span.bg-primary-container\\/20');
-                                if(badge) {
-                                    badge.textContent = 'PENDING REVIEW';
-                                    badge.classList.add('bg-amber-100', 'text-amber-700', 'border-amber-200');
-                                    badge.classList.remove('bg-primary-container/20', 'text-primary', 'border-primary-container');
-                                }
                             } else {
                                 Swal.fire('Error', json.message || 'Failed to update course status.', 'error');
                             }
-                        } else {
-                            Swal.fire('Error', 'Failed to update course status.', 'error');
-                        }
-                    } catch (e) {
-                        Swal.fire('Error', 'An error occurred while communicating with the server.', 'error');
+                        })
+                        .catch(e => {
+                            Swal.fire('Error', 'An error occurred while communicating with the server.', 'error');
+                        });
                     }
-                }
-            });
+                });
+            };
+
+            if (hasUnsavedChanges) {
+                Swal.fire({
+                    title: 'Unsaved Changes',
+                    text: 'There are unsaved changes in Course Landing Page, do you want to save before proceed?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#006a62',
+                    cancelButtonColor: '#cbd5e1',
+                    confirmButtonText: 'YES',
+                    cancelButtonText: 'NO'
+                }).then((saveResult) => {
+                    if (saveResult.isConfirmed) {
+                        // YES -> save then submit
+                        saveCourseDetails(true).then(() => {
+                            proceedWithSubmit();
+                        });
+                    } else if (saveResult.dismiss === Swal.DismissReason.cancel) {
+                        // NO -> continue with original data, don't save
+                        proceedWithSubmit();
+                    }
+                });
+            } else {
+                proceedWithSubmit();
+            }
         };
 
 
@@ -1544,7 +1809,45 @@
         resourceBtnEl.addEventListener('click', () => resourceInputEl.click());
         resourceInputEl.addEventListener('change', function() {
             if (this.files.length > 0) {
+                // ★ Limit: Max 1 resource for unlinked Stripe
+                const isStripeActive = @Json.Serialize(ViewBag.IsStripeActive);
+                if (isStripeActive === false) {
+                    const lessonIdEl = document.querySelector('.lesson-item.border-primary');
+                    if (lessonIdEl) {
+                        const lessonId = lessonIdEl.dataset.lessonId;
+                        const lesson = lessonsData.find(l => (l.lessonId || l.LessonId) == lessonId);
+                        if (lesson && lesson.learningMaterials) {
+                            const resources = lesson.learningMaterials.filter(m => {
+                                const mStatus = (m.learningStatus || m.LearningStatus || '').toLowerCase();
+                                const mMetadata = m.materialMetadata || m.MaterialMetadata;
+                                let fType = mMetadata?.file_type || mMetadata?.FileType || 'video';
+                                return mStatus !== 'removed' && (fType === 'document' || fType === 'file' || fType === 'raw');
+                            });
+                            if (resources.length >= 1) {
+                                Swal.fire('Giới hạn tài liệu', 'Instructor chưa liên kết Stripe chỉ được phép đính kèm tối đa 1 tài liệu mỗi bài học.', 'warning');
+                                this.value = '';
+                                return;
+                            }
+                        }
+                    }
+                }
+
                 const file = this.files[0];
+                
+                // ★ Block video files in resource section
+                const fileName = file.name.toLowerCase();
+                const videoExtensions = ['.mp4', '.mov', '.avi', '.wmv', '.flv', '.webm', '.mkv'];
+                if (videoExtensions.some(ext => fileName.endsWith(ext)) || file.type.startsWith('video/')) {
+                    Swal.fire({
+                        title: 'Định dạng không hợp lệ',
+                        text: 'Phần này chỉ dành cho tài liệu (PDF, Word, Zip...). Vui lòng upload Video ở phần "Video Content".',
+                        icon: 'error',
+                        confirmButtonColor: '#006a62'
+                    });
+                    this.value = '';
+                    return;
+                }
+
                 resourceBtnEl.classList.add('hidden');
                 resourceProgressEl.classList.remove('hidden');
                 
@@ -1560,15 +1863,23 @@
                     resourceBtnEl.classList.remove('hidden');
                     if (data.secure_url) {
                         document.getElementById('resource-file-name').textContent = file.name;
-                        document.getElementById('resource-title-input').value = file.name;
+                        
+                        // Smart Defaulting: Only set title if user hasn't typed one
+                        const titleInput = document.getElementById('resource-title-input');
+                        let finalTitle = titleInput.value.trim();
+                        if (!finalTitle) {
+                            finalTitle = file.name;
+                            titleInput.value = file.name;
+                        }
+                        
                         const resUrlInput = document.getElementById('ResourceUrl');
                         resUrlInput.value = data.secure_url;
                         resUrlInput.dataset.fileSize = data.bytes || 0;
                         resUrlInput.dataset.format = data.format || '';
                         resourceBtnEl.innerHTML = 'Change File';
                         
-                        // Auto-save immediately after upload
-                        saveResourceMaterial(data.secure_url, file.name, data.bytes || 0, data.format || '');
+                        // Auto-save immediately with LATEST values
+                        saveResourceMaterial(data.secure_url, finalTitle, data.bytes || 0, data.format || '');
                     }
                 })
                 .catch(err => {
@@ -1578,5 +1889,54 @@
                 });
             }
         });
+        
+        // ─── Disable editing if Pending Review ───
+        const currentStatus = '@(ViewBag.CourseStatus as string ?? "Draft")';
+        if (currentStatus.toLowerCase() === 'pending') {
+            // Disable all inputs, selects and textareas
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                el.disabled = true;
+                el.classList.add('opacity-70', 'cursor-not-allowed');
+            });
+            
+            // Disable all action buttons
+            document.querySelectorAll('button').forEach(el => {
+                 const text = el.textContent.trim().toLowerCase();
+                 const onclick = el.getAttribute('onclick') || '';
+                 
+                 // Keep navigation and close buttons functional
+                 if (onclick.includes('switchMainTab') || 
+                     onclick.includes('selectLesson') || 
+                     onclick.includes('closeModal') || 
+                     onclick.includes('closeLessonModal') ||
+                     onclick.includes('closeVideoModal') ||
+                     onclick.includes('closeResourceModal') ||
+                     el.classList.contains('text-slate-400')) { // Like back button or close icons
+                     return;
+                 }
+                 
+                 // Disable everything else
+                 el.disabled = true;
+                 el.classList.add('opacity-50', 'cursor-not-allowed');
+                 el.style.pointerEvents = 'none';
+            });
+
+            // Disable Quill editors
+            const disableQuill = (q) => { if (q) q.disable(); };
+            setTimeout(() => {
+                disableQuill(window.videoQuill);
+                disableQuill(window.resourceQuill);
+                disableQuill(window.courseDescQuill);
+                disableQuill(window.courseLearnQuill);
+                disableQuill(window.courseReqQuill);
+            }, 500); // Small delay to ensure they are initialized
+            
+            // Hide specific upload buttons that might not be caught
+            const hideEls = ['upload-resource-btn', 'save-course-details-btn', 'save-video-btn', 'save-resource-btn'];
+            hideEls.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+        }
     </script>
 }
