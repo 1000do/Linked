@@ -129,7 +129,7 @@ namespace CourseMarketplaceFE.Controllers
 
                 // ── 4. Redirect theo role ──────────────────────────────────────────
                 var roleLower = result.Role.Trim().ToLower();
-                if (roleLower == "manager" || roleLower == "admin" || roleLower == "staff")
+                if (roleLower == "admin" || roleLower == "staff")
                     return RedirectToAction("Admin", "Notification");
 
                 return RedirectToAction("Index", "Home", new { debug = "is_user" });

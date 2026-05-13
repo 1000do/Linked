@@ -29,6 +29,44 @@
 
 
 <div class="bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col">
+    <!-- Bộ lọc & Tìm kiếm -->
+    <div class="px-5 py-4 border-b border-slate-200 bg-slate-50/50">
+        <form method="get" action="/Transaction" class="flex flex-col md:flex-row items-center gap-3 w-full">
+            <input type="hidden" name="page" value="1" />
+            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+            
+            <div class="relative flex-1 w-full">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">search</span>
+                <input type="text" name="keyword" value="@ViewBag.Keyword" placeholder="Tìm tên KH, học viên, GV..." 
+                       class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all shadow-sm" />
+            </div>
+            
+            <div class="w-full md:w-40">
+                <select name="status" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none shadow-sm cursor-pointer">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="succeeded" selected="@(ViewBag.Status == "succeeded")">Thành công</option>
+                    <option value="pending" selected="@(ViewBag.Status == "pending")">Đang xử lý</option>
+                    <option value="failed" selected="@(ViewBag.Status == "failed")">Thất bại</option>
+                </select>
+            </div>
+
+            <div class="w-full md:w-48">
+                <select name="sortBy" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none shadow-sm cursor-pointer">
+                    <option value="date_desc" selected="@(ViewBag.SortBy == "date_desc")">Ngày: Mới nhất</option>
+                    <option value="date_asc" selected="@(ViewBag.SortBy == "date_asc")">Ngày: Cũ nhất</option>
+                    <option value="amount_desc" selected="@(ViewBag.SortBy == "amount_desc")">Tiền: Cao đến thấp</option>
+                    <option value="amount_asc" selected="@(ViewBag.SortBy == "amount_asc")">Tiền: Thấp đến cao</option>
+                </select>
+            </div>
+
+            <button type="submit" class="w-full md:w-auto px-5 py-2 bg-indigo-600 text-white font-medium text-sm rounded-lg hover:bg-indigo-700 transition-colors shadow-sm whitespace-nowrap">Lọc</button>
+            @if (!string.IsNullOrEmpty(ViewBag.Keyword as string) || !string.IsNullOrEmpty(ViewBag.Status as string) || (ViewBag.SortBy as string) != "date_desc")
+            {
+                <a href="/Transaction" class="w-full md:w-auto px-4 py-2 bg-slate-200 text-slate-700 font-medium text-sm rounded-lg hover:bg-slate-300 transition-colors whitespace-nowrap text-center">Xóa lọc</a>
+            }
+        </form>
+    </div>
+
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
@@ -150,7 +188,7 @@
             <div class="flex items-center gap-1">
                 @if (Model.Page > 1)
                 {
-                    <a href="@Url.Action("Index", new { page = Model.Page - 1, pageSize = Model.PageSize })"
+                    <a href="@Url.Action("Index", new { page = Model.Page - 1, pageSize = Model.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status })"
                        class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all">
                         ← Trước
                     </a>
@@ -164,14 +202,14 @@
                     }
                     else
                     {
-                        <a href="@Url.Action("Index", new { page = p, pageSize = Model.PageSize })"
+                        <a href="@Url.Action("Index", new { page = p, pageSize = Model.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status })"
                            class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all">@p</a>
                     }
                 }
 
                 @if (Model.Page < Model.TotalPages)
                 {
-                    <a href="@Url.Action("Index", new { page = Model.Page + 1, pageSize = Model.PageSize })"
+                    <a href="@Url.Action("Index", new { page = Model.Page + 1, pageSize = Model.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status })"
                        class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all">
                         Sau →
                     </a>

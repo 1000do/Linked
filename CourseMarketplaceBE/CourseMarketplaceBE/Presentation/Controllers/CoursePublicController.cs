@@ -54,6 +54,10 @@ public class CoursePublicController : ControllerBase
             }
             return Ok(ApiResponse<object>.SuccessResponse(course, "Retrieved course successfully."));
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
         catch (Exception ex)
         {
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));

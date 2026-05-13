@@ -17,6 +17,7 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly IMaterialRepository _materialRepository;
         private readonly ILessonRepository _lessonRepository;
         private readonly ICheckoutRepository _checkoutRepository;
+        private readonly IRedisService _redisService;
 
         public ModerationService(
             ICourseRepository courseRepository, 
@@ -24,7 +25,8 @@ namespace CourseMarketplaceBE.Application.Services
             INotificationService notificationService,
             IMaterialRepository materialRepository,
             ILessonRepository lessonRepository,
-            ICheckoutRepository checkoutRepository)
+            ICheckoutRepository checkoutRepository,
+            IRedisService redisService)
         {
             _courseRepository = courseRepository;
             _chatRepository = chatRepository;
@@ -32,6 +34,7 @@ namespace CourseMarketplaceBE.Application.Services
             _materialRepository = materialRepository;
             _lessonRepository = lessonRepository;
             _checkoutRepository = checkoutRepository;
+            _redisService = redisService;
         }
 
         public async Task<List<CourseModerationDto>> GetPendingCoursesAsync(ModerationFilterDto filter)
@@ -100,6 +103,9 @@ namespace CourseMarketplaceBE.Application.Services
                 }
             }
 
+            // Invalidate Cache
+            await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
+
             return true;
         }
 
@@ -125,6 +131,9 @@ namespace CourseMarketplaceBE.Application.Services
                 );
             }
 
+            // Invalidate Cache
+            await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
+
             return true;
         }
 
@@ -133,9 +142,10 @@ namespace CourseMarketplaceBE.Application.Services
             var course = await _courseRepository.GetByIdAsync(courseId);
             if (course == null) return false;
 
-            // Flagged course is usually moved to rejected or a blocked state
-            course.CourseStatus = "rejected"; 
-            course.ModerationFeedback = $"[VIOLATION FLAG] {reason}";
+            var currentFlags = (course.CourseFlagCount ?? 0) + 1;
+            course.CourseFlagCount = currentFlags;
+            course.CourseStatus = "flagged"; 
+            course.ModerationFeedback = $"[VIOLATION FLAG #{currentFlags}] {reason}";
             course.UpdatedAt = DateTime.Now;
 
             _courseRepository.Update(course);
@@ -143,13 +153,39 @@ namespace CourseMarketplaceBE.Application.Services
 
             if (course.InstructorId.HasValue)
             {
+                string subject = "Cảnh báo vi phạm khóa học";
+                string message = "";
+
+                if (currentFlags == 1)
+                {
+                    subject = "Nhắc nhở vi phạm khóa học (Lần 1)";
+                    message = $"Khóa học '{course.Title}' của bạn đã bị gắn cờ vi phạm lần đầu và tạm ẩn. Lý do: {reason}. Vui lòng kiểm tra lại nội dung và tuân thủ quy định.";
+                }
+                else if (currentFlags == 2)
+                {
+                    subject = "Cảnh báo vi phạm nghiêm trọng (Lần 2)";
+                    message = $"Khóa học '{course.Title}' của bạn tiếp tục vi phạm lần thứ 2. Đây là cảnh báo mạnh mẽ. Nếu tiếp tục vi phạm, khóa học sẽ bị xóa vĩnh viễn.";
+                }
+                else
+                {
+                    subject = "Thông báo ngừng kinh doanh khóa học vĩnh viễn (Lần 3)";
+                    message = $"Khóa học '{course.Title}' của bạn đã vi phạm chính sách lần thứ 3. Hệ thống quyết định ngừng kinh doanh khóa học này vĩnh viễn. Bạn sẽ không thể chỉnh sửa nội dung hoặc nhận học viên mới, nhưng học viên cũ vẫn có thể truy cập nội dung đã mua.";
+                    
+                    course.CourseStatus = "archived";
+                    _courseRepository.Update(course);
+                    await _courseRepository.SaveChangesAsync();
+                }
+
                 await _notificationService.SendNotificationAsync(
                     course.InstructorId.Value,
-                    "Cảnh báo vi phạm khóa học",
-                    $"Khóa học '{course.Title}' của bạn đã bị gắn cờ vi phạm và tạm ẩn. Lý do: {reason}. Vui lòng kiểm tra lại nội dung.",
+                    subject,
+                    message,
                     $"/InstructorCourse/Editor?id={courseId}"
                 );
             }
+
+            // Invalidate Cache
+            await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
 
             return true;
         }
@@ -250,7 +286,6 @@ namespace CourseMarketplaceBE.Application.Services
             _courseRepository.Update(course);
             await _courseRepository.SaveChangesAsync();
 
-            // Send notification
             if (course.InstructorId.HasValue)
             {
                 await _notificationService.SendNotificationAsync(
@@ -260,6 +295,9 @@ namespace CourseMarketplaceBE.Application.Services
                     $"/InstructorCourse/Editor?id={request.CourseId}"
                 );
             }
+
+            // Invalidate Cache
+            await _redisService.RemoveCacheAsync($"course:detail:{request.CourseId}");
 
             return true;
         }

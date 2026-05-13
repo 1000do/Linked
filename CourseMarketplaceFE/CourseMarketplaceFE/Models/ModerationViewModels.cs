@@ -15,6 +15,7 @@ namespace CourseMarketplaceFE.Models
         public string? CourseThumbnailUrl { get; set; }
         public string UrgencyLevel { get; set; } = "Normal";
         public string UrgencyColor { get; set; } = "slate";
+        public int FlagCount { get; set; }
     }
 
     public class UserReportModerationViewModel

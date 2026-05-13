@@ -161,4 +161,60 @@ public class StripePaymentService : IPaymentGatewayService
         var service = new TransferService();
         await service.CreateAsync(options);
     }
+
+    /// <summary>
+    /// ★ STRIPE REFUND: Hoàn tiền toàn bộ cho khách hàng.
+    ///
+    /// Flow: Admin bấm "Hoàn tiền" → Stripe tạo Refund trên PaymentIntent gốc
+    ///       → Stripe tự động trả tiền về thẻ/phương thức thanh toán ban đầu.
+    ///
+    /// ★ Lưu ý:
+    ///   - Stripe cho phép refund trong vòng 180 ngày kể từ ngày charge.
+    ///   - Nếu đã Transfer cho GV, phải gọi ReverseTransferAsync TRƯỚC.
+    ///   - Phí Stripe (2.9% + $0.30) KHÔNG được hoàn lại.
+    /// </summary>
+    public async Task<string> RefundAsync(string paymentIntentId, string? reason = null)
+    {
+        var refundService = new RefundService();
+        var options = new RefundCreateOptions
+        {
+            PaymentIntent = paymentIntentId,
+            Reason = reason ?? "requested_by_customer",
+            Metadata = new Dictionary<string, string>
+            {
+                { "source", "admin_dashboard" },
+                { "refunded_at", DateTime.UtcNow.ToString("O") }
+            }
+        };
+
+        var refund = await refundService.CreateAsync(options);
+        return refund.Id; // re_xxx
+    }
+
+    /// <summary>
+    /// ★ STRIPE TRANSFER REVERSAL: Đảo ngược lệnh chuyển tiền cho GV.
+    ///
+    /// Flow: Platform đã Transfer $13.99 cho GV → Admin bấm hoàn tiền
+    ///       → Gọi Transfer Reversal → Stripe ghi nợ GV $13.99 về Platform
+    ///       → Sau đó mới gọi RefundAsync để trả tiền cho Student.
+    ///
+    /// ★ Lưu ý:
+    ///   - Chỉ reverse được nếu GV còn đủ tiền trong Connected Account.
+    ///   - Nếu GV đã rút hết → Stripe sẽ trả lỗi "insufficient balance".
+    /// </summary>
+    public async Task<string> ReverseTransferAsync(string transferId)
+    {
+        var reversalService = new TransferReversalService();
+        var reversal = await reversalService.CreateAsync(
+            transferId,
+            new TransferReversalCreateOptions
+            {
+                Metadata = new Dictionary<string, string>
+                {
+                    { "source", "admin_refund" },
+                    { "reversed_at", DateTime.UtcNow.ToString("O") }
+                }
+            });
+        return reversal.Id; // trr_xxx
+    }
 }

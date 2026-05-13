@@ -21,7 +21,7 @@ namespace CourseMarketplaceFE.Controllers
         {
             ViewBag.Search = search;
             ViewBag.Category = category;
-            ViewBag.Status = status ?? "pending";
+            ViewBag.Status = status ?? "all";
             ViewBag.SortBy = sortBy ?? "oldest";
 
             // Fetch categories

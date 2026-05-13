@@ -114,19 +114,76 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .FirstOrDefaultAsync();
 
         public async Task<InstructorStats?> GetStatsAsync(int userId)
-            => await _context.InstructorStats.FirstOrDefaultAsync(s => s.InstructorId == userId);
+        {
+            var stats = await _context.InstructorStats.FirstOrDefaultAsync(s => s.InstructorId == userId);
+            if (stats != null)
+            {
+                // Check if instructor is enrolled in any of their own courses
+                var instructorOwnCourseIds = await _context.Courses
+                    .Where(c => c.InstructorId == userId)
+                    .Select(c => c.CourseId)
+                    .ToListAsync();
+                
+                if (instructorOwnCourseIds.Any())
+                {
+                    var isEnrolledInAny = await _context.Enrollments
+                        .AnyAsync(e => e.UserId == userId && e.CourseId.HasValue && instructorOwnCourseIds.Contains(e.CourseId.Value));
+                    
+                    if (isEnrolledInAny)
+                    {
+                        stats.TotalStudentsCount = Math.Max(0, stats.TotalStudentsCount - 1);
+                    }
+                }
+            }
+            return stats;
+        }
 
         public async Task<int> CountActiveCoursesAsync(int instructorId)
             => await _context.Courses.CountAsync(c => c.InstructorId == instructorId && c.CourseStatus == "published");
 
-        public async Task<List<InstructorPayoutDto>> GetPayoutsAsync(int instructorId)
+        public async Task<InstructorPayoutPagedDto> GetPayoutsAsync(int instructorId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null)
         {
-            return await _context.InstructorPayouts
+            var query = _context.InstructorPayouts
                 .Where(p => p.InstructorId == instructorId)
                 .Include(p => p.Transaction)
                     .ThenInclude(t => t!.OrderItem)
                         .ThenInclude(oi => oi!.Course)
-                .OrderByDescending(p => p.PayoutDate)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                var lowerKeyword = keyword.ToLower();
+                query = query.Where(p => 
+                    (p.Transaction != null && p.Transaction.OrderItem != null && p.Transaction.OrderItem.Course != null && p.Transaction.OrderItem.Course.Title != null && p.Transaction.OrderItem.Course.Title.ToLower().Contains(lowerKeyword)) ||
+                    (p.StripePayoutId != null && p.StripePayoutId.ToLower().Contains(lowerKeyword)) ||
+                    (p.StripeTransferId != null && p.StripeTransferId.ToLower().Contains(lowerKeyword))
+                );
+            }
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = status.ToLower() switch
+                {
+                    "succeeded" => query.Where(p => p.PayoutStatus == "paid" || p.PayoutStatus == "transferred"),
+                    "pending" => query.Where(p => p.PayoutStatus == "pending" || p.PayoutStatus == "in_transit"),
+                    "failed" => query.Where(p => p.PayoutStatus == "failed" || p.PayoutStatus == "canceled"),
+                    _ => query.Where(p => p.PayoutStatus == status)
+                };
+            }
+
+            query = sortBy switch
+            {
+                "date_asc" => query.OrderBy(p => p.PayoutDate),
+                "amount_desc" => query.OrderByDescending(p => p.PayoutAmount),
+                "amount_asc" => query.OrderBy(p => p.PayoutAmount),
+                _ => query.OrderByDescending(p => p.PayoutDate)
+            };
+
+            int totalCount = await query.CountAsync();
+
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(p => new InstructorPayoutDto
                 {
                     PayoutId = p.PayoutId,
@@ -134,13 +191,32 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                     PayoutDate = p.PayoutDate,
                     IsPaid = p.IsPaid,
                     CourseTitle = p.Transaction!.OrderItem!.Course!.Title ?? "N/A",
-                    TotalAmount = p.Transaction.Amount
+                    TotalAmount = p.Transaction.Amount,
+                    PayoutStatus = p.PayoutStatus,
+                    PaidToBankAt = p.PaidToBankAt,
+                    StripeTransferId = p.StripeTransferId,
+                    StripePayoutId = p.StripePayoutId
                 })
                 .ToListAsync();
+
+            return new InstructorPayoutPagedDto
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
         }
 
         public async Task<int> GetTotalApprovedInstructorsCountAsync()
             => await _context.Instructors.CountAsync(i => i.ApprovalStatus == "Approved");
+
+        public async Task<List<Instructor>> GetInstructorsWithStripeAsync()
+        {
+            return await _context.Instructors
+                .Where(i => !string.IsNullOrEmpty(i.StripeAccountId))
+                .ToListAsync();
+        }
 
         // ── Persistence ───────────────────────────────────────────────────────
 

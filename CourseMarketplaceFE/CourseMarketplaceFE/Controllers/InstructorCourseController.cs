@@ -131,8 +131,9 @@ namespace CourseMarketplaceFE.Controllers
         // ─── CREATE (GET) ─────────────────────────────────────────────────
         public async Task<IActionResult> Create()
         {
-            // Kiểm tra Stripe status
+            // Kiểm tra Stripe status & Transfer Rate
             await LoadStripeStatusAsync();
+            await LoadTransferRateAsync();
 
             var model = new CreateCourseViewModel
             {
@@ -199,8 +200,9 @@ namespace CourseMarketplaceFE.Controllers
             ViewBag.CourseId = id;
             ViewBag.AvailableCategories = await GetCategoriesAsync();
 
-            // Kiểm tra Stripe status
+            // Kiểm tra Stripe status & Transfer Rate
             await LoadStripeStatusAsync();
+            await LoadTransferRateAsync();
 
             try
             {
@@ -296,6 +298,23 @@ namespace CourseMarketplaceFE.Controllers
                     var newStatus = data.TryGetProperty("courseStatus", out var s) ? s.GetString() : null;
                     return Json(new { success = true, data = data.Clone(), status = newStatus });
                 }
+                var error = await resp.Content.ReadAsStringAsync();
+                return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+        // ─── REMOVE LESSON (AJAX) ────────────────────────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> RemoveLesson([FromForm] int lessonId)
+        {
+            try
+            {
+                var resp = await _api.DeleteAsync($"lessons/{lessonId}");
+                if (resp.IsSuccessStatusCode)
+                    return Json(new { success = true });
                 var error = await resp.Content.ReadAsStringAsync();
                 return Json(new { success = false, message = error });
             }
@@ -458,6 +477,30 @@ namespace CourseMarketplaceFE.Controllers
             }
             catch { }
             ViewBag.IsStripeActive = false;
+        }
+
+        /// <summary>
+        /// Load Transfer Rate từ Backend
+        /// </summary>
+        private async Task LoadTransferRateAsync()
+        {
+            try
+            {
+                var resp = await _api.GetAsync("admin/finance/transfer-rate");
+                if (resp.IsSuccessStatusCode)
+                {
+                    var json = await resp.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    var root = doc.RootElement;
+                    if (root.TryGetProperty("data", out var rateEl))
+                    {
+                        ViewBag.TransferRate = rateEl.GetDecimal();
+                        return;
+                    }
+                }
+            }
+            catch { }
+            ViewBag.TransferRate = 70.00m;
         }
 
         // ─── TRASH VIEW ──────────────────────────────────────────────────
