@@ -188,8 +188,9 @@ public class CourseService : ICourseService
         // Cập nhật thông tin định danh riêng cho từng User (Không cache phần này)
         if (userId.HasValue)
         {
-            response.IsEnrolled = await _courseRepository.IsEnrolledAsync(userId.Value, courseId);
             response.IsOwner = response.InstructorId == userId.Value;
+            // Bypass: Nếu là chủ sở hữu thì luôn coi như đã ghi danh
+            response.IsEnrolled = response.IsOwner || await _courseRepository.IsEnrolledAsync(userId.Value, courseId);
         }
         else
         {

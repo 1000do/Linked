@@ -252,9 +252,14 @@ public class LessonService : ILessonService
         if (!string.IsNullOrEmpty(material.MaterialUrl))
         {
             var cloudPublicId = _uploadService.GetPublicIdFromUrl(material.MaterialUrl);
-            await _uploadService.MoveToTrashAsync(material.MaterialUrl);
+            var trashUrl = await _uploadService.MoveToTrashAsync(material.MaterialUrl);
+            
             material.CloudPublicId = cloudPublicId;
-            material.MaterialUrl = null; // Update to null as requested
+            // Giữ lại URL (đã được đổi sang link trong thư mục trash/) để vẫn có thể xem được detail
+            if (!string.IsNullOrEmpty(trashUrl))
+            {
+                material.MaterialUrl = trashUrl;
+            }
         }
 
         material.LearningStatus = "removed";
@@ -296,9 +301,13 @@ public class LessonService : ILessonService
             if (!string.IsNullOrEmpty(m.MaterialUrl))
             {
                 var cloudPublicId = _uploadService.GetPublicIdFromUrl(m.MaterialUrl);
-                await _uploadService.MoveToTrashAsync(m.MaterialUrl);
+                var trashUrl = await _uploadService.MoveToTrashAsync(m.MaterialUrl);
+                
                 m.CloudPublicId = cloudPublicId;
-                m.MaterialUrl = null;
+                if (!string.IsNullOrEmpty(trashUrl))
+                {
+                    m.MaterialUrl = trashUrl;
+                }
             }
             m.LearningStatus = "removed";
             m.UpdatedAt = DateTime.UtcNow;

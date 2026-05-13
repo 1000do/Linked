@@ -74,7 +74,23 @@ public class EnrollmentService : IEnrollmentService
     public async Task<DTOs.ProgressResponse> GetProgressAsync(int userId, int courseId)
     {
         var enrollment = await _repo.GetEnrollmentAsync(userId, courseId);
-        if (enrollment == null) return null;
+        
+        if (enrollment == null) 
+        {
+            // Bypass cho giảng viên: Trả về tiến độ ảo nếu là chủ sở hữu
+            var course = await _courseRepo.GetByIdAsync(courseId);
+            if (course != null && course.InstructorId == userId)
+            {
+                return new DTOs.ProgressResponse
+                {
+                    EnrollmentId = 0, // Không có record thực
+                    LearnedMaterialCount = 0,
+                    TotalMaterialCount = 0,
+                    CompletedMaterialIds = new List<int>()
+                };
+            }
+            return null;
+        }
 
         var stats = await _courseRepo.GetCourseStatsAsync(courseId);
         var totalMaterials = stats?.TotalMaterials ?? 0;
