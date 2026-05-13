@@ -3,70 +3,113 @@
     ViewData["Title"] = "Danh sách yêu thích";
 }
 
-<div class="bg-slate-50 min-h-screen py-12">
+<div class="bg-surface min-h-screen py-12 pt-28">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="mb-12">
-            <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight mb-4">Danh sách yêu thích</h1>
-            <p class="text-lg text-slate-600">Những khóa học bạn đã lưu lại để học sau.</p>
+        @* ── Header Section ────────────────────────────────────────── *@
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div class="max-w-2xl">
+                <h1 class="text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">Danh sách yêu thích</h1>
+                <p class="text-lg text-slate-500 leading-relaxed">Những khóa học bạn đã lưu lại để học sau.</p>
+            </div>
+            <div class="flex items-center gap-2 text-primary font-bold">
+                <span class="material-symbols-outlined">favorite</span>
+                <span>@Model.Count khóa học</span>
+            </div>
         </div>
 
         @if (Model == null || !Model.Any())
         {
-            <div class="bg-white rounded-2xl border border-dashed border-slate-300 p-16 text-center">
-                <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">favorite</span>
-                <h3 class="text-xl font-bold text-slate-700 mb-2">Danh sách yêu thích trống</h3>
-                <p class="text-slate-500 mb-8">Bạn chưa lưu khóa học nào vào danh sách yêu thích.</p>
-                <a href="/Course" class="inline-flex items-center gap-2 bg-primary text-white font-bold px-8 py-3 rounded-xl hover:bg-primary/90 transition-all">
-                    Khám phá khóa học
+            @* ── Empty State ─────────────────────────────────────────── *@
+            <div class="bg-white rounded-3xl border border-dashed border-slate-200 p-20 text-center shadow-sm">
+                <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-slate-50 text-slate-200 mb-6">
+                    <span class="material-symbols-outlined text-5xl" style='font-variation-settings: "FILL" 1;'>favorite</span>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-800 mb-3">Danh sách yêu thích trống</h3>
+                <p class="text-slate-500 max-w-sm mx-auto mb-10 leading-relaxed">
+                    Bạn chưa lưu khóa học nào. Hãy khám phá hàng ngàn khóa học hấp dẫn của chúng tôi ngay!
+                </p>
+                <a href="/Course" class="inline-flex items-center gap-2 bg-primary text-white font-bold px-10 py-4 rounded-2xl shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-300">
+                    <span class="material-symbols-outlined">explore</span>
+                    Khám phá ngay
                 </a>
             </div>
         }
         else
         {
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            @* ── Course Grid ─────────────────────────────────────────── *@
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                 @foreach (var item in Model)
                 {
-                    <div class="flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300 group">
+                    <div class="flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 ease-out-expo group cursor-pointer" 
+                         onclick="location.href='/Course/Details/@item.CourseId'">
+                        
+                        @* Card Image *@
                         <div class="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 shrink-0">
                             <img src="@(string.IsNullOrEmpty(item.CourseThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800&auto=format&fit=crop" : item.CourseThumbnailUrl)" 
-                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out-expo" 
                                  alt="@item.Title" loading="lazy" />
-                            
+                            <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
+
+                            @* Wishlist Toggle (Always filled red here) *@
                             <button type="button" 
-                                    onclick="toggleWishlist(this, @item.CourseId);"
-                                    class="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/90 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm">
-                                <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>favorite</span>
+                                    class="absolute top-3 right-3 z-30 w-9 h-9 rounded-full bg-white/90 text-red-500 flex items-center justify-center hover:bg-white hover:scale-110 shadow-sm transition-all duration-300"
+                                    onclick="event.stopPropagation(); toggleWishlist(this, @item.CourseId);">
+                                <span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "FILL" 1;'>favorite</span>
                             </button>
                         </div>
 
-                        <div class="p-5 flex flex-col flex-grow">
-                            <h3 class="text-sm font-bold text-slate-900 line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
-                                <a href="/Course/Details/@item.CourseId">@item.Title</a>
+                        @* Card Content *@
+                        <div class="p-6 flex flex-col flex-grow">
+                            <h3 class="text-lg font-bold text-slate-900 line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
+                                @item.Title
                             </h3>
-                            
-                            <p class="text-[11px] text-slate-500 mb-4">@item.InstructorName</p>
+                            <div class="flex items-center gap-2 text-sm text-slate-500 mb-4">
+                                <span class="material-symbols-outlined text-[18px]">person</span>
+                                <span class="truncate">@item.InstructorName</span>
+                            </div>
 
-                            <div class="mt-auto flex items-center justify-between">
-                                <div class="text-base font-extrabold text-slate-900">
+                            @* Rating & Students *@
+                            <div class="flex items-center gap-1.5 mb-6">
+                                <span class="text-sm font-bold text-slate-800">@item.RatingAverage.ToString("F1")</span>
+                                <div class="flex text-amber-400">
+                                    @for(int i=0; i<Math.Floor((double)item.RatingAverage); i++) { <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star</span> }
+                                    @if((double)item.RatingAverage - Math.Floor((double)item.RatingAverage) >= 0.5) { <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star_half</span> }
+                                </div>
+                                <span class="text-xs text-slate-400 font-medium">(@item.TotalStudents)</span>
+                            </div>
+
+                            @* Price & Action *@
+                            <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                                <div class="text-xl font-extrabold text-slate-900 tracking-tight">
                                     @if (item.Price == 0)
                                     {
-                                        <span class="text-emerald-600">FREE</span>
+                                        <span class="text-emerald-600 uppercase text-lg">Miễn phí</span>
                                     }
                                     else
                                     {
                                         <span>$@item.Price.ToString("N2")</span>
                                     }
                                 </div>
-                                
-                                <form asp-action="AddToCart" asp-controller="Cart" method="post" class="m-0 z-20">
-                                    <input type="hidden" name="courseId" value="@item.CourseId" />
-                                    <input type="hidden" name="returnUrl" value="/Wishlist" />
-                                    <button type="submit" 
-                                            class="p-2 rounded-lg bg-slate-50 text-primary hover:bg-primary hover:text-white transition-all shadow-sm"
-                                            title="Thêm vào giỏ hàng">
-                                        <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
-                                    </button>
-                                </form>
+
+                                @if (item.IsEnrolled)
+                                {
+                                    <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm" title="Đã sở hữu">
+                                        <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <form asp-action="AddToCart" asp-controller="Cart" method="post" class="m-0 z-20">
+                                        <input type="hidden" name="courseId" value="@item.CourseId" />
+                                        <input type="hidden" name="returnUrl" value="/Wishlist" />
+                                        <button type="submit" 
+                                                class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all duration-300"
+                                                onclick="event.stopPropagation();"
+                                                title="Thêm vào giỏ hàng">
+                                            <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
+                                        </button>
+                                    </form>
+                                }
                             </div>
                         </div>
                     </div>
@@ -75,3 +118,29 @@
         }
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Hide wishlist badge in header when on this page
+        function hideWishlistBadge() {
+            const badge = document.getElementById('wishlist-badge');
+            if (badge) {
+                badge.classList.add('hidden');
+                badge.setAttribute('data-manual-hide', 'true');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            hideWishlistBadge();
+            
+            // Override the global update function to keep it hidden on this page
+            const originalUpdate = window.updateWishlistBadge;
+            window.updateWishlistBadge = async () => {
+                if (typeof originalUpdate === 'function') {
+                    await originalUpdate();
+                }
+                hideWishlistBadge();
+            };
+        });
+    </script>
+}

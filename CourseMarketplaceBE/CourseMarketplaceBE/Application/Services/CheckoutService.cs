@@ -28,6 +28,8 @@ public class CheckoutService : ICheckoutService
     private readonly IPaymentGatewayService _paymentGateway;
     private readonly ILogger<CheckoutService> _logger;
     private readonly IHubContext<FinanceHub> _hubContext;
+    private readonly INotificationService _notificationService;
+    private readonly ICourseRepository _courseRepo;
     private readonly IAdminFinanceService _adminFinanceService;
 
     public CheckoutService(
@@ -35,12 +37,16 @@ public class CheckoutService : ICheckoutService
         IPaymentGatewayService paymentGateway,
         ILogger<CheckoutService> logger,
         IHubContext<FinanceHub> hubContext,
-        IAdminFinanceService adminFinanceService)
+        IAdminFinanceService adminFinanceService,
+        INotificationService notificationService,
+        ICourseRepository courseRepo)
     {
         _repo = repo;
         _paymentGateway = paymentGateway;
         _logger = logger;
         _hubContext = hubContext;
+        _notificationService = notificationService;
+        _courseRepo = courseRepo;
         _adminFinanceService = adminFinanceService;
     }
 
@@ -451,6 +457,18 @@ public class CheckoutService : ICheckoutService
                     };
                     await _repo.AddInstructorPayoutAsync(payout);
                     Console.WriteLine($"[CHECKOUT-DEBUG] 📝 Payout record created: TxnId={txn.TransactionId}, Status=pending");
+
+                    // ── NEW: Thông báo cho giảng viên ──
+                    if (instructorId.HasValue)
+                    {
+                        var courseTitle = txn.OrderItem?.Course?.Title ?? "Khóa học của bạn";
+                        await _notificationService.SendNotificationAsync(
+                            instructorId.Value,
+                            "Bạn có đơn hàng mới",
+                            $"Khóa học '{courseTitle}' vừa được bán thành công. Số tiền thu về dự kiến: {payoutAmount:N0} VND.",
+                            $"/Instructor/Payouts"
+                        );
+                    }
                 }
 
                 // ── 2.6 CLEAR CART ───────────────────────────────────────────

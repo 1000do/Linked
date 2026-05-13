@@ -102,6 +102,11 @@ namespace CourseMarketplaceBE.Application.Services
         public async Task<List<string>> SearchEmailsAsync(string query)
             => await _repo.SearchEmailsByQueryAsync(query);
 
+        public async Task<int> GetUnreadCountAsync(int userId)
+        {
+            return await _repo.GetUnreadCountAsync(userId);
+        }
+
         public async Task<int> SendAdvancedAsync(NotificationAdvancedDto dto)
         {
             var targetUserIds = new List<int>();

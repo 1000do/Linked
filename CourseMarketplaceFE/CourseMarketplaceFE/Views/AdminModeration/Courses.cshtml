@@ -27,6 +27,62 @@
             </div>
         </div>
     </div>
+    
+    <!-- Filter Bar -->
+    <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm mb-6">
+        <form method="get" action="/AdminModeration/Courses" class="flex flex-wrap items-end gap-4">
+            <div class="flex-1 min-w-[300px]">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Tìm kiếm</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                    <input type="text" name="search" value="@ViewBag.Search" placeholder="Tên khóa học hoặc giảng viên..." 
+                           class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" />
+                </div>
+            </div>
+            
+            <div class="w-48">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Danh mục</label>
+                <select name="category" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer">
+                    <option value="0">Tất cả danh mục</option>
+                    @if (ViewBag.Categories != null)
+                    {
+                        var cats = System.Text.Json.JsonSerializer.Deserialize<List<CourseMarketplaceFE.Models.CategoryViewModel>>(ViewBag.Categories as string, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        foreach (var cat in cats)
+                        {
+                            <option value="@cat.CategoryId" selected="@(ViewBag.Category == cat.CategoryId.ToString())">@cat.CategoriesName</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="w-40">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Trạng thái</label>
+                <select name="status" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer">
+                    <option value="all" selected="@(ViewBag.Status == "all" || string.IsNullOrEmpty(ViewBag.Status))">Tất cả</option>
+                    <option value="pending" selected="@(ViewBag.Status == "pending")">Chờ duyệt</option>
+                    <option value="published" selected="@(ViewBag.Status == "published")">Đã duyệt</option>
+                    <option value="rejected" selected="@(ViewBag.Status == "rejected")">Đã từ chối</option>
+                    <option value="flagged" selected="@(ViewBag.Status == "flagged")">Đã gắn cờ</option>
+                </select>
+            </div>
+
+            <div class="w-48">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Sắp xếp</label>
+                <select name="sortBy" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer">
+                    <option value="oldest" selected="@(ViewBag.SortBy == "oldest")">Cũ nhất (Ưu tiên)</option>
+                    <option value="newest" selected="@(ViewBag.SortBy == "newest")">Mới nhất</option>
+                </select>
+            </div>
+
+            <button type="submit" class="h-[46px] px-6 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-[20px]">filter_list</span>
+                Lọc
+            </button>
+            <a href="/AdminModeration/Courses" class="h-[46px] px-4 flex items-center justify-center bg-slate-100 text-slate-400 rounded-2xl hover:bg-slate-200 transition-all">
+                <span class="material-symbols-outlined">refresh</span>
+            </a>
+        </form>
+    </div>
 
     <!-- Table Container -->
     <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
@@ -38,15 +94,17 @@
                         <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Giảng viên</th>
                         <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Danh mục</th>
                         <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Giá bán</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Mức độ ưu tiên</th>
                         <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Ngày gửi</th>
-                        <th class="px-8 py-5 text-right text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Hành động</th>
+                        <th class="px-6 py-5 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Xem chi tiết</th>
+                        <th class="px-8 py-5 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Hành động</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
                     @if (!Model.Any())
                     {
                         <tr>
-                            <td colspan="6" class="px-8 py-20 text-center">
+                            <td colspan="7" class="px-8 py-20 text-center">
                                 <div class="flex flex-col items-center">
                                     <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                                         <span class="material-symbols-outlined text-slate-300 text-4xl">inventory_2</span>
@@ -59,7 +117,10 @@
                     }
                     @foreach (var item in Model)
                     {
-                        <tr class="group hover:bg-slate-50/80 transition-colors">
+                        var isPending = item.CourseStatus?.Equals("pending", StringComparison.OrdinalIgnoreCase) ?? false;
+                        var rowOpacity = isPending ? "opacity-100" : "opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0";
+                        
+                        <tr class="group hover:bg-slate-50/80 transition-all duration-300 @rowOpacity">
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-4">
                                     <div class="w-14 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-100 shadow-sm">
@@ -78,7 +139,28 @@
                                         <a href="/Course/Details/@item.CourseId" target="_blank" class="font-display font-extrabold text-slate-900 leading-tight hover:text-primary transition-colors block">
                                             @item.Title
                                         </a>
-                                        <p class="text-[11px] text-slate-400 font-medium">ID: #@item.CourseId</p>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <p class="text-[11px] text-slate-400 font-medium">ID: #@item.CourseId</p>
+                                            @if (item.FlagCount > 0)
+                                            {
+                                                <div class="flex gap-0.5">
+                                                    @for (int i = 1; i <= 3; i++)
+                                                    {
+                                                        if (i <= item.FlagCount)
+                                                        {
+                                                            var flagColor = i == 1 ? "bg-amber-400" : i == 2 ? "bg-orange-500" : "bg-red-600";
+                                                            var flagTitle = i == 1 ? "Lần 1: Nhắc nhở" : i == 2 ? "Lần 2: Cảnh báo mạnh" : "Lần 3: Vi phạm nghiêm trọng";
+                                                            <div class="w-3 h-1 rounded-full @flagColor" title="@flagTitle"></div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="w-3 h-1 rounded-full bg-slate-200" title="Chưa vi phạm"></div>
+                                                        }
+                                                    }
+                                                </div>
+                                                <span class="text-[9px] font-black text-red-600 uppercase tracking-tighter">Violation Strike @item.FlagCount</span>
+                                            }
+                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -99,23 +181,79 @@
                                 @item.Price.ToString("N0")đ
                             </td>
                             <td class="px-6 py-6">
+                                @if (isPending)
+                                {
+                                    var badgeColor = item.UrgencyColor == "red" ? "bg-red-50 text-red-600 border-red-100" :
+                                                     item.UrgencyColor == "amber" ? "bg-amber-50 text-amber-600 border-amber-100" :
+                                                     "bg-slate-50 text-slate-500 border-slate-100";
+                                    var urgencyText = item.UrgencyLevel == "High" ? "Khẩn cấp" :
+                                                      item.UrgencyLevel == "Medium" ? "Cần xử lý" : "Bình thường";
+                                    
+                                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border @badgeColor">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                        <span class="text-[10px] font-black uppercase tracking-wider">@urgencyText</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    var statusLabel = item.CourseStatus?.ToLower() switch {
+                                        "published" => "Đã duyệt",
+                                        "rejected" => "Từ chối",
+                                        "flagged" => "Gắn cờ",
+                                        "archived" => "Lưu trữ",
+                                        _ => item.CourseStatus
+                                    };
+                                    var statusColor = item.CourseStatus?.ToLower() switch {
+                                        "published" => "bg-emerald-500 text-white",
+                                        "rejected" => "bg-red-500 text-white",
+                                        "flagged" => "bg-slate-900 text-white",
+                                        "archived" => "bg-slate-500 text-white",
+                                        _ => "bg-slate-100 text-slate-600"
+                                    };
+                                    <span class="px-3 py-1 @statusColor rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
+                                        @statusLabel
+                                    </span>
+                                }
+                            </td>
+                            <td class="px-6 py-6">
                                 <p class="text-sm text-slate-500 font-medium">@item.CreatedAt?.ToString("dd/MM/yyyy")</p>
                                 <p class="text-[10px] text-slate-400 font-bold uppercase">@item.CreatedAt?.ToString("HH:mm")</p>
                             </td>
-                            <td class="px-8 py-6 text-right">
-                                <div class="flex items-center justify-end gap-2">
-                                    <a href="/Course/Details/@item.CourseId" target="_blank" class="w-9 h-9 flex items-center justify-center bg-slate-100 text-slate-400 rounded-xl hover:bg-primary hover:text-white transition-all active:scale-95" title="Xem chi tiết khóa học">
-                                        <span class="material-symbols-outlined text-[20px]">visibility</span>
-                                    </a>
-                                    <button onclick="approveCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
-                                        <span class="material-symbols-outlined text-[18px]">done</span> Duyệt
-                                    </button>
-                                    <button onclick="rejectCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-bold transition-all active:scale-95">
-                                        <span class="material-symbols-outlined text-[18px]">close</span> Từ chối
-                                    </button>
-                                    <button onclick="flagCourse(@item.CourseId)" class="flex items-center justify-center w-9 h-9 bg-accent text-white rounded-xl hover:bg-red-600 transition-all active:scale-95" title="Gắn cờ vi phạm">
-                                        <span class="material-symbols-outlined text-[18px]">flag</span>
-                                    </button>
+                            <td class="px-6 py-6 text-center">
+                                <a href="/Course/Details/@item.CourseId" target="_blank" class="inline-flex w-9 h-9 items-center justify-center bg-slate-100 text-slate-400 rounded-xl hover:bg-primary hover:text-white transition-all active:scale-95" title="Xem chi tiết khóa học">
+                                    <span class="material-symbols-outlined text-[20px]">visibility</span>
+                                </a>
+                            </td>
+                            <td class="px-8 py-6 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    @if (isPending || item.CourseStatus?.ToLower() == "rejected")
+                                    {
+                                        <button onclick="approveCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
+                                            <span class="material-symbols-outlined text-[18px]">done</span> Duyệt
+                                        </button>
+                                        <button onclick="rejectCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-bold transition-all active:scale-95">
+                                            <span class="material-symbols-outlined text-[18px]">close</span> Từ chối
+                                        </button>
+                                    }
+                                    
+                                    @if (item.CourseStatus?.ToLower() == "published")
+                                    {
+                                        <button onclick="flagCourse(@item.CourseId)" class="flex items-center justify-center gap-2 px-4 py-2 bg-accent text-white rounded-xl hover:bg-red-600 transition-all shadow-lg shadow-red-900/20 active:scale-95" title="Gắn cờ vi phạm">
+                                            <span class="material-symbols-outlined text-[18px]">flag</span> Gắn cờ
+                                        </button>
+                                    }
+                                    else if (item.CourseStatus?.ToLower() == "flagged")
+                                    {
+                                         <button onclick="approveCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
+                                            <span class="material-symbols-outlined text-[18px]">settings_backup_restore</span> Duyệt lại
+                                        </button>
+                                    }
+                                    else if (isPending)
+                                    {
+                                        <button onclick="flagCourse(@item.CourseId)" class="flex items-center justify-center w-9 h-9 bg-slate-100 text-slate-400 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all active:scale-95" title="Gắn cờ vi phạm">
+                                            <span class="material-symbols-outlined text-[18px]">flag</span>
+                                        </button>
+                                    }
                                 </div>
                             </td>
                         </tr>
@@ -126,8 +264,49 @@
     </div>
 </div>
 
+<!-- Reject Modal -->
+<div id="reject-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-6 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
+        <!-- Header -->
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+            <div>
+                <h3 class="text-xl font-display font-extrabold text-slate-900">Từ chối khóa học</h3>
+                <p class="text-sm text-slate-500 mt-1">Tag thành phần vi phạm và ghi lý do từ chối</p>
+            </div>
+            <button onclick="closeRejectModal()" class="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-xl text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-all">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+            <div id="reject-loading" class="flex items-center justify-center py-12 text-slate-400">
+                <span class="material-symbols-outlined animate-spin mr-2">sync</span> Đang tải chi tiết khóa học...
+            </div>
+            <div id="reject-items-container" class="hidden space-y-3">
+                <!-- Dynamic rows will be inserted here -->
+            </div>
+            <button id="add-reject-item-btn" onclick="addRejectRow()" class="hidden mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-500 hover:text-primary hover:border-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 text-sm font-bold">
+                <span class="material-symbols-outlined text-[18px]">add_circle</span> Thêm mục từ chối
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-6 border-t border-slate-100 flex justify-end gap-3">
+            <button onclick="closeRejectModal()" class="px-6 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors">Hủy</button>
+            <button onclick="submitDetailedReject()" id="submit-reject-btn" class="px-6 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">close</span> Gửi từ chối
+            </button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 <script>
+    let rejectCourseId = null;
+    let rejectCourseData = null;
+    let rejectRowCounter = 0;
+
     async function approveCourse(id) {
         const { value: feedback } = await Swal.fire({
             title: 'Duyệt khóa học',
@@ -171,44 +350,179 @@
     }
 
     async function rejectCourse(id) {
-        const { value: reason } = await Swal.fire({
-            title: 'Từ chối khóa học',
-            input: 'textarea',
-            inputLabel: 'Lý do từ chối (Gửi cho giảng viên)',
-            inputPlaceholder: 'Nội dung video chưa đạt chuẩn, thiếu tài liệu đi kèm...',
-            inputValidator: (value) => {
-                if (!value) return 'Bạn phải nhập lý do từ chối để giảng viên sửa lỗi!';
-            },
-            showCancelButton: true,
-            confirmButtonText: 'Gửi từ chối',
-            confirmButtonColor: '#ef4444',
-            cancelButtonText: 'Hủy',
-            background: '#ffffff',
-            customClass: {
-                title: 'font-display font-extrabold text-slate-900',
-                input: 'rounded-2xl border-slate-200 focus:ring-primary focus:border-primary'
-            }
-        });
-
-        if (!reason) return;
-
-        Swal.showLoading();
-        const response = await fetch(`/AdminModeration/RejectCourse`, { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `id=${id}&reason=${encodeURIComponent(reason)}`
-        });
+        rejectCourseId = id;
+        rejectRowCounter = 0;
+        const modal = document.getElementById('reject-modal');
+        const loading = document.getElementById('reject-loading');
+        const container = document.getElementById('reject-items-container');
+        const addBtn = document.getElementById('add-reject-item-btn');
         
-        const result = await response.json();
-        if (result.success) {
-            Swal.fire({
-                icon: 'info',
-                title: 'Đã gửi phản hồi',
-                text: 'Khóa học đã bị từ chối và giảng viên đã nhận được lý do.',
-                confirmButtonColor: '#10b981'
-            }).then(() => location.reload());
-        } else {
-            Swal.fire('Lỗi', 'Có lỗi xảy ra khi thực hiện.', 'error');
+        modal.classList.remove('hidden');
+        loading.classList.remove('hidden');
+        container.classList.add('hidden');
+        addBtn.classList.add('hidden');
+        container.innerHTML = '';
+
+        try {
+            const res = await fetch(`/AdminModeration/GetCourseDetails?id=${id}`);
+            const json = await res.json();
+            rejectCourseData = json.data || json;
+            
+            loading.classList.add('hidden');
+            container.classList.remove('hidden');
+            addBtn.classList.remove('hidden');
+            
+            // Add first row by default
+            addRejectRow();
+        } catch(e) {
+            loading.innerHTML = '<span class="text-red-500">Không thể tải chi tiết khóa học.</span>';
+        }
+    }
+
+    function buildTargetOptions() {
+        if (!rejectCourseData) return '';
+        let opts = `<optgroup label="Khóa học">
+            <option value="course.title">@@course.title</option>
+            <option value="course.description">@@course.description</option>
+            <option value="course.thumbnail">@@course.thumbnail</option>
+            <option value="course.what_you_will_learn">@@course.what_you_will_learn</option>
+            <option value="course.requirements">@@course.requirements</option>
+        </optgroup>`;
+
+        const lessons = rejectCourseData.lessons || [];
+        if (lessons.length > 0) {
+            opts += `<optgroup label="Lesson">`;
+            lessons.forEach(l => {
+                const lId = l.lessonId || l.LessonId;
+                const lTitle = l.title || l.Title;
+                opts += `<option value="lesson.title" data-lesson-id="${lId}" data-lesson-title="${lTitle}">@@lesson: ${lTitle}</option>`;
+            });
+            opts += `</optgroup>`;
+
+            opts += `<optgroup label="File / Material">`;
+            lessons.forEach(l => {
+                const lId = l.lessonId || l.LessonId;
+                const lTitle = l.title || l.Title;
+                const materials = l.learningMaterials || l.LearningMaterials || [];
+                materials.forEach(m => {
+                    const mId = m.materialId || m.MaterialId;
+                    const mTitle = m.title || m.Title;
+                    opts += `<option value="file" data-lesson-id="${lId}" data-material-id="${mId}" data-material-title="${mTitle}" data-lesson-title="${lTitle}">@@file: ${mTitle} (Lesson: ${lTitle})</option>`;
+                });
+            });
+            opts += `</optgroup>`;
+        }
+        return opts;
+    }
+
+    function addRejectRow() {
+        rejectRowCounter++;
+        const container = document.getElementById('reject-items-container');
+        const row = document.createElement('div');
+        row.className = 'reject-row flex gap-3 items-start bg-slate-50 p-4 rounded-xl border border-slate-200';
+        row.dataset.rowId = rejectRowCounter;
+        row.innerHTML = `
+            <div class="flex-1 space-y-3">
+                <div class="relative custom-dropdown" data-row-id="${rejectRowCounter}">
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-2">
+                        Thành phần
+                        <span class="normal-case tracking-normal text-[10px] text-slate-400 font-medium bg-slate-200/50 px-2 py-0.5 rounded-full flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">info</span> Gõ @@ để tìm nhanh</span>
+                    </label>
+                    <select class="reject-target hidden">
+                        <option value="">— Chọn thành phần —</option>
+                        ${buildTargetOptions()}
+                    </select>
+                    <div class="relative">
+                        <input type="text" class="dropdown-search w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm" 
+                            placeholder="Gõ @@ để tìm thành phần (VD: @@course, @@lesson...)" 
+                            onfocus="openDropdown(${rejectRowCounter})" 
+                            onkeyup="filterDropdown(${rejectRowCounter}, this.value)"
+                            autocomplete="off">
+                        <span class="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">search</span>
+                    </div>
+                    <div class="dropdown-menu absolute z-50 w-full mt-1 bg-white border border-slate-100 rounded-xl shadow-xl hidden flex-col overflow-hidden max-h-60 overflow-y-auto">
+                        <div class="dropdown-list py-1"></div>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Lý do từ chối</label>
+                    <textarea class="reject-reason w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm" rows="2" placeholder="Mô tả lý do từ chối..."></textarea>
+                </div>
+            </div>
+            <button onclick="this.closest('.reject-row').remove()" class="mt-7 w-9 h-9 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all shrink-0">
+                <span class="material-symbols-outlined text-[20px]">delete</span>
+            </button>
+        `;
+        container.appendChild(row);
+        initCustomDropdown(rejectRowCounter);
+    }
+
+    function closeRejectModal() {
+        document.getElementById('reject-modal').classList.add('hidden');
+        rejectCourseId = null;
+        rejectCourseData = null;
+    }
+
+    async function submitDetailedReject() {
+        const rows = document.querySelectorAll('.reject-row');
+        const items = [];
+        let valid = true;
+
+        rows.forEach(row => {
+            const select = row.querySelector('.reject-target');
+            const reason = row.querySelector('.reject-reason').value.trim();
+            const target = select.value;
+
+            if (!target || !reason) {
+                valid = false;
+                return;
+            }
+
+            const selectedOption = select.options[select.selectedIndex];
+            const item = {
+                target,
+                reason,
+                lessonId: selectedOption.dataset.lessonId ? parseInt(selectedOption.dataset.lessonId) : null,
+                materialId: selectedOption.dataset.materialId ? parseInt(selectedOption.dataset.materialId) : null,
+                lessonTitle: selectedOption.dataset.lessonTitle || null,
+                materialTitle: selectedOption.dataset.materialTitle || null
+            };
+            items.push(item);
+        });
+
+        if (!valid || items.length === 0) {
+            Swal.fire('Thiếu thông tin', 'Vui lòng chọn thành phần và nhập lý do cho mỗi mục từ chối.', 'warning');
+            return;
+        }
+
+        const btn = document.getElementById('submit-reject-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">sync</span> Đang xử lý...';
+
+        try {
+            const res = await fetch('/AdminModeration/RejectCourseDetailed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ courseId: rejectCourseId, items })
+            });
+            const result = await res.json();
+
+            if (result.success) {
+                closeRejectModal();
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Đã gửi phản hồi',
+                    text: 'Khóa học đã bị từ chối và giảng viên đã nhận được chi tiết.',
+                    confirmButtonColor: '#10b981'
+                }).then(() => location.reload());
+            } else {
+                Swal.fire('Lỗi', 'Có lỗi xảy ra khi thực hiện.', 'error');
+            }
+        } catch(e) {
+            Swal.fire('Lỗi', 'Không thể kết nối máy chủ.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">close</span> Gửi từ chối';
         }
     }
 
@@ -252,5 +566,76 @@
             Swal.fire('Lỗi', 'Có lỗi xảy ra khi thực hiện.', 'error');
         }
     }
+    // Custom Searchable Dropdown Logic
+    function initCustomDropdown(rowId) {
+        const row = document.querySelector(`.reject-row[data-row-id="${rowId}"]`);
+        const select = row.querySelector('.reject-target');
+        const listContainer = row.querySelector('.dropdown-list');
+        
+        let html = '';
+        let globalIndex = 1;
+        Array.from(select.children).forEach(child => {
+            if (child.tagName === 'OPTGROUP') {
+                html += `<div class="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] bg-slate-50 sticky top-0 border-b border-slate-100 z-10">${child.label}</div>`;
+                Array.from(child.children).forEach(opt => {
+                    const textSafe = opt.innerText.replace(/'/g, "\\'");
+                    let icon = 'data_object';
+                    if (opt.value.startsWith('course')) icon = 'library_books';
+                    if (opt.value.startsWith('lesson')) icon = 'play_lesson';
+                    if (opt.value.startsWith('file')) icon = 'draft';
+                    
+                    html += `<div class="dropdown-item px-3 py-2.5 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 cursor-pointer transition-colors flex items-center gap-3 border-b border-slate-50 last:border-0" 
+                                onclick="selectOption(${rowId}, ${globalIndex}, '${textSafe}')">
+                                <span class="material-symbols-outlined text-[18px] ${opt.value.startsWith('file') ? 'text-amber-500' : 'text-primary'}">${icon}</span>
+                                <span class="font-medium">${opt.innerText}</span>
+                             </div>`;
+                    globalIndex++;
+                });
+            }
+        });
+        listContainer.innerHTML = html;
+    }
+
+    window.openDropdown = function(rowId) {
+        document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.add('hidden'));
+        const row = document.querySelector(`.reject-row[data-row-id="${rowId}"]`);
+        row.querySelector('.dropdown-menu').classList.remove('hidden');
+    };
+
+    window.filterDropdown = function(rowId, text) {
+        const row = document.querySelector(`.reject-row[data-row-id="${rowId}"]`);
+        const items = row.querySelectorAll('.dropdown-item');
+        const query = text.toLowerCase().replace(/@@/g, '');
+        
+        items.forEach(item => {
+            const val = item.innerText.toLowerCase();
+            if (val.includes(query)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    };
+
+    window.selectOption = function(rowId, index, text) {
+        const row = document.querySelector(`.reject-row[data-row-id="${rowId}"]`);
+        const select = row.querySelector('.reject-target');
+        select.selectedIndex = index;
+        
+        const input = row.querySelector('.dropdown-search');
+        input.value = text;
+        row.querySelector('.dropdown-menu').classList.add('hidden');
+        
+        input.classList.remove('border-slate-200');
+        input.classList.add('border-emerald-500', 'bg-emerald-50/30', 'text-emerald-700');
+    };
+    
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.custom-dropdown')) {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.add('hidden'));
+        }
+    });
+
 </script>
 }
+

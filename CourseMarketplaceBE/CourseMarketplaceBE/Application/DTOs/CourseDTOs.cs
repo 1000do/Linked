@@ -55,6 +55,7 @@ public class CourseResponse
     public bool IsEnrolled { get; set; }
     public bool IsOwner { get; set; }
     public int TotalReviews { get; set; }
+    public DateTime? LastApprovedAt { get; set; }
 }
 
 public class CourseDetailResponse : CourseResponse

@@ -10,7 +10,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 
 [ApiController]
 [Route("api/lessons")]
-[Authorize] // Requires authentication
+[Authorize]
 public class LessonController : ControllerBase
 {
     private readonly ILessonService _lessonService;
@@ -68,6 +68,25 @@ public class LessonController : ControllerBase
         }
     }
 
+    [HttpPatch("materials/{materialId}/remove")]
+    public async Task<IActionResult> RemoveMaterial(int materialId)
+    {
+        try
+        {
+            var instructorId = GetInstructorId();
+            await _lessonService.RemoveMaterialAsync(materialId, instructorId);
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Material removed successfully."));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteLesson(int id)
     {
@@ -80,6 +99,63 @@ public class LessonController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
+    [HttpGet("materials/trash")]
+    public async Task<IActionResult> GetTrashMaterials()
+    {
+        try
+        {
+            var instructorId = GetInstructorId();
+            var result = await _lessonService.GetTrashMaterialsAsync(instructorId);
+            return Ok(ApiResponse<object>.SuccessResponse(result, "Trash materials retrieved successfully."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
+    [HttpDelete("materials/{materialId}/permanent")]
+    public async Task<IActionResult> PermanentDeleteMaterial(int materialId)
+    {
+        try
+        {
+            var instructorId = GetInstructorId();
+            await _lessonService.PermanentDeleteMaterialAsync(materialId, instructorId);
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Material permanently deleted."));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
+    [HttpPost("materials/{materialId}/restore")]
+    public async Task<IActionResult> RestoreMaterial(int materialId)
+    {
+        try
+        {
+            var instructorId = GetInstructorId();
+            await _lessonService.RestoreMaterialAsync(materialId, instructorId);
+            return Ok(ApiResponse<object>.SuccessResponse(null, "Material restored successfully."));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {

@@ -15,12 +15,18 @@ public class CourseService : ICourseService
     private readonly ICourseRepository _courseRepository;
     private readonly IInstructorRepository _instructorRepository;
     private readonly IFileUploadService _uploadService;
+    private readonly IMaterialRepository _materialRepository;
+    private readonly ILessonRepository _lessonRepository;
+    private readonly IRedisService _redisService;
 
-    public CourseService(ICourseRepository courseRepository, IInstructorRepository instructorRepository, IFileUploadService uploadService)
+    public CourseService(ICourseRepository courseRepository, IInstructorRepository instructorRepository, IFileUploadService uploadService, IMaterialRepository materialRepository, ILessonRepository lessonRepository, IRedisService redisService)
     {
         _courseRepository = courseRepository;
         _instructorRepository = instructorRepository;
         _uploadService = uploadService;
+        _materialRepository = materialRepository;
+        _lessonRepository = lessonRepository;
+        _redisService = redisService;
     }
 
     public async Task<IEnumerable<CourseResponse>> GetAllPublishedCoursesAsync(int? userId = null)
@@ -111,64 +117,86 @@ public class CourseService : ICourseService
 
     public async Task<CourseDetailResponse?> GetCourseWithDetailsAsync(int courseId, int instructorId, int? userId = null)
     {
-        var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
-        if (course == null) return null;
+        string cacheKey = $"course:detail:{courseId}";
+        var response = await _redisService.GetCacheAsync<CourseDetailResponse>(cacheKey);
 
-        var courseStats = await _courseRepository.GetCourseStatsAsync(courseId);
-        var instructorStats = course.InstructorId.HasValue 
-            ? await _instructorRepository.GetStatsAsync(course.InstructorId.Value) 
-            : null;
-
-        var response = new CourseDetailResponse
+        if (response == null)
         {
-            CourseId = course.CourseId,
-            InstructorId = course.InstructorId,
-            CategoryId = course.CategoryId,
-            Title = course.Title,
-            Description = course.Description,
-            Price = course.Price,
-            CourseThumbnailUrl = course.CourseThumbnailUrl,
-            CourseStatus = course.CourseStatus,
-            CreatedAt = course.CreatedAt,
-            UpdatedAt = course.UpdatedAt,
-            WhatYouWillLearn = course.WhatYouWillLearn,
-            Requirements = course.Requirements,
-            CategoryName = course.Category?.CategoriesName,
-            InstructorName = course.Instructor?.InstructorNavigation?.FullName ?? "Unknown Instructor",
-            InstructorAvatarUrl = course.Instructor?.InstructorNavigation?.UserNavigation?.AvatarUrl,
-            InstructorBio = course.Instructor?.InstructorNavigation?.Bio,
-            InstructorProfessionalTitle = course.Instructor?.ProfessionalTitle,
-            InstructorCoursesCount = course.Instructor?.Courses?.Count ?? 0,
-            InstructorReviewCount = 0, 
-            InstructorStudentsCount = instructorStats?.TotalStudentsCount ?? 0,
-            TotalStudents = courseStats?.TotalStudents ?? 0,
-            TotalReviews = courseStats?.TotalReviews ?? 0,
-            RatingAverage = (decimal)(courseStats?.RatingAverage ?? 0),
-            IsEnrolled = userId.HasValue && await _courseRepository.IsEnrolledAsync(userId.Value, courseId),
-            IsOwner = userId.HasValue && course.InstructorId == userId.Value,
-            Lessons = course.Lessons.Select(l => new LessonResponse
+            var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
+            if (course == null) return null;
+
+            var courseStats = await _courseRepository.GetCourseStatsAsync(courseId);
+            var instructorStats = course.InstructorId.HasValue 
+                ? await _instructorRepository.GetStatsAsync(course.InstructorId.Value) 
+                : null;
+
+            response = new CourseDetailResponse
             {
-                LessonId = l.LessonId,
-                CourseId = l.CourseId,
-                Title = l.Title,
-                Description = l.Description,
-                ThumbnailUrl = l.ThumbnailUrl,
-                CreatedAt = l.CreatedAt,
-                UpdatedAt = l.UpdatedAt,
-                LessonStatus = l.LessonStatus,
-                LearningMaterials = l.LearningMaterials.Select(m => new MaterialResponse
+                CourseId = course.CourseId,
+                InstructorId = course.InstructorId,
+                CategoryId = course.CategoryId,
+                Title = course.Title,
+                Description = course.Description,
+                Price = course.Price,
+                CourseThumbnailUrl = course.CourseThumbnailUrl,
+                CourseStatus = course.CourseStatus,
+                CreatedAt = course.CreatedAt,
+                UpdatedAt = course.UpdatedAt,
+                WhatYouWillLearn = course.WhatYouWillLearn,
+                Requirements = course.Requirements,
+                CategoryName = course.Category?.CategoriesName,
+                InstructorName = course.Instructor?.InstructorNavigation?.FullName ?? "Unknown Instructor",
+                InstructorAvatarUrl = course.Instructor?.InstructorNavigation?.UserNavigation?.AvatarUrl,
+                InstructorBio = course.Instructor?.InstructorNavigation?.Bio,
+                InstructorProfessionalTitle = course.Instructor?.ProfessionalTitle,
+                InstructorCoursesCount = course.Instructor?.Courses?.Count ?? 0,
+                InstructorReviewCount = 0, 
+                InstructorStudentsCount = instructorStats?.TotalStudentsCount ?? 0,
+                TotalStudents = courseStats?.TotalStudents ?? 0,
+                TotalReviews = courseStats?.TotalReviews ?? 0,
+                RatingAverage = (decimal)(courseStats?.RatingAverage ?? 0),
+                LastApprovedAt = course.LastApprovedAt,
+                Lessons = course.Lessons.Select(l => new LessonResponse
                 {
-                    MaterialId = m.MaterialId,
-                    LessonId = m.LessonId,
-                    Title = m.Title,
-                    Description = m.Description,
-                    MaterialUrl = m.MaterialUrl,
-                    MaterialMetadata = m.MaterialMetadata,
-                    CreatedAt = m.CreatedAt,
-                    UpdatedAt = m.UpdatedAt
+                    LessonId = l.LessonId,
+                    CourseId = l.CourseId,
+                    Title = l.Title,
+                    Description = l.Description,
+                    ThumbnailUrl = l.ThumbnailUrl,
+                    CreatedAt = l.CreatedAt,
+                    UpdatedAt = l.UpdatedAt,
+                    LessonStatus = l.LessonStatus,
+                    LearningMaterials = l.LearningMaterials.Select(m => new MaterialResponse
+                    {
+                        MaterialId = m.MaterialId,
+                        LessonId = m.LessonId,
+                        Title = m.Title,
+                        Description = m.Description,
+                        MaterialUrl = m.MaterialUrl,
+                        MaterialMetadata = m.MaterialMetadata,
+                        CreatedAt = m.CreatedAt,
+                        UpdatedAt = m.UpdatedAt,
+                        LearningStatus = m.LearningStatus,
+                        ModerationFeedback = m.ModerationFeedback
+                    }).ToList()
                 }).ToList()
-            }).ToList()
-        };
+            };
+
+            await _redisService.SetCacheAsync(cacheKey, response, TimeSpan.FromHours(1));
+        }
+
+        // Cập nhật thông tin định danh riêng cho từng User (Không cache phần này)
+        if (userId.HasValue)
+        {
+            response.IsOwner = response.InstructorId == userId.Value;
+            // Bypass: Nếu là chủ sở hữu thì luôn coi như đã ghi danh
+            response.IsEnrolled = response.IsOwner || await _courseRepository.IsEnrolledAsync(userId.Value, courseId);
+        }
+        else
+        {
+            response.IsEnrolled = false;
+            response.IsOwner = false;
+        }
 
         return response;
     }
@@ -182,9 +210,21 @@ public class CourseService : ICourseService
             throw new BadRequestException("You must be an approved instructor to create a course.");
         }
 
-        // ★ Nếu chưa hoàn tất Stripe → ép giá = 0 (chỉ tạo khóa free)
+        // ★ Limit: Max 2 courses for unlinked Stripe
         var isStripeActive = !string.IsNullOrEmpty(instructor.StripeAccountId)
             && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+
+        if (!isStripeActive)
+        {
+            var instructorCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
+            if (instructorCourses.Count(c => !c.IsRemoved) >= 2)
+            {
+                throw new BadRequestException("Instructor chưa liên kết Stripe chỉ được phép tạo tối đa 2 khóa học.");
+            }
+        }
+
+
+        // ★ Nếu chưa hoàn tất Stripe → ép giá = 0 (chỉ tạo khóa free)
         var coursePrice = isStripeActive ? request.Price : 0m;
 
         string? thumbnailUrl = request.CourseThumbnailUrl;
@@ -242,6 +282,15 @@ public class CourseService : ICourseService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to modify this course.");
 
+        // ★ Block updates if course is archived by moderation (3+ flags)
+        if (string.Equals(course.CourseStatus, "archived", StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
+        {
+            throw new BadRequestException("Khóa học đã bị ngừng kinh doanh vĩnh viễn do vi phạm chính sách và không thể chỉnh sửa.");
+        }
+
+        if (course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cannot modify course while it is pending review.");
+
         string? thumbnailUrl = request.CourseThumbnailUrl ?? course.CourseThumbnailUrl;
 
         if (request.ThumbnailFile != null)
@@ -269,16 +318,19 @@ public class CourseService : ICourseService
         course.Requirements = request.Requirements;
         course.UpdatedAt = DateTime.UtcNow;
 
-        // Nếu khóa học đang ở trạng thái Published, chuyển về Pending để kiểm duyệt lại
+        // Nếu khóa học đang ở trạng thái Published, chuyển về Draft để sửa
         if (course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
         {
-            course.CourseStatus = "pending";
+            course.CourseStatus = "draft";
             // Tùy chọn: Xóa feedback cũ khi có thay đổi mới
             course.ModerationFeedback = null;
         }
 
         _courseRepository.Update(course);
         await _courseRepository.SaveChangesAsync();
+
+        // Invalidate Cache
+        await _redisService.RemoveCacheAsync($"course:detail:{course.CourseId}");
 
         return new CourseResponse
         {
@@ -306,6 +358,12 @@ public class CourseService : ICourseService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to modify this course.");
 
+        // ★ Block status changes if course is archived by moderation (3+ flags)
+        if (string.Equals(course.CourseStatus, "archived", StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
+        {
+            throw new BadRequestException("Khóa học đã bị ngừng kinh doanh vĩnh viễn do vi phạm chính sách và không thể thay đổi trạng thái.");
+        }
+
         // Instructor chỉ được gửi yêu cầu duyệt (pending) hoặc ẩn khóa học (archived)
         // Việc chuyển sang "published" chỉ được phép nếu khóa học đang ở trạng thái "archived" (Unhide)
         // Các trường hợp khác để lên "published" phải qua Admin
@@ -322,8 +380,71 @@ public class CourseService : ICourseService
         course.CourseStatus = status.ToLower();
         course.UpdatedAt = DateTime.UtcNow;
 
+        if (status.Equals("pending", StringComparison.OrdinalIgnoreCase))
+        {
+            // ★ Limit: Total Video Duration
+            var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+            var isStripeActive = instructor != null
+                && !string.IsNullOrEmpty(instructor.StripeAccountId)
+                && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+
+            var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
+            int totalDurationSeconds = 0;
+            foreach (var lesson in lessons.Where(l => !l.IsRemoved))
+            {
+                foreach (var material in lesson.LearningMaterials.Where(m => m.LearningStatus != "removed" && (m.MaterialMetadata?.FileType == "video" || m.MaterialMetadata == null)))
+                {
+                    totalDurationSeconds += material.MaterialMetadata?.Duration ?? 0;
+                }
+            }
+
+            double totalMinutes = totalDurationSeconds / 60.0;
+
+            if (!isStripeActive && totalMinutes > 30)
+            {
+                throw new BadRequestException($"Tổng thời lượng video của khóa học hiện tại là {Math.Round(totalMinutes, 1)} phút. Instructor chưa liên kết Stripe chỉ được phép tối đa 30 phút.");
+            }
+            
+            bool isFreeCourse = course.Price == 0;
+            if (isFreeCourse && totalMinutes > 60)
+            {
+                throw new BadRequestException($"Tổng thời lượng video của khóa học miễn phí hiện tại là {Math.Round(totalMinutes, 1)} phút. Khóa học miễn phí chỉ được phép tối đa 60 phút.");
+            }
+
+            // Clear moderation feedback when resubmitting
+
+            course.ModerationFeedback = null;
+            
+            var materials = await _materialRepository.GetByCourseIdAsync(courseId);
+            if (materials != null)
+            {
+                foreach (var material in materials)
+                {
+                    material.ModerationFeedback = null;
+                    if (material.LearningStatus == "rejected")
+                    {
+                        material.LearningStatus = "active";
+                    }
+                    _materialRepository.Update(material);
+                }
+            }
+
+            // Clear lesson status when resubmitting
+            lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
+            if (lessons != null)
+            {
+                foreach (var lesson in lessons)
+                {
+                    lesson.LessonStatus = "active";
+                    _lessonRepository.Update(lesson);
+                }
+            }
+        }
         _courseRepository.Update(course);
         await _courseRepository.SaveChangesAsync();
+
+        // Invalidate Cache
+        await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
     }
 
     public async Task DeleteCourseAsync(int courseId, int instructorId)
@@ -335,12 +456,29 @@ public class CourseService : ICourseService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to delete this course.");
 
+        if (course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cannot delete course while it is pending review.");
+
         var hasEnrollments = await _courseRepository.HasEnrollmentsAsync(courseId);
         if (hasEnrollments)
             throw new BadRequestException("Cannot delete a course with active students. Please archive it instead.");
 
-        _courseRepository.Delete(course);
+        course.IsRemoved = true;
+        course.UpdatedAt = DateTime.UtcNow;
+
+        // Optional: Soft delete all lessons in the course as well
+        var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
+        foreach (var lesson in lessons)
+        {
+            lesson.IsRemoved = true;
+            lesson.UpdatedAt = DateTime.UtcNow;
+            _lessonRepository.Update(lesson);
+        }
+        _courseRepository.Update(course);
         await _courseRepository.SaveChangesAsync();
+
+        // Invalidate Cache
+        await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
     }
 
     public async Task<IEnumerable<CategoryResponse>> GetCategoriesAsync()

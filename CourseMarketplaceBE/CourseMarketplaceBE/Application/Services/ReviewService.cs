@@ -14,12 +14,18 @@ public class ReviewService : IReviewService
     private readonly IReviewRepository _reviewRepo;
     private readonly ICheckoutRepository _checkoutRepo;
     private readonly ICourseRepository _courseRepo;
+    private readonly INotificationService _notificationService;
 
-    public ReviewService(IReviewRepository reviewRepo, ICheckoutRepository checkoutRepo, ICourseRepository courseRepo)
+    public ReviewService(
+        IReviewRepository reviewRepo, 
+        ICheckoutRepository checkoutRepo, 
+        ICourseRepository courseRepo,
+        INotificationService notificationService)
     {
         _reviewRepo = reviewRepo;
         _checkoutRepo = checkoutRepo;
         _courseRepo = courseRepo;
+        _notificationService = notificationService;
     }
 
     // ── Helper: Kiểm tra user có phải instructor sở hữu khóa học ───────
@@ -143,20 +149,20 @@ public class ReviewService : IReviewService
     {
         bool isOwner = await IsOwnerAsync(userId, courseId);
 
-        // Nếu là chủ nhân → auto-enroll nếu chưa có
+        // Nếu là chủ nhân → bypass, không tạo record DB khi chỉ xem status
         if (isOwner)
         {
-            var ownerEnrollment = await GetOrCreateOwnerEnrollmentAsync(userId, courseId);
-            var hasReviewed = (await _reviewRepo.GetCourseReviewByEnrollmentAsync(ownerEnrollment.EnrollmentId)) != null;
+            var ownerEnrollment = await _checkoutRepo.GetEnrollmentWithProgressAsync(userId, courseId);
+            bool hasReviewed = ownerEnrollment != null && (await _reviewRepo.GetCourseReviewByEnrollmentAsync(ownerEnrollment.EnrollmentId)) != null;
 
             return new EnrollmentStatusResponse
             {
-                IsEnrolled = true,
+                IsEnrolled = true, // Bypass: Luôn coi như đã ghi danh
                 IsCompleted = true,
                 ProgressPercentage = 100,
                 LearnedMaterialCount = 0,
                 TotalMaterialCount = 0,
-                CanReview = true, // Chủ nhân luôn được review
+                CanReview = true, 
                 ReviewBlockedReason = null,
                 HasReviewed = hasReviewed,
                 IsOwner = true
@@ -178,7 +184,7 @@ public class ReviewService : IReviewService
 
         var stats = await _courseRepo.GetCourseStatsAsync(courseId);
         var totalMaterials = stats?.TotalMaterials ?? 0;
-        var learnedCount = enrollment.Progress?.LearnedMaterialCount ?? 0;
+        var learnedCount = await _checkoutRepo.GetCompletedMaterialCountAsync(enrollment.EnrollmentId);
         var pct = totalMaterials > 0 ? (double)learnedCount / totalMaterials * 100 : 0;
         var isCompleted = enrollment.IsCompleted == true;
 
@@ -224,7 +230,7 @@ public class ReviewService : IReviewService
             }
             else
             {
-                var learnedCount = enrollment.Progress?.LearnedMaterialCount ?? 0;
+                var learnedCount = await _checkoutRepo.GetCompletedMaterialCountAsync(enrollment.EnrollmentId);
                 if (learnedCount <= 0)
                     throw new InvalidOperationException("Bạn cần học ít nhất 1 bài học trước khi đánh giá.");
             }
@@ -293,6 +299,21 @@ public class ReviewService : IReviewService
         }
 
         await _reviewRepo.SaveChangesAsync();
+
+        // ── Thông báo cho instructor (nếu không phải instructor tự đánh giá) ──
+        if (!isOwner)
+        {
+            var course = await _courseRepo.GetByIdAsync(request.CourseId);
+            if (course != null && course.InstructorId.HasValue)
+            {
+                await _notificationService.SendNotificationAsync(
+                    course.InstructorId.Value,
+                    "Đánh giá mới",
+                    $"Khóa học '{course.Title}' vừa nhận được đánh giá {request.Rating} sao từ học viên.",
+                    $"/InstructorCourse/Editor?id={request.CourseId}"
+                );
+            }
+        }
     }
 
     public async Task ReportReviewAsync(int userId, int reviewId, string type, string reason)

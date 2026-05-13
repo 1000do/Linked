@@ -114,7 +114,29 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .FirstOrDefaultAsync();
 
         public async Task<InstructorStats?> GetStatsAsync(int userId)
-            => await _context.InstructorStats.FirstOrDefaultAsync(s => s.InstructorId == userId);
+        {
+            var stats = await _context.InstructorStats.FirstOrDefaultAsync(s => s.InstructorId == userId);
+            if (stats != null)
+            {
+                // Check if instructor is enrolled in any of their own courses
+                var instructorOwnCourseIds = await _context.Courses
+                    .Where(c => c.InstructorId == userId)
+                    .Select(c => c.CourseId)
+                    .ToListAsync();
+                
+                if (instructorOwnCourseIds.Any())
+                {
+                    var isEnrolledInAny = await _context.Enrollments
+                        .AnyAsync(e => e.UserId == userId && e.CourseId.HasValue && instructorOwnCourseIds.Contains(e.CourseId.Value));
+                    
+                    if (isEnrolledInAny)
+                    {
+                        stats.TotalStudentsCount = Math.Max(0, stats.TotalStudentsCount - 1);
+                    }
+                }
+            }
+            return stats;
+        }
 
         public async Task<int> CountActiveCoursesAsync(int instructorId)
             => await _context.Courses.CountAsync(c => c.InstructorId == instructorId && c.CourseStatus == "published");

@@ -2,6 +2,7 @@ using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,17 +16,20 @@ public class ChatService : IChatService
     private readonly IUserRepository _userRepository;
     private readonly ICourseRepository _courseRepository;
     private readonly IRedisService _redisService;
+    private readonly IConfiguration _configuration;
 
     public ChatService(
         IChatRepository chatRepository, 
         IUserRepository userRepository,
         ICourseRepository courseRepository,
-        IRedisService redisService)
+        IRedisService redisService,
+        IConfiguration configuration)
     {
         _chatRepository = chatRepository;
         _userRepository = userRepository;
         _courseRepository = courseRepository;
         _redisService = redisService;
+        _configuration = configuration;
     }
 
     public async Task<List<ChatListDto>> GetMyChatsAsync(int accountId)
@@ -84,7 +88,15 @@ public class ChatService : IChatService
             MessageStatus = m.MessageStatus,
             SentAt = m.SentAt,
             SenderName = m.Sender?.User?.FullName ?? m.Sender?.Manager?.DisplayName ?? m.Sender?.Email ?? "Unknown",
-            SenderAvatar = m.Sender?.AvatarUrl
+            SenderAvatar = m.Sender?.AvatarUrl,
+            Attachments = m.Attachments.Select(a => new AttachmentDto
+            {
+                AttachmentId = a.AttachmentId,
+                FileUrl = a.FileUrl,
+                FileName = a.FileName,
+                FileType = a.FileType,
+                FileSize = a.FileSize
+            }).ToList()
         }).ToList();
     }
 
@@ -108,6 +120,19 @@ public class ChatService : IChatService
             MessageStatus = "ok"
         };
 
+        // DLC Attachment Logic
+        if (_configuration.GetValue<bool>("ChatSettings:EnableAttachments") && dto.Attachments != null && dto.Attachments.Any())
+        {
+            message.Attachments = dto.Attachments.Select(a => new MessageAttachment
+            {
+                FileUrl = a.FileUrl,
+                FileName = a.FileName,
+                FileType = a.FileType,
+                FileSize = a.FileSize,
+                CreatedAt = DateTime.Now
+            }).ToList();
+        }
+
         await _chatRepository.AddMessageAsync(message);
 
         // Cập nhật Redis cho các người nhận
@@ -117,8 +142,15 @@ public class ChatService : IChatService
             chat.LastMessageAt = message.SentAt;
             await _chatRepository.UpdateChatAsync(chat);
 
-            // Giả sử lấy list participants để tăng unread trong Redis
-            // (Trong thực tế nên dùng Repository để lấy list ID nhanh hơn)
+            // Tăng unread count trong Redis cho các người nhận
+            var participantIds = await _chatRepository.GetParticipantIdsAsync(dto.ChatId);
+            foreach (var accountId in participantIds)
+            {
+                if (accountId != senderId)
+                {
+                    await _redisService.IncrementUnreadCountAsync(accountId, dto.ChatId);
+                }
+            }
         }
 
         // Lấy thông tin sender để trả về DTO đầy đủ
@@ -133,7 +165,15 @@ public class ChatService : IChatService
             SentAt = message.SentAt,
             MessageStatus = message.MessageStatus,
             SenderName = sender?.User?.FullName ?? sender?.Manager?.DisplayName ?? sender?.Email ?? "Unknown",
-            SenderAvatar = sender?.AvatarUrl
+            SenderAvatar = sender?.AvatarUrl,
+            Attachments = message.Attachments.Select(a => new AttachmentDto
+            {
+                AttachmentId = a.AttachmentId,
+                FileUrl = a.FileUrl,
+                FileName = a.FileName,
+                FileType = a.FileType,
+                FileSize = a.FileSize
+            }).ToList()
         };
     }
 
@@ -193,7 +233,7 @@ public class ChatService : IChatService
         if (await _chatRepository.IsParticipantAsync(chatId, accountId)) return true;
 
         var role = await _userRepository.GetRoleByAccountIdAsync(accountId);
-        if (role == "manager") // Kiểm tra Admin/Staff có đang xử lý report không
+        if (role == "admin" || role == "staff")
         {
              return await _chatRepository.HasActiveReportForChatAsync(chatId);
         }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CourseMarketplaceBE.Presentation.Controllers
 {
-    [Authorize(Roles = "admin,manager")] // Manager role as Admin
+    [Authorize(Roles = "admin,staff")]
     [ApiController]
     [Route("api/admin/moderation")]
     public class AdminModerationController : ControllerBase
@@ -19,9 +19,9 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpGet("courses/pending")]
-        public async Task<IActionResult> GetPendingCourses()
+        public async Task<IActionResult> GetPendingCourses([FromQuery] ModerationFilterDto filter)
         {
-            return Ok(await _moderationService.GetPendingCoursesAsync());
+            return Ok(await _moderationService.GetPendingCoursesAsync(filter));
         }
 
         [HttpPost("courses/approve/{id}")]
@@ -35,6 +35,13 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         public async Task<IActionResult> RejectCourse(int id, [FromBody] string reason)
         {
             var result = await _moderationService.RejectCourseAsync(id, reason);
+            return result ? Ok() : NotFound();
+        }
+
+        [HttpPost("courses/reject-detailed")]
+        public async Task<IActionResult> RejectCourseDetailed([FromBody] RejectCourseDetailedRequest request)
+        {
+            var result = await _moderationService.RejectCourseDetailedAsync(request);
             return result ? Ok() : NotFound();
         }
 

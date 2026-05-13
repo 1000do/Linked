@@ -48,4 +48,15 @@ namespace CourseMarketplaceFE.Models
         public string? SearchTerm { get; set; }
         public string? FilterStatus { get; set; }
     }
+
+    public class MaterialTrashViewModel
+    {
+        public int MaterialId { get; set; }
+        public string Title { get; set; } = null!;
+        public string? LessonTitle { get; set; }
+        public string? CourseTitle { get; set; }
+        public DateTime? DeletedAt { get; set; }
+        public string? FileType { get; set; }
+        public string? CloudPublicId { get; set; }
+    }
 }

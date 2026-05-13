@@ -113,7 +113,10 @@
                 {
                     <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></span>
                 }
-                <span class="material-symbols-outlined text-[20px]">notifications</span>
+                <div class="relative">
+                    <span class="material-symbols-outlined text-[20px]">notifications</span>
+                    <span id="sidebar-noti-badge" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                </div>
                 <span class="text-sm @(isNotifications ? "font-bold" : "font-semibold")">Notifications</span>
             </a>
 
@@ -126,7 +129,10 @@
                 {
                     <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></span>
                 }
-                <span class="material-symbols-outlined text-[20px]">chat_bubble</span>
+                <div class="relative">
+                    <span class="material-symbols-outlined text-[20px]">chat_bubble</span>
+                    <span id="sidebar-msg-badge" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                </div>
                 <span class="text-sm @(isChat ? "font-bold" : "font-semibold")">Messages</span>
             </a>
             
@@ -157,17 +163,15 @@
                 var avatarUrl = Context.Request.Cookies["AvatarUrl"];
             }
             <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-colors">
-                <a asp-controller="Account" asp-action="Profile"
-                   class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 shrink-0 shadow-sm hover:border-primary transition-all">
-                    @if (!string.IsNullOrEmpty(avatarUrl) && avatarUrl != "null")
-                    {
-                        <img class="w-full h-full object-cover" src="@avatarUrl" alt="User avatar"
-                             onerror="this.src='https://ui-avatars.com/api/?name=@Uri.EscapeDataString(userName)&background=006a62&color=fff'" />
-                    }
-                    else
-                    {
-                        <img class="w-full h-full object-cover" src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(userName)&background=006a62&color=fff" alt="Default avatar" />
-                    }
+                <a asp-controller="Account" asp-action="Profile" class="hover:scale-105 transition-all">
+                    @await Html.PartialAsync("_UserAvatar", new { 
+                        Url = avatarUrl, 
+                        Role = "instructor", 
+                        Name = userName, 
+                        Size = "md",
+                        ShowFrame = true,
+                        FrameUrl = ""
+                    })
                 </a>
                 <div class="flex flex-col flex-1 overflow-hidden">
                     <span class="text-xs font-bold text-slate-700 truncate">Chào, @userName</span>
@@ -219,19 +223,18 @@
             .withAutomaticReconnect()
             .build();
 
-                connection.on("ReceiveNotification", function (noti) {
-            // 1. Hiện chấm đỏ ở chuông (giữ nguyên của bạn)
+        connection.on("ReceiveNotification", function (noti) {
+            // 1. Hiện chấm đỏ ở chuông
             const badge = document.getElementById('noti-badge');
             if(badge) badge.classList.remove('hidden');
 
-            // 2. Cập nhật danh sách nhỏ ở chuông (giữ nguyên của bạn)
+            // 2. Cập nhật danh sách nhỏ ở chuông
             if (typeof loadTopNotifications === "function") loadTopNotifications();
 
             // 3. KIỂM TRA: Nếu trang hiện tại có hàm prependNotification thì gọi nó ngay
             if (typeof prependNotification === "function") {
                 prependNotification(noti);
             }
-            // Nếu không có prependNotification thì mới gọi các hàm cũ của bạn
             else {
                 const path = window.location.pathname.toLowerCase();
                 if (path.includes("/notification/admin")) {
@@ -240,9 +243,58 @@
                     if (typeof loadNotifications === "function") loadNotifications();
                 }
             }
+
+            // 4. Cập nhật Sidebar badge
+            loadUnreadSummary();
+        });
+
+        // Thêm SignalR cho Chat để cập nhật Message badge
+        const chatConnection = new signalR.HubConnectionBuilder()
+            .withUrl("http://localhost:5207/chatHub", {
+                accessTokenFactory: () => LAYOUT_TOKEN
+            })
+            .withAutomaticReconnect()
+            .build();
+
+        chatConnection.on("ReceiveMessage", function() {
+            loadUnreadSummary();
         });
 
         connection.start().catch(err => console.error("SignalR Error: ", err));
+        chatConnection.start().catch(err => console.error("Chat SignalR Error: ", err));
+
+        async function loadUnreadSummary() {
+            if (!LAYOUT_TOKEN) return;
+            try {
+                const response = await fetch("http://localhost:5207/api/Notification/unread-summary", {
+                    headers: { 'Authorization': `Bearer ${LAYOUT_TOKEN}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Cập nhật Sidebar Notification Badge
+                    const sidebarNotiBadge = document.getElementById('sidebar-noti-badge');
+                    if (sidebarNotiBadge) {
+                        if (data.notificationCount > 0) sidebarNotiBadge.classList.remove('hidden');
+                        else sidebarNotiBadge.classList.add('hidden');
+                    }
+
+                    // Cập nhật Sidebar Message Badge
+                    const sidebarMsgBadge = document.getElementById('sidebar-msg-badge');
+                    if (sidebarMsgBadge) {
+                        if (data.chatCount > 0) sidebarMsgBadge.classList.remove('hidden');
+                        else sidebarMsgBadge.classList.add('hidden');
+                    }
+
+                    // Cập nhật Header chuông badge (nếu có)
+                    const headerNotiBadge = document.getElementById('noti-badge');
+                    if (headerNotiBadge) {
+                        if (data.notificationCount > 0) headerNotiBadge.classList.remove('hidden');
+                        else headerNotiBadge.classList.add('hidden');
+                    }
+                }
+            } catch (err) { console.error("Summary error:", err); }
+        }
 
         async function loadTopNotifications() {
             const container = document.getElementById('notification-items-container');
@@ -291,7 +343,10 @@
             }
         }
 
-        document.addEventListener("DOMContentLoaded", loadTopNotifications);
+        document.addEventListener("DOMContentLoaded", () => {
+            loadTopNotifications();
+            loadUnreadSummary();
+        });
     </script>
 </body>
 </html>

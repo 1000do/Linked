@@ -34,4 +34,6 @@ public partial class Enrollment
     public virtual ICollection<LessonReview> LessonReviews { get; set; } = new List<LessonReview>();
 
     public virtual User? User { get; set; }
+
+    public virtual ICollection<MaterialCompletion> MaterialCompletions { get; set; } = new List<MaterialCompletion>();
 }

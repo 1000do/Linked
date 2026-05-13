@@ -306,6 +306,23 @@ namespace CourseMarketplaceFE.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
+        // ─── REMOVE LESSON (AJAX) ────────────────────────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> RemoveLesson([FromForm] int lessonId)
+        {
+            try
+            {
+                var resp = await _api.DeleteAsync($"lessons/{lessonId}");
+                if (resp.IsSuccessStatusCode)
+                    return Json(new { success = true });
+                var error = await resp.Content.ReadAsStringAsync();
+                return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
         // ─── ADD MATERIAL (AJAX) ──────────────────────────────────────────
         [HttpPost]
         public async Task<IActionResult> AddMaterial([FromForm] int lessonId, [FromForm] string title, [FromForm] string description, [FromForm] string materialUrl, [FromForm] string type, [FromForm] int? duration, [FromForm] long? fileSize, [FromForm] string? fileExtension)
@@ -334,6 +351,23 @@ namespace CourseMarketplaceFE.Controllers
                     var newStatus = data.TryGetProperty("courseStatus", out var s) ? s.GetString() : null;
                     return Json(new { success = true, data = data.Clone(), status = newStatus });
                 }
+                var error = await resp.Content.ReadAsStringAsync();
+                return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+        // ─── REMOVE MATERIAL (soft-delete, AJAX) ─────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> RemoveMaterial([FromForm] int materialId)
+        {
+            try
+            {
+                var resp = await _api.PatchAsync($"lessons/materials/{materialId}/remove");
+                if (resp.IsSuccessStatusCode)
+                    return Json(new { success = true });
                 var error = await resp.Content.ReadAsStringAsync();
                 return Json(new { success = false, message = error });
             }
@@ -469,5 +503,62 @@ namespace CourseMarketplaceFE.Controllers
             ViewBag.TransferRate = 70.00m;
         }
 
+        // ─── TRASH VIEW ──────────────────────────────────────────────────
+        public async Task<IActionResult> Trash()
+        {
+            try
+            {
+                var resp = await _api.GetAsync("lessons/materials/trash");
+                if (resp.IsSuccessStatusCode)
+                {
+                    var json = await resp.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    var data = doc.RootElement.GetProperty("data");
+                    
+                    var materials = JsonSerializer.Deserialize<List<MaterialTrashViewModel>>(data.GetRawText(), _jsonOpts);
+                    return View(materials);
+                }
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = "Failed to load trash: " + ex.Message;
+            }
+            return View(new List<MaterialTrashViewModel>());
+        }
+
+        // ─── PERMANENT DELETE MATERIAL (AJAX) ────────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> PermanentDeleteMaterial(int materialId)
+        {
+            try
+            {
+                var resp = await _api.DeleteAsync($"lessons/materials/{materialId}/permanent");
+                if (resp.IsSuccessStatusCode)
+                    return Json(new { success = true });
+                var error = await resp.Content.ReadAsStringAsync();
+                return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+        // ─── RESTORE MATERIAL (AJAX) ─────────────────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> RestoreMaterial(int materialId)
+        {
+            try
+            {
+                var resp = await _api.PostAsync($"lessons/materials/{materialId}/restore");
+                if (resp.IsSuccessStatusCode)
+                    return Json(new { success = true });
+                var error = await resp.Content.ReadAsStringAsync();
+                return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
     }
 }

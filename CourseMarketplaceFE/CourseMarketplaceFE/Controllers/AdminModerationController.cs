@@ -17,9 +17,24 @@ namespace CourseMarketplaceFE.Controllers
             _apiClient = apiClient;
         }
 
-        public async Task<IActionResult> Courses()
+        public async Task<IActionResult> Courses(string? search, string? category, string? status, string? sortBy)
         {
-            var response = await _apiClient.GetAsync("/api/admin/moderation/courses/pending");
+            ViewBag.Search = search;
+            ViewBag.Category = category;
+            ViewBag.Status = status ?? "all";
+            ViewBag.SortBy = sortBy ?? "oldest";
+
+            // Fetch categories
+            var catRes = await _apiClient.GetAsync("/api/public/categories");
+            if (catRes.IsSuccessStatusCode)
+            {
+                var catContent = await catRes.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(catContent);
+                ViewBag.Categories = json.RootElement.GetProperty("data").ToString();
+            }
+
+            var url = $"/api/admin/moderation/courses/pending?search={search}&category={category}&status={status}&sortBy={sortBy}";
+            var response = await _apiClient.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
@@ -48,6 +63,25 @@ namespace CourseMarketplaceFE.Controllers
         {
             var response = await _apiClient.PostJsonAsync($"/api/admin/moderation/courses/flag/{id}", reason);
             return Json(new { success = response.IsSuccessStatusCode });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RejectCourseDetailed([FromBody] System.Text.Json.JsonElement body)
+        {
+            var response = await _apiClient.PostJsonAsync("/api/admin/moderation/courses/reject-detailed", body);
+            return Json(new { success = response.IsSuccessStatusCode });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCourseDetails(int id)
+        {
+            var response = await _apiClient.GetAsync($"public/courses/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return Content(content, "application/json");
+            }
+            return Json(new { success = false });
         }
 
         public async Task<IActionResult> Reports()

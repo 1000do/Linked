@@ -40,6 +40,27 @@ public class MaterialRepository : IMaterialRepository
         _context.LearningMaterials.Remove(material);
     }
 
+    public async Task<List<LearningMaterial>> GetByCourseIdAsync(int courseId)
+    {
+        return await _context.LearningMaterials
+            .Include(m => m.Lesson)
+            .Where(m => m.Lesson != null && m.Lesson.CourseId == courseId)
+            .ToListAsync();
+    }
+
+    public async Task<List<LearningMaterial>> GetTrashMaterialsAsync(int instructorId)
+    {
+        return await _context.LearningMaterials
+            .IgnoreQueryFilters() // Important: fetch even if Lesson/Course is soft-deleted
+            .Include(m => m.Lesson)
+                .ThenInclude(l => l!.Course)
+            .Where(m => m.LearningStatus == "removed" 
+                   && m.Lesson != null 
+                   && m.Lesson.Course != null 
+                   && m.Lesson.Course.InstructorId == instructorId)
+            .ToListAsync();
+    }
+
     public async Task SaveChangesAsync()
     {
         await _context.SaveChangesAsync();

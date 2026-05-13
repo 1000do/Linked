@@ -57,4 +57,6 @@ public partial class Course
     public string? Requirements { get; set; }
 
     public string? ModerationFeedback { get; set; }
+    public DateTime? LastApprovedAt { get; set; }
+    public bool IsRemoved { get; set; }
 }

@@ -7,9 +7,10 @@ namespace CourseMarketplaceBE.Application.IServices
     public interface IModerationService
     {
         // Khóa học
-        Task<List<CourseModerationDto>> GetPendingCoursesAsync();
+        Task<List<CourseModerationDto>> GetPendingCoursesAsync(ModerationFilterDto filter);
         Task<bool> ApproveCourseAsync(int courseId, string? feedback);
         Task<bool> RejectCourseAsync(int courseId, string reason);
+        Task<bool> RejectCourseDetailedAsync(RejectCourseDetailedRequest request);
         Task<bool> FlagCourseAsync(int courseId, string reason);
 
         // Khiếu nại

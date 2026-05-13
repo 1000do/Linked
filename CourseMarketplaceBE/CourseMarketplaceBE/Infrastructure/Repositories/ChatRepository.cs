@@ -43,6 +43,7 @@ public class ChatRepository : IChatRepository
                 .ThenInclude(a => a.User)
             .Include(m => m.Sender)
                 .ThenInclude(a => a.Manager)
+            .Include(m => m.Attachments)
             .OrderBy(m => m.SentAt)
             .ToListAsync();
     }
@@ -155,6 +156,14 @@ public class ChatRepository : IChatRepository
         return await _context.ChatParticipants
             .Where(p => p.AccountId == accountId)
             .SumAsync(p => p.UnreadCount);
+    }
+
+    public async Task<List<int>> GetParticipantIdsAsync(int chatId)
+    {
+        return await _context.ChatParticipants
+            .Where(p => p.ChatId == chatId)
+            .Select(p => p.AccountId)
+            .ToListAsync();
     }
 
     public async Task<List<UserReport>> GetAllReportsAsync()

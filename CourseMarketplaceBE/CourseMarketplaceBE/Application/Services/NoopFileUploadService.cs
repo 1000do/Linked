@@ -17,4 +17,34 @@ public class NoopFileUploadService : IFileUploadService
     {
         return Task.FromResult<string?>(null);
     }
+
+    public Task<bool> DeleteFileAsync(string fileUrl)
+    {
+        return Task.FromResult(true);
+    }
+
+    public Task<string?> MoveToTrashAsync(string fileUrl)
+    {
+        return Task.FromResult<string?>(null);
+    }
+
+    public string? GetPublicIdFromUrl(string fileUrl)
+    {
+        return null;
+    }
+
+    public Task<bool> DeleteFileByPublicIdAsync(string publicId, string resourceType)
+    {
+        return Task.FromResult(true);
+    }
+
+    public Task<string?> UploadFileAsync(IFormFile file)
+    {
+        return Task.FromResult<string?>(null);
+    }
+
+    public Task<string?> RestoreFromTrashAsync(string publicId, string resourceType)
+    {
+        return Task.FromResult<string?>(null);
+    }
 }

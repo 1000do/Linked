@@ -1,6 +1,7 @@
 @model LinkedLearn.Models.UserVM.UserProfileViewModel
 @{
     ViewData["Title"] = "My Profile";
+    var userRole = (Context.Request.Cookies["UserRole"] ?? "learner").ToLower();
 }
 
 <div class="max-w-7xl mx-auto px-6 lg:px-12 py-10">
@@ -30,11 +31,19 @@
             </div>
 
             <section class="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center gap-8">
-                <div class="relative">
-                    <div class="w-32 h-32 rounded-[2rem] overflow-hidden ring-4 ring-slate-50 shadow-lg">
-                        <img class="w-full h-full object-cover" src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? $"https://ui-avatars.com/api/?name={Model.FullName}&background=006a62&color=fff" : Model.AvatarUrl)" />
+                @await Html.PartialAsync("_UserAvatar", new { 
+                    Url = Model.AvatarUrl, 
+                    Role = userRole, 
+                    Name = Model.FullName, 
+                    Size = "2xl",
+                    ShowFrame = true,
+                    FrameUrl = ""
+                })
+                @if(userRole == "admin" || userRole == "staff") {
+                    <div class="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg animate-bounce z-20">
+                        PREMIUM FRAME
                     </div>
-                </div>
+                }
                 <div class="flex-grow text-center md:text-left">
                     <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
                         <div>
@@ -81,14 +90,59 @@
                         <p class="font-bold text-slate-700">@(Model.PhoneNumber ?? "Chưa cập nhật")</p>
                     </div>
                 </div>
-                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-                    <div class="bg-purple-50 p-3 rounded-2xl text-purple-600"><span class="material-symbols-outlined">calendar_today</span></div>
+            </div>
+
+            @* ── BỘ SƯU TẬP KHUNG AVATAR ────────────────────────── *@
+            <section class="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-sm border border-slate-100">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="bg-amber-100 p-3 rounded-2xl">
+                        <span class="material-symbols-outlined text-amber-600 text-xl">military_tech</span>
+                    </div>
                     <div>
-                        <p class="text-xs text-slate-400 font-bold uppercase">Ngày sinh</p>
-                        <p class="font-bold text-slate-700">@(Model.DateOfBirth?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")</p>
+                        <h3 class="text-xl font-extrabold text-slate-800">Khung Avatar & Thành tựu</h3>
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Thể hiện đẳng cấp của bạn</p>
                     </div>
                 </div>
-            </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                    <!-- Khung hiện tại -->
+                    <div class="relative p-4 rounded-3xl border-2 border-primary bg-primary/5 flex flex-col items-center gap-3">
+                        @await Html.PartialAsync("_UserAvatar", new { 
+                            Url = Model.AvatarUrl, 
+                            Role = userRole, 
+                            Name = Model.FullName, 
+                            Size = "xl",
+                            ShowFrame = true,
+                            FrameUrl = ""
+                        })
+                        <span class="text-[10px] font-extrabold text-primary uppercase mt-2">Đang dùng</span>
+                        <p class="text-xs font-bold text-slate-700">@userRole.ToUpper() Frame</p>
+                    </div>
+
+                    <!-- Khung khóa (Dành cho sự kiện) -->
+                    <div class="relative p-4 rounded-3xl border border-slate-100 bg-slate-50/50 opacity-60 flex flex-col items-center gap-3 group grayscale hover:grayscale-0 transition-all cursor-not-allowed">
+                        <div class="absolute inset-0 flex items-center justify-center z-10">
+                            <span class="material-symbols-outlined text-slate-400 group-hover:hidden">lock</span>
+                        </div>
+                        <div class="w-20 h-20 border-2 border-slate-100 rounded-2xl flex items-center justify-center bg-white">
+                            <span class="material-symbols-outlined text-slate-200 text-4xl">workspace_premium</span>
+                        </div>
+                        <span class="text-[10px] font-extrabold text-slate-400 uppercase">Chưa sở hữu</span>
+                        <p class="text-xs font-bold text-slate-500">Top Learner</p>
+                    </div>
+                    
+                    <div class="relative p-4 rounded-3xl border border-slate-100 bg-slate-50/50 opacity-60 flex flex-col items-center gap-3 group grayscale hover:grayscale-0 transition-all cursor-not-allowed">
+                        <div class="absolute inset-0 flex items-center justify-center z-10">
+                            <span class="material-symbols-outlined text-slate-400 group-hover:hidden">lock</span>
+                        </div>
+                        <div class="w-20 h-20 border-2 border-slate-100 rounded-2xl flex items-center justify-center bg-white">
+                            <span class="material-symbols-outlined text-slate-200 text-4xl">local_fire_department</span>
+                        </div>
+                        <span class="text-[10px] font-extrabold text-slate-400 uppercase">Chưa sở hữu</span>
+                        <p class="text-xs font-bold text-slate-500">7-Day Streak</p>
+                    </div>
+                </div>
+            </section>
 
             @* ── THÔNG TIN GIẢNG VIÊN ────────────────────────────── *@
             @if (Model.IsInstructor)
