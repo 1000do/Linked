@@ -80,7 +80,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
 
         public async Task AutoCleanupAdminNotificationsAsync()
         {
-            var cutoffDate = DateTime.UtcNow.AddDays(-30);
+            var cutoffDate = DateTime.UtcNow.AddDays(-90);
             var oldNotifications = await _context.Notifications
                 .Where(n => n.IsRead == true && n.CreatedAt < cutoffDate && n.IsRemoved != true)
                 .ToListAsync();
