@@ -237,7 +237,11 @@ public class CloudinaryUploadService : IFileUploadService
         {
             if (string.IsNullOrWhiteSpace(publicId)) return false;
 
-            var resType = resourceType.ToLower() == "video" ? ResourceType.Video : ResourceType.Image;
+            var resType = ResourceType.Image;
+            var typeLower = resourceType.ToLower();
+            if (typeLower == "video") resType = ResourceType.Video;
+            else if (typeLower == "raw" || typeLower == "document" || typeLower == "file") resType = ResourceType.Raw;
+
             var deletionParams = new DeletionParams(publicId)
             {
                 ResourceType = resType

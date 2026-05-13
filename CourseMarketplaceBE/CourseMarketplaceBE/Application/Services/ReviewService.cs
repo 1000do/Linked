@@ -149,20 +149,20 @@ public class ReviewService : IReviewService
     {
         bool isOwner = await IsOwnerAsync(userId, courseId);
 
-        // Nếu là chủ nhân → auto-enroll nếu chưa có
+        // Nếu là chủ nhân → bypass, không tạo record DB khi chỉ xem status
         if (isOwner)
         {
-            var ownerEnrollment = await GetOrCreateOwnerEnrollmentAsync(userId, courseId);
-            var hasReviewed = (await _reviewRepo.GetCourseReviewByEnrollmentAsync(ownerEnrollment.EnrollmentId)) != null;
+            var ownerEnrollment = await _checkoutRepo.GetEnrollmentWithProgressAsync(userId, courseId);
+            bool hasReviewed = ownerEnrollment != null && (await _reviewRepo.GetCourseReviewByEnrollmentAsync(ownerEnrollment.EnrollmentId)) != null;
 
             return new EnrollmentStatusResponse
             {
-                IsEnrolled = true,
+                IsEnrolled = true, // Bypass: Luôn coi như đã ghi danh
                 IsCompleted = true,
                 ProgressPercentage = 100,
                 LearnedMaterialCount = 0,
                 TotalMaterialCount = 0,
-                CanReview = true, // Chủ nhân luôn được review
+                CanReview = true, 
                 ReviewBlockedReason = null,
                 HasReviewed = hasReviewed,
                 IsOwner = true

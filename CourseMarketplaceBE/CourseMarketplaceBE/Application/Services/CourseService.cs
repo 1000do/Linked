@@ -188,8 +188,9 @@ public class CourseService : ICourseService
         // Cập nhật thông tin định danh riêng cho từng User (Không cache phần này)
         if (userId.HasValue)
         {
-            response.IsEnrolled = await _courseRepository.IsEnrolledAsync(userId.Value, courseId);
             response.IsOwner = response.InstructorId == userId.Value;
+            // Bypass: Nếu là chủ sở hữu thì luôn coi như đã ghi danh
+            response.IsEnrolled = response.IsOwner || await _courseRepository.IsEnrolledAsync(userId.Value, courseId);
         }
         else
         {
@@ -209,9 +210,21 @@ public class CourseService : ICourseService
             throw new BadRequestException("You must be an approved instructor to create a course.");
         }
 
-        // ★ Nếu chưa hoàn tất Stripe → ép giá = 0 (chỉ tạo khóa free)
+        // ★ Limit: Max 2 courses for unlinked Stripe
         var isStripeActive = !string.IsNullOrEmpty(instructor.StripeAccountId)
             && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+
+        if (!isStripeActive)
+        {
+            var instructorCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
+            if (instructorCourses.Count(c => !c.IsRemoved) >= 2)
+            {
+                throw new BadRequestException("Instructor chưa liên kết Stripe chỉ được phép tạo tối đa 2 khóa học.");
+            }
+        }
+
+
+        // ★ Nếu chưa hoàn tất Stripe → ép giá = 0 (chỉ tạo khóa free)
         var coursePrice = isStripeActive ? request.Price : 0m;
 
         string? thumbnailUrl = request.CourseThumbnailUrl;
@@ -269,6 +282,12 @@ public class CourseService : ICourseService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to modify this course.");
 
+        // ★ Block updates if course is archived by moderation (3+ flags)
+        if (string.Equals(course.CourseStatus, "archived", StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
+        {
+            throw new BadRequestException("Khóa học đã bị ngừng kinh doanh vĩnh viễn do vi phạm chính sách và không thể chỉnh sửa.");
+        }
+
         if (course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot modify course while it is pending review.");
 
@@ -299,10 +318,10 @@ public class CourseService : ICourseService
         course.Requirements = request.Requirements;
         course.UpdatedAt = DateTime.UtcNow;
 
-        // Nếu khóa học đang ở trạng thái Published, chuyển về Pending để kiểm duyệt lại
+        // Nếu khóa học đang ở trạng thái Published, chuyển về Draft để sửa
         if (course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
         {
-            course.CourseStatus = "pending";
+            course.CourseStatus = "draft";
             // Tùy chọn: Xóa feedback cũ khi có thay đổi mới
             course.ModerationFeedback = null;
         }
@@ -339,6 +358,12 @@ public class CourseService : ICourseService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to modify this course.");
 
+        // ★ Block status changes if course is archived by moderation (3+ flags)
+        if (string.Equals(course.CourseStatus, "archived", StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
+        {
+            throw new BadRequestException("Khóa học đã bị ngừng kinh doanh vĩnh viễn do vi phạm chính sách và không thể thay đổi trạng thái.");
+        }
+
         // Instructor chỉ được gửi yêu cầu duyệt (pending) hoặc ẩn khóa học (archived)
         // Việc chuyển sang "published" chỉ được phép nếu khóa học đang ở trạng thái "archived" (Unhide)
         // Các trường hợp khác để lên "published" phải qua Admin
@@ -357,7 +382,37 @@ public class CourseService : ICourseService
 
         if (status.Equals("pending", StringComparison.OrdinalIgnoreCase))
         {
+            // ★ Limit: Total Video Duration
+            var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+            var isStripeActive = instructor != null
+                && !string.IsNullOrEmpty(instructor.StripeAccountId)
+                && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+
+            var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
+            int totalDurationSeconds = 0;
+            foreach (var lesson in lessons.Where(l => !l.IsRemoved))
+            {
+                foreach (var material in lesson.LearningMaterials.Where(m => m.LearningStatus != "removed" && (m.MaterialMetadata?.FileType == "video" || m.MaterialMetadata == null)))
+                {
+                    totalDurationSeconds += material.MaterialMetadata?.Duration ?? 0;
+                }
+            }
+
+            double totalMinutes = totalDurationSeconds / 60.0;
+
+            if (!isStripeActive && totalMinutes > 30)
+            {
+                throw new BadRequestException($"Tổng thời lượng video của khóa học hiện tại là {Math.Round(totalMinutes, 1)} phút. Instructor chưa liên kết Stripe chỉ được phép tối đa 30 phút.");
+            }
+            
+            bool isFreeCourse = course.Price == 0;
+            if (isFreeCourse && totalMinutes > 60)
+            {
+                throw new BadRequestException($"Tổng thời lượng video của khóa học miễn phí hiện tại là {Math.Round(totalMinutes, 1)} phút. Khóa học miễn phí chỉ được phép tối đa 60 phút.");
+            }
+
             // Clear moderation feedback when resubmitting
+
             course.ModerationFeedback = null;
             
             var materials = await _materialRepository.GetByCourseIdAsync(courseId);
@@ -375,7 +430,7 @@ public class CourseService : ICourseService
             }
 
             // Clear lesson status when resubmitting
-            var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
+            lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
             if (lessons != null)
             {
                 foreach (var lesson in lessons)

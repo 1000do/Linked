@@ -72,8 +72,8 @@ public class CourseRepository : ICourseRepository
             .Include(c => c.Instructor)
                 .ThenInclude(i => i!.InstructorNavigation)
                     .ThenInclude(u => u.UserNavigation)
-            .Include(c => c.Lessons)
-                .ThenInclude(l => l.LearningMaterials)
+            .Include(c => c.Lessons.Where(l => !l.IsRemoved).OrderBy(l => l.LessonId))
+                .ThenInclude(l => l.LearningMaterials.Where(m => m.LearningStatus != "removed").OrderBy(m => m.MaterialId))
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.CourseId == courseId);
     }
@@ -90,14 +90,48 @@ public class CourseRepository : ICourseRepository
 
     public async Task<IEnumerable<CourseStats>> GetCourseStatsAsync(IEnumerable<int> courseIds)
     {
-        return await _context.CourseStats
+        var statsList = await _context.CourseStats
             .Where(s => courseIds.Contains(s.CourseId))
             .ToListAsync();
+
+        if (statsList.Any())
+        {
+            var courses = await _context.Courses.AsNoTracking()
+                .Where(c => courseIds.Contains(c.CourseId))
+                .ToListAsync();
+
+            foreach (var stats in statsList)
+            {
+                var course = courses.FirstOrDefault(c => c.CourseId == stats.CourseId);
+                if (course != null && course.InstructorId.HasValue)
+                {
+                    var isInstructorEnrolled = await _context.Enrollments.AnyAsync(e => e.CourseId == stats.CourseId && e.UserId == course.InstructorId.Value);
+                    if (isInstructorEnrolled)
+                    {
+                        stats.TotalStudents = Math.Max(0, stats.TotalStudents - 1);
+                    }
+                }
+            }
+        }
+        return statsList;
     }
 
     public async Task<CourseStats?> GetCourseStatsAsync(int courseId)
     {
-        return await _context.CourseStats.FirstOrDefaultAsync(s => s.CourseId == courseId);
+        var stats = await _context.CourseStats.FirstOrDefaultAsync(s => s.CourseId == courseId);
+        if (stats != null)
+        {
+            var course = await _context.Courses.AsNoTracking().FirstOrDefaultAsync(c => c.CourseId == courseId);
+            if (course != null && course.InstructorId.HasValue)
+            {
+                var isInstructorEnrolled = await _context.Enrollments.AnyAsync(e => e.CourseId == courseId && e.UserId == course.InstructorId.Value);
+                if (isInstructorEnrolled)
+                {
+                    stats.TotalStudents = Math.Max(0, stats.TotalStudents - 1);
+                }
+            }
+        }
+        return stats;
     }
 
     public async Task AddAsync(Course course)
@@ -136,8 +170,11 @@ public class CourseRepository : ICourseRepository
             .Include(c => c.Category)
             .AsQueryable();
 
-        // 1. Filter by Status (Default is pending)
-        var statusFilter = string.IsNullOrEmpty(filter.Status) ? "pending" : filter.Status;
+        // Always exclude draft courses from moderation interface
+        query = query.Where(c => c.CourseStatus != "draft");
+
+        // 1. Filter by Status (Default is all)
+        var statusFilter = string.IsNullOrEmpty(filter.Status) ? "all" : filter.Status;
         if (statusFilter != "all")
         {
             query = query.Where(c => c.CourseStatus == statusFilter);
@@ -181,7 +218,8 @@ public class CourseRepository : ICourseRepository
                 Price = c.Price,
                 CreatedAt = c.CreatedAt,
                 CourseStatus = c.CourseStatus,
-                CourseThumbnailUrl = c.CourseThumbnailUrl
+                CourseThumbnailUrl = c.CourseThumbnailUrl,
+                FlagCount = c.CourseFlagCount ?? 0
             };
 
             // Calculate Urgency
