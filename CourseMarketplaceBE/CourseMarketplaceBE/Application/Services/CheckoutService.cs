@@ -28,20 +28,20 @@ public class CheckoutService : ICheckoutService
     private readonly IPaymentGatewayService _paymentGateway;
     private readonly ILogger<CheckoutService> _logger;
     private readonly IHubContext<FinanceHub> _hubContext;
-
-    // ── Tỷ lệ instructor nhận được (có thể chuyển sang system_configs sau) ──
-    private const decimal DefaultTransferRate = 70.00m; // 70% cho instructor, 30% cho sàn
+    private readonly IAdminFinanceService _adminFinanceService;
 
     public CheckoutService(
         ICheckoutRepository repo,
         IPaymentGatewayService paymentGateway,
         ILogger<CheckoutService> logger,
-        IHubContext<FinanceHub> hubContext)
+        IHubContext<FinanceHub> hubContext,
+        IAdminFinanceService adminFinanceService)
     {
         _repo = repo;
         _paymentGateway = paymentGateway;
         _logger = logger;
         _hubContext = hubContext;
+        _adminFinanceService = adminFinanceService;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -58,6 +58,9 @@ public class CheckoutService : ICheckoutService
         var cartItems = await _repo.GetCartItemsWithCourseAndInstructorAsync(userId);
         if (!cartItems.Any())
             throw new InvalidOperationException("Giỏ hàng trống. Không thể thanh toán.");
+
+        // Lấy TransferRate từ system_configs
+        var currentTransferRate = await _adminFinanceService.GetCurrentTransferRateAsync();
 
         // ── 1.2 Kiểm tra không mua trùng (đã enrolled) ──────────────────────
         foreach (var item in cartItems)
@@ -170,7 +173,7 @@ public class CheckoutService : ICheckoutService
                     AccountFrom = userId,
                     AccountTo = instructorId, // Instructor nhận tiền
                     Amount = orderItem.PurchasePrice,
-                    TransferRate = DefaultTransferRate,
+                    TransferRate = currentTransferRate,
                     StripeSessionId = paymentResult.SessionId,
                     Currency = sessionCurrency,
                     TransactionsStatus = "pending",
@@ -220,6 +223,9 @@ public class CheckoutService : ICheckoutService
         if (string.IsNullOrEmpty(stripeAccountId))
             throw new InvalidOperationException("Giảng viên chưa kết nối tài khoản thanh toán Stripe.");
 
+        // Lấy TransferRate từ system_configs
+        var currentTransferRate = await _adminFinanceService.GetCurrentTransferRateAsync();
+
         Coupon? coupon = null;
         decimal discountAmount = 0m;
         decimal originalPrice = course.Price;
@@ -239,8 +245,8 @@ public class CheckoutService : ICheckoutService
         var purchasePrice = Math.Max(originalPrice - discountAmount, 0m);
         var userEmail = await _repo.GetUserEmailAsync(userId);
 
-        // Tính toán platform fee (30%)
-        var platformFee = Math.Round(purchasePrice * ((100m - DefaultTransferRate) / 100m), 2);
+        // Tính toán platform fee
+        var platformFee = Math.Round(purchasePrice * ((100m - currentTransferRate) / 100m), 2);
 
         await using var dbTransaction = await _repo.BeginTransactionAsync();
         try
@@ -293,7 +299,7 @@ public class CheckoutService : ICheckoutService
                 AccountFrom = userId,
                 AccountTo = course.InstructorId,
                 Amount = purchasePrice,
-                TransferRate = DefaultTransferRate,
+                TransferRate = currentTransferRate,
                 StripeSessionId = paymentResult.SessionId,
                 Currency = sessionCurrency,
                 TransactionsStatus = "pending",

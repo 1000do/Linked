@@ -94,25 +94,14 @@
             </a>
 
             @{
-                bool isTransaction = currentAction == "Instructor" && currentController == "Transaction";
+                bool isTransaction = currentController == "Transaction" && currentAction == "Instructor";
             }
             <a href="/Transaction/Instructor" class="flex items-center gap-3 px-4 py-3 @(isTransaction ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative">
                 @if (isTransaction) {
                     <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></span>
                 }
                 <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
-                <span class="text-sm @(isTransaction ? "font-bold" : "font-semibold")">Transactions</span>
-            </a>
-
-            @{
-                bool isPayouts = currentAction == "Payouts" && currentController == "Instructor";
-            }
-            <a href="/Instructor/Payouts" class="flex items-center gap-3 px-4 py-3 @(isPayouts ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative">
-                @if (isPayouts) {
-                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></span>
-                }
-                <span class="material-symbols-outlined text-[20px]">payments</span>
-                <span class="text-sm @(isPayouts ? "font-bold" : "font-semibold")">Earnings</span>
+                <span class="text-sm @(isTransaction ? "font-bold" : "font-semibold")">Earnings</span>
             </a>
 
             @{

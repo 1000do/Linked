@@ -48,6 +48,12 @@ public class TransactionController : Controller
         public int TotalPages { get; set; }
     }
 
+    public class InstructorFinancePageVM
+    {
+        public TransactionPagedVM Transactions { get; set; } = new();
+        public CourseMarketplaceFE.Controllers.InstructorController.InstructorPayoutPagedViewModel Payouts { get; set; } = new();
+    }
+
     public class TransactionDetailVM
     {
         public int TransactionId { get; set; }
@@ -74,11 +80,20 @@ public class TransactionController : Controller
     // UC-115: Danh sách giao dịch
     // ═══════════════════════════════════════════════════════════════════════
     [HttpGet]
-    public async Task<IActionResult> Index(int page = 1, int pageSize = 20)
+    public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null)
     {
         var vm = new TransactionPagedVM { Page = page, PageSize = pageSize };
 
-        var resp = await _api.GetAsync($"transactions?page={page}&pageSize={pageSize}");
+        ViewBag.Keyword = keyword;
+        ViewBag.SortBy = sortBy;
+        ViewBag.Status = status;
+
+        var query = $"transactions?page={page}&pageSize={pageSize}";
+        if (!string.IsNullOrEmpty(keyword)) query += $"&keyword={Uri.EscapeDataString(keyword)}";
+        if (!string.IsNullOrEmpty(sortBy)) query += $"&sortBy={Uri.EscapeDataString(sortBy)}";
+        if (!string.IsNullOrEmpty(status)) query += $"&status={Uri.EscapeDataString(status)}";
+
+        var resp = await _api.GetAsync(query);
         if (resp.IsSuccessStatusCode)
         {
             var json = await resp.Content.ReadAsStringAsync();
@@ -99,21 +114,61 @@ public class TransactionController : Controller
     // Lịch sử giao dịch cho Giảng viên
     // ═══════════════════════════════════════════════════════════════════════
     [HttpGet]
-    public async Task<IActionResult> Instructor(int page = 1, int pageSize = 20)
+    public async Task<IActionResult> Instructor(int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null, string tab = "tx",
+        int payoutPage = 1, int payoutPageSize = 20, string? payoutKeyword = null, string? payoutSortBy = "date_desc", string? payoutStatus = null)
     {
-        var vm = new TransactionPagedVM { Page = page, PageSize = pageSize };
+        var vm = new InstructorFinancePageVM();
+        vm.Transactions.Page = page;
+        vm.Transactions.PageSize = pageSize;
+        vm.Payouts.Page = payoutPage;
+        vm.Payouts.PageSize = payoutPageSize;
+        
+        ViewBag.Keyword = keyword;
+        ViewBag.SortBy = sortBy;
+        ViewBag.Status = status;
 
-        var resp = await _api.GetAsync($"transactions/instructor?page={page}&pageSize={pageSize}");
-        if (resp.IsSuccessStatusCode)
+        ViewBag.PayoutKeyword = payoutKeyword;
+        ViewBag.PayoutSortBy = payoutSortBy;
+        ViewBag.PayoutStatus = payoutStatus;
+        ViewBag.ActiveTab = tab;
+
+        var txQuery = $"transactions/instructor?page={page}&pageSize={pageSize}";
+        if (!string.IsNullOrEmpty(keyword)) txQuery += $"&keyword={Uri.EscapeDataString(keyword)}";
+        if (!string.IsNullOrEmpty(sortBy)) txQuery += $"&sortBy={Uri.EscapeDataString(sortBy)}";
+        if (!string.IsNullOrEmpty(status)) txQuery += $"&status={Uri.EscapeDataString(status)}";
+
+        var payoutQuery = $"instructor/payouts?page={payoutPage}&pageSize={payoutPageSize}";
+        if (!string.IsNullOrEmpty(payoutKeyword)) payoutQuery += $"&keyword={Uri.EscapeDataString(payoutKeyword)}";
+        if (!string.IsNullOrEmpty(payoutSortBy)) payoutQuery += $"&sortBy={Uri.EscapeDataString(payoutSortBy)}";
+        if (!string.IsNullOrEmpty(payoutStatus)) payoutQuery += $"&status={Uri.EscapeDataString(payoutStatus)}";
+
+        // Fetch Transactions
+        var txTask = _api.GetAsync(txQuery);
+        // Fetch Payouts
+        var payoutTask = _api.GetAsync(payoutQuery);
+
+        await Task.WhenAll(txTask, payoutTask);
+
+        var txResp = await txTask;
+        if (txResp.IsSuccessStatusCode)
         {
-            var json = await resp.Content.ReadAsStringAsync();
+            var json = await txResp.Content.ReadAsStringAsync();
             var parsed = JsonSerializer.Deserialize<ApiResp<TransactionPagedVM>>(json, _jsonOpts);
             if (parsed?.Data != null)
-                vm = parsed.Data;
+                vm.Transactions = parsed.Data;
         }
-        else if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        else if (txResp.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
             return RedirectToAction("Login", "Account");
+        }
+
+        var payoutResp = await payoutTask;
+        if (payoutResp.IsSuccessStatusCode)
+        {
+            var json = await payoutResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<CourseMarketplaceFE.Controllers.InstructorController.InstructorPayoutPagedViewModel>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+                vm.Payouts = parsed.Data;
         }
 
         return View(vm);

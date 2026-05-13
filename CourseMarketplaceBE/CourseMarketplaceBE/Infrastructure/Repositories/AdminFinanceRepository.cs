@@ -169,5 +169,103 @@ public class AdminFinanceRepository : IAdminFinanceRepository
             .ToListAsync();
     }
 
+    public async Task<InstructorPayout?> GetPayoutByTransferIdAsync(string transferId)
+    {
+        return await _context.InstructorPayouts
+            .FirstOrDefaultAsync(p => p.StripeTransferId == transferId);
+    }
+
+    // ── Platform Withdrawals ──────────────────────────────────────────────
+
+    public async Task AddWithdrawalAsync(PlatformWithdrawal withdrawal)
+    {
+        _context.PlatformWithdrawals.Add(withdrawal);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<List<PlatformWithdrawal>> GetWithdrawalsAsync()
+    {
+        return await _context.PlatformWithdrawals
+            .Include(w => w.Manager)
+            .OrderByDescending(w => w.CreatedAt)
+            .ToListAsync();
+    }
+
+    // ── Refund ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Lấy Transaction entity đầy đủ kèm toàn bộ entity graph cần cho refund:
+    ///   Transaction → InstructorPayouts → Instructor
+    ///   Transaction → OrderItem → Course → Instructor
+    ///   Transaction → AccountFrom → User (buyer)
+    /// </summary>
+    public async Task<Transaction?> GetTransactionWithFullGraphAsync(int transactionId)
+    {
+        return await _context.Transactions
+            .Include(t => t.InstructorPayouts)
+                .ThenInclude(p => p.Instructor)
+            .Include(t => t.OrderItem)
+                .ThenInclude(oi => oi!.Course)
+                    .ThenInclude(c => c!.Instructor)
+            .Include(t => t.AccountFromNavigation)
+                .ThenInclude(a => a!.User)
+            .FirstOrDefaultAsync(t => t.TransactionId == transactionId);
+    }
+
+    /// <summary>
+    /// Tìm Enrollment active của user cho khóa học cụ thể.
+    /// Chỉ trả về enrollment có status "active" (không tìm enrollment đã bị revoke trước đó).
+    /// </summary>
+    public async Task<Enrollment?> GetActiveEnrollmentAsync(int userId, int courseId)
+    {
+        return await _context.Enrollments
+            .FirstOrDefaultAsync(e => e.UserId == userId
+                                   && e.CourseId == courseId
+                                   && e.EnrollmentStatus == "active");
+    }
+
+    /// <summary>
+    /// Resolve DestinationPaymentId (py_xxx) → Transfer ID (tr_xxx).
+    /// 
+    /// ★ Context: Khi tạo Transfer, Stripe trả về Transfer.Id (tr_xxx) và 
+    ///   Transfer.DestinationPaymentId (py_xxx). Hệ thống lưu py_xxx vào DB.
+    ///   Nhưng Transfer Reversal API yêu cầu tr_xxx.
+    ///   → Gọi Stripe Charge.Get trên Connected Account để tìm transfer gốc.
+    /// </summary>
+    public async Task<string?> GetStripeTransferIdByDestinationPaymentAsync(string destinationPaymentId)
+    {
+        // Tìm payout có StripeTransferId = py_xxx để lấy thông tin instructor
+        var payout = await _context.InstructorPayouts
+            .Include(p => p.Instructor)
+            .FirstOrDefaultAsync(p => p.StripeTransferId == destinationPaymentId);
+
+        if (payout?.Instructor?.StripeAccountId == null)
+            return null;
+
+        // Gọi Stripe API để lấy Charge trên Connected Account → tìm source_transfer (tr_xxx)
+        try
+        {
+            var chargeService = new Stripe.ChargeService();
+            var charge = await chargeService.GetAsync(
+                destinationPaymentId,
+                requestOptions: new Stripe.RequestOptions { StripeAccount = payout.Instructor.StripeAccountId });
+            return charge?.SourceTransferId; // tr_xxx
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<Transaction?> GetTransactionByPaymentIntentIdAsync(string paymentIntentId)
+    {
+        return await _context.Transactions
+            .Include(t => t.InstructorPayouts)
+            .Include(t => t.OrderItem)
+            .Include(t => t.AccountFromNavigation)
+                .ThenInclude(a => a!.User)
+            .FirstOrDefaultAsync(t => t.StripePaymentintentId == paymentIntentId);
+    }
+
     public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
 }

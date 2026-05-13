@@ -1,6 +1,7 @@
 -- ==============================================================================
 -- XÓA BẢNG CŨ NẾU ĐÃ TỒN TẠI (Giúp bạn dễ dàng chạy lại script nhiều lần)
 -- ==============================================================================
+DROP TABLE IF EXISTS platform_withdrawals CASCADE;
 DROP TABLE IF EXISTS ai_activity_logs CASCADE;
 DROP TABLE IF EXISTS ai_models_courses CASCADE;
 DROP TABLE IF EXISTS ai_models CASCADE;
@@ -346,6 +347,21 @@ CREATE TABLE instructor_payouts (
 	stripe_transfer_id VARCHAR(255),    -- ID lệnh Transfer từ Sàn → Connected Account (tx_xxx)
 	stripe_payout_id VARCHAR(255),      -- ID lệnh Payout từ Connected Account → Bank (po_xxx)
 	paid_to_bank_at TIMESTAMP           -- Thời điểm Stripe confirm tiền đã về ngân hàng
+);
+
+-- Bảng lưu lịch sử rút tiền lợi nhuận của Sàn (Admin) từ Stripe về ngân hàng
+DROP TABLE IF EXISTS platform_withdrawals CASCADE;
+CREATE TABLE platform_withdrawals (
+	withdrawal_id SERIAL PRIMARY KEY,
+	manager_id INT REFERENCES managers(manager_id) ON DELETE SET NULL,
+	amount NUMERIC(10,2) NOT NULL,           -- Số tiền rút (USD)
+	currency VARCHAR(10) DEFAULT 'usd',
+	stripe_payout_id VARCHAR(255),           -- Mã Payout trên Stripe (po_xxx)
+	status VARCHAR(20) NOT NULL DEFAULT 'pending'
+		CHECK (status IN ('pending', 'in_transit', 'paid', 'failed', 'canceled')),
+	description TEXT,                         -- Ghi chú
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	arrived_at TIMESTAMP                     -- Thời điểm tiền về ngân hàng
 );
 
 -- ==============================================================================

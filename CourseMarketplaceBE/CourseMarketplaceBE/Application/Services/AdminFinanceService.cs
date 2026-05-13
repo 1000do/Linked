@@ -21,14 +21,27 @@ namespace CourseMarketplaceBE.Application.Services;
 public class AdminFinanceService : IAdminFinanceService
 {
     private readonly IAdminFinanceRepository _repo;
+    private readonly IPaymentGatewayService _paymentGateway;
+    private readonly IInstructorRepository _instructorRepo;
+    private readonly INotificationService _notiService;
+    private readonly ILogger<AdminFinanceService> _logger;
 
     // Key trong bảng system_configs
     private const string TransferRateKey = "TransferRate";
     private const decimal DefaultTransferRate = 70.00m;
 
-    public AdminFinanceService(IAdminFinanceRepository repo)
+    public AdminFinanceService(
+        IAdminFinanceRepository repo,
+        IPaymentGatewayService paymentGateway,
+        IInstructorRepository instructorRepo,
+        INotificationService notiService,
+        ILogger<AdminFinanceService> logger)
     {
         _repo = repo;
+        _paymentGateway = paymentGateway;
+        _instructorRepo = instructorRepo;
+        _notiService = notiService;
+        _logger = logger;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -49,6 +62,38 @@ public class AdminFinanceService : IAdminFinanceService
             TransferRateKey,
             rate.ToString("F2"),
             $"Tỷ lệ giảng viên nhận: {rate}%, Sàn nhận: {100 - rate}%");
+
+        // ── UC-XXX: THÔNG BÁO CHO GIẢNG VIÊN ─────────────────────────────────
+        // Khi thay đổi tỷ lệ, cần báo cho các đối tác đã liên kết Stripe
+        // ──────────────────────────────────────────────────────────────────────
+        try
+        {
+            var instructors = await _instructorRepo.GetInstructorsWithStripeAsync();
+            
+            if (instructors.Any())
+            {
+                var title = "📢 Cập nhật chính sách chia sẻ doanh thu";
+                var content = $"Hệ thống vừa cập nhật tỷ lệ chia sẻ doanh thu mới. Kể từ bây giờ, bạn sẽ nhận được {rate:F0}% doanh thu từ mỗi khóa học được bán ra.";
+
+                foreach (var ins in instructors)
+                {
+                    // ReceiverId ở đây tương ứng với User ID (trong DB này InstructorId = UserId)
+                    await _notiService.SendNotificationAsync(
+                        ins.InstructorId, 
+                        title, 
+                        content, 
+                        "/Instructor/Payouts" // Link đến trang thu nhập để họ kiểm tra
+                    );
+                }
+
+                _logger.LogInformation("✅ Đã gửi thông báo thay đổi TransferRate ({Rate}%) cho {Count} giảng viên.", rate, instructors.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Không throw lỗi ở đây để tránh làm gián đoạn việc lưu config
+            _logger.LogError(ex, "❌ Lỗi khi gửi thông báo cập nhật TransferRate.");
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -181,7 +226,9 @@ public class AdminFinanceService : IAdminFinanceService
             // ★ Cập nhật trạng thái: transferred (đã vào ví Stripe của GV, chờ về ngân hàng)
             payout.IsPaid = true;
             payout.PayoutStatus = "transferred";
-            payout.StripeTransferId = transfer.Id;
+            // ★ QUAN TRỌNG: Lưu DestinationPaymentId (py_xxx) thay vì TransferId (tr_xxx)
+            // Vì tài khoản Connected Account chỉ nhìn thấy mã py_xxx trong lịch sử số dư của họ.
+            payout.StripeTransferId = transfer.DestinationPaymentId; 
             payout.PayoutDate = DateTime.UtcNow;
             await _repo.SaveChangesAsync();
 
@@ -217,6 +264,285 @@ public class AdminFinanceService : IAdminFinanceService
             }
         }
 
+        return result;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PLATFORM WITHDRAWAL — Rút tiền lợi nhuận Sàn về ngân hàng
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public async Task<PlatformBalanceResponse> GetPlatformBalanceAsync()
+    {
+        // ★ Gọi Stripe Balance API để lấy số dư thực tế
+        var balanceService = new BalanceService();
+        var balance = await balanceService.GetAsync();
+
+        // Lấy số dư USD (hoặc loại tiền đầu tiên nếu chỉ có 1)
+        var available = balance.Available?.FirstOrDefault(b => b.Currency == "usd");
+        var pending = balance.Pending?.FirstOrDefault(b => b.Currency == "usd");
+
+        decimal availableAmount = available != null ? (decimal)available.Amount / 100m : 0m;
+        decimal pendingAmount = pending != null ? (decimal)pending.Amount / 100m : 0m;
+
+        // Lấy payout schedule hiện tại
+        var accountService = new AccountService();
+        // Platform account không có account ID, lấy info qua Retrieve
+        string scheduleInterval = "manual";
+        string? scheduleAnchor = null;
+
+        try
+        {
+            var account = await accountService.GetSelfAsync();
+            if (account?.Settings?.Payouts?.Schedule != null)
+            {
+                scheduleInterval = account.Settings.Payouts.Schedule.Interval ?? "manual";
+                scheduleAnchor = account.Settings.Payouts.Schedule.WeeklyAnchor 
+                    ?? account.Settings.Payouts.Schedule.MonthlyAnchor.ToString();
+            }
+        }
+        catch { /* Bỏ qua nếu không có quyền đọc schedule */ }
+
+        return new PlatformBalanceResponse
+        {
+            Available = availableAmount,
+            Incoming = pendingAmount,
+            Total = availableAmount + pendingAmount,
+            Currency = "usd",
+            PayoutScheduleInterval = scheduleInterval,
+            PayoutScheduleAnchor = scheduleAnchor
+        };
+    }
+
+    public async Task<WithdrawResponse> CreateWithdrawalAsync(WithdrawRequest request, int managerId)
+    {
+        // 1. Kiểm tra số dư
+        var balanceResp = await GetPlatformBalanceAsync();
+        decimal amountToWithdraw = (request.Amount.HasValue && request.Amount.Value > 0)
+            ? request.Amount.Value
+            : balanceResp.Available;
+
+        if (amountToWithdraw <= 0)
+            throw new InvalidOperationException("Số tiền rút phải lớn hơn 0.");
+
+        if (amountToWithdraw > balanceResp.Available)
+            throw new InvalidOperationException(
+                $"Số dư không đủ. Available: ${balanceResp.Available:F2}, Yêu cầu: ${amountToWithdraw:F2}");
+
+        // 2. Tạo Payout trên Stripe (chuyển từ Stripe → ngân hàng Admin)
+        var payoutService = new PayoutService();
+        Payout stripePayout;
+        try
+        {
+            stripePayout = await payoutService.CreateAsync(new PayoutCreateOptions
+            {
+                Amount = (long)(amountToWithdraw * 100), // Chuyển sang cents
+                Currency = "usd",
+                Description = request.Description ?? $"Platform withdrawal by Manager #{managerId}",
+                Metadata = new Dictionary<string, string>
+                {
+                    { "manager_id", managerId.ToString() },
+                    { "source", "web_dashboard" }
+                }
+            });
+        }
+        catch (StripeException ex)
+        {
+            throw new InvalidOperationException($"Lỗi Stripe Payout: {ex.Message}");
+        }
+
+        // 3. Lưu vào DB
+        var withdrawal = new Domain.Entities.PlatformWithdrawal
+        {
+            ManagerId = managerId,
+            Amount = amountToWithdraw,
+            Currency = "usd",
+            StripePayoutId = stripePayout.Id,
+            Status = stripePayout.Status ?? "pending",
+            Description = request.Description,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _repo.AddWithdrawalAsync(withdrawal);
+
+        return new WithdrawResponse
+        {
+            WithdrawalId = withdrawal.WithdrawalId,
+            StripePayoutId = stripePayout.Id,
+            Amount = amountToWithdraw,
+            Status = stripePayout.Status ?? "pending",
+            CreatedAt = withdrawal.CreatedAt
+        };
+    }
+
+    public async Task<List<WithdrawalHistoryItem>> GetWithdrawalHistoryAsync()
+    {
+        var withdrawals = await _repo.GetWithdrawalsAsync();
+
+        bool hasChanges = false;
+        var payoutService = new PayoutService();
+
+        foreach (var w in withdrawals)
+        {
+            if (w.Status == "pending" || w.Status == "in_transit")
+            {
+                try
+                {
+                    var stripePayout = await payoutService.GetAsync(w.StripePayoutId);
+                    if (stripePayout.Status != w.Status)
+                    {
+                        w.Status = stripePayout.Status;
+                        if (stripePayout.Status == "paid")
+                        {
+                            w.ArrivedAt = stripePayout.ArrivalDate;
+                        }
+                        hasChanges = true;
+                    }
+                }
+                catch
+                {
+                    // Ignore error during sync, keep old status
+                }
+            }
+        }
+
+        if (hasChanges)
+        {
+            await _repo.SaveChangesAsync();
+        }
+
+        return withdrawals.Select(w => new WithdrawalHistoryItem
+        {
+            WithdrawalId = w.WithdrawalId,
+            ManagerName = w.Manager?.DisplayName ?? "Admin",
+            Amount = w.Amount,
+            Currency = w.Currency,
+            StripePayoutId = w.StripePayoutId,
+            Status = w.Status,
+            Description = w.Description,
+            CreatedAt = w.CreatedAt,
+            ArrivedAt = w.ArrivedAt
+        }).ToList();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // REFUND — Hoàn tiền toàn bộ cho 1 giao dịch
+    //
+    // ★ Business Flow:
+    //   1. Validate: Giao dịch phải tồn tại, status = succeeded, chưa bị refund.
+    //   2. Nếu đã Transfer cho GV → Reverse Transfer (lấy lại tiền từ GV).
+    //   3. Tạo Stripe Refund → trả tiền về thẻ/ví khách hàng.
+    //   4. Update DB: Transaction.status → refunded, InstructorPayout.status → refunded.
+    //   5. Thu hồi Enrollment (xóa quyền truy cập khóa học).
+    //
+    // ★ Edge Cases:
+    //   - GV đã rút tiền khỏi Stripe → Reverse Transfer FAIL → throw lỗi.
+    //   - Giao dịch chưa có PaymentIntentId → không thể refund.
+    //   - Giao dịch đã refund trước đó → từ chối.
+    // ═══════════════════════════════════════════════════════════════════════
+    public async Task<RefundResultResponse> RefundTransactionAsync(int transactionId, string? reason = null)
+    {
+        // ── 1. LOAD & VALIDATE ──────────────────────────────────────────
+        var txn = await _repo.GetTransactionWithFullGraphAsync(transactionId);
+        if (txn == null)
+            throw new InvalidOperationException($"Không tìm thấy giao dịch #{transactionId}.");
+
+        if (txn.TransactionsStatus == "refunded")
+            throw new InvalidOperationException("Giao dịch này đã được hoàn tiền trước đó.");
+
+        if (txn.TransactionsStatus != "succeeded")
+            throw new InvalidOperationException(
+                $"Chỉ hoàn tiền được giao dịch thành công. Trạng thái hiện tại: {txn.TransactionsStatus}.");
+
+        if (string.IsNullOrEmpty(txn.StripePaymentintentId))
+            throw new InvalidOperationException(
+                "Giao dịch này không có PaymentIntent ID — không thể hoàn tiền qua Stripe.");
+
+        _logger.LogInformation(
+            "🔄 REFUND START | TxnId={TxnId} | Amount={Amount} {Currency} | PI={PI}",
+            transactionId, txn.Amount, txn.Currency, txn.StripePaymentintentId);
+
+        var result = new RefundResultResponse { RefundedAmount = txn.Amount };
+        string? reversalId = null;
+
+        // ── 2. REVERSE STRIPE TRANSFER (nếu đã chuyển cho GV) ───────────
+        var payout = txn.InstructorPayouts.FirstOrDefault();
+        if (payout != null && payout.IsPaid && !string.IsNullOrEmpty(payout.StripeTransferId))
+        {
+            _logger.LogInformation(
+                "🔄 Reversing transfer for GV | PayoutId={PId} | DestPaymentId={DPI}",
+                payout.PayoutId, payout.StripeTransferId);
+
+            // Resolve py_xxx → tr_xxx (Stripe Transfer Reversal yêu cầu transfer ID gốc)
+            var stripeTransferId = await _repo.GetStripeTransferIdByDestinationPaymentAsync(payout.StripeTransferId);
+            if (string.IsNullOrEmpty(stripeTransferId))
+                throw new InvalidOperationException(
+                    $"Không thể tìm Stripe Transfer ID gốc cho DestPaymentId={payout.StripeTransferId}. " +
+                    "Vui lòng xử lý thủ công trên Stripe Dashboard.");
+
+            try
+            {
+                reversalId = await _paymentGateway.ReverseTransferAsync(stripeTransferId);
+                _logger.LogInformation("✅ Transfer reversed | ReversalId={RId}", reversalId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Transfer reversal FAILED");
+                throw new InvalidOperationException(
+                    $"Không thể thu hồi tiền từ giảng viên: {ex.Message}. " +
+                    "Có thể giảng viên đã rút hết tiền khỏi Stripe.");
+            }
+        }
+
+        // ── 3. CREATE STRIPE REFUND ─────────────────────────────────────
+        string refundId;
+        try
+        {
+            refundId = await _paymentGateway.RefundAsync(txn.StripePaymentintentId, reason);
+            _logger.LogInformation("✅ Stripe Refund created | RefundId={RfId}", refundId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Stripe Refund FAILED");
+            throw new InvalidOperationException($"Lỗi hoàn tiền Stripe: {ex.Message}");
+        }
+
+        // ── 4. UPDATE DB STATUS ─────────────────────────────────────────
+        txn.TransactionsStatus = "refunded";
+
+        if (payout != null)
+        {
+            payout.PayoutStatus = "refunded";
+            payout.IsPaid = false;
+        }
+
+        // ── 5. REVOKE ENROLLMENT ────────────────────────────────────────
+        bool enrollmentRevoked = false;
+        var buyerUserId = txn.AccountFromNavigation?.User?.UserId;
+        var courseId = txn.OrderItem?.CourseId;
+
+        if (buyerUserId.HasValue && courseId.HasValue)
+        {
+            var enrollment = await _repo.GetActiveEnrollmentAsync(buyerUserId.Value, courseId.Value);
+            if (enrollment != null)
+            {
+                enrollment.EnrollmentStatus = "revoked";
+                enrollmentRevoked = true;
+                _logger.LogInformation(
+                    "🚫 Enrollment revoked | UserId={UID} | CourseId={CID}",
+                    buyerUserId.Value, courseId.Value);
+            }
+        }
+
+        // ── 6. COMMIT ───────────────────────────────────────────────────
+        await _repo.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "✅ REFUND COMPLETE | TxnId={TxnId} | RefundId={RfId} | ReversalId={RvId} | EnrollRevoked={ER}",
+            transactionId, refundId, reversalId, enrollmentRevoked);
+
+        result.StripeRefundId = refundId;
+        result.StripeReversalId = reversalId;
+        result.EnrollmentRevoked = enrollmentRevoked;
         return result;
     }
 }

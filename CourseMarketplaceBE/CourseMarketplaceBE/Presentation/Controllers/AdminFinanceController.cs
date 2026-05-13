@@ -164,4 +164,83 @@ public class AdminFinanceController : ControllerBase
             return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PLATFORM WITHDRAWAL — Rút tiền lợi nhuận Sàn về ngân hàng
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>GET /api/admin/finance/balance — Lấy số dư Stripe Platform</summary>
+    [HttpGet("balance")]
+    public async Task<IActionResult> GetPlatformBalance()
+    {
+        try
+        {
+            var balance = await _financeService.GetPlatformBalanceAsync();
+            return Ok(ApiResponse<PlatformBalanceResponse>.SuccessResponse(balance, "Số dư Stripe Platform."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+        }
+    }
+
+    /// <summary>POST /api/admin/finance/withdraw — Tạo lệnh rút tiền</summary>
+    [HttpPost("withdraw")]
+    public async Task<IActionResult> Withdraw([FromBody] WithdrawRequest request)
+    {
+        try
+        {
+            // Lấy manager ID từ JWT claims
+            var accountIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            int managerId = accountIdClaim != null ? int.Parse(accountIdClaim) : 0;
+
+            var result = await _financeService.CreateWithdrawalAsync(request, managerId);
+            return Ok(ApiResponse<WithdrawResponse>.SuccessResponse(result, "Lệnh rút tiền đã được tạo thành công."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+        }
+    }
+
+    /// <summary>GET /api/admin/finance/withdrawals — Lịch sử rút tiền</summary>
+    [HttpGet("withdrawals")]
+    public async Task<IActionResult> GetWithdrawalHistory()
+    {
+        try
+        {
+            var history = await _financeService.GetWithdrawalHistoryAsync();
+            return Ok(ApiResponse<List<WithdrawalHistoryItem>>.SuccessResponse(history, "Lịch sử rút tiền."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/admin/finance/transactions/{transactionId}/refund
+    // Hoàn tiền toàn bộ cho 1 giao dịch qua Stripe
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("transactions/{transactionId:int}/refund")]
+    public async Task<IActionResult> RefundTransaction(int transactionId, [FromBody] RefundRequest? request)
+    {
+        try
+        {
+            var result = await _financeService.RefundTransactionAsync(transactionId, request?.Reason);
+            return Ok(ApiResponse<RefundResultResponse>.SuccessResponse(result, "Hoàn tiền thành công."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi hệ thống: {ex.Message}"));
+        }
+    }
 }

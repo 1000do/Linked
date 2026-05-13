@@ -37,11 +37,14 @@ public class TransactionController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetTransactions(
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? keyword = null,
+        [FromQuery] string? sortBy = "date_desc",
+        [FromQuery] string? status = null)
     {
         try
         {
-            var result = await _transactionService.GetTransactionsAsync(page, pageSize);
+            var result = await _transactionService.GetTransactionsAsync(page, pageSize, keyword, sortBy, status);
             return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Danh sách giao dịch."));
         }
         catch (Exception ex)
@@ -86,7 +89,10 @@ public class TransactionController : ControllerBase
     [HttpGet("instructor")]
     public async Task<IActionResult> GetInstructorTransactions(
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? keyword = null,
+        [FromQuery] string? sortBy = "date_desc",
+        [FromQuery] string? status = null)
     {
         try
         {
@@ -94,7 +100,7 @@ public class TransactionController : ControllerBase
             if (!int.TryParse(userIdStr, out int userId))
                 return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
 
-            var result = await _transactionService.GetInstructorTransactionsAsync(userId, page, pageSize);
+            var result = await _transactionService.GetInstructorTransactionsAsync(userId, page, pageSize, keyword, sortBy, status);
             return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Danh sách giao dịch của giảng viên."));
         }
         catch (Exception ex)
