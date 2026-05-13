@@ -64,20 +64,71 @@ public class AdminFinanceController : Controller
         public List<PayoutDetailVM> Payouts { get; set; } = new();
     }
 
+    public class PlatformBalanceVM
+    {
+        public decimal Available { get; set; }
+        public decimal Incoming { get; set; }
+        public decimal Total { get; set; }
+        public string Currency { get; set; } = "usd";
+        public string PayoutScheduleInterval { get; set; } = "manual";
+        public string? PayoutScheduleAnchor { get; set; }
+    }
+
+    public class WithdrawalHistoryVM
+    {
+        public int WithdrawalId { get; set; }
+        public string? ManagerName { get; set; }
+        public decimal Amount { get; set; }
+        public string Currency { get; set; } = "usd";
+        public string? StripePayoutId { get; set; }
+        public string Status { get; set; } = "pending";
+        public string? Description { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? ArrivedAt { get; set; }
+    }
+
+    public class WithdrawPageVM
+    {
+        public PlatformBalanceVM Balance { get; set; } = new();
+        public List<WithdrawalHistoryVM> History { get; set; } = new();
+    }
+
+    public class AdminFinanceUnifiedVM
+    {
+        public FinanceDashboardVM Dashboard { get; set; } = new();
+        public WithdrawPageVM Withdraw { get; set; } = new();
+        public CourseMarketplaceFE.Controllers.TransactionController.TransactionPagedVM Transactions { get; set; } = new();
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // GET /AdminFinance
     // Dashboard chính — gọi 2 API song song: summary + payouts
     // ═══════════════════════════════════════════════════════════════════════
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, string tab = "tx")
     {
-        var vm = new FinanceDashboardVM();
+        var vm = new AdminFinanceUnifiedVM();
+        vm.Transactions.Page = page;
+        vm.Transactions.PageSize = pageSize;
 
-        // Gọi song song 2 API để giảm latency
+        ViewBag.Keyword = keyword;
+        ViewBag.SortBy = sortBy;
+        ViewBag.Status = status;
+        ViewBag.ActiveTab = tab;
+
+        var txQuery = $"transactions?page={page}&pageSize={pageSize}";
+        if (!string.IsNullOrEmpty(keyword)) txQuery += $"&keyword={Uri.EscapeDataString(keyword)}";
+        if (!string.IsNullOrEmpty(sortBy)) txQuery += $"&sortBy={Uri.EscapeDataString(sortBy)}";
+        if (!string.IsNullOrEmpty(status)) txQuery += $"&status={Uri.EscapeDataString(status)}";
+
+        // Gọi song song 5 API để giảm latency
         var summaryTask = _api.GetAsync("admin/finance/summary");
         var payoutsTask = _api.GetAsync("admin/finance/payouts");
+        var balanceTask = _api.GetAsync("admin/finance/balance");
+        var historyTask = _api.GetAsync("admin/finance/withdrawals");
+        var txTask = _api.GetAsync(txQuery);
 
-        await Task.WhenAll(summaryTask, payoutsTask);
+        await Task.WhenAll(summaryTask, payoutsTask, balanceTask, historyTask, txTask);
 
         // Parse summary
         var summaryResp = await summaryTask;
@@ -86,7 +137,7 @@ public class AdminFinanceController : Controller
             var json = await summaryResp.Content.ReadAsStringAsync();
             var parsed = JsonSerializer.Deserialize<ApiResp<FinancialSummaryVM>>(json, _jsonOpts);
             if (parsed?.Data != null)
-                vm.Summary = parsed.Data;
+                vm.Dashboard.Summary = parsed.Data;
         }
 
         // Parse payouts
@@ -96,7 +147,37 @@ public class AdminFinanceController : Controller
             var json = await payoutsResp.Content.ReadAsStringAsync();
             var parsed = JsonSerializer.Deserialize<ApiResp<List<PayoutDetailVM>>>(json, _jsonOpts);
             if (parsed?.Data != null)
-                vm.Payouts = parsed.Data;
+                vm.Dashboard.Payouts = parsed.Data;
+        }
+
+        // Parse balance
+        var balanceResp = await balanceTask;
+        if (balanceResp.IsSuccessStatusCode)
+        {
+            var json = await balanceResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<PlatformBalanceVM>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+                vm.Withdraw.Balance = parsed.Data;
+        }
+
+        // Parse history
+        var historyResp = await historyTask;
+        if (historyResp.IsSuccessStatusCode)
+        {
+            var json = await historyResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<List<WithdrawalHistoryVM>>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+                vm.Withdraw.History = parsed.Data;
+        }
+
+        // Parse transactions
+        var txResp = await txTask;
+        if (txResp.IsSuccessStatusCode)
+        {
+            var json = await txResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<CourseMarketplaceFE.Controllers.TransactionController.TransactionPagedVM>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+                vm.Transactions = parsed.Data;
         }
 
         return View(vm);
@@ -180,5 +261,90 @@ public class AdminFinanceController : Controller
         }
 
         return RedirectToAction(nameof(Index));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TRANG RÚT TIỀN SÀN
+    // GET /AdminFinance/Withdrawals — Hiển thị số dư + lịch sử rút
+    // POST /AdminFinance/Withdraw — Tạo lệnh rút
+    // ═══════════════════════════════════════════════════════════════════════
+
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Withdraw(decimal? amount, string? description)
+    {
+        var response = await _api.PostJsonAsync("admin/finance/withdraw", new
+        {
+            Amount = amount,
+            Description = description
+        });
+
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+            TempData["WithdrawSuccess"] = "✅ Lệnh rút tiền đã được tạo thành công! Tiền sẽ về ngân hàng trong 1-3 ngày.";
+        }
+        else
+        {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            try
+            {
+                using var doc = JsonDocument.Parse(errorBody);
+                if (doc.RootElement.TryGetProperty("message", out var m))
+                    errorBody = m.GetString();
+            }
+            catch { }
+
+            TempData["WithdrawError"] = $"❌ Lỗi: {errorBody}";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // POST /AdminFinance/Refund/{transactionId}
+    // Hoàn tiền cho 1 giao dịch qua Stripe
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Refund(int transactionId, string? reason)
+    {
+        var response = await _api.PostJsonAsync($"admin/finance/transactions/{transactionId}/refund", new
+        {
+            Reason = reason
+        });
+
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            var data = doc.RootElement.GetProperty("data");
+
+            var refundId = data.GetProperty("stripeRefundId").GetString();
+            var amount = data.GetProperty("refundedAmount").GetDecimal();
+            var enrollRevoked = data.GetProperty("enrollmentRevoked").GetBoolean();
+
+            TempData["FinanceSuccess"] = $"✅ Hoàn tiền thành công! " +
+                $"Stripe Refund: {refundId} | " +
+                $"Số tiền: ${amount:F2} | " +
+                $"Thu hồi quyền truy cập: {(enrollRevoked ? "Đã thu hồi" : "Không áp dụng")}";
+        }
+        else
+        {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            try
+            {
+                using var doc = JsonDocument.Parse(errorBody);
+                if (doc.RootElement.TryGetProperty("message", out var m))
+                    errorBody = m.GetString();
+            }
+            catch { }
+
+            TempData["FinanceError"] = $"❌ Lỗi hoàn tiền: {errorBody}";
+        }
+
+        return RedirectToAction("Detail", "Transaction", new { id = transactionId });
     }
 }

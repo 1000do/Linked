@@ -58,7 +58,12 @@ public interface IInstructorService
     Task SetStripeCountryAsync(int userId, string countryCode);
 
     /// <summary>
-    /// Lấy danh sách lịch sử thanh toán của giảng viên.
+    /// Lấy danh sách lịch sử thanh toán của giảng viên (có phân trang, tìm kiếm, lọc).
     /// </summary>
-    Task<List<InstructorPayoutDto>> GetPayoutsAsync(int userId);
+    Task<InstructorPayoutPagedDto> GetPayoutsAsync(int userId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null);
+
+    /// <summary>
+    /// Chủ động gọi Stripe để đồng bộ trạng thái Payouts (giải pháp cho việc lỡ mất Webhook).
+    /// </summary>
+    Task SyncPayoutsWithStripeAsync(int userId);
 }

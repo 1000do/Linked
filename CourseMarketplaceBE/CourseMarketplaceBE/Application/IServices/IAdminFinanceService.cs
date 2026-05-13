@@ -45,4 +45,34 @@ public interface IAdminFinanceService
     /// Quét và thanh toán tất cả công nợ đang chờ qua Stripe.
     /// </summary>
     Task<BulkPayoutResult> BulkPayAllViaStripeAsync();
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PLATFORM WITHDRAWAL (Rút tiền lợi nhuận Sàn về ngân hàng)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>Lấy số dư Stripe Platform (Available + Incoming).</summary>
+    Task<PlatformBalanceResponse> GetPlatformBalanceAsync();
+
+    /// <summary>Tạo lệnh rút tiền từ Stripe về ngân hàng Admin.</summary>
+    Task<WithdrawResponse> CreateWithdrawalAsync(WithdrawRequest request, int managerId);
+
+    /// <summary>Lấy danh sách lịch sử rút tiền.</summary>
+    Task<List<WithdrawalHistoryItem>> GetWithdrawalHistoryAsync();
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // REFUND (Hoàn tiền cho khách hàng)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Hoàn tiền toàn bộ cho 1 giao dịch. Orchestrate:
+    ///   1. Reverse Stripe Transfer (nếu đã chuyển cho GV)
+    ///   2. Tạo Stripe Refund trên PaymentIntent gốc
+    ///   3. Cập nhật trạng thái Transaction → refunded
+    ///   4. Cập nhật trạng thái InstructorPayout → refunded
+    ///   5. Thu hồi Enrollment của học viên
+    /// </summary>
+    /// <param name="transactionId">ID giao dịch cần hoàn tiền.</param>
+    /// <param name="reason">Lý do hoàn tiền (requested_by_customer, duplicate, fraudulent).</param>
+    /// <returns>Stripe Refund ID (re_xxx).</returns>
+    Task<RefundResultResponse> RefundTransactionAsync(int transactionId, string? reason = null);
 }

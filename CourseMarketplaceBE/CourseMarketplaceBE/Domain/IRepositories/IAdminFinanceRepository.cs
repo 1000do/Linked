@@ -58,6 +58,42 @@ public interface IAdminFinanceRepository
     /// </summary>
     Task<List<Domain.Entities.InstructorPayout>> GetTransferredPayoutsByAccountAsync(string stripeAccountId);
 
+    /// <summary>Tìm 1 bản ghi payout theo mã Stripe Transfer ID.</summary>
+    Task<Domain.Entities.InstructorPayout?> GetPayoutByTransferIdAsync(string transferId);
+
+    // ── Platform Withdrawals ──────────────────────────────────────────────
+
+    /// <summary>Thêm mới bản ghi rút tiền Sàn.</summary>
+    Task AddWithdrawalAsync(Domain.Entities.PlatformWithdrawal withdrawal);
+
+    /// <summary>Lấy danh sách rút tiền Sàn (mới nhất trước).</summary>
+    Task<List<Domain.Entities.PlatformWithdrawal>> GetWithdrawalsAsync();
+
+    // ── Refund ─────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Lấy Transaction entity đầy đủ kèm InstructorPayouts + OrderItem → Course → Enrollment.
+    /// Cần để orchestrate toàn bộ flow refund (reverse transfer, refund, revoke enrollment).
+    /// </summary>
+    Task<Domain.Entities.Transaction?> GetTransactionWithFullGraphAsync(int transactionId);
+
+    /// <summary>
+    /// Tìm Enrollment active của user cho khóa học (để revoke khi refund).
+    /// </summary>
+    Task<Domain.Entities.Enrollment?> GetActiveEnrollmentAsync(int userId, int courseId);
+
+    /// <summary>
+    /// Lấy Stripe Transfer ID gốc (tr_xxx) từ DestinationPayment (py_xxx).
+    /// InstructorPayout lưu py_xxx, nhưng Transfer Reversal API cần tr_xxx.
+    /// </summary>
+    Task<string?> GetStripeTransferIdByDestinationPaymentAsync(string destinationPaymentId);
+
+    /// <summary>
+    /// Tìm Transaction theo Stripe PaymentIntent ID (pi_xxx).
+    /// Dùng cho Webhook sync khi Admin refund trực tiếp trên Stripe Dashboard.
+    /// </summary>
+    Task<Domain.Entities.Transaction?> GetTransactionByPaymentIntentIdAsync(string paymentIntentId);
+
     /// <summary>Commit changes.</summary>
     Task SaveChangesAsync();
 }

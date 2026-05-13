@@ -60,6 +60,7 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<MessageModerationLog> MessageModerationLogs { get; set; }
     public virtual DbSet<AvatarFrame> AvatarFrames { get; set; }
     public virtual DbSet<UserAvatarFrame> UserAvatarFrames { get; set; }
+    public virtual DbSet<PlatformWithdrawal> PlatformWithdrawals { get; set; }
 
     // ─── OnConfiguring ────────────────────────────────────────────────────────
 
@@ -1142,6 +1143,33 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.MessageId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("message_moderation_logs_message_id_fkey");
+        });
+
+        // ── platform_withdrawals (★ Rút tiền lợi nhuận Sàn) ──────────────────
+        modelBuilder.Entity<PlatformWithdrawal>(entity =>
+        {
+            entity.HasKey(e => e.WithdrawalId).HasName("platform_withdrawals_pkey");
+            entity.ToTable("platform_withdrawals");
+
+            entity.Property(e => e.WithdrawalId).HasColumnName("withdrawal_id");
+            entity.Property(e => e.ManagerId).HasColumnName("manager_id");
+            entity.Property(e => e.Amount).HasPrecision(10, 2).HasColumnName("amount");
+            entity.Property(e => e.Currency).HasMaxLength(10).HasDefaultValue("usd").HasColumnName("currency");
+            entity.Property(e => e.StripePayoutId).HasMaxLength(255).HasColumnName("stripe_payout_id");
+            entity.Property(e => e.Status).HasMaxLength(20).HasDefaultValue("pending").HasColumnName("status");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.ArrivedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("arrived_at");
+
+            entity.HasOne(d => d.Manager).WithMany()
+                .HasForeignKey(d => d.ManagerId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("platform_withdrawals_manager_id_fkey");
         });
 
 

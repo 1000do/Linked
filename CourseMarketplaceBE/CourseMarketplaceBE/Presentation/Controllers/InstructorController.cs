@@ -257,19 +257,44 @@ public class InstructorController : ControllerBase
     // ─── 9. LẤY LỊCH SỬ THANH TOÁN ───────────────────────────────────
     [HttpGet("payouts")]
     [Authorize]
-    public async Task<IActionResult> GetPayouts()
+    public async Task<IActionResult> GetPayouts(int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null)
     {
         var userId = GetUserId();
         if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
 
         try
         {
-            var list = await _instructorService.GetPayoutsAsync(userId.Value);
-            return Ok(new { status = 200, data = list });
+            var pagedResult = await _instructorService.GetPayoutsAsync(userId.Value, page, pageSize, keyword, sortBy, status);
+            return Ok(new { status = 200, data = pagedResult });
         }
         catch (Exception ex)
         {
             return StatusCode(500, new { status = 500, message = $"Lỗi server: {ex.Message}" });
+        }
+    }
+
+    // ─── 9b. ĐỒNG BỘ PAYOUT TỪ STRIPE (PULL MODEL) ──────────────────
+    /// <summary>
+    /// POST /api/instructor/sync-payouts
+    /// Chủ động gọi Stripe để lấy danh sách Payouts và cập nhật vào DB local.
+    /// Dùng khi bị lỡ Webhook hoặc muốn làm mới dữ liệu ngay lập tức.
+    /// </summary>
+    [HttpPost("sync-payouts")]
+    [Authorize]
+    public async Task<IActionResult> SyncPayouts()
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+
+        try
+        {
+            await _instructorService.SyncPayoutsWithStripeAsync(userId.Value);
+            var pagedResult = await _instructorService.GetPayoutsAsync(userId.Value, 1, 10, null, "date_desc", null);
+            return Ok(new { status = 200, message = "Đồng bộ thành công!", data = pagedResult });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = 500, message = $"Lỗi đồng bộ: {ex.Message}" });
         }
     }
 

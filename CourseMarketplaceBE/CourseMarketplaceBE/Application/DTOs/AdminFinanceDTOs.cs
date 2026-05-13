@@ -97,3 +97,116 @@ public class SetTransferRateRequest
     /// <summary>Tỷ lệ giảng viên nhận (1-100). VD: 70 = 70% cho giảng viên, 30% cho sàn.</summary>
     public decimal Rate { get; set; }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Platform Balance & Withdrawal DTOs
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Số dư Stripe Platform (lấy từ Stripe Balance API)
+/// </summary>
+public class PlatformBalanceResponse
+{
+    /// <summary>Số tiền có thể rút ngay (Available)</summary>
+    public decimal Available { get; set; }
+
+    /// <summary>Số tiền đang chờ vào ví (Incoming/Pending)</summary>
+    public decimal Incoming { get; set; }
+
+    /// <summary>Tổng = Available + Incoming</summary>
+    public decimal Total { get; set; }
+
+    public string Currency { get; set; } = "usd";
+
+    /// <summary>Lịch rút tiền hiện tại (manual / daily / weekly / monthly)</summary>
+    public string PayoutScheduleInterval { get; set; } = "manual";
+
+    /// <summary>Chi tiết lịch (VD: "Monday" nếu weekly)</summary>
+    public string? PayoutScheduleAnchor { get; set; }
+}
+
+/// <summary>
+/// Request rút tiền từ Stripe về ngân hàng
+/// </summary>
+public class WithdrawRequest
+{
+    /// <summary>Số tiền muốn rút (USD). Để 0 hoặc null = rút toàn bộ Available.</summary>
+    public decimal? Amount { get; set; }
+
+    /// <summary>Ghi chú (tùy chọn)</summary>
+    public string? Description { get; set; }
+}
+
+/// <summary>
+/// Response sau khi tạo lệnh rút thành công
+/// </summary>
+public class WithdrawResponse
+{
+    public int WithdrawalId { get; set; }
+    public string StripePayoutId { get; set; } = "";
+    public decimal Amount { get; set; }
+    public string Status { get; set; } = "pending";
+    public DateTime CreatedAt { get; set; }
+}
+
+/// <summary>
+/// DTO hiển thị lịch sử rút tiền
+/// </summary>
+public class WithdrawalHistoryItem
+{
+    public int WithdrawalId { get; set; }
+    public string? ManagerName { get; set; }
+    public decimal Amount { get; set; }
+    public string Currency { get; set; } = "usd";
+    public string? StripePayoutId { get; set; }
+    public string Status { get; set; } = "pending";
+    public string? Description { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? ArrivedAt { get; set; }
+}
+
+/// <summary>
+/// Kết quả đồng bộ trạng thái lệnh rút
+/// </summary>
+public class BulkPayoutResult
+{
+    public int TotalProcessed { get; set; }
+    public int SuccessCount { get; set; }
+    public int FailCount { get; set; }
+    public List<string> Errors { get; set; } = new();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// REFUND DTOs
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Request hoàn tiền từ Admin Dashboard.
+/// </summary>
+public class RefundRequest
+{
+    /// <summary>Lý do hoàn tiền: requested_by_customer | duplicate | fraudulent</summary>
+    public string? Reason { get; set; }
+}
+
+/// <summary>
+/// Response chi tiết kết quả hoàn tiền.
+/// </summary>
+public class RefundResultResponse
+{
+    /// <summary>Mã Stripe Refund (re_xxx)</summary>
+    public string StripeRefundId { get; set; } = "";
+
+    /// <summary>Mã Transfer Reversal (trr_xxx) — null nếu chưa transfer cho GV</summary>
+    public string? StripeReversalId { get; set; }
+
+    /// <summary>Số tiền hoàn lại cho khách hàng</summary>
+    public decimal RefundedAmount { get; set; }
+
+    /// <summary>Enrollment bị thu hồi hay không</summary>
+    public bool EnrollmentRevoked { get; set; }
+
+    /// <summary>Trạng thái giao dịch sau khi refund</summary>
+    public string TransactionStatus { get; set; } = "refunded";
+}
+
