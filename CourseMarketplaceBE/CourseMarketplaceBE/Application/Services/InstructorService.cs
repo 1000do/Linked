@@ -15,11 +15,13 @@ public class InstructorService : IInstructorService
 {
     private readonly IInstructorRepository _repo;
     private readonly IFileUploadService    _uploadService;
+    private readonly IAdminFinanceRepository _financeRepo;
 
-    public InstructorService(IInstructorRepository repo, IFileUploadService uploadService)
+    public InstructorService(IInstructorRepository repo, IFileUploadService uploadService, IAdminFinanceRepository financeRepo)
     {
         _repo          = repo;
         _uploadService = uploadService;
+        _financeRepo   = financeRepo;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -314,8 +316,93 @@ public class InstructorService : IInstructorService
         await _repo.SaveChangesAsync();
     }
 
-    public async Task<List<InstructorPayoutDto>> GetPayoutsAsync(int userId)
+    public async Task<InstructorPayoutPagedDto> GetPayoutsAsync(int userId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null)
     {
-        return await _repo.GetPayoutsAsync(userId);
+        return await _repo.GetPayoutsAsync(userId, page, pageSize, keyword, sortBy, status);
+    }
+
+    public async Task SyncPayoutsWithStripeAsync(int userId)
+    {
+        var instructor = await _repo.GetByIdAsync(userId);
+        if (instructor == null || string.IsNullOrEmpty(instructor.StripeAccountId))
+            return;
+
+        // 1. Lấy danh sách Payouts gần đây từ Stripe cho Connected Account này
+        var payoutService = new PayoutService();
+        var stripePayouts = await payoutService.ListAsync(new PayoutListOptions
+        {
+            Limit = 20,
+            Expand = new List<string> { "data.destination" }
+        }, new RequestOptions
+        {
+            StripeAccount = instructor.StripeAccountId
+        });
+
+        if (!stripePayouts.Any()) return;
+
+        // 2. Duyệt qua từng Payout từ Stripe để đồng bộ
+        foreach (var sp in stripePayouts)
+        {
+            // Kiểm tra xem mã Payout này đã có trong DB chưa
+            var dbPayouts = await _financeRepo.GetPayoutsByStripePayoutIdAsync(sp.Id);
+
+            // Nếu CHƯA có mã Payout trong DB -> Ta cần tìm xem Payout này chứa những Transfer nào của ta
+            if (!dbPayouts.Any())
+            {
+                // Truy vấn Balance Transactions của Payout này để tìm các TransferId (tr_xxx)
+                var btService = new BalanceTransactionService();
+                var balanceTransactions = await btService.ListAsync(new BalanceTransactionListOptions
+                {
+                    Payout = sp.Id,
+                    Limit = 100
+                }, new RequestOptions
+                {
+                    StripeAccount = instructor.StripeAccountId
+                });
+
+                foreach (var bt in balanceTransactions)
+                {
+                    // Chấp nhận cả 'payment' (py_xxx) và 'transfer' (tr_xxx)
+                    if ((bt.Type != "transfer" && bt.Type != "payment") || string.IsNullOrEmpty(bt.SourceId)) continue;
+
+                    var localPayout = await _financeRepo.GetPayoutByTransferIdAsync(bt.SourceId);
+                    if (localPayout != null)
+                    {
+                        // Khớp lệnh thành công -> Gắn mã Payout và cập nhật trạng thái
+                        localPayout.StripePayoutId = sp.Id;
+                        UpdatePayoutStatusFromStripe(localPayout, sp);
+                    }
+                }
+            }
+            else
+            {
+                // Nếu ĐÃ có mã Payout -> Cập nhật trạng thái mới nhất (VD: từ in_transit sang paid)
+                foreach (var dbp in dbPayouts)
+                {
+                    UpdatePayoutStatusFromStripe(dbp, sp);
+                }
+            }
+        }
+
+        await _repo.SaveChangesAsync();
+    }
+
+    private void UpdatePayoutStatusFromStripe(InstructorPayout dbp, Payout sp)
+    {
+        if (sp.Status == "paid")
+        {
+            dbp.PayoutStatus = "paid";
+            dbp.IsPaid = true;
+            dbp.PaidToBankAt = sp.ArrivalDate;
+        }
+        else if (sp.Status == "in_transit" || sp.Status == "pending")
+        {
+            dbp.PayoutStatus = "in_transit";
+        }
+        else if (sp.Status == "failed" || sp.Status == "canceled")
+        {
+            dbp.PayoutStatus = "failed";
+            dbp.IsPaid = false;
+        }
     }
 }

@@ -158,6 +158,7 @@ public class InstructorController : Controller
     {
         if (!ModelState.IsValid)
         {
+            await LoadEmailVerifiedAsync();
             model.AvailableCountries = await LoadStripeCountriesAsync();
             return View(model);
         }
@@ -390,26 +391,30 @@ public class InstructorController : Controller
     // ═══════════════════════════════════════════════════════════════════
     // 6. LỊCH SỬ THANH TOÁN (PAYOUTS)
     // ═══════════════════════════════════════════════════════════════════
-    public async Task<IActionResult> Payouts()
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SyncPayouts()
     {
         try
         {
-            var response = await _api.GetAsync("instructor/payouts");
+            var response = await _api.PostAsync("instructor/sync-payouts");
             if (response.IsSuccessStatusCode)
             {
-                var json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-                if (doc.RootElement.TryGetProperty("data", out var dataEl))
-                {
-                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    var list = JsonSerializer.Deserialize<List<InstructorPayoutViewModel>>(dataEl.GetRawText(), options);
-                    return View(list ?? new List<InstructorPayoutViewModel>());
-                }
+                TempData["SuccessMessage"] = "Đã đồng bộ dữ liệu thanh toán từ Stripe thành công!";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Không thể đồng bộ dữ liệu. Vui lòng thử lại sau.";
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"Lỗi đồng bộ: {ex.Message}";
+        }
 
-        return View(new List<InstructorPayoutViewModel>());
+        return RedirectToAction("Instructor", "Transaction");
     }
 
     public class InstructorPayoutViewModel
@@ -420,5 +425,18 @@ public class InstructorController : Controller
         public bool IsPaid { get; set; }
         public string CourseTitle { get; set; } = "";
         public decimal TotalAmount { get; set; }
+        public string? PayoutStatus { get; set; }
+        public DateTime? PaidToBankAt { get; set; }
+        public string? StripeTransferId { get; set; }
+        public string? StripePayoutId { get; set; }
+    }
+
+    public class InstructorPayoutPagedViewModel
+    {
+        public List<InstructorPayoutViewModel> Items { get; set; } = new();
+        public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages { get; set; }
     }
 }

@@ -23,14 +23,14 @@ public class TransactionService : ITransactionService
     // ═══════════════════════════════════════════════════════════════════════
     // UC-115: DANH SÁCH GIAO DỊCH
     // ═══════════════════════════════════════════════════════════════════════
-    public async Task<TransactionPagedResult> GetTransactionsAsync(int page = 1, int pageSize = 20)
+    public async Task<TransactionPagedResult> GetTransactionsAsync(int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null)
     {
         // ★ Guard: tránh invalid pagination
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
         if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
-        var (items, totalCount) = await _repo.GetTransactionsAsync(page, pageSize);
+        var (items, totalCount) = await _repo.GetTransactionsAsync(page, pageSize, keyword, sortBy, status);
 
         return new TransactionPagedResult
         {
@@ -52,13 +52,13 @@ public class TransactionService : ITransactionService
         return await _repo.GetTransactionDetailAsync(transactionId);
     }
 
-    public async Task<TransactionPagedResult> GetInstructorTransactionsAsync(int instructorId, int page = 1, int pageSize = 20)
+    public async Task<TransactionPagedResult> GetInstructorTransactionsAsync(int instructorId, int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null)
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
         if (pageSize > MaxPageSize) pageSize = MaxPageSize;
 
-        var (items, totalCount) = await _repo.GetInstructorTransactionsAsync(instructorId, page, pageSize);
+        var (items, totalCount) = await _repo.GetInstructorTransactionsAsync(instructorId, page, pageSize, keyword, sortBy, status);
 
         return new TransactionPagedResult
         {

@@ -12,4 +12,10 @@ public class FinanceHub : Hub
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, "AdminFinance");
     }
+
+    // Instructor join vào group riêng của họ dựa trên InstructorId
+    public async Task JoinInstructorGroup(string instructorId)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"InstructorFinance_{instructorId}");
+    }
 }

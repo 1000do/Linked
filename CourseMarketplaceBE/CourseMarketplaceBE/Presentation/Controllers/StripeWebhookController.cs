@@ -121,6 +121,9 @@ public class StripeWebhookController : ControllerBase
             case "payout.created":
                 await OnPayoutCreatedAsync(e);
                 break;
+            case "charge.refunded":
+                await OnChargeRefundedAsync(e);
+                break;
             default:
                 _logger.LogDebug("Unhandled event type: {Type}", e.Type);
                 break;
@@ -156,10 +159,17 @@ public class StripeWebhookController : ControllerBase
         }
         await _financeRepo.SaveChangesAsync();
 
-        // 🔥 Gửi SignalR báo cho Admin (refresh toàn bảng)
+        // 🔥 Gửi SignalR báo cho Admin và Instructor (refresh toàn bảng)
+        var instructorId = dbPayouts.First().InstructorId;
         await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new {
             refresh = true
         });
+        if (instructorId.HasValue)
+        {
+            await _hubContext.Clients.Group($"InstructorFinance_{instructorId.Value}").SendAsync("UpdatePayoutStatus", new {
+                refresh = true
+            });
+        }
 
         _logger.LogInformation(
             "✅ {Count} InstructorPayouts → PAID TO BANK at {Time}",
@@ -220,14 +230,79 @@ public class StripeWebhookController : ControllerBase
         }
         await _financeRepo.SaveChangesAsync();
 
-        // 🔥 Gửi SignalR báo cho Admin (báo refresh lại toàn bảng)
+        // 🔥 Gửi SignalR báo cho Admin và Instructor
+        var instructorId = dbPayouts.First().InstructorId;
         await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new {
             refresh = true
         });
+        if (instructorId.HasValue)
+        {
+            await _hubContext.Clients.Group($"InstructorFinance_{instructorId.Value}").SendAsync("UpdatePayoutStatus", new {
+                refresh = true
+            });
+        }
 
         _logger.LogInformation(
             "🔵 {Count} InstructorPayouts → IN TRANSIT | StripePayoutId={PoId}",
             dbPayouts.Count, stripePayout.Id);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // charge.refunded → Stripe xác nhận refund đã hoàn tất
+    // ★ Safety net: Bắt refund từ cả Dashboard lẫn API
+    // ═══════════════════════════════════════════════════════════════════════
+    /// <summary>
+    /// charge.refunded → Stripe xác nhận refund đã hoàn tất
+    /// ★ Safety net: Bắt refund từ cả Dashboard lẫn API
+    /// ═══════════════════════════════════════════════════════════════════════
+    private async Task OnChargeRefundedAsync(Event e)
+    {
+        var charge = e.Data.Object as Charge;
+        if (charge is null) return;
+
+        _logger.LogInformation(
+            "charge.refunded | ChargeId={Id} | PaymentIntent={PI} | Amount={Amt}",
+            charge.Id, charge.PaymentIntentId, charge.AmountRefunded / 100.0);
+
+        // 1. Tìm transaction theo PaymentIntentId (pi_xxx)
+        var txn = await _financeRepo.GetTransactionByPaymentIntentIdAsync(charge.PaymentIntentId);
+        
+        if (txn != null && txn.TransactionsStatus != "refunded")
+        {
+            _logger.LogInformation("🔄 Syncing refund from Stripe Dashboard for TxnId={Id}", txn.TransactionId);
+            
+            // 2. Cập nhật trạng thái
+            txn.TransactionsStatus = "refunded";
+            
+            // 3. Cập nhật payout liên quan
+            var payout = txn.InstructorPayouts.FirstOrDefault();
+            if (payout != null)
+            {
+                payout.PayoutStatus = "refunded";
+                payout.IsPaid = false;
+            }
+
+            // 4. Thu hồi Enrollment
+            var buyerUserId = txn.AccountFromNavigation?.User?.UserId;
+            var courseId = txn.OrderItem?.CourseId;
+            if (buyerUserId.HasValue && courseId.HasValue)
+            {
+                var enrollment = await _financeRepo.GetActiveEnrollmentAsync(buyerUserId.Value, courseId.Value);
+                if (enrollment != null)
+                {
+                    enrollment.EnrollmentStatus = "revoked";
+                    _logger.LogInformation("🚫 Enrollment revoked via Webhook sync");
+                }
+            }
+
+            await _financeRepo.SaveChangesAsync();
+        }
+
+        // 🔥 Gửi SignalR báo cho Admin để refresh UI
+        await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new
+        {
+            refresh = true
+        });
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -248,9 +323,16 @@ public class StripeWebhookController : ControllerBase
         await _financeRepo.SaveChangesAsync();
 
         // 🔥 Bắn SignalR để Web tự nhảy chữ
+        var instructorId = dbPayouts.First().InstructorId;
         await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new {
             refresh = true
         });
+        if (instructorId.HasValue)
+        {
+            await _hubContext.Clients.Group($"InstructorFinance_{instructorId.Value}").SendAsync("UpdatePayoutStatus", new {
+                refresh = true
+            });
+        }
 
         return Ok($"Đã ép {dbPayouts.Count} giao dịch sang trạng thái PAID!");
     }

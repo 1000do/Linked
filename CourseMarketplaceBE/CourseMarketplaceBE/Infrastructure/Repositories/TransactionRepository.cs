@@ -35,10 +35,43 @@ public class TransactionRepository : ITransactionRepository
     //   ORDER BY t.transaction_created_at DESC
     //   LIMIT @pageSize OFFSET @skip
     // ═══════════════════════════════════════════════════════════════════════
-    public async Task<(List<TransactionListDto> Items, int TotalCount)> GetTransactionsAsync(int page, int pageSize)
+    public async Task<(List<TransactionListDto> Items, int TotalCount)> GetTransactionsAsync(int page, int pageSize, string? keyword = null, string? sortBy = "date_desc", string? status = null)
     {
-        var query = _context.Transactions
-            .OrderByDescending(t => t.TransactionCreatedAt)
+        var baseQuery = _context.Transactions.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var keywordLower = keyword.ToLower();
+            baseQuery = baseQuery.Where(t =>
+                (t.OrderItem != null && t.OrderItem.Course != null && t.OrderItem.Course.Title != null && t.OrderItem.Course.Title.ToLower().Contains(keywordLower)) ||
+                (t.AccountFromNavigation != null && t.AccountFromNavigation.User != null && t.AccountFromNavigation.User.FullName != null && t.AccountFromNavigation.User.FullName.ToLower().Contains(keywordLower)) ||
+                (t.OrderItem != null && t.OrderItem.Course != null && t.OrderItem.Course.Instructor != null && t.OrderItem.Course.Instructor.InstructorNavigation != null && t.OrderItem.Course.Instructor.InstructorNavigation.FullName != null && t.OrderItem.Course.Instructor.InstructorNavigation.FullName.ToLower().Contains(keywordLower))
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            var statusLower = status.ToLower();
+            baseQuery = baseQuery.Where(t => t.TransactionsStatus != null && t.TransactionsStatus.ToLower() == statusLower);
+        }
+
+        switch (sortBy?.ToLower())
+        {
+            case "date_asc":
+                baseQuery = baseQuery.OrderBy(t => t.TransactionCreatedAt);
+                break;
+            case "amount_desc":
+                baseQuery = baseQuery.OrderByDescending(t => t.Amount);
+                break;
+            case "amount_asc":
+                baseQuery = baseQuery.OrderBy(t => t.Amount);
+                break;
+            default: // date_desc
+                baseQuery = baseQuery.OrderByDescending(t => t.TransactionCreatedAt);
+                break;
+        }
+
+        var query = baseQuery
             .Select(t => new TransactionListDto
             {
                 TransactionId  = t.TransactionId,
@@ -137,21 +170,48 @@ public class TransactionRepository : ITransactionRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task<(List<TransactionListDto> Items, int TotalCount)> GetInstructorTransactionsAsync(int instructorId, int page, int pageSize)
+    public async Task<(List<TransactionListDto> Items, int TotalCount)> GetInstructorTransactionsAsync(int instructorId, int page, int pageSize, string? keyword = null, string? sortBy = "date_desc", string? status = null)
     {
-        var query = _context.Transactions
-            // Điều kiện: Chỉ lấy những giao dịch mà Giảng viên này có khóa học được bán (và payout có liên quan)
-            // InstructorPayouts.InstructorId = instructorId
-            .Where(t => t.InstructorPayouts.Any(p => p.InstructorId == instructorId))
-            .OrderByDescending(t => t.TransactionCreatedAt)
+        var baseQuery = _context.Transactions
+            .Where(t => t.InstructorPayouts.Any(p => p.InstructorId == instructorId));
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var keywordLower = keyword.ToLower();
+            baseQuery = baseQuery.Where(t =>
+                (t.OrderItem != null && t.OrderItem.Course != null && t.OrderItem.Course.Title != null && t.OrderItem.Course.Title.ToLower().Contains(keywordLower)) ||
+                (t.AccountFromNavigation != null && t.AccountFromNavigation.User != null && t.AccountFromNavigation.User.FullName != null && t.AccountFromNavigation.User.FullName.ToLower().Contains(keywordLower))
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            var statusLower = status.ToLower();
+            baseQuery = baseQuery.Where(t => t.TransactionsStatus != null && t.TransactionsStatus.ToLower() == statusLower);
+        }
+
+        switch (sortBy?.ToLower())
+        {
+            case "date_asc":
+                baseQuery = baseQuery.OrderBy(t => t.TransactionCreatedAt);
+                break;
+            case "amount_desc":
+                baseQuery = baseQuery.OrderByDescending(t => t.Amount);
+                break;
+            case "amount_asc":
+                baseQuery = baseQuery.OrderBy(t => t.Amount);
+                break;
+            default: // date_desc
+                baseQuery = baseQuery.OrderByDescending(t => t.TransactionCreatedAt);
+                break;
+        }
+
+        var query = baseQuery
             .Select(t => new TransactionListDto
             {
                 TransactionId  = t.TransactionId,
                 StripeSessionId = t.StripeSessionId,
                 Date           = t.TransactionCreatedAt,
-                // Chú ý: Ở đây Amount của ListDto ta có thể ghi đè thành tiền mà GV nhận,
-                // hoặc vẫn hiển thị Gross Amount. Dựa theo yêu cầu "tổng tiền trừ phí còn nhiêu",
-                // ta sẽ truyền PayoutAmount qua cột Amount.
                 Amount         = t.InstructorPayouts.FirstOrDefault(p => p.InstructorId == instructorId)!.PayoutAmount,
                 Currency       = t.Currency ?? "USD",
                 PayoutCurrency = t.InstructorPayouts.Any(p => p.InstructorId == instructorId && p.IsPaid)
@@ -171,7 +231,7 @@ public class TransactionRepository : ITransactionRepository
                     ? t.OrderItem.Course.Title ?? "N/A"
                     : "N/A",
 
-                InstructorName = "Me" // Vì đây là view của chính instructor
+                InstructorName = "Me"
             });
 
         var totalCount = await query.CountAsync();

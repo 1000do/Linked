@@ -170,6 +170,8 @@
                             <div class="space-y-4">
                                 @{
                                     var isStripeActiveEditor = (bool)(ViewBag.IsStripeActive ?? false);
+                                    var transferRate = (decimal)(ViewBag.TransferRate ?? 70.0m);
+                                    var transferRateStr = transferRate.ToString("0.##");
                                 }
 
                                 @if (!isStripeActiveEditor)
@@ -252,7 +254,7 @@
                                         </div>
                                         <div>
                                             <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Instructor Revenue</p>
-                                            <p class="font-bold text-slate-900 text-lg">70% Share</p>
+                                            <p class="font-bold text-slate-900 text-lg">@transferRateStr% Share</p>
                                             <p class="text-[10px] text-slate-500 mt-1">Estimated payout per sale: <span id="payout-estimate">$0.00</span></p>
                                         </div>
                                     </div>
@@ -1779,9 +1781,10 @@
             updatePayout(val);
         };
 
+        const transferRateMultiplier = @((((decimal)(ViewBag.TransferRate ?? 70.0m)) / 100m).ToString(System.Globalization.CultureInfo.InvariantCulture));
         function updatePayout(val) {
             const el = document.getElementById('payout-estimate');
-            if (el) el.textContent = '$' + ((parseFloat(val)||0)*0.7).toFixed(2);
+            if (el) el.textContent = '$' + ((parseFloat(val)||0) * transferRateMultiplier).toFixed(2);
         }
 
         // Format initial price (must be called AFTER formatPrice is defined)
