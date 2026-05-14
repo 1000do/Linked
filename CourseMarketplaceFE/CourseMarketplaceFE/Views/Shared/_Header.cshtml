@@ -178,63 +178,69 @@
 </nav>
 
 <script>
-       function toggleNoti() {
-        const box = document.getElementById('noti-box');
-        box.classList.toggle('hidden');
-        if (!box.classList.contains('hidden')) {
-            document.getElementById('noti-badge').classList.add('hidden');
-           
+    // ─── DROPDOWNS MANAGEMENT ───
+    function toggleCategories() {
+        const box = document.getElementById('categories-box');
+        const isHidden = box.classList.contains('hidden');
+        closeAllDropdowns();
+        if (isHidden) {
+            box.classList.remove('hidden');
+            loadCategories();
         }
     }
-
-    
-
-    window.addEventListener('click', function(e) {
-        const dropdown = document.getElementById('notification-dropdown');
-        if (dropdown && !dropdown.contains(e.target)) {
-            document.getElementById('noti-box').classList.add('hidden');
-        }
-    });
-</script>
-
-<script>
-    // ─── CART MINI DROPDOWN ───
-    const cartApiUrl = "http://localhost:5207/api/cart/summary";
-    const accessToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`;
 
     function toggleCart() {
         const box = document.getElementById('cart-box');
         const isHidden = box.classList.contains('hidden');
-        // Đóng notification nếu đang mở
-        document.getElementById('noti-box')?.classList.add('hidden');
-        box.classList.toggle('hidden');
-        if (isHidden) loadCartPreview();
+        closeAllDropdowns();
+        if (isHidden) {
+            box.classList.remove('hidden');
+            loadCartPreview();
+        }
     }
+
+    function toggleNoti() {
+        const box = document.getElementById('noti-box');
+        const isHidden = box.classList.contains('hidden');
+        closeAllDropdowns();
+        if (isHidden) {
+            box.classList.remove('hidden');
+            document.getElementById('noti-badge').classList.add('hidden');
+        }
+    }
+
+    function closeAllDropdowns() {
+        document.getElementById('categories-box')?.classList.add('hidden');
+        document.getElementById('cart-box')?.classList.add('hidden');
+        document.getElementById('noti-box')?.classList.add('hidden');
+    }
+
+    window.addEventListener('click', function(e) {
+        if (!document.getElementById('categories-dropdown')?.contains(e.target)) 
+            document.getElementById('categories-box')?.classList.add('hidden');
+        if (!document.getElementById('cart-dropdown')?.contains(e.target)) 
+            document.getElementById('cart-box')?.classList.add('hidden');
+        if (!document.getElementById('notification-dropdown')?.contains(e.target)) 
+            document.getElementById('noti-box')?.classList.add('hidden');
+    });
+
+    // ─── DATA LOADING ───
+    const cartApiUrl = "http://localhost:5207/api/cart/summary";
+    const headerToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`;
 
     async function loadCartPreview() {
         const container = document.getElementById('cart-items-container');
         const badge    = document.getElementById('cart-badge');
-        if (!container) return;
-
-        if (!accessToken) {
-            container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">Vui lòng đăng nhập</div>`;
-            return;
-        }
+        if (!container || !headerToken) return;
 
         try {
             const res = await fetch(cartApiUrl, {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
+                headers: { 'Authorization': `Bearer ${headerToken}` }
             });
-
-            if (!res.ok) {
-                container.innerHTML = `<div class="p-4 text-center text-xs text-red-400">Lỗi tải giỏ hàng</div>`;
-                return;
-            }
-
+            if (!res.ok) return;
             const result = await res.json();
             const items  = result?.data?.items ?? [];
 
-            // Cập nhật số lượng trên badge
             if (items.length > 0) {
                 badge.textContent = items.length > 9 ? '9+' : items.length;
                 badge.classList.remove('hidden');
@@ -266,71 +272,37 @@
                         <p class="text-xs font-bold text-primary mt-1">${item.price.toLocaleString('vi-VN')} VND</p>
                     </div>
                 </a>`).join('');
-
-        } catch (err) {
-            container.innerHTML = `<div class="p-4 text-center text-xs text-red-400">Lỗi kết nối</div>`;
-        }
+        } catch (err) { }
     }
 
-    // Load badge ngay khi trang load (không cần mở dropdown)
     async function initCartBadge() {
         const badge = document.getElementById('cart-badge');
-        if (!badge || !accessToken) return;
+        if (!badge || !headerToken) return;
         try {
-            const res = await fetch(cartApiUrl, {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-            if (!res.ok) return;
-            const result = await res.json();
-            const count  = result?.data?.items?.length ?? 0;
-            if (count > 0) {
-                badge.textContent = count > 9 ? '9+' : count;
-                badge.classList.remove('hidden');
+            const res = await fetch(cartApiUrl, { headers: { 'Authorization': `Bearer ${headerToken}` } });
+            if (res.ok) {
+                const result = await res.json();
+                const count  = result?.data?.items?.length ?? 0;
+                if (count > 0) {
+                    badge.textContent = count > 9 ? '9+' : count;
+                    badge.classList.remove('hidden');
+                }
             }
         } catch { }
-    }
-
-    // Đóng cart khi click ra ngoài
-    window.addEventListener('click', function(e) {
-        const cartEl = document.getElementById('cart-dropdown');
-        if (cartEl && !cartEl.contains(e.target))
-            document.getElementById('cart-box')?.classList.add('hidden');
-    });
-
-    document.addEventListener('DOMContentLoaded', initCartBadge);
-
-    // ─── CATEGORIES DROPDOWN ───
-    function toggleCategories() {
-        const box = document.getElementById('categories-box');
-        const isHidden = box.classList.contains('hidden');
-        
-        // Đóng các dropdown khác
-        document.getElementById('cart-box')?.classList.add('hidden');
-        document.getElementById('noti-box')?.classList.add('hidden');
-        
-        box.classList.toggle('hidden');
-        if (isHidden) loadCategories();
     }
 
     async function loadCategories() {
         const container = document.getElementById('categories-items-container');
         if (!container) return;
-
         try {
             const res = await fetch("http://localhost:5207/api/public/courses/categories");
-            if (!res.ok) {
-                container.innerHTML = `<div class="px-4 py-3 text-xs text-red-400">Không thể tải danh mục</div>`;
-                return;
-            }
-
+            if (!res.ok) return;
             const result = await res.json();
             const categories = result?.data ?? [];
-
             if (categories.length === 0) {
                 container.innerHTML = `<div class="px-4 py-3 text-xs text-slate-400">Chưa có danh mục nào</div>`;
                 return;
             }
-
             container.innerHTML = categories.map(cat => `
                 <a href="/Course?category=${encodeURIComponent(cat.categoriesName)}" 
                    class="flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition-colors group">
@@ -338,19 +310,15 @@
                     <span class="material-symbols-outlined text-[18px] text-slate-300 group-hover:text-primary transition-transform group-hover:translate-x-1">chevron_right</span>
                 </a>
             `).join('');
-
-        } catch (err) {
-            container.innerHTML = `<div class="px-4 py-3 text-xs text-red-400">Lỗi kết nối</div>`;
-        }
+        } catch (err) { }
     }
 
-    // ─── WISHLIST MINI BADGE ───
     async function updateWishlistBadge() {
         const badge = document.getElementById('wishlist-badge');
-        if (!badge || !accessToken) return;
+        if (!badge || !headerToken) return;
         try {
             const res = await fetch("http://localhost:5207/api/Wishlist/count", {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
+                headers: { 'Authorization': `Bearer ${headerToken}` }
             });
             if (!res.ok) return;
             const data = await res.json();
@@ -362,14 +330,6 @@
             }
         } catch { }
     }
-
-    // Đóng dropdown khi click ra ngoài
-    window.addEventListener('click', function(e) {
-        const catDropdown = document.getElementById('categories-dropdown');
-        if (catDropdown && !catDropdown.contains(e.target)) {
-            document.getElementById('categories-box')?.classList.add('hidden');
-        }
-    });
 
     document.addEventListener('DOMContentLoaded', () => {
         initCartBadge();

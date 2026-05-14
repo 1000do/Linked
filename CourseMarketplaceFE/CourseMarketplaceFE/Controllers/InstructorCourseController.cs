@@ -182,12 +182,12 @@ namespace CourseMarketplaceFE.Controllers
                 else
                 {
                     var errorBody = await resp.Content.ReadAsStringAsync();
-                    ModelState.AddModelError("", $"API Error ({resp.StatusCode}): {errorBody}");
+                    ViewBag.ApiError = errorBody;
                 }
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError("", "Failed to create course: " + ex.Message);
+                ViewBag.ApiError = "Failed to create course: " + ex.Message;
             }
 
             model.AvailableCategories = await GetCategoriesAsync();

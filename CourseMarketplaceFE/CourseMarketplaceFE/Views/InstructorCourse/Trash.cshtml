@@ -118,40 +118,53 @@
 @section Scripts {
     <script>
         async function restoreMaterial(id, name) {
-            try {
-                const formData = new FormData();
-                formData.append('materialId', id);
+            const { isConfirmed } = await Swal.fire({
+                title: 'Khôi phục tài liệu?',
+                text: `Bạn có chắc muốn khôi phục "${name}" về bài học cũ không?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#006a62',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Có, khôi phục',
+                cancelButtonText: 'Hủy'
+            });
 
-                const resp = await fetch('/InstructorCourse/RestoreMaterial', {
-                    method: 'POST',
-                    body: formData
-                });
-                const result = await resp.json();
-                if (result.success) {
-                    Swal.fire({
-                        title: 'Restored!',
-                        text: `"${name}" has been restored to its lesson.`,
-                        icon: 'success',
-                        confirmButtonColor: '#006a62'
-                    }).then(() => location.reload());
-                } else {
-                    Swal.fire('Error', result.message || 'Failed to restore material', 'error');
+            if (isConfirmed) {
+                try {
+                    const formData = new FormData();
+                    formData.append('materialId', id);
+
+                    const resp = await fetch('/InstructorCourse/RestoreMaterial', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await resp.json();
+                    if (result.success) {
+                        Swal.fire({
+                            title: 'Đã khôi phục!',
+                            text: `"${name}" đã được đưa trở lại bài học thành công.`,
+                            icon: 'success',
+                            confirmButtonColor: '#006a62'
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire('Lỗi', result.message || 'Không thể khôi phục tài liệu', 'error');
+                    }
+                } catch(e) {
+                    Swal.fire('Lỗi', 'Đã có lỗi xảy ra: ' + e.message, 'error');
                 }
-            } catch(e) {
-                Swal.fire('Error', 'An error occurred: ' + e.message, 'error');
             }
         }
 
         async function confirmPermanentDelete(id, name) {
             const { isConfirmed } = await Swal.fire({
-                title: 'Delete Permanently?',
-                text: `You are about to permanently delete "${name}" from Cloudinary and our database. This cannot be undone.`,
+                title: 'Xóa vĩnh viễn?',
+                text: `Bạn đang chuẩn bị xóa vĩnh viễn "${name}" khỏi Cloudinary và cơ sở dữ liệu. Hành động này không thể hoàn tác!`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Yes, delete forever',
-                cancelButtonText: 'Cancel'
+                confirmButtonText: 'Vâng, xóa vĩnh viễn',
+                cancelButtonText: 'Hủy'
             });
 
             if (isConfirmed) {
@@ -166,16 +179,16 @@
                     const result = await resp.json();
                     if (result.success) {
                         Swal.fire({
-                            title: 'Deleted!',
-                            text: 'Material has been permanently removed.',
+                            title: 'Đã xóa!',
+                            text: 'Tài liệu đã được xóa vĩnh viễn thành công.',
                             icon: 'success',
                             confirmButtonColor: '#006a62'
                         }).then(() => location.reload());
                     } else {
-                        Swal.fire('Error', result.message || 'Failed to delete material', 'error');
+                        Swal.fire('Lỗi', result.message || 'Không thể xóa tài liệu', 'error');
                     }
                 } catch(e) { 
-                    Swal.fire('Error', 'An error occurred: ' + e.message, 'error'); 
+                    Swal.fire('Lỗi', 'Đã có lỗi xảy ra: ' + e.message, 'error'); 
                 }
             }
         }

@@ -206,7 +206,6 @@ public class Program
         builder.Services.AddScoped<ITransactionService, TransactionService>();
         builder.Services.AddScoped<IChatService, ChatService>();
         builder.Services.AddScoped<IModerationService, ModerationService>();
-        builder.Services.AddScoped<IAvatarFrameRepository, AvatarFrameRepository>();
         builder.Services.AddScoped<IAvatarFrameService, AvatarFrameService>();
         
         // 🔥 Background Tasks

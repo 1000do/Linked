@@ -1,4 +1,4 @@
-﻿@using LinkedLearn.Models.UserVM
+@using LinkedLearn.Models.UserVM
 @model LoginViewModel
 @{
     ViewData["Title"] = "Login";
@@ -8,17 +8,19 @@
     <div class="max-w-md w-full bg-white p-10 rounded-2xl shadow-xl border border-slate-100">
         <div class="text-center mb-8">
             <h2 class="text-3xl font-headline font-extrabold text-primary mb-2">Welcome Back</h2>
-
+            
             @if (ViewBag.ErrorMessage != null)
             {
-                <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-4 text-sm">
-                    @ViewBag.ErrorMessage
+                <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-4 text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <span class="material-symbols-outlined text-lg">error</span>
+                    <span>@ViewBag.ErrorMessage</span>
                 </div>
             }
             @if (TempData["SuccessMessage"] != null)
             {
-                <div class="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-xl mb-4 text-sm">
-                    @TempData["SuccessMessage"]
+                <div class="bg-emerald-50 border border-emerald-200 text-emerald-600 px-4 py-3 rounded-xl mb-4 text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <span class="material-symbols-outlined text-lg">check_circle</span>
+                    <span>@TempData["SuccessMessage"]</span>
                 </div>
             }
         </div>
@@ -41,7 +43,10 @@
                 </div>
                 <div class="relative">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">lock</span>
-                    <input asp-for="Password" type="password" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 transition-all" placeholder="••••••••" />
+                    <input asp-for="Password" type="password" id="loginPassword" class="w-full pl-10 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 transition-all" placeholder="••••••••" />
+                    <button type="button" onclick="togglePassword('loginPassword', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors flex items-center">
+                        <span class="material-symbols-outlined text-xl">visibility</span>
+                    </button>
                 </div>
                 <span asp-validation-for="Password" class="text-[10px] text-red-500"></span>
             </div>
@@ -76,6 +81,18 @@
 </main>
 
 <script>
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('.material-symbols-outlined');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.textContent = 'visibility_off';
+        } else {
+            input.type = 'password';
+            icon.textContent = 'visibility';
+        }
+    }
+
     async function handleGoogleLogin(response) {
         const idToken = response.credential;
 
@@ -90,7 +107,7 @@
         if (res.ok) {
             window.location.href = "/";
         } else {
-            alert("Google login failed");
+            Swal.fire('Lỗi', 'Đăng nhập Google thất bại', 'error');
         }
     }
 </script>

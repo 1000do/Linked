@@ -200,11 +200,11 @@ public class InstructorController : Controller
                 }
                 catch { }
             }
-            ModelState.AddModelError("", errorMsg);
+            ViewBag.ApiError = errorMsg;
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("", $"Lỗi: {ex.Message}");
+            ViewBag.ApiError = $"Lỗi: {ex.Message}";
         }
 
         model.AvailableCountries = await LoadStripeCountriesAsync();

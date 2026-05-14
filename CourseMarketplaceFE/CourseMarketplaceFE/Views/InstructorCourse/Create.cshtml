@@ -20,7 +20,6 @@
     </div>
 
     <form method="post" asp-action="Create" id="createCourseForm">
-        <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm mb-4 bg-red-50 p-4 rounded-xl border border-red-200" style="display:none"></div>
         <input type="hidden" asp-for="CourseThumbnailUrl" id="CourseThumbnailUrl" />
         
         <!-- Section 1: Core Identity -->
@@ -211,6 +210,27 @@
 </div>
 
 @section Scripts {
+    @if (ViewBag.ApiError != null)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var errorData = @Html.Raw(Json.Serialize(ViewBag.ApiError));
+                var message = errorData;
+                
+                try {
+                    var json = JSON.parse(errorData);
+                    message = json.message || errorData;
+                } catch(e) {}
+
+                Swal.fire({
+                    title: 'Lỗi từ hệ thống',
+                    text: message,
+                    icon: 'error',
+                    confirmButtonColor: '#006a62'
+                });
+            });
+        </script>
+    }
     <script>
         // Quill
         var quill = new Quill('#editor', {

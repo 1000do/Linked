@@ -224,6 +224,17 @@ public class CourseService : ICourseService
         }
 
 
+        // ★ Kiểm tra trùng lặp tiêu đề (Case-insensitive)
+        var titleLower = request.Title.Trim().ToLower();
+        var existingCourse = await _courseRepository.GetAllPublishedCoursesAsync(); // Hoặc dùng một phương thức chuyên biệt
+        // Thực tế nên dùng một phương thức CheckTitleExists trong Repository để tối ưu hơn.
+        // Tôi sẽ tạm thời kiểm tra thông qua GetInstructorCoursesAsync để tránh load quá nhiều dữ liệu nếu chưa có hàm chuyên biệt.
+        var allCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
+        if (allCourses.Any(c => c.Title.Trim().ToLower() == titleLower && !c.IsRemoved))
+        {
+            throw new BadRequestException("Bạn đã có một khóa học với tiêu đề này. Vui lòng chọn tiêu đề khác.");
+        }
+
         // ★ Nếu chưa hoàn tất Stripe → ép giá = 0 (chỉ tạo khóa free)
         var coursePrice = isStripeActive ? request.Price : 0m;
 
@@ -288,8 +299,19 @@ public class CourseService : ICourseService
             throw new BadRequestException("Khóa học đã bị ngừng kinh doanh vĩnh viễn do vi phạm chính sách và không thể chỉnh sửa.");
         }
 
-        if (course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+        if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot modify course while it is pending review.");
+
+        // ★ Kiểm tra trùng lặp tiêu đề khi cập nhật (nếu tiêu đề thay đổi)
+        if (!string.Equals(course.Title, request.Title, StringComparison.OrdinalIgnoreCase))
+        {
+            var titleLower = request.Title.Trim().ToLower();
+            var instructorCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
+            if (instructorCourses.Any(c => c.Title.Trim().ToLower() == titleLower && c.CourseId != courseId && !c.IsRemoved))
+            {
+                throw new BadRequestException("Bạn đã có một khóa học khác với tiêu đề này.");
+            }
+        }
 
         string? thumbnailUrl = request.CourseThumbnailUrl ?? course.CourseThumbnailUrl;
 
@@ -319,7 +341,7 @@ public class CourseService : ICourseService
         course.UpdatedAt = DateTime.UtcNow;
 
         // Nếu khóa học đang ở trạng thái Published, chuyển về Draft để sửa
-        if (course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        if ("published".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
         {
             course.CourseStatus = "draft";
             // Tùy chọn: Xóa feedback cũ khi có thay đổi mới
@@ -369,7 +391,7 @@ public class CourseService : ICourseService
         // Các trường hợp khác để lên "published" phải qua Admin
         if (status.Equals("published", StringComparison.OrdinalIgnoreCase))
         {
-            if (!course.CourseStatus.Equals("archived", StringComparison.OrdinalIgnoreCase))
+            if (!"archived".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
                 throw new BadRequestException("Only archived courses can be set back to published by instructor.");
         }
         else if (!status.Equals("pending", StringComparison.OrdinalIgnoreCase) && !status.Equals("archived", StringComparison.OrdinalIgnoreCase))
@@ -456,7 +478,7 @@ public class CourseService : ICourseService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to delete this course.");
 
-        if (course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+        if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot delete course while it is pending review.");
 
         var hasEnrollments = await _courseRepository.HasEnrollmentsAsync(courseId);
