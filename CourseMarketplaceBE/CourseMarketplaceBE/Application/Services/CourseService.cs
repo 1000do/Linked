@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Net.Http;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using Microsoft.Extensions.Logging;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -18,8 +20,22 @@ public class CourseService : ICourseService
     private readonly IMaterialRepository _materialRepository;
     private readonly ILessonRepository _lessonRepository;
     private readonly IRedisService _redisService;
+    private readonly IContentHashService _contentHashService;
+    private readonly ICourseAiIntegrationRepository _aiIntegrationRepository;
+    private readonly ILogger<CourseService> _logger;
+    private readonly HttpClient _httpClient;
 
-    public CourseService(ICourseRepository courseRepository, IInstructorRepository instructorRepository, IFileUploadService uploadService, IMaterialRepository materialRepository, ILessonRepository lessonRepository, IRedisService redisService)
+    public CourseService(
+        ICourseRepository courseRepository, 
+        IInstructorRepository instructorRepository, 
+        IFileUploadService uploadService, 
+        IMaterialRepository materialRepository, 
+        ILessonRepository lessonRepository, 
+        IRedisService redisService,
+        IContentHashService contentHashService,
+        ICourseAiIntegrationRepository aiIntegrationRepository,
+        ILogger<CourseService> logger,
+        HttpClient httpClient)
     {
         _courseRepository = courseRepository;
         _instructorRepository = instructorRepository;
@@ -27,6 +43,10 @@ public class CourseService : ICourseService
         _materialRepository = materialRepository;
         _lessonRepository = lessonRepository;
         _redisService = redisService;
+        _contentHashService = contentHashService;
+        _aiIntegrationRepository = aiIntegrationRepository;
+        _logger = logger;
+        _httpClient = httpClient;
     }
 
     public async Task<IEnumerable<CourseResponse>> GetAllPublishedCoursesAsync(int? userId = null)
@@ -256,23 +276,8 @@ public class CourseService : ICourseService
         await _courseRepository.AddAsync(course);
         await _courseRepository.SaveChangesAsync();
 
-        // ==========================================================
-
-        // // 2. Compute & store hashes in course_exts
-        // var courseExts = new CourseExt
-        // {
-        //     CourseId = course.Id,
-        //     TitleHash = await _contentHashService.ComputeMD5HashAsync(course.Title),
-        //     DescriptionHash = await _contentHashService.ComputeMD5HashAsync(course.Description),
-        //     // ThumbnailHash = await _contentHashService.ComputeFileHashAsync(course.ThumbnailPath)
-        // };
-        // await _courseExtRepository.AddAsync(courseExts);
-        // await _courseExtRepository.SaveChangesAsync();
-
-        // // 3. Cache in redis
-        // await _redisCacheService.CacheCourseForModerationAsync(course.Id);
-
-        // ==========================================================
+        // 2. Compute & store hashes for deduplication
+        await UpdateCourseHashesAsync(course);
 
         return new CourseResponse
         {
@@ -306,7 +311,7 @@ public class CourseService : ICourseService
             throw new BadRequestException("Khóa học đã bị ngừng kinh doanh vĩnh viễn do vi phạm chính sách và không thể chỉnh sửa.");
         }
 
-        if (course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+        if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot modify course while it is pending review.");
 
         string? thumbnailUrl = request.CourseThumbnailUrl ?? course.CourseThumbnailUrl;
@@ -337,7 +342,7 @@ public class CourseService : ICourseService
         course.UpdatedAt = DateTime.UtcNow;
 
         // Nếu khóa học đang ở trạng thái Published, chuyển về Draft để sửa
-        if (course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        if ("published".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
         {
             course.CourseStatus = "draft";
             // Tùy chọn: Xóa feedback cũ khi có thay đổi mới
@@ -347,19 +352,10 @@ public class CourseService : ICourseService
         _courseRepository.Update(course);
         await _courseRepository.SaveChangesAsync();
 
-        // Invalidate Cache
-        await _redisService.RemoveCacheAsync($"course:detail:{course.CourseId}");
+        // Update Hashes
+        await UpdateCourseHashesAsync(course);
 
-        // // 2. Compute & store hashes in course_exts
-        // var courseExts = new CourseExt
-        // {
-        //     CourseId = course.Id,
-        //     TitleHash = await _contentHashService.ComputeMD5HashAsync(course.Title),
-        //     DescriptionHash = await _contentHashService.ComputeMD5HashAsync(course.Description),
-        //     // ThumbnailHash = await _contentHashService.ComputeFileHashAsync(course.ThumbnailPath)
-        // };
-        // _courseExtRepository.Update(courseExts);
-        // await _courseExtRepository.SaveChangesAsync();
+        await _redisService.RemoveCacheAsync($"course:detail:{course.CourseId}");
 
         return new CourseResponse
         {
@@ -376,6 +372,35 @@ public class CourseService : ICourseService
             WhatYouWillLearn = course.WhatYouWillLearn,
             Requirements = course.Requirements
         };
+    }
+
+    private async Task UpdateCourseHashesAsync(Course course)
+    {
+        string? thumbHash = null;
+        if (!string.IsNullOrEmpty(course.CourseThumbnailUrl))
+        {
+            try
+            {
+                var bytes = await _httpClient.GetByteArrayAsync(course.CourseThumbnailUrl);
+                thumbHash = await _contentHashService.ComputeFileHashAsync(bytes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"Failed to download thumbnail for hashing: {ex.Message}");
+            }
+        }
+
+        var command = new SaveCourseHashesCommand
+        {
+            CourseId = course.CourseId,
+            title_hash = await _contentHashService.ComputeCourseHashAsync(course.Title),
+            description_hash = await _contentHashService.ComputeCourseHashAsync(course.Description ?? ""),
+            what_you_will_learn_hash = await _contentHashService.ComputeCourseHashAsync(course.WhatYouWillLearn ?? ""),
+            requirements_hash = await _contentHashService.ComputeCourseHashAsync(course.Requirements ?? ""),
+            thumbnail_hash = thumbHash
+        };
+
+        await _contentHashService.SaveCourseHashesAsync(command);
     }
 
     public async Task UpdateCourseStatusAsync(int courseId, string status, int instructorId)
@@ -398,7 +423,7 @@ public class CourseService : ICourseService
         // Các trường hợp khác để lên "published" phải qua Admin
         if (status.Equals("published", StringComparison.OrdinalIgnoreCase))
         {
-            if (!course.CourseStatus.Equals("archived", StringComparison.OrdinalIgnoreCase))
+            if (!"archived".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
                 throw new BadRequestException("Only archived courses can be set back to published by instructor.");
         }
         else if (!status.Equals("pending", StringComparison.OrdinalIgnoreCase) && !status.Equals("archived", StringComparison.OrdinalIgnoreCase))
@@ -485,7 +510,7 @@ public class CourseService : ICourseService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to delete this course.");
 
-        if (course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+        if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot delete course while it is pending review.");
 
         var hasEnrollments = await _courseRepository.HasEnrollmentsAsync(courseId);
@@ -518,5 +543,21 @@ public class CourseService : ICourseService
             CategoryId = c.CategoryId,
             CategoriesName = c.CategoriesName
         });
+    }
+
+    public async Task<bool> IntegrateAItoCourseAsync(CourseAIIntegrationCommand command)
+    {
+        var integration = new CourseAiIntegration
+        {
+            CourseId = command.CourseId,
+            ModelId = command.ModelId,
+            Role = command.Role,
+            IsEnabled = command.IsEnabled,
+            ConfigJson = System.Text.Json.JsonSerializer.Serialize(command.ConfigJson)
+        };
+
+        await _aiIntegrationRepository.AddAsync(integration);
+        await _aiIntegrationRepository.SaveChangesAsync();
+        return true;
     }
 }

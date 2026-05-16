@@ -1699,10 +1699,10 @@
                     confirmButtonText: 'Yes, submit it!'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        fetch('/InstructorCourse/UpdateCourseStatus', { 
+                        fetch('/InstructorCourse/ModerateCourse', { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: new URLSearchParams({ courseId: courseId, status: 'pending' })
+                            body: new URLSearchParams({ courseId: courseId, instructorId: @(ViewBag.InstructorId ?? 0) })
                         })
                         .then(res => res.json())
                         .then(json => {

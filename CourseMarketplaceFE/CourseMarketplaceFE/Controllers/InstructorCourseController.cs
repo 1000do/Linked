@@ -198,6 +198,7 @@ namespace CourseMarketplaceFE.Controllers
         public async Task<IActionResult> Editor(int id)
         {
             ViewBag.CourseId = id;
+            ViewBag.InstructorId = int.Parse(User.FindFirst("InstructorId")?.Value ?? "0");
             ViewBag.AvailableCategories = await GetCategoriesAsync();
 
             // Kiểm tra Stripe status & Transfer Rate
@@ -382,9 +383,55 @@ namespace CourseMarketplaceFE.Controllers
         {
             try
             {
-                var payload = new { status = status };
-                var resp = await _api.PatchJsonAsync($"courses/{courseId}/status", payload);
+                if (status.Equals("pending", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Trigger AI moderation pipeline
+                    var payload = new { courseId = courseId };
+                    var resp = await _api.PostJsonAsync("courses/moderate", payload);
+                    
+                    if (resp.IsSuccessStatusCode)
+                    {
+                        var json = await resp.Content.ReadAsStringAsync();
+                        using var doc = JsonDocument.Parse(json);
+                        var data = doc.RootElement.GetProperty("data");
+                        var modStatus = data.GetProperty("moderationStatus").GetString();
+                        
+                        if (modStatus == "REJECTED")
+                        {
+                            return Json(new { success = false, message = "Khóa học bị từ chối tự động do trùng lặp hoặc vi phạm chính sách AI." });
+                        }
+                        return Json(new { success = true });
+                    }
+                    var error = await resp.Content.ReadAsStringAsync();
+                    return Json(new { success = false, message = error });
+                }
+                else
+                {
+                    // Regular status update for 'archived' or 'published'
+                    var payload = new { status = status };
+                    var resp = await _api.PatchJsonAsync($"courses/{courseId}/status", payload);
 
+                    if (resp.IsSuccessStatusCode)
+                    {
+                        return Json(new { success = true });
+                    }
+                    var error = await resp.Content.ReadAsStringAsync();
+                    return Json(new { success = false, message = error });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+        
+        [HttpPost]
+        public async Task<IActionResult> ModerateCourse([FromForm] int courseId, [FromForm] int instructorId)
+        {
+            try
+            {
+                var payload = new { CourseId = courseId, InstructorId = instructorId };
+                var resp = await _api.PostJsonAsync("courses/moderate", payload);
                 if (resp.IsSuccessStatusCode)
                 {
                     return Json(new { success = true });

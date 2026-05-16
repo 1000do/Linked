@@ -1,113 +1,105 @@
-// using System;
-// using System.IO;
-// using System.Security.Cryptography;
-// using System.Threading.Tasks;
-// using Microsoft.Extensions.Logging;
+using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Extensions.Logging;
+using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.IRepositories;
 
-// namespace CourseMarketplaceBE.Application.Services
-// {
-//     /// <summary>
-//     /// Implementation of content hash service using MD5.
-//     /// </summary>
-//     public class ContentHashService : IContentHashService
-//     {
-//         private readonly ILogger<ContentHashService> _logger;
+namespace CourseMarketplaceBE.Application.Services
+{
+    /// <summary>
+    /// Implementation of content hash service using MD5.
+    /// </summary>
+    public class ContentHashService : IContentHashService
+    {
+        private readonly ILogger<ContentHashService> _logger;
+        private readonly ICourseExtRepository _courseExtRepository;
 
-//         public ContentHashService(ILogger<ContentHashService> logger)
-//         {
-//             _logger = logger;
-//         }
+        public ContentHashService(ILogger<ContentHashService> logger, ICourseExtRepository courseExtRepository)
+        {
+            _logger = logger;
+            _courseExtRepository = courseExtRepository;
+        }
 
-//         /// <summary>
-//         /// Compute MD5 hash of text content.
-//         /// </summary>
-//         public async Task<string> ComputeMD5HashAsync(string content)
-//         {
-//             if (string.IsNullOrEmpty(content))
-//             {
-//                 throw new ArgumentNullException(nameof(content), "Content cannot be null or empty");
-//             }
+        /// <summary>
+        /// Normalize text content for hashing (lowercase, trim, normalize whitespace).
+        /// </summary>
+        public string NormalizeText(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return string.Empty;
+            text = text.ToLowerInvariant().Trim();
+            text = Regex.Replace(text, @"\n", " ");
+            text = Regex.Replace(text, @"\s+", " ");
+            return text;
+        }
 
-//             try
-//             {
-//                 using (var md5 = MD5.Create())
-//                 {
-//                     byte[] contentBytes = System.Text.Encoding.UTF8.GetBytes(content);
-//                     byte[] hashBytes = md5.ComputeHash(contentBytes);
-//                     string hash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+        public async Task<string> ComputeCourseHashAsync(string text)
+        {
+            var normalized = NormalizeText(text);
+            using (var md5 = MD5.Create())
+            {
+                byte[] inputBytes = System.Text.Encoding.UTF8.GetBytes(normalized);
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+                return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+            }
+        }
 
-//                     _logger.LogDebug($"Computed MD5 hash for text content ({content.Length} chars): {hash.Substring(0, 8)}...");
-//                     return hash;
-//                 }
-//             }
-//             catch (Exception ex)
-//             {
-//                 _logger.LogError($"Error computing MD5 hash for text: {ex.Message}");
-//                 throw;
-//             }
-//         }
+        public async Task<string> ComputeFileHashAsync(byte[] fileBytes)
+        {
+            using (var md5 = MD5.Create())
+            {
+                byte[] hashBytes = md5.ComputeHash(fileBytes);
+                return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+            }
+        }
 
-//         /// <summary>
-//         /// Compute MD5 hash of binary content (file bytes).
-//         /// </summary>
-//         public async Task<string> ComputeMD5HashAsync(byte[] fileBytes)
-//         {
-//             if (fileBytes == null || fileBytes.Length == 0)
-//             {
-//                 throw new ArgumentNullException(nameof(fileBytes), "File bytes cannot be null or empty");
-//             }
+        public async Task SaveCourseHashesAsync(SaveCourseHashesCommand command)
+        {
+            var entity = new Domain.Entities.CourseExt
+            {
+                CourseId = command.CourseId,
+                TitleHash = command.title_hash,
+                DescriptionHash = command.description_hash,
+                WhatYouWillLearnHash = command.what_you_will_learn_hash,
+                RequirementsHash = command.requirements_hash,
+                ThumbnailHash = command.thumbnail_hash
+            };
+            await _courseExtRepository.AddAsync(entity);
+            await _courseExtRepository.SaveChangesAsync();
+        }
 
-//             try
-//             {
-//                 using (var md5 = MD5.Create())
-//                 {
-//                     byte[] hashBytes = md5.ComputeHash(fileBytes);
-//                     string hash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+        public async Task<CourseExt?> GetCourseHashesAsync(int courseId)
+        {
+            var entity = await _courseExtRepository.GetByIdAsync(courseId);
+            if (entity == null) return null!;
+            return new CourseExt
+            {
+                CourseId = entity.CourseId,
+                title_hash = entity.TitleHash,
+                description_hash = entity.DescriptionHash,
+                what_you_will_learn_hash = entity.WhatYouWillLearnHash,
+                requirements_hash = entity.RequirementsHash,
+                thumbnail_hash = entity.ThumbnailHash
+            };
+        }
 
-//                     _logger.LogDebug($"Computed MD5 hash for binary content ({fileBytes.Length} bytes): {hash.Substring(0, 8)}...");
-//                     return hash;
-//                 }
-//             }
-//             catch (Exception ex)
-//             {
-//                 _logger.LogError($"Error computing MD5 hash for binary: {ex.Message}");
-//                 throw;
-//             }
-//         }
-
-//         /// <summary>
-//         /// Compute MD5 hash of a file from filesystem path.
-//         /// </summary>
-//         public async Task<(string hash, bool success)> ComputeFileHashAsync(string filePath)
-//         {
-//             if (string.IsNullOrEmpty(filePath))
-//             {
-//                 return (null, false);
-//             }
-
-//             try
-//             {
-//                 if (!File.Exists(filePath))
-//                 {
-//                     _logger.LogWarning($"File not found: {filePath}");
-//                     return (null, false);
-//                 }
-
-//                 using (var md5 = MD5.Create())
-//                 using (var stream = File.OpenRead(filePath))
-//                 {
-//                     byte[] hashBytes = md5.ComputeHash(stream);
-//                     string hash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
-
-//                     _logger.LogDebug($"Computed MD5 hash for file {Path.GetFileName(filePath)}: {hash.Substring(0, 8)}...");
-//                     return (hash, true);
-//                 }
-//             }
-//             catch (Exception ex)
-//             {
-//                 _logger.LogError($"Error computing file hash for {filePath}: {ex.Message}");
-//                 return (null, false);
-//             }
-//         }
-//     }
-// }
+        public async Task<List<CourseExt>> GetAllCourseHashesAsync()
+        {
+            var entities = await _courseExtRepository.GetAllAsync();
+            return entities.Select(entity => new CourseExt
+            {
+                CourseId = entity.CourseId,
+                title_hash = entity.TitleHash,
+                description_hash = entity.DescriptionHash,
+                what_you_will_learn_hash = entity.WhatYouWillLearnHash,
+                requirements_hash = entity.RequirementsHash,
+                thumbnail_hash = entity.ThumbnailHash
+            }).ToList();
+        }
+    }
+}

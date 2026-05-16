@@ -51,7 +51,6 @@ class TextClassifierService(BaseService):
             spam_path = os.path.abspath(settings.SPAM_MODEL_PATH)
             
             logger.info(f"Loading spam model from {spam_path}...")
-            logger.info(f"Loading spam model from {str(spam_path)}...")
             
             cls._spam_tokenizer = AutoTokenizer.from_pretrained(spam_path, local_files_only=True)
             cls._spam_model = AutoModelForSequenceClassification.from_pretrained(spam_path, local_files_only=True)

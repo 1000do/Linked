@@ -18,6 +18,7 @@ public class LessonService : ILessonService
     private readonly IFileUploadService _uploadService;
     private readonly IRedisService _redisService;
     private readonly IInstructorRepository _instructorRepository;
+    private readonly IMaterialEmbeddingRepository _materialEmbeddingRepository;
 
     public LessonService(
         ILessonRepository lessonRepository, 
@@ -25,7 +26,8 @@ public class LessonService : ILessonService
         IMaterialRepository materialRepository,
         IFileUploadService uploadService,
         IRedisService redisService,
-        IInstructorRepository instructorRepository)
+        IInstructorRepository instructorRepository,
+        IMaterialEmbeddingRepository materialEmbeddingRepository)
     {
         _lessonRepository = lessonRepository;
         _courseRepository = courseRepository;
@@ -33,6 +35,7 @@ public class LessonService : ILessonService
         _uploadService = uploadService;
         _redisService = redisService;
         _instructorRepository = instructorRepository;
+        _materialEmbeddingRepository = materialEmbeddingRepository;
     }
 
     public async Task<LessonResponse> CreateLessonAsync(LessonCreateRequest request, int instructorId)
@@ -457,5 +460,10 @@ public class LessonService : ILessonService
         {
             await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
         }
+    }
+
+    public async Task<List<MaterialEmbedding>> GetAllMaterialEmbeddingsAsync()
+    {
+        return await _materialEmbeddingRepository.GetAllAsync();
     }
 }

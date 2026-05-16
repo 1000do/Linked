@@ -21,5 +21,6 @@ public interface IUserRepository
     Task<bool> UpdateEmailVerifiedAsync(string email);
     Task<bool> UpdateAccountAsync(Account account);
     Task<int?> GetStaffAccountIdAsync();
+    Task<int?> GetAdminIdAsync();
     Task<int> GetTotalStudentsCountAsync();
 }

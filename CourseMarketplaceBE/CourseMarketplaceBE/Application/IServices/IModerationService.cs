@@ -12,9 +12,19 @@ namespace CourseMarketplaceBE.Application.IServices
         Task<bool> RejectCourseAsync(int courseId, string reason);
         Task<bool> RejectCourseDetailedAsync(RejectCourseDetailedRequest request);
         Task<bool> FlagCourseAsync(int courseId, string reason);
-
         // Khiếu nại
         Task<List<UserReportModerationDto>> GetAllReportsAsync();
         Task<bool> ResolveReportAsync(ResolveReportDto dto);
+
+        Task<ExactDuplicationResult> GetExactDuplicationResult(ExactDuplicationCommand command);
+        Task<ExactDuplicationResult> CheckExactDuplication(int courseId);
+        Task NotifyAdminAsync(string title, string content, string? linkAction);
+        Task PrepareMaterialEmbeddingsAsync();
+        Task AssignAIModeratorsToCourseAsync(int courseId);
+        Task<bool> PrepareForCourseAIModeration(int courseId);
+        Task ResolveCourseAIModerationResult(CourseAIModerationResult result);
+        Task LogCourseAiModerationResult(CourseAIModerationResult result);
+        Task<CourseAIModerationResult> HandleCourseModerationWithAIAsync(CouresModerationRequest request);
+        Task HandleCourseModerationAsync(CouresModerationRequest request);
     }
 }

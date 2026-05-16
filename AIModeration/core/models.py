@@ -26,8 +26,9 @@ class StageLog(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     result: str = Field(..., description="Result: NO_MATCH, MATCH_FOUND, FLAGGED, APPROVED, etc.")
     reason: str = Field(..., description="Explanation of result")
-    flagged_content: Optional[List[str]] = Field(None, description="What triggered the flag")
-    details: Optional[Dict[str, Any]] = Field(None, description="Additional details (matches, scores, etc.)")
+    flaggedFields: List[str] = Field(default_factory=list)
+    details: Dict[str, Any] = Field(default_factory=dict)
+    latency_ms: float = Field(0.0)
     confidence_score: float = Field(..., ge=0.0, le=1.0, description="Confidence in this decision")
 
 
@@ -35,14 +36,12 @@ class StageLog(BaseModel):
 # STAGE 1: DUPLICATION REQUESTS/RESPONSES
 # ============================================================================
 
-class DuplicationRequest(BaseModel):
-    """Request for Stage 1: Duplication checking."""
-    course_id: int = Field(..., description="Course to check")
-    title_hash: str = Field(..., description="MD5 hash of course title")
-    description_hash: str = Field(..., description="MD5 hash of course description")
-    thumbnail_hash: Optional[str] = Field(None, description="MD5 hash of course thumbnail")
-    material_hashes: List[str] = Field(default_factory=list, description="MD5 hashes of learning materials")
-    material_embeddings: Optional[List[List[float]]] = Field(None, description="768-dim embeddings of materials")
+
+class SemanticDuplicationRequest(BaseModel):
+    """Request for Stage 1: Semantic Duplication checking."""
+    course_id: int
+    material_ids: List[int]
+    similarity_score_threshold: float
 
 
 class DuplicationCheckResult(BaseModel):
@@ -50,30 +49,25 @@ class DuplicationCheckResult(BaseModel):
     is_duplicate: bool
     matched_ids: List[int] = Field(default_factory=list)
     similarity_scores: Optional[List[float]] = Field(None)
-    stage_logs: List[StageLog] = Field(default_factory=list)
+    stageLogs: List[StageLog] = Field(default_factory=list)
 
 
 # ============================================================================
 # STAGE 2: TOXICITY REQUESTS/RESPONSES
 # ============================================================================
 
-class ToxicityRequest(BaseModel):
+class CourseHarmfulRequest(BaseModel):
     """Request for Stage 2: Toxicity & Spam checking."""
-    course_id: int = Field(..., description="Course to check")
-    title: str = Field(..., description="Course title text")
-    description: str = Field(..., description="Course description text")
-    lesson_texts: List[str] = Field(default_factory=list, description="Lesson titles and descriptions")
-    material_list: Optional[List[Dict[str, Any]]] = Field(
-        None,
-        description="Materials with paths and types: [{material_id, file_path, file_type}, ...]"
-    )
+    course_id: int
+    spam_score_threshold: float
+    toxic_score_threshold: float
 
 
 class ToxicityCheckResult(BaseModel):
     """Result of toxicity check."""
     is_flagged: bool
-    flagged_fields: List[str] = Field(default_factory=list, description="Which fields triggered flags")
-    stage_logs: List[StageLog] = Field(default_factory=list)
+    flaggedFields: List[str] = Field(default_factory=list)
+    stageLogs: List[StageLog] = Field(default_factory=list)
 
 
 # ============================================================================
@@ -84,7 +78,7 @@ class EmbeddingGenerationRequest(BaseModel):
     """Request for generating embeddings."""
     material_id: int = Field(..., description="Material identifier")
     material_type: str = Field(..., description="Type: text, image, video, pdf, word")
-    content: bytes = Field(..., description="File content or text as bytes")
+    file_path: str = Field(..., description="URL or local path to file")
 
 
 class EmbeddingGenerationResponse(BaseModel):
@@ -99,34 +93,17 @@ class EmbeddingGenerationResponse(BaseModel):
 # UNIFIED MODERATION RESPONSE
 # ============================================================================
 
-class ModerationResponse(BaseModel):
+class CourseModerationResponse(BaseModel):
     """Unified response from moderation pipeline."""
-    course_id: int = Field(..., description="Course that was moderated")
-    status: ModerationStatus = Field(..., description="Final decision: APPROVED, FLAGGED, MANUAL_AUDIT, etc.")
-    stage_logs: List[StageLog] = Field(default_factory=list, description="Full log trace from entry point")
-    flagged_content: List[str] = Field(default_factory=list, description="What was flagged")
-    confidence_score: float = Field(..., ge=0.0, le=1.0, description="Overall confidence in decision")
-    total_latency_ms: float = Field(default=0.0, description="Total time in milliseconds")
-    
+    CourseId: int
+    ModerationStatus: str
+    flaggedFields: List[str] = Field(default_factory=list)
+    overall_confidence_score: float
+    total_latency_ms: float
+    stageLogs: List[StageLog] = Field(default_factory=list)
+
     class Config:
-        json_schema_extra = {
-            "example": {
-                "course_id": 123,
-                "status": "FLAGGED",
-                "flagged_content": ["course_description"],
-                "confidence_score": 0.96,
-                "total_latency_ms": 1250.5,
-                "stage_logs": [
-                    {
-                        "stage": 1,
-                        "step": 1,
-                        "result": "NO_MATCH",
-                        "reason": "No exact duplicates found",
-                        "confidence_score": 1.0
-                    }
-                ]
-            }
-        }
+        populate_by_name = True
 
 
 # ============================================================================

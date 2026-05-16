@@ -180,6 +180,12 @@ public class UserRepository : IUserRepository
         return admin?.ManagerId;
     }
 
+    public async Task<int?> GetAdminIdAsync()
+    {
+        var admin = await _context.Managers.FirstOrDefaultAsync(m => m.Role == "admin");
+        return admin?.ManagerId;
+    }
+
     public async Task<int> GetTotalStudentsCountAsync()
     {
         return await _context.Users.CountAsync();

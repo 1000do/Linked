@@ -15,7 +15,7 @@ namespace CourseMarketplaceBE.Application.DTOs
         public string? CourseThumbnailUrl { get; set; }
 
         // NEW: Urgency calculation
-        public string UrgencyLevel { get; set; } = "Normal"; 
+        public string UrgencyLevel { get; set; } = "Normal";
         public string UrgencyColor { get; set; } = "slate";
 
         // NEW: Flagging tracking
@@ -62,5 +62,145 @@ namespace CourseMarketplaceBE.Application.DTOs
     {
         public int CourseId { get; set; }
         public List<RejectCourseItemDto> Items { get; set; } = new();
+    }
+
+    // ===== New DTOs for AI Moderation Pipeline =====
+
+    /// <summary>
+    /// DTO for exact duplication check command
+    /// </summary>
+    public class ExactDuplicationCommand
+    {
+        public CourseExt CourseExt { get; set; } = null!;
+        public List<CourseExt> ExistingCourseExts { get; set; } = new();
+    }
+
+    /// <summary>
+    /// DTO for exact duplication check result
+    /// </summary>
+    public class ExactDuplicationResult
+    {
+        public int CourseId { get; set; }
+        public bool IsDup { get; set; }
+        public List<string> DupFields { get; set; } = new();
+    }
+
+    /// <summary>
+    /// DTO for course AI integration command
+    /// </summary>
+    public class CourseAIIntegrationCommand
+    {
+        public int CourseId { get; set; }
+        public int ModelId { get; set; }
+        public string? Role { get; set; }
+        public bool IsEnabled { get; set; } = true;
+        public Dictionary<string, float>? ConfigJson { get; set; }
+    }
+
+    /// <summary>
+    /// DTO for semantic duplication check request to FastAPI
+    /// </summary>
+    public class SemanticDuplicationRequest
+    {
+        public int CourseId { get; set; }
+        public List<int> MaterialIds { get; set; } = new();
+        public float similarityScoreThreshold { get; set; } = 0.8f;
+    }
+
+    /// <summary>
+    /// DTO for course harmful content check request to FastAPI
+    /// </summary>
+    public class CourseHarmfulRequest
+    {
+        public int CourseId { get; set; }
+        public float spamScoreThreshold { get; set; } = 0.7f;
+        public float toxicScoreThreshold { get; set; } = 0.7f;
+    }
+
+    /// <summary>
+    /// DTO for saving course hashes
+    /// </summary>
+    public class SaveCourseHashesCommand
+    {
+        public int CourseId { get; set; }
+        public string? title_hash { get; set; }
+        public string? description_hash { get; set; }
+        public string? what_you_will_learn_hash { get; set; }
+        public string? requirements_hash { get; set; }
+        public string? thumbnail_hash { get; set; }
+    }
+
+    /// <summary>
+    /// DTO for course moderation request
+    /// </summary>
+    public class CouresModerationRequest
+    {
+        public int CourseId { get; set; }
+        public int InstructorId { get; set; }
+    }
+
+    /// <summary>
+    /// DTO for saving course AI usage log
+    /// </summary>
+    public class SaveCourseAiUsageLogCommand
+    {
+        public int? integration_id { get; set; }
+        public string? interaction_type { get; set; }
+        public Dictionary<string, object>? input_json { get; set; }
+        public Dictionary<string, object>? output_json { get; set; }
+        public float latency_ms { get; set; }
+        public float token_usage { get; set; }
+        public string? error_message { get; set; }
+    }
+
+    /// <summary>
+    /// DTO for stage log in AI moderation pipeline
+    /// </summary>
+    public class StageLog
+    {
+        public int stage { get; set; } // 1, 2, 3, etc.
+        public int step { get; set; } // Step within stage
+        public DateTime timestamp { get; set; }
+        public string? result { get; set; } // NO_MATCH, MATCH_FOUND, FLAGGED, APPROVED, etc.
+        public string? reason { get; set; }
+        public List<string> flaggedFields { get; set; } = new();
+        public Dictionary<string, object>? details { get; set; }
+        public float latency_ms { get; set; }
+        public float confidence_score { get; set; } // 0-1
+    }
+
+    /// <summary>
+    /// DTO for AI moderation result
+    /// </summary>
+    public class FullPipelineRequest
+    {
+        public int course_id { get; set; }
+        public List<int> material_ids { get; set; } = new();
+        public float similarity_score_threshold { get; set; }
+        public float spam_score_threshold { get; set; }
+        public float toxic_score_threshold { get; set; }
+    }
+
+    public class CourseAIModerationResult
+    {
+        public int CourseId { get; set; }
+        public string ModerationStatus { get; set; } = null!; // APPROVED, FLAGGED, MANUAL_AUDIT, PENDING
+        public List<string> flaggedFields { get; set; } = new();
+        public float overall_confidence_score { get; set; } // 0-1
+        public float total_latency_ms { get; set; }
+        public List<StageLog> stageLogs { get; set; } = new();
+    }
+
+    /// <summary>
+    /// DTO for course hashes (used internally)
+    /// </summary>
+    public class CourseExt
+    {
+        public int CourseId { get; set; }
+        public string? title_hash { get; set; }
+        public string? description_hash { get; set; }
+        public string? what_you_will_learn_hash { get; set; }
+        public string? requirements_hash { get; set; }
+        public string? thumbnail_hash { get; set; }
     }
 }

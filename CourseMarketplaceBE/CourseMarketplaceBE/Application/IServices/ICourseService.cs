@@ -15,4 +15,5 @@ public interface ICourseService
     Task UpdateCourseStatusAsync(int courseId, string status, int instructorId);
     Task DeleteCourseAsync(int courseId, int instructorId);
     Task<IEnumerable<CategoryResponse>> GetCategoriesAsync();
+    Task<bool> IntegrateAItoCourseAsync(CourseAIIntegrationCommand command);
 }

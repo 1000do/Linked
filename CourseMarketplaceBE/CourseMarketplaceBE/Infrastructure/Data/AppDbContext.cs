@@ -22,7 +22,7 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<CourseReviewModerationLog> CourseReviewModerationLogs { get; set; }
     public virtual DbSet<LessonReviewModerationLog> LessonReviewModerationLogs { get; set; }
     public virtual DbSet<AiModel> AiModels { get; set; }
-    public virtual DbSet<AiModelsCourse> AiModelsCourses { get; set; }
+    public virtual DbSet<CourseAiIntegration> CourseAiIntegrations { get; set; }
     public virtual DbSet<Chat> Chats { get; set; }
     public virtual DbSet<ChatParticipant> ChatParticipants { get; set; }
     public virtual DbSet<Message> Messages { get; set; }
@@ -51,7 +51,6 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<UserReport> UserReports { get; set; }
     public virtual DbSet<WishlistItem> WishlistItems { get; set; }
     public virtual DbSet<CourseExt> CourseExts { get; set; }
-    public virtual DbSet<LessonExt> LessonExts { get; set; }
     public virtual DbSet<MaterialEmbedding> MaterialEmbeddings { get; set; }
     public virtual DbSet<InstructorStats> InstructorStats { get; set; }
     public virtual DbSet<CourseStats> CourseStats { get; set; }
@@ -133,23 +132,22 @@ public partial class AppDbContext : DbContext
             entity.ToTable("course_ai_usage_logs");
 
             entity.Property(e => e.LogId).HasColumnName("log_id");
-            entity.Property(e => e.AiModelCourseId).HasColumnName("ai_model_course_id");
+            entity.Property(e => e.IntegrationId).HasColumnName("integration_id");
             entity.Property(e => e.InteractionType).HasMaxLength(50).HasColumnName("interaction_type");
             entity.Property(e => e.InputJson).HasColumnType("jsonb").HasColumnName("input_json");
             entity.Property(e => e.OutputJson).HasColumnType("jsonb").HasColumnName("output_json");
             entity.Property(e => e.LatencyMs).HasColumnName("latency_ms");
             entity.Property(e => e.TokenUsage).HasColumnName("token_usage");
-            entity.Property(e => e.LogStatus).HasMaxLength(50).HasColumnName("log_status");
             entity.Property(e => e.ErrorMessage).HasColumnName("error_message");
             entity.Property(e => e.LogCreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("log_created_at");
 
-            entity.HasOne(d => d.AiModelCourse).WithMany(p => p.CourseAiUsageLogs)
-                .HasForeignKey(d => d.AiModelCourseId)
+            entity.HasOne(d => d.CourseAiIntegration).WithMany(p => p.CourseAiUsageLogs)
+                .HasForeignKey(d => d.IntegrationId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("course_ai_usage_logs_ai_model_course_id_fkey");
+                .HasConstraintName("course_ai_usage_logs_integration_id_fkey");
         });
 
 
@@ -165,7 +163,6 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.InputJson).HasColumnType("jsonb").HasColumnName("input_json");
             entity.Property(e => e.OutputJson).HasColumnType("jsonb").HasColumnName("output_json");
             entity.Property(e => e.LatencyMs).HasColumnName("latency_ms");
-            entity.Property(e => e.LogStatus).HasMaxLength(50).HasColumnName("log_status");
             entity.Property(e => e.ErrorMessage).HasColumnName("error_message");
             entity.Property(e => e.LogCreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -195,7 +192,6 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.InputJson).HasColumnType("jsonb").HasColumnName("input_json");
             entity.Property(e => e.OutputJson).HasColumnType("jsonb").HasColumnName("output_json");
             entity.Property(e => e.LatencyMs).HasColumnName("latency_ms");
-            entity.Property(e => e.LogStatus).HasMaxLength(50).HasColumnName("log_status");
             entity.Property(e => e.ErrorMessage).HasColumnName("error_message");
             entity.Property(e => e.LogCreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -236,12 +232,12 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("model_updated_at");
         });
 
-        // ── ai_models_courses ─────────────────────────────────────────────────
-        modelBuilder.Entity<AiModelsCourse>(entity =>
+        // ── courses_ai_integrations ─────────────────────────────────────────────
+        modelBuilder.Entity<CourseAiIntegration>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("ai_models_courses_pkey");
-            entity.ToTable("ai_models_courses");
-            entity.HasIndex(e => new { e.ModelId, e.CourseId }, "ai_models_courses_model_id_course_id_key").IsUnique();
+            entity.HasKey(e => e.Id).HasName("courses_ai_integrations_pkey");
+            entity.ToTable("courses_ai_integrations");
+            entity.HasIndex(e => new { e.ModelId, e.CourseId }, "courses_ai_integrations_model_id_course_id_key").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.ModelId).HasColumnName("model_id");
@@ -254,15 +250,15 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("assigned_at");
 
-            entity.HasOne(d => d.Course).WithMany(p => p.AiModelsCourses)
+            entity.HasOne(d => d.Course).WithMany(p => p.CourseAiIntegrations)
                 .HasForeignKey(d => d.CourseId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("ai_models_courses_course_id_fkey");
+                .HasConstraintName("courses_ai_integrations_course_id_fkey");
 
-            entity.HasOne(d => d.Model).WithMany(p => p.AiModelsCourses)
+            entity.HasOne(d => d.Model).WithMany(p => p.CourseAiIntegrations)
                 .HasForeignKey(d => d.ModelId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("ai_models_courses_model_id_fkey");
+                .HasConstraintName("courses_ai_integrations_model_id_fkey");
         });
 
         // ── cart_items ────────────────────────────────────────────────────────
@@ -633,9 +629,6 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("jsonb")
                 .HasColumnName("material_metadata");
 
-            entity.Property(e => e.MaterialHash)
-                .HasMaxLength(32)
-                .HasColumnName("material_hash");
             entity.Property(e => e.CloudPublicId)
                 .HasColumnName("cloud_public_id");
             entity.Property(e => e.CreatedAt)
@@ -1023,29 +1016,14 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.CourseId).ValueGeneratedNever().HasColumnName("course_id");
             entity.Property(e => e.TitleHash).HasMaxLength(32).IsFixedLength().HasColumnName("title_hash");
             entity.Property(e => e.DescriptionHash).HasMaxLength(32).IsFixedLength().HasColumnName("description_hash");
+            entity.Property(e => e.WhatYouWillLearnHash).HasMaxLength(32).IsFixedLength().HasColumnName("what_you_will_learn_hash");
+            entity.Property(e => e.RequirementsHash).HasMaxLength(32).IsFixedLength().HasColumnName("requirements_hash");
             entity.Property(e => e.ThumbnailHash).HasMaxLength(32).IsFixedLength().HasColumnName("thumbnail_hash");
 
             entity.HasOne(d => d.Course).WithOne(p => p.CourseExt)
                 .HasForeignKey<CourseExt>(d => d.CourseId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("course_exts_course_id_fkey");
-        });
-
-        // ── lesson_exts ───────────────────────────────────────────────────────
-        modelBuilder.Entity<LessonExt>(entity =>
-        {
-            entity.HasKey(e => e.LessonId).HasName("lesson_exts_pkey");
-            entity.ToTable("lesson_exts");
-
-            entity.Property(e => e.LessonId).ValueGeneratedNever().HasColumnName("lesson_id");
-            entity.Property(e => e.TitleHash).HasMaxLength(32).IsFixedLength().HasColumnName("title_hash");
-            entity.Property(e => e.DescriptionHash).HasMaxLength(32).IsFixedLength().HasColumnName("description_hash");
-            entity.Property(e => e.ThumbnailHash).HasMaxLength(32).IsFixedLength().HasColumnName("thumbnail_hash");
-
-            entity.HasOne(d => d.Lesson).WithOne(p => p.LessonExt)
-                .HasForeignKey<LessonExt>(d => d.LessonId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("lesson_exts_lesson_id_fkey");
         });
 
         // ── material_embeddings ───────────────────────────────────────────────
@@ -1127,7 +1105,6 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.InputJson).HasColumnType("jsonb").HasColumnName("input_json");
             entity.Property(e => e.OutputJson).HasColumnType("jsonb").HasColumnName("output_json");
             entity.Property(e => e.LatencyMs).HasColumnName("latency_ms");
-            entity.Property(e => e.LogStatus).HasMaxLength(50).HasColumnName("log_status");
             entity.Property(e => e.ErrorMessage).HasColumnName("error_message");
             entity.Property(e => e.LogCreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
