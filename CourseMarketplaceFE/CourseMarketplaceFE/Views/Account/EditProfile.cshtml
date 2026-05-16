@@ -3,108 +3,197 @@
     ViewData["Title"] = "Edit Profile";
 }
 
-<div class="max-w-7xl mx-auto px-6 lg:px-12 py-10">
-    <div class="flex flex-col lg:flex-row gap-8">
-        @* Sidebar *@
-        <aside class="w-full lg:w-72 flex-shrink-0">
-            <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 sticky top-24">
-                <nav class="flex flex-col gap-2">
-                    <a href="/Account/Profile" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all">
-                        <span class="material-symbols-outlined">person</span>
-                        <span>Profile</span>
-                    </a>
-                    <a href="/Account/EditProfile" class="flex items-center gap-4 px-4 py-3 rounded-2xl bg-primary-container/30 text-primary font-bold transition-all">
-                        <span class="material-symbols-outlined" style='font-variation-settings: "FILL" 1;'>edit_square</span>
-                        <span>Edit Profile</span>
-                    </a>
-                    <a href="/Account/ChangePassword" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all mt-2 border-t border-slate-100 pt-4">
-                        <span class="material-symbols-outlined">lock</span>
-                        <span>Đổi mật khẩu</span>
-                    </a>
-                </nav>
-            </div>
-        </aside>
-
-        @* Main Content *@
-        <div class="flex-grow space-y-8">
-            <div class="mb-4">
-                <h1 class="text-3xl font-extrabold text-slate-800">Account Settings</h1>
-                <p class="text-slate-500">Cập nhật thông tin cá nhân của bạn.</p>
-            </div>
-
-            <section class="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-sm border border-slate-100">
-                <form id="editProfileForm" asp-controller="Account" asp-action="EditProfile" method="post" enctype="multipart/form-data" class="space-y-6">
-                    <input type="hidden" asp-for="AvatarUrl" />
-
-                    @* Avatar Section *@
-                    <div class="flex items-center gap-6 mb-10 pb-8 border-b border-slate-50">
-                        <div class="relative group">
-                            <div class="w-24 h-24 rounded-[1.5rem] overflow-hidden ring-4 ring-primary/10">
-                                <img id="previewImg" src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? $"https://ui-avatars.com/api/?name={Model.FirstName}&background=006a62&color=fff" : Model.AvatarUrl)"
-                                     class="w-full h-full object-cover" />
-                            </div>
-                            <label class="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-xl shadow-lg cursor-pointer hover:scale-110 transition-transform">
-                                <span class="material-symbols-outlined text-sm">photo_camera</span>
-                                <input type="file" asp-for="AvatarFile" id="AvatarInput" class="hidden" onchange="previewImage(event)" accept="image/*" />
-                            </label>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-slate-800">Ảnh đại diện</h3>
-                            <p class="text-sm text-slate-500">JPG, PNG hoặc WebP. Tối đa 2MB.</p>
-                        </div>
+<div class="min-h-screen bg-[#f8fafc] relative overflow-hidden">
+    @* Decorative background elements *@
+    <div class="absolute top-0 left-0 w-full h-64 bg-gradient-to-br from-primary/5 to-transparent -z-10"></div>
+    <div class="absolute top-40 -right-20 w-80 h-80 bg-primary/5 rounded-full blur-3xl -z-10"></div>
+    
+    <div class="max-w-7xl mx-auto px-6 lg:px-12 py-12 relative">
+        <div class="flex flex-col lg:flex-row gap-10">
+            @* Sidebar *@
+            <aside class="w-full lg:w-80 flex-shrink-0">
+                <div class="bg-white/70 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-xl shadow-slate-200/50 border border-white sticky top-24">
+                    <div class="mb-8 px-4">
+                        <h2 class="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Cài đặt</h2>
+                        <p class="text-lg font-bold text-slate-800">Tài khoản của tôi</p>
                     </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold uppercase text-slate-400 ml-1">Họ & Tên đệm</label>
-                            <input asp-for="FirstName" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary/20 transition-all" />
-                            <span asp-validation-for="FirstName" class="text-xs text-red-500"></span>
-                        </div>
-
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold uppercase text-slate-400 ml-1">Tên</label>
-                            <input asp-for="LastName" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary/20 transition-all" />
-                            <span asp-validation-for="LastName" class="text-xs text-red-500"></span>
-                        </div>
-
-                        @* Số điện thoại - ĐÃ CẬP NHẬT *@
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold uppercase text-slate-400 ml-1">Số điện thoại</label>
-                            <div class="relative">
-                                <span class="absolute left-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">call</span>
-                                <input asp-for="PhoneNumber" id="PhoneInput" type="tel" maxlength="11"
-                                       class="w-full bg-slate-50 border-none rounded-2xl pl-12 pr-5 py-4 focus:ring-2 focus:ring-primary/20 transition-all"
-                                       placeholder="Nhập 10-11 số" />
-                            </div>
-                            <span asp-validation-for="PhoneNumber" class="text-xs text-red-500"></span>
-                        </div>
-
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold uppercase text-slate-400 ml-1">Ngày sinh</label>
-                            <div class="relative">
-                                <span class="absolute left-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg">calendar_today</span>
-                                <input asp-for="DateOfBirth" type="date" class="w-full bg-slate-50 border-none rounded-2xl pl-12 pr-5 py-4 focus:ring-2 focus:ring-primary/20 transition-all" />
-                            </div>
-                            <span asp-validation-for="DateOfBirth" class="text-xs text-red-500"></span>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label class="text-xs font-bold uppercase text-slate-400 ml-1">Giới thiệu bản thân (Bio)</label>
-                        <textarea asp-for="Bio" rows="4" class="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-primary/20 transition-all resize-none" placeholder="Viết vài dòng về bản thân..."></textarea>
-                        <span asp-validation-for="Bio" class="text-xs text-red-500"></span>
-                    </div>
-
-                    <div class="pt-6 flex flex-wrap gap-4">
-                        <button type="submit" class="px-10 py-4 bg-primary text-white font-bold rounded-2xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all">
-                            Lưu thay đổi
-                        </button>
-                        <a href="/Account/Profile" class="px-10 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all">
-                            Hủy
+                    <nav class="flex flex-col gap-2">
+                        <a href="/Account/Profile" class="group flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-500 hover:bg-white hover:shadow-md transition-all duration-300">
+                            <span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">person</span>
+                            <span class="font-semibold">Hồ sơ cá nhân</span>
                         </a>
+                        <a href="/Account/EditProfile" class="flex items-center gap-4 px-5 py-4 rounded-2xl bg-white shadow-lg shadow-primary/10 text-primary font-bold transition-all border border-primary/5">
+                            <span class="material-symbols-outlined fill-1">edit_square</span>
+                            <span>Chỉnh sửa hồ sơ</span>
+                        </a>
+                        <a href="/Transaction/History" class="group flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-500 hover:bg-white hover:shadow-md transition-all duration-300">
+                            <span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">receipt_long</span>
+                            <span class="font-semibold">Lịch sử mua hàng</span>
+                        </a>
+                        <div class="h-px bg-slate-100 my-2 mx-4"></div>
+                        <a href="/Account/ChangePassword" class="group flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-500 hover:bg-white hover:shadow-md transition-all duration-300">
+                            <span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">lock</span>
+                            <span class="font-semibold">Đổi mật khẩu</span>
+                        </a>
+                    </nav>
+
+                    <div class="mt-10 p-5 bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl text-white">
+                        <p class="text-xs font-bold opacity-60 mb-2 uppercase tracking-wider">Trạng thái hồ sơ</p>
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="h-2 flex-1 bg-white/10 rounded-full overflow-hidden">
+                                <div class="h-full bg-primary w-[85%] rounded-full shadow-[0_0_10px_rgba(0,106,98,0.5)]"></div>
+                            </div>
+                            <span class="text-xs font-bold">85%</span>
+                        </div>
+                        <p class="text-[10px] opacity-50 leading-relaxed italic">Hoàn thiện hồ sơ để nhận được nhiều đề xuất khóa học hơn!</p>
                     </div>
-                </form>
-            </section>
+                </div>
+            </aside>
+
+            @* Main Content *@
+            <div class="flex-grow">
+                <div class="mb-10">
+                    <h1 class="text-4xl font-black text-slate-900 tracking-tight mb-2">Cài đặt tài khoản</h1>
+                    <p class="text-slate-500 font-medium">Quản lý thông tin cá nhân và thiết lập quyền riêng tư của bạn.</p>
+                </div>
+
+                <section class="bg-white/80 backdrop-blur-xl rounded-[3rem] p-8 md:p-12 shadow-2xl shadow-slate-200/60 border border-white relative overflow-hidden">
+                    @* Subtle pattern overlay *@
+                    <div class="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+                        <span class="material-symbols-outlined text-[200px]">settings</span>
+                    </div>
+
+                    <form id="editProfileForm" asp-controller="Account" asp-action="EditProfile" method="post" enctype="multipart/form-data" class="space-y-10 relative">
+                        <input type="hidden" asp-for="AvatarUrl" />
+
+                        @* Avatar Section *@
+                        <div class="flex flex-col md:flex-row items-center gap-8 pb-10 border-b border-slate-100">
+                            <div class="relative group">
+                                <div class="w-32 h-32 rounded-[2.5rem] overflow-hidden ring-8 ring-slate-50 shadow-inner group-hover:ring-primary/10 transition-all duration-500">
+                                    <img id="previewImg" src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? $"https://ui-avatars.com/api/?name={Model.FirstName}&background=006a62&color=fff&size=128" : Model.AvatarUrl)"
+                                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                </div>
+                                <label class="absolute -bottom-2 -right-2 bg-primary text-white w-10 h-10 flex items-center justify-center rounded-2xl shadow-xl cursor-pointer hover:scale-110 hover:rotate-12 transition-all duration-300">
+                                    <span class="material-symbols-outlined text-lg">photo_camera</span>
+                                    <input type="file" asp-for="AvatarFile" id="AvatarInput" class="hidden" onchange="previewImage(event)" accept="image/*" />
+                                </label>
+                            </div>
+                            <div class="text-center md:text-left">
+                                <h3 class="text-2xl font-black text-slate-800 mb-1">Ảnh đại diện</h3>
+                                <p class="text-slate-500 mb-4 font-medium">Thay đổi ảnh đại diện giúp mọi người dễ dàng nhận ra bạn.</p>
+                                <div class="flex flex-wrap justify-center md:justify-start gap-2">
+                                    <span class="px-3 py-1 bg-slate-100 rounded-lg text-[10px] font-bold text-slate-500 uppercase tracking-wider">PNG, JPG</span>
+                                    <span class="px-3 py-1 bg-slate-100 rounded-lg text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tối đa 2MB</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Form Fields *@
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-3">
+                                <label class="text-sm font-black text-slate-700 ml-1">Họ & Tên đệm</label>
+                                <div class="group relative">
+                                    <input asp-for="FirstName" class="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-6 py-4 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-slate-800" placeholder="Họ và tên đệm..." />
+                                </div>
+                                <span asp-validation-for="FirstName" class="text-xs text-red-500 font-bold ml-1"></span>
+                            </div>
+
+                            <div class="space-y-3">
+                                <label class="text-sm font-black text-slate-700 ml-1">Tên của bạn</label>
+                                <div class="group relative">
+                                    <input asp-for="LastName" class="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-6 py-4 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-slate-800" placeholder="Tên..." />
+                                </div>
+                                <span asp-validation-for="LastName" class="text-xs text-red-500 font-bold ml-1"></span>
+                            </div>
+
+                            <div class="space-y-3">
+                                <label class="text-sm font-black text-slate-700 ml-1">Số điện thoại liên hệ</label>
+                                <div class="relative group">
+                                    <span class="absolute left-6 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 group-focus-within:text-primary transition-colors">call</span>
+                                    <input asp-for="PhoneNumber" id="PhoneInput" type="tel" maxlength="11"
+                                           class="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl pl-14 pr-6 py-4 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-slate-800"
+                                           placeholder="Nhập 10-11 số" />
+                                </div>
+                                <span asp-validation-for="PhoneNumber" class="text-xs text-red-500 font-bold ml-1"></span>
+                            </div>
+
+                            <div class="space-y-3">
+                                <label class="text-sm font-black text-slate-700 ml-1">Ngày sinh</label>
+                                <div class="relative group">
+                                    <span class="absolute left-6 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 group-focus-within:text-primary transition-colors">calendar_today</span>
+                                    <input asp-for="DateOfBirth" type="date" class="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl pl-14 pr-6 py-4 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-slate-800" />
+                                </div>
+                                <span asp-validation-for="DateOfBirth" class="text-xs text-red-500 font-bold ml-1"></span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <label class="text-sm font-black text-slate-700 ml-1">Giới thiệu bản thân (Bio)</label>
+                            <textarea asp-for="Bio" rows="5" class="w-full bg-slate-50/50 border-2 border-slate-100 rounded-3xl px-6 py-5 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-slate-800 resize-none" placeholder="Hãy viết vài dòng giới thiệu về kinh nghiệm và sở thích của bạn..."></textarea>
+                            <span asp-validation-for="Bio" class="text-xs text-red-500 font-bold ml-1"></span>
+                        </div>
+
+                        @if (Model.IsInstructor)
+                        {
+                            <div class="pt-10 border-t border-slate-100 space-y-8">
+                                <div>
+                                    <h3 class="text-2xl font-black text-slate-800 mb-2">Thông tin Giảng viên</h3>
+                                    <p class="text-slate-500 font-medium">Thông tin này sẽ hiển thị công khai trên hồ sơ giảng viên của bạn.</p>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div class="space-y-3">
+                                        <label class="text-sm font-black text-slate-700 ml-1">Tiêu đề nghề nghiệp</label>
+                                        <input asp-for="ProfessionalTitle" class="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-6 py-4 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-slate-800" placeholder="VD: Senior Web Developer..." />
+                                    </div>
+
+                                    <div class="space-y-3">
+                                        <label class="text-sm font-black text-slate-700 ml-1">Lĩnh vực chuyên môn</label>
+                                        <input asp-for="ExpertiseCategories" class="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-6 py-4 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-slate-800" placeholder="VD: Web, Mobile, Design..." />
+                                        <p class="text-[10px] text-slate-400 font-bold ml-1 italic uppercase tracking-wider">Phân cách bằng dấu phẩy (,)</p>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div class="space-y-3">
+                                        <label class="text-sm font-black text-slate-700 ml-1">LinkedIn URL</label>
+                                        <div class="relative">
+                                            <i class="fa-brands fa-linkedin absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                            <input asp-for="LinkedinUrl" class="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl pl-12 pr-6 py-4 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-slate-800 text-sm" placeholder="https://linkedin.com/in/..." />
+                                        </div>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <label class="text-sm font-black text-slate-700 ml-1">YouTube URL</label>
+                                        <div class="relative">
+                                            <i class="fa-brands fa-youtube absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                            <input asp-for="YoutubeUrl" class="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl pl-12 pr-6 py-4 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-slate-800 text-sm" placeholder="https://youtube.com/c/..." />
+                                        </div>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <label class="text-sm font-black text-slate-700 ml-1">Facebook URL</label>
+                                        <div class="relative">
+                                            <i class="fa-brands fa-facebook absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                            <input asp-for="FacebookUrl" class="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl pl-12 pr-6 py-4 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-slate-800 text-sm" placeholder="https://facebook.com/..." />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <input type="hidden" asp-for="IsInstructor" />
+
+                        <div class="pt-10 flex flex-wrap items-center gap-6 border-t border-slate-50">
+                            <button type="submit" class="relative group px-12 py-5 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 hover:-translate-y-1 active:scale-95 transition-all duration-300 overflow-hidden">
+                                <span class="relative z-10">Lưu thay đổi</span>
+                                <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                            </button>
+                            <a href="/Account/Profile" class="px-12 py-5 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all">
+                                Hủy bỏ
+                            </a>
+                        </div>
+                    </form>
+                </section>
+            </div>
         </div>
     </div>
 </div>

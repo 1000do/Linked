@@ -107,6 +107,13 @@ public class CheckoutRepository : ICheckoutRepository
             .Include(t => t.InstructorPayouts)
             .ToListAsync();
 
+    public async Task<List<Transaction>> GetTransactionsByOrderIdAsync(int orderId)
+        => await _context.Transactions
+            .Where(t => t.OrderItem != null && t.OrderItem.OrderId == orderId)
+            .Include(t => t.OrderItem)
+                .ThenInclude(oi => oi!.Order)
+            .ToListAsync();
+
     public async Task<OrderInfo?> GetOrderWithDetailsAsync(int orderId)
         => await _context.OrderInfos
             .Include(o => o.OrderItems)
@@ -163,6 +170,23 @@ public class CheckoutRepository : ICheckoutRepository
         {
             coupon.UsedCount = (coupon.UsedCount ?? 0) + 1;
         }
+    }
+
+    public Task DeleteOrderAsync(OrderInfo order)
+    {
+        // Xóa OrderItems trước do foreign key (nếu DB không cấu hình cascade delete)
+        if (order.OrderItems != null && order.OrderItems.Any())
+        {
+            _context.OrderItems.RemoveRange(order.OrderItems);
+        }
+        _context.OrderInfos.Remove(order);
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteTransactionsAsync(IEnumerable<Transaction> transactions)
+    {
+        _context.Transactions.RemoveRange(transactions);
+        return Task.CompletedTask;
     }
 
     // ── Unit of Work ─────────────────────────────────────────────────────────

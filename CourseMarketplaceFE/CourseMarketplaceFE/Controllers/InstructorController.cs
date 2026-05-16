@@ -67,6 +67,7 @@ public class InstructorController : Controller
                         // Kiểm tra email đã xác thực
                         await LoadEmailVerifiedAsync();
                         model.AvailableCountries = await LoadStripeCountriesAsync();
+                        model.AvailableCategories = await LoadCategoriesAsync();
                         return View(model);
                     }
                 }
@@ -82,6 +83,7 @@ public class InstructorController : Controller
 
         var applyModel = new InstructorApplyViewModel();
         applyModel.AvailableCountries = await LoadStripeCountriesAsync();
+        applyModel.AvailableCategories = await LoadCategoriesAsync();
         return View(applyModel);
     }
 
@@ -152,6 +154,52 @@ public class InstructorController : Controller
         return items;
     }
 
+    /// <summary>Load danh sách lĩnh vực chuyên môn (Categories).</summary>
+    private async Task<List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>> LoadCategoriesAsync()
+    {
+        var items = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+        try
+        {
+            var response = await _api.GetAsync("public/courses/categories");
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("data", out var data))
+                {
+                    foreach (var cat in data.EnumerateArray())
+                    {
+                        // Kiểm tra cả camelCase và snake_case để chắc chắn
+                        string? name = null;
+                        if (cat.TryGetProperty("categoriesName", out var prop1)) name = prop1.GetString();
+                        else if (cat.TryGetProperty("categories_name", out var prop2)) name = prop2.GetString();
+                        else if (cat.TryGetProperty("CategoriesName", out var prop3)) name = prop3.GetString();
+
+                        if (name != null)
+                        {
+                            items.Add(new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                            {
+                                Value = name,
+                                Text = name
+                            });
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Log lỗi nếu cần
+                var error = await response.Content.ReadAsStringAsync();
+                System.Diagnostics.Debug.WriteLine($"API Category Error: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"LoadCategoriesAsync Exception: {ex.Message}");
+        }
+        return items;
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Apply(InstructorApplyViewModel model)
@@ -160,6 +208,7 @@ public class InstructorController : Controller
         {
             await LoadEmailVerifiedAsync();
             model.AvailableCountries = await LoadStripeCountriesAsync();
+            model.AvailableCategories = await LoadCategoriesAsync();
             return View(model);
         }
 
@@ -170,6 +219,8 @@ public class InstructorController : Controller
             content.Add(new StringContent(model.ProfessionalTitle ?? ""), "ProfessionalTitle");
             content.Add(new StringContent(model.ExpertiseCategories ?? ""), "ExpertiseCategories");
             content.Add(new StringContent(model.LinkedinUrl ?? ""), "LinkedinUrl");
+            content.Add(new StringContent(model.YoutubeUrl ?? ""), "YoutubeUrl");
+            content.Add(new StringContent(model.FacebookUrl ?? ""), "FacebookUrl");
             content.Add(new StringContent(model.StripeCountry ?? "SG"), "StripeCountry");
 
             if (model.DocumentFile != null)
@@ -208,6 +259,7 @@ public class InstructorController : Controller
         }
 
         model.AvailableCountries = await LoadStripeCountriesAsync();
+        model.AvailableCategories = await LoadCategoriesAsync();
         return View(model);
     }
 
@@ -438,5 +490,33 @@ public class InstructorController : Controller
         public int Page { get; set; }
         public int PageSize { get; set; }
         public int TotalPages { get; set; }
+    }
+    // ═══════════════════════════════════════════════════════════════════
+    // 7. PUBLIC PROFILE — GET: /Instructor/Profile/{id}
+    // ═══════════════════════════════════════════════════════════════════
+    [HttpGet]
+    public async Task<IActionResult> Profile(int id)
+    {
+        try
+        {
+            var response = await _api.GetAsync($"instructor/profile/{id}");
+            if (!response.IsSuccessStatusCode)
+                return RedirectToAction("Index", "Home");
+
+            var json = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<ApiResponse<InstructorPublicProfileViewModel>>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (result == null || result.Data == null)
+                return RedirectToAction("Index", "Home");
+
+            return View(result.Data);
+        }
+        catch
+        {
+            return RedirectToAction("Index", "Home");
+        }
     }
 }

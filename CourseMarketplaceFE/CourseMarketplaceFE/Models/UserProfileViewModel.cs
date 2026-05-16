@@ -15,6 +15,8 @@ namespace LinkedLearn.Models.UserVM
         public string? ProfessionalTitle { get; set; }
         public string? ExpertiseCategories { get; set; }
         public string? LinkedinUrl { get; set; }
+        public string? YoutubeUrl { get; set; }
+        public string? FacebookUrl { get; set; }
         public string? ApprovalStatus { get; set; }
     }
 

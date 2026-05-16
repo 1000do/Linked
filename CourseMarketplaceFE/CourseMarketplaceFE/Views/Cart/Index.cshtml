@@ -15,21 +15,7 @@
             <p class="text-slate-500 mt-1 text-sm">@Model.Items.Count khóa học đang chờ bạn</p>
         </div>
 
-        @* ── TOAST MESSAGES ───────────────────────────────────────────────── *@
-        @if (TempData["CartSuccess"] != null)
-        {
-            <div class="mb-6 flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-                <span class="material-symbols-outlined text-emerald-500">check_circle</span>
-                <span class="text-sm font-medium text-emerald-700">@TempData["CartSuccess"]</span>
-            </div>
-        }
-        @if (TempData["CartError"] != null)
-        {
-            <div class="mb-6 flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                <span class="material-symbols-outlined text-red-500">error</span>
-                <span class="text-sm font-medium text-red-700">@TempData["CartError"]</span>
-            </div>
-        }
+        @* ── TOAST MESSAGES (Now handled via SweetAlert2 popup) ── *@
 
         @if (!Model.Items.Any())
         {
@@ -390,3 +376,34 @@
         if (e.key === 'Escape') closeVoucherModal();
     });
 </script>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            @if (TempData["CartSuccess"] != null)
+            {
+                <text>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công!',
+                    text: '@Html.Raw(TempData["CartSuccess"].ToString().Replace("'", "\\'"))',
+                    confirmButtonColor: '#059669'
+                });
+                </text>
+            }
+
+            @if (TempData["CartError"] != null)
+            {
+                <text>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Thông báo',
+                    text: '@Html.Raw(TempData["CartError"].ToString().Replace("'", "\\'"))',
+                    confirmButtonColor: '#ef4444'
+                });
+                </text>
+            }
+        });
+    </script>
+}

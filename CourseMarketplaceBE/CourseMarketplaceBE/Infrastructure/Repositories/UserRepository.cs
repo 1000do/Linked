@@ -30,13 +30,19 @@ public class UserRepository : IUserRepository
       string? bio,
       DateOnly? dob,
       string? avatarUrl,
-      string? phoneNumber)
+      string? phoneNumber,
+      string? professionalTitle = null,
+      string? expertiseCategories = null,
+      string? linkedinUrl = null,
+      string? youtubeUrl = null,
+      string? facebookUrl = null)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             var user = await _context.Users
                 .Include(u => u.UserNavigation) 
+                .Include(u => u.Instructor)
                 .FirstOrDefaultAsync(u => u.UserId == userId);
 
             if (user == null) return false;
@@ -55,6 +61,16 @@ public class UserRepository : IUserRepository
                 }
                 account.PhoneNumber = phoneNumber;
                 account.AccountUpdatedAt = DateTime.Now;
+            }
+
+            // Update instructor fields if they exist
+            if (user.Instructor != null)
+            {
+                user.Instructor.ProfessionalTitle = professionalTitle;
+                user.Instructor.ExpertiseCategories = expertiseCategories;
+                user.Instructor.LinkedinUrl = linkedinUrl;
+                user.Instructor.YoutubeUrl = youtubeUrl;
+                user.Instructor.FacebookUrl = facebookUrl;
             }
 
             await _context.SaveChangesAsync();

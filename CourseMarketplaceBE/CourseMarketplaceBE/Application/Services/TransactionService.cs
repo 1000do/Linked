@@ -68,4 +68,27 @@ public class TransactionService : ITransactionService
             PageSize   = pageSize
         };
     }
+
+    public async Task<TransactionPagedResult> GetUserTransactionsAsync(int userId, int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null)
+    {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 20;
+        if (pageSize > MaxPageSize) pageSize = MaxPageSize;
+
+        // ★ Học viên chỉ xem đơn thành công (không hiện đơn ảo do checkout thất bại)
+        if (string.IsNullOrEmpty(status))
+        {
+            status = "succeeded";
+        }
+
+        var (items, totalCount) = await _repo.GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status);
+
+        return new TransactionPagedResult
+        {
+            Items      = items,
+            TotalCount = totalCount,
+            Page       = page,
+            PageSize   = pageSize
+        };
+    }
 }

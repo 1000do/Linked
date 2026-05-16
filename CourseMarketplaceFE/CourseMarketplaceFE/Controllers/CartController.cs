@@ -222,7 +222,7 @@ public class CartController : Controller
         {
             couponCode = couponCode,
             successUrl = $"{baseUrl}/Cart/CheckoutSuccess?session_id={{CHECKOUT_SESSION_ID}}",
-            cancelUrl = $"{baseUrl}/Cart"
+            cancelUrl = $"{baseUrl}/Cart/CheckoutCancel"
         });
 
         if (!response.IsSuccessStatusCode)
@@ -278,7 +278,7 @@ public class CartController : Controller
         {
             courseId = id,
             successUrl = $"{baseUrl}/Cart/CheckoutSuccess?session_id={{CHECKOUT_SESSION_ID}}",
-            cancelUrl = $"{baseUrl}/Course/Details/{id}"
+            cancelUrl = $"{baseUrl}/Cart/CheckoutCancel"
         });
 
         if (!response.IsSuccessStatusCode)
@@ -361,6 +361,23 @@ public class CartController : Controller
             TempData["CartError"] = "Có lỗi xảy ra khi xử lý thanh toán. Vui lòng liên hệ hỗ trợ.";
             return RedirectToAction(nameof(Index));
         }
+    }
+
+    // ─── 8. CHECKOUT CANCEL — STRIPE REDIRECT VỀ ĐÂY KHI HỦY ─────────────────
+    /// <summary>
+    /// GET /Cart/CheckoutCancel?order_id=123
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> CheckoutCancel([FromQuery(Name = "order_id")] int orderId)
+    {
+        if (orderId > 0)
+        {
+            // Gọi API backend để cập nhật trạng thái
+            await _api.GetAsync($"checkout/cancel?order_id={orderId}");
+        }
+
+        TempData["CartError"] = "Bạn chưa thanh toán thành công hoặc đã hủy giao dịch. Đơn hàng hiện tại không còn hiệu lực.";
+        return RedirectToAction(nameof(Index));
     }
 }
 

@@ -1,65 +1,239 @@
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace CourseMarketplaceBE.Presentation.Controllers
+namespace CourseMarketplaceBE.Presentation.Controllers;
+
+/// <summary>
+/// API Controller cho Module Quản lý Khuyến Mãi (UC-62, 63, 64, 65).
+///
+/// SOLID — SRP: Controller CHỈ làm 3 việc:
+///   1. Xác thực request (JWT + [Authorize]).
+///   2. Gọi ICouponService (DIP).
+///   3. Trả về HTTP response chuẩn ApiResponse.
+///
+/// ★ 2 nhóm endpoint:
+///   1. /api/coupon/*           — Admin CRUD (Roles = "admin")
+///   2. /api/coupon/platform/*  — Instructor browse & attach (Roles = "instructor")
+/// </summary>
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class CouponController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    [Authorize(Roles = "admin")] 
-    public class CouponController : ControllerBase
+    private readonly ICouponService _service;
+
+    public CouponController(ICouponService service) => _service = service;
+
+    private int GetUserId() =>
+        int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  ADMIN: CRUD Kho Voucher
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>UC-63: Danh sách tất cả mã giảm giá (Admin).</summary>
+    [HttpGet]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] bool? isActive,
+        [FromQuery] string? type,
+        [FromQuery] string? search)
     {
-        private readonly ICouponService _service;
-
-        public CouponController(ICouponService service)
+        try
         {
-            _service = service;
+            var isAdmin = User.IsInRole("admin");
+            var data = await _service.GetAll(GetUserId(), isActive, type, search, isAdmin);
+            return Ok(ApiResponse<List<CouponResponse>>.SuccessResponse(data, "Danh sách mã giảm giá."));
         }
-
-        private int GetManagerId()
+        catch (Exception ex)
         {
-            return int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetAll(
-    [FromQuery] bool? isActive,
-    [FromQuery] string? type,
-    [FromQuery] string? search)
-        {
-            return Ok(await _service.GetAll(GetManagerId(), isActive, type, search));
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var data = await _service.GetById(id, GetManagerId());
-            if (data == null) return NotFound();
-            return Ok(data);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Create(CreateCouponRequest req)
-        {
-            await _service.Create(req, GetManagerId());
-            return Ok("Created");
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, UpdateCouponRequest req)
-        {
-            await _service.Update(id, req, GetManagerId());
-            return Ok("Updated");
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            await _service.Delete(id, GetManagerId());
-            return Ok("Deleted");
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
         }
     }
+
+    /// <summary>UC-63: Chi tiết 1 mã giảm giá (Admin).</summary>
+    [HttpGet("{id:int}")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        try
+        {
+            var isAdmin = User.IsInRole("admin");
+            var data = await _service.GetById(id, GetUserId(), isAdmin);
+            if (data == null)
+                return NotFound(ApiResponse<string>.ErrorResponse($"Không tìm thấy mã #{id}."));
+            return Ok(ApiResponse<CouponResponse>.SuccessResponse(data, "Chi tiết mã giảm giá."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+        }
+    }
+
+    /// <summary>UC-62: Tạo mã giảm giá mới (Admin).</summary>
+    [HttpPost]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> Create([FromBody] CreateCouponRequest req)
+    {
+        try
+        {
+            await _service.Create(req, GetUserId());
+            return Ok(ApiResponse<string>.SuccessResponse("OK", "Tạo mã giảm giá thành công."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+        }
+    }
+
+    /// <summary>
+    /// UC-64: Sửa mã giảm giá (Admin).
+    /// ★ CHỈ cho phép sửa: end_date, usage_limit, is_active.
+    /// </summary>
+    [HttpPut("{id:int}")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateCouponRequest req)
+    {
+        try
+        {
+            var isAdmin = User.IsInRole("admin");
+            await _service.Update(id, req, GetUserId(), isAdmin);
+            return Ok(ApiResponse<string>.SuccessResponse("OK", "Cập nhật mã giảm giá thành công."));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+        }
+    }
+
+    /// <summary>
+    /// UC-65: Xóa mềm mã giảm giá (Admin).
+    /// ★ Luôn soft-delete: set is_active = false, end_date = hôm qua.
+    /// </summary>
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> SoftDelete(int id)
+    {
+        try
+        {
+            var isAdmin = User.IsInRole("admin");
+            await _service.SoftDelete(id, GetUserId(), isAdmin);
+            return Ok(ApiResponse<string>.SuccessResponse("OK", "Đã vô hiệu hóa mã giảm giá."));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  INSTRUCTOR: Browse & Attach Coupon → Course
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Lấy danh sách mã giảm giá đang hoạt động trên nền tảng.
+    /// Instructor dùng để chọn gắn vào khóa học.
+    /// </summary>
+    [HttpGet("platform/active")]
+    [Authorize]
+    public async Task<IActionResult> GetActivePlatformCoupons()
+    {
+        try
+        {
+            var data = await _service.GetActivePlatformCouponsAsync();
+            return Ok(ApiResponse<List<CouponResponse>>.SuccessResponse(data, "Danh sách mã giảm giá khả dụng."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+        }
+    }
+
+    /// <summary>
+    /// Giảng viên gắn mã giảm giá vào khóa học.
+    /// ★ JWT ownership: Chỉ chủ khóa học mới được phép.
+    /// </summary>
+    [HttpPost("platform/apply")]
+    [Authorize]
+    public async Task<IActionResult> ApplyCouponToCourse([FromBody] ApplyCouponToCourseRequest req)
+    {
+        try
+        {
+            await _service.ApplyCouponToCourseAsync(req.CourseId, req.CouponId, GetUserId());
+            return Ok(ApiResponse<string>.SuccessResponse("OK", "Đã gắn mã giảm giá vào khóa học."));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+        }
+    }
+
+    /// <summary>
+    /// Giảng viên gỡ mã giảm giá khỏi khóa học.
+    /// ★ JWT ownership: Chỉ chủ khóa học mới được phép.
+    /// </summary>
+    [HttpDelete("platform/remove/{courseId:int}")]
+    [Authorize]
+    public async Task<IActionResult> RemoveCouponFromCourse(int courseId)
+    {
+        try
+        {
+            await _service.RemoveCouponFromCourseAsync(courseId, GetUserId());
+            return Ok(ApiResponse<string>.SuccessResponse("OK", "Đã gỡ mã giảm giá khỏi khóa học."));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+        }
+    }
+}
+
+// ── Request DTO cho ApplyCouponToCourse ─────────────────────────────────
+public class ApplyCouponToCourseRequest
+{
+    public int CourseId { get; set; }
+    public int CouponId { get; set; }
 }

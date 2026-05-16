@@ -139,6 +139,8 @@ CREATE TABLE instructors (
     professional_title VARCHAR(255),
     expertise_categories VARCHAR(255),
     linkedin_url TEXT,
+    youtube_url TEXT,
+    facebook_url TEXT,
     document_url TEXT,
     approval_status VARCHAR(50) DEFAULT 'Pending',
     
@@ -343,7 +345,12 @@ CREATE TABLE order_items (
     order_id INT REFERENCES order_info(order_id) ON DELETE CASCADE,
     course_id INT REFERENCES courses(course_id) ON DELETE SET NULL,
     purchase_price NUMERIC(10, 2) NOT NULL,
-	coupon_used BOOLEAN DEFAULT FALSE
+	coupon_used BOOLEAN DEFAULT FALSE,
+    -- ★ Snapshot giá gốc & coupon tại thời điểm mua (không bị ảnh hưởng khi giá khóa học thay đổi)
+    original_price NUMERIC(10, 2),          -- Giá gốc khóa học lúc mua
+    coupon_code VARCHAR(50),                -- Mã coupon đã dùng (VD: 'SUMMER20')
+    coupon_type VARCHAR(50),                -- Loại coupon: 'percentage' hoặc 'fixed_amount'
+    discount_amount NUMERIC(10, 2) DEFAULT 0 -- Số tiền giảm = original_price - purchase_price
 );
 
 CREATE TABLE transactions (

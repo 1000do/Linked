@@ -53,6 +53,8 @@ public class InstructorService : IInstructorService
             existing.ProfessionalTitle   = request.ProfessionalTitle;
             existing.ExpertiseCategories = request.ExpertiseCategories;
             existing.LinkedinUrl         = request.LinkedinUrl;
+            existing.YoutubeUrl          = request.YoutubeUrl;
+            existing.FacebookUrl         = request.FacebookUrl;
             existing.StripeCountry       = request.StripeCountry.ToUpper();
             existing.ApprovalStatus      = "Pending";
 
@@ -72,6 +74,8 @@ public class InstructorService : IInstructorService
             ProfessionalTitle    = request.ProfessionalTitle,
             ExpertiseCategories  = request.ExpertiseCategories,
             LinkedinUrl          = request.LinkedinUrl,
+            YoutubeUrl           = request.YoutubeUrl,
+            FacebookUrl          = request.FacebookUrl,
             DocumentUrl          = documentUrl,
             ApprovalStatus       = "Pending",
             StripeCountry        = request.StripeCountry.ToUpper(),
@@ -404,5 +408,50 @@ public class InstructorService : IInstructorService
             dbp.PayoutStatus = "failed";
             dbp.IsPaid = false;
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PUBLIC PROFILE — Trang thông tin công khai của giảng viên
+    // ═══════════════════════════════════════════════════════════════════════
+    public async Task<InstructorPublicProfileDto?> GetPublicProfileAsync(int instructorId)
+    {
+        var instructor = await _repo.GetByIdWithNavigationAsync(instructorId);
+        if (instructor == null || instructor.ApprovalStatus != "Approved")
+            return null;
+
+        var user = instructor.InstructorNavigation;
+        var stats = await _repo.GetStatsAsync(instructorId);
+        var activeCourses = await _repo.CountActiveCoursesAsync(instructorId);
+
+        // Lấy danh sách khóa học published
+        var courses = instructor.Courses
+            .Where(c => c.CourseStatus == "published")
+            .Select(c => new InstructorCourseDto
+            {
+                CourseId = c.CourseId,
+                Title = c.Title,
+                ThumbnailUrl = c.CourseThumbnailUrl,
+                Price = c.Price,
+                Rating = 0, // Sẽ lấy từ view nếu cần
+                TotalStudents = c.Enrollments?.Count ?? 0
+            }).ToList();
+
+        return new InstructorPublicProfileDto
+        {
+            InstructorId = instructorId,
+            FullName = user?.FullName,
+            AvatarUrl = user?.UserNavigation?.AvatarUrl,
+            ProfessionalTitle = instructor.ProfessionalTitle,
+            ExpertiseCategories = instructor.ExpertiseCategories,
+            Bio = user?.Bio,
+            LinkedinUrl = instructor.LinkedinUrl,
+            YoutubeUrl = instructor.YoutubeUrl,
+            FacebookUrl = instructor.FacebookUrl,
+            TotalStudents = stats?.TotalStudentsCount ?? 0,
+            TotalCourses = activeCourses,
+            AverageRating = (decimal)(stats?.InstructorRating ?? 0),
+            TotalReviews = 0, // Sẽ bổ sung sau nếu cần
+            Courses = courses
+        };
     }
 }

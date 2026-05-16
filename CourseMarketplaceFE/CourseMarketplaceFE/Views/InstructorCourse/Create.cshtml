@@ -193,6 +193,27 @@
                 </div>
             }
         </div>
+
+        <!-- Section 5: Marketing & Promotions -->
+        <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">5</div>
+                <h2 class="text-xl font-headline font-bold text-slate-900">Marketing & Promotions</h2>
+            </div>
+            
+            <input type="hidden" asp-for="CouponId" id="CouponIdInput" />
+            <div class="flex items-center justify-between mb-4">
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Platform Voucher (Optional)</label>
+                <span class="text-xs text-slate-400 font-medium">Bạn có thể chọn 1 voucher duy nhất để áp dụng.</span>
+            </div>
+            
+            <div id="voucher-selection-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="col-span-full py-8 text-center text-slate-400 font-bold text-sm flex flex-col items-center justify-center gap-3">
+                    <div class="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                    Đang tải danh sách voucher...
+                </div>
+            </div>
+        </div>
     </form>
 </div>
 
@@ -340,5 +361,68 @@
             if (priceInput.value) formatPrice(priceInput);
         }
         updateProgressBar();
+
+        // ─── LOAD AND SELECT PLATFORM COUPONS ───
+        async function loadPlatformCoupons() {
+            try {
+                const res = await fetch('/Coupon/PlatformActive');
+                const result = await res.json();
+                const container = document.getElementById('voucher-selection-container');
+                
+                if (result.success && result.data && result.data.length > 0) {
+                    container.innerHTML = result.data.map(c => `
+                        <div class="voucher-option cursor-pointer group relative overflow-hidden rounded-2xl p-5 border-2 border-slate-100 hover:border-emerald-500/40 transition-all bg-white shadow-sm hover:shadow-md" 
+                             onclick="selectVoucher(this, ${c.couponId})">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center font-black group-[.selected]:bg-emerald-500 group-[.selected]:text-white transition-colors duration-300">
+                                    ${c.couponType === 'percentage' ? c.discountValue + '%' : '$' + c.discountValue}
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900 tracking-widest font-mono">${c.couponCode}</h4>
+                                    <p class="text-[10px] text-slate-500 uppercase mt-0.5">HSD: ${new Date(c.endDate).toLocaleDateString('vi-VN')}</p>
+                                </div>
+                            </div>
+                            <!-- Selection Indicator -->
+                            <div class="absolute top-1/2 -translate-y-1/2 right-5 w-6 h-6 rounded-full border-2 border-slate-200 flex items-center justify-center group-[.selected]:border-emerald-500 group-[.selected]:bg-emerald-500 transition-colors duration-300">
+                                <span class="material-symbols-outlined text-white text-[14px] opacity-0 group-[.selected]:opacity-100 transition-opacity">check</span>
+                            </div>
+                            <!-- Decorative background icon -->
+                            <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-[80px] text-slate-50 opacity-0 group-[.selected]:opacity-10 pointer-events-none transition-opacity">loyalty</span>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = `<div class="col-span-full py-8 text-center text-slate-400 font-bold text-sm bg-slate-50 rounded-xl border border-slate-100">Hiện tại không có voucher nền tảng nào đang hoạt động.</div>`;
+                }
+            } catch(e) {
+                console.error(e);
+                const container = document.getElementById('voucher-selection-container');
+                if (container) container.innerHTML = `<div class="col-span-full text-center text-red-400 text-sm py-4">Lỗi tải danh sách voucher.</div>`;
+            }
+        }
+        
+        window.selectVoucher = function(el, id) {
+            const couponInput = document.getElementById('CouponIdInput');
+            const isCurrentlySelected = el.classList.contains('selected');
+            
+            // Bỏ chọn tất cả
+            document.querySelectorAll('.voucher-option').forEach(v => {
+                v.classList.remove('selected', 'border-emerald-500');
+                v.classList.add('border-slate-100');
+            });
+            
+            if (isCurrentlySelected) {
+                // Nếu đang chọn mà click lại -> Hủy chọn
+                couponInput.value = '';
+            } else {
+                // Nếu chưa chọn -> Chọn
+                el.classList.add('selected', 'border-emerald-500');
+                el.classList.remove('border-slate-100');
+                couponInput.value = id;
+            }
+        };
+        
+        // Khởi chạy load voucher khi tải trang
+        loadPlatformCoupons();
+
     </script>
 }
