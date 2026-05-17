@@ -647,15 +647,15 @@
             // Validation (only alert if NOT auto-saving)
             if (!title || title.trim() === '') { 
                 if (!skipAlert) Swal.fire('Thiếu thông tin', 'Vui lòng nhập Tiêu đề khóa học.', 'warning'); 
-                return; 
+                return Promise.resolve(false); 
             }
             if (!desc || desc.trim() === '' || desc === '<p><br></p>') { 
                 if (!skipAlert) Swal.fire('Thiếu thông tin', 'Vui lòng nhập Mô tả khóa học.', 'warning'); 
-                return; 
+                return Promise.resolve(false); 
             }
             if (catId == "0") {
                 if (!skipAlert) Swal.fire('Thiếu thông tin', 'Vui lòng chọn Danh mục khóa học.', 'warning');
-                return;
+                return Promise.resolve(false);
             }
 
             if (btn) {
@@ -681,7 +681,7 @@
             fd.append('whatYouWillLearn', learn);
             fd.append('requirements', req);
 
-            fetch('/InstructorCourse/UpdateDetails', { method: 'POST', body: fd })
+            return fetch('/InstructorCourse/UpdateDetails', { method: 'POST', body: fd })
                 .then(res => res.json())
                 .then(json => {
                     if (json.success) {
@@ -707,14 +707,17 @@
                                 setTimeout(() => autoSaveEl.classList.add('hidden'), 3000);
                             }
                         }
+                        return true;
                     } else {
                         if (!skipAlert) Swal.fire('Error', json.message || 'Failed to update details', 'error');
                         if (autoSaveEl) autoSaveEl.classList.add('hidden');
+                        return false;
                     }
                 })
                 .catch(e => {
                     if (!skipAlert) Swal.fire('Error', 'An error occurred', 'error');
                     if (autoSaveEl) autoSaveEl.classList.add('hidden');
+                    return false;
                 })
                 .finally(() => {
                     if (btn) {
@@ -828,6 +831,80 @@
             learn: window.courseLearnQuill?.root.innerHTML || '',
             req: window.courseReqQuill?.root.innerHTML || ''
         };
+
+        window.checkUnsavedChanges = function() {
+            const title = document.getElementById('course-title-input')?.value || '';
+            const price = document.getElementById('course-price-input')?.value || '0';
+            const catId = document.getElementById('course-category-input')?.value || '0';
+            const thumb = document.getElementById('course-thumbnail-input')?.value || '';
+            
+            const desc = window.courseDescQuill?.root.innerHTML || '';
+            const learn = window.courseLearnQuill?.root.innerHTML || '';
+            const req = window.courseReqQuill?.root.innerHTML || '';
+
+            const cleanHtml = (h) => {
+                if (!h) return '';
+                const trimmed = h.trim();
+                return (trimmed === '<p><br></p>' || trimmed === '<p></p>') ? '' : trimmed;
+            };
+
+            const parsePrice = (p) => {
+                const parsed = parseFloat(p);
+                return isNaN(parsed) ? 0 : parsed;
+            };
+
+            return title.trim() !== (initialCourseData.title || '').trim() ||
+                cleanHtml(desc) !== cleanHtml(initialCourseData.desc) ||
+                catId !== initialCourseData.catId ||
+                parsePrice(price) !== parsePrice(initialCourseData.price) ||
+                thumb !== initialCourseData.thumb ||
+                cleanHtml(learn) !== cleanHtml(initialCourseData.learn) ||
+                cleanHtml(req) !== cleanHtml(initialCourseData.req);
+        };
+
+        window.addEventListener('beforeunload', function (e) {
+            if (window.checkUnsavedChanges()) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes in your Course Landing Page. Are you sure you want to leave?';
+                return e.returnValue;
+            }
+        });
+
+        // Intercept back button click with SweetAlert confirmation
+        setTimeout(() => {
+            const backBtn = document.querySelector('a[href="/InstructorCourse"]');
+            if (backBtn) {
+                backBtn.addEventListener('click', function(e) {
+                    if (window.checkUnsavedChanges()) {
+                        e.preventDefault();
+                        Swal.fire({
+                            title: 'Bạn có thay đổi chưa lưu!',
+                            text: 'Bạn có chắc chắn muốn quay lại mà không lưu các thay đổi trên Landing Page?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#ef4444',
+                            cancelButtonColor: '#cbd5e1',
+                            confirmButtonText: 'Rời đi',
+                            cancelButtonText: 'Ở lại'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Temporarily reset initialCourseData to bypass beforeunload warning
+                                initialCourseData = {
+                                    title: document.getElementById('course-title-input')?.value || '',
+                                    desc: window.courseDescQuill?.root.innerHTML || '',
+                                    price: document.getElementById('course-price-input')?.value || '0',
+                                    catId: document.getElementById('course-category-input')?.value || '0',
+                                    thumb: document.getElementById('course-thumbnail-input')?.value || '',
+                                    learn: window.courseLearnQuill?.root.innerHTML || '',
+                                    req: window.courseReqQuill?.root.innerHTML || ''
+                                };
+                                window.location.href = backBtn.href;
+                            }
+                        });
+                    }
+                });
+            }
+        }, 100);
         
         // Show API error if any
         @if (ViewBag.ApiError != null) {
@@ -1660,16 +1737,7 @@
             }
 
             // Unsaved changes check
-            let hasUnsavedChanges = false;
-            if (title !== initialCourseData.title ||
-                desc !== initialCourseData.desc ||
-                catId !== initialCourseData.catId ||
-                price !== initialCourseData.price ||
-                thumb !== initialCourseData.thumb ||
-                learn !== initialCourseData.learn ||
-                req !== initialCourseData.req) {
-                hasUnsavedChanges = true;
-            }
+            const hasUnsavedChanges = window.checkUnsavedChanges();
             
             const proceedWithSubmit = () => {
                 // 3. Check if all lessons have content
@@ -1702,7 +1770,7 @@
                         fetch('/InstructorCourse/ModerateCourse', { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: new URLSearchParams({ courseId: courseId, instructorId: @(ViewBag.InstructorId ?? 0) })
+                            body: new URLSearchParams({ courseId: courseId })
                         })
                         .then(res => res.json())
                         .then(json => {
@@ -1751,9 +1819,11 @@
                     cancelButtonText: 'NO'
                 }).then((saveResult) => {
                     if (saveResult.isConfirmed) {
-                        // YES -> save then submit
-                        saveCourseDetails(true).then(() => {
-                            proceedWithSubmit();
+                        // YES -> save then submit if successful
+                        saveCourseDetails(true).then((success) => {
+                            if (success) {
+                                proceedWithSubmit();
+                            }
                         });
                     } else if (saveResult.dismiss === Swal.DismissReason.cancel) {
                         // NO -> continue with original data, don't save

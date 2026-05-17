@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Domain.Entities;
 
 namespace CourseMarketplaceBE.Application.IServices;
 
@@ -15,5 +16,7 @@ public interface ICourseService
     Task UpdateCourseStatusAsync(int courseId, string status, int instructorId);
     Task DeleteCourseAsync(int courseId, int instructorId);
     Task<IEnumerable<CategoryResponse>> GetCategoriesAsync();
-    Task<bool> IntegrateAItoCourseAsync(CourseAIIntegrationCommand command);
+    Task<CourseAIIntegrationResult> IntegrateAItoCourseAsync(CourseAIIntegrationCommand command);
+    Task<CourseAiIntegrationResponse> GetByModelAndCourseAsync(int modelId, int courseId);
+    Task UpdateCourseStatusAndFeedbackAsync(int courseId, string status, string? feedback);
 }

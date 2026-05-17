@@ -75,5 +75,12 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .AsNoTracking()
                 .ToListAsync();
         }
+
+        public async Task<CourseAiIntegration?> GetByModelAndCourseAsync(int modelId, int courseId)
+        {
+            return await _context.CourseAiIntegrations
+                .AsNoTracking()
+                .FirstOrDefaultAsync(cai => cai.ModelId == modelId && cai.CourseId == courseId);
+        }
     }
 }

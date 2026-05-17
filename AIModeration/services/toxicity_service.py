@@ -3,11 +3,12 @@
 import logging
 import time
 from typing import Dict, List, Optional, Any, Tuple
-from core.models import StageLog, ModerationResponse, ModerationStatus
+from core.models import StageLog, CourseModerationResponse, ModerationStatus
 from core.exceptions import ModerationException, FileProcessingException
 from services.base_service import BaseService
 from services.text_classifier_service import TextClassifierService
 from services.text_extraction_service import TextExtractionService
+from repositories.cache_repository import CacheRepository
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ class ToxicityService(BaseService):
         self,
         text_classifier: TextClassifierService = None,
         text_extractor: TextExtractionService = None,
+        cache_repository: CacheRepository = None,
     ):
         """
         Initialize toxicity service.
@@ -28,10 +30,12 @@ class ToxicityService(BaseService):
         Args:
             text_classifier: Text classifier service
             text_extractor: Text extraction service
+            cache_repository: Cache repository
         """
         super().__init__("ToxicityService")
         self.text_classifier = text_classifier or TextClassifierService()
         self.text_extractor = text_extractor or TextExtractionService()
+        self.cache_repo = cache_repository or CacheRepository()
     
     async def check_text_toxicity(
         self,
@@ -292,11 +296,11 @@ class ToxicityService(BaseService):
     async def orchestrate_stage2(
         self,
         course_id: int,
-        title: str,
-        description: str,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
         lesson_texts: Optional[List[str]] = None,
         material_list: Optional[List[Dict[str, Any]]] = None,
-    ) -> ModerationResponse:
+    ) -> CourseModerationResponse:
         """
         Orchestrate Stage 2: Run toxicity checks in sequence.
         
@@ -312,11 +316,52 @@ class ToxicityService(BaseService):
             material_list: List of materials with extracted content
             
         Returns:
-            ModerationResponse with full trace
+            CourseModerationResponse with full trace
         """
         stage_start = time.time()
         all_stage_logs = []
         
+        # Load from Redis cache if not provided in the parameters
+        if not title or not description:
+            try:
+                course_data = self.cache_repo.get_course_data(course_id)
+                if course_data:
+                    title = title or course_data.get("Title") or course_data.get("title") or ""
+                    description = description or course_data.get("Description") or course_data.get("description") or ""
+                    
+                    # Extract lesson texts
+                    if not lesson_texts:
+                        lesson_texts = []
+                        lessons = course_data.get("Lessons") or course_data.get("lessons") or []
+                        for lesson in lessons:
+                            lesson_title = lesson.get("Title") or lesson.get("title") or ""
+                            lesson_text = lesson.get("LessonText") or lesson.get("lesson_text") or ""
+                            if lesson_title:
+                                lesson_texts.append(lesson_title)
+                            if lesson_text:
+                                lesson_texts.append(lesson_text)
+                                
+                    # Extract materials list
+                    if not material_list:
+                        material_list = []
+                        lessons = course_data.get("Lessons") or course_data.get("lessons") or []
+                        for lesson in lessons:
+                            materials = lesson.get("LearningMaterials") or lesson.get("learning_materials") or []
+                            for mat in materials:
+                                material_list.append({
+                                    "material_id": mat.get("MaterialId") or mat.get("material_id"),
+                                    "content_text": mat.get("ContentText") or mat.get("content_text") or "",
+                                    "file_url": mat.get("FileUrl") or mat.get("file_url") or "",
+                                })
+            except Exception as cache_err:
+                self.logger.warning(f"Failed to fetch course details from cache: {cache_err}")
+
+        # Ensure we have fallback string values
+        title = title or ""
+        description = description or ""
+        lesson_texts = lesson_texts or []
+        material_list = material_list or []
+
         try:
             self.log_stage_entry(self.STAGE, course_id, action="START")
             
@@ -340,12 +385,12 @@ class ToxicityService(BaseService):
                         f"Text toxicity detected - fields: {flagged_fields}"
                     )
                     
-                    return ModerationResponse(
-                        course_id=course_id,
-                        status=ModerationStatus.FLAGGED,
-                        stage_logs=all_stage_logs,
-                        flagged_content=flagged_fields,
-                        confidence_score=step1_logs[0]["confidence_score"] if step1_logs else 0.9,
+                    return CourseModerationResponse(
+                        CourseId=course_id,
+                        ModerationStatus=ModerationStatus.FLAGGED.value,
+                        stageLogs=all_stage_logs,
+                        flaggedFields=flagged_fields,
+                        overall_confidence_score=step1_logs[0]["confidence_score"] if step1_logs else 0.9,
                         total_latency_ms=total_latency,
                     )
             
@@ -378,12 +423,12 @@ class ToxicityService(BaseService):
                         f"Media text toxicity detected - materials: {flagged_materials}"
                     )
                     
-                    return ModerationResponse(
-                        course_id=course_id,
-                        status=ModerationStatus.FLAGGED,
-                        stage_logs=all_stage_logs,
-                        flagged_content=flagged_materials,
-                        confidence_score=step2_logs[0]["confidence_score"] if step2_logs else 0.85,
+                    return CourseModerationResponse(
+                        CourseId=course_id,
+                        ModerationStatus=ModerationStatus.FLAGGED.value,
+                        stageLogs=all_stage_logs,
+                        flaggedFields=flagged_materials,
+                        overall_confidence_score=step2_logs[0]["confidence_score"] if step2_logs else 0.85,
                         total_latency_ms=total_latency,
                     )
             
@@ -417,12 +462,12 @@ class ToxicityService(BaseService):
             confidences = [log["confidence_score"] for log in all_stage_logs if log["result"] not in ["ERROR", "PENDING_MODEL"]]
             avg_confidence = sum(confidences) / len(confidences) if confidences else 1.0
             
-            return ModerationResponse(
-                course_id=course_id,
-                status=ModerationStatus.APPROVED,
-                stage_logs=all_stage_logs,
-                flagged_content=[],
-                confidence_score=avg_confidence,
+            return CourseModerationResponse(
+                CourseId=course_id,
+                ModerationStatus=ModerationStatus.APPROVED.value,
+                stageLogs=all_stage_logs,
+                flaggedFields=[],
+                overall_confidence_score=avg_confidence,
                 total_latency_ms=total_latency,
             )
         
@@ -430,11 +475,11 @@ class ToxicityService(BaseService):
             self.logger.error(f"Stage 2 orchestration failed: {e}")
             total_latency = (time.time() - stage_start) * 1000
             
-            return ModerationResponse(
-                course_id=course_id,
-                status=ModerationStatus.MANUAL_AUDIT,
-                stage_logs=all_stage_logs,
-                flagged_content=[],
-                confidence_score=0.0,
+            return CourseModerationResponse(
+                CourseId=course_id,
+                ModerationStatus=ModerationStatus.MANUAL_AUDIT.value,
+                stageLogs=all_stage_logs,
+                flaggedFields=[],
+                overall_confidence_score=0.0,
                 total_latency_ms=total_latency,
             )

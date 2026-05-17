@@ -11,9 +11,10 @@ namespace CourseMarketplaceBE.Application.IServices
     /// </summary>
     public interface IAiModerationService
     {
-        // Task<CourseAIModerationResult> ModerateCourseFullPipelineAsync(SemanticDuplicationRequest semanticReq, CourseHarmfulRequest harmfulReq);
+        Task<CourseAIModerationResult> ModerateCourseFullPipelineAsync(SemanticDuplicationRequest semanticReq, CourseHarmfulRequest harmfulReq);
         Task<Dictionary<string, float>> GetScoreThresholdConfigAsync(string key);
         Task<List<int>> GetModelIdsByType(string type);
+        Task<List<AiModelResponse>> GetModelsByTypeAsync(string modelType);
         Task SaveCourseAiUsageLog(SaveCourseAiUsageLogCommand command);
         Task<bool> HealthCheckAsync();
     }

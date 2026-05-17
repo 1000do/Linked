@@ -15,8 +15,8 @@ class CacheRepository:
     """Single data access layer for Redis cache."""
     
     # Key prefixes
-    COURSE_PREFIX = "mod:course:"
-    EMBEDDING_PREFIX = "mod:embedding:"
+    COURSE_PREFIX = "course:detail:"
+    EMBEDDING_PREFIX = "material_embedding:"
     LOG_PREFIX = "mod:log:"
     
     # TTL settings (in seconds)

@@ -26,10 +26,11 @@ class StageLog(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     result: str = Field(..., description="Result: NO_MATCH, MATCH_FOUND, FLAGGED, APPROVED, etc.")
     reason: str = Field(..., description="Explanation of result")
-    flaggedFields: List[str] = Field(default_factory=list)
+    flaggedFields: List[str] = Field(default_factory=list, validation_alias="flagged_content", serialization_alias="flaggedFields")
     details: Dict[str, Any] = Field(default_factory=dict)
     latency_ms: float = Field(0.0)
     confidence_score: float = Field(..., ge=0.0, le=1.0, description="Confidence in this decision")
+    model_id: int = Field(0, description="ID of the model used for this stage")
 
 
 # ============================================================================
@@ -104,6 +105,13 @@ class CourseModerationResponse(BaseModel):
 
     class Config:
         populate_by_name = True
+
+
+class FullModerationPipelineRequest(BaseModel):
+    """Unified request for full AI moderation pipeline."""
+    semantic: SemanticDuplicationRequest
+    harmful: CourseHarmfulRequest
+
 
 
 # ============================================================================

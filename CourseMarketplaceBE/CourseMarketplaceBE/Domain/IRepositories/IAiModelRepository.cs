@@ -23,5 +23,10 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         /// Get all active models of a specific type.
         /// </summary>
         Task<List<AiModel>> GetByTypeAsync(string modelType);
+
+        /// <summary>
+        /// Get models by type.
+        /// </summary>
+        Task<List<AiModel>> GetModelsByTypeAsync(string modelType);
     }
 }

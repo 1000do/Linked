@@ -426,11 +426,11 @@ namespace CourseMarketplaceFE.Controllers
         }
         
         [HttpPost]
-        public async Task<IActionResult> ModerateCourse([FromForm] int courseId, [FromForm] int instructorId)
+        public async Task<IActionResult> ModerateCourse([FromForm] int courseId)
         {
             try
             {
-                var payload = new { CourseId = courseId, InstructorId = instructorId };
+                var payload = new { CourseId = courseId };
                 var resp = await _api.PostJsonAsync("courses/moderate", payload);
                 if (resp.IsSuccessStatusCode)
                 {

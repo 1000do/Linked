@@ -2,6 +2,7 @@ using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Domain.Constants;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +25,7 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly ICourseAiIntegrationRepository _aiIntegrationRepository;
         private readonly IMaterialEmbeddingRepository _embeddingRepository;
         private readonly IUserRepository _userRepository;
+        private readonly ICourseService _courseService;
         private readonly ILessonService _lessonService;
         private readonly ILogger<ModerationService> _logger;
  
@@ -41,6 +43,7 @@ namespace CourseMarketplaceBE.Application.Services
             IMaterialEmbeddingRepository embeddingRepository,
             IUserRepository userRepository,
             ILessonService lessonService,
+            ICourseService courseService,
             ILogger<ModerationService> logger)
         {
             _courseRepository = courseRepository;
@@ -56,6 +59,7 @@ namespace CourseMarketplaceBE.Application.Services
             _embeddingRepository = embeddingRepository;
             _userRepository = userRepository;
             _lessonService = lessonService;
+            _courseService = courseService;
             _logger = logger;
         }
 
@@ -126,7 +130,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             // Invalidate Cache
-            await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
 
             return true;
         }
@@ -136,7 +140,7 @@ namespace CourseMarketplaceBE.Application.Services
             var course = await _courseRepository.GetByIdAsync(courseId);
             if (course == null) return false;
 
-            course.CourseStatus = "rejected";
+            course.CourseStatus = CourseStatus.Rejected.ToValue();
             course.ModerationFeedback = reason;
             course.UpdatedAt = DateTime.Now;
 
@@ -154,7 +158,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             // Invalidate Cache
-            await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
 
             return true;
         }
@@ -166,7 +170,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             var currentFlags = (course.CourseFlagCount ?? 0) + 1;
             course.CourseFlagCount = currentFlags;
-            course.CourseStatus = "flagged"; 
+            course.CourseStatus = CourseStatus.Flagged.ToValue(); 
             course.ModerationFeedback = $"[VIOLATION FLAG #{currentFlags}] {reason}";
             course.UpdatedAt = DateTime.Now;
 
@@ -193,7 +197,7 @@ namespace CourseMarketplaceBE.Application.Services
                     subject = "Thông báo ngừng kinh doanh khóa học vĩnh viễn (Lần 3)";
                     message = $"Khóa học '{course.Title}' của bạn đã vi phạm chính sách lần thứ 3. Hệ thống quyết định ngừng kinh doanh khóa học này vĩnh viễn. Bạn sẽ không thể chỉnh sửa nội dung hoặc nhận học viên mới, nhưng học viên cũ vẫn có thể truy cập nội dung đã mua.";
                     
-                    course.CourseStatus = "archived";
+                    course.CourseStatus = CourseStatus.Archived.ToValue();
                     _courseRepository.Update(course);
                     await _courseRepository.SaveChangesAsync();
                 }
@@ -207,7 +211,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             // Invalidate Cache
-            await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
 
             return true;
         }
@@ -299,7 +303,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             // Update course status
-            course.CourseStatus = "rejected";
+            course.CourseStatus = CourseStatus.Rejected.ToValue();
             course.ModerationFeedback = courseFeedbackParts.Count > 0
                 ? string.Join("\n", courseFeedbackParts)
                 : "Khóa học bị từ chối. Vui lòng kiểm tra các file bị đánh dấu.";
@@ -319,7 +323,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             // Invalidate Cache
-            await _redisService.RemoveCacheAsync($"course:detail:{request.CourseId}");
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(request.CourseId));
 
             return true;
         }
@@ -385,20 +389,32 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task PrepareMaterialEmbeddingsAsync()
         {
+            var isInitialized = await _redisService.GetCacheAsync<bool>(CacheKeys.MaterialEmbeddingInitialized.GetKey());
+            if (isInitialized) return;
+
             var allEmbeddings = await _lessonService.GetAllMaterialEmbeddingsAsync();
             foreach (var e in allEmbeddings)
             {
-                await _redisService.SetCacheAsync($"material_embedding:{e.EmbeddingId}", e, TimeSpan.FromHours(3));
+                string cacheKey = CacheKeys.MaterialEmbedding.GetKey(e.EmbeddingId);
+                var cached = await _redisService.GetCacheAsync<MaterialEmbedding>(cacheKey);
+                if (cached == null)
+                {
+                    await _redisService.SetCacheAsync(cacheKey, e, CacheTtl.Medium.GetTtl());
+                }
             }
+
+            await _redisService.SetCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey(), true, CacheTtl.Medium.GetTtl());
         }
 
-        public async Task AssignAIModeratorsToCourseAsync(int courseId)
+        public async Task<AssignAIModeratorsToCourseResult> AssignAIModeratorsToCourseAsync(int courseId)
         {
-            var thresholds = await _aiModerationService.GetScoreThresholdConfigAsync("moderation_threshold");
-            var modelIds = await _aiModerationService.GetModelIdsByType("LLM");
+            var thresholds = await _aiModerationService.GetScoreThresholdConfigAsync(SystemConfigKeys.ModerationThreshold);
+            var models = await _aiModerationService.GetModelsByTypeAsync(AiModelType.Moderator);
+            var modelIds = models.Select(m => m.model_id).ToList();
+            
             foreach (var mid in modelIds)
             {
-                var existing = await _aiIntegrationRepository.GetByModelAndCourseAsync(mid, courseId);
+                var existing = await _courseService.GetByModelAndCourseAsync(mid, courseId);
                 if (existing == null)
                 {
                     await _courseService.IntegrateAItoCourseAsync(new CourseAIIntegrationCommand
@@ -411,16 +427,31 @@ namespace CourseMarketplaceBE.Application.Services
                     });
                 }
             }
+            return new AssignAIModeratorsToCourseResult
+            {
+                CourseId = courseId,
+                ModelIds = modelIds,
+                Thresholds = thresholds
+            };
         }
 
-        public async Task<bool> PrepareForCourseAIModeration(int courseId)
+        public async Task<PrepareForCourseAIModerationResult> PrepareForCourseAIModeration(int courseId)
         {
             try
             {
-                await AssignAIModeratorsToCourseAsync(courseId);
-                await _courseService.GetCourseWithDetailsAsync(courseId, null); // Cache course
+                var assignmentResult = await AssignAIModeratorsToCourseAsync(courseId);
+                var course = await _courseService.GetCourseWithDetailsAsync(courseId, 0); // Cache course
+                var materialIds = course?.Lessons?
+                    .SelectMany(lesson => lesson.LearningMaterials?.Select(material => material.MaterialId) ?? [])
+                    .ToList() ?? [];
+                
                 await PrepareMaterialEmbeddingsAsync();
-                return true;
+                return new PrepareForCourseAIModerationResult{
+                    CourseId = courseId,
+                    MaterialIds = materialIds,
+                    ModelIds = assignmentResult.ModelIds,
+                    Thresholds = assignmentResult.Thresholds
+                };
             }
             catch (Exception ex)
             {
@@ -432,56 +463,269 @@ namespace CourseMarketplaceBE.Application.Services
         public async Task ResolveCourseAIModerationResult(CourseAIModerationResult result)
         {
             var courseId = result.CourseId;
-            var course = await _courseRepository.GetByIdAsync(courseId);
+            var course = await _courseService.GetCourseWithDetailsAsync(courseId, 0);
             if (course == null) return;
 
-            if (result.ModerationStatus == "APPROVED")
+            // Save material embeddings from Redis cache to database
+            var materialIds = course.Lessons?
+                .SelectMany(l => l.LearningMaterials?.Select(m => m.MaterialId) ?? [])
+                .ToList() ?? [];
+
+            foreach (var matId in materialIds)
+            {
+                string cacheKey = CacheKeys.MaterialEmbedding.GetKey(matId);
+                var cachedEmbedding = await _redisService.GetCacheAsync<List<float>>(cacheKey);
+                if (cachedEmbedding != null && cachedEmbedding.Any())
+                {
+                    await _lessonService.SaveMaterialEmbeddingsAsync(matId, cachedEmbedding);
+                }
+            }
+
+            if (result.ModerationStatus == ModerationStatus.Approved.ToValue())
             {
                 await ApproveCourseAsync(courseId, "AI moderation passed.");
             }
-            else if (result.ModerationStatus == "REJECTED" || result.ModerationStatus == "FLAGGED")
+            else if (result.ModerationStatus == ModerationStatus.Rejected.ToValue())
             {
-                var reason = string.Join("\n", result.stageLogs.Select(l => l.reason).Where(r => !string.IsNullOrEmpty(r)));
-                await RejectCourseAsync(courseId, reason);
+                var items = new List<RejectCourseItemDto>();
+                foreach (var log in result.stageLogs)
+                {
+                    if (log.result == StageLogResult.Flagged.ToValue() || log.result == StageLogResult.MatchFound.ToValue())
+                    {
+                        foreach (var field in log.flaggedFields)
+                        {
+                            items.Add(new RejectCourseItemDto
+                            {
+                                Target = field,
+                                Reason = log.reason ?? "AI moderation flag"
+                            });
+                        }
+                    }
+                }
+
+                if (!items.Any())
+                {
+                    items.Add(new RejectCourseItemDto
+                    {
+                        Target = "course.description",
+                        Reason = "Nội dung khóa học vi phạm chính sách kiểm duyệt."
+                    });
+                }
+
+                await RejectCourseDetailedAsync(new RejectCourseDetailedRequest
+                {
+                    CourseId = courseId,
+                    Items = items
+                });
             }
-            else if (result.ModerationStatus == "MANUAL_AUDIT")
+            else if (result.ModerationStatus == ModerationStatus.Flagged.ToValue())
             {
-                course.CourseStatus = "pending";
-                course.ModerationFeedback = "AI suggested manual audit.";
-                _courseRepository.Update(course);
-                await _courseRepository.SaveChangesAsync();
-                await NotifyAdminAsync("Manual Audit Required", $"Course {courseId} requires manual audit.", $"/Admin/Moderation/Courses?id={courseId}");
+                var items = new List<RejectCourseItemDto>();
+                foreach (var log in result.stageLogs)
+                {
+                    if (log.result == StageLogResult.Flagged.ToValue() || log.result == StageLogResult.MatchFound.ToValue())
+                    {
+                        foreach (var field in log.flaggedFields)
+                        {
+                            items.Add(new RejectCourseItemDto
+                            {
+                                Target = field,
+                                Reason = log.reason ?? "AI moderation flag"
+                            });
+                        }
+                    }
+                }
+
+                if (!items.Any())
+                {
+                    items.Add(new RejectCourseItemDto
+                    {
+                        Target = "course.description",
+                        Reason = "Nội dung khóa học vi phạm chính sách kiểm duyệt."
+                    });
+                }
+
+                await FlagCourseDetailedAsync(new RejectCourseDetailedRequest
+                {
+                    CourseId = courseId,
+                    Items = items
+                });
             }
-            
-            // Notify instructor if status changed from Pending
-            if (course.CourseStatus != "pending" && course.InstructorId.HasValue)
+            else if (result.ModerationStatus == ModerationStatus.ManualAudit.ToValue())
             {
-                await _notificationService.SendNotificationAsync(
-                    course.InstructorId.Value,
-                    "Cập nhật kết quả kiểm duyệt AI",
-                    $"Khóa học '{course.Title}' của bạn đã có kết quả kiểm duyệt: {course.CourseStatus}.",
-                    $"/InstructorCourse/Editor?id={courseId}"
-                );
+                await _courseService.UpdateCourseStatusAndFeedbackAsync(courseId, CourseStatus.Pending.ToValue(), "AI suggested manual audit.");
+                await NotifyAdminAsync("Manual Audit Required", $"Course {courseId} requires manual review by AI.", $"/Admin/Moderation/Courses?id={courseId}");
             }
         }
 
-        public async Task LogCourseAiModerationResult(CourseAIModerationResult result)
+        public async Task<bool> FlagCourseDetailedAsync(RejectCourseDetailedRequest request)
         {
-            var integrations = await _aiIntegrationRepository.GetByCourseIdAsync(result.CourseId);
-            var integration = integrations.FirstOrDefault(i => i.IsEnabled);
-            if (integration == null) return;
+            var course = await _courseRepository.GetByIdAsync(request.CourseId);
+            if (course == null) return false;
 
+            var courseFeedbackParts = new List<string>();
+            var flaggedLessonIds = new HashSet<int>();
+
+            // FIRST: Clear ALL old feedback to ensure only new feedback persists
+            course.ModerationFeedback = null;
+            var allMaterials = await _materialRepository.GetByCourseIdAsync(request.CourseId);
+            if (allMaterials != null)
+            {
+                foreach (var m in allMaterials)
+                {
+                    m.ModerationFeedback = null;
+                    m.LearningStatus = "active"; // Reset to active before applying new flags
+                    _materialRepository.Update(m);
+                }
+            }
+
+            // Also reset all lessons of this course to active before applying rejections
+            var lessons = await _lessonRepository.GetByCourseIdAsync(request.CourseId);
+            if (lessons != null)
+            {
+                foreach (var l in lessons)
+                {
+                    l.LessonStatus = "active";
+                    _lessonRepository.Update(l);
+                }
+            }
+
+            foreach (var item in request.Items)
+            {
+                if (item.Target == "file" && item.MaterialId.HasValue)
+                {
+                    var material = await _materialRepository.GetByIdAsync(item.MaterialId.Value);
+                    if (material != null)
+                    {
+                        material.LearningStatus = "flagged";
+                        material.ModerationFeedback = item.Reason;
+                        material.UpdatedAt = DateTime.Now;
+                        _materialRepository.Update(material);
+
+                        if (material.LessonId.HasValue)
+                        {
+                            flaggedLessonIds.Add(material.LessonId.Value);
+                        }
+                    }
+                }
+                else if (item.Target == "lesson.title" && item.LessonId.HasValue)
+                {
+                    flaggedLessonIds.Add(item.LessonId.Value);
+                    courseFeedbackParts.Add($"[Lesson: {item.LessonTitle ?? $"#{item.LessonId}"}] {item.Reason}");
+                }
+                else if (item.Target.StartsWith("course."))
+                {
+                    var label = item.Target switch
+                    {
+                        "course.title" => "Tiêu đề",
+                        "course.description" => "Mô tả",
+                        "course.thumbnail" => "Thumbnail",
+                        "course.what_you_will_learn" => "Nội dung học được",
+                        "course.requirements" => "Yêu cầu",
+                        _ => item.Target
+                    };
+                    courseFeedbackParts.Add($"[@{label}] {item.Reason}");
+                }
+            }
+
+            foreach (var lessonId in flaggedLessonIds)
+            {
+                var lesson = await _lessonRepository.GetByIdAsync(lessonId);
+                if (lesson != null)
+                {
+                    lesson.LessonStatus = "rejected";
+                    lesson.UpdatedAt = DateTime.Now;
+                    _lessonRepository.Update(lesson);
+                }
+            }
+
+            var currentFlags = (course.CourseFlagCount ?? 0) + 1;
+            course.CourseFlagCount = currentFlags;
+            course.CourseStatus = CourseStatus.Flagged.ToValue();
+
+            var detailedReason = courseFeedbackParts.Count > 0
+                ? string.Join("\n", courseFeedbackParts)
+                : "Nội dung bị gắn cờ vi phạm chính sách.";
+
+            course.ModerationFeedback = $"[VIOLATION FLAG #{currentFlags}] {detailedReason}";
+            course.UpdatedAt = DateTime.Now;
+
+            _courseRepository.Update(course);
+            await _courseRepository.SaveChangesAsync();
+
+            if (course.InstructorId.HasValue)
+            {
+                string subject = "Cảnh báo vi phạm khóa học";
+                string message = "";
+
+                if (currentFlags == 1)
+                {
+                    subject = "Nhắc nhở vi phạm khóa học (Lần 1)";
+                    message = $"Khóa học '{course.Title}' của bạn đã bị gắn cờ vi phạm lần đầu và tạm ẩn. Chi tiết:\n{detailedReason}\nVui lòng kiểm tra lại nội dung và tuân thủ quy định.";
+                }
+                else if (currentFlags == 2)
+                {
+                    subject = "Cảnh báo vi phạm nghiêm trọng (Lần 2)";
+                    message = $"Khóa học '{course.Title}' của bạn tiếp tục vi phạm lần thứ 2. Chi tiết:\n{detailedReason}\nĐây là cảnh báo mạnh mẽ. Nếu tiếp tục vi phạm, khóa học sẽ bị xóa vĩnh viễn.";
+                }
+                else
+                {
+                    subject = "Thông báo ngừng kinh doanh khóa học vĩnh viễn (Lần 3)";
+                    message = $"Khóa học '{course.Title}' của bạn đã vi phạm chính sách lần thứ 3. Chi tiết:\n{detailedReason}\nHệ thống quyết định ngừng kinh doanh khóa học này vĩnh viễn. Bạn sẽ không thể chỉnh sửa nội dung hoặc nhận học viên mới, nhưng học viên cũ vẫn có thể truy cập nội dung đã mua.";
+                    
+                    course.CourseStatus = CourseStatus.Archived.ToValue();
+                    _courseRepository.Update(course);
+                    await _courseRepository.SaveChangesAsync();
+                }
+
+                await _notificationService.SendNotificationAsync(
+                    course.InstructorId.Value,
+                    subject,
+                    message,
+                    $"/InstructorCourse/Editor?id={request.CourseId}"
+                );
+            }
+
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(request.CourseId));
+            return true;
+        }
+
+        public async Task LogCourseAiModeration(LogCourseAiModerationCommand command)
+        {
+            var result = command.CourseAIModerationResult;
             foreach (var stage in result.stageLogs)
             {
+                var integration = await _aiIntegrationRepository.GetByModelAndCourseAsync(stage.model_id, result.CourseId);
+                if(integration == null) continue;
+
+                var semRq = command.SemanticDuplicationRequest;
+                var harmRq = command.CourseHarmfulRequest;
+
                 await _aiModerationService.SaveCourseAiUsageLog(new SaveCourseAiUsageLogCommand
                 {
                     integration_id = integration.Id,
-                    interaction_type = $"stage_{stage.stage}_step_{stage.step}",
-                    input_json = new Dictionary<string, object> { { "course_id", result.CourseId } },
-                    output_json = new Dictionary<string, object> { { "result", stage.result ?? "N/A" }, { "reason", stage.reason ?? "N/A" }, { "details", stage.details ?? new() } },
+                    interaction_type = command.InteractionType,
+                    input_json = new Dictionary<string, object> 
+                    { 
+                        { "course_id", result.CourseId },
+                        { "material_ids", semRq.MaterialIds },
+                        {"similarity_threshold",semRq.similarityScoreThreshold},
+                        { "spam_threshold", harmRq.spamScoreThreshold },
+                        { "toxic_threshold", harmRq.toxicScoreThreshold}
+                    },
+                    output_json = new Dictionary<string, object> 
+                    { 
+                        { "stage", stage.result ?? "N/A" }, 
+                        { "result", stage.result ?? "N/A" }, 
+                        { "result", stage.result ?? "N/A" }, 
+                        { "result", stage.result ?? "N/A" }, 
+                        { "result", stage.result ?? "N/A" }, 
+                        { "reason", stage.reason ?? "N/A" }, 
+                        { "details", stage.details ?? new() } 
+                    },
                     latency_ms = stage.latency_ms,
                     token_usage = 0,
-                    error_message = null
+                    error_message = command.ErrorMessage
                 });
             }
         }
@@ -493,19 +737,19 @@ namespace CourseMarketplaceBE.Application.Services
                 var isHealthy = await _aiModerationService.HealthCheckAsync();
                 if (!isHealthy)
                 {
-                    await NotifyAdminAsync("AI Service Unhealthy", $"Course {request.CourseId} requires manual review due to AI service being unhealthy.", "/Admin/Moderation/Courses");
-                    return new CourseAIModerationResult { CourseId = request.CourseId, ModerationStatus = "MANUAL_AUDIT" };
+                    await NotifyAdminAsync("AI Service Unhealthy", $"Course {request.CourseId} requires manual review due to AI service being unhealthy.", "/AdminModeration/Courses");
+                    return new CourseAIModerationResult { CourseId = request.CourseId, ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
                 }
 
-                await PrepareForCourseAIModeration(request.CourseId);
+                var prep = await PrepareForCourseAIModeration(request.CourseId);
 
-                var thresholds = await _aiModerationService.GetScoreThresholdConfigAsync("moderation_threshold");
-                var materials = await _materialRepository.GetByCourseIdAsync(request.CourseId);
+                var thresholds = prep.Thresholds;
+                var materialIds = prep.MaterialIds;
                 
                 var semanticReq = new SemanticDuplicationRequest
                 {
                     CourseId = request.CourseId,
-                    MaterialIds = materials.Select(m => m.MaterialId).ToList(),
+                    MaterialIds = materialIds,
                     similarityScoreThreshold = thresholds.GetValueOrDefault("similarity", 0.8f)
                 };
 
@@ -518,23 +762,29 @@ namespace CourseMarketplaceBE.Application.Services
 
                 var result = await _aiModerationService.ModerateCourseFullPipelineAsync(semanticReq, harmfulReq);
                 
-                if (result.ModerationStatus == "MANUAL_AUDIT")
+                if (result.ModerationStatus == ModerationStatus.ManualAudit.ToValue())
                 {
-                    await NotifyAdminAsync("Manual Audit Required", $"Course {request.CourseId} flagged for manual review by AI.", "/Admin/Moderation/Courses");
+                    await NotifyAdminAsync("Manual Audit Required", $"Course {request.CourseId} flagged for manual review by AI.", "/AdminModeration/Courses");
                 }
                 else
                 {
                     await ResolveCourseAIModerationResult(result);
                 }
 
-                await LogCourseAiModerationResult(result);
+                await LogCourseAiModeration(new LogCourseAiModerationCommand
+                {
+                    SemanticDuplicationRequest = semanticReq,
+                    CourseHarmfulRequest = harmfulReq,
+                    CourseAIModerationResult = result,
+                    InteractionType = "moderation",
+                    ErrorMessage = null
+                });
                 return result;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during AI moderation for course {CourseId}", request.CourseId);
-                // Handle specific HTTP exceptions if needed, but generic catch for now as per to_do
-                await NotifyAdminAsync("Moderation Process Exception", $"Exception during AI moderation for course {request.CourseId}: {ex.Message}", null);
+                await NotifyAdminAsync("Moderation Process Exception", $"Exception during AI moderation for course {request.CourseId}: {ex.Message}", "/AdminModeration/Courses");
                 throw;
             }
         }
@@ -543,7 +793,7 @@ namespace CourseMarketplaceBE.Application.Services
         {
             try
             {
-                await _courseRepository.UpdateCourseStatusAsync(request.CourseId, "pending", request.InstructorId);
+                await _courseService.UpdateCourseStatusAsync(request.CourseId, CourseStatus.Pending.ToValue(), request.InstructorId);
                 
                 var dupResult = await CheckExactDuplication(request.CourseId);
                 if (dupResult.IsDup)

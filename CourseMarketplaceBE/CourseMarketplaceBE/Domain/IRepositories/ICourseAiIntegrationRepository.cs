@@ -53,5 +53,10 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         /// Get all integrations.
         /// </summary>
         Task<List<CourseAiIntegration>> GetAllAsync();
+
+        /// <summary>
+        /// Get specific integration by model and course.
+        /// </summary>
+        Task<CourseAiIntegration?> GetByModelAndCourseAsync(int modelId, int courseId);
     }
 }

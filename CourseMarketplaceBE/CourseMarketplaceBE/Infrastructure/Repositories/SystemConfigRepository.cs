@@ -93,7 +93,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 {
                     ConfigKey = key,
                     ConfigValue = jsonValue,
-                    ConfigDescription = $"System configuration for {key}"
+                    Description = $"System configuration for {key}"
                 };
                 await _context.SystemConfigs.AddAsync(config);
             }

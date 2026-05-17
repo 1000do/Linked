@@ -44,5 +44,13 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .Where(am => am.ModelType == modelType && am.ModelStatus == "active")
                 .ToListAsync();
         }
+
+        public async Task<List<AiModel>> GetModelsByTypeAsync(string modelType)
+        {
+            return await _context.AiModels
+                .AsNoTracking()
+                .Where(am => am.ModelType == modelType)
+                .ToListAsync();
+        }
     }
 }

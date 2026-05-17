@@ -15,4 +15,5 @@ public interface ILessonService
     Task PermanentDeleteMaterialAsync(int materialId, int instructorId);
     Task RestoreMaterialAsync(int materialId, int instructorId);
     Task<List<MaterialEmbedding>> GetAllMaterialEmbeddingsAsync();
+    Task SaveMaterialEmbeddingsAsync(int materialId, List<float> embedding);
 }

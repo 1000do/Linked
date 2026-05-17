@@ -3,7 +3,7 @@
 import logging
 import time
 from typing import Dict, List, Optional, Tuple, Any
-from core.models import StageLog, ModerationResponse, ModerationStatus
+from core.models import StageLog, CourseModerationResponse, ModerationStatus
 from core.exceptions import CacheNotFoundException, DataValidationException, ModerationException
 from services.base_service import BaseService
 from repositories.cache_repository import CacheRepository
@@ -239,13 +239,13 @@ class DuplicationService(BaseService):
     async def orchestrate_stage1(
         self,
         course_id: int,
-        title_hash: str,
-        description_hash: str,
+        title_hash: Optional[str] = None,
+        description_hash: Optional[str] = None,
         thumbnail_hash: Optional[str] = None,
         material_hashes: Optional[List[str]] = None,
         material_ids: Optional[List[int]] = None,
         material_embeddings: Optional[List[List[float]]] = None,
-    ) -> ModerationResponse:
+    ) -> CourseModerationResponse:
         """
         Orchestrate Stage 1: Run both exact and semantic deduplication.
         
@@ -262,7 +262,7 @@ class DuplicationService(BaseService):
             material_embeddings: Embeddings of materials
             
         Returns:
-            ModerationResponse with full trace
+            CourseModerationResponse with full trace
         """
         stage_start = time.time()
         all_stage_logs = []
@@ -292,12 +292,12 @@ class DuplicationService(BaseService):
                         f"Exact duplicate found - matched courses: {matched_courses}"
                     )
                     
-                    return ModerationResponse(
-                        course_id=course_id,
-                        status=ModerationStatus.FLAGGED,
-                        stage_logs=all_stage_logs,
-                        flagged_content=[f"duplicate_of_course_{cid}" for cid in matched_courses],
-                        confidence_score=step1_logs[0]["confidence_score"] if step1_logs else 0.95,
+                    return CourseModerationResponse(
+                        CourseId=course_id,
+                        ModerationStatus=ModerationStatus.FLAGGED.value,
+                        stageLogs=all_stage_logs,
+                        flaggedFields=[f"duplicate_of_course_{cid}" for cid in matched_courses],
+                        overall_confidence_score=step1_logs[0]["confidence_score"] if step1_logs else 0.95,
                         total_latency_ms=total_latency,
                     )
             
@@ -334,12 +334,12 @@ class DuplicationService(BaseService):
                     
                     confidence = max(similarity_scores) if similarity_scores else 0.85
                     
-                    return ModerationResponse(
-                        course_id=course_id,
-                        status=ModerationStatus.FLAGGED,
-                        stage_logs=all_stage_logs,
-                        flagged_content=[f"duplicate_of_material_{mid}" for mid in matched_materials],
-                        confidence_score=confidence,
+                    return CourseModerationResponse(
+                        CourseId=course_id,
+                        ModerationStatus=ModerationStatus.FLAGGED.value,
+                        stageLogs=all_stage_logs,
+                        flaggedFields=[f"duplicate_of_material_{mid}" for mid in matched_materials],
+                        overall_confidence_score=confidence,
                         total_latency_ms=total_latency,
                     )
             
@@ -364,12 +364,12 @@ class DuplicationService(BaseService):
             confidences = [log["confidence_score"] for log in all_stage_logs if log["result"] != "ERROR"]
             avg_confidence = sum(confidences) / len(confidences) if confidences else 1.0
             
-            return ModerationResponse(
-                course_id=course_id,
-                status=ModerationStatus.APPROVED,
-                stage_logs=all_stage_logs,
-                flagged_content=[],
-                confidence_score=avg_confidence,
+            return CourseModerationResponse(
+                CourseId=course_id,
+                ModerationStatus=ModerationStatus.APPROVED.value,
+                stageLogs=all_stage_logs,
+                flaggedFields=[],
+                overall_confidence_score=avg_confidence,
                 total_latency_ms=total_latency,
             )
         
@@ -377,11 +377,11 @@ class DuplicationService(BaseService):
             self.logger.error(f"Stage 1 orchestration failed: {e}")
             total_latency = (time.time() - stage_start) * 1000
             
-            return ModerationResponse(
-                course_id=course_id,
-                status=ModerationStatus.MANUAL_AUDIT,
-                stage_logs=all_stage_logs,
-                flagged_content=[],
-                confidence_score=0.0,
+            return CourseModerationResponse(
+                CourseId=course_id,
+                ModerationStatus=ModerationStatus.MANUAL_AUDIT.value,
+                stageLogs=all_stage_logs,
+                flaggedFields=[],
+                overall_confidence_score=0.0,
                 total_latency_ms=total_latency,
             )

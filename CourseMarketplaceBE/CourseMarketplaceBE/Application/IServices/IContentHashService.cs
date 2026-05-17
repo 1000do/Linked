@@ -62,13 +62,13 @@ namespace CourseMarketplaceBE.Application.IServices
         /// Get course hashes from database.
         /// </summary>
         /// <param name="courseId">Course ID</param>
-        /// <returns>CourseExt with hashes</returns>
-        Task<CourseExt?> GetCourseHashesAsync(int courseId);
+        /// <returns>CourseExtDto with hashes</returns>
+        Task<CourseExtDto> GetCourseHashesAsync(int courseId);
 
         /// <summary>
         /// Get all course hashes from database.
         /// </summary>
-        /// <returns>List of CourseExt</returns>
-        Task<System.Collections.Generic.List<CourseExt>> GetAllCourseHashesAsync();
+        /// <returns>List of CourseExtDto</returns>
+        Task<System.Collections.Generic.List<CourseExtDto>> GetAllCourseHashesAsync();
     }
 }

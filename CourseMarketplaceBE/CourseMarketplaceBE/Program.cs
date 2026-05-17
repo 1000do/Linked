@@ -206,6 +206,14 @@ public class Program
         builder.Services.AddScoped<ITransactionService, TransactionService>();
         builder.Services.AddScoped<IChatService, ChatService>();
         builder.Services.AddScoped<IModerationService, ModerationService>();
+        builder.Services.AddScoped<IAiModelRepository, AiModelRepository>();
+        builder.Services.AddScoped<ICourseAiIntegrationRepository, CourseAiIntegrationRepository>();
+        builder.Services.AddScoped<IAiModerationService, AiModerationService>();
+        builder.Services.AddScoped<ISystemConfigRepository, SystemConfigRepository>();
+        builder.Services.AddScoped<IMaterialEmbeddingRepository, MaterialEmbeddingRepository>();
+        builder.Services.AddScoped<ICourseExtRepository, CourseExtRepository>();
+        builder.Services.AddScoped<ICourseAiUsageLogRepository, CourseAiUsageLogRepository>();
+        builder.Services.AddScoped<IContentHashService, ContentHashService>();
         builder.Services.AddScoped<IAvatarFrameRepository, AvatarFrameRepository>();
         builder.Services.AddScoped<IAvatarFrameService, AvatarFrameService>();
         

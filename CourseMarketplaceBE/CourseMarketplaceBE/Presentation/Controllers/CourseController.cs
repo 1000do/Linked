@@ -171,7 +171,7 @@ public class CourseController : ControllerBase
         try
         {
             var instructorId = GetInstructorId();
-            if (request.InstructorId != instructorId) return Forbid();
+            request.InstructorId = instructorId;
             
             await _moderationService.HandleCourseModerationAsync(request);
             return Ok(ApiResponse<object>.SuccessResponse(null, "Moderation process started."));

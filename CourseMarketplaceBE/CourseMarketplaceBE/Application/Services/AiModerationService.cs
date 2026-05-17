@@ -13,6 +13,7 @@ using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Domain.Constants;
 using System.Linq;
 
 namespace CourseMarketplaceBE.Application.Services
@@ -29,19 +30,21 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly ICourseAiUsageLogRepository _usageLogRepository;
         private readonly ISystemConfigRepository _configRepository;
         private readonly ICourseRepository _courseRepository;
+        private readonly IRedisService _redisService;
         private readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy;
         private readonly IAsyncPolicy<HttpResponseMessage> _circuitBreakerPolicy;
-
+ 
         private const int MaxRetries = 3;
         private const string BaseUrl = "http://ai-moderation:8000";
-
+ 
         public AiModerationService(
             HttpClient httpClient,
             ILogger<AiModerationService> logger,
             IAiModelRepository aiModelRepository,
             ICourseAiUsageLogRepository usageLogRepository,
             ISystemConfigRepository configRepository,
-            ICourseRepository courseRepository)
+            ICourseRepository courseRepository,
+            IRedisService redisService)
         {
             _httpClient = httpClient;
             _logger = logger;
@@ -49,7 +52,8 @@ namespace CourseMarketplaceBE.Application.Services
             _usageLogRepository = usageLogRepository;
             _configRepository = configRepository;
             _courseRepository = courseRepository;
-
+            _redisService = redisService;
+ 
             // Setup retry policy
             _retryPolicy = Policy
                 .Handle<HttpRequestException>()
@@ -62,7 +66,7 @@ namespace CourseMarketplaceBE.Application.Services
                     {
                         _logger.LogWarning($"Retry {retryCount} after {timespan.TotalSeconds}s");
                     });
-
+ 
             // Setup circuit breaker policy
             _circuitBreakerPolicy = Policy
                 .Handle<HttpRequestException>()
@@ -80,7 +84,7 @@ namespace CourseMarketplaceBE.Application.Services
                         _logger.LogInformation("Circuit breaker reset");
                     });
         }
-
+ 
         public async Task<CourseAIModerationResult> ModerateCourseFullPipelineAsync(SemanticDuplicationRequest semanticReq, CourseHarmfulRequest harmfulReq)
         {
             var request = new
@@ -88,25 +92,57 @@ namespace CourseMarketplaceBE.Application.Services
                 semantic = semanticReq,
                 harmful = harmfulReq
             };
-
+ 
             var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/moderation/full-pipeline", request);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<CourseAIModerationResult>() ?? new CourseAIModerationResult();
         }
-
+ 
         public async Task<Dictionary<string, float>> GetScoreThresholdConfigAsync(string key)
         {
             var val = await _configRepository.GetValueAsync(key);
             if (string.IsNullOrEmpty(val)) 
-                return new Dictionary<string, float> { { "similarity", 0.8f }, { "spam", 0.7f }, { "toxic", 0.7f } };
+            {
+                return new Dictionary<string, float> 
+                { 
+                    { "similarity", Domain.Constants.SystemConfigKeys.DefaultSimilarityScoreThreshold }, 
+                    { "spam", Domain.Constants.SystemConfigKeys.DefaultSpamScoreThreshold }, 
+                    { "toxic", Domain.Constants.SystemConfigKeys.DefaultToxicScoreThreshold } 
+                };
+            }
             
             return JsonSerializer.Deserialize<Dictionary<string, float>>(val) ?? new Dictionary<string, float>();
         }
-
+ 
         public async Task<List<int>> GetModelIdsByType(string type)
         {
             var models = await _aiModelRepository.GetByTypeAsync(type);
             return models.Select(m => m.ModelId).ToList();
+        }
+
+        public async Task<List<AiModelResponse>> GetModelsByTypeAsync(string modelType)
+        {
+            string cacheKey = CacheKeys.AiModelType.GetKey(modelType);
+            var cached = await _redisService.GetCacheAsync<List<AiModelResponse>>(cacheKey);
+            if (cached != null)
+            {
+                return cached;
+            }
+
+            var dbModels = await _aiModelRepository.GetModelsByTypeAsync(modelType);
+            var result = dbModels.Select(m => new AiModelResponse
+            {
+                model_id = m.ModelId,
+                model_name = m.ModelName,
+                model_type = m.ModelType,
+                model_provider = m.ModelProvider,
+                model_version = m.ModelVersion,
+                model_status = m.ModelStatus,
+                description = m.Description
+            }).ToList();
+
+            await _redisService.SetCacheAsync(cacheKey, result, CacheTtl.Medium.GetTtl());
+            return result;
         }
 
         public async Task SaveCourseAiUsageLog(SaveCourseAiUsageLogCommand command)

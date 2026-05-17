@@ -1,4 +1,6 @@
 using System;
+using System.Text.Json.Serialization;
+
 
 namespace CourseMarketplaceBE.Application.DTOs
 {
@@ -71,8 +73,8 @@ namespace CourseMarketplaceBE.Application.DTOs
     /// </summary>
     public class ExactDuplicationCommand
     {
-        public CourseExt CourseExt { get; set; } = null!;
-        public List<CourseExt> ExistingCourseExts { get; set; } = new();
+        public CourseExtDto CourseExt { get; set; } = new();
+        public List<CourseExtDto> ExistingCourseExts { get; set; } = [];
     }
 
     /// <summary>
@@ -82,7 +84,7 @@ namespace CourseMarketplaceBE.Application.DTOs
     {
         public int CourseId { get; set; }
         public bool IsDup { get; set; }
-        public List<string> DupFields { get; set; } = new();
+        public List<string> DupFields { get; set; } = [];
     }
 
     /// <summary>
@@ -102,8 +104,13 @@ namespace CourseMarketplaceBE.Application.DTOs
     /// </summary>
     public class SemanticDuplicationRequest
     {
+        [JsonPropertyName("course_id")]
         public int CourseId { get; set; }
-        public List<int> MaterialIds { get; set; } = new();
+
+        [JsonPropertyName("material_ids")]
+        public List<int> MaterialIds { get; set; } = [];
+
+        [JsonPropertyName("similarity_score_threshold")]
         public float similarityScoreThreshold { get; set; } = 0.8f;
     }
 
@@ -112,8 +119,13 @@ namespace CourseMarketplaceBE.Application.DTOs
     /// </summary>
     public class CourseHarmfulRequest
     {
+        [JsonPropertyName("course_id")]
         public int CourseId { get; set; }
+
+        [JsonPropertyName("spam_score_threshold")]
         public float spamScoreThreshold { get; set; } = 0.7f;
+
+        [JsonPropertyName("toxic_score_threshold")]
         public float toxicScoreThreshold { get; set; } = 0.7f;
     }
 
@@ -163,10 +175,31 @@ namespace CourseMarketplaceBE.Application.DTOs
         public DateTime timestamp { get; set; }
         public string? result { get; set; } // NO_MATCH, MATCH_FOUND, FLAGGED, APPROVED, etc.
         public string? reason { get; set; }
-        public List<string> flaggedFields { get; set; } = new();
+        public List<string> flaggedFields { get; set; } = [];
         public Dictionary<string, object>? details { get; set; }
         public float latency_ms { get; set; }
         public float confidence_score { get; set; } // 0-1
+        public int model_id { get; set; }
+    }
+
+    public class AiModelResponse
+    {
+        public int model_id { get; set; }
+        public string model_name { get; set; } = null!;
+        public string? model_type { get; set; }
+        public string? model_provider { get; set; }
+        public string? model_version { get; set; }
+        public string? model_status { get; set; }
+        public string? description { get; set; }
+    }
+
+    public class LogCourseAiModerationCommand
+    {
+        public SemanticDuplicationRequest SemanticDuplicationRequest { get; set; } = null!;
+        public CourseHarmfulRequest CourseHarmfulRequest { get; set; } = null!;
+        public CourseAIModerationResult CourseAIModerationResult { get; set; } = null!;
+        public string InteractionType { get; set; } = "moderation";
+        public string? ErrorMessage { get; set; }
     }
 
     /// <summary>
@@ -175,7 +208,7 @@ namespace CourseMarketplaceBE.Application.DTOs
     public class FullPipelineRequest
     {
         public int course_id { get; set; }
-        public List<int> material_ids { get; set; } = new();
+        public List<int> material_ids { get; set; } = [];
         public float similarity_score_threshold { get; set; }
         public float spam_score_threshold { get; set; }
         public float toxic_score_threshold { get; set; }
@@ -185,22 +218,58 @@ namespace CourseMarketplaceBE.Application.DTOs
     {
         public int CourseId { get; set; }
         public string ModerationStatus { get; set; } = null!; // APPROVED, FLAGGED, MANUAL_AUDIT, PENDING
-        public List<string> flaggedFields { get; set; } = new();
+        public List<string> flaggedFields { get; set; } = [];
         public float overall_confidence_score { get; set; } // 0-1
         public float total_latency_ms { get; set; }
-        public List<StageLog> stageLogs { get; set; } = new();
+        public List<StageLog> stageLogs { get; set; } = [];
     }
 
     /// <summary>
     /// DTO for course hashes (used internally)
     /// </summary>
-    public class CourseExt
+    public class CourseExtDto
+    {
+        public int CourseId { get; set; } = 0;
+        public string title_hash { get; set; } = string.Empty;
+        public string description_hash { get; set; } = string.Empty;
+        public string what_you_will_learn_hash { get; set; } = string.Empty;
+        public string requirements_hash { get; set; } = string.Empty;
+        public string thumbnail_hash { get; set; } = string.Empty;
+    }
+
+    public class CourseAIIntegrationResult{
+        public int CourseId { get; set; }
+        public int ModelId { get; set; } 
+        public bool IsEnabled { get; set; } = true;
+        public Dictionary<string, float> ConfigJson { get; set; } = new();
+        public string? Role { get; set; } 
+        
+    }
+
+    public class AssignAIModeratorsToCourseResult
     {
         public int CourseId { get; set; }
-        public string? title_hash { get; set; }
-        public string? description_hash { get; set; }
-        public string? what_you_will_learn_hash { get; set; }
-        public string? requirements_hash { get; set; }
-        public string? thumbnail_hash { get; set; }
+        public List<int> ModelIds { get; set; } = [];
+        public Dictionary<string,float> Thresholds { get; set; } = new();
+        
+        
     }
-}
+
+    public class PrepareForCourseAIModerationResult
+    {
+        public int CourseId { get; set; }
+        public List<int> MaterialIds { get; set; } = [];
+        public List<int> ModelIds { get; set; } = [];
+        public Dictionary<string,float> Thresholds { get; set; } = new();
+    }
+
+    public class CourseAiIntegrationResponse
+    {
+        public int CourseId { get; set; }
+        public int ModelId { get; set; }
+        public bool IsEnabled { get; set; } = true;
+        public Dictionary<string, float> ConfigJson { get; set; } = new();
+        public string? Role { get; set; }
+    }
+}    
+    

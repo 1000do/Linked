@@ -60,8 +60,7 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task SaveCourseHashesAsync(SaveCourseHashesCommand command)
         {
-            var entity = new Domain.Entities.CourseExt
-            {
+            var entity = new Domain.Entities.CourseExt {
                 CourseId = command.CourseId,
                 TitleHash = command.title_hash,
                 DescriptionHash = command.description_hash,
@@ -69,36 +68,43 @@ namespace CourseMarketplaceBE.Application.Services
                 RequirementsHash = command.requirements_hash,
                 ThumbnailHash = command.thumbnail_hash
             };
-            await _courseExtRepository.AddAsync(entity);
+            var existing = await _courseExtRepository.GetByIdAsync(command.CourseId);
+            if (existing != null) {
+                _courseExtRepository.Update(entity);
+            }else {
+                await _courseExtRepository.AddAsync(entity);
+            }
             await _courseExtRepository.SaveChangesAsync();
         }
 
-        public async Task<CourseExt?> GetCourseHashesAsync(int courseId)
+        
+
+        public async Task<CourseExtDto> GetCourseHashesAsync(int courseId)
         {
             var entity = await _courseExtRepository.GetByIdAsync(courseId);
-            if (entity == null) return null!;
-            return new CourseExt
+            if (entity == null) return new();
+            return new CourseExtDto
             {
                 CourseId = entity.CourseId,
-                title_hash = entity.TitleHash,
-                description_hash = entity.DescriptionHash,
-                what_you_will_learn_hash = entity.WhatYouWillLearnHash,
-                requirements_hash = entity.RequirementsHash,
-                thumbnail_hash = entity.ThumbnailHash
+                title_hash = entity.TitleHash ?? "",
+                description_hash = entity.DescriptionHash ?? "",
+                what_you_will_learn_hash = entity.WhatYouWillLearnHash ?? "",
+                requirements_hash = entity.RequirementsHash ?? "",
+                thumbnail_hash = entity.ThumbnailHash ?? ""
             };
         }
 
-        public async Task<List<CourseExt>> GetAllCourseHashesAsync()
+        public async Task<List<CourseExtDto>> GetAllCourseHashesAsync()
         {
             var entities = await _courseExtRepository.GetAllAsync();
-            return entities.Select(entity => new CourseExt
+            return entities.Select(entity => new CourseExtDto
             {
                 CourseId = entity.CourseId,
-                title_hash = entity.TitleHash,
-                description_hash = entity.DescriptionHash,
-                what_you_will_learn_hash = entity.WhatYouWillLearnHash,
-                requirements_hash = entity.RequirementsHash,
-                thumbnail_hash = entity.ThumbnailHash
+                title_hash = entity.TitleHash ?? "",
+                description_hash = entity.DescriptionHash ?? "",
+                what_you_will_learn_hash = entity.WhatYouWillLearnHash ?? "",
+                requirements_hash = entity.RequirementsHash ?? "",
+                thumbnail_hash = entity.ThumbnailHash ?? ""
             }).ToList();
         }
     }
