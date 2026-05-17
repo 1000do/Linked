@@ -38,6 +38,11 @@ public class ChatController : Controller
 
     public IActionResult Instructor()
     {
+        // Guard: Chỉ giảng viên đã duyệt mới được vào chat của Instructor
+        var approvalStatus = Request.Cookies["InstructorApprovalStatus"];
+        if (approvalStatus != "Approved") 
+            return RedirectToAction("Dashboard", "Instructor");
+
         ViewBag.Actor = "Instructor";
         return View("Index");
     }

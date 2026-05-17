@@ -14,7 +14,7 @@
             </div>
             <div>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Khiếu nại mới</p>
-                <h3 class="text-2xl font-display font-extrabold text-slate-900">@Model.Count(@r => r.Status == "pending")</h3>
+                <h3 id="pending-count" class="text-2xl font-display font-extrabold text-slate-900">@Model.Count(@r => r.Status == "pending")</h3>
             </div>
         </div>
         <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
@@ -23,13 +23,13 @@
             </div>
             <div>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Đã giải quyết</p>
-                <h3 class="text-2xl font-display font-extrabold text-slate-900">@Model.Count(@r => r.Status != "pending")</h3>
+                <h3 id="resolved-count" class="text-2xl font-display font-extrabold text-slate-900">@Model.Count(@r => r.Status != "pending")</h3>
             </div>
         </div>
     </div>
 
     <!-- Table Container -->
-    <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+    <div id="reports-table-container" class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
         <div class="overflow-x-auto custom-scrollbar">
             <table class="w-full border-collapse">
                 <thead>
@@ -171,7 +171,9 @@
                     text: 'Trạng thái khiếu nại đã được cập nhật.',
                     confirmButtonColor: '#10b981',
                     customClass: { popup: 'rounded-3xl' }
-                }).then(() => location.reload());
+                }).then(async () => {
+                    await refreshReportsDOM();
+                });
             } else {
                 Swal.fire({
                     icon: 'error',
@@ -179,6 +181,43 @@
                     text: 'Có lỗi xảy ra khi xử lý khiếu nại.',
                     confirmButtonColor: '#ef4444'
                 });
+            }
+        }
+    }
+
+    async function refreshReportsDOM() {
+        const tableContainer = document.getElementById('reports-table-container');
+        if (tableContainer) {
+            tableContainer.style.opacity = '0.5';
+            tableContainer.style.transition = 'opacity 0.2s ease';
+        }
+        try {
+            const resp = await fetch('/AdminModeration/Reports');
+            const htmlText = await resp.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
+            
+            const newTable = doc.getElementById('reports-table-container');
+            if (newTable && tableContainer) {
+                tableContainer.innerHTML = newTable.innerHTML;
+            }
+            
+            const newPending = doc.getElementById('pending-count');
+            const currentPending = document.getElementById('pending-count');
+            if (newPending && currentPending) {
+                currentPending.innerText = newPending.innerText;
+            }
+            
+            const newResolved = doc.getElementById('resolved-count');
+            const currentResolved = document.getElementById('resolved-count');
+            if (newResolved && currentResolved) {
+                currentResolved.innerText = newResolved.innerText;
+            }
+        } catch (err) {
+            console.error("Error refreshing reports DOM:", err);
+        } finally {
+            if (tableContainer) {
+                tableContainer.style.opacity = '1';
             }
         }
     }

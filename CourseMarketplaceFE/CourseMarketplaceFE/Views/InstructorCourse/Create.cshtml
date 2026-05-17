@@ -96,6 +96,32 @@
             </div>
         </div>
 
+        <!-- Section 3.1: What you will learn -->
+        <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">3.1</div>
+                <h2 class="text-xl font-headline font-bold text-slate-900">What you will learn</h2>
+            </div>
+            <label asp-for="WhatYouWillLearn" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">What will students achieve?</label>
+            <div class="bg-white rounded-xl">
+                <div id="learn-editor" class="bg-slate-50"></div>
+                <input type="hidden" asp-for="WhatYouWillLearn" id="LearnInput" />
+            </div>
+        </div>
+
+        <!-- Section 3.2: Requirements -->
+        <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">3.2</div>
+                <h2 class="text-xl font-headline font-bold text-slate-900">Requirements</h2>
+            </div>
+            <label asp-for="Requirements" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">What do students need before starting?</label>
+            <div class="bg-white rounded-xl">
+                <div id="req-editor" class="bg-slate-50"></div>
+                <input type="hidden" asp-for="Requirements" id="ReqInput" />
+            </div>
+        </div>
+
         <!-- Section 4: Access & Pricing -->
         <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
             <div class="flex items-center gap-3 mb-6">
@@ -240,6 +266,20 @@
         const descriptionInput = document.getElementById('DescriptionInput');
         if(descriptionInput.value) quill.clipboard.dangerouslyPasteHTML(descriptionInput.value);
 
+        var learnQuill = new Quill('#learn-editor', {
+            theme: 'snow', placeholder: 'What will students achieve?',
+            modules: { toolbar: [['bold','italic'],[{'list':'ordered'},{'list':'bullet'}]] }
+        });
+        const learnInput = document.getElementById('LearnInput');
+        if(learnInput.value) learnQuill.clipboard.dangerouslyPasteHTML(learnInput.value);
+
+        var reqQuill = new Quill('#req-editor', {
+            theme: 'snow', placeholder: 'What do students need before starting?',
+            modules: { toolbar: [['bold','italic'],[{'list':'ordered'},{'list':'bullet'}]] }
+        });
+        const reqInput = document.getElementById('ReqInput');
+        if(reqInput.value) reqQuill.clipboard.dangerouslyPasteHTML(reqInput.value);
+
         // Show validation summary if it has content
         const valSummary = document.querySelector('[data-valmsg-summary]') || document.querySelector('.text-red-500.bg-red-50');
         if (valSummary && valSummary.querySelector('li')) valSummary.style.display = 'block';
@@ -247,12 +287,17 @@
         // Sync Quill + submit with validation
         document.getElementById('createCourseForm').addEventListener('submit', function(e) {
             const html = quill.root.innerHTML;
+            const learnHtml = learnQuill.root.innerHTML;
+            const reqHtml = reqQuill.root.innerHTML;
+
             const title = document.getElementById('Title').value;
             const catId = document.getElementById('CategoryId').value;
             const thumb = document.getElementById('CourseThumbnailUrl').value;
             const desc = (html === '<p><br></p>') ? '' : html;
             
             descriptionInput.value = desc;
+            learnInput.value = (learnHtml === '<p><br></p>') ? '' : learnHtml;
+            reqInput.value = (reqHtml === '<p><br></p>') ? '' : reqHtml;
 
             // CLIENT-SIDE VALIDATION
             let errors = [];
@@ -286,6 +331,8 @@
         }
         ['Title','CategoryId','Price'].forEach(id => { const el = document.getElementById(id); if(el) { el.addEventListener('input', updateProgressBar); el.addEventListener('change', updateProgressBar); } });
         quill.on('text-change', updateProgressBar);
+        learnQuill.on('text-change', updateProgressBar);
+        reqQuill.on('text-change', updateProgressBar);
 
         // Cloudinary Upload
         const CLOUD_NAME = 'df8i0azc5';

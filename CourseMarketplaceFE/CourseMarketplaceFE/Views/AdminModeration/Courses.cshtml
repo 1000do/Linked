@@ -7,7 +7,7 @@
 
 <div class="space-y-6">
     <!-- Stats Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div id="stats-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
             <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center">
                 <span class="material-symbols-outlined text-emerald-600">pending_actions</span>
@@ -30,19 +30,19 @@
     
     <!-- Filter Bar -->
     <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm mb-6">
-        <form method="get" action="/AdminModeration/Courses" class="flex flex-wrap items-end gap-4">
+        <form id="filter-form" method="get" action="/AdminModeration/Courses" class="flex flex-wrap items-end gap-4" onsubmit="event.preventDefault();">
             <div class="flex-1 min-w-[300px]">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Tìm kiếm</label>
                 <div class="relative">
                     <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                    <input type="text" name="search" value="@ViewBag.Search" placeholder="Tên khóa học hoặc giảng viên..." 
-                           class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" />
+                    <input type="text" name="search" id="search-input" value="@ViewBag.Search" placeholder="Tên khóa học hoặc giảng viên..." 
+                           class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none" />
                 </div>
             </div>
             
-            <div class="w-48">
+            <div class="w-48 relative">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Danh mục</label>
-                <select name="category" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer">
+                <select name="category" id="category-select" class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer outline-none">
                     <option value="0">Tất cả danh mục</option>
                     @if (ViewBag.Categories != null)
                     {
@@ -53,39 +53,38 @@
                         }
                     }
                 </select>
+                <span class="material-symbols-outlined absolute right-3 bottom-3 text-slate-400 pointer-events-none">arrow_drop_down</span>
             </div>
 
-            <div class="w-40">
+            <div class="w-40 relative">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Trạng thái</label>
-                <select name="status" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer">
+                <select name="status" id="status-select" class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer outline-none">
                     <option value="all" selected="@(ViewBag.Status == "all" || string.IsNullOrEmpty(ViewBag.Status))">Tất cả</option>
                     <option value="pending" selected="@(ViewBag.Status == "pending")">Chờ duyệt</option>
                     <option value="published" selected="@(ViewBag.Status == "published")">Đã duyệt</option>
                     <option value="rejected" selected="@(ViewBag.Status == "rejected")">Đã từ chối</option>
                     <option value="flagged" selected="@(ViewBag.Status == "flagged")">Đã gắn cờ</option>
                 </select>
+                <span class="material-symbols-outlined absolute right-3 bottom-3 text-slate-400 pointer-events-none">arrow_drop_down</span>
             </div>
 
-            <div class="w-48">
+            <div class="w-48 relative">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Sắp xếp</label>
-                <select name="sortBy" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer">
+                <select name="sortBy" id="sort-select" class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer outline-none">
                     <option value="oldest" selected="@(ViewBag.SortBy == "oldest")">Cũ nhất (Ưu tiên)</option>
                     <option value="newest" selected="@(ViewBag.SortBy == "newest")">Mới nhất</option>
                 </select>
+                <span class="material-symbols-outlined absolute right-3 bottom-3 text-slate-400 pointer-events-none">arrow_drop_down</span>
             </div>
 
-            <button type="submit" class="h-[46px] px-6 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all flex items-center gap-2">
-                <span class="material-symbols-outlined text-[20px]">filter_list</span>
-                Lọc
-            </button>
-            <a href="/AdminModeration/Courses" class="h-[46px] px-4 flex items-center justify-center bg-slate-100 text-slate-400 rounded-2xl hover:bg-slate-200 transition-all">
+            <button type="button" id="btn-clear-filters" class="h-[46px] px-4 flex items-center justify-center bg-slate-100 text-slate-400 rounded-2xl hover:bg-slate-200 transition-all cursor-pointer">
                 <span class="material-symbols-outlined">refresh</span>
-            </a>
+            </button>
         </form>
     </div>
 
     <!-- Table Container -->
-    <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+    <div id="moderation-table-container" class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
         <div class="overflow-x-auto custom-scrollbar">
             <table class="w-full border-collapse">
                 <thead>
@@ -120,7 +119,7 @@
                         var isPending = item.CourseStatus?.Equals("pending", StringComparison.OrdinalIgnoreCase) ?? false;
                         var rowOpacity = isPending ? "opacity-100" : "opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0";
                         
-                        <tr class="group hover:bg-slate-50/80 transition-all duration-300 @rowOpacity">
+                        <tr data-course-id="@item.CourseId" class="group hover:bg-slate-50/80 transition-all duration-300 @rowOpacity">
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-4">
                                     <div class="w-14 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-100 shadow-sm">
@@ -306,6 +305,67 @@
     let rejectCourseId = null;
     let rejectCourseData = null;
     let rejectRowCounter = 0;
+    let debounceTimer;
+
+    // AJAX fetching for courses
+    function triggerAjaxFetch() {
+        const searchVal = document.getElementById("search-input").value.trim();
+        const categoryVal = document.getElementById("category-select").value;
+        const statusVal = document.getElementById("status-select").value;
+        const sortByVal = document.getElementById("sort-select").value;
+
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            fetchCourses(searchVal, categoryVal, statusVal, sortByVal);
+        }, 300);
+    }
+
+    async function fetchCourses(search, category, status, sortBy) {
+        const container = document.getElementById("moderation-table-container");
+        if (container) {
+            container.style.opacity = "0.5";
+            container.style.transition = "opacity 0.15s ease-in-out";
+        }
+
+        const url = `/AdminModeration/Courses?search=${encodeURIComponent(search)}&category=${category}&status=${status}&sortBy=${sortBy}`;
+        try {
+            const resp = await fetch(url);
+            const htmlText = await resp.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, "text/html");
+
+            const newContent = doc.getElementById("moderation-table-container");
+            if (newContent && container) {
+                container.innerHTML = newContent.innerHTML;
+            }
+
+            const newStats = doc.getElementById("stats-container");
+            const currentStats = document.getElementById("stats-container");
+            if (newStats && currentStats) {
+                currentStats.innerHTML = newStats.innerHTML;
+            }
+        } catch (err) {
+            console.error("AJAX Error:", err);
+        } finally {
+            if (container) {
+                container.style.opacity = "1";
+            }
+        }
+    }
+
+    // Dim row smoothly instead of deleting it
+    function dimCourseRowInDOM(courseId) {
+        const row = document.querySelector(`tr[data-course-id="${courseId}"]`);
+        if (row) {
+            row.style.transition = "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)";
+            row.style.opacity = "0.4";
+            row.classList.add("opacity-40", "grayscale-[0.5]");
+            row.classList.remove("opacity-100");
+        }
+        
+        // Refresh AJAX to sync list filters and stats badge
+        triggerAjaxFetch();
+    }
 
     async function approveCourse(id) {
         const { value: feedback } = await Swal.fire({
@@ -343,7 +403,7 @@
                 text: 'Khóa học hiện đã có mặt trên sàn.',
                 confirmButtonColor: '#10b981',
                 customClass: { popup: 'rounded-3xl' }
-            }).then(() => location.reload());
+            }).then(() => dimCourseRowInDOM(id));
         } else {
             Swal.fire('Lỗi', 'Có lỗi xảy ra khi duyệt khóa học.', 'error');
         }
@@ -514,7 +574,7 @@
                     title: 'Đã gửi phản hồi',
                     text: 'Khóa học đã bị từ chối và giảng viên đã nhận được chi tiết.',
                     confirmButtonColor: '#10b981'
-                }).then(() => location.reload());
+                }).then(() => dimCourseRowInDOM(rejectCourseId));
             } else {
                 Swal.fire('Lỗi', 'Có lỗi xảy ra khi thực hiện.', 'error');
             }
@@ -561,11 +621,12 @@
                 title: 'Đã gắn cờ',
                 text: 'Khóa học đã bị tạm ẩn và đưa vào danh sách đen.',
                 confirmButtonColor: '#10b981'
-            }).then(() => location.reload());
+            }).then(() => dimCourseRowInDOM(id));
         } else {
             Swal.fire('Lỗi', 'Có lỗi xảy ra khi thực hiện.', 'error');
         }
     }
+
     // Custom Searchable Dropdown Logic
     function initCustomDropdown(rowId) {
         const row = document.querySelector(`.reject-row[data-row-id="${rowId}"]`);
@@ -636,6 +697,27 @@
         }
     });
 
+    // Wire up filter controls
+    document.addEventListener("DOMContentLoaded", () => {
+        const searchInput = document.getElementById("search-input");
+        const categorySelect = document.getElementById("category-select");
+        const statusSelect = document.getElementById("status-select");
+        const sortSelect = document.getElementById("sort-select");
+        const clearBtn = document.getElementById("btn-clear-filters");
+
+        searchInput.addEventListener("input", triggerAjaxFetch);
+        categorySelect.addEventListener("change", triggerAjaxFetch);
+        statusSelect.addEventListener("change", triggerAjaxFetch);
+        sortSelect.addEventListener("change", triggerAjaxFetch);
+
+        clearBtn.addEventListener("click", () => {
+            searchInput.value = "";
+            categorySelect.value = "0";
+            statusSelect.value = "all";
+            sortSelect.value = "oldest";
+            triggerAjaxFetch();
+        });
+    });
 </script>
 }
 

@@ -117,6 +117,11 @@ public class TransactionController : Controller
     public async Task<IActionResult> Instructor(int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null, string tab = "tx",
         int payoutPage = 1, int payoutPageSize = 20, string? payoutKeyword = null, string? payoutSortBy = "date_desc", string? payoutStatus = null)
     {
+        // Guard: Chỉ giảng viên đã duyệt mới được xem Earnings
+        var approvalStatus = Request.Cookies["InstructorApprovalStatus"];
+        if (approvalStatus != "Approved") 
+            return RedirectToAction("Dashboard", "Instructor");
+
         var vm = new InstructorFinancePageVM();
         vm.Transactions.Page = page;
         vm.Transactions.PageSize = pageSize;

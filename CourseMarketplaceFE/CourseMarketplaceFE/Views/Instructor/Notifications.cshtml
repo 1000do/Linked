@@ -92,21 +92,74 @@
             window.notiConn.on("ReceiveNotification", function (noti) {
                 console.log("🔔 Nhận thông báo:", noti);
                 
-                // CÁCH MẠNH NHẤT: Bất kể thông báo gì, tự động load lại trang
-                // Không cần F5 tay nữa
-                setTimeout(() => {
-                    window.location.reload();
-                }, 500); 
+                const container = document.getElementById('notification-container');
+                const emptyMsg = document.getElementById('empty-message');
+                if (emptyMsg) emptyMsg.remove();
+                
+                if (container) {
+                    const temp = document.createElement('div');
+                    temp.id = `noti-${noti.notificationId}`;
+                    temp.className = "flex items-center justify-between p-4 transition-all bg-slate-50 border-b border-slate-100 last:border-0 hover:bg-slate-100 cursor-pointer opacity-0 -translate-y-4";
+                    temp.onclick = () => {
+                        window.location.href = noti.linkAction || '#';
+                    };
+                    temp.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                    
+                    temp.innerHTML = `
+                        <div class="flex items-center gap-4 flex-1">
+                            <div class="w-2 flex-shrink-0">
+                                <div class="w-2 h-2 bg-teal-500 rounded-full"></div>
+                            </div>
+    
+                            <div class="flex-1 grid grid-cols-12 gap-4 items-center">
+                                <div class="col-span-3 font-bold text-slate-700 truncate">${noti.title}</div>
+                                <div class="col-span-6 text-slate-500 text-sm truncate">${noti.content}</div>
+                                <div class="col-span-3 text-right text-[11px] text-slate-400 font-medium">
+                                    ${new Date(noti.createdAt || Date.now()).toLocaleTimeString('vi-VN')} ${new Date(noti.createdAt || Date.now()).toLocaleDateString('vi-VN')}
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="flex items-center gap-2 ml-6" onclick="event.stopPropagation()">
+                            <button onclick="handleAction(${noti.notificationId}, 'MarkAsRead')"
+                                    class="p-2 hover:bg-teal-100 text-teal-600 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-lg">done_all</span>
+                            </button>
+                            <button onclick="handleAction(${noti.notificationId}, 'DeleteNotification')"
+                                    class="p-2 hover:bg-red-100 text-red-500 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-lg">delete</span>
+                            </button>
+                        </div>
+                    `;
+                    
+                    container.prepend(temp);
+                    setTimeout(() => {
+                        temp.classList.remove('opacity-0', '-translate-y-4');
+                    }, 50);
+                }
             });
 
             window.notiConn.start()
                 .then(() => console.log("✅ SignalR đã sẵn sàng!"))
                 .catch(err => {
                     console.error("❌ Lỗi kết nối:", err);
-                    // Nếu lỗi SSL ở trên, thử fallback sang https nếu cần
                 });
         }
     })();
+
+    function markNotificationAsReadInDOM(id) {
+        const element = document.getElementById(`noti-${id}`);
+        if (element) {
+            element.classList.remove('bg-slate-50');
+            element.classList.add('bg-white', 'opacity-60');
+            
+            const dotContainer = element.querySelector('.w-2.flex-shrink-0');
+            if (dotContainer) dotContainer.innerHTML = '';
+            
+            const markAsReadBtn = element.querySelector('button[onclick*="MarkAsRead"]');
+            if (markAsReadBtn) markAsReadBtn.remove();
+        }
+    }
 
     // 3. Hàm xử lý nút bấm
     async function handleAction(id, action) {
@@ -119,13 +172,22 @@
             });
 
             if (response.ok) {
-                const element = document.getElementById(`noti-${id}`);
-                if (element) {
-                    if (action === 'DeleteNotification') {
-                        element.remove();
-                    } else {
-                        location.reload(); // Đọc xong reload cho sạch
+                if (action === 'DeleteNotification') {
+                    const element = document.getElementById(`noti-${id}`);
+                    if (element) {
+                        element.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                        element.style.opacity = '0';
+                        element.style.transform = 'translateX(20px)';
+                        setTimeout(() => {
+                            element.remove();
+                            const container = document.getElementById('notification-container');
+                            if (container && container.querySelectorAll('div[id^="noti-"]').length === 0) {
+                                container.innerHTML = `<div id="empty-message" class="py-20 text-center text-slate-400 border border-dashed border-slate-200 rounded-lg">Không có thông báo nào.</div>`;
+                            }
+                        }, 300);
                     }
+                } else {
+                    markNotificationAsReadInDOM(id);
                 }
             }
         } catch (e) { console.error(e); }

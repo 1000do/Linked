@@ -62,6 +62,13 @@ public class LessonService : ILessonService
             }
         }
 
+        // Duplicate Title Check (Case-insensitive)
+        var allLessons = await _lessonRepository.GetByCourseIdAsync(request.CourseId);
+        if (allLessons.Any(l => !l.IsRemoved && l.Title.Trim().Equals(request.Title.Trim(), StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new BadRequestException("Tên bài học đã tồn tại trong khóa học này. Vui lòng chọn tên khác.");
+        }
+
 
         string? thumbnailUrl = request.ThumbnailUrl;
 

@@ -239,16 +239,22 @@ public class InstructorController : Controller
                         FullName = dataEl.TryGetProperty("fullName", out var fn) ? fn.GetString() : null
                     };
 
+                    // ★ Lưu trạng thái duyệt vào Cookie để các phần khác kiểm tra nhanh
+                    var statusCookieOpts = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7), Path = "/" };
+                    Response.Cookies.Append("InstructorApprovalStatus", model.ApprovalStatus ?? "None", statusCookieOpts);
+
                     // ★ Set cookie UserRole = instructor ngay khi Approved (không chờ Stripe)
                     if (model.ApprovalStatus == "Approved")
                     {
-                        var cookieOpts = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7), Path = "/" };
-                        Response.Cookies.Append("UserRole", "instructor", cookieOpts);
+                        Response.Cookies.Append("UserRole", "instructor", statusCookieOpts);
                     }
 
                     return View(model);
                 }
             }
+
+            // Chưa đăng ký -> Xóa cookie trạng thái
+            Response.Cookies.Delete("InstructorApprovalStatus", new CookieOptions { Path = "/" });
 
             // Chưa đăng ký → redirect về form Apply
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -356,6 +362,11 @@ public class InstructorController : Controller
     [Route("Instructor/Notifications")]
     public async Task<IActionResult> Notifications()
     {
+        // Guard
+        var approvalStatus = Request.Cookies["InstructorApprovalStatus"];
+        if (approvalStatus != "Approved") 
+            return RedirectToAction("Dashboard", "Instructor");
+
         var response = await _api.GetAsync("notification");
         if (response.IsSuccessStatusCode)
         {

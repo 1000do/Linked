@@ -118,7 +118,15 @@
                     setTimeout(() => {
                         row.remove();
                         if (document.querySelectorAll('#approval-table-body tr').length === 0) {
-                            location.reload();
+                            document.getElementById('approval-table-body').innerHTML = `
+                                <tr>
+                                    <td colspan="5" class="px-5 py-12 text-center">
+                                        <div class="flex flex-col items-center justify-center text-slate-400">
+                                            <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">inbox</span>
+                                            <p class="text-sm">Không có đơn đăng ký nào chờ duyệt.</p>
+                                        </div>
+                                    </td>
+                                </tr>`;
                         }
                     }, 200);
                 } else {

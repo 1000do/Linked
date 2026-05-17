@@ -54,15 +54,18 @@
                         </select>
                     </div>
 
-                    <button type="submit" class="w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-primary/90 transition-colors">
+                    <button type="submit" class="w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-primary/90 transition-all duration-300 shadow-lg shadow-primary/10">
                         Áp dụng
                     </button>
-                    <a href="/Course" class="block w-full text-center mt-3 text-sm text-slate-500 hover:text-slate-700 underline">Xóa bộ lọc</a>
+                    <button type="button" id="btn-clear-filters" class="w-full mt-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">filter_alt_off</span>
+                        Xóa bộ lọc
+                    </button>
                 </form>
             </div>
 
             <!-- Course Grid -->
-            <div class="flex-1">
+            <div class="flex-1" id="courses-container" style="transition: opacity 0.2s ease-in-out;">
                 @if (Model == null || !Model.Any())
                 {
                     <div class="bg-white rounded-2xl border border-dashed border-slate-300 p-16 text-center">
@@ -194,3 +197,151 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const queryInput = document.querySelector('input[name="query"]');
+        const categorySelect = document.querySelector('select[name="category"]');
+        const sortSelect = document.querySelector('select[name="sort"]');
+        const filterForm = document.querySelector('form[action="/Course"]');
+        const coursesContainer = document.getElementById('courses-container');
+
+        if (!queryInput || !categorySelect || !sortSelect || !coursesContainer) return;
+
+        // Restore filters from localStorage if URL has no parameters (persists filter selections on reload/re-entry)
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasUrlParams = urlParams.has('query') || urlParams.has('category') || urlParams.has('sort') || urlParams.has('page');
+
+        if (!hasUrlParams) {
+            const savedQuery = localStorage.getItem('course_query');
+            const savedCategory = localStorage.getItem('course_category');
+            const savedSort = localStorage.getItem('course_sort');
+
+            let shouldUpdate = false;
+            if (savedQuery !== null) {
+                queryInput.value = savedQuery;
+                shouldUpdate = true;
+            }
+            if (savedCategory !== null) {
+                categorySelect.value = savedCategory;
+                shouldUpdate = true;
+            }
+            if (savedSort !== null) {
+                sortSelect.value = savedSort;
+                shouldUpdate = true;
+            }
+
+            if (shouldUpdate) {
+                updateFilters(1);
+            }
+        } else {
+            // Save initial URL params to localStorage
+            localStorage.setItem('course_query', queryInput.value.trim());
+            localStorage.setItem('course_category', categorySelect.value);
+            localStorage.setItem('course_sort', sortSelect.value);
+        }
+
+        // Intercept standard form submit
+        if (filterForm) {
+            filterForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                updateFilters(1);
+            });
+        }
+
+        // Debounce helper
+        let debounceTimer;
+        function debounce(func, delay) {
+            return function(...args) {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+
+        async function updateFilters(page = 1) {
+            const query = queryInput.value.trim();
+            const category = categorySelect.value;
+            const sort = sortSelect.value;
+
+            // Save active filters to localStorage
+            localStorage.setItem('course_query', query);
+            localStorage.setItem('course_category', category);
+            localStorage.setItem('course_sort', sort);
+
+            // Sleek loading animation - dim down container during load
+            coursesContainer.style.opacity = '0.4';
+            coursesContainer.style.pointerEvents = 'none';
+
+            const params = new URLSearchParams();
+            if (query) params.append('query', query);
+            if (category) params.append('category', category);
+            if (sort) params.append('sort', sort);
+            if (page > 1) params.append('page', page);
+
+            const newUrl = `/Course?${params.toString()}`;
+            
+            try {
+                const response = await fetch(newUrl);
+                if (response.ok) {
+                    const html = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContainer = doc.getElementById('courses-container');
+                    
+                    if (newContainer) {
+                        coursesContainer.innerHTML = newContainer.innerHTML;
+                        // Smoothly restore opacity
+                        coursesContainer.style.opacity = '1';
+                        // Update browser URL history bar without page reload
+                        window.history.pushState({ path: newUrl }, '', newUrl);
+                    }
+                }
+            } catch (err) {
+                console.error("Lỗi khi tải danh sách khóa học:", err);
+                coursesContainer.style.opacity = '1';
+            } finally {
+                coursesContainer.style.pointerEvents = 'auto';
+            }
+        }
+
+        // Attach event listeners for real-time changes
+        queryInput.addEventListener('input', debounce(() => updateFilters(1), 300));
+        categorySelect.addEventListener('change', () => updateFilters(1));
+        sortSelect.addEventListener('change', () => updateFilters(1));
+
+        // Intercept click on the "Clear filters" button
+        const clearBtn = document.getElementById('btn-clear-filters');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                queryInput.value = '';
+                categorySelect.value = '';
+                sortSelect.value = 'newest';
+                
+                // Clear localStorage
+                localStorage.removeItem('course_query');
+                localStorage.removeItem('course_category');
+                localStorage.removeItem('course_sort');
+
+                updateFilters(1);
+            });
+        }
+
+        // Intercept clicks on pagination links using event delegation
+        coursesContainer.addEventListener('click', (e) => {
+            const link = e.target.closest('a');
+            if (link && link.href) {
+                const urlObj = new URL(link.href);
+                const page = urlObj.searchParams.get('page') || 1;
+                e.preventDefault();
+                updateFilters(page);
+                
+                // Smooth scroll to top of courses container
+                window.scrollTo({
+                    top: document.getElementById('courses-container').offsetTop - 120,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+</script>

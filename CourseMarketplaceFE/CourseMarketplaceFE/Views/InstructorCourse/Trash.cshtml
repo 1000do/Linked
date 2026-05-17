@@ -61,7 +61,7 @@
                 {
                     foreach (var material in Model)
                     {
-                        <tr class="hover:bg-slate-50/50 transition-colors group">
+                        <tr id="material-row-@material.MaterialId" class="hover:bg-slate-50/50 transition-all duration-300 group">
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-4">
                                     <div class="w-10 h-10 bg-slate-100 rounded flex items-center justify-center text-slate-500">
@@ -117,6 +117,35 @@
 
 @section Scripts {
     <script>
+        function dismissRow(id) {
+            const row = document.getElementById(`material-row-${id}`);
+            if (row) {
+                row.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(-8px) scale(0.98)';
+                setTimeout(() => {
+                    row.remove();
+                    
+                    // Check if there are any rows left
+                    const tbody = document.querySelector('tbody');
+                    const rows = tbody.querySelectorAll('tr[id^="material-row-"]');
+                    if (rows.length === 0) {
+                        tbody.innerHTML = `<tr>
+                            <td colspan="4" class="px-6 py-20 text-center">
+                                <div class="flex flex-col items-center">
+                                    <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                                        <span class="material-symbols-outlined text-slate-400 text-[32px]">delete_sweep</span>
+                                    </div>
+                                    <h3 class="font-bold text-slate-900 mb-1">Your trash is empty</h3>
+                                    <p class="text-sm text-slate-500">Deleted materials will appear here for 30 days.</p>
+                                </div>
+                            </td>
+                        </tr>`;
+                    }
+                }, 400);
+            }
+        }
+
         async function restoreMaterial(id, name) {
             const { isConfirmed } = await Swal.fire({
                 title: 'Khôi phục tài liệu?',
@@ -145,7 +174,7 @@
                             text: `"${name}" đã được đưa trở lại bài học thành công.`,
                             icon: 'success',
                             confirmButtonColor: '#006a62'
-                        }).then(() => location.reload());
+                        }).then(() => dismissRow(id));
                     } else {
                         Swal.fire('Lỗi', result.message || 'Không thể khôi phục tài liệu', 'error');
                     }
@@ -183,7 +212,7 @@
                             text: 'Tài liệu đã được xóa vĩnh viễn thành công.',
                             icon: 'success',
                             confirmButtonColor: '#006a62'
-                        }).then(() => location.reload());
+                        }).then(() => dismissRow(id));
                     } else {
                         Swal.fire('Lỗi', result.message || 'Không thể xóa tài liệu', 'error');
                     }

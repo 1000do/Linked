@@ -120,6 +120,38 @@ namespace CourseMarketplaceFE.Controllers
             return View(new List<PublicCourseViewModel>());
         }
 
+        [HttpGet]
+        public async Task<IActionResult> SearchCoursesJson(string query)
+        {
+            var response = await _apiClient.GetAsync("public/courses");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(content);
+                var data = json.RootElement.GetProperty("data").ToString();
+                var allCourses = JsonSerializer.Deserialize<List<PublicCourseViewModel>>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<PublicCourseViewModel>();
+
+                if (!string.IsNullOrEmpty(query))
+                {
+                    allCourses = allCourses.Where(c => c.Title.Contains(query, StringComparison.OrdinalIgnoreCase) || 
+                                                 (c.Description != null && c.Description.Contains(query, StringComparison.OrdinalIgnoreCase)))
+                                           .ToList();
+                }
+
+                var results = allCourses.Take(8).Select(c => new {
+                    c.CourseId,
+                    c.Title,
+                    c.InstructorName,
+                    c.CourseThumbnailUrl,
+                    c.Price,
+                    c.RatingAverage
+                }).ToList();
+
+                return Json(new { success = true, data = results });
+            }
+            return Json(new { success = false, data = new List<object>() });
+        }
+
         public async Task<IActionResult> Details(int id)
         {
             var response = await _apiClient.GetAsync($"public/courses/{id}");

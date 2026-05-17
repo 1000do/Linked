@@ -30,7 +30,10 @@ namespace CourseMarketplaceFE.Models
         [Required(ErrorMessage = "Price is required")]
         [Range(0, 10000, ErrorMessage = "Price must be between 0 and 10000")]
         public decimal Price { get; set; }
-
+        
+        public string? WhatYouWillLearn { get; set; }
+        public string? Requirements { get; set; }
+ 
         public List<CategoryViewModel> AvailableCategories { get; set; } = new();
     }
     public class InstructorStudioViewModel

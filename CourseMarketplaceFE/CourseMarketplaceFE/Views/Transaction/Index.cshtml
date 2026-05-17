@@ -15,7 +15,7 @@
 }
 
 
-<div class="flex items-center justify-between mb-5">
+<div id="transaction-stats" class="flex items-center justify-between mb-5">
     <div class="flex items-center gap-2 text-sm text-slate-500">
         <span class="material-symbols-outlined text-[18px] text-slate-400">receipt_long</span>
         Tổng cộng
@@ -31,191 +31,307 @@
 <div class="bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col">
     <!-- Bộ lọc & Tìm kiếm -->
     <div class="px-5 py-4 border-b border-slate-200 bg-slate-50/50">
-        <form method="get" action="/Transaction" class="flex flex-col md:flex-row items-center gap-3 w-full">
-            <input type="hidden" name="page" value="1" />
+        <form id="filter-form" method="get" action="/Transaction" class="flex flex-col md:flex-row items-center gap-3 w-full" onsubmit="event.preventDefault();">
+            <input type="hidden" name="page" id="form-page" value="1" />
             <input type="hidden" name="pageSize" value="@Model.PageSize" />
             
             <div class="relative flex-1 w-full">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">search</span>
-                <input type="text" name="keyword" value="@ViewBag.Keyword" placeholder="Tìm tên KH, học viên, GV..." 
+                <input type="text" name="keyword" id="keyword-input" value="@ViewBag.Keyword" placeholder="Tìm tên KH, học viên, GV..." 
                        class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all shadow-sm" />
             </div>
             
-            <div class="w-full md:w-40">
-                <select name="status" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none shadow-sm cursor-pointer">
+            <div class="w-full md:w-40 relative">
+                <select name="status" id="status-select" class="w-full pl-3 pr-8 py-2 appearance-none bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none shadow-sm cursor-pointer text-slate-700">
                     <option value="">Tất cả trạng thái</option>
                     <option value="succeeded" selected="@(ViewBag.Status == "succeeded")">Thành công</option>
                     <option value="pending" selected="@(ViewBag.Status == "pending")">Đang xử lý</option>
                     <option value="failed" selected="@(ViewBag.Status == "failed")">Thất bại</option>
                 </select>
+                <span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">arrow_drop_down</span>
             </div>
 
-            <div class="w-full md:w-48">
-                <select name="sortBy" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none shadow-sm cursor-pointer">
+            <div class="w-full md:w-48 relative">
+                <select name="sortBy" id="sort-select" class="w-full pl-3 pr-8 py-2 appearance-none bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none shadow-sm cursor-pointer text-slate-700">
                     <option value="date_desc" selected="@(ViewBag.SortBy == "date_desc")">Ngày: Mới nhất</option>
                     <option value="date_asc" selected="@(ViewBag.SortBy == "date_asc")">Ngày: Cũ nhất</option>
                     <option value="amount_desc" selected="@(ViewBag.SortBy == "amount_desc")">Tiền: Cao đến thấp</option>
                     <option value="amount_asc" selected="@(ViewBag.SortBy == "amount_asc")">Tiền: Thấp đến cao</option>
                 </select>
+                <span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">arrow_drop_down</span>
             </div>
 
-            <button type="submit" class="w-full md:w-auto px-5 py-2 bg-indigo-600 text-white font-medium text-sm rounded-lg hover:bg-indigo-700 transition-colors shadow-sm whitespace-nowrap">Lọc</button>
-            @if (!string.IsNullOrEmpty(ViewBag.Keyword as string) || !string.IsNullOrEmpty(ViewBag.Status as string) || (ViewBag.SortBy as string) != "date_desc")
-            {
-                <a href="/Transaction" class="w-full md:w-auto px-4 py-2 bg-slate-200 text-slate-700 font-medium text-sm rounded-lg hover:bg-slate-300 transition-colors whitespace-nowrap text-center">Xóa lọc</a>
-            }
+            <button type="button" id="btn-clear-filters" class="w-full md:w-auto px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-sm rounded-lg transition-all shadow-sm active:scale-95 whitespace-nowrap text-center">
+                Xóa bộ lọc
+            </button>
         </form>
     </div>
 
-    <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="border-b border-slate-200 bg-slate-50/50">
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-16">ID</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Mã Stripe</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Khóa học</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Người mua</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Giảng viên</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Số tiền</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Ngày</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Trạng thái</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Chi tiết</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 text-sm">
-                @if (Model.Items != null && Model.Items.Any())
-                {
-                    @foreach (var item in Model.Items)
-                    {
-                        <tr class="hover:bg-slate-50/50 transition-colors group">
-                            
-                            <td class="px-5 py-3.5 font-mono text-xs text-slate-400">
-                                #@item.TransactionId
-                            </td>
-
-                            
-                            <td class="px-5 py-3.5">
-                                @if (!string.IsNullOrEmpty(item.StripeSessionId))
-                                {
-                                    <span class="font-mono text-xs text-slate-500 cursor-default"
-                                          title="@item.StripeSessionId">
-                                        @(item.StripeSessionId.Length > 22
-                                            ? item.StripeSessionId[..10] + "…" + item.StripeSessionId[^8..]
-                                            : item.StripeSessionId)
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="text-xs text-slate-300 italic">—</span>
-                                }
-                            </td>
-
-                            
-                            <td class="px-5 py-3.5 max-w-[180px]">
-                                <span class="font-medium text-slate-800 truncate block" title="@item.CourseTitle">
-                                    @item.CourseTitle
-                                </span>
-                            </td>
-
-                            
-                            <td class="px-5 py-3.5 text-slate-600">@item.BuyerName</td>
-
-                            
-                            <td class="px-5 py-3.5 text-slate-600">@item.InstructorName</td>
-
-                            
-                            <td class="px-5 py-3.5 text-right font-semibold text-slate-800">
-                                @((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
-                            </td>
-
-                            
-                            <td class="px-5 py-3.5 text-slate-500 text-xs whitespace-nowrap">
-                                @(item.Date.HasValue ? item.Date.Value.ToString("dd/MM/yyyy HH:mm") : "—")
-                            </td>
-
-                            
-                            <td class="px-5 py-3.5">
-                                @{
-                                    var (bgClass, textClass, dotClass, label) = item.Status switch
-                                    {
-                                        "succeeded" => ("bg-emerald-50", "text-emerald-700", "bg-emerald-500", "Thành công"),
-                                        "failed"    => ("bg-red-50",     "text-red-700",     "bg-red-500",     "Thất bại"),
-                                        "pending"   => ("bg-amber-50",   "text-amber-700",   "bg-amber-400",   "Đang xử lý"),
-                                        _           => ("bg-slate-100",  "text-slate-600",   "bg-slate-400",   item.Status ?? "—")
-                                    };
-                                }
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium @bgClass @textClass">
-                                    <span class="w-1.5 h-1.5 rounded-full @dotClass"></span>
-                                    @label
-                                </span>
-                            </td>
-
-                            
-                            <td class="px-5 py-3.5 text-center">
-                                <a href="@Url.Action("Detail", "Transaction", new { id = item.TransactionId })"
-                                   class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-md transition-all">
-                                    <span class="material-symbols-outlined text-[14px]">visibility</span>
-                                    Xem
-                                </a>
-                            </td>
-                        </tr>
-                    }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="9" class="px-5 py-14 text-center">
-                            <div class="flex flex-col items-center justify-center text-slate-400">
-                                <span class="material-symbols-outlined text-5xl mb-3 text-slate-200">receipt_long</span>
-                                <p class="text-sm font-medium text-slate-500">Không có giao dịch nào.</p>
-                                <p class="text-xs text-slate-400 mt-1">Dữ liệu sẽ xuất hiện sau khi có thanh toán đầu tiên.</p>
-                            </div>
-                        </td>
+    <div id="transaction-table-container">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200 bg-slate-50/50">
+                        <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-16">ID</th>
+                        <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Mã Stripe</th>
+                        <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Khóa học</th>
+                        <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Người mua</th>
+                        <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Giảng viên</th>
+                        <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Số tiền</th>
+                        <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Ngày</th>
+                        <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Trạng thái</th>
+                        <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Chi tiết</th>
                     </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-
-    
-    @if (Model.TotalPages > 1)
-    {
-        <div class="px-5 py-3 border-t border-slate-100 flex items-center justify-between">
-            <p class="text-xs text-slate-500">
-                Hiển thị @((Model.Page - 1) * Model.PageSize + 1)–@Math.Min(Model.Page * Model.PageSize, Model.TotalCount)
-                trong <span class="font-semibold">@Model.TotalCount</span> giao dịch
-            </p>
-            <div class="flex items-center gap-1">
-                @if (Model.Page > 1)
-                {
-                    <a href="@Url.Action("Index", new { page = Model.Page - 1, pageSize = Model.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status })"
-                       class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all">
-                        ← Trước
-                    </a>
-                }
-
-                @for (int p = Math.Max(1, Model.Page - 2); p <= Math.Min(Model.TotalPages, Model.Page + 2); p++)
-                {
-                    if (p == Model.Page)
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    @if (Model.Items != null && Model.Items.Any())
                     {
-                        <span class="px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white border border-indigo-600 rounded-md">@p</span>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr class="hover:bg-slate-50/50 transition-colors group">
+                                
+                                <td class="px-5 py-3.5 font-mono text-xs text-slate-400">
+                                    #@item.TransactionId
+                                </td>
+
+                                
+                                <td class="px-5 py-3.5">
+                                    @if (!string.IsNullOrEmpty(item.StripeSessionId))
+                                    {
+                                        <span class="font-mono text-xs text-slate-500 cursor-default"
+                                              title="@item.StripeSessionId">
+                                            @(item.StripeSessionId.Length > 22
+                                                ? item.StripeSessionId[..10] + "…" + item.StripeSessionId[^8..]
+                                                : item.StripeSessionId)
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-slate-300 italic">—</span>
+                                    }
+                                </td>
+
+                                
+                                <td class="px-5 py-3.5 max-w-[180px]">
+                                    <span class="font-medium text-slate-800 truncate block" title="@item.CourseTitle">
+                                        @item.CourseTitle
+                                    </span>
+                                </td>
+
+                                
+                                <td class="px-5 py-3.5 text-slate-600">@item.BuyerName</td>
+
+                                
+                                <td class="px-5 py-3.5 text-slate-600">@item.InstructorName</td>
+
+                                
+                                <td class="px-5 py-3.5 text-right font-semibold text-slate-800">
+                                    @((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
+                                </td>
+
+                                
+                                <td class="px-5 py-3.5 text-slate-500 text-xs whitespace-nowrap">
+                                    @(item.Date.HasValue ? item.Date.Value.ToString("dd/MM/yyyy HH:mm") : "—")
+                                </td>
+
+                                
+                                <td class="px-5 py-3.5">
+                                    @{
+                                        var (bgClass, textClass, dotClass, label) = item.Status switch
+                                        {
+                                            "succeeded" => ("bg-emerald-50", "text-emerald-700", "bg-emerald-500", "Thành công"),
+                                            "failed"    => ("bg-red-50",     "text-red-700",     "bg-red-500",     "Thất bại"),
+                                            "pending"   => ("bg-amber-50",   "text-amber-700",   "bg-amber-400",   "Đang xử lý"),
+                                            _           => ("bg-slate-100",  "text-slate-600",   "bg-slate-400",   item.Status ?? "—")
+                                        };
+                                    }
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium @bgClass @textClass">
+                                        <span class="w-1.5 h-1.5 rounded-full @dotClass"></span>
+                                        @label
+                                    </span>
+                                </td>
+
+                                
+                                <td class="px-5 py-3.5 text-center">
+                                    <a href="@Url.Action("Detail", "Transaction", new { id = item.TransactionId })"
+                                       class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-md transition-all">
+                                        <span class="material-symbols-outlined text-[14px]">visibility</span>
+                                        Xem
+                                    </a>
+                                </td>
+                            </tr>
+                        }
                     }
                     else
                     {
-                        <a href="@Url.Action("Index", new { page = p, pageSize = Model.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status })"
-                           class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all">@p</a>
+                        <tr>
+                            <td colspan="9" class="px-5 py-14 text-center">
+                                <div class="flex flex-col items-center justify-center text-slate-400">
+                                    <span class="material-symbols-outlined text-5xl mb-3 text-slate-200">receipt_long</span>
+                                    <p class="text-sm font-medium text-slate-500">Không có giao dịch nào.</p>
+                                    <p class="text-xs text-slate-400 mt-1">Dữ liệu sẽ xuất hiện sau khi có thanh toán đầu tiên.</p>
+                                </div>
+                            </td>
+                        </tr>
                     }
-                }
-
-                @if (Model.Page < Model.TotalPages)
-                {
-                    <a href="@Url.Action("Index", new { page = Model.Page + 1, pageSize = Model.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status })"
-                       class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all">
-                        Sau →
-                    </a>
-                }
-            </div>
+                </tbody>
+            </table>
         </div>
-    }
+
+        
+        @if (Model.TotalPages > 1)
+        {
+            <div class="px-5 py-3 border-t border-slate-100 flex items-center justify-between" data-pagination="true">
+                <p class="text-xs text-slate-500">
+                    Hiển thị @((Model.Page - 1) * Model.PageSize + 1)–@Math.Min(Model.Page * Model.PageSize, Model.TotalCount)
+                    trong <span class="font-semibold">@Model.TotalCount</span> giao dịch
+                </p>
+                <div class="flex items-center gap-1">
+                    @if (Model.Page > 1)
+                    {
+                        <a href="@Url.Action("Index", new { page = Model.Page - 1, pageSize = Model.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status })"
+                           class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all">
+                            ← Trước
+                        </a>
+                    }
+
+                    @for (int p = Math.Max(1, Model.Page - 2); p <= Math.Min(Model.TotalPages, Model.Page + 2); p++)
+                    {
+                        if (p == Model.Page)
+                        {
+                            <span class="px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white border border-indigo-600 rounded-md">@p</span>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Index", new { page = p, pageSize = Model.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status })"
+                               class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all">@p</a>
+                        }
+                    }
+
+                    @if (Model.Page < Model.TotalPages)
+                    {
+                        <a href="@Url.Action("Index", new { page = Model.Page + 1, pageSize = Model.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status })"
+                           class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all">
+                            Sau →
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const keywordInput = document.getElementById("keyword-input");
+        const statusSelect = document.getElementById("status-select");
+        const sortSelect = document.getElementById("sort-select");
+        const clearBtn = document.getElementById("btn-clear-filters");
+
+        let debounceTimer;
+        function triggerAjaxFetch(page = 1) {
+            const keyword = keywordInput.value.trim();
+            const status = statusSelect.value;
+            const sortBy = sortSelect.value;
+
+            // Show or hide clear button
+            if (keyword || status || sortBy !== "date_desc") {
+                clearBtn.classList.remove("hidden");
+            } else {
+                clearBtn.classList.add("hidden");
+            }
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                fetchTransactions(keyword, status, sortBy, page);
+            }, 300);
+        }
+
+        async function fetchTransactions(keyword, status, sortBy, page) {
+            const tableContainer = document.getElementById('transaction-table-container');
+            if (tableContainer) {
+                tableContainer.style.opacity = '0.5';
+                tableContainer.style.transition = 'opacity 0.15s ease-in-out';
+            }
+
+            const url = `/Transaction?page=${page}&keyword=${encodeURIComponent(keyword)}&status=${status}&sortBy=${sortBy}`;
+            
+            try {
+                const resp = await fetch(url);
+                const htmlText = await resp.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlText, 'text/html');
+                
+                // Patch the transaction table container
+                const newContent = doc.getElementById('transaction-table-container');
+                if (newContent && tableContainer) {
+                    tableContainer.innerHTML = newContent.innerHTML;
+                    
+                    // Patch stats counter
+                    const stats = doc.getElementById('transaction-stats');
+                    const currentStats = document.getElementById('transaction-stats');
+                    if (stats && currentStats) {
+                        currentStats.innerHTML = stats.innerHTML;
+                    }
+                    
+                    bindPaginationLinks();
+                }
+            } catch (err) {
+                console.error("AJAX Error:", err);
+            } finally {
+                if (tableContainer) {
+                    tableContainer.style.opacity = '1';
+                }
+            }
+        }
+
+        function bindPaginationLinks() {
+            const paginationContainer = document.querySelector('#transaction-table-container [data-pagination]');
+            if (!paginationContainer) return;
+            
+            const links = paginationContainer.querySelectorAll('a');
+            links.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href) {
+                    const url = new URL(window.location.origin + href);
+                    const page = url.searchParams.get('page') || 1;
+                    link.removeAttribute('href');
+                    link.style.cursor = 'pointer';
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const keyword = keywordInput.value.trim();
+                        const status = statusSelect.value;
+                        const sortBy = sortSelect.value;
+                        fetchTransactions(keyword, status, sortBy, page);
+                    });
+                }
+            });
+        }
+
+        // Hook listeners
+        keywordInput.addEventListener("input", () => triggerAjaxFetch(1));
+        statusSelect.addEventListener("change", () => triggerAjaxFetch(1));
+        sortSelect.addEventListener("change", () => triggerAjaxFetch(1));
+
+        clearBtn.addEventListener("click", () => {
+            keywordInput.value = "";
+            statusSelect.value = "";
+            sortSelect.value = "date_desc";
+            triggerAjaxFetch(1);
+        });
+
+        // Initialize pagination binding for first load
+        bindPaginationLinks();
+        
+        // Initial setup for clear button visibility
+        const keyword = keywordInput.value.trim();
+        const status = statusSelect.value;
+        const sortBy = sortSelect.value;
+        if (keyword || status || sortBy !== "date_desc") {
+            clearBtn.classList.remove("hidden");
+        } else {
+            clearBtn.classList.add("hidden");
+        }
+    });
+</script>
 

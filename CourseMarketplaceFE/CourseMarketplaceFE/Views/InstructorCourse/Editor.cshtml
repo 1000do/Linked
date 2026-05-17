@@ -573,6 +573,13 @@
         window.videoQuill = new Quill('#video-editor', { ...quillConfig, placeholder: 'Describe the video content...' });
         window.resourceQuill = new Quill('#resource-editor', { ...quillConfig, placeholder: 'Describe this resource...' });
         
+        // Auto-save listeners for Video description
+        const debouncedSaveVideo = debounce(() => {
+            saveVideoMaterial(true);
+        }, 1500);
+
+        window.videoQuill.on('text-change', debouncedSaveVideo);
+
         // Course Landing Page Quills
         window.courseDescQuill = new Quill('#course-description-editor', { ...quillConfig, placeholder: 'Detailed course description...' });
         window.courseLearnQuill = new Quill('#course-learn-editor', { ...quillConfig, placeholder: 'What will students achieve?' });
@@ -1398,14 +1405,26 @@
         window.resetVideoUpload = resetVideoUpload;
 
         // ─── Auto-Save Video Material ───
-        window.saveVideoMaterial = function() {
+        window.saveVideoMaterial = function(isAutoSave = false) {
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
             const lessonId = lessonIdEl.dataset.lessonId;
             const title = lessonIdEl.dataset.title;
             const description = window.videoQuill.root.innerHTML;
-            const materialUrl = document.getElementById('MaterialUrl').value;
-            if (!materialUrl) return;
+            
+            // If it's an auto-save of description, we might not have a NEW materialUrl
+            // In that case, backend logic for "string.IsNullOrEmpty(materialUrl)" will update existing video
+            let materialUrl = document.getElementById('MaterialUrl').value;
+            
+            // If we are just updating the description, we should send empty MaterialUrl 
+            // to hit the backend update logic instead of the "swap" logic
+            if (isAutoSave && materialUrl) {
+                // If we have a materialUrl but it's already the active one, we should send empty to just update desc
+                // Actually, let's just always send empty if we are just updating metadata
+                materialUrl = ""; 
+            }
+
+            if (!isAutoSave && !materialUrl) return;
 
             const statusEl = document.getElementById('video-save-status');
             const autoSaveEl = document.getElementById('video-autosave-status');
@@ -1420,9 +1439,11 @@
             fd.append('type', 'video');
             
             const matUrlInput = document.getElementById('MaterialUrl');
-            if (matUrlInput.dataset.duration) fd.append('duration', matUrlInput.dataset.duration);
-            if (matUrlInput.dataset.fileSize) fd.append('fileSize', matUrlInput.dataset.fileSize);
-            if (matUrlInput.dataset.format) fd.append('fileExtension', matUrlInput.dataset.format);
+            if (!isAutoSave) {
+                if (matUrlInput.dataset.duration) fd.append('duration', matUrlInput.dataset.duration);
+                if (matUrlInput.dataset.fileSize) fd.append('fileSize', matUrlInput.dataset.fileSize);
+                if (matUrlInput.dataset.format) fd.append('fileExtension', matUrlInput.dataset.format);
+            }
             
             fetch('/InstructorCourse/AddMaterial', { method: 'POST', body: fd })
                 .then(res => {
@@ -1661,10 +1682,15 @@
 
             // Unsaved changes check
             let hasUnsavedChanges = false;
+            
+            // Normalize values for comparison
+            const normPrice = parseFloat(price || 0).toFixed(2);
+            const initialPrice = parseFloat(initialCourseData.price || 0).toFixed(2);
+
             if (title !== initialCourseData.title ||
                 desc !== initialCourseData.desc ||
                 catId !== initialCourseData.catId ||
-                price !== initialCourseData.price ||
+                normPrice !== initialPrice ||
                 thumb !== initialCourseData.thumb ||
                 learn !== initialCourseData.learn ||
                 req !== initialCourseData.req) {
@@ -1941,5 +1967,30 @@
                 if (el) el.classList.add('hidden');
             });
         }
+        // ─── Before Unload Warning ───
+        window.onbeforeunload = function() {
+            const title = document.getElementById('course-title-input')?.value;
+            const price = document.getElementById('course-price-input')?.value;
+            const catId = document.getElementById('course-category-input')?.value;
+            const thumb = document.getElementById('course-thumbnail-input')?.value;
+            const desc = window.courseDescQuill?.root.innerHTML;
+            const learn = window.courseLearnQuill?.root.innerHTML;
+            const req = window.courseReqQuill?.root.innerHTML;
+
+            if (initialCourseData) {
+                const normPrice = parseFloat(price || 0).toFixed(2);
+                const initialPrice = parseFloat(initialCourseData.price || 0).toFixed(2);
+
+                if (title !== initialCourseData.title ||
+                    desc !== initialCourseData.desc ||
+                    catId !== initialCourseData.catId ||
+                    normPrice !== initialPrice ||
+                    thumb !== initialCourseData.thumb ||
+                    learn !== initialCourseData.learn ||
+                    req !== initialCourseData.req) {
+                    return "You have unsaved changes in Course Landing Page. Are you sure you want to leave?";
+                }
+            }
+        };
     </script>
 }

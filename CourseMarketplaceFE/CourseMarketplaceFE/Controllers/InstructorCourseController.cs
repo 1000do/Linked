@@ -18,14 +18,70 @@ namespace CourseMarketplaceFE.Controllers
             _api = api;
         }
 
-        // ─── Auth guard: redirect to Login if no AccessToken cookie ────
-        public override void OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext context)
+        // ─── Auth guard: kiểm tra Token và Trạng thái duyệt (Approved) ────
+        public override async Task OnActionExecutionAsync(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext context, Microsoft.AspNetCore.Mvc.Filters.ActionExecutionDelegate next)
         {
-            base.OnActionExecuting(context);
             if (!Request.Cookies.ContainsKey("AccessToken"))
             {
                 context.Result = RedirectToAction("Login", "Account");
+                return;
             }
+
+            // 1. Kiểm tra nhanh qua Cookie
+            var statusCookie = Request.Cookies["InstructorApprovalStatus"];
+            if (statusCookie == "Approved")
+            {
+                await next();
+                return;
+            }
+
+            // 2. Nếu cookie chưa có hoặc chưa Approved -> Gọi API kiểm tra lại cho chắc
+            try
+            {
+                var response = await _api.GetAsync("instructor/dashboard");
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("data", out var dataEl) &&
+                        dataEl.TryGetProperty("approvalStatus", out var statusEl))
+                    {
+                        var status = statusEl.GetString();
+                        
+                        // Cập nhật lại Cookie cho lần sau
+                        var statusCookieOpts = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7), Path = "/" };
+                        Response.Cookies.Append("InstructorApprovalStatus", status ?? "None", statusCookieOpts);
+
+                        if (status != "Approved")
+                        {
+                            context.Result = RedirectToAction("Dashboard", "Instructor");
+                            return;
+                        }
+                    }
+                    else 
+                    {
+                        context.Result = RedirectToAction("Apply", "Instructor");
+                        return;
+                    }
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    context.Result = RedirectToAction("Apply", "Instructor");
+                    return;
+                }
+                else 
+                {
+                    context.Result = RedirectToAction("Index", "Home");
+                    return;
+                }
+            }
+            catch
+            {
+                context.Result = RedirectToAction("Index", "Home");
+                return;
+            }
+
+            await next();
         }
 
         // ─── LIST COURSES ─────────────────────────────────────────────────
@@ -159,6 +215,9 @@ namespace CourseMarketplaceFE.Controllers
                 formData.Add(new StringContent(model.Title), "Title");
                 formData.Add(new StringContent(model.Description ?? ""), "Description");
                 formData.Add(new StringContent(model.Price.ToString()), "Price");
+                formData.Add(new StringContent(model.WhatYouWillLearn ?? ""), "WhatYouWillLearn");
+                formData.Add(new StringContent(model.Requirements ?? ""), "Requirements");
+                
                 if (!string.IsNullOrEmpty(model.CourseThumbnailUrl))
                 {
                     formData.Add(new StringContent(model.CourseThumbnailUrl), "CourseThumbnailUrl");
