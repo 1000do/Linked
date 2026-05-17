@@ -76,54 +76,39 @@ public class CheckoutService : ICheckoutService
                     $"Bạn đã mua khóa học \"{item.Course?.Title}\" rồi. Vui lòng xóa khỏi giỏ hàng.");
         }
 
-        // ── 1.3 Tính toán coupon (Logic mới: Chỉ giảm cho khóa học khớp mã) ────
-        Coupon? coupon = null;
+        // ── 1.3 Tính toán coupon (Hỗ trợ nhiều mã phân tách bằng dấu phẩy) ────
+        var appliedCoupons = new List<Coupon>();
         decimal totalDiscountAmount = 0m;
-        
+
         if (!string.IsNullOrWhiteSpace(couponCode))
         {
-            // Lấy thông tin coupon từ DB (kiểm tra hạn dùng, active, slot)
-            coupon = await _repo.GetValidCouponAsync(couponCode, DateTime.Now);
-            
-            if (coupon != null)
-            {
-                // Tính tổng tiền của những khóa học CÓ gắn mã này
-                decimal eligibleSubTotal = cartItems
-                    .Where(c => c.Course != null && c.Course.CouponId == coupon.CouponId)
-                    .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
+            var codes = couponCode.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(c => c.Trim().ToUpper())
+                .Distinct()
+                .ToList();
 
-                // Nếu tổng tiền các khóa hợp lệ đủ điều kiện MinOrderValue
-                if (eligibleSubTotal >= coupon.MinOrderValue && eligibleSubTotal > 0)
-                {
-                    totalDiscountAmount = coupon.CouponType == "percentage"
-                        ? eligibleSubTotal * (coupon.DiscountValue / 100m)
-                        : coupon.DiscountValue;
-                    
-                    // Không cho phép giảm quá tổng tiền của các món hợp lệ
-                    totalDiscountAmount = Math.Round(Math.Min(totalDiscountAmount, eligibleSubTotal), 2);
-                }
-                else if (eligibleSubTotal > 0)
-                {
-                    // Có khóa học khớp mã nhưng chưa đủ điều kiện MinOrderValue
-                    throw new InvalidOperationException($"Mã này yêu cầu tổng giá trị các khóa học được áp dụng tối thiểu là ${coupon.MinOrderValue:N2}.");
-                }
-                else
-                {
-                    // Nhập mã đúng nhưng không có khóa học nào trong giỏ hàng được giảng viên gắn mã này
-                    throw new InvalidOperationException("Mã giảm giá này không áp dụng cho bất kỳ khóa học nào trong giỏ hàng của bạn.");
-                }
-            }
-            else
+            foreach (var code in codes)
             {
-                throw new InvalidOperationException("Mã giảm giá không tồn tại hoặc đã hết hạn.");
+                var cp = await _repo.GetValidCouponAsync(code, DateTime.Now);
+                if (cp != null)
+                {
+                    decimal eligibleSubTotal = cartItems
+                        .Where(c => c.Course != null && c.Course.CouponId == cp.CouponId)
+                        .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
+
+                    if (eligibleSubTotal >= cp.MinOrderValue && eligibleSubTotal > 0)
+                    {
+                        appliedCoupons.Add(cp);
+                        decimal cpDiscount = cp.CouponType == "percentage"
+                            ? eligibleSubTotal * (cp.DiscountValue / 100m)
+                            : cp.DiscountValue;
+
+                        cpDiscount = Math.Round(Math.Min(cpDiscount, eligibleSubTotal), 2);
+                        totalDiscountAmount += cpDiscount;
+                    }
+                }
             }
         }
-
-        // ── 1.4 Tính giá thực tế cho mỗi item (Cập nhật logic phân bổ) ────────
-        // Tính tỉ lệ giảm giá dựa trên eligibleSubTotal để chia đều nếu là fixed_amount
-        decimal eligibleSubTotalForRatio = cartItems
-            .Where(c => c.Course != null && c.Course.CouponId == (coupon?.CouponId ?? -1))
-            .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
 
         // Lấy email user cho Stripe
         var userEmail = await _repo.GetUserEmailAsync(userId);
@@ -154,23 +139,24 @@ public class CheckoutService : ICheckoutService
                 var originalPrice = cartItem.Price ?? cartItem.Course?.Price ?? 0m;
                 decimal purchasePrice = originalPrice;
                 bool isItemDiscounted = false;
+                Coupon? matchedCoupon = null;
 
-                // Nếu khóa học này có gắn mã khớp với mã User nhập
-                if (coupon != null && cartItem.Course?.CouponId == coupon.CouponId)
+                // Tìm coupon khớp với khóa học này trong danh sách appliedCoupons
+                if (cartItem.Course != null)
+                {
+                    matchedCoupon = appliedCoupons.FirstOrDefault(cp => cartItem.Course.CouponId == cp.CouponId);
+                }
+
+                if (matchedCoupon != null)
                 {
                     isItemDiscounted = true;
-                    // Tính giá mua cho món này: 
-                    // Nếu là phần trăm: giảm trực tiếp % trên món này
-                    // Nếu là tiền mặt: chia tỉ lệ giảm giá dựa trên giá trị món đồ trong nhóm được giảm
-                    if (coupon.CouponType == "percentage")
+                    if (matchedCoupon.CouponType == "percentage")
                     {
-                        purchasePrice = originalPrice * (1 - (coupon.DiscountValue / 100m));
+                        purchasePrice = originalPrice * (1 - (matchedCoupon.DiscountValue / 100m));
                     }
                     else
                     {
-                        // Phân bổ mã tiền mặt (fixed) theo tỉ lệ giá trị khóa học
-                        decimal itemRatio = eligibleSubTotalForRatio > 0 ? originalPrice / eligibleSubTotalForRatio : 0;
-                        purchasePrice = originalPrice - (totalDiscountAmount * itemRatio);
+                        purchasePrice = originalPrice - matchedCoupon.DiscountValue;
                     }
                 }
 
@@ -184,8 +170,8 @@ public class CheckoutService : ICheckoutService
                     CouponUsed = isItemDiscounted,
                     // ★ Snapshot giá gốc & coupon tại thời điểm mua
                     OriginalPrice = originalPrice,
-                    CouponCode = isItemDiscounted ? coupon?.CouponCode : null,
-                    CouponType = isItemDiscounted ? coupon?.CouponType : null,
+                    CouponCode = isItemDiscounted ? matchedCoupon?.CouponCode : null,
+                    CouponType = isItemDiscounted ? matchedCoupon?.CouponType : null,
                     DiscountAmount = Math.Round(originalPrice - purchasePrice, 2)
                 };
                 await _repo.AddOrderItemAsync(orderItem);
@@ -289,12 +275,26 @@ public class CheckoutService : ICheckoutService
         if (!string.IsNullOrWhiteSpace(couponCode))
         {
             coupon = await _repo.GetValidCouponAsync(couponCode, DateTime.Now);
-            if (coupon != null && originalPrice >= coupon.MinOrderValue)
+            if (coupon != null)
             {
+                if (course.CouponId != coupon.CouponId)
+                {
+                    throw new InvalidOperationException("Mã giảm giá này không áp dụng cho khóa học này.");
+                }
+
+                if (originalPrice < coupon.MinOrderValue)
+                {
+                    throw new InvalidOperationException($"Mã này yêu cầu giá trị khóa học tối thiểu là ${coupon.MinOrderValue:N2}.");
+                }
+
                 discountAmount = coupon.CouponType == "percentage"
                     ? originalPrice * (coupon.DiscountValue / 100m)
                     : coupon.DiscountValue;
                 discountAmount = Math.Round(Math.Min(discountAmount, originalPrice), 2);
+            }
+            else
+            {
+                throw new InvalidOperationException("Mã giảm giá không tồn tại hoặc đã hết hạn.");
             }
         }
 
@@ -458,6 +458,12 @@ public class CheckoutService : ICheckoutService
                 {
                     var courseId = txn.OrderItem?.CourseId;
                     if (!courseId.HasValue) continue;
+
+                    // Increment coupon usage if used
+                    if (txn.OrderItem?.CouponUsed == true && txn.OrderItem.Course?.CouponId.HasValue == true)
+                    {
+                        await _repo.IncrementCouponUsageAsync(txn.OrderItem.Course.CouponId.Value);
+                    }
 
                     if (await _repo.IsEnrolledAsync(userId.Value, courseId.Value))
                     {

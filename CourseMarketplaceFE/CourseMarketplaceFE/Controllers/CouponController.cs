@@ -52,7 +52,7 @@ namespace CourseMarketplaceFE.Controllers
         /// Proxy: DELETE /Coupon/PlatformRemove/{courseId} → Backend api/coupon/platform/remove/{courseId}
         /// </summary>
         [HttpDelete]
-        public async Task<IActionResult> PlatformRemove(int courseId)
+        public async Task<IActionResult> PlatformRemove([FromQuery] int courseId)
         {
             var resp = await _api.DeleteAsync($"coupon/platform/remove/{courseId}");
             var body = await resp.Content.ReadAsStringAsync();

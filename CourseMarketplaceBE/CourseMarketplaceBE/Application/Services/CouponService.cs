@@ -22,8 +22,13 @@ namespace CourseMarketplaceBE.Application.Services;
 public class CouponService : ICouponService
 {
     private readonly ICouponRepository _repo;
+    private readonly IRedisService _redisService;
 
-    public CouponService(ICouponRepository repo) => _repo = repo;
+    public CouponService(ICouponRepository repo, IRedisService redisService)
+    {
+        _repo = repo;
+        _redisService = redisService;
+    }
 
     // ═══════════════════════════════════════════════════════════════════════
     // HELPERS
@@ -236,6 +241,9 @@ public class CouponService : ICouponService
         course.CouponId = couponId;
         _repo.UpdateCourse(course);
         await _repo.SaveChangesAsync();
+
+        // 5. Invalidate Cache
+        await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -254,6 +262,9 @@ public class CouponService : ICouponService
         course.CouponId = null;
         _repo.UpdateCourse(course);
         await _repo.SaveChangesAsync();
+
+        // Invalidate Cache
+        await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
     }
 
     // ═══════════════════════════════════════════════════════════════════════

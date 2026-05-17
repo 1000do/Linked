@@ -201,19 +201,135 @@
                 <h2 class="text-xl font-headline font-bold text-slate-900">Marketing & Promotions</h2>
             </div>
             
-            <input type="hidden" asp-for="CouponId" id="CouponIdInput" />
-            <div class="flex items-center justify-between mb-4">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Platform Voucher (Optional)</label>
-                <span class="text-xs text-slate-400 font-medium">Bạn có thể chọn 1 voucher duy nhất để áp dụng.</span>
+            <!-- Toggle Switch -->
+            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 mb-4 transition-all duration-300 hover:bg-slate-100/50">
+                <div class="flex flex-col gap-1">
+                    <span class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-emerald-600 text-[18px]">loyalty</span>
+                        Áp dụng coupon cho khóa học này
+                    </span>
+                    <span class="text-[11px] text-slate-500">Giảm giá khóa học bằng mã giảm giá do hệ thống Linked tài trợ</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="coupon-toggle" class="sr-only peer" />
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
             </div>
+
+            <input type="hidden" asp-for="CouponId" id="CouponIdInput" />
             
-            <div id="voucher-selection-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="col-span-full py-8 text-center text-slate-400 font-bold text-sm flex flex-col items-center justify-center gap-3">
-                    <div class="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-                    Đang tải danh sách voucher...
+            <!-- Coupon Action Area (hidden by default) -->
+            <div id="voucher-action-container" class="hidden space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <!-- Select Button if not selected -->
+                <div id="no-voucher-selected-state" class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+                    <span class="material-symbols-outlined text-slate-400 text-[32px] mb-2">confirmation_number</span>
+                    <p class="text-xs text-slate-505 font-bold mb-4 text-slate-500">Chưa có voucher nào được áp dụng cho khóa học này</p>
+                    <button type="button" onclick="openCouponModal()" class="px-5 py-2.5 bg-slate-900 text-white hover:bg-slate-800 text-xs font-black rounded-xl uppercase tracking-widest transition-all active:scale-95 shadow-md flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[16px]">add_circle</span>
+                        Chọn Voucher từ Hệ thống
+                    </button>
+                </div>
+
+                <!-- Selected Voucher Card -->
+                <div id="voucher-selected-state" class="hidden relative overflow-hidden bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/30 rounded-3xl p-6 flex items-center justify-between gap-6 shadow-sm">
+                    <div class="flex items-center gap-5">
+                        <div class="relative">
+                            <div class="absolute inset-0 bg-emerald-400/20 blur-lg rounded-full animate-pulse"></div>
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg relative z-10">
+                                <span class="material-symbols-outlined text-[30px]">confirmation_number</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-0.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                                <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Đang áp dụng</p>
+                            </div>
+                            <h4 id="display-coupon-code" class="text-lg font-black text-slate-900 tracking-widest font-mono">CODE</h4>
+                            <div class="flex items-center gap-3 mt-1.5">
+                                <span id="display-coupon-discount" class="px-2.5 py-0.5 bg-emerald-500 text-white text-[9px] font-black rounded-lg uppercase shadow-sm">Giảm 0%</span>
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">HSD: <span id="display-coupon-expiry">2026</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="openCouponModal()" class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-[10px] font-black rounded-xl uppercase tracking-widest border border-slate-200 transition-all shadow-sm active:scale-95 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[14px]">edit</span> Thay đổi
+                    </button>
                 </div>
             </div>
         </div>
+
+        <!-- Premium Coupon Selection Modal -->
+        <div id="coupon-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300">
+            <!-- Backdrop with deeper blur -->
+            <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[12px] opacity-0 transition-opacity duration-300 modal-backdrop" onclick="closeCouponModal()"></div>
+
+            <!-- Modal Content -->
+            <div class="bg-white/95 w-full max-w-2xl rounded-[2.5rem] shadow-[0_20px_70px_-10px_rgba(0,0,0,0.2)] relative z-10 flex flex-col overflow-hidden border border-white transform scale-90 opacity-0 transition-all duration-500 modal-content">
+                <!-- Header with Glass effect -->
+                <div class="px-10 py-8 border-b border-slate-100/50 flex justify-between items-center bg-white/50">
+                    <div class="flex items-center gap-5">
+                        <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-2xl shadow-slate-200">
+                            <span class="material-symbols-outlined text-[32px]">auto_awesome</span>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-black text-slate-900 tracking-tight">Voucher Siêu Cấp</h3>
+                            <p class="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-[0.2em] flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                Cập nhật từ hệ thống Linked
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeCouponModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all duration-300">
+                        <span class="material-symbols-outlined text-[28px]">close</span>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="p-10 max-h-[50vh] overflow-y-auto custom-scrollbar bg-slate-50/30">
+                    <div id="coupon-list-container" class="grid grid-cols-1 gap-6">
+                        <!-- Data populated by JS -->
+                        <div class="flex flex-col items-center justify-center py-20 gap-4">
+                            <div class="relative">
+                                <div class="w-12 h-12 border-4 border-slate-100 border-t-primary rounded-full animate-spin"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="w-2 h-2 bg-primary rounded-full"></div>
+                                </div>
+                            </div>
+                            <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Đang săn tìm Voucher...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="px-10 py-8 bg-white border-t border-slate-100 flex justify-between items-center">
+                    <div class="flex flex-col gap-1">
+                        <p class="text-[10px] font-black text-slate-900 uppercase tracking-widest">Trợ giúp Marketing</p>
+                        <p class="text-[11px] font-medium text-slate-400">Chọn mã có tỉ lệ giảm cao nhất để thu hút học viên.</p>
+                    </div>
+                    <button type="button" onclick="closeCouponModal()" class="px-8 py-3.5 text-xs font-black text-white bg-slate-900 rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95 uppercase tracking-widest">
+                        Đã hiểu
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+            
+            #coupon-modal.modal-visible { display: flex !important; }
+            #coupon-modal.modal-visible .modal-backdrop { opacity: 1; }
+            #coupon-modal.modal-visible .modal-content { transform: scale(1); opacity: 1; }
+
+            /* Voucher Card Styling */
+            .voucher-card-glass {
+                background: rgba(255, 255, 255, 0.8);
+                backdrop-filter: blur(8px);
+                border: 1px solid rgba(255, 255, 255, 0.5);
+            }
+        </style>
     </form>
 </div>
 
@@ -363,66 +479,116 @@
         updateProgressBar();
 
         // ─── LOAD AND SELECT PLATFORM COUPONS ───
+        const couponToggle = document.getElementById('coupon-toggle');
+        const voucherActionContainer = document.getElementById('voucher-action-container');
+        const couponInput = document.getElementById('CouponIdInput');
+
+        // Modal triggers
+        window.openCouponModal = function() {
+            const modal = document.getElementById('coupon-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            modal.offsetHeight; // force reflow
+            modal.classList.add('modal-visible');
+            loadPlatformCoupons();
+        };
+
+        window.closeCouponModal = function() {
+            const modal = document.getElementById('coupon-modal');
+            if (!modal) return;
+            modal.classList.remove('modal-visible');
+            setTimeout(() => { 
+                modal.classList.add('hidden'); 
+                modal.style.display = ''; 
+            }, 300);
+        };
+
         async function loadPlatformCoupons() {
+            const container = document.getElementById('coupon-list-container');
+            if (!container) return;
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-20 gap-4">
+                    <div class="w-10 h-10 border-4 border-slate-100 border-t-primary rounded-full animate-spin"></div>
+                    <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Đang săn tìm Voucher...</p>
+                </div>
+            `;
+            
             try {
                 const res = await fetch('/Coupon/PlatformActive');
                 const result = await res.json();
-                const container = document.getElementById('voucher-selection-container');
                 
                 if (result.success && result.data && result.data.length > 0) {
-                    container.innerHTML = result.data.map(c => `
-                        <div class="voucher-option cursor-pointer group relative overflow-hidden rounded-2xl p-5 border-2 border-slate-100 hover:border-emerald-500/40 transition-all bg-white shadow-sm hover:shadow-md" 
-                             onclick="selectVoucher(this, ${c.couponId})">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center font-black group-[.selected]:bg-emerald-500 group-[.selected]:text-white transition-colors duration-300">
-                                    ${c.couponType === 'percentage' ? c.discountValue + '%' : '$' + c.discountValue}
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-slate-900 tracking-widest font-mono">${c.couponCode}</h4>
-                                    <p class="text-[10px] text-slate-500 uppercase mt-0.5">HSD: ${new Date(c.endDate).toLocaleDateString('vi-VN')}</p>
+                    container.innerHTML = result.data.map(c => {
+                        const discountText = c.couponType === 'percentage' ? `${c.discountValue}%` : `$${c.discountValue}`;
+                        const expiryText = c.endDate ? new Date(c.endDate).toLocaleDateString('vi-VN') : 'Vĩnh viễn';
+                        const isCurrent = couponInput.value === String(c.couponId);
+                        
+                        return `
+                            <div class="group relative overflow-hidden rounded-[2rem] p-6 border-2 ${isCurrent ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-100 bg-white'} hover:border-emerald-500/40 hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-500">
+                                ${isCurrent ? '<div class="absolute top-0 right-0 bg-emerald-500 text-white text-[8px] font-black px-4 py-1.5 rounded-bl-xl uppercase tracking-widest">Đang chọn</div>' : ''}
+                                
+                                <div class="flex items-center justify-between gap-6">
+                                    <div class="flex items-center gap-5">
+                                        <div class="w-16 h-16 rounded-2xl ${isCurrent ? 'bg-emerald-500' : 'bg-slate-900'} text-white flex flex-col items-center justify-center group-hover:bg-emerald-500 transition-all duration-500 shadow-lg shadow-slate-200">
+                                            <span class="text-xl font-black leading-none">${discountText}</span>
+                                            <span class="text-[9px] font-bold uppercase opacity-60 mt-1">OFF</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-lg font-black text-slate-900 tracking-widest font-mono">${c.couponCode}</h4>
+                                            <div class="flex items-center gap-2 mt-1.5">
+                                                <span class="material-symbols-outlined text-slate-300 text-[14px]">event_available</span>
+                                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Hết hạn: ${expiryText}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    ${isCurrent ? `
+                                        <div class="flex items-center gap-2 px-4 py-2.5 bg-emerald-100 text-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest">
+                                            <span class="material-symbols-outlined text-[16px]">check_circle</span> Đã chọn
+                                        </div>
+                                    ` : `
+                                        <button type="button" onclick="selectPlatformCoupon(${c.couponId}, '${c.couponCode}', 'Giảm ${discountText}', '${expiryText}')" class="px-6 py-3 bg-slate-900 text-white hover:bg-emerald-500 text-[10px] font-black rounded-xl uppercase tracking-widest transition-all duration-300 active:scale-95 shadow-lg shadow-slate-200 hover:shadow-emerald-500/20 shrink-0">Áp dụng</button>
+                                    `}
                                 </div>
                             </div>
-                            <!-- Selection Indicator -->
-                            <div class="absolute top-1/2 -translate-y-1/2 right-5 w-6 h-6 rounded-full border-2 border-slate-200 flex items-center justify-center group-[.selected]:border-emerald-500 group-[.selected]:bg-emerald-500 transition-colors duration-300">
-                                <span class="material-symbols-outlined text-white text-[14px] opacity-0 group-[.selected]:opacity-100 transition-opacity">check</span>
-                            </div>
-                            <!-- Decorative background icon -->
-                            <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-[80px] text-slate-50 opacity-0 group-[.selected]:opacity-10 pointer-events-none transition-opacity">loyalty</span>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 } else {
-                    container.innerHTML = `<div class="col-span-full py-8 text-center text-slate-400 font-bold text-sm bg-slate-50 rounded-xl border border-slate-100">Hiện tại không có voucher nền tảng nào đang hoạt động.</div>`;
+                    container.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400 font-bold text-sm bg-slate-50 border border-slate-100 rounded-2xl">Hiện tại không có voucher nào khả dụng.</div>';
                 }
-            } catch(e) {
-                console.error(e);
-                const container = document.getElementById('voucher-selection-container');
-                if (container) container.innerHTML = `<div class="col-span-full text-center text-red-400 text-sm py-4">Lỗi tải danh sách voucher.</div>`;
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<div class="col-span-full py-8 text-center text-rose-500 font-bold text-sm bg-rose-50 border border-rose-100 rounded-2xl">Lỗi hệ thống khi tải danh sách voucher.</div>';
             }
         }
-        
-        window.selectVoucher = function(el, id) {
-            const couponInput = document.getElementById('CouponIdInput');
-            const isCurrentlySelected = el.classList.contains('selected');
+
+        window.selectPlatformCoupon = function(id, code, discount, expiry) {
+            couponInput.value = id;
             
-            // Bỏ chọn tất cả
-            document.querySelectorAll('.voucher-option').forEach(v => {
-                v.classList.remove('selected', 'border-emerald-500');
-                v.classList.add('border-slate-100');
-            });
+            // Update main view preview
+            document.getElementById('display-coupon-code').textContent = code;
+            document.getElementById('display-coupon-discount').textContent = discount;
+            document.getElementById('display-coupon-expiry').textContent = expiry;
             
-            if (isCurrentlySelected) {
-                // Nếu đang chọn mà click lại -> Hủy chọn
-                couponInput.value = '';
-            } else {
-                // Nếu chưa chọn -> Chọn
-                el.classList.add('selected', 'border-emerald-500');
-                el.classList.remove('border-slate-100');
-                couponInput.value = id;
-            }
+            // Switch views
+            document.getElementById('no-voucher-selected-state').classList.add('hidden');
+            document.getElementById('voucher-selected-state').classList.remove('hidden');
+            
+            closeCouponModal();
         };
-        
-        // Khởi chạy load voucher khi tải trang
-        loadPlatformCoupons();
+
+        couponToggle.addEventListener('change', function() {
+            if (this.checked) {
+                voucherActionContainer.classList.remove('hidden');
+            } else {
+                voucherActionContainer.classList.add('hidden');
+                // Hủy chọn coupon
+                couponInput.value = '';
+                document.getElementById('no-voucher-selected-state').classList.remove('hidden');
+                document.getElementById('voucher-selected-state').classList.add('hidden');
+            }
+        });
 
     </script>
 }

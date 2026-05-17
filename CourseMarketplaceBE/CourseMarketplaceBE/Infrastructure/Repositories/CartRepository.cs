@@ -60,6 +60,7 @@ public class CartRepository : ICartRepository
 
     public async Task<List<Coupon>> GetActiveAvailableCouponsAsync(DateTime now)
         => await _context.Coupons
+            .Include(cp => cp.Courses)
             .Where(cp =>
                 cp.IsActive == true &&
                 (cp.StartDate == null || cp.StartDate <= now) &&

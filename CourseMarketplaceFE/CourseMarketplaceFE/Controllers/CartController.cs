@@ -23,6 +23,43 @@ public class CartController : Controller
         _api = api;
     }
 
+    private Dictionary<int, string> GetCouponMapFromCookie()
+    {
+        var cookie = HttpContext.Request.Cookies[CouponCookieName];
+        var map = new Dictionary<int, string>();
+        if (string.IsNullOrWhiteSpace(cookie)) return map;
+
+        var parts = cookie.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var part in parts)
+        {
+            var kvp = part.Split(':');
+            if (kvp.Length == 2 && int.TryParse(kvp[0], out int cid))
+            {
+                map[cid] = kvp[1].Trim().ToUpper();
+            }
+        }
+        return map;
+    }
+
+    private void SaveCouponMapToCookie(Dictionary<int, string> map)
+    {
+        var cookieValue = string.Join(",", map.Select(kvp => $"{kvp.Key}:{kvp.Value}"));
+        if (string.IsNullOrWhiteSpace(cookieValue))
+        {
+            HttpContext.Response.Cookies.Delete(CouponCookieName);
+        }
+        else
+        {
+            HttpContext.Response.Cookies.Append(CouponCookieName, cookieValue, new CookieOptions
+            {
+                Expires  = DateTimeOffset.UtcNow.AddHours(1),
+                HttpOnly = false,
+                SameSite = SameSiteMode.Lax,
+                Path     = "/"
+            });
+        }
+    }
+
     // ─── 1. XEM GIỎ HÀNG ─────────────────────────────────────────────────
     /// <summary>
     /// GET /Cart
@@ -34,10 +71,11 @@ public class CartController : Controller
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
             return Redirect("/Account/Login");
 
-        // Đọc coupon code từ Cookie (nhất quán với cách dùng AccessToken cookie)
-        var couponCode = HttpContext.Request.Cookies[CouponCookieName];
+        // Đọc map coupon từ Cookie
+        var couponMap = GetCouponMapFromCookie();
+        var couponCode = string.Join(",", couponMap.Values.Distinct());
 
-        // Gọi API BE summary, truyền couponCode vào query string nếu có
+        // Gọi API BE summary, truyền danh sách couponCode vào query string nếu có
         var url = string.IsNullOrWhiteSpace(couponCode)
             ? "cart/summary"
             : $"cart/summary?couponCode={Uri.EscapeDataString(couponCode)}";
@@ -86,18 +124,13 @@ public class CartController : Controller
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult ApplyCoupon(string couponCode)
+    public IActionResult ApplyCoupon(string couponCode, int? courseId)
     {
-        if (!string.IsNullOrWhiteSpace(couponCode))
+        if (!string.IsNullOrWhiteSpace(couponCode) && courseId.HasValue)
         {
-            // Lưu vào Cookie — hết hạn sau 1 giờ, không cần HttpOnly (không nhạy cảm)
-            HttpContext.Response.Cookies.Append(CouponCookieName, couponCode.Trim().ToUpper(), new CookieOptions
-            {
-                Expires  = DateTimeOffset.UtcNow.AddHours(1),
-                HttpOnly = false,
-                SameSite = SameSiteMode.Lax,
-                Path     = "/"
-            });
+            var map = GetCouponMapFromCookie();
+            map[courseId.Value] = couponCode.Trim().ToUpper();
+            SaveCouponMapToCookie(map);
         }
 
         return RedirectToAction(nameof(Index));
@@ -106,13 +139,18 @@ public class CartController : Controller
     // ─── 3. XÓA COUPON ───────────────────────────────────────────────────
     /// <summary>
     /// POST /Cart/RemoveCoupon
-    /// Xóa cookie coupon.
+    /// Xóa coupon của một khóa học cụ thể.
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult RemoveCoupon()
+    public IActionResult RemoveCoupon(int courseId)
     {
-        HttpContext.Response.Cookies.Delete(CouponCookieName);
+        var map = GetCouponMapFromCookie();
+        if (map.ContainsKey(courseId))
+        {
+            map.Remove(courseId);
+            SaveCouponMapToCookie(map);
+        }
         return RedirectToAction(nameof(Index));
     }
 
@@ -211,8 +249,9 @@ public class CartController : Controller
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
             return Redirect("/Account/Login");
 
-        // Đọc coupon code từ Cookie (nhất quán với trang giỏ hàng)
-        var couponCode = HttpContext.Request.Cookies[CouponCookieName];
+        // Đọc map coupon từ Cookie và ghép thành chuỗi phân tách bằng dấu phẩy
+        var couponMap = GetCouponMapFromCookie();
+        var couponCode = string.Join(",", couponMap.Values.Distinct());
 
         // Tạo base URL của FE (dựa vào Request context)
         var baseUrl = $"{Request.Scheme}://{Request.Host}";

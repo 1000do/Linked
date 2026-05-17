@@ -382,7 +382,7 @@
                     ? parseFloat(document.getElementById("minOrderValue").value)
                     : 0,
                 startDate: formatDateLocal(document.getElementById("startDate").value),
-                endDate: formatDateLocal(document.getElementById("endDate").value),
+                endDate: formatDateLocalEnd(document.getElementById("endDate").value),
                 usageLimit: document.getElementById("usageLimit").value
                     ? parseInt(document.getElementById("usageLimit").value)
                     : null,
@@ -419,6 +419,10 @@
 
         function formatDateLocal(dateStr) {
             return dateStr ? dateStr + "T00:00:00" : null;
+        }
+
+        function formatDateLocalEnd(dateStr) {
+            return dateStr ? dateStr + "T23:59:59" : null;
         }
 
         function applyFilter() {
