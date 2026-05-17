@@ -69,6 +69,15 @@ public class TransactionController : Controller
         public string InstructorName { get; set; } = "";
         public string InstructorEmail { get; set; } = "";
         public decimal GrossAmount { get; set; }
+        
+        // ★ Mới thêm: Thông tin Coupon
+        public decimal OriginalPrice { get; set; }
+        public decimal DiscountAmount { get; set; }
+        public bool CouponUsed { get; set; }
+        public string? CouponCode { get; set; }
+        public string? CouponType { get; set; }
+        public decimal? CouponDiscountValue { get; set; }
+
         public decimal TransferRate { get; set; }
         public decimal InstructorPayout { get; set; }
         public decimal PlatformProfit { get; set; }
@@ -89,6 +98,40 @@ public class TransactionController : Controller
         ViewBag.Status = status;
 
         var query = $"transactions?page={page}&pageSize={pageSize}";
+        if (!string.IsNullOrEmpty(keyword)) query += $"&keyword={Uri.EscapeDataString(keyword)}";
+        if (!string.IsNullOrEmpty(sortBy)) query += $"&sortBy={Uri.EscapeDataString(sortBy)}";
+        if (!string.IsNullOrEmpty(status)) query += $"&status={Uri.EscapeDataString(status)}";
+
+        var resp = await _api.GetAsync(query);
+        if (resp.IsSuccessStatusCode)
+        {
+            var json = await resp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<TransactionPagedVM>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+                vm = parsed.Data;
+        }
+        else if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        return View(vm);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET /Transaction/History?page=1&pageSize=10
+    // Lịch sử mua hàng cho Người dùng (Học viên)
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpGet]
+    public async Task<IActionResult> History(int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null)
+    {
+        var vm = new TransactionPagedVM { Page = page, PageSize = pageSize };
+
+        ViewBag.Keyword = keyword;
+        ViewBag.SortBy = sortBy;
+        ViewBag.Status = status;
+
+        var query = $"transactions/my?page={page}&pageSize={pageSize}";
         if (!string.IsNullOrEmpty(keyword)) query += $"&keyword={Uri.EscapeDataString(keyword)}";
         if (!string.IsNullOrEmpty(sortBy)) query += $"&sortBy={Uri.EscapeDataString(sortBy)}";
         if (!string.IsNullOrEmpty(status)) query += $"&status={Uri.EscapeDataString(status)}";
@@ -210,6 +253,42 @@ public class TransactionController : Controller
         {
             TempData["Error"] = "Dữ liệu giao dịch không hợp lệ.";
             return RedirectToAction(nameof(Index));
+        }
+
+        return View(parsed.Data);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET /Transaction/HistoryDetail/{id}
+    // Chi tiết giao dịch dành cho Người dùng (Học viên)
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpGet]
+    public async Task<IActionResult> HistoryDetail(int id)
+    {
+        var resp = await _api.GetAsync($"transactions/{id}");
+
+        if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            return RedirectToAction("Login", "Account");
+
+        if (resp.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            TempData["Error"] = $"Không tìm thấy giao dịch #{id}.";
+            return RedirectToAction(nameof(History));
+        }
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            TempData["Error"] = "Không thể tải chi tiết giao dịch.";
+            return RedirectToAction(nameof(History));
+        }
+
+        var json = await resp.Content.ReadAsStringAsync();
+        var parsed = JsonSerializer.Deserialize<ApiResp<TransactionDetailVM>>(json, _jsonOpts);
+
+        if (parsed?.Data == null)
+        {
+            TempData["Error"] = "Dữ liệu giao dịch không hợp lệ.";
+            return RedirectToAction(nameof(History));
         }
 
         return View(parsed.Data);

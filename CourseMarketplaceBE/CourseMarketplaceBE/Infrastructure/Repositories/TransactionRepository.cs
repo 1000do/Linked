@@ -156,7 +156,30 @@ public class TransactionRepository : ITransactionRepository
                     ? t.OrderItem.Course.Instructor.InstructorNavigation.UserNavigation.Email ?? "N/A" : "N/A",
 
                 // ── Phân bổ tài chính ★ ───────────────────────────────────
+                // ★ Ưu tiên đọc từ snapshot order_items (dữ liệu bất biến tại thời điểm mua)
+                //   Fallback về courses.price nếu chưa có dữ liệu snapshot (giao dịch cũ)
                 GrossAmount      = t.Amount,
+                OriginalPrice    = t.OrderItem != null && t.OrderItem.OriginalPrice.HasValue
+                    ? t.OrderItem.OriginalPrice.Value
+                    : (t.OrderItem != null && t.OrderItem.Course != null ? t.OrderItem.Course.Price : t.Amount),
+                DiscountAmount   = t.OrderItem != null && t.OrderItem.DiscountAmount > 0
+                    ? t.OrderItem.DiscountAmount
+                    : (t.OrderItem != null && t.OrderItem.Course != null 
+                        ? Math.Max(t.OrderItem.Course.Price - t.Amount, 0) : 0m),
+                CouponUsed       = t.OrderItem != null && t.OrderItem.CouponUsed == true,
+                CouponCode       = t.OrderItem != null && t.OrderItem.CouponCode != null
+                    ? t.OrderItem.CouponCode
+                    : (t.OrderItem != null && t.OrderItem.CouponUsed == true
+                       && t.OrderItem.Course != null && t.OrderItem.Course.Coupon != null
+                        ? t.OrderItem.Course.Coupon.CouponCode : null),
+                CouponType       = t.OrderItem != null && t.OrderItem.CouponType != null
+                    ? t.OrderItem.CouponType
+                    : (t.OrderItem != null && t.OrderItem.CouponUsed == true
+                       && t.OrderItem.Course != null && t.OrderItem.Course.Coupon != null
+                        ? t.OrderItem.Course.Coupon.CouponType : null),
+                CouponDiscountValue = t.OrderItem != null && t.OrderItem.CouponUsed == true
+                                      && t.OrderItem.Course != null && t.OrderItem.Course.Coupon != null
+                    ? t.OrderItem.Course.Coupon.DiscountValue : null,
                 TransferRate     = t.TransferRate,
                 // Payout = amount lấy từ instructor_payouts (là số thực tế đã tính)
                 InstructorPayout = t.InstructorPayouts.Any()
@@ -232,6 +255,62 @@ public class TransactionRepository : ITransactionRepository
                     : "N/A",
 
                 InstructorName = "Me"
+            });
+
+        var totalCount = await query.CountAsync();
+        var skip = (page - 1) * pageSize;
+        var items = await query.Skip(skip).Take(pageSize).ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    public async Task<(List<TransactionListDto> Items, int TotalCount)> GetUserTransactionsAsync(int userId, int page, int pageSize, string? keyword = null, string? sortBy = "date_desc", string? status = null)
+    {
+        var baseQuery = _context.Transactions
+            .Where(t => t.AccountFrom == userId);
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var keywordLower = keyword.ToLower();
+            baseQuery = baseQuery.Where(t =>
+                (t.OrderItem != null && t.OrderItem.Course != null && t.OrderItem.Course.Title != null && t.OrderItem.Course.Title.ToLower().Contains(keywordLower))
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            var statusLower = status.ToLower();
+            baseQuery = baseQuery.Where(t => t.TransactionsStatus != null && t.TransactionsStatus.ToLower() == statusLower);
+        }
+
+        switch (sortBy?.ToLower())
+        {
+            case "date_asc":
+                baseQuery = baseQuery.OrderBy(t => t.TransactionCreatedAt);
+                break;
+            case "amount_desc":
+                baseQuery = baseQuery.OrderByDescending(t => t.Amount);
+                break;
+            case "amount_asc":
+                baseQuery = baseQuery.OrderBy(t => t.Amount);
+                break;
+            default: // date_desc
+                baseQuery = baseQuery.OrderByDescending(t => t.TransactionCreatedAt);
+                break;
+        }
+
+        var query = baseQuery
+            .Select(t => new TransactionListDto
+            {
+                TransactionId   = t.TransactionId,
+                StripeSessionId = t.StripeSessionId,
+                Date            = t.TransactionCreatedAt,
+                Amount          = t.Amount,
+                Currency        = t.Currency ?? "USD",
+                Status          = t.TransactionsStatus,
+                BuyerName       = "Me",
+                CourseTitle     = t.OrderItem != null && t.OrderItem.Course != null ? t.OrderItem.Course.Title ?? "N/A" : "N/A",
+                InstructorName  = t.OrderItem != null && t.OrderItem.Course != null && t.OrderItem.Course.Instructor != null && t.OrderItem.Course.Instructor.InstructorNavigation != null ? t.OrderItem.Course.Instructor.InstructorNavigation.FullName ?? "N/A" : "N/A"
             });
 
         var totalCount = await query.CountAsync();

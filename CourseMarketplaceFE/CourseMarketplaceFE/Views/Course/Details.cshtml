@@ -40,7 +40,7 @@
             </div>
             
             <div class="flex items-center gap-2 text-sm text-slate-300">
-                <span>Created by <a href="#" class="text-[#cec0fc] hover:text-white underline font-bold">@Model.InstructorName</a></span>
+                <span>Created by <a href="/Instructor/Profile/@Model.InstructorId" class="text-[#cec0fc] hover:text-white underline font-bold">@Model.InstructorName</a></span>
             </div>
             
             <div class="mt-4 flex items-center gap-6 text-sm text-slate-300">
@@ -348,7 +348,9 @@
             <div class="flex flex-col gap-4">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h3 class="text-[#a435f0] font-bold text-lg underline hover:text-[#8710d8] cursor-pointer">@Model.InstructorName</h3>
+                            <a href="/Instructor/Profile/@Model.InstructorId">
+                                <h3 class="text-[#a435f0] font-bold text-lg underline hover:text-[#8710d8] cursor-pointer">@Model.InstructorName</h3>
+                            </a>
                             <p class="text-slate-500 text-sm">@(string.IsNullOrEmpty(Model.InstructorProfessionalTitle) ? "Instructor" : Model.InstructorProfessionalTitle)</p>
                         </div>
                         @if (!Model.IsOwner && !isManager)

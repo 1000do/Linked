@@ -85,7 +85,12 @@ public class UserProfileService : IUserProfileService
             request.Bio,
             dob,
             avatarUrl,
-            request.PhoneNumber
+            request.PhoneNumber,
+            request.ProfessionalTitle,
+            request.ExpertiseCategories,
+            request.LinkedinUrl,
+            request.YoutubeUrl,
+            request.FacebookUrl
         );
     }
 

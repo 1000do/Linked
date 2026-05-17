@@ -6,21 +6,21 @@
 }
 
 @section HeaderActions {
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-4">
         <div class="relative group">
-            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-[20px]">search</span>
-            <input id="search" placeholder="Tìm theo mã..." oninput="applyFilter()" class="pl-10 pr-4 py-2 text-sm font-medium border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all w-56 bg-slate-50 focus:bg-white text-slate-800 placeholder:text-slate-400 shadow-sm" />
+            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-all text-[20px]">search</span>
+            <input id="search" placeholder="Tìm kiếm chiến dịch..." oninput="applyFilter()" class="pl-11 pr-4 py-2.5 text-sm font-bold border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all w-64 bg-slate-50/50 focus:bg-white text-slate-800 placeholder:text-slate-400 placeholder:font-medium shadow-sm" />
         </div>
 
         <div class="relative">
-            <select id="filter" onchange="applyFilter()" class="appearance-none border border-slate-200 rounded-lg pl-4 pr-10 py-2 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow text-slate-700 shadow-sm cursor-pointer">
-                <option value="">Tất cả trạng thái</option>
+            <select id="filter" onchange="applyFilter()" class="appearance-none border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-sm font-black bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all text-slate-700 shadow-sm cursor-pointer hover:border-slate-300">
+                <option value="">Tất cả chiến dịch</option>
                 <option value="active">Đang hoạt động</option>
                 <option value="inactive">Đã tạm dừng</option>
                 <option value="percentage">Loại % (Phần trăm)</option>
-                <option value="fixed">Loại $ (Cố định)</option>
+                <option value="fixed">Loại $ (USD)</option>
             </select>
-            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">expand_more</span>
         </div>
 
         <div class="relative">
@@ -46,131 +46,134 @@
     </div>
 }
 
-<div class="bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col h-[calc(100vh-8.5rem)] overflow-hidden">
+<div class="bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/50 flex flex-col h-[calc(100vh-9rem)] overflow-hidden transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
     <div class="flex-1 overflow-auto custom-scrollbar">
         <table class="w-full text-left border-collapse">
-            <thead class="sticky top-0 bg-white/95 backdrop-blur-md z-10 border-b border-slate-200 shadow-sm">
-                <tr class="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest">
-                    <th class="px-6 py-4">Mã Coupon</th>
-                    <th class="px-6 py-4">Loại</th>
-                    <th class="px-6 py-4 text-right">Mức giảm</th>
-                    <th class="px-6 py-4">Thời gian áp dụng</th>
-                    <th class="px-6 py-4 text-right">Đơn tối thiểu</th>
-                    <th class="px-6 py-4 text-center">Lượt dùng</th>
-                    <th class="px-6 py-4 text-center">Trạng thái</th>
-                    <th class="px-6 py-4 text-right">Thao tác</th>
+            <thead class="sticky top-0 bg-white/80 backdrop-blur-xl z-20 border-b border-slate-100">
+                <tr class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                    <th class="px-8 py-5">Chiến dịch / Mã</th>
+                    <th class="px-6 py-5">Phân loại</th>
+                    <th class="px-6 py-5 text-right">Mức ưu đãi</th>
+                    <th class="px-6 py-5">Thời gian</th>
+                    <th class="px-6 py-5 text-right">Điều kiện</th>
+                    <th class="px-6 py-5 text-center">Hiệu suất dùng</th>
+                    <th class="px-6 py-5 text-center">Trạng thái</th>
+                    <th class="px-8 py-5 text-right">Thao tác</th>
                 </tr>
             </thead>
-            <tbody id="table-body" class="divide-y divide-slate-100 text-sm">
+            <tbody id="table-body" class="divide-y divide-slate-50 text-sm">
                 <!-- Data populated by JS -->
+                <tr><td colspan="8" class="px-6 py-32 text-center"><div class="flex justify-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div></td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
 <!-- Modal Create / Edit Coupon -->
-<div id="modal-coupon" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+<div id="modal-coupon" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity duration-300" onclick="closeModal()"></div>
 
-    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl relative z-10 flex flex-col overflow-hidden border border-slate-200 transform transition-all">
+    <div id="modal-content" class="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl relative z-10 flex flex-col overflow-hidden border border-slate-100 transform transition-all duration-500 scale-95 opacity-0">
         <!-- Modal Header -->
-        <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span class="material-symbols-outlined text-primary text-[20px]">local_activity</span>
+        <div class="px-8 py-7 border-b border-slate-50 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shadow-inner">
+                    <span class="material-symbols-outlined text-primary text-[24px]">auto_awesome</span>
                 </div>
                 <div>
-                    <h3 class="text-base font-extrabold text-slate-900 tracking-tight" id="modal-title">Tạo mã giảm giá</h3>
-                    <p class="text-xs font-medium text-slate-500 mt-0.5">Thiết lập điều kiện áp dụng mã cho học viên</p>
+                    <h3 class="text-lg font-black text-slate-900 tracking-tight" id="modal-title">Cấu hình ưu đãi</h3>
+                    <p class="text-[11px] font-bold text-slate-400 mt-0.5 uppercase tracking-wider">Hệ thống Mega Sale 2026</p>
                 </div>
             </div>
-            <button type="button" onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
-                <span class="material-symbols-outlined text-[20px]">close</span>
+            <button type="button" onclick="closeModal()" class="w-10 h-10 flex items-center justify-center rounded-full text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all">
+                <span class="material-symbols-outlined text-[24px]">close</span>
             </button>
         </div>
 
         <!-- Modal Body -->
-        <form id="coupon-form" class="p-6 space-y-5">
+        <form id="coupon-form" class="p-8 space-y-6">
             <!-- Code Input -->
-            <div>
-                <label class="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wide">Mã giảm giá <span class="text-red-500">*</span></label>
-                <div class="relative">
-                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">tag</span>
-                    <input id="code" class="w-full border border-slate-200 rounded-lg pl-9 pr-3 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary uppercase transition-all bg-slate-50 focus:bg-white placeholder:font-medium placeholder:normal-case" placeholder="Nhập mã (VD: SUMMER2026)" />
+            <div class="space-y-2">
+                <label class="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Mã định danh chiến dịch</label>
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors text-[20px]">qr_code_2</span>
+                    <input id="code" class="w-full border-2 border-slate-100 rounded-2xl pl-12 pr-4 py-3.5 text-base font-black focus:outline-none focus:ring-0 focus:border-primary uppercase transition-all bg-slate-50/50 focus:bg-white placeholder:font-bold placeholder:text-slate-300" placeholder="VD: SUMMERFLASH" />
                 </div>
-                <p id="err-code" class="text-red-500 text-[11px] font-bold mt-1.5 hidden flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span> Bắt buộc nhập mã</p>
+                <p id="err-code" class="text-rose-500 text-[10px] font-black mt-1.5 hidden flex items-center gap-1.5 ml-1 animate-pulse uppercase tracking-tight"><span class="material-symbols-outlined text-[14px]">report_problem</span> Trường này là bắt buộc</p>
             </div>
 
             <!-- Type & Value -->
-            <div class="grid grid-cols-2 gap-5">
-                <div>
-                    <label class="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wide">Loại giảm</label>
+            <div class="grid grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Cơ chế ưu đãi</label>
                     <div class="relative">
-                        <select id="type" class="w-full appearance-none border border-slate-200 rounded-lg pl-3 pr-8 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white cursor-pointer">
-                            <option value="percentage">Theo phần trăm (%)</option>
-                            <option value="fixed">Tiền mặt (VNĐ)</option>
+                        <select id="type" class="w-full appearance-none border-2 border-slate-100 rounded-2xl pl-4 pr-10 py-3.5 text-sm font-black focus:outline-none focus:border-primary transition-all bg-slate-50/50 focus:bg-white cursor-pointer hover:border-slate-200">
+                            <option value="percentage">Giảm theo %</option>
+                            <option value="fixed">Giảm tiền mặt ($)</option>
                         </select>
-                        <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">arrow_drop_down</span>
+                        <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">unfold_more</span>
                     </div>
                 </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wide">Mức giảm <span class="text-red-500">*</span></label>
-                    <input id="value" type="number" step="0.01" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 focus:bg-white" placeholder="0" />
-                    <p id="err-value" class="text-red-500 text-[11px] font-bold mt-1.5 hidden flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span> Giá trị không hợp lệ</p>
+                <div class="space-y-2">
+                    <label class="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Mức giảm</label>
+                    <div class="relative group">
+                        <input id="value" type="number" step="0.01" class="w-full border-2 border-slate-100 rounded-2xl px-4 py-3.5 text-base font-black focus:outline-none focus:border-primary transition-all bg-slate-50/50 focus:bg-white" placeholder="0.00" />
+                    </div>
+                    <p id="err-value" class="text-rose-500 text-[10px] font-black mt-1.5 hidden flex items-center gap-1.5 ml-1 uppercase tracking-tight"><span class="material-symbols-outlined text-[14px]">error</span> Giá trị không hợp lệ</p>
                 </div>
             </div>
 
-            <div class="h-px bg-slate-100 my-2"></div>
-
             <!-- Dates -->
-            <div class="grid grid-cols-2 gap-5">
-                <div>
-                    <label class="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wide">Ngày bắt đầu</label>
-                    <input id="startDate" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 focus:bg-white" />
+            <div class="grid grid-cols-2 gap-6 p-5 bg-slate-50/50 rounded-2xl border border-slate-100">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ngày bắt đầu</label>
+                    <input id="startDate" type="date" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-600 focus:outline-none focus:border-primary transition-all bg-white" />
                 </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wide">Ngày kết thúc</label>
-                    <input id="endDate" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 focus:bg-white" />
-                    <p id="err-date" class="text-red-500 text-[11px] font-bold mt-1.5 hidden flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span> Sai ngày</p>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ngày kết thúc</label>
+                    <input id="endDate" type="date" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-600 focus:outline-none focus:border-primary transition-all bg-white" />
                 </div>
             </div>
 
             <!-- Conditions -->
-            <div class="grid grid-cols-2 gap-5">
-                <div>
-                    <label class="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wide">Đơn tối thiểu</label>
-                    <div class="relative">
-                        <input id="minOrderValue" type="number" min="0" step="1000" class="w-full border border-slate-200 rounded-lg pl-3 pr-12 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 focus:bg-white" placeholder="0" />
-                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">VNĐ</span>
+            <div class="grid grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Đơn tối thiểu</label>
+                    <div class="relative group">
+                        <input id="minOrderValue" type="number" min="0" step="0.01" class="w-full border-2 border-slate-100 rounded-2xl pl-4 pr-12 py-3.5 text-base font-black focus:outline-none focus:border-primary transition-all bg-slate-50/50 focus:bg-white" placeholder="0" />
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-300 group-focus-within:text-primary">USD</span>
                     </div>
-                    <p class="text-[10px] font-medium text-slate-400 mt-1">Bỏ trống nếu không yêu cầu</p>
                 </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-700 block mb-1.5 uppercase tracking-wide">Lượt dùng tối đa</label>
-                    <input id="usageLimit" type="number" class="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 focus:bg-white placeholder:font-medium" placeholder="Không giới hạn (∞)" />
-                    <p id="err-usage" class="text-red-500 text-[11px] font-bold mt-1.5 hidden flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span> Phải ≥ 0</p>
+                <div class="space-y-2">
+                    <label class="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Lượt dùng tối đa</label>
+                    <input id="usageLimit" type="number" class="w-full border-2 border-slate-100 rounded-2xl px-4 py-3.5 text-base font-black focus:outline-none focus:border-primary transition-all bg-slate-50/50 focus:bg-white" placeholder="∞" />
                 </div>
             </div>
 
             <!-- Active Toggle -->
-            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100 mt-2">
-                <div>
-                    <p class="text-sm font-bold text-slate-900">Trạng thái kích hoạt</p>
-                    <p class="text-[11px] font-medium text-slate-500 mt-0.5">Mã có thể sử dụng ngay sau khi lưu</p>
+            <div class="flex items-center justify-between p-5 bg-emerald-50/30 rounded-2xl border border-emerald-100/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-emerald-600 text-[18px]">verified</span>
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-black text-slate-800 uppercase tracking-wider">Kích hoạt ngay</p>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Mã sẽ khả dụng ngay lập tức</p>
+                    </div>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" id="isActive" class="sr-only peer" checked>
-                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary transition-colors"></div>
+                    <div class="w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 transition-all duration-300"></div>
                 </label>
             </div>
 
             <!-- Actions -->
-            <div class="pt-2 flex justify-end gap-3 mt-4">
-                <button type="button" onclick="closeModal()" class="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+            <div class="pt-2 flex gap-3">
+                <button type="button" onclick="closeModal()" class="flex-1 py-4 text-sm font-black text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-2xl transition-all uppercase tracking-widest">
                     Hủy bỏ
                 </button>
-                <button type="submit" id="btnSubmit" class="px-6 py-2.5 text-sm font-bold bg-primary hover:bg-secondary text-white rounded-lg transition-all shadow-md shadow-primary/20 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-[18px]">save</span>
+                <button type="submit" id="btnSubmit" class="flex-[2] py-4 text-sm font-black bg-primary hover:bg-secondary text-white rounded-2xl transition-all shadow-xl shadow-primary/30 flex items-center justify-center gap-3 active:scale-95 uppercase tracking-widest">
+                    <span class="material-symbols-outlined text-[20px]">task_alt</span>
                     Lưu cấu hình
                 </button>
             </div>
@@ -194,8 +197,88 @@
                 });
                 
                 if(!res.ok) throw new Error("API failed");
-                allCoupons = await res.json();
-                applyFilter();
+                const result = await res.json();
+                const data = result.data || [];
+                
+                const tbody = document.getElementById("table-body");
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-24 text-center bg-slate-50/30">
+                        <div class="flex flex-col items-center justify-center text-slate-400">
+                            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100 mb-4">
+                                <span class="material-symbols-outlined text-3xl text-slate-300">local_activity</span>
+                            </div>
+                            <p class="text-base font-bold text-slate-700">Chưa có mã giảm giá nào</p>
+                            <p class="text-sm text-slate-500 mt-1 max-w-sm">Tạo mã giảm giá để thu hút học viên và tăng trưởng doanh thu.</p>
+                            <button onclick="openModal()" class="mt-4 px-4 py-2 text-sm font-bold text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors">Tạo ngay</button>
+                        </div>
+                    </td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = data.map(x => `
+                    <tr class="hover:bg-slate-50/80 transition-colors group">
+                        <td class="px-6 py-4 align-middle">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-md bg-slate-100 flex items-center justify-center border border-slate-200">
+                                    <span class="material-symbols-outlined text-[16px] text-slate-500">sell</span>
+                                </div>
+                                <span class="font-mono font-extrabold text-slate-900 text-sm tracking-wide uppercase">${x.couponCode}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 align-middle">
+                            ${x.couponType === 'percentage' 
+                                ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold uppercase tracking-wide"><span class="material-symbols-outlined text-[12px]">percent</span> Theo %</span>`
+                                : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold uppercase tracking-wide"><span class="material-symbols-outlined text-[12px]">payments</span> Cố định</span>`
+                            }
+                        </td>
+                        <td class="px-6 py-4 align-middle text-right">
+                            <span class="font-extrabold text-slate-900 text-sm">
+                                ${x.couponType === 'percentage' ? x.discountValue + '%' : '$' + new Intl.NumberFormat('en-US').format(x.discountValue)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 align-middle">
+                            <div class="flex flex-col gap-0.5">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-[14px] text-emerald-500">play_circle</span>
+                                    <span class="text-xs font-semibold text-slate-700">${x.startDate ? x.startDate.split("T")[0] : "Bất kỳ"}</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-[14px] text-red-400">stop_circle</span>
+                                    <span class="text-xs font-semibold text-slate-700">${x.endDate ? x.endDate.split("T")[0] : "Vô thời hạn"}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 align-middle text-right">
+                            ${x.minOrderValue > 0
+                                ? `<span class="text-sm font-bold text-slate-700">$${new Intl.NumberFormat('en-US').format(x.minOrderValue)}</span>`
+                                : `<span class="text-xs font-medium text-slate-400 px-2 py-0.5 rounded bg-slate-100">Không yêu cầu</span>`
+                            }
+                        </td>
+                        <td class="px-6 py-4 align-middle text-center">
+                            <div class="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg">
+                                <span class="font-extrabold text-slate-900">${x.usedCount || 0}</span>
+                                <span class="text-slate-400 text-xs">/</span>
+                                <span class="font-bold text-slate-600 text-xs">${x.usageLimit ?? "∞"}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 align-middle text-center">
+                            ${x.isActive 
+                                ? `<span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Đang chạy</span>`
+                                : `<span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-slate-500 bg-slate-100 px-2.5 py-1 rounded border border-slate-200"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Đã dừng</span>`
+                            }
+                        </td>
+                        <td class="px-6 py-4 align-middle text-right">
+                            <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button type="button" onclick="edit(${x.couponId})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-lg transition-all" title="Chỉnh sửa">
+                                    <span class="material-symbols-outlined text-[18px]">edit</span>
+                                </button>
+                                <button type="button" onclick="del(${x.couponId})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-lg transition-all" title="Xóa mã">
+                                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join("");
             } catch (e) {
                 console.error(e);
             }
@@ -307,15 +390,16 @@
         async function edit(id) {
             try {
                 const res = await fetch(`${API}/${id}`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
-                const x = await res.json();
+                const result = await res.json();
+                const x = result.data;
                 
                 editId = id;
                 document.getElementById("modal-title").innerText = "Chỉnh sửa Coupon";
                 openModal(true);
 
-                code.value = x.couponCode;
-                type.value = x.couponType;
-                value.value = x.discountValue;
+                document.getElementById("code").value = x.couponCode;
+                document.getElementById("type").value = x.couponType;
+                document.getElementById("value").value = x.discountValue;
                 document.getElementById("startDate").value = x.startDate ? x.startDate.split("T")[0] : "";
                 document.getElementById("endDate").value = x.endDate ? x.endDate.split("T")[0] : "";
                 document.getElementById("usageLimit").value = x.usageLimit ?? "";
@@ -332,13 +416,25 @@
                 editId = null;
             }
             document.querySelectorAll("[id^='err-']").forEach(e => e.classList.add("hidden"));
-            document.getElementById("modal-coupon").classList.remove("hidden");
-            setTimeout(() => document.getElementById("code").focus(), 100);
+            const modal = document.getElementById("modal-coupon");
+            const content = document.getElementById("modal-content");
+            modal.classList.remove("hidden");
+            setTimeout(() => {
+                content.classList.remove("scale-95", "opacity-0");
+                content.classList.add("scale-100", "opacity-100");
+                document.getElementById("code").focus();
+            }, 50);
         }
 
         function closeModal() {
-            document.getElementById("modal-coupon").classList.add("hidden");
-            editId = null;
+            const modal = document.getElementById("modal-coupon");
+            const content = document.getElementById("modal-content");
+            content.classList.remove("scale-100", "opacity-100");
+            content.classList.add("scale-95", "opacity-0");
+            setTimeout(() => {
+                modal.classList.add("hidden");
+                editId = null;
+            }, 300);
         }
         
         function showError(id, message) {
@@ -349,9 +445,9 @@
 
         function validateForm() {
             let isValid = true;
-            const codeVal = code.value.trim();
-            const valueVal = parseFloat(value.value);
-            const typeVal = type.value;
+            const codeVal = document.getElementById("code").value.trim();
+            const valueVal = parseFloat(document.getElementById("value").value);
+            const typeVal = document.getElementById("type").value;
             const startVal = document.getElementById("startDate").value;
             const endVal = document.getElementById("endDate").value;
             const usageVal = document.getElementById("usageLimit").value;
@@ -379,14 +475,14 @@
             btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> Đang lưu...`;
 
             const body = {
-                couponCode: code.value.trim(),
-                couponType: type.value,
-                discountValue: parseFloat(value.value),
+                couponCode: document.getElementById("code").value.trim(),
+                couponType: document.getElementById("type").value,
+                discountValue: parseFloat(document.getElementById("value").value),
                 minOrderValue: document.getElementById("minOrderValue").value
                     ? parseFloat(document.getElementById("minOrderValue").value)
                     : 0,
                 startDate: formatDateLocal(document.getElementById("startDate").value),
-                endDate: formatDateLocal(document.getElementById("endDate").value),
+                endDate: formatDateLocalEnd(document.getElementById("endDate").value),
                 usageLimit: document.getElementById("usageLimit").value
                     ? parseInt(document.getElementById("usageLimit").value)
                     : null,
@@ -394,17 +490,27 @@
             };
 
             try {
+                let res;
                 if (editId == null) {
-                    await fetch(API, { method: "POST", headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                    Swal.fire({ title: 'Thành công', text: 'Tạo mã giảm giá thành công!', icon: 'success', timer: 1500, showConfirmButton: false });
+                    res = await fetch(API, { method: "POST", headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
                 } else {
-                    await fetch(`${API}/${editId}`, { method: "PUT", headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                    Swal.fire({ title: 'Thành công', text: 'Cập nhật mã giảm giá thành công!', icon: 'success', timer: 1500, showConfirmButton: false });
+                    res = await fetch(`${API}/${editId}`, { method: "PUT", headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
                 }
-                closeModal();
-                applyFilter();
-            } catch {
-                Swal.fire('Lỗi', 'Đã xảy ra lỗi, vui lòng thử lại', 'error');
+
+                // API might return standard 400 errors without JSON or with different structure
+                let result = {};
+                try { result = await res.json(); } catch(err) {}
+
+                if (res.ok && result.success !== false) {
+                    Swal.fire({ title: 'Thành công', text: result.message || 'Thao tác thành công!', icon: 'success', timer: 1500, showConfirmButton: false });
+                    closeModal();
+                    applyFilter();
+                } else {
+                    Swal.fire('Thất bại', result.message || 'Không thể lưu dữ liệu.', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Lỗi', 'Đã xảy ra lỗi kết nối, vui lòng thử lại', 'error');
             }
 
             btn.disabled = false;
@@ -413,6 +519,10 @@
 
         function formatDateLocal(dateStr) {
             return dateStr ? dateStr + "T00:00:00" : null;
+        }
+
+        function formatDateLocalEnd(dateStr) {
+            return dateStr ? dateStr + "T23:59:59" : null;
         }
 
         function applyFilter() {

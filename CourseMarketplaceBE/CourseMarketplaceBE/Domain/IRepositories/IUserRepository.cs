@@ -12,7 +12,18 @@ public interface IUserRepository
     Task<User?> GetUserByIdAsync(int userId);
     Task UpdateLastLoginAsync(int accountId);
     Task<bool> RegisterUserAsync(Account account, User user);
-    Task<bool> UpdateUserProfileAsync(int userId, string fullName, string? bio, DateOnly? dob, string? avatarUrl, string? phoneNumber);
+    Task<bool> UpdateUserProfileAsync(
+        int userId, 
+        string fullName, 
+        string? bio, 
+        DateOnly? dob, 
+        string? avatarUrl, 
+        string? phoneNumber,
+        string? professionalTitle = null,
+        string? expertiseCategories = null,
+        string? linkedinUrl = null,
+        string? youtubeUrl = null,
+        string? facebookUrl = null);
     Task SaveRefreshTokenAsync(int accountId, string refreshToken, DateTime expiry);
     Task<Account?> GetAccountByRefreshTokenAsync(string refreshToken);
     Task RevokeRefreshTokenAsync(int accountId);

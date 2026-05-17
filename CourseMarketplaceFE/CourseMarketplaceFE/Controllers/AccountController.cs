@@ -215,7 +215,13 @@ namespace CourseMarketplaceFE.Controllers
                 Bio = data?.Bio,
                 PhoneNumber = data?.PhoneNumber,
                 AvatarUrl = data?.AvatarUrl,
-                DateOfBirth = data?.DateOfBirth?.ToString("yyyy-MM-dd")
+                DateOfBirth = data?.DateOfBirth?.ToString("yyyy-MM-dd"),
+                IsInstructor = data?.IsInstructor ?? false,
+                ProfessionalTitle = data?.ProfessionalTitle,
+                ExpertiseCategories = data?.ExpertiseCategories,
+                LinkedinUrl = data?.LinkedinUrl,
+                YoutubeUrl = data?.YoutubeUrl,
+                FacebookUrl = data?.FacebookUrl
             };
 
             return View(vm);
@@ -232,6 +238,15 @@ namespace CourseMarketplaceFE.Controllers
             content.Add(new StringContent(model.Bio ?? ""), "Bio");
             content.Add(new StringContent(model.PhoneNumber ?? ""), "PhoneNumber");
             content.Add(new StringContent(model.DateOfBirth ?? ""), "DateOfBirth");
+
+            if (model.IsInstructor)
+            {
+                content.Add(new StringContent(model.ProfessionalTitle ?? ""), "ProfessionalTitle");
+                content.Add(new StringContent(model.ExpertiseCategories ?? ""), "ExpertiseCategories");
+                content.Add(new StringContent(model.LinkedinUrl ?? ""), "LinkedinUrl");
+                content.Add(new StringContent(model.YoutubeUrl ?? ""), "YoutubeUrl");
+                content.Add(new StringContent(model.FacebookUrl ?? ""), "FacebookUrl");
+            }
 
             if (model.AvatarFile != null)
             {

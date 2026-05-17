@@ -231,11 +231,17 @@ namespace CourseMarketplaceFE.Controllers
                     using var doc = JsonDocument.Parse(json);
                     var root = doc.RootElement;
 
-                    // Get the new courseId and redirect to editor
+                    // Get the new courseId, apply coupon if selected, and redirect to editor
                     if (root.TryGetProperty("data", out var dataEl) &&
                         dataEl.TryGetProperty("courseId", out var idEl))
                     {
-                        return RedirectToAction("Editor", new { id = idEl.GetInt32() });
+                        int newCourseId = idEl.GetInt32();
+                        if (model.CouponId.HasValue && model.CouponId > 0)
+                        {
+                            var couponPayload = new { courseId = newCourseId, couponId = model.CouponId.Value };
+                            await _api.PostJsonAsync("coupon/platform/apply", couponPayload);
+                        }
+                        return RedirectToAction("Editor", new { id = newCourseId });
                     }
                 }
                 else
@@ -283,6 +289,11 @@ namespace CourseMarketplaceFE.Controllers
                         ViewBag.Price = data.TryGetProperty("price", out var p) ? p.GetDecimal() : 0;
                         ViewBag.ThumbnailUrl = data.TryGetProperty("courseThumbnailUrl", out var t) ? t.GetString() : "";
                         ViewBag.ModerationFeedback = data.TryGetProperty("moderationFeedback", out var mf) ? mf.GetString() : "";
+
+                        // Applied Coupon
+                        ViewBag.CouponCode = data.TryGetProperty("appliedCouponCode", out var ccode) && ccode.ValueKind != JsonValueKind.Null ? ccode.GetString() : null;
+                        ViewBag.CouponType = data.TryGetProperty("appliedCouponType", out var ctype) && ctype.ValueKind != JsonValueKind.Null ? ctype.GetString() : null;
+                        ViewBag.CouponValue = data.TryGetProperty("appliedCouponValue", out var cval) && cval.ValueKind != JsonValueKind.Null ? cval.GetDecimal() : 0;
 
                         // Parse lessons
                         if (data.TryGetProperty("lessons", out var lessonsEl) && lessonsEl.ValueKind == JsonValueKind.Array)

@@ -1,0 +1,225 @@
+<div class="bg-[#fcfcfd] min-h-screen pb-24 font-sans selection:bg-primary/10 selection:text-primary">
+    <!-- Header/Hero Profile -->
+    <div class="relative bg-[#0a0a0b] text-white overflow-hidden pt-20 pb-40">
+        @* Background decorative elements *@
+        <div class="absolute inset-0 opacity-20">
+            <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[60%] bg-primary rounded-full blur-[120px] animate-pulse"></div>
+            <div class="absolute bottom-[-10%] right-[-10%] w-[30%] h-[50%] bg-indigo-600 rounded-full blur-[100px] opacity-40"></div>
+        </div>
+        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+        
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="flex flex-col md:flex-row items-center md:items-start gap-12">
+                <!-- Avatar with animation -->
+                <div class="relative group">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-primary to-indigo-500 rounded-full blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+                    <div class="relative w-44 h-44 md:w-56 md:h-56 rounded-full border-[6px] border-white/5 overflow-hidden shadow-2xl bg-slate-900 ring-4 ring-white/10">
+                        @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+                        {
+                            <img src="@Model.AvatarUrl" alt="@Model.FullName" class="w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-700" />
+                        }
+                        else
+                        {
+                            <div class="w-full h-full flex items-center justify-center text-6xl font-black text-white/10 uppercase tracking-tighter">
+                                @(Model.FullName?[0].ToString() ?? "?")
+                            </div>
+                        }
+                    </div>
+                    @* Badge for verified/top instructor *@
+                    <div class="absolute bottom-4 right-4 w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-2xl border-4 border-[#0a0a0b] transform rotate-12">
+                        <span class="material-symbols-outlined text-white text-2xl fill-1">verified</span>
+                    </div>
+                </div>
+
+                <!-- Info Section -->
+                <div class="flex-1 text-center md:text-left">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10 mb-6">
+                        <span class="w-2 h-2 bg-green-400 rounded-full animate-ping"></span>
+                        <span class="text-[10px] font-black uppercase tracking-widest opacity-80">Giảng viên uy tín</span>
+                    </div>
+                    
+                    <h1 class="text-5xl md:text-7xl font-black mb-4 tracking-tighter leading-none">@Model.FullName</h1>
+                    <p class="text-xl md:text-2xl text-slate-400 font-medium mb-10 max-w-2xl leading-relaxed italic">"@Model.ProfessionalTitle"</p>
+                    
+                    @* Premium Stats Layout *@
+                    <div class="grid grid-cols-3 gap-4 md:gap-12 max-w-2xl">
+                        <div class="group">
+                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 group-hover:text-primary transition-colors">Học viên</p>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-3xl md:text-4xl font-black tabular-nums">@Model.TotalStudents.ToString("N0")</span>
+                                <span class="text-xs font-bold text-slate-500">+</span>
+                            </div>
+                        </div>
+                        <div class="group border-x border-white/5 px-4 md:px-12">
+                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 group-hover:text-amber-400 transition-colors">Đánh giá</p>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-3xl md:text-4xl font-black tabular-nums">@Model.TotalReviews.ToString("N0")</span>
+                                <span class="text-[10px] font-bold text-slate-500">lượt</span>
+                            </div>
+                        </div>
+                        <div class="group">
+                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 group-hover:text-indigo-400 transition-colors">Xếp hạng</p>
+                            <div class="flex items-center gap-2">
+                                <span class="text-3xl md:text-4xl font-black tabular-nums">@Model.AverageRating.ToString("F1")</span>
+                                <span class="material-symbols-outlined text-amber-400 fill-1 text-2xl animate-pulse">star</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social Action Column -->
+                <div class="flex md:flex-col gap-4">
+                    @if (!string.IsNullOrEmpty(Model.LinkedinUrl))
+                    {
+                        <a href="@Model.LinkedinUrl" target="_blank" class="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#0077b5] hover:border-transparent hover:shadow-[0_0_20px_rgba(0,119,181,0.4)] transition-all duration-300 group" title="LinkedIn">
+                            <i class="fa-brands fa-linkedin-in text-2xl group-hover:scale-125 transition-transform"></i>
+                        </a>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.YoutubeUrl))
+                    {
+                        <a href="@Model.YoutubeUrl" target="_blank" class="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#ff0000] hover:border-transparent hover:shadow-[0_0_20px_rgba(255,0,0,0.4)] transition-all duration-300 group" title="YouTube">
+                            <i class="fa-brands fa-youtube text-2xl group-hover:scale-125 transition-transform"></i>
+                        </a>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.FacebookUrl))
+                    {
+                        <a href="@Model.FacebookUrl" target="_blank" class="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#1877f2] hover:border-transparent hover:shadow-[0_0_20px_rgba(24,119,242,0.4)] transition-all duration-300 group" title="Facebook">
+                            <i class="fa-brands fa-facebook-f text-2xl group-hover:scale-125 transition-transform"></i>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Section -->
+    <div class="max-w-7xl mx-auto px-6 -mt-20 relative z-20">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            
+            <!-- Left Column: Bio & Courses (8/12) -->
+            <div class="lg:col-span-8 space-y-12">
+                
+                @* Bio Card *@
+                <div class="bg-white rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100 p-10 md:p-14 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-40 h-40 bg-slate-50 rounded-bl-[100px] -z-10"></div>
+                    <h2 class="text-3xl font-black text-slate-900 mb-8 flex items-center gap-4">
+                        <span class="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined">notes</span>
+                        </span>
+                        Về giảng viên
+                    </h2>
+                    <div class="prose prose-lg max-w-none text-slate-600 leading-relaxed font-medium">
+                        @if (!string.IsNullOrEmpty(Model.Bio))
+                        {
+                            @Html.Raw(Model.Bio)
+                        }
+                        else
+                        {
+                            <div class="py-10 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                                <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">person_off</span>
+                                <p class="text-slate-400">Giảng viên chưa cập nhật thông tin giới thiệu.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @* Courses Section *@
+                <div>
+                    <div class="flex items-center justify-between mb-8 px-4">
+                        <h2 class="text-3xl font-black text-slate-900 flex items-center gap-4">
+                            <span class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center">
+                                <span class="material-symbols-outlined">auto_stories</span>
+                            </span>
+                            Khóa học đang dạy (@Model.TotalCourses)
+                        </h2>
+                        <a href="#" class="text-sm font-black text-primary hover:underline decoration-2 underline-offset-4">Tất cả khóa học</a>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        @foreach (var course in Model.Courses)
+                        {
+                            <a href="/Course/Details/@course.CourseId" class="group bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden hover:shadow-2xl hover:shadow-slate-200 hover:-translate-y-2 transition-all duration-500">
+                                <div class="aspect-[16/10] relative overflow-hidden">
+                                    <img src="@(string.IsNullOrEmpty(course.ThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800" : course.ThumbnailUrl)" 
+                                         alt="@course.Title" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                    <div class="absolute bottom-4 left-6 right-6 flex items-center justify-between transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                                        <span class="bg-white text-slate-900 text-xs font-black px-4 py-2 rounded-xl shadow-xl">Xem chi tiết</span>
+                                        <span class="text-white font-black text-xl">$@course.Price.ToString("F2")</span>
+                                    </div>
+                                </div>
+                                <div class="p-8">
+                                    <h3 class="text-xl font-black text-slate-800 mb-6 line-clamp-2 h-14 group-hover:text-primary transition-colors">@course.Title</h3>
+                                    <div class="flex items-center justify-between pt-6 border-t border-slate-50">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="material-symbols-outlined text-amber-400 fill-1 text-lg">star</span>
+                                            <span class="text-slate-900 font-black">@course.Rating.ToString("F1")</span>
+                                        </div>
+                                        <div class="flex items-center gap-2 text-slate-400 text-xs font-bold">
+                                            <span class="material-symbols-outlined text-sm">group</span>
+                                            <span>@course.TotalStudents.ToString("N0") học viên</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Sidebar (4/12) -->
+            <div class="lg:col-span-4 space-y-8">
+                
+                @* Expertise Card *@
+                <div class="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 p-8 sticky top-24">
+                    <div class="mb-8">
+                        <h3 class="text-xl font-black text-slate-900 mb-2 flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">psychology</span>
+                            Lĩnh vực chuyên môn
+                        </h3>
+                        <div class="h-1 w-12 bg-primary/20 rounded-full"></div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-2 mb-10">
+                        @if (!string.IsNullOrEmpty(Model.ExpertiseCategories))
+                        {
+                            var cats = Model.ExpertiseCategories.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                            foreach (var cat in cats)
+                            {
+                                <span class="px-5 py-2.5 bg-slate-50 text-slate-600 text-xs font-black rounded-2xl border border-slate-100 hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-all cursor-default">@cat.Trim()</span>
+                            }
+                        }
+                    </div>
+
+                    @* Premium CTA *@
+                    <div class="relative rounded-3xl p-8 overflow-hidden group">
+                        <div class="absolute inset-0 bg-gradient-to-br from-primary to-indigo-600 group-hover:scale-110 transition-transform duration-700"></div>
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                        
+                        <div class="relative z-10 text-white">
+                            <h4 class="text-2xl font-black mb-4 leading-tight">Bắt đầu học ngay hôm nay?</h4>
+                            <p class="text-sm opacity-80 mb-8 font-medium leading-relaxed">Tham gia cùng hàng ngàn học viên khác để làm chủ các kỹ năng mới cùng @Model.FullName.</p>
+                            <a href="#courses" class="flex items-center justify-center gap-3 w-full py-4 bg-white text-primary font-black rounded-2xl shadow-xl shadow-black/10 hover:shadow-2xl hover:-translate-y-1 active:scale-95 transition-all">
+                                <span>Xem các khóa học</span>
+                                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    @* Help/Support Info *@
+                    <div class="mt-8 pt-8 border-t border-slate-50">
+                        <div class="flex items-center gap-4 text-slate-400">
+                            <span class="material-symbols-outlined text-xl">verified_user</span>
+                            <p class="text-[10px] font-bold uppercase tracking-widest leading-relaxed">Nội dung được bảo vệ bởi bản quyền và chính sách LinkedLearn</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+}

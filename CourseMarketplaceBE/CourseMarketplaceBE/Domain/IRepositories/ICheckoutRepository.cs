@@ -36,6 +36,8 @@ public interface ICheckoutRepository
     /// <summary>Tìm tất cả transactions liên kết với 1 Stripe session.</summary>
     Task<List<Transaction>> GetTransactionsBySessionIdAsync(string stripeSessionId);
 
+    Task<List<Transaction>> GetTransactionsByOrderIdAsync(int orderId);
+
     /// <summary>Lấy OrderInfo theo orderId (kèm OrderItems → Course → Instructor).</summary>
     Task<OrderInfo?> GetOrderWithDetailsAsync(int orderId);
 
@@ -59,6 +61,9 @@ public interface ICheckoutRepository
 
     /// <summary>Tăng used_count của coupon.</summary>
     Task IncrementCouponUsageAsync(int couponId);
+
+    Task DeleteOrderAsync(OrderInfo order);
+    Task DeleteTransactionsAsync(IEnumerable<Transaction> transactions);
 
     // ── Unit of Work ─────────────────────────────────────────────────────────
     /// <summary>Bắt đầu DB transaction (EF Core IDbContextTransaction).</summary>

@@ -1,17 +1,68 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using CourseMarketplaceFE.Helpers;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceFE.Controllers
 {
     public class CouponController : Controller
     {
-        public IActionResult Index()
+        private readonly ApiClient _api;
+
+        public CouponController(ApiClient api)
         {
-            return View();
+            _api = api;
         }
 
-        public IActionResult Admin()
+        // ── Razor Views ───────────────────────────────────────────────────────
+        public IActionResult Index() => View();
+        public IActionResult Admin() => View();
+
+        // ── Proxy APIs (for JavaScript – bypasses HttpOnly cookie & Docker networking) ──
+
+        /// <summary>
+        /// Proxy: GET /Coupon/PlatformActive → Backend api/coupon/platform/active
+        /// Called by JS in Editor.cshtml and Create.cshtml
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> PlatformActive()
         {
-            return View();
+            var resp = await _api.GetAsync("coupon/platform/active");
+            var body = await resp.Content.ReadAsStringAsync();
+            if (string.IsNullOrWhiteSpace(body)) {
+                body = "{\"success\":false,\"message\":\"Lỗi hoặc không có quyền truy cập.\"}";
+            }
+            return Content(body, "application/json");
         }
+
+        /// <summary>
+        /// Proxy: POST /Coupon/PlatformApply → Backend api/coupon/platform/apply
+        /// Body: { courseId, couponId }
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> PlatformApply([FromBody] ApplyCouponRequest req)
+        {
+            var resp = await _api.PostJsonAsync("coupon/platform/apply", req);
+            var body = await resp.Content.ReadAsStringAsync();
+            if (string.IsNullOrWhiteSpace(body)) {
+                body = "{\"success\":false,\"message\":\"Lỗi hoặc không có quyền truy cập.\"}";
+            }
+            return Content(body, "application/json");
+        }
+
+        /// <summary>
+        /// Proxy: DELETE /Coupon/PlatformRemove/{courseId} → Backend api/coupon/platform/remove/{courseId}
+        /// </summary>
+        [HttpDelete]
+        public async Task<IActionResult> PlatformRemove([FromQuery] int courseId)
+        {
+            var resp = await _api.DeleteAsync($"coupon/platform/remove/{courseId}");
+            var body = await resp.Content.ReadAsStringAsync();
+            return Content(body, "application/json");
+        }
+    }
+
+    public class ApplyCouponRequest
+    {
+        public int CourseId { get; set; }
+        public int CouponId { get; set; }
     }
 }

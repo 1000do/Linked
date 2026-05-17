@@ -15,6 +15,8 @@ public partial class Instructor
     public string? ProfessionalTitle { get; set; }
     public string? ExpertiseCategories { get; set; }
     public string? LinkedinUrl { get; set; }
+    public string? YoutubeUrl { get; set; }
+    public string? FacebookUrl { get; set; }
     public string? DocumentUrl { get; set; }  // Link CV/ID trên Cloudinary
 
     // ── Trạng thái duyệt (Admin quản lý) ────────────────────────────
