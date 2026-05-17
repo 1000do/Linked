@@ -10,6 +10,10 @@ public class CartItemDto
     public string? ThumbnailUrl { get; set; }
     public string? InstructorName { get; set; }   // Tên giảng viên (full_name từ users)
     public decimal Price { get; set; }             // Giá tại thời điểm thêm vào giỏ
+    public decimal OriginalPrice { get; set; }
+    public decimal DiscountedPrice { get; set; }
+    public string? AppliedCouponCode { get; set; }
+    public decimal DiscountAmount { get; set; }
 }
 
 /// <summary>

@@ -66,4 +66,9 @@ public interface IInstructorService
     /// Chủ động gọi Stripe để đồng bộ trạng thái Payouts (giải pháp cho việc lỡ mất Webhook).
     /// </summary>
     Task SyncPayoutsWithStripeAsync(int userId);
+
+    /// <summary>
+    /// Lấy thông tin Public Profile của giảng viên (cho trang Instructor Profile công khai).
+    /// </summary>
+    Task<InstructorPublicProfileDto?> GetPublicProfileAsync(int instructorId);
 }

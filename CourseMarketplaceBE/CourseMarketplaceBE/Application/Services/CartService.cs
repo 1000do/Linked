@@ -80,7 +80,11 @@ public class CartService : ICartService
             ThumbnailUrl   = c.Course?.CourseThumbnailUrl,
             InstructorName = c.Course?.Instructor?.InstructorNavigation?.FullName,
             // Ưu tiên snapshot giá lúc add; nếu null thì lấy giá hiện tại
-            Price          = c.Price ?? c.Course?.Price ?? 0m
+            Price          = c.Price ?? c.Course?.Price ?? 0m,
+            OriginalPrice  = c.Price ?? c.Course?.Price ?? 0m,
+            DiscountedPrice = c.Price ?? c.Course?.Price ?? 0m,
+            AppliedCouponCode = null,
+            DiscountAmount = 0m
         }).ToList();
 
         // ── 3.3 Tính SubTotal ───────────────────────────────────────────────
@@ -100,54 +104,75 @@ public class CartService : ICartService
         // ── 3.5 Kiểm tra & tính Coupon nếu có ───────────────────────────────
         if (!string.IsNullOrWhiteSpace(couponCode))
         {
-            var now    = DateTime.Now;
-            var coupon = await _repo.GetCouponByCodeAsync(couponCode);
+            var now = DateTime.Now;
+            var codes = couponCode.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(c => c.Trim().ToUpper())
+                .Distinct()
+                .ToList();
 
-            if (coupon == null)
+            var appliedCoupons = new List<string>();
+            var couponMessages = new List<string>();
+
+            foreach (var code in codes)
             {
-                response.CouponMessage = "Mã giảm giá không tồn tại.";
+                var coupon = await _repo.GetCouponByCodeAsync(code);
+                if (coupon == null || coupon.IsActive != true) continue;
+                if (coupon.StartDate.HasValue && now < coupon.StartDate.Value) continue;
+                if (coupon.EndDate.HasValue && now > coupon.EndDate.Value) continue;
+                if (coupon.UsageLimit.HasValue && (coupon.UsedCount ?? 0) >= coupon.UsageLimit.Value) continue;
+
+                // Logic mới: Chỉ giảm cho khóa học khớp mã
+                decimal eligibleSubTotal = cartItems
+                    .Where(c => c.Course != null && c.Course.CouponId == coupon.CouponId)
+                    .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
+
+                if (eligibleSubTotal >= coupon.MinOrderValue && eligibleSubTotal > 0)
+                {
+                    // ✅ Coupon hợp lệ — tính DiscountAmount theo loại dựa trên eligibleSubTotal
+                    decimal discountAmount = coupon.CouponType == "percentage"
+                        ? eligibleSubTotal * (coupon.DiscountValue / 100m)
+                        : coupon.DiscountValue;
+
+                    // Đảm bảo không vượt quá giá trị khóa học
+                    discountAmount = Math.Round(Math.Min(discountAmount, eligibleSubTotal), 2);
+
+                    response.DiscountAmount += discountAmount;
+                    appliedCoupons.Add(coupon.CouponCode);
+
+                    var msg = coupon.CouponType == "percentage"
+                        ? $"giảm {coupon.DiscountValue:0.##}%"
+                        : $"giảm ${coupon.DiscountValue:N2}";
+                    couponMessages.Add($"{coupon.CouponCode} ({msg})");
+
+                    // Cập nhật giá trị giảm giá cho từng item cụ thể!
+                    foreach (var item in items)
+                    {
+                        var matchingCartItem = cartItems.FirstOrDefault(c => c.CourseId == item.CourseId);
+                        if (matchingCartItem != null && matchingCartItem.Course != null && matchingCartItem.Course.CouponId == coupon.CouponId)
+                        {
+                            decimal itemDiscount = coupon.CouponType == "percentage"
+                                ? item.OriginalPrice * (coupon.DiscountValue / 100m)
+                                : coupon.DiscountValue;
+
+                            itemDiscount = Math.Round(Math.Min(itemDiscount, item.OriginalPrice), 2);
+
+                            item.DiscountAmount = itemDiscount;
+                            item.DiscountedPrice = item.OriginalPrice - itemDiscount;
+                            item.AppliedCouponCode = coupon.CouponCode;
+                        }
+                    }
+                }
             }
-            else if (coupon.IsActive != true)
+
+            if (appliedCoupons.Any())
             {
-                response.CouponMessage = "Mã giảm giá đã bị vô hiệu hóa.";
-            }
-            else if (coupon.StartDate.HasValue && now < coupon.StartDate.Value)
-            {
-                response.CouponMessage = $"Mã giảm giá chưa có hiệu lực đến ngày {coupon.StartDate.Value:dd/MM/yyyy}.";
-            }
-            else if (coupon.EndDate.HasValue && now > coupon.EndDate.Value)
-            {
-                response.CouponMessage = $"Mã giảm giá đã hết hạn từ ngày {coupon.EndDate.Value:dd/MM/yyyy}.";
-            }
-            else if (coupon.UsageLimit.HasValue && (coupon.UsedCount ?? 0) >= coupon.UsageLimit.Value)
-            {
-                response.CouponMessage = "Mã giảm giá đã đạt giới hạn sử dụng.";
-            }
-            else if (subTotal == 0)
-            {
-                response.CouponMessage = "Giỏ hàng của bạn đang trống.";
-            }
-            else if (subTotal < coupon.MinOrderValue)
-            {
-                var missing = coupon.MinOrderValue - subTotal;
-                response.CouponMessage = $"Cần mua thêm {missing:N0} VND để sử dụng mã này (tối thiểu {coupon.MinOrderValue:N0} VND).";
+                response.Total = Math.Round(Math.Max(subTotal - response.DiscountAmount, 0m), 2);
+                response.AppliedCouponCode = string.Join(",", appliedCoupons);
+                response.CouponMessage = "Đã áp dụng: " + string.Join(", ", couponMessages);
             }
             else
             {
-                // ✅ Coupon hợp lệ — tính DiscountAmount theo loại
-                decimal discountAmount = coupon.CouponType == "percentage"
-                    ? subTotal * (coupon.DiscountValue / 100m)
-                    : coupon.DiscountValue;
-
-                // Đảm bảo Total không bao giờ âm
-                discountAmount = Math.Round(Math.Min(discountAmount, subTotal), 2);
-
-                response.DiscountAmount    = discountAmount;
-                response.Total             = Math.Round(subTotal - discountAmount, 2);
-                response.AppliedCouponCode = coupon.CouponCode;
-                response.CouponMessage     = coupon.CouponType == "percentage"
-                    ? $"Áp dụng thành công! Giảm {coupon.DiscountValue:0.##}% tổng hóa đơn."
-                    : $"Áp dụng thành công! Giảm {coupon.DiscountValue:N0} VND.";
+                response.CouponMessage = "Không có mã giảm giá hợp lệ được áp dụng.";
             }
         }
 
@@ -157,13 +182,28 @@ public class CartService : ICartService
 
         response.AvailableCoupons = activeCoupons.Select(cp =>
         {
-            bool isEligible = subTotal >= cp.MinOrderValue;
+            // Tính eligibleSubTotal cho cp này
+            decimal eligibleSubTotal = cartItems
+                .Where(c => c.Course != null && c.Course.CouponId == cp.CouponId)
+                .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
 
-            string conditionMessage = isEligible
-                ? (cp.CouponType == "percentage"
+            bool isEligible = eligibleSubTotal >= cp.MinOrderValue && eligibleSubTotal > 0;
+
+            string conditionMessage;
+            if (eligibleSubTotal == 0)
+            {
+                conditionMessage = "Không áp dụng cho khóa học nào trong giỏ";
+            }
+            else if (!isEligible)
+            {
+                conditionMessage = $"Mua thêm {cp.MinOrderValue - eligibleSubTotal:N0}đ để dùng mã này";
+            }
+            else
+            {
+                conditionMessage = cp.CouponType == "percentage"
                     ? $"Giảm {cp.DiscountValue:0.##}%"
-                    : $"Giảm {cp.DiscountValue:N0}đ")
-                : $"Mua thêm {cp.MinOrderValue - subTotal:N0}đ để dùng mã này";
+                    : $"Giảm {cp.DiscountValue:N0}đ";
+            }
 
             return new AvailableCouponDto
             {
@@ -173,7 +213,8 @@ public class CartService : ICartService
                 MinOrderValue    = cp.MinOrderValue,
                 EndDate          = cp.EndDate,
                 IsEligible       = isEligible,
-                ConditionMessage = conditionMessage
+                ConditionMessage = conditionMessage,
+                CourseId         = cp.Courses.FirstOrDefault()?.CourseId
             };
         }).ToList();
 

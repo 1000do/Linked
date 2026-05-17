@@ -108,4 +108,31 @@ public class TransactionController : ControllerBase
             return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET /api/transactions/my?page=1&pageSize=20
+    // Lấy danh sách giao dịch cho Người mua (Dùng token để xác định ID)
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpGet("my")]
+    public async Task<IActionResult> GetMyTransactions(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? keyword = null,
+        [FromQuery] string? sortBy = "date_desc",
+        [FromQuery] string? status = null)
+    {
+        try
+        {
+            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId))
+                return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
+
+            var result = await _transactionService.GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status);
+            return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Danh sách giao dịch của bạn."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+        }
+    }
 }

@@ -15,6 +15,19 @@ public partial class OrderItem
 
     public bool? CouponUsed { get; set; }
 
+    // ★ Snapshot giá gốc & coupon tại thời điểm mua
+    [System.ComponentModel.DataAnnotations.Schema.Column("original_price")]
+    public decimal? OriginalPrice { get; set; }
+
+    [System.ComponentModel.DataAnnotations.Schema.Column("coupon_code")]
+    public string? CouponCode { get; set; }
+
+    [System.ComponentModel.DataAnnotations.Schema.Column("coupon_type")]
+    public string? CouponType { get; set; }
+
+    [System.ComponentModel.DataAnnotations.Schema.Column("discount_amount")]
+    public decimal DiscountAmount { get; set; }
+
     public virtual Course? Course { get; set; }
 
     public virtual OrderInfo? Order { get; set; }

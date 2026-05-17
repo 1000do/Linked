@@ -166,7 +166,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Price -->
                             <div class="space-y-4">
                                 @{
                                     var isStripeActiveEditor = (bool)(ViewBag.IsStripeActive ?? false);
@@ -186,11 +185,9 @@
                                             <span class="text-slate-400 font-bold material-symbols-outlined text-[18px]">attach_money</span>
                                         </div>
                                         <input type="text" value="0.00 — Free" disabled class="w-full pl-11 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-xl font-semibold text-slate-400 cursor-not-allowed" />
-                                        <!-- Hidden input để gửi giá = 0 -->
                                         <input type="hidden" id="course-price-input" value="0" />
                                     </div>
                                     
-                                    <!-- Stripe Registration Banner -->
                                     <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 mt-3">
                                         <div class="flex items-start gap-3">
                                             <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center shrink-0">
@@ -199,30 +196,11 @@
                                             <div class="flex-1">
                                                 <p class="text-sm font-bold text-amber-900 mb-1">Muốn bán khóa học có phí?</p>
                                                 <p class="text-xs text-amber-700 mb-2">Đăng ký tài khoản Stripe để mở khóa tính năng đặt giá.</p>
-                                                <a href="/Instructor/Dashboard" 
-                                                   class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-lg shadow hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-xs">
+                                                <a href="/Instructor/Dashboard" class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-lg shadow hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-xs">
                                                     <span class="material-symbols-outlined text-[16px]">credit_card</span>
                                                     Đăng ký Stripe
                                                 </a>
                                             </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Quick Price Tiers (disabled) -->
-                                    <div class="flex flex-wrap gap-2 mt-3">
-                                        <span class="px-3 py-1.5 text-xs font-bold rounded-lg border border-primary bg-primary/10 text-primary">Free ✓</span>
-                                        <span class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed">$9.99 🔒</span>
-                                        <span class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed">$19.99 🔒</span>
-                                        <span class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed">$49.99 🔒</span>
-                                    </div>
-                                    <div class="bg-slate-50 rounded-xl p-4 flex gap-4 border border-slate-100 mt-4">
-                                        <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white shrink-0 mt-1">
-                                            <span class="material-symbols-outlined text-[14px]">info</span>
-                                        </div>
-                                        <div>
-                                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Instructor Revenue</p>
-                                            <p class="font-bold text-slate-900 text-lg">Free Course</p>
-                                            <p class="text-[10px] text-slate-500 mt-1">Đăng ký Stripe để bán khóa học với giá tùy chọn</p>
                                         </div>
                                     </div>
                                 }
@@ -240,13 +218,11 @@
                                         <input type="number" id="course-price-input" min="0" step="0.01" class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary font-semibold text-slate-800 transition-colors" value="@ViewBag.Price" placeholder="0.00" onblur="formatPrice(this)" />
                                     </div>
                                     
-                                    <!-- Quick Price Tiers -->
                                     <div class="flex flex-wrap gap-2 mt-3">
                                         <button type="button" onclick="setPrice(0)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">Free</button>
                                         <button type="button" onclick="setPrice(9.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$9.99</button>
                                         <button type="button" onclick="setPrice(19.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$19.99</button>
                                         <button type="button" onclick="setPrice(49.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$49.99</button>
-                                        <button type="button" onclick="setPrice(99.99)" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors">$99.99</button>
                                     </div>
                                     <div class="bg-slate-50 rounded-xl p-4 flex gap-4 border border-slate-100 mt-4">
                                         <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white shrink-0 mt-1">
@@ -260,7 +236,304 @@
                                     </div>
                                 }
                             </div>
+
+                            <!-- Promotion Section -->
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-sm font-black text-slate-900 block tracking-tight">Promotions & Marketing</label>
+                                    <div class="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <span class="text-[10px] font-black uppercase tracking-widest">Platform Funded</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Toggle Switch -->
+                                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 transition-all duration-300 hover:bg-slate-100/50">
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-emerald-600 text-[16px]">loyalty</span>
+                                            Áp dụng coupon cho khóa học này
+                                        </span>
+                                        <span class="text-[10px] text-slate-400">Tăng tỷ lệ mua hàng bằng Voucher do hệ thống tài trợ</span>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="coupon-toggle" class="sr-only peer" @(ViewBag.CouponCode != null ? "checked" : "") />
+                                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                    </label>
+                                </div>
+
+                                <!-- Coupon Action Area -->
+                                <div id="voucher-action-container" class="@(ViewBag.CouponCode != null ? "" : "hidden") space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <!-- Select Button if not selected -->
+                                    <div id="no-voucher-selected-state" class="@(ViewBag.CouponCode == null ? "" : "hidden") flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+                                        <span class="material-symbols-outlined text-slate-400 text-[32px] mb-2">confirmation_number</span>
+                                        <p class="text-xs text-slate-505 font-bold mb-4 text-slate-500">Chưa có voucher nào được áp dụng cho khóa học này</p>
+                                        <button type="button" onclick="openCouponModal()" class="px-5 py-2.5 bg-slate-900 text-white hover:bg-slate-800 text-xs font-black rounded-xl uppercase tracking-widest transition-all active:scale-95 shadow-md flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-[16px]">add_circle</span>
+                                            Chọn Voucher từ Hệ thống
+                                        </button>
+                                    </div>
+
+                                    <!-- Selected Voucher Card -->
+                                    <div id="voucher-selected-state" class="@(ViewBag.CouponCode != null ? "" : "hidden") relative overflow-hidden bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/30 rounded-3xl p-6 flex items-center justify-between gap-6 shadow-sm">
+                                        <div class="flex items-center gap-5">
+                                            <div class="relative">
+                                                <div class="absolute inset-0 bg-emerald-400/20 blur-lg rounded-full animate-pulse"></div>
+                                                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg relative z-10">
+                                                    <span class="material-symbols-outlined text-[30px]">confirmation_number</span>
+                                                 </div>
+                                             </div>
+                                             <div>
+                                                 <div class="flex items-center gap-2 mb-0.5">
+                                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                                                     <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Đang áp dụng</p>
+                                                 </div>
+                                                 <h4 id="display-coupon-code" class="text-lg font-black text-slate-900 tracking-widest font-mono">@ViewBag.CouponCode</h4>
+                                                 <div class="flex items-center gap-3 mt-1.5">
+                                                     <span id="display-coupon-discount" class="px-2.5 py-0.5 bg-emerald-500 text-white text-[9px] font-black rounded-lg uppercase shadow-sm">Giảm @(ViewBag.CouponType == "percentage" ? ViewBag.CouponValue + "%" : "$" + ViewBag.CouponValue)</span>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                         <button type="button" onclick="openCouponModal()" class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-[10px] font-black rounded-xl uppercase tracking-widest border border-slate-200 transition-all shadow-sm active:scale-95 flex items-center gap-1.5">
+                                             <span class="material-symbols-outlined text-[14px]">edit</span> Thay đổi
+                                         </button>
+                                     </div>
+                                 </div>
+
+                                 <div class="flex items-start gap-2 px-1">
+                                     <span class="material-symbols-outlined text-amber-500 text-[14px] mt-0.5">verified_user</span>
+                                     <p class="text-[10px] font-bold text-slate-400 italic leading-relaxed">
+                                         Mã giảm giá được tài trợ bởi hệ thống. Bạn không mất thêm chi phí khi áp dụng.
+                                     </p>
+                                 </div>
+                             </div>
+                         </div>
+
+                        <!-- Premium Coupon Selection Modal -->
+                        <div id="coupon-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300">
+                            <!-- Backdrop with deeper blur -->
+                            <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[12px] opacity-0 transition-opacity duration-300 modal-backdrop" onclick="closeCouponModal()"></div>
+
+                            <!-- Modal Content -->
+                            <div class="bg-white/95 w-full max-w-2xl rounded-[2.5rem] shadow-[0_20px_70px_-10px_rgba(0,0,0,0.2)] relative z-10 flex flex-col overflow-hidden border border-white transform scale-90 opacity-0 transition-all duration-500 modal-content">
+                                <!-- Header with Glass effect -->
+                                <div class="px-10 py-8 border-b border-slate-100/50 flex justify-between items-center bg-white/50">
+                                    <div class="flex items-center gap-5">
+                                        <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-2xl shadow-slate-200">
+                                            <span class="material-symbols-outlined text-[32px]">auto_awesome</span>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-2xl font-black text-slate-900 tracking-tight">Voucher Siêu Cấp</h3>
+                                            <p class="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                Cập nhật từ hệ thống Linked
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="closeCouponModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all duration-300">
+                                        <span class="material-symbols-outlined text-[28px]">close</span>
+                                    </button>
+                                </div>
+
+                                <!-- Body -->
+                                <div class="p-10 max-h-[50vh] overflow-y-auto custom-scrollbar bg-slate-50/30">
+                                    <div id="coupon-list-container" class="grid grid-cols-1 gap-6">
+                                        <!-- Data populated by JS -->
+                                        <div class="flex flex-col items-center justify-center py-20 gap-4">
+                                            <div class="relative">
+                                                <div class="w-12 h-12 border-4 border-slate-100 border-t-primary rounded-full animate-spin"></div>
+                                                <div class="absolute inset-0 flex items-center justify-center">
+                                                    <div class="w-2 h-2 bg-primary rounded-full"></div>
+                                                </div>
+                                            </div>
+                                            <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Đang săn tìm Voucher...</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Footer -->
+                                <div class="px-10 py-8 bg-white border-t border-slate-100 flex justify-between items-center">
+                                    <div class="flex flex-col gap-1">
+                                        <p class="text-[10px] font-black text-slate-900 uppercase tracking-widest">Trợ giúp Marketing</p>
+                                        <p class="text-[11px] font-medium text-slate-400">Chọn mã có tỉ lệ giảm cao nhất để thu hút học viên.</p>
+                                    </div>
+                                    <button type="button" onclick="closeCouponModal()" class="px-8 py-3.5 text-xs font-black text-white bg-slate-900 rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95 uppercase tracking-widest">
+                                        Đã hiểu
+                                    </button>
+                                </div>
+                            </div>
                         </div>
+
+                        <style>
+                            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+                            .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                            .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+                            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+                            
+                            #coupon-modal.modal-visible { display: flex !important; }
+                            #coupon-modal.modal-visible .modal-backdrop { opacity: 1; }
+                            #coupon-modal.modal-visible .modal-content { transform: scale(1); opacity: 1; }
+
+                            /* Voucher Card Styling */
+                            .voucher-card-glass {
+                                background: rgba(255, 255, 255, 0.8);
+                                backdrop-filter: blur(8px);
+                                border: 1px solid rgba(255, 255, 255, 0.5);
+                            }
+                        </style>
+
+                        <!-- Coupon JS - ALWAYS rendered regardless of coupon state -->
+                        <script>
+                            // ─── LOAD AND SELECT PLATFORM COUPONS FOR EDITOR ───
+                            const couponToggle = document.getElementById('coupon-toggle');
+                            const voucherActionContainer = document.getElementById('voucher-action-container');
+                            const currentCouponCode = '@ViewBag.CouponCode';
+
+                            window.openCouponModal = function() {
+                                const modal = document.getElementById('coupon-modal');
+                                if (!modal) return;
+                                modal.classList.remove('hidden');
+                                modal.style.display = 'flex';
+                                modal.offsetHeight; // force reflow
+                                modal.classList.add('modal-visible');
+                                loadPlatformCoupons();
+                            };
+
+                            window.closeCouponModal = function() {
+                                const modal = document.getElementById('coupon-modal');
+                                if (!modal) return;
+                                modal.classList.remove('modal-visible');
+                                setTimeout(() => { 
+                                    modal.classList.add('hidden'); 
+                                    modal.style.display = ''; 
+                                }, 300);
+                            };
+
+                            async function loadPlatformCoupons() {
+                                const container = document.getElementById('coupon-list-container');
+                                if (!container) return;
+                                container.innerHTML = `
+                                    <div class="flex flex-col items-center justify-center py-20 gap-4">
+                                        <div class="w-10 h-10 border-4 border-slate-100 border-t-primary rounded-full animate-spin"></div>
+                                        <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Đang săn tìm Voucher...</p>
+                                    </div>
+                                `;
+                                
+                                try {
+                                    const res = await fetch('/Coupon/PlatformActive');
+                                    const result = await res.json();
+                                    
+                                    if (result.success && result.data && result.data.length > 0) {
+                                        container.innerHTML = result.data.map(c => {
+                                            const discountText = c.couponType === 'percentage' ? `${c.discountValue}%` : `$${c.discountValue}`;
+                                            const expiryText = c.endDate ? new Date(c.endDate).toLocaleDateString('vi-VN') : 'Vĩnh viễn';
+                                            const isCurrent = c.couponCode === currentCouponCode;
+                                            
+                                            return `
+                                                <div class="group relative overflow-hidden rounded-[2rem] p-6 border-2 ${isCurrent ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-100 bg-white'} hover:border-emerald-500/40 hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-500">
+                                                    ${isCurrent ? '<div class="absolute top-0 right-0 bg-emerald-500 text-white text-[8px] font-black px-4 py-1.5 rounded-bl-xl uppercase tracking-widest">Đang dùng</div>' : ''}
+                                                    
+                                                    <div class="flex items-center justify-between gap-6">
+                                                        <div class="flex items-center gap-5">
+                                                            <div class="w-16 h-16 rounded-2xl ${isCurrent ? 'bg-emerald-500' : 'bg-slate-900'} text-white flex flex-col items-center justify-center group-hover:bg-emerald-500 transition-all duration-500 shadow-lg shadow-slate-200">
+                                                                <span class="text-xl font-black leading-none">${discountText}</span>
+                                                                <span class="text-[9px] font-bold uppercase opacity-60 mt-1">OFF</span>
+                                                            </div>
+                                                            <div>
+                                                                <h4 class="text-lg font-black text-slate-900 tracking-widest font-mono">${c.couponCode}</h4>
+                                                                <div class="flex items-center gap-2 mt-1.5">
+                                                                    <span class="material-symbols-outlined text-slate-300 text-[14px]">event_available</span>
+                                                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Hết hạn: ${expiryText}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        ${isCurrent ? `
+                                                            <div class="flex items-center gap-2 px-4 py-2.5 bg-emerald-100 text-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest">
+                                                                <span class="material-symbols-outlined text-[16px]">check_circle</span> Đã chọn
+                                                            </div>
+                                                        ` : `
+                                                            <button type="button" onclick="applyPlatformCoupon(${c.couponId})" class="px-6 py-3 bg-slate-900 text-white hover:bg-emerald-500 text-[10px] font-black rounded-xl uppercase tracking-widest transition-all duration-300 active:scale-95 shadow-lg shadow-slate-200 hover:shadow-emerald-500/20 shrink-0">Áp dụng</button>
+                                                        `}
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }).join('');
+                                    } else {
+                                        container.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400 font-bold text-sm bg-slate-50 border border-slate-100 rounded-2xl">Hiện tại không có voucher nào khả dụng.</div>';
+                                    }
+                                } catch (err) {
+                                    console.error(err);
+                                    container.innerHTML = '<div class="col-span-full py-8 text-center text-rose-500 font-bold text-sm bg-rose-50 border border-rose-100 rounded-2xl">Lỗi hệ thống khi tải danh sách voucher.</div>';
+                                }
+                            }
+
+                            couponToggle.addEventListener('change', async function() {
+                                if (this.checked) {
+                                    voucherActionContainer.classList.remove('hidden');
+                                } else {
+                                    // User toggled it OFF. Confirm removal.
+                                    const confirmRemove = await Swal.fire({ 
+                                        title: 'Hủy bỏ ưu đãi?', 
+                                        text: 'Khóa học sẽ quay về giá gốc.', 
+                                        icon: 'warning', 
+                                        showCancelButton: true, 
+                                        confirmButtonColor: '#0f172a', 
+                                        confirmButtonText: 'Đồng ý hủy', 
+                                        cancelButtonText: 'Giữ lại' 
+                                    });
+                                    
+                                    if (confirmRemove.isConfirmed) {
+                                        await removeCoupon();
+                                    } else {
+                                        // Reset the toggle back to ON
+                                        this.checked = true;
+                                    }
+                                }
+                            });
+
+                            window.applyPlatformCoupon = async function(id) {
+                                try {
+                                    Swal.fire({ title: 'Đang áp dụng...', allowOutsideClick: false, showConfirmButton: false, didOpen: () => Swal.showLoading() });
+                                    const res = await fetch('/Coupon/PlatformApply', { 
+                                        method: 'POST', 
+                                        headers: { 'Content-Type': 'application/json' }, 
+                                        body: JSON.stringify({ courseId: parseInt(courseId), couponId: parseInt(id) }) 
+                                    });
+                                    const result = await res.json();
+                                    if (result.success) {
+                                        Swal.fire({ icon: 'success', title: 'Thành công!', text: 'Mã giảm giá đã được áp dụng.', timer: 1500, showConfirmButton: false });
+                                        setTimeout(() => location.reload(), 1500);
+                                    } else {
+                                        Swal.fire('Lỗi', result.message || 'Không thể áp dụng mã này.', 'error');
+                                    }
+                                } catch (err) { 
+                                    Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ.', 'error'); 
+                                }
+                            };
+
+                            window.removeCoupon = async function() {
+                                try {
+                                    Swal.fire({ title: 'Đang xử lý...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                                    const res = await fetch(`/Coupon/PlatformRemove?courseId=${courseId}`, { method: 'DELETE' });
+                                    const result = await res.json();
+                                    if (result.success) { 
+                                        Swal.fire({ icon: 'success', title: 'Đã gỡ bỏ', timer: 1500, showConfirmButton: false }); 
+                                        setTimeout(() => location.reload(), 1500); 
+                                    } else { 
+                                        Swal.fire('Lỗi', result.message, 'error'); 
+                                        couponToggle.checked = true; // reset toggle to ON
+                                    }
+                                } catch (err) { 
+                                    Swal.fire('Lỗi', 'Không thể kết nối.', 'error'); 
+                                    couponToggle.checked = true; // reset toggle to ON
+                                }
+                            };
+
+                            // Load platform coupons on initialize
+                            loadPlatformCoupons();
+                        </script>
+
 
                         <!-- What you will learn -->
                         <div class="space-y-4">
@@ -514,11 +787,77 @@
     </div>
 </div>
 
+<!-- Premium Coupon Selection Modal -->
+<div id="coupon-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300">
+    <!-- Backdrop with deeper blur -->
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[12px] opacity-0 transition-opacity duration-300 modal-backdrop" onclick="closeCouponModal()"></div>
+
+    <!-- Modal Content -->
+    <div class="bg-white/95 w-full max-w-2xl rounded-[2.5rem] shadow-[0_20px_70px_-10px_rgba(0,0,0,0.2)] relative z-10 flex flex-col overflow-hidden border border-white transform scale-90 opacity-0 transition-all duration-500 modal-content">
+        <!-- Header with Glass effect -->
+        <div class="px-10 py-8 border-b border-slate-100/50 flex justify-between items-center bg-white/50">
+            <div class="flex items-center gap-5">
+                <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-2xl shadow-slate-200">
+                    <span class="material-symbols-outlined text-[32px]">auto_awesome</span>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-black text-slate-900 tracking-tight">Voucher Siêu Cấp</h3>
+                    <p class="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        Cập nhật từ hệ thống Linked
+                    </p>
+                </div>
+            </div>
+            <button type="button" onclick="closeCouponModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all duration-300">
+                <span class="material-symbols-outlined text-[28px]">close</span>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-10 max-h-[65vh] overflow-y-auto custom-scrollbar bg-slate-50/30">
+            <div id="coupon-list-container" class="grid grid-cols-1 gap-6">
+                <!-- Data populated by JS -->
+                <div class="flex flex-col items-center justify-center py-20 gap-4">
+                    <div class="relative">
+                        <div class="w-12 h-12 border-4 border-slate-100 border-t-primary rounded-full animate-spin"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="w-2 h-2 bg-primary rounded-full"></div>
+                        </div>
+                    </div>
+                    <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Đang săn tìm Voucher...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-10 py-8 bg-white border-t border-slate-100 flex justify-between items-center">
+            <div class="flex flex-col gap-1">
+                <p class="text-[10px] font-black text-slate-900 uppercase tracking-widest">Trợ giúp Marketing</p>
+                <p class="text-[11px] font-medium text-slate-400">Chọn mã có tỉ lệ giảm cao nhất để thu hút học viên.</p>
+            </div>
+            <button type="button" onclick="closeCouponModal()" class="px-8 py-3.5 text-xs font-black text-white bg-slate-900 rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95 uppercase tracking-widest">
+                Đã hiểu
+            </button>
+        </div>
+    </div>
+</div>
+
 <style>
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+    
+    #coupon-modal.modal-visible { display: flex !important; }
+    #coupon-modal.modal-visible .modal-backdrop { opacity: 1; }
+    #coupon-modal.modal-visible .modal-content { transform: scale(1); opacity: 1; }
+
+    /* Voucher Card Styling */
+    .voucher-card-glass {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
 </style>
 
 @if (courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase))
@@ -532,6 +871,7 @@
         </div>
     </div>
 }
+
 
 @section Scripts {
     <script>

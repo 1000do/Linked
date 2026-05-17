@@ -56,6 +56,11 @@ public class CourseResponse
     public bool IsOwner { get; set; }
     public int TotalReviews { get; set; }
     public DateTime? LastApprovedAt { get; set; }
+
+    // Applied Coupon details
+    public string? AppliedCouponCode { get; set; }
+    public string? AppliedCouponType { get; set; }
+    public decimal? AppliedCouponValue { get; set; }
 }
 
 public class CourseDetailResponse : CourseResponse

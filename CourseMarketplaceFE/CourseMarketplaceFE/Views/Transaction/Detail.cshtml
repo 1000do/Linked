@@ -259,15 +259,36 @@
                 <div class="space-y-4">
                     <div class="flex items-center justify-between text-sm">
                         <span class="text-slate-500 font-medium">Giá bán khóa học</span>
-                        <span class="text-slate-900 font-bold">@Model.Currency?.ToUpper() @Model.GrossAmount.ToString("N2")</span>
+                        <span class="text-slate-900 font-bold">@Model.Currency?.ToUpper() @Model.OriginalPrice.ToString("N2")</span>
                     </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-slate-500 font-medium">Chiết khấu / Coupon</span>
-                        <span class="text-slate-400 font-bold">@Model.Currency?.ToUpper() 0.00</span>
-                    </div>
+                    @if (Model.CouponUsed) {
+                        <div class="flex items-center justify-between text-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="text-slate-500 font-medium">Chiết khấu / Coupon</span>
+                                @if (!string.IsNullOrEmpty(Model.CouponCode)) {
+                                    <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200">
+                                        @Model.CouponCode
+                                    </span>
+                                }
+                            </div>
+                            <span class="text-emerald-600 font-bold">- @Model.Currency?.ToUpper() @Model.DiscountAmount.ToString("N2")</span>
+                        </div>
+                    } else {
+                         <div class="flex items-center justify-between text-sm">
+                            <span class="text-slate-500 font-medium">Chiết khấu / Coupon</span>
+                            <span class="text-slate-400 font-bold">@Model.Currency?.ToUpper() 0.00</span>
+                        </div>
+                    }
                     <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
                         <span class="text-base font-black text-slate-900 uppercase">Tổng thu thực tế</span>
-                        <span class="text-2xl font-display font-black text-slate-900">@Model.Currency?.ToUpper() @Model.GrossAmount.ToString("N2")</span>
+                        <div class="text-right">
+                            @if (Model.CouponUsed) {
+                                <div class="text-sm text-slate-400 line-through mb-1">
+                                    @Model.Currency?.ToUpper() @Model.OriginalPrice.ToString("N2")
+                                </div>
+                            }
+                            <span class="text-2xl font-display font-black text-slate-900">@Model.Currency?.ToUpper() @Model.GrossAmount.ToString("N2")</span>
+                        </div>
                     </div>
                 </div>
 

@@ -27,6 +27,10 @@ public class CartItemViewModel
     public string? ThumbnailUrl { get; set; }
     public string? InstructorName { get; set; }
     public decimal Price { get; set; }
+    public decimal OriginalPrice { get; set; }
+    public decimal DiscountedPrice { get; set; }
+    public string? AppliedCouponCode { get; set; }
+    public decimal DiscountAmount { get; set; }
 }
 
 public class AvailableCouponViewModel
@@ -38,5 +42,6 @@ public class AvailableCouponViewModel
     public DateTime? EndDate { get; set; }
     public bool IsEligible { get; set; }
     public string ConditionMessage { get; set; } = string.Empty;
+    public int? CourseId { get; set; }
 }
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
 namespace LinkedLearn.Models.UserVM
@@ -21,5 +21,13 @@ namespace LinkedLearn.Models.UserVM
 
         public IFormFile? AvatarFile { get; set; }
         public string? AvatarUrl { get; set; }
+
+        // Instructor specific fields
+        public bool IsInstructor { get; set; }
+        public string? ProfessionalTitle { get; set; }
+        public string? ExpertiseCategories { get; set; }
+        public string? LinkedinUrl { get; set; }
+        public string? YoutubeUrl { get; set; }
+        public string? FacebookUrl { get; set; }
     }
 }

@@ -69,6 +69,7 @@ public class CourseRepository : ICourseRepository
         return await _context.Courses
             .IgnoreQueryFilters()
             .Include(c => c.Category)
+            .Include(c => c.Coupon)
             .Include(c => c.Instructor)
                 .ThenInclude(i => i!.InstructorNavigation)
                     .ThenInclude(u => u.UserNavigation)
