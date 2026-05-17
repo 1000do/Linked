@@ -114,7 +114,6 @@
                                 <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
                                 Add to cart
                             </button>
-                            <button onclick="buyNow(@Model.CourseId)" class="w-full border-2 border-slate-900 font-bold py-3 rounded-lg hover:bg-slate-50 transition-all">Buy now</button>
                         }
                         
                         @if (!Model.IsOwner && !isManager)
@@ -682,23 +681,6 @@
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalHtml;
-        }
-    }
-
-    async function buyNow(courseId) {
-        try {
-            const response = await fetch('/Cart/AddToCartAjax/' + courseId, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const result = await response.json();
-            if (result.success) {
-                window.location.href = '/Cart';
-            } else {
-                Swal.fire('Lỗi', result.message, 'error');
-            }
-        } catch (error) {
-            Swal.fire('Lỗi', 'Không thể kết nối với máy chủ.', 'error');
         }
     }
 
