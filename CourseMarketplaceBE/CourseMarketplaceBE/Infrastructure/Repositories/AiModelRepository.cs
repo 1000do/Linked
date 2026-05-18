@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
@@ -25,7 +26,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
         {
             return await _context.AiModels
                 .AsNoTracking()
-                .Where(am => am.ModelType == modelType && am.ModelStatus == "active")
+                .Where(am => am.ModelType == modelType && am.ModelStatus == AiModelConst.Active)
                 .Select(am => am.ModelId)
                 .ToListAsync();
         }
@@ -41,7 +42,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
         {
             return await _context.AiModels
                 .AsNoTracking()
-                .Where(am => am.ModelType == modelType && am.ModelStatus == "active")
+                .Where(am => am.ModelType == modelType && am.ModelStatus == AiModelConst.Active)
                 .ToListAsync();
         }
 
