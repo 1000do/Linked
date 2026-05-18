@@ -230,6 +230,7 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("model_updated_at");
+            entity.Property(e => e.ModelPath).HasColumnName("model_path");
         });
 
         // ── courses_ai_integrations ─────────────────────────────────────────────
