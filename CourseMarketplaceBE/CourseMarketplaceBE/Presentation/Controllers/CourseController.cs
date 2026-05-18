@@ -172,9 +172,9 @@ public class CourseController : ControllerBase
         {
             var instructorId = GetInstructorId();
             request.InstructorId = instructorId;
-            
-            await _moderationService.HandleCourseModerationAsync(request);
-            return Ok(ApiResponse<object>.SuccessResponse(null, "Moderation process started."));
+
+            var result = await _moderationService.HandleCourseModerationAsync(request);
+            return Ok(ApiResponse<CourseModerationResult>.SuccessResponse(result, "Moderation has been successfully processed."));
         }
         catch (Exception ex)
         {
