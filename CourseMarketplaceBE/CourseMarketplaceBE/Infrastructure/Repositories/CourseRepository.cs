@@ -26,6 +26,45 @@ public class CourseRepository : ICourseRepository
             .ToListAsync();
     }
 
+    public async Task<(IEnumerable<Course> Courses, int TotalCount)> GetInstructorCoursesPagedAsync(
+        int instructorId,
+        string? search = null,
+        string? status = null,
+        int? page = null,
+        int? pageSize = null)
+    {
+        var queryable = _context.Courses
+            .Where(c => c.InstructorId == instructorId)
+            .AsNoTracking();
+
+        // 1. Filtering by search term
+        if (!string.IsNullOrEmpty(search))
+        {
+            var searchLower = search.ToLower();
+            queryable = queryable.Where(c => c.Title.ToLower().Contains(searchLower));
+        }
+
+        // 2. Filtering by status
+        if (!string.IsNullOrEmpty(status) && !string.Equals(status, "All", StringComparison.OrdinalIgnoreCase))
+        {
+            queryable = queryable.Where(c => c.CourseStatus == status.ToLower());
+        }
+
+        // 3. Sorting (default: newest update / modified)
+        queryable = queryable.OrderByDescending(c => c.UpdatedAt);
+
+        var totalCount = await queryable.CountAsync();
+
+        // 4. Pagination
+        if (page.HasValue && pageSize.HasValue)
+        {
+            queryable = queryable.Skip((page.Value - 1) * pageSize.Value).Take(pageSize.Value);
+        }
+
+        var courses = await queryable.ToListAsync();
+        return (courses, totalCount);
+    }
+
     public async Task<IEnumerable<Course>> GetAllPublishedCoursesAsync()
     {
         return await _context.Courses
@@ -36,6 +75,96 @@ public class CourseRepository : ICourseRepository
             .OrderByDescending(c => c.CreatedAt)
             .AsNoTracking()
             .ToListAsync();
+    }
+
+    public async Task<(IEnumerable<Course> Courses, int TotalCount)> GetAllPublishedCoursesPagedAsync(
+        string? search = null, 
+        string? category = null, 
+        string? sort = null, 
+        string? price = null,
+        string? rating = null,
+        int? page = null, 
+        int? pageSize = null)
+    {
+        var queryable = _context.Courses
+            .Include(c => c.Category)
+            .Include(c => c.Instructor)
+                .ThenInclude(i => i!.InstructorNavigation)
+            .Where(c => c.CourseStatus == "published")
+            .AsNoTracking();
+
+        // 0.1. Filtering by price
+        if (!string.IsNullOrEmpty(price) && price != "all")
+        {
+            if (price == "free")
+            {
+                queryable = queryable.Where(c => c.Price == 0);
+            }
+            else if (price == "paid")
+            {
+                queryable = queryable.Where(c => c.Price > 0);
+            }
+        }
+
+        // 0.2. Filtering by rating
+        if (!string.IsNullOrEmpty(rating) && rating != "all")
+        {
+            if (decimal.TryParse(rating, out decimal minRating))
+            {
+                queryable = from c in queryable
+                            join s in _context.CourseStats on c.CourseId equals s.CourseId into statsGroup
+                            from s in statsGroup.DefaultIfEmpty()
+                            where s != null && s.RatingAverage >= (double)minRating
+                            select c;
+            }
+        }
+
+        // 1. Filtering by search term
+        if (!string.IsNullOrEmpty(search))
+        {
+            var searchLower = search.ToLower();
+            queryable = queryable.Where(c => c.Title.ToLower().Contains(searchLower) || 
+                                             (c.Description != null && c.Description.ToLower().Contains(searchLower)));
+        }
+
+        // 2. Filtering by category
+        if (!string.IsNullOrEmpty(category))
+        {
+            queryable = queryable.Where(c => c.Category != null && c.Category.CategoriesName == category);
+        }
+
+        // 3. Sorting & Joins
+        if (sort == "price_asc")
+        {
+            queryable = queryable.OrderBy(c => c.Price);
+        }
+        else if (sort == "price_desc")
+        {
+            queryable = queryable.OrderByDescending(c => c.Price);
+        }
+        else if (sort == "rating")
+        {
+            queryable = from c in queryable
+                        join s in _context.CourseStats on c.CourseId equals s.CourseId into statsGroup
+                        from s in statsGroup.DefaultIfEmpty()
+                        orderby s.RatingAverage descending
+                        select c;
+        }
+        else // default: newest
+        {
+            queryable = queryable.OrderByDescending(c => c.CreatedAt);
+        }
+
+        var totalCount = await queryable.CountAsync();
+
+        // 4. Pagination
+        if (page.HasValue && pageSize.HasValue)
+        {
+            queryable = queryable.Skip((page.Value - 1) * pageSize.Value).Take(pageSize.Value);
+        }
+
+        var courses = await queryable.ToListAsync();
+        return (courses, totalCount);
     }
 
     public async Task<IEnumerable<Category>> GetCategoriesAsync()
@@ -69,6 +198,7 @@ public class CourseRepository : ICourseRepository
         return await _context.Courses
             .IgnoreQueryFilters()
             .Include(c => c.Category)
+            .Include(c => c.Coupon)
             .Include(c => c.Instructor)
                 .ThenInclude(i => i!.InstructorNavigation)
                     .ThenInclude(u => u.UserNavigation)

@@ -16,23 +16,13 @@
             <p class="text-slate-500 mt-2">Manage your curriculum and track performance across @courseList.Count active courses.</p>
         </div>
         <div class="flex items-center gap-3">
-            <div id="view-toggle" class="bg-white border border-slate-200 rounded-lg p-1 flex items-center">
+            <div id="view-toggle" class="bg-white border border-slate-200 rounded-lg p-1 flex items-center shadow-sm">
                 <button data-view="list" class="view-btn px-3 py-1.5 bg-slate-100 rounded text-slate-800 text-sm font-semibold flex items-center gap-2">
                     <span class="material-symbols-outlined text-[18px]">format_list_bulleted</span> List
                 </button>
                 <button data-view="grid" class="view-btn px-3 py-1.5 text-slate-500 hover:text-slate-800 text-sm font-semibold flex items-center gap-2 transition-colors">
                     <span class="material-symbols-outlined text-[18px]">grid_view</span> Grid
                 </button>
-            </div>
-            <div class="flex items-center gap-2">
-                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Status:</label>
-                <select id="status-filter" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors outline-none text-sm cursor-pointer">
-                    <option value="All" selected="@(Model.FilterStatus == "All")">All Status</option>
-                    <option value="Draft" selected="@(Model.FilterStatus == "Draft")">Draft</option>
-                    <option value="Pending" selected="@(Model.FilterStatus == "Pending")">Pending Review</option>
-                    <option value="Published" selected="@(Model.FilterStatus == "Published")">Published</option>
-                    <option value="Rejected" selected="@(Model.FilterStatus == "Rejected")">Rejected</option>
-                </select>
             </div>
         </div>
     </div>
@@ -66,17 +56,46 @@
     </div>
 
     <!-- ACTION BAR -->
-    <div class="flex items-center justify-between mb-6">
-        <div class="w-96 relative">
-            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
-            <input type="text" id="course-search-input" placeholder="Search courses by title..." value="@Model.SearchTerm" class="w-full bg-white border border-slate-200 rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-slate-400" />
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6 bg-slate-50/50 backdrop-blur-md p-4 border border-slate-200 rounded-2xl">
+        <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[300px]">
+            <div class="relative w-72">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                <input type="text" id="course-search-input" placeholder="Search courses by title..." oninput="applyFilters()" class="w-full bg-white border border-slate-200 rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-slate-400 shadow-sm" />
+            </div>
+            
+            <div class="relative">
+                <select id="status-filter" onchange="applyFilters()" class="appearance-none border border-slate-200 rounded-lg pl-4 pr-10 py-2 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow text-slate-700 shadow-sm cursor-pointer">
+                    <option value="All">All Status</option>
+                    <option value="Draft">Draft</option>
+                    <option value="Pending">Pending Review</option>
+                    <option value="Published">Published</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
+            </div>
+
+            <div class="relative">
+                <select id="course-sort" onchange="applyFilters()" class="appearance-none border border-slate-200 rounded-lg pl-4 pr-10 py-2 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow text-slate-700 shadow-sm cursor-pointer">
+                    <option value="newest">Updated: Newest</option>
+                    <option value="oldest">Updated: Oldest</option>
+                    <option value="students-desc">Students: High to Low</option>
+                    <option value="rating-desc">Rating: High to Low</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
+            </div>
+
+            <button type="button" onclick="clearFilters()" class="flex items-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm font-bold rounded-lg transition-all shadow-sm active:scale-95">
+                <span class="material-symbols-outlined text-[20px]">filter_alt_off</span>
+                Clear
+            </button>
         </div>
+
         <div class="flex items-center gap-3">
-            <a href="/InstructorCourse/Trash" class="px-5 py-2.5 bg-white text-slate-700 border border-slate-200 font-bold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2">
+            <a href="/InstructorCourse/Trash" class="px-5 py-2 bg-white text-slate-700 border border-slate-200 font-bold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm">
                 <span class="material-symbols-outlined text-[18px]">delete</span>
                 Trash
             </a>
-            <a href="/InstructorCourse/Create" class="px-5 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/20 flex items-center gap-2">
+            <a href="/InstructorCourse/Create" class="px-5 py-2 bg-primary hover:bg-secondary text-white font-bold rounded-lg transition-colors shadow-md shadow-primary/20 flex items-center gap-2">
                 <span class="material-symbols-outlined text-[18px]">add</span>
                 Create New Course
             </a>
@@ -85,190 +104,31 @@
 
     <!-- COURSES TABLE (List View) -->
     <div id="list-view" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    <th class="px-6 py-4 w-2/5">Course Details</th>
-                    <th class="px-6 py-4">Students</th>
-                    <th class="px-6 py-4">Rating</th>
-                    <th class="px-6 py-4">Status</th>
-                    <th class="px-6 py-4 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-                @foreach (var course in courseList)
-                {
-                    <tr class="hover:bg-slate-50/50 transition-colors group">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-4">
-                                <div class="w-24 h-16 bg-slate-200 rounded-lg overflow-hidden flex-shrink-0 relative">
-                                    @if (!string.IsNullOrEmpty(course.ThumbnailUrl))
-                                    {
-                                        <img src="@course.ThumbnailUrl" alt="@course.Title" class="w-full h-full object-cover" />
-                                    }
-                                    else
-                                    {
-                                        <div class="w-full h-full bg-gradient-to-br from-primary to-primary-container opacity-80"></div>
-                                    }
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-slate-900 text-sm">@course.Title</h4>
-                                    <p class="text-xs text-slate-500 mt-1">Updated @course.UpdatedAt.ToString("MMM dd, yyyy")</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <p class="font-bold text-slate-900 text-sm">@course.Students.ToString("N0")</p>
-                            <p class="text-xs text-slate-500">Students</p>
-                        </td>
-                        <td class="px-6 py-4">
-                            @if (course.Rating > 0)
-                            {
-                                <div class="flex items-center gap-1.5">
-                                    <span class="material-symbols-outlined text-[16px] text-amber-400" style='font-variation-settings: "FILL" 1;'>star</span>
-                                    <span class="font-bold text-slate-900 text-sm">@course.Rating</span>
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="flex items-center gap-1.5">
-                                    <span class="material-symbols-outlined text-[16px] text-slate-300" style='font-variation-settings: "FILL" 1;'>star</span>
-                                    <span class="font-medium text-slate-400 text-sm">--</span>
-                                </div>
-                            }
-                        </td>
-                        <td class="px-6 py-4">
-                            @if (course.Status.Equals("Published", StringComparison.OrdinalIgnoreCase))
-                            {
-                                <span class="px-3 py-1 bg-primary-container/20 text-primary border border-primary-container rounded-full text-xs font-bold">Published</span>
-                            }
-                            else if (course.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
-                            {
-                                <span class="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-full text-xs font-bold">Pending Review</span>
-                            }
-                            else if (course.Status.Equals("Rejected", StringComparison.OrdinalIgnoreCase))
-                            {
-                                <span class="px-3 py-1 bg-red-50 text-red-600 border border-red-200 rounded-full text-xs font-bold">Rejected</span>
-                            }
-                            else if (course.Status.Equals("Draft", StringComparison.OrdinalIgnoreCase))
-                            {
-                                <span class="px-3 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded-full text-xs font-bold">Draft</span>
-                            }
-                            else if (course.Status.Equals("archived", StringComparison.OrdinalIgnoreCase) || course.Status.Equals("Hidden", StringComparison.OrdinalIgnoreCase))
-                            {
-                                <span class="px-3 py-1 bg-slate-200 text-slate-700 border border-slate-300 rounded-full text-xs font-bold">Hidden</span>
-                            }
-                            else
-                            {
-                                <span class="px-3 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-full text-xs font-bold">@course.Status</span>
-                            }
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <a href="/InstructorCourse/Editor/@course.Id" title="Edit course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
-                                    <span class="material-symbols-outlined text-[18px]">edit</span>
-                                </a>
-                                
-                                @if (course.Status.Equals("archived", StringComparison.OrdinalIgnoreCase) || course.Status.Equals("Hidden", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    <button onclick="toggleHide(@course.Id, 'published')" title="Unhide course" class="w-8 h-8 flex items-center justify-center text-emerald-500 hover:bg-emerald-50 rounded-full transition-colors">
-                                        <span class="material-symbols-outlined text-[18px]">visibility</span>
-                                    </button>
-                                }
-                                else if (course.Status.Equals("Published", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    <button onclick="toggleHide(@course.Id, 'archived')" title="Hide course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors">
-                                        <span class="material-symbols-outlined text-[18px]">visibility_off</span>
-                                    </button>
-                                }
-
-                                <button title="Delete course" onclick="confirmDelete(@course.Id, '@course.Title.Replace("'", "\\'")', @course.Students)" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
-                                    <span class="material-symbols-outlined text-[18px]">delete</span>
-                                </button>
-                            </div>
-                        </td>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        <th class="px-6 py-4 w-2/5">Course Details</th>
+                        <th class="px-6 py-4">Students</th>
+                        <th class="px-6 py-4">Rating</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4 text-right">Actions</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    <!-- Rendered Reactively -->
+                </tbody>
+            </table>
+        </div>
         
-        <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50/30">
-            <p class="text-sm text-slate-500">
-                Showing <span class="font-bold text-slate-700">@((Model.CurrentPage - 1) * 6 + 1) - @Math.Min(Model.CurrentPage * 6, Model.TotalItems)</span> of <span class="font-bold text-slate-700">@Model.TotalItems</span> courses
-            </p>
-            
-            <!-- Pagination Controls -->
-            @if (Model.TotalPages > 1)
-            {
-                <div class="flex items-center gap-1">
-                    <button onclick="changePage(@(Model.CurrentPage - 1))" @(Model.CurrentPage == 1 ? "disabled" : "") class="p-2 rounded-lg border border-slate-200 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
-                    </button>
-                    
-                    @for (int i = 1; i <= Model.TotalPages; i++)
-                    {
-                        <button onclick="changePage(@i)" class="w-10 h-10 rounded-lg border @(Model.CurrentPage == i ? "bg-primary text-white border-primary font-bold" : "border-slate-200 hover:bg-white text-slate-600 font-semibold") transition-all">
-                            @i
-                        </button>
-                    }
-
-                    <button onclick="changePage(@(Model.CurrentPage + 1))" @(Model.CurrentPage == Model.TotalPages ? "disabled" : "") class="p-2 rounded-lg border border-slate-200 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
-                    </button>
-                </div>
-            }
+        <div id="pagination-container" class="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50/30">
+            <!-- Rendered Reactively -->
         </div>
     </div>
 
     <!-- COURSES GRID (Grid View - hidden by default) -->
     <div id="grid-view" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        @foreach (var course in courseList)
-        {
-            <a href="/InstructorCourse/Editor/@course.Id" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block">
-                <div class="w-full h-40 bg-slate-200 relative overflow-hidden">
-                    @if (!string.IsNullOrEmpty(course.ThumbnailUrl))
-                    {
-                        <img src="@course.ThumbnailUrl" alt="@course.Title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    }
-                    else
-                    {
-                        <div class="w-full h-full bg-gradient-to-br from-primary to-primary-container opacity-80 group-hover:opacity-100 transition-opacity"></div>
-                    }
-                    <div class="absolute top-3 right-3">
-                        @if (course.Status.Equals("Published", StringComparison.OrdinalIgnoreCase))
-                        {
-                            <span class="px-2 py-1 bg-white/90 text-primary rounded text-[10px] font-bold">Published</span>
-                        }
-                        else if (course.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
-                        {
-                            <span class="px-2 py-1 bg-white/90 text-amber-600 rounded text-[10px] font-bold">Pending Review</span>
-                        }
-                        else if (course.Status.Equals("Rejected", StringComparison.OrdinalIgnoreCase))
-                        {
-                            <span class="px-2 py-1 bg-white/90 text-red-600 rounded text-[10px] font-bold">Rejected</span>
-                        }
-                        else
-                        {
-                            <span class="px-2 py-1 bg-white/90 text-slate-600 rounded text-[10px] font-bold">@course.Status</span>
-                        }
-                    </div>
-                </div>
-                <div class="p-5">
-                    <h4 class="font-bold text-slate-900 text-sm mb-2">@course.Title</h4>
-                    <div class="flex items-center justify-between text-xs text-slate-500">
-                        <span>@course.Students.ToString("N0") students</span>
-                        @if (course.Rating > 0)
-                        {
-                            <span class="flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[14px] text-amber-400" style='font-variation-settings: "FILL" 1;'>star</span>
-                                @course.Rating
-                            </span>
-                        }
-                    </div>
-                    <p class="text-[10px] text-slate-400 mt-2">Updated @course.UpdatedAt.ToString("MMM dd, yyyy")</p>
-                </div>
-            </a>
-        }
+        <!-- Rendered Reactively -->
     </div>
 
     <!-- BANNER -->
@@ -327,32 +187,260 @@
         });
 
         // Search and Filter Logic
-        const searchInput = document.getElementById('course-search-input');
-        const statusFilter = document.getElementById('status-filter');
+        const allCourses = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(courseList.Select(c => new {
+            Id = c.Id,
+            Title = c.Title,
+            ThumbnailUrl = c.ThumbnailUrl,
+            Students = c.Students,
+            Rating = c.Rating,
+            Status = c.Status,
+            UpdatedAt = c.UpdatedAt
+        })));
 
-        function updateFilters(newPage = 1) {
-            const searchTerm = searchInput.value.trim();
-            const status = statusFilter.value;
-            
-            let url = new URL(window.location.origin + window.location.pathname);
-            if (searchTerm) url.searchParams.set('searchTerm', searchTerm);
-            if (status && status !== 'All') url.searchParams.set('status', status);
-            if (newPage > 1) url.searchParams.set('page', newPage);
-            
-            window.location.href = url.toString();
+        const ITEMS_PER_PAGE = 6;
+        let currentPage = 1;
+        let filteredCourses = [...allCourses];
+
+        function renderListView(courses) {
+            const tbody = document.querySelector("#list-view tbody");
+            if (courses.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-24 text-center bg-slate-50/30">
+                    <div class="flex flex-col items-center justify-center text-slate-400">
+                        <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">inventory_2</span>
+                        <p class="text-sm font-bold text-slate-700">No courses match your criteria</p>
+                    </div>
+                </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = courses.map(course => {
+                const date = new Date(course.UpdatedAt);
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+                
+                let statusBadge = '';
+                const status = course.Status.toLowerCase();
+                if (status === 'published') {
+                    statusBadge = `<span class="px-3 py-1 bg-primary-container/20 text-primary border border-primary-container rounded-full text-xs font-bold">Published</span>`;
+                } else if (status === 'pending') {
+                    statusBadge = `<span class="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-full text-xs font-bold">Pending Review</span>`;
+                } else if (status === 'rejected') {
+                    statusBadge = `<span class="px-3 py-1 bg-red-50 text-red-600 border border-red-200 rounded-full text-xs font-bold">Rejected</span>`;
+                } else if (status === 'draft') {
+                    statusBadge = `<span class="px-3 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded-full text-xs font-bold">Draft</span>`;
+                } else if (status === 'archived' || status === 'hidden') {
+                    statusBadge = `<span class="px-3 py-1 bg-slate-200 text-slate-700 border border-slate-300 rounded-full text-xs font-bold">Hidden</span>`;
+                } else {
+                    statusBadge = `<span class="px-3 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-full text-xs font-bold">${course.Status}</span>`;
+                }
+
+                let ratingHtml = '';
+                if (course.Rating > 0) {
+                    ratingHtml = `<div class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[16px] text-amber-400" style='font-variation-settings: "FILL" 1;'>star</span>
+                        <span class="font-bold text-slate-900 text-sm">${course.Rating.toFixed(2)}</span>
+                    </div>`;
+                } else {
+                    ratingHtml = `<div class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[16px] text-slate-300" style='font-variation-settings: "FILL" 1;'>star</span>
+                        <span class="font-medium text-slate-400 text-sm">--</span>
+                    </div>`;
+                }
+
+                let hideBtn = '';
+                if (status === 'archived' || status === 'hidden') {
+                    hideBtn = `<button onclick="toggleHide(${course.Id}, 'published')" title="Unhide course" class="w-8 h-8 flex items-center justify-center text-emerald-500 hover:bg-emerald-50 rounded-full transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">visibility</span>
+                    </button>`;
+                } else if (status === 'published') {
+                    hideBtn = `<button onclick="toggleHide(${course.Id}, 'archived')" title="Hide course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">visibility_off</span>
+                    </button>`;
+                }
+
+                const titleSafe = course.Title.replace(/'/g, "\\'");
+
+                return `<tr class="hover:bg-slate-50/50 transition-colors group">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-24 h-16 bg-slate-200 rounded-lg overflow-hidden flex-shrink-0 relative">
+                                ${course.ThumbnailUrl 
+                                    ? `<img src="${course.ThumbnailUrl}" alt="${course.Title}" class="w-full h-full object-cover" />`
+                                    : `<div class="w-full h-full bg-gradient-to-br from-primary to-primary-container opacity-80"></div>`
+                                }
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-900 text-sm">${course.Title}</h4>
+                                <p class="text-xs text-slate-500 mt-1">Updated ${dateStr}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <p class="font-bold text-slate-900 text-sm">${new Intl.NumberFormat('en-US').format(course.Students)}</p>
+                        <p class="text-xs text-slate-500">Students</p>
+                    </td>
+                    <td class="px-6 py-4">
+                        ${ratingHtml}
+                    </td>
+                    <td class="px-6 py-4">
+                        ${statusBadge}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <a href="/InstructorCourse/Editor/${course.Id}" title="Edit course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">edit</span>
+                            </a>
+                            ${hideBtn}
+                            <button title="Delete course" onclick="confirmDelete(${course.Id}, '${titleSafe}', ${course.Students})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join("");
         }
 
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') updateFilters(1);
-        });
+        function renderGridView(courses) {
+            const grid = document.getElementById("grid-view");
+            if (courses.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-24 text-center bg-slate-50/30 rounded-2xl border border-slate-200">
+                    <div class="flex flex-col items-center justify-center text-slate-400">
+                        <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">inventory_2</span>
+                        <p class="text-sm font-bold text-slate-700">No courses match your criteria</p>
+                    </div>
+                </div>`;
+                return;
+            }
 
-        statusFilter.addEventListener('change', () => {
-            updateFilters(1);
-        });
+            grid.innerHTML = courses.map(course => {
+                const date = new Date(course.UpdatedAt);
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+                
+                let statusBadge = '';
+                const status = course.Status.toLowerCase();
+                if (status === 'published') {
+                    statusBadge = `<span class="px-2 py-1 bg-white/90 text-primary rounded text-[10px] font-bold">Published</span>`;
+                } else if (status === 'pending') {
+                    statusBadge = `<span class="px-2 py-1 bg-white/90 text-amber-600 rounded text-[10px] font-bold">Pending Review</span>`;
+                } else if (status === 'rejected') {
+                    statusBadge = `<span class="px-2 py-1 bg-white/90 text-red-600 rounded text-[10px] font-bold">Rejected</span>`;
+                } else {
+                    statusBadge = `<span class="px-2 py-1 bg-white/90 text-slate-600 rounded text-[10px] font-bold">${course.Status}</span>`;
+                }
+
+                let ratingHtml = '';
+                if (course.Rating > 0) {
+                    ratingHtml = `<span class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px] text-amber-400" style='font-variation-settings: "FILL" 1;'>star</span>
+                        ${course.Rating.toFixed(2)}
+                    </span>`;
+                }
+
+                return `<a href="/InstructorCourse/Editor/${course.Id}" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block">
+                    <div class="w-full h-40 bg-slate-200 relative overflow-hidden">
+                        ${course.ThumbnailUrl
+                            ? `<img src="${course.ThumbnailUrl}" alt="${course.Title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />`
+                            : `<div class="w-full h-full bg-gradient-to-br from-primary to-primary-container opacity-80 group-hover:opacity-100 transition-opacity"></div>`
+                        }
+                        <div class="absolute top-3 right-3">
+                            ${statusBadge}
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <h4 class="font-bold text-slate-900 text-sm mb-2">${course.Title}</h4>
+                        <div class="flex items-center justify-between text-xs text-slate-500">
+                            <span>${new Intl.NumberFormat('en-US').format(course.Students)} students</span>
+                            ${ratingHtml}
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">Updated ${dateStr}</p>
+                    </div>
+                </a>`;
+            }).join("");
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('course-search-input').value.toLowerCase().trim();
+            const status = document.getElementById('status-filter').value;
+            const sort = document.getElementById('course-sort').value;
+
+            filteredCourses = allCourses.filter(c => {
+                const matchSearch = !searchTerm || c.Title.toLowerCase().includes(searchTerm);
+                const matchStatus = status === 'All' || c.Status.toLowerCase() === status.toLowerCase();
+                return matchSearch && matchStatus;
+            });
+
+            // Sorting
+            if (sort === 'newest') {
+                filteredCourses.sort((a, b) => new Date(b.UpdatedAt) - new Date(a.UpdatedAt));
+            } else if (sort === 'oldest') {
+                filteredCourses.sort((a, b) => new Date(a.UpdatedAt) - new Date(b.UpdatedAt));
+            } else if (sort === 'students-desc') {
+                filteredCourses.sort((a, b) => b.Students - a.Students);
+            } else if (sort === 'rating-desc') {
+                filteredCourses.sort((a, b) => b.Rating - a.Rating);
+            }
+
+            currentPage = 1;
+            renderAll();
+        }
+
+        function clearFilters() {
+            document.getElementById('course-search-input').value = '';
+            document.getElementById('status-filter').value = 'All';
+            document.getElementById('course-sort').value = 'newest';
+            applyFilters();
+        }
+
+        function renderAll() {
+            const totalItems = filteredCourses.length;
+            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+            
+            const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+            const endIdx = startIdx + ITEMS_PER_PAGE;
+            const paginatedCourses = filteredCourses.slice(startIdx, endIdx);
+
+            renderListView(paginatedCourses);
+            renderGridView(paginatedCourses);
+            renderPagination(totalItems, totalPages);
+        }
+
+        function renderPagination(totalItems, totalPages) {
+            const container = document.getElementById('pagination-container');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+
+            const startIdx = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+            const endIdx = Math.min(currentPage * ITEMS_PER_PAGE, totalItems);
+
+            let buttonsHtml = '';
+            for (let i = 1; i <= totalPages; i++) {
+                buttonsHtml += `<button onclick="changePage(${i})" class="w-10 h-10 rounded-lg border ${currentPage === i ? 'bg-primary text-white border-primary font-bold' : 'border-slate-200 hover:bg-white text-slate-600 font-semibold'} transition-all">${i}</button>`;
+            }
+
+            container.innerHTML = `
+                <p class="text-sm text-slate-500">
+                    Showing <span class="font-bold text-slate-700">${startIdx} - ${endIdx}</span> of <span class="font-bold text-slate-700">${totalItems}</span> courses
+                </p>
+                <div class="flex items-center gap-1">
+                    <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="p-2 rounded-lg border border-slate-200 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                    </button>
+                    ${buttonsHtml}
+                    <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} class="p-2 rounded-lg border border-slate-200 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                    </button>
+                </div>
+            `;
+        }
 
         window.changePage = function(page) {
-            if (page < 1 || page > @Model.TotalPages) return;
-            updateFilters(page);
+            const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            renderAll();
         };
 
         // Delete modal
@@ -360,8 +448,8 @@
         function confirmDelete(id, name, students) {
             if (students > 0) {
                 Swal.fire({
-                    title: 'Không thể xóa!',
-                    text: `Khóa học "${name}" đang có ${students} học viên đang theo học. Bạn không thể xóa khóa học này để bảo vệ quyền lợi của họ.`,
+                    title: 'Cannot Delete!',
+                    text: `The course "${name}" currently has ${students} enrolled learners. You cannot delete this course to protect their learning access.`,
                     icon: 'warning',
                     confirmButtonColor: '#006a62'
                 });
@@ -396,18 +484,18 @@
         // Toggle Hide/Show
         async function toggleHide(id, newStatus) {
             const confirmText = (newStatus === 'archived' || newStatus === 'Hidden') 
-                ? 'Bạn có chắc muốn ẩn khóa học này? Học viên mới sẽ không thể tìm thấy nó.' 
-                : 'Bạn muốn công khai lại khóa học này?';
+                ? 'Are you sure you want to hide this course? New students will not be able to find it.' 
+                : 'Do you want to make this course visible again?';
                 
             const { isConfirmed } = await Swal.fire({
-                title: 'Xác nhận thay đổi',
+                title: 'Confirm Change',
                 text: confirmText,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#006a62',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Đồng ý',
-                cancelButtonText: 'Hủy'
+                confirmButtonText: 'Yes',
+                cancelButtonText: 'Cancel'
             });
 
             if (isConfirmed) {
@@ -424,14 +512,20 @@
                     if (result.success) {
                         location.reload();
                     } else {
-                        Swal.fire('Lỗi', result.message || 'Không thể cập nhật trạng thái', 'error');
+                        Swal.fire('Error', result.message || 'Could not update status', 'error');
                     }
-                } catch(e) { Swal.fire('Lỗi', 'Có lỗi xảy ra: ' + e.message, 'error'); }
+                } catch(e) { Swal.fire('Error', 'An error occurred: ' + e.message, 'error'); }
             }
         }
+        
         // Close modal on backdrop click
         document.getElementById('delete-modal').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) closeDeleteModal();
+        });
+
+        // Initial render
+        document.addEventListener("DOMContentLoaded", () => {
+            renderAll();
         });
     </script>
 }

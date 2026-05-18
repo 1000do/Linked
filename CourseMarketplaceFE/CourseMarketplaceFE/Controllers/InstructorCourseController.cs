@@ -18,14 +18,70 @@ namespace CourseMarketplaceFE.Controllers
             _api = api;
         }
 
-        // ─── Auth guard: redirect to Login if no AccessToken cookie ────
-        public override void OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext context)
+        // ─── Auth guard: kiểm tra Token và Trạng thái duyệt (Approved) ────
+        public override async Task OnActionExecutionAsync(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext context, Microsoft.AspNetCore.Mvc.Filters.ActionExecutionDelegate next)
         {
-            base.OnActionExecuting(context);
             if (!Request.Cookies.ContainsKey("AccessToken"))
             {
                 context.Result = RedirectToAction("Login", "Account");
+                return;
             }
+
+            // 1. Kiểm tra nhanh qua Cookie
+            var statusCookie = Request.Cookies["InstructorApprovalStatus"];
+            if (statusCookie == "Approved")
+            {
+                await next();
+                return;
+            }
+
+            // 2. Nếu cookie chưa có hoặc chưa Approved -> Gọi API kiểm tra lại cho chắc
+            try
+            {
+                var response = await _api.GetAsync("instructor/dashboard");
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("data", out var dataEl) &&
+                        dataEl.TryGetProperty("approvalStatus", out var statusEl))
+                    {
+                        var status = statusEl.GetString();
+                        
+                        // Cập nhật lại Cookie cho lần sau
+                        var statusCookieOpts = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7), Path = "/" };
+                        Response.Cookies.Append("InstructorApprovalStatus", status ?? "None", statusCookieOpts);
+
+                        if (status != "Approved")
+                        {
+                            context.Result = RedirectToAction("ApplicationStatus", "Instructor");
+                            return;
+                        }
+                    }
+                    else 
+                    {
+                        context.Result = RedirectToAction("Apply", "Instructor");
+                        return;
+                    }
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    context.Result = RedirectToAction("Apply", "Instructor");
+                    return;
+                }
+                else 
+                {
+                    context.Result = RedirectToAction("Index", "Home");
+                    return;
+                }
+            }
+            catch
+            {
+                context.Result = RedirectToAction("Index", "Home");
+                return;
+            }
+
+            await next();
         }
 
         // ─── LIST COURSES ─────────────────────────────────────────────────
@@ -54,18 +110,21 @@ namespace CourseMarketplaceFE.Controllers
                     viewModel.TotalRevenue = statsData.GetProperty("totalRevenue").GetDecimal();
                 }
 
-                // 2. Fetch Courses
-                var resp = await _api.GetAsync("courses/my-courses");
+                // 2. Fetch Courses from the new paged, database-driven endpoint!
+                int pageSize = 6;
+                var url = $"courses/my-courses?search={Uri.EscapeDataString(searchTerm ?? "")}&status={Uri.EscapeDataString(status ?? "")}&page={page}&pageSize={pageSize}";
+                var resp = await _api.GetAsync(url);
                 if (resp.IsSuccessStatusCode)
                 {
                     var json = await resp.Content.ReadAsStringAsync();
                     using var doc = JsonDocument.Parse(json);
                     var root = doc.RootElement;
 
-                    if (root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array)
+                    if (root.TryGetProperty("data", out var dataEl))
                     {
+                        var coursesEl = dataEl.GetProperty("courses");
                         var allCourses = new List<CourseListViewModel>();
-                        foreach (var item in dataEl.EnumerateArray())
+                        foreach (var item in coursesEl.EnumerateArray())
                         {
                             allCourses.Add(new CourseListViewModel
                             {
@@ -80,28 +139,9 @@ namespace CourseMarketplaceFE.Controllers
                             });
                         }
 
-                        // Apply Search & Filter
-                        var filtered = allCourses.AsQueryable();
-                        if (!string.IsNullOrEmpty(searchTerm))
-                        {
-                            filtered = filtered.Where(c => c.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
-                        }
-                        if (!string.IsNullOrEmpty(status) && status != "All")
-                        {
-                            filtered = filtered.Where(c => c.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
-                        }
-
-                        // Pagination
-                        int pageSize = 6;
-                        var final = filtered.ToList();
-                        viewModel.TotalItems = final.Count;
-                        viewModel.TotalPages = (int)Math.Ceiling(viewModel.TotalItems / (double)pageSize);
-                        
-                        viewModel.Courses = final
-                            .OrderByDescending(c => c.UpdatedAt)
-                            .Skip((page - 1) * pageSize)
-                            .Take(pageSize)
-                            .ToList();
+                        viewModel.TotalItems = dataEl.GetProperty("totalItems").GetInt32();
+                        viewModel.TotalPages = dataEl.GetProperty("totalPages").GetInt32();
+                        viewModel.Courses = allCourses;
                     }
                 }
             }
@@ -159,6 +199,9 @@ namespace CourseMarketplaceFE.Controllers
                 formData.Add(new StringContent(model.Title), "Title");
                 formData.Add(new StringContent(model.Description ?? ""), "Description");
                 formData.Add(new StringContent(model.Price.ToString()), "Price");
+                formData.Add(new StringContent(model.WhatYouWillLearn ?? ""), "WhatYouWillLearn");
+                formData.Add(new StringContent(model.Requirements ?? ""), "Requirements");
+                
                 if (!string.IsNullOrEmpty(model.CourseThumbnailUrl))
                 {
                     formData.Add(new StringContent(model.CourseThumbnailUrl), "CourseThumbnailUrl");
@@ -172,22 +215,28 @@ namespace CourseMarketplaceFE.Controllers
                     using var doc = JsonDocument.Parse(json);
                     var root = doc.RootElement;
 
-                    // Get the new courseId and redirect to editor
+                    // Get the new courseId, apply coupon if selected, and redirect to editor
                     if (root.TryGetProperty("data", out var dataEl) &&
                         dataEl.TryGetProperty("courseId", out var idEl))
                     {
-                        return RedirectToAction("Editor", new { id = idEl.GetInt32() });
+                        int newCourseId = idEl.GetInt32();
+                        if (model.CouponId.HasValue && model.CouponId > 0)
+                        {
+                            var couponPayload = new { courseId = newCourseId, couponId = model.CouponId.Value };
+                            await _api.PostJsonAsync("coupon/platform/apply", couponPayload);
+                        }
+                        return RedirectToAction("Editor", new { id = newCourseId });
                     }
                 }
                 else
                 {
                     var errorBody = await resp.Content.ReadAsStringAsync();
-                    ModelState.AddModelError("", $"API Error ({resp.StatusCode}): {errorBody}");
+                    ViewBag.ApiError = errorBody;
                 }
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError("", "Failed to create course: " + ex.Message);
+                ViewBag.ApiError = "Failed to create course: " + ex.Message;
             }
 
             model.AvailableCategories = await GetCategoriesAsync();
@@ -225,6 +274,11 @@ namespace CourseMarketplaceFE.Controllers
                         ViewBag.Price = data.TryGetProperty("price", out var p) ? p.GetDecimal() : 0;
                         ViewBag.ThumbnailUrl = data.TryGetProperty("courseThumbnailUrl", out var t) ? t.GetString() : "";
                         ViewBag.ModerationFeedback = data.TryGetProperty("moderationFeedback", out var mf) ? mf.GetString() : "";
+
+                        // Applied Coupon
+                        ViewBag.CouponCode = data.TryGetProperty("appliedCouponCode", out var ccode) && ccode.ValueKind != JsonValueKind.Null ? ccode.GetString() : null;
+                        ViewBag.CouponType = data.TryGetProperty("appliedCouponType", out var ctype) && ctype.ValueKind != JsonValueKind.Null ? ctype.GetString() : null;
+                        ViewBag.CouponValue = data.TryGetProperty("appliedCouponValue", out var cval) && cval.ValueKind != JsonValueKind.Null ? cval.GetDecimal() : 0;
 
                         // Parse lessons
                         if (data.TryGetProperty("lessons", out var lessonsEl) && lessonsEl.ValueKind == JsonValueKind.Array)

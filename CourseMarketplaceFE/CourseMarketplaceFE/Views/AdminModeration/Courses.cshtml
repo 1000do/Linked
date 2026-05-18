@@ -1,19 +1,19 @@
 @model List<CourseMarketplaceFE.Models.CourseModerationViewModel>
 @{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Xét duyệt Khóa học";
-    ViewData["PageHeader"] = "Xét duyệt Khóa học";
+    ViewData["Title"] = "Course Moderation Queue";
+    ViewData["PageHeader"] = "Course Moderation Queue";
 }
 
 <div class="space-y-6">
     <!-- Stats Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div id="stats-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
             <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center">
                 <span class="material-symbols-outlined text-emerald-600">pending_actions</span>
             </div>
             <div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Đang chờ duyệt</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Pending Review</p>
                 <h3 class="text-2xl font-display font-extrabold text-slate-900">@Model.Count</h3>
             </div>
         </div>
@@ -22,7 +22,7 @@
                 <span class="material-symbols-outlined text-white">verified</span>
             </div>
             <div>
-                <p class="text-xs font-bold text-white/60 uppercase tracking-widest">Hệ thống</p>
+                <p class="text-xs font-bold text-white/60 uppercase tracking-widest">Platform</p>
                 <h3 class="text-lg font-display font-bold text-white">Moderation Active</h3>
             </div>
         </div>
@@ -30,20 +30,20 @@
     
     <!-- Filter Bar -->
     <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm mb-6">
-        <form method="get" action="/AdminModeration/Courses" class="flex flex-wrap items-end gap-4">
+        <form id="filter-form" method="get" action="/AdminModeration/Courses" class="flex flex-wrap items-end gap-4" onsubmit="event.preventDefault();">
             <div class="flex-1 min-w-[300px]">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Tìm kiếm</label>
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Search</label>
                 <div class="relative">
                     <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                    <input type="text" name="search" value="@ViewBag.Search" placeholder="Tên khóa học hoặc giảng viên..." 
-                           class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" />
+                    <input type="text" name="search" id="search-input" value="@ViewBag.Search" placeholder="Search course title or instructor name..." 
+                           class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm outline-none" />
                 </div>
             </div>
             
-            <div class="w-48">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Danh mục</label>
-                <select name="category" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer">
-                    <option value="0">Tất cả danh mục</option>
+            <div class="w-48 relative">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Category</label>
+                <select name="category" id="category-select" class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer outline-none">
+                    <option value="0">All Categories</option>
                     @if (ViewBag.Categories != null)
                     {
                         var cats = System.Text.Json.JsonSerializer.Deserialize<List<CourseMarketplaceFE.Models.CategoryViewModel>>(ViewBag.Categories as string, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -53,64 +53,63 @@
                         }
                     }
                 </select>
+                <span class="material-symbols-outlined absolute right-3 bottom-3 text-slate-400 pointer-events-none">arrow_drop_down</span>
             </div>
 
-            <div class="w-40">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Trạng thái</label>
-                <select name="status" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer">
-                    <option value="all" selected="@(ViewBag.Status == "all" || string.IsNullOrEmpty(ViewBag.Status))">Tất cả</option>
-                    <option value="pending" selected="@(ViewBag.Status == "pending")">Chờ duyệt</option>
-                    <option value="published" selected="@(ViewBag.Status == "published")">Đã duyệt</option>
-                    <option value="rejected" selected="@(ViewBag.Status == "rejected")">Đã từ chối</option>
-                    <option value="flagged" selected="@(ViewBag.Status == "flagged")">Đã gắn cờ</option>
+            <div class="w-40 relative">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Status</label>
+                <select name="status" id="status-select" class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer outline-none">
+                    <option value="all" selected="@(ViewBag.Status == "all" || string.IsNullOrEmpty(ViewBag.Status))">All</option>
+                    <option value="pending" selected="@(ViewBag.Status == "pending")">Pending</option>
+                    <option value="published" selected="@(ViewBag.Status == "published")">Approved</option>
+                    <option value="rejected" selected="@(ViewBag.Status == "rejected")">Rejected</option>
+                    <option value="flagged" selected="@(ViewBag.Status == "flagged")">Flagged</option>
                 </select>
+                <span class="material-symbols-outlined absolute right-3 bottom-3 text-slate-400 pointer-events-none">arrow_drop_down</span>
             </div>
 
-            <div class="w-48">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Sắp xếp</label>
-                <select name="sortBy" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer">
-                    <option value="oldest" selected="@(ViewBag.SortBy == "oldest")">Cũ nhất (Ưu tiên)</option>
-                    <option value="newest" selected="@(ViewBag.SortBy == "newest")">Mới nhất</option>
+            <div class="w-48 relative">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Sort By</label>
+                <select name="sortBy" id="sort-select" class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer outline-none">
+                    <option value="oldest" selected="@(ViewBag.SortBy == "oldest")">Oldest (Priority)</option>
+                    <option value="newest" selected="@(ViewBag.SortBy == "newest")">Newest</option>
                 </select>
+                <span class="material-symbols-outlined absolute right-3 bottom-3 text-slate-400 pointer-events-none">arrow_drop_down</span>
             </div>
 
-            <button type="submit" class="h-[46px] px-6 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all flex items-center gap-2">
-                <span class="material-symbols-outlined text-[20px]">filter_list</span>
-                Lọc
-            </button>
-            <a href="/AdminModeration/Courses" class="h-[46px] px-4 flex items-center justify-center bg-slate-100 text-slate-400 rounded-2xl hover:bg-slate-200 transition-all">
+            <button type="button" id="btn-clear-filters" class="h-[46px] px-4 flex items-center justify-center bg-slate-100 text-slate-400 rounded-2xl hover:bg-slate-200 transition-all cursor-pointer">
                 <span class="material-symbols-outlined">refresh</span>
-            </a>
+            </button>
         </form>
     </div>
 
     <!-- Table Container -->
-    <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+    <div id="moderation-table-container" class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
         <div class="overflow-x-auto custom-scrollbar">
             <table class="w-full border-collapse">
                 <thead>
                     <tr class="bg-slate-50/50 border-b border-slate-100">
-                        <th class="px-8 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Thông tin khóa học</th>
-                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Giảng viên</th>
-                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Danh mục</th>
-                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Giá bán</th>
-                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Mức độ ưu tiên</th>
-                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Ngày gửi</th>
-                        <th class="px-6 py-5 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Xem chi tiết</th>
-                        <th class="px-8 py-5 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Hành động</th>
+                        <th class="px-8 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Course Info</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Instructor</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Category</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Price</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Priority Level</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Submission Date</th>
+                        <th class="px-6 py-5 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Preview</th>
+                        <th class="px-8 py-5 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
                     @if (!Model.Any())
                     {
                         <tr>
-                            <td colspan="7" class="px-8 py-20 text-center">
+                            <td colspan="8" class="px-8 py-20 text-center">
                                 <div class="flex flex-col items-center">
                                     <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                                         <span class="material-symbols-outlined text-slate-300 text-4xl">inventory_2</span>
                                     </div>
-                                    <h4 class="text-slate-900 font-display font-bold">Không có khóa học chờ duyệt</h4>
-                                    <p class="text-slate-400 text-sm">Hệ thống hiện đã xử lý xong toàn bộ hàng đợi.</p>
+                                    <h4 class="text-slate-900 font-display font-bold">No Courses Pending Review</h4>
+                                    <p class="text-slate-400 text-sm">Excellent! The moderation queue is completely empty.</p>
                                 </div>
                             </td>
                         </tr>
@@ -120,7 +119,7 @@
                         var isPending = item.CourseStatus?.Equals("pending", StringComparison.OrdinalIgnoreCase) ?? false;
                         var rowOpacity = isPending ? "opacity-100" : "opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0";
                         
-                        <tr class="group hover:bg-slate-50/80 transition-all duration-300 @rowOpacity">
+                        <tr data-course-id="@item.CourseId" class="group hover:bg-slate-50/80 transition-all duration-300 @rowOpacity">
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-4">
                                     <div class="w-14 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-100 shadow-sm">
@@ -149,12 +148,12 @@
                                                         if (i <= item.FlagCount)
                                                         {
                                                             var flagColor = i == 1 ? "bg-amber-400" : i == 2 ? "bg-orange-500" : "bg-red-600";
-                                                            var flagTitle = i == 1 ? "Lần 1: Nhắc nhở" : i == 2 ? "Lần 2: Cảnh báo mạnh" : "Lần 3: Vi phạm nghiêm trọng";
+                                                            var flagTitle = i == 1 ? "Strike 1: Friendly Reminder" : i == 2 ? "Strike 2: Severe Warning" : "Strike 3: Critical Infraction";
                                                             <div class="w-3 h-1 rounded-full @flagColor" title="@flagTitle"></div>
                                                         }
                                                         else
                                                         {
-                                                            <div class="w-3 h-1 rounded-full bg-slate-200" title="Chưa vi phạm"></div>
+                                                            <div class="w-3 h-1 rounded-full bg-slate-200" title="No infraction recorded"></div>
                                                         }
                                                     }
                                                 </div>
@@ -178,7 +177,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-6 font-display font-black text-primary">
-                                @item.Price.ToString("N0")đ
+                                @item.Price.ToString("C2", new System.Globalization.CultureInfo("en-US"))
                             </td>
                             <td class="px-6 py-6">
                                 @if (isPending)
@@ -186,8 +185,8 @@
                                     var badgeColor = item.UrgencyColor == "red" ? "bg-red-50 text-red-600 border-red-100" :
                                                      item.UrgencyColor == "amber" ? "bg-amber-50 text-amber-600 border-amber-100" :
                                                      "bg-slate-50 text-slate-500 border-slate-100";
-                                    var urgencyText = item.UrgencyLevel == "High" ? "Khẩn cấp" :
-                                                      item.UrgencyLevel == "Medium" ? "Cần xử lý" : "Bình thường";
+                                    var urgencyText = item.UrgencyLevel == "High" ? "Urgent" :
+                                                      item.UrgencyLevel == "Medium" ? "Attention Required" : "Standard";
                                     
                                     <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border @badgeColor">
                                         <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
@@ -197,10 +196,10 @@
                                 else
                                 {
                                     var statusLabel = item.CourseStatus?.ToLower() switch {
-                                        "published" => "Đã duyệt",
-                                        "rejected" => "Từ chối",
-                                        "flagged" => "Gắn cờ",
-                                        "archived" => "Lưu trữ",
+                                        "published" => "Approved",
+                                        "rejected" => "Rejected",
+                                        "flagged" => "Flagged",
+                                        "archived" => "Archived",
                                         _ => item.CourseStatus
                                     };
                                     var statusColor = item.CourseStatus?.ToLower() switch {
@@ -220,7 +219,7 @@
                                 <p class="text-[10px] text-slate-400 font-bold uppercase">@item.CreatedAt?.ToString("HH:mm")</p>
                             </td>
                             <td class="px-6 py-6 text-center">
-                                <a href="/Course/Details/@item.CourseId" target="_blank" class="inline-flex w-9 h-9 items-center justify-center bg-slate-100 text-slate-400 rounded-xl hover:bg-primary hover:text-white transition-all active:scale-95" title="Xem chi tiết khóa học">
+                                <a href="/Course/Details/@item.CourseId" target="_blank" class="inline-flex w-9 h-9 items-center justify-center bg-slate-100 text-slate-400 rounded-xl hover:bg-primary hover:text-white transition-all active:scale-95" title="Preview course details">
                                     <span class="material-symbols-outlined text-[20px]">visibility</span>
                                 </a>
                             </td>
@@ -229,28 +228,28 @@
                                     @if (isPending || item.CourseStatus?.ToLower() == "rejected")
                                     {
                                         <button onclick="approveCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
-                                            <span class="material-symbols-outlined text-[18px]">done</span> Duyệt
+                                            <span class="material-symbols-outlined text-[18px]">done</span> Approve
                                         </button>
                                         <button onclick="rejectCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-bold transition-all active:scale-95">
-                                            <span class="material-symbols-outlined text-[18px]">close</span> Từ chối
+                                            <span class="material-symbols-outlined text-[18px]">close</span> Reject
                                         </button>
                                     }
                                     
                                     @if (item.CourseStatus?.ToLower() == "published")
                                     {
-                                        <button onclick="flagCourse(@item.CourseId)" class="flex items-center justify-center gap-2 px-4 py-2 bg-accent text-white rounded-xl hover:bg-red-600 transition-all shadow-lg shadow-red-900/20 active:scale-95" title="Gắn cờ vi phạm">
-                                            <span class="material-symbols-outlined text-[18px]">flag</span> Gắn cờ
+                                        <button onclick="flagCourse(@item.CourseId)" class="flex items-center justify-center gap-2 px-4 py-2 bg-accent text-white rounded-xl hover:bg-red-600 transition-all shadow-lg shadow-red-900/20 active:scale-95" title="Flag for violation">
+                                            <span class="material-symbols-outlined text-[18px]">flag</span> Flag
                                         </button>
                                     }
                                     else if (item.CourseStatus?.ToLower() == "flagged")
                                     {
                                          <button onclick="approveCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
-                                            <span class="material-symbols-outlined text-[18px]">settings_backup_restore</span> Duyệt lại
+                                            <span class="material-symbols-outlined text-[18px]">settings_backup_restore</span> Re-approve
                                         </button>
                                     }
                                     else if (isPending)
                                     {
-                                        <button onclick="flagCourse(@item.CourseId)" class="flex items-center justify-center w-9 h-9 bg-slate-100 text-slate-400 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all active:scale-95" title="Gắn cờ vi phạm">
+                                        <button onclick="flagCourse(@item.CourseId)" class="flex items-center justify-center w-9 h-9 bg-slate-100 text-slate-400 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all active:scale-95" title="Flag for violation">
                                             <span class="material-symbols-outlined text-[18px]">flag</span>
                                         </button>
                                     }
@@ -270,8 +269,8 @@
         <!-- Header -->
         <div class="p-6 border-b border-slate-100 flex items-center justify-between">
             <div>
-                <h3 class="text-xl font-display font-extrabold text-slate-900">Từ chối khóa học</h3>
-                <p class="text-sm text-slate-500 mt-1">Tag thành phần vi phạm và ghi lý do từ chối</p>
+                <h3 class="text-xl font-display font-extrabold text-slate-900">Reject Course</h3>
+                <p class="text-sm text-slate-500 mt-1">Tag violating elements and provide constructive rejection reasons</p>
             </div>
             <button onclick="closeRejectModal()" class="w-9 h-9 flex items-center justify-center bg-slate-100 rounded-xl text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-all">
                 <span class="material-symbols-outlined text-[20px]">close</span>
@@ -281,21 +280,21 @@
         <!-- Body -->
         <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
             <div id="reject-loading" class="flex items-center justify-center py-12 text-slate-400">
-                <span class="material-symbols-outlined animate-spin mr-2">sync</span> Đang tải chi tiết khóa học...
+                <span class="material-symbols-outlined animate-spin mr-2">sync</span> Loading course metadata...
             </div>
             <div id="reject-items-container" class="hidden space-y-3">
                 <!-- Dynamic rows will be inserted here -->
             </div>
             <button id="add-reject-item-btn" onclick="addRejectRow()" class="hidden mt-4 w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-500 hover:text-primary hover:border-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 text-sm font-bold">
-                <span class="material-symbols-outlined text-[18px]">add_circle</span> Thêm mục từ chối
+                <span class="material-symbols-outlined text-[18px]">add_circle</span> Add Rejection Item
             </button>
         </div>
 
         <!-- Footer -->
         <div class="p-6 border-t border-slate-100 flex justify-end gap-3">
-            <button onclick="closeRejectModal()" class="px-6 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors">Hủy</button>
+            <button onclick="closeRejectModal()" class="px-6 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors">Cancel</button>
             <button onclick="submitDetailedReject()" id="submit-reject-btn" class="px-6 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 flex items-center gap-2">
-                <span class="material-symbols-outlined text-[18px]">close</span> Gửi từ chối
+                <span class="material-symbols-outlined text-[18px]">close</span> Submit Rejection
             </button>
         </div>
     </div>
@@ -306,17 +305,78 @@
     let rejectCourseId = null;
     let rejectCourseData = null;
     let rejectRowCounter = 0;
+    let debounceTimer;
+
+    // AJAX fetching for courses
+    function triggerAjaxFetch() {
+        const searchVal = document.getElementById("search-input").value.trim();
+        const categoryVal = document.getElementById("category-select").value;
+        const statusVal = document.getElementById("status-select").value;
+        const sortByVal = document.getElementById("sort-select").value;
+
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            fetchCourses(searchVal, categoryVal, statusVal, sortByVal);
+        }, 300);
+    }
+
+    async function fetchCourses(search, category, status, sortBy) {
+        const container = document.getElementById("moderation-table-container");
+        if (container) {
+            container.style.opacity = "0.5";
+            container.style.transition = "opacity 0.15s ease-in-out";
+        }
+
+        const url = `/AdminModeration/Courses?search=${encodeURIComponent(search)}&category=${category}&status=${status}&sortBy=${sortBy}`;
+        try {
+            const resp = await fetch(url);
+            const htmlText = await resp.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, "text/html");
+
+            const newContent = doc.getElementById("moderation-table-container");
+            if (newContent && container) {
+                container.innerHTML = newContent.innerHTML;
+            }
+
+            const newStats = doc.getElementById("stats-container");
+            const currentStats = document.getElementById("stats-container");
+            if (newStats && currentStats) {
+                currentStats.innerHTML = newStats.innerHTML;
+            }
+        } catch (err) {
+            console.error("AJAX Error:", err);
+        } finally {
+            if (container) {
+                container.style.opacity = "1";
+            }
+        }
+    }
+
+    // Dim row smoothly instead of deleting it
+    function dimCourseRowInDOM(courseId) {
+        const row = document.querySelector(`tr[data-course-id="${courseId}"]`);
+        if (row) {
+            row.style.transition = "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)";
+            row.style.opacity = "0.4";
+            row.classList.add("opacity-40", "grayscale-[0.5]");
+            row.classList.remove("opacity-100");
+        }
+        
+        // Refresh AJAX to sync list filters and stats badge
+        triggerAjaxFetch();
+    }
 
     async function approveCourse(id) {
         const { value: feedback } = await Swal.fire({
-            title: 'Duyệt khóa học',
-            text: 'Bạn có muốn gửi lời nhắn khích lệ cho giảng viên không?',
+            title: 'Approve Course',
+            text: 'Would you like to send a positive or encouraging message to the instructor?',
             input: 'textarea',
-            inputPlaceholder: 'Ví dụ: Khóa học của bạn rất tuyệt vời, hãy tiếp tục phát huy nhé!',
+            inputPlaceholder: 'e.g., Your course curriculum looks phenomenal! We are excited to launch it.',
             showCancelButton: true,
-            confirmButtonText: 'Phê duyệt & Đăng tải',
+            confirmButtonText: 'Approve & Publish',
             confirmButtonColor: '#10b981',
-            cancelButtonText: 'Hủy',
+            cancelButtonText: 'Cancel',
             background: '#ffffff',
             customClass: {
                 title: 'font-display font-extrabold text-slate-900',
@@ -339,13 +399,13 @@
         if (result.success) {
             Swal.fire({
                 icon: 'success',
-                title: 'Đã phê duyệt!',
-                text: 'Khóa học hiện đã có mặt trên sàn.',
+                title: 'Course Approved!',
+                text: 'The course is now active and live on the marketplace.',
                 confirmButtonColor: '#10b981',
                 customClass: { popup: 'rounded-3xl' }
-            }).then(() => location.reload());
+            }).then(() => dimCourseRowInDOM(id));
         } else {
-            Swal.fire('Lỗi', 'Có lỗi xảy ra khi duyệt khóa học.', 'error');
+            Swal.fire('Error', 'An error occurred while approving this course.', 'error');
         }
     }
 
@@ -375,13 +435,13 @@
             // Add first row by default
             addRejectRow();
         } catch(e) {
-            loading.innerHTML = '<span class="text-red-500">Không thể tải chi tiết khóa học.</span>';
+            loading.innerHTML = '<span class="text-red-500">Failed to load course details.</span>';
         }
     }
 
     function buildTargetOptions() {
         if (!rejectCourseData) return '';
-        let opts = `<optgroup label="Khóa học">
+        let opts = `<optgroup label="Course Level">
             <option value="course.title">@@course.title</option>
             <option value="course.description">@@course.description</option>
             <option value="course.thumbnail">@@course.thumbnail</option>
@@ -425,16 +485,16 @@
             <div class="flex-1 space-y-3">
                 <div class="relative custom-dropdown" data-row-id="${rejectRowCounter}">
                     <label class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-2">
-                        Thành phần
-                        <span class="normal-case tracking-normal text-[10px] text-slate-400 font-medium bg-slate-200/50 px-2 py-0.5 rounded-full flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">info</span> Gõ @@ để tìm nhanh</span>
+                        Violating Element
+                        <span class="normal-case tracking-normal text-[10px] text-slate-400 font-medium bg-slate-200/50 px-2 py-0.5 rounded-full flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">info</span> Type @@ to search quickly</span>
                     </label>
                     <select class="reject-target hidden">
-                        <option value="">— Chọn thành phần —</option>
+                        <option value="">— Select element —</option>
                         ${buildTargetOptions()}
                     </select>
                     <div class="relative">
                         <input type="text" class="dropdown-search w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm" 
-                            placeholder="Gõ @@ để tìm thành phần (VD: @@course, @@lesson...)" 
+                            placeholder="Type @@ to search elements (e.g., @@course, @@lesson...)" 
                             onfocus="openDropdown(${rejectRowCounter})" 
                             onkeyup="filterDropdown(${rejectRowCounter}, this.value)"
                             autocomplete="off">
@@ -445,8 +505,8 @@
                     </div>
                 </div>
                 <div>
-                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Lý do từ chối</label>
-                    <textarea class="reject-reason w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm" rows="2" placeholder="Mô tả lý do từ chối..."></textarea>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Rejection Reason</label>
+                    <textarea class="reject-reason w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm" rows="2" placeholder="Describe why this specific element is being rejected..."></textarea>
                 </div>
             </div>
             <button onclick="this.closest('.reject-row').remove()" class="mt-7 w-9 h-9 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all shrink-0">
@@ -491,13 +551,13 @@
         });
 
         if (!valid || items.length === 0) {
-            Swal.fire('Thiếu thông tin', 'Vui lòng chọn thành phần và nhập lý do cho mỗi mục từ chối.', 'warning');
+            Swal.fire('Information Missing', 'Please select a specific element and type a reason for each rejection row.', 'warning');
             return;
         }
 
         const btn = document.getElementById('submit-reject-btn');
         btn.disabled = true;
-        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">sync</span> Đang xử lý...';
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">sync</span> Processing...';
 
         try {
             const res = await fetch('/AdminModeration/RejectCourseDetailed', {
@@ -511,34 +571,34 @@
                 closeRejectModal();
                 Swal.fire({
                     icon: 'info',
-                    title: 'Đã gửi phản hồi',
-                    text: 'Khóa học đã bị từ chối và giảng viên đã nhận được chi tiết.',
+                    title: 'Rejection Submitted',
+                    text: 'The course has been rejected and the instructor was notified with your detailed logs.',
                     confirmButtonColor: '#10b981'
-                }).then(() => location.reload());
+                }).then(() => dimCourseRowInDOM(rejectCourseId));
             } else {
-                Swal.fire('Lỗi', 'Có lỗi xảy ra khi thực hiện.', 'error');
+                Swal.fire('Error', 'An error occurred during submission.', 'error');
             }
         } catch(e) {
-            Swal.fire('Lỗi', 'Không thể kết nối máy chủ.', 'error');
+            Swal.fire('Error', 'Cannot connect to server.', 'error');
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">close</span> Gửi từ chối';
+            btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">close</span> Submit Rejection';
         }
     }
 
     async function flagCourse(id) {
         const { value: reason } = await Swal.fire({
-            title: 'Gắn cờ vi phạm',
-            html: '<p class="text-sm text-slate-500 mb-4">Hành động này sẽ khóa khóa học và gửi cảnh báo vi phạm nghiêm trọng cho giảng viên.</p>',
+            title: 'Flag Violation',
+            html: '<p class="text-sm text-slate-500 mb-4">This action will unpublish/lock the course and issue a formal violation strike to the instructor.</p>',
             input: 'textarea',
-            inputPlaceholder: 'Mô tả vi phạm (Bản quyền, Nội dung độc hại...)',
+            inputPlaceholder: 'Describe the violation in detail (e.g., Copyright infringement, Harmful/Spam content...)',
             inputValidator: (value) => {
-                if (!value) return 'Bạn phải nhập lý do vi phạm!';
+                if (!value) return 'You must enter a violation reason!';
             },
             showCancelButton: true,
-            confirmButtonText: 'Xác nhận Gắn cờ',
+            confirmButtonText: 'Confirm Flag',
             confirmButtonColor: '#064e3b',
-            cancelButtonText: 'Hủy',
+            cancelButtonText: 'Cancel',
             customClass: {
                 title: 'font-display font-extrabold text-red-600',
                 input: 'rounded-2xl border-slate-200 focus:ring-primary focus:border-primary'
@@ -558,14 +618,15 @@
         if (result.success) {
             Swal.fire({
                 icon: 'success',
-                title: 'Đã gắn cờ',
-                text: 'Khóa học đã bị tạm ẩn và đưa vào danh sách đen.',
+                title: 'Course Flagged',
+                text: 'The course has been hidden from the marketplace and restricted.',
                 confirmButtonColor: '#10b981'
-            }).then(() => location.reload());
+            }).then(() => dimCourseRowInDOM(id));
         } else {
-            Swal.fire('Lỗi', 'Có lỗi xảy ra khi thực hiện.', 'error');
+            Swal.fire('Error', 'An error occurred while flagging this course.', 'error');
         }
     }
+
     // Custom Searchable Dropdown Logic
     function initCustomDropdown(rowId) {
         const row = document.querySelector(`.reject-row[data-row-id="${rowId}"]`);
@@ -636,6 +697,26 @@
         }
     });
 
+    // Wire up filter controls
+    document.addEventListener("DOMContentLoaded", () => {
+        const searchInput = document.getElementById("search-input");
+        const categorySelect = document.getElementById("category-select");
+        const statusSelect = document.getElementById("status-select");
+        const sortSelect = document.getElementById("sort-select");
+        const clearBtn = document.getElementById("btn-clear-filters");
+
+        searchInput.addEventListener("input", triggerAjaxFetch);
+        categorySelect.addEventListener("change", triggerAjaxFetch);
+        statusSelect.addEventListener("change", triggerAjaxFetch);
+        sortSelect.addEventListener("change", triggerAjaxFetch);
+
+        clearBtn.addEventListener("click", () => {
+            searchInput.value = "";
+            categorySelect.value = "0";
+            statusSelect.value = "all";
+            sortSelect.value = "oldest";
+            triggerAjaxFetch();
+        });
+    });
 </script>
 }
-

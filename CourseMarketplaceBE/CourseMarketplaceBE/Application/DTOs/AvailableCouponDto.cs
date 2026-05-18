@@ -16,10 +16,12 @@ public class AvailableCouponDto
     /// <summary>True khi CartSubTotal >= MinOrderValue.</summary>
     public bool IsEligible { get; set; }
 
-    /// <summary>
-    /// Text hiển thị điều kiện.
+    /// <summary>Text hiển thị điều kiện.
     /// Eligible:   "Giảm 20%" | "Giảm 50,000đ"
     /// Ineligible: "Mua thêm 30,000đ để dùng mã này"
     /// </summary>
     public string ConditionMessage { get; set; } = string.Empty;
+
+    /// <summary>ID của khóa học mà coupon này liên kết.</summary>
+    public int? CourseId { get; set; }
 }

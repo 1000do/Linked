@@ -56,6 +56,11 @@ public class CourseResponse
     public bool IsOwner { get; set; }
     public int TotalReviews { get; set; }
     public DateTime? LastApprovedAt { get; set; }
+
+    // Applied Coupon details
+    public string? AppliedCouponCode { get; set; }
+    public string? AppliedCouponType { get; set; }
+    public decimal? AppliedCouponValue { get; set; }
 }
 
 public class CourseDetailResponse : CourseResponse
@@ -67,4 +72,13 @@ public class CategoryResponse
 {
     public int CategoryId { get; set; }
     public string CategoriesName { get; set; } = null!;
+}
+
+public class PaginatedCoursesResponse
+{
+    public IEnumerable<CourseResponse> Courses { get; set; } = new List<CourseResponse>();
+    public int TotalItems { get; set; }
+    public int TotalPages { get; set; }
+    public int CurrentPage { get; set; }
+    public int PageSize { get; set; }
 }

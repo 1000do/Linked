@@ -40,7 +40,7 @@
             </div>
             
             <div class="flex items-center gap-2 text-sm text-slate-300">
-                <span>Created by <a href="#" class="text-[#cec0fc] hover:text-white underline font-bold">@Model.InstructorName</a></span>
+                <span>Created by <a href="/Instructor/Profile/@Model.InstructorId" class="text-[#cec0fc] hover:text-white underline font-bold">@Model.InstructorName</a></span>
             </div>
             
             <div class="mt-4 flex items-center gap-6 text-sm text-slate-300">
@@ -114,7 +114,6 @@
                                 <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
                                 Add to cart
                             </button>
-                            <button onclick="buyNow(@Model.CourseId)" class="w-full border-2 border-slate-900 font-bold py-3 rounded-lg hover:bg-slate-50 transition-all">Buy now</button>
                         }
                         
                         @if (!Model.IsOwner && !isManager)
@@ -349,7 +348,9 @@
             <div class="flex flex-col gap-4">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h3 class="text-[#a435f0] font-bold text-lg underline hover:text-[#8710d8] cursor-pointer">@Model.InstructorName</h3>
+                            <a href="/Instructor/Profile/@Model.InstructorId">
+                                <h3 class="text-[#a435f0] font-bold text-lg underline hover:text-[#8710d8] cursor-pointer">@Model.InstructorName</h3>
+                            </a>
                             <p class="text-slate-500 text-sm">@(string.IsNullOrEmpty(Model.InstructorProfessionalTitle) ? "Instructor" : Model.InstructorProfessionalTitle)</p>
                         </div>
                         @if (!Model.IsOwner && !isManager)
@@ -425,8 +426,8 @@
             <!-- Review Form (conditionally shown by JS) -->
             <div id="detail-review-form" class="hidden mb-10">
                 <div class="bg-gradient-to-r from-[#a435f0]/5 to-[#a435f0]/10 p-6 rounded-2xl border border-[#a435f0]/20">
-                    <h4 class="font-bold text-sm mb-1 text-[#a435f0]">✍️ Viết đánh giá của bạn</h4>
-                    <p class="text-xs text-slate-500 mb-4">Chia sẻ trải nghiệm học tập của bạn với cộng đồng</p>
+                    <h4 class="font-bold text-sm mb-1 text-[#a435f0]">✍️ Write your review</h4>
+                    <p class="text-xs text-slate-500 mb-4">Share your learning experience with the community</p>
                     <div class="flex gap-1 mb-4" id="detail-rating-input">
                         @for (int ri = 1; ri <= 5; ri++) {
                             <button onclick="setDetailRating(@ri)" class="detail-star-btn text-slate-300 hover:text-amber-500 transition-colors">
@@ -435,10 +436,10 @@
                         }
                         <input type="hidden" id="detail-selected-rating" value="0" />
                     </div>
-                    <textarea id="detail-review-comment" rows="3" class="w-full bg-white border border-slate-200 rounded-lg p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#a435f0]/30 mb-4" placeholder="Khóa học này đã giúp bạn như thế nào?"></textarea>
+                    <textarea id="detail-review-comment" rows="3" class="w-full bg-white border border-slate-200 rounded-lg p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#a435f0]/30 mb-4" placeholder="How has this course helped you?"></textarea>
                     <button onclick="submitDetailReview()" id="detail-submit-btn" class="bg-[#a435f0] text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-[#8710d8] transition-all flex items-center gap-2">
                         <span class="material-symbols-outlined text-[18px]">send</span>
-                        Gửi đánh giá
+                        Submit Review
                     </button>
                 </div>
             </div>
@@ -449,22 +450,22 @@
                     <span class="material-symbols-outlined text-amber-500 text-xl mt-0.5">info</span>
                     <div>
                         <p id="detail-blocked-msg" class="text-sm font-medium text-amber-800"></p>
-                        <p class="text-xs text-amber-600 mt-1">Hoàn thành tất cả bài học để mở khóa chức năng đánh giá.</p>
+                        <p class="text-xs text-amber-600 mt-1">Complete all lessons to unlock the review feature.</p>
                     </div>
                 </div>
             </div>
 
             <div class="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
-                <h3 class="text-xl font-bold text-slate-900">Đánh giá từ học viên</h3>
+                <h3 class="text-xl font-bold text-slate-900">Student Reviews</h3>
                 <div class="flex items-center gap-3">
-                    <span class="text-sm text-slate-500 font-medium">Lọc theo:</span>
+                    <span class="text-sm text-slate-500 font-medium">Filter by:</span>
                     <select id="review-star-filter" onchange="loadReviews()" class="bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#a435f0]/20">
-                        <option value="">Tất cả xếp hạng</option>
-                        <option value="5">5 sao</option>
-                        <option value="4">4 sao</option>
-                        <option value="3">3 sao</option>
-                        <option value="2">2 sao</option>
-                        <option value="1">1 sao</option>
+                        <option value="">All Ratings</option>
+                        <option value="5">5 stars</option>
+                        <option value="4">4 stars</option>
+                        <option value="3">3 stars</option>
+                        <option value="2">2 stars</option>
+                        <option value="1">1 star</option>
                     </select>
                 </div>
             </div>
@@ -512,6 +513,7 @@
 </div>
 
 <script>
+    const currentToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`.trim();
     let allExpanded = false;
 
     function toggleAllSections() {
@@ -568,6 +570,17 @@
     }
 
     async function enrollFree(courseId) {
+        if (!currentToken) {
+            Swal.fire({
+                title: 'Login Required',
+                text: 'You need to log in to enroll in this course.',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'Log In Now',
+                cancelButtonText: 'Later'
+            }).then((res) => { if (res.isConfirmed) window.location.href = '/Account/Login'; });
+            return;
+        }
         const btn = event.currentTarget;
         const originalHtml = btn.innerHTML;
         btn.disabled = true;
@@ -578,6 +591,12 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
+            if (response.status === 401) {
+                Swal.fire('Login Required', 'Please log in to continue.', 'warning')
+                    .then(() => { window.location.href = '/Account/Login'; });
+                return;
+            }
+
             const result = await response.json();
             
             if (result.success) {
@@ -620,12 +639,12 @@
                 });
 
                 Swal.fire({
-                    title: 'Thành công!',
-                    text: 'Bạn đã ghi danh khóa học thành công.',
+                    title: 'Success!',
+                    text: 'You have enrolled in the course successfully.',
                     icon: 'success',
                     showCancelButton: true,
-                    confirmButtonText: 'Bắt đầu học ngay',
-                    cancelButtonText: 'Ở lại trang này'
+                    confirmButtonText: 'Start Learning Now',
+                    cancelButtonText: 'Stay on Page'
                 }).then((res) => {
                     if (res.isConfirmed) {
                         window.location.href = '/Course/Learn/' + courseId;
@@ -639,11 +658,23 @@
         } catch (error) {
             btn.disabled = false;
             btn.innerHTML = originalHtml;
-            Swal.fire('Lỗi', 'Không thể kết nối với máy chủ.', 'error');
+            if (error.status === 401) window.location.href = '/Account/Login';
+            else Swal.fire('Error', 'An error occurred during enrollment.', 'error');
         }
     }
 
     async function addToCart(courseId) {
+        if (!currentToken) {
+            Swal.fire({
+                title: 'Login Required',
+                text: 'You need to log in to add this course to your cart.',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'Log In Now',
+                cancelButtonText: 'Later'
+            }).then((res) => { if (res.isConfirmed) window.location.href = '/Account/Login'; });
+            return;
+        }
         const btn = event.currentTarget;
         const originalHtml = btn.innerHTML;
         btn.disabled = true;
@@ -654,6 +685,11 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
+            if (response.status === 401) {
+                Swal.fire('Login Required', 'Please log in to continue.', 'warning')
+                    .then(() => { window.location.href = '/Account/Login'; });
+                return;
+            }
             const result = await response.json();
             
             if (result.success) {
@@ -661,12 +697,12 @@
                 if (typeof initCartBadge === "function") initCartBadge();
                 
                 Swal.fire({
-                    title: 'Thêm thành công!',
-                    text: 'Khóa học đã được thêm vào giỏ hàng.',
+                    title: 'Added Successfully!',
+                    text: 'The course has been added to your cart.',
                     icon: 'success',
                     showCancelButton: true,
-                    confirmButtonText: 'Đến giỏ hàng',
-                    cancelButtonText: 'Tiếp tục xem'
+                    confirmButtonText: 'Go to Cart',
+                    cancelButtonText: 'Continue Browsing'
                 }).then((res) => {
                     if (res.isConfirmed) {
                         window.location.href = '/Cart';
@@ -676,27 +712,14 @@
                 Swal.fire('Lỗi', result.message, 'error');
             }
         } catch (error) {
-            Swal.fire('Lỗi', 'Không thể kết nối với máy chủ.', 'error');
+            if (error.status === 401) {
+                Swal.fire('Session Expired', 'Please log in again to continue.', 'warning')
+                    .then(() => { window.location.href = '/Account/Login'; });
+            }
+            else Swal.fire('Error', 'An error occurred while adding to cart.', 'error');
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalHtml;
-        }
-    }
-
-    async function buyNow(courseId) {
-        try {
-            const response = await fetch('/Cart/AddToCartAjax/' + courseId, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const result = await response.json();
-            if (result.success) {
-                window.location.href = '/Cart';
-            } else {
-                Swal.fire('Lỗi', result.message, 'error');
-            }
-        } catch (error) {
-            Swal.fire('Lỗi', 'Không thể kết nối với máy chủ.', 'error');
         }
     }
 
@@ -711,7 +734,7 @@
                 const totalVal = d.totalReviews || 0;
                 
                 document.getElementById('stats-avg').textContent = avgVal.toFixed(1);
-                document.getElementById('stats-total').textContent = `${totalVal} đánh giá`;
+                document.getElementById('stats-total').textContent = `${totalVal} reviews`;
                 
                 // Header update
                 const headerAvg = document.getElementById('header-rating-avg');
@@ -779,7 +802,7 @@
                     document.getElementById('detail-review-blocked').classList.remove('hidden');
                     const pct = Math.round(d.progressPercentage || 0);
                     document.getElementById('detail-blocked-msg').textContent =
-                        `Tiến độ hiện tại: ${pct}%. Bạn cần hoàn thành 100% khóa học để viết đánh giá tại đây.`;
+                        `Current progress: ${pct}%. You need to complete 100% of the course to write a review here.`;
                 }
                 // Not enrolled → both hidden (default)
             }
@@ -806,12 +829,12 @@
     async function submitDetailReview() {
         const rating = document.getElementById('detail-selected-rating').value;
         const comment = document.getElementById('detail-review-comment').value;
-        if (rating == 0) return Swal.fire('Lỗi', 'Vui lòng chọn số sao.', 'warning');
-        if (!comment.trim()) return Swal.fire('Lỗi', 'Vui lòng nhập nội dung đánh giá.', 'warning');
+        if (rating == 0) return Swal.fire('Error', 'Please select a rating.', 'warning');
+        if (!comment.trim()) return Swal.fire('Error', 'Please write a comment.', 'warning');
 
         const btn = document.getElementById('detail-submit-btn');
         btn.disabled = true;
-        btn.innerHTML = '<span class="animate-spin material-symbols-outlined text-[18px]">sync</span> Đang gửi...';
+        btn.innerHTML = '<span class="animate-spin material-symbols-outlined text-[18px]">sync</span> Submitting...';
 
         try {
             const response = await fetch('/Course/SubmitReview?source=detail', {
@@ -821,19 +844,19 @@
             });
             const result = await response.json();
             if (result.success) {
-                Swal.fire('Thành công!', 'Đánh giá của bạn đã được gửi.', 'success');
+                Swal.fire('Success!', 'Your review has been submitted.', 'success');
                 document.getElementById('detail-review-comment').value = '';
                 setDetailRating(0);
                 loadReviews();
                 loadReviewStats();
             } else {
-                Swal.fire('Lỗi', result.message || 'Không thể gửi đánh giá.', 'error');
+                Swal.fire('Error', result.message || 'Could not submit review.', 'error');
             }
         } catch (e) {
-            Swal.fire('Lỗi', 'Không thể kết nối với máy chủ.', 'error');
+            Swal.fire('Error', 'Could not connect to server.', 'error');
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">send</span> Gửi đánh giá';
+            btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">send</span> Submit Review';
         }
     }
 
@@ -851,7 +874,7 @@
                 }
                 
                 if (data.length === 0) {
-                    list.innerHTML = `<p class="text-slate-400 italic text-center py-10">Không tìm thấy đánh giá ${filter} sao nào.</p>`;
+                    list.innerHTML = `<p class="text-slate-400 italic text-center py-10">No ${filter}-star reviews found.</p>`;
                     return;
                 }
 
@@ -869,7 +892,7 @@
                                     </h4>
                                     <div class="flex items-center gap-3">
                                         <span class="text-[11px] text-slate-400 font-medium">${new Date(r.createdAt).toLocaleDateString('vi-VN')}</span>
-                                        <button onclick="reportReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}')" class="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500" title="Báo cáo vi phạm">
+                                        <button onclick="reportReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}')" class="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500" title="Report review">
                                             <span class="material-symbols-outlined text-[16px]">flag</span>
                                         </button>
                                     </div>
@@ -888,7 +911,7 @@
                                     ` : `
                                         <div class="flex items-center gap-1 bg-purple-50 text-purple-600 text-[10px] px-2 py-0.5 rounded border border-purple-200">
                                             <span class="material-symbols-outlined text-[12px]">auto_awesome</span>
-                                            Khóa học tổng quát
+                                            General review
                                         </div>
                                     `}
                                 </div>
@@ -898,10 +921,10 @@
                     </div>
                 `).join('');
             } else {
-                list.innerHTML = '<p class="text-slate-400 italic text-center py-10">Chưa có đánh giá nào cho khóa học này.</p>';
+                list.innerHTML = '<p class="text-slate-400 italic text-center py-10">No reviews yet for this course.</p>';
             }
         } catch (e) {
-            list.innerHTML = '<p class="text-red-400 italic text-center py-10">Không thể tải đánh giá.</p>';
+            list.innerHTML = '<p class="text-red-400 italic text-center py-10">Could not load reviews.</p>';
         }
     }
 
@@ -912,18 +935,18 @@
     });
     async function reportReview(reviewId, type) {
         const { value: reason } = await Swal.fire({
-            title: 'Báo cáo đánh giá',
+            title: 'Report Review',
             input: 'select',
             inputOptions: {
-                'spam': 'Nội dung rác (Spam)',
-                'offensive': 'Ngôn từ gây hấn/Xúc phạm',
-                'fake': 'Đánh giá giả mạo',
-                'other': 'Lý do khác'
+                'spam': 'Spam content',
+                'offensive': 'Offensive/Harassment',
+                'fake': 'Fake review',
+                'other': 'Other reason'
             },
-            inputPlaceholder: 'Chọn lý do báo cáo',
+            inputPlaceholder: 'Select report reason',
             showCancelButton: true,
             confirmButtonColor: '#d33',
-            confirmButtonText: 'Gửi báo cáo'
+            confirmButtonText: 'Submit Report'
         });
 
         if (reason) {
@@ -935,12 +958,12 @@
                 });
                 const result = await response.json();
                 if (result.success) {
-                    Swal.fire('Đã báo cáo', 'Cảm ơn bạn đã đóng góp, quản trị viên sẽ xem xét đánh giá này.', 'success');
+                    Swal.fire('Reported', 'Thank you for your feedback, a moderator will review this.', 'success');
                 } else {
-                    Swal.fire('Lỗi', 'Không thể gửi báo cáo lúc này.', 'error');
+                    Swal.fire('Error', 'Could not send report at this time.', 'error');
                 }
             } catch (e) {
-                Swal.fire('Lỗi', 'Lỗi kết nối máy chủ.', 'error');
+                Swal.fire('Error', 'Server connection error.', 'error');
             }
         }
     }
@@ -949,10 +972,10 @@
         const token = "@(Context.Request.Cookies["AccessToken"] ?? "")";
         if (!token) {
             Swal.fire({
-                title: 'Vui lòng đăng nhập',
-                text: 'Bạn cần đăng nhập để nhắn tin cho giảng viên.',
+                title: 'Please Log In',
+                text: 'You need to log in to message the instructor.',
                 icon: 'info',
-                confirmButtonText: 'Đăng nhập',
+                confirmButtonText: 'Log In',
                 showCancelButton: true
             }).then((result) => {
                 if (result.isConfirmed) window.location.href = '/Auth/Login';
@@ -963,7 +986,7 @@
         try {
             // Hiển thị loading
             Swal.fire({
-                title: 'Đang kết nối...',
+                title: 'Connecting...',
                 allowOutsideClick: false,
                 didOpen: () => { Swal.showLoading(); }
             });
@@ -986,10 +1009,10 @@
                 Swal.close();
                 window.location.href = `/Chat/Index?chatId=${result.chatId}`;
             } else {
-                Swal.fire('Lỗi', result.message || 'Không thể tạo cuộc trò chuyện.', 'error');
+                Swal.fire('Error', result.message || 'Could not start conversation.', 'error');
             }
         } catch (e) {
-            Swal.fire('Lỗi', 'Lỗi kết nối server chat.', 'error');
+            Swal.fire('Error', 'Chat server connection error.', 'error');
         }
     }
 </script>

@@ -110,10 +110,36 @@
                     body: JSON.stringify(data)
                 });
                 const result = await res.json();
-                alert(result.message);
-                if(res.ok) e.target.reset();
+                
+                if (res.ok) {
+                    Swal.fire({
+                        title: 'Tặng khung thành công!',
+                        text: result.message || "Khung avatar đã được cấp thành công cho người dùng.",
+                        icon: 'success',
+                        confirmButtonColor: '#10b981',
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl' }
+                    });
+                    e.target.reset();
+                } else {
+                    Swal.fire({
+                        title: 'Tặng khung thất bại',
+                        text: result.message || "Có lỗi xảy ra khi tặng khung.",
+                        icon: 'error',
+                        confirmButtonColor: '#10b981',
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl' }
+                    });
+                }
             } catch (err) {
-                alert("Lỗi kết nối server.");
+                Swal.fire({
+                    title: 'Lỗi kết nối',
+                    text: "Không thể kết nối đến máy chủ quản lý khung.",
+                    icon: 'error',
+                    confirmButtonColor: '#10b981',
+                    background: '#ffffff',
+                    customClass: { popup: 'rounded-2xl shadow-xl' }
+                });
             }
         };
 

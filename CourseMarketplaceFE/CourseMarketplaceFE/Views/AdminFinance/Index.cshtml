@@ -1,15 +1,15 @@
 @using CourseMarketplaceFE.Controllers
 @model CourseMarketplaceFE.Controllers.AdminFinanceController.AdminFinanceUnifiedVM
 @{
-    ViewData["Title"] = "Quản lý Tài chính & Thanh toán";
+    ViewData["Title"] = "Financial & Payout Management";
     Layout = "_AdminLayout";
 }
 
 <!-- Header -->
 <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
     <div>
-        <h1 class="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">Quản lý Tài chính</h1>
-        <p class="text-slate-500">Quản lý doanh thu, tỷ lệ chia sẻ, số dư Stripe và lịch sử rút tiền sàn.</p>
+        <h1 class="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">Financial Management</h1>
+        <p class="text-slate-500">Monitor revenue splits, current Stripe balance metrics, and process manager bank withdrawals.</p>
     </div>
 </div>
 
@@ -29,7 +29,7 @@
 }
 
 <!-- ========================================== -->
-<!-- PHẦN 1: TỔNG QUAN DOANH THU & SỐ DƯ        -->
+<!-- SECTION 1: REVENUE OVERVIEW & BALANCES     -->
 <!-- ========================================== -->
 
 <!-- Thống kê tổng quan Doanh thu -->
@@ -37,35 +37,35 @@
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
         <div class="absolute right-0 top-0 w-24 h-24 bg-primary/5 rounded-bl-[100px] -z-0"></div>
         <div class="relative z-10">
-            <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Tổng doanh thu</p>
+            <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Gross Revenue</p>
             <p class="text-3xl font-black text-slate-900">@Model.Dashboard.Summary.GrossRevenue.ToString("C")</p>
-            <p class="text-xs text-slate-400 mt-2">Từ @Model.Dashboard.Summary.TotalTransactions giao dịch</p>
+            <p class="text-xs text-slate-400 mt-2">Across @Model.Dashboard.Summary.TotalTransactions transactions</p>
         </div>
     </div>
     
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
         <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-500/5 rounded-bl-[100px] -z-0"></div>
         <div class="relative z-10">
-            <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Đã thanh toán (GV)</p>
+            <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Paid to Instructors</p>
             <p class="text-3xl font-black text-emerald-600">@Model.Dashboard.Summary.TotalPaidOut.ToString("C")</p>
-            <p class="text-xs text-slate-400 mt-2">Đã chuyển cho giảng viên</p>
+            <p class="text-xs text-slate-400 mt-2">Transferred directly to instructors</p>
         </div>
     </div>
     
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
         <div class="absolute right-0 top-0 w-24 h-24 bg-amber-500/5 rounded-bl-[100px] -z-0"></div>
         <div class="relative z-10">
-            <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Đang nợ (GV)</p>
+            <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Escrow Pending</p>
             <p class="text-3xl font-black text-amber-500">@Model.Dashboard.Summary.PendingEscrow.ToString("C")</p>
-            <p class="text-xs text-slate-400 mt-2">Cần thanh toán</p>
+            <p class="text-xs text-slate-400 mt-2">Awaiting payout transfer</p>
         </div>
     </div>
     
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 text-white">
         <div class="relative z-10">
-            <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Lợi nhuận Sàn</p>
+            <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Platform Net Profit</p>
             <p class="text-3xl font-black text-white">@Model.Dashboard.Summary.PlatformNetProfit.ToString("C")</p>
-            <p class="text-xs text-slate-400 mt-2">Sau khi trừ chi phí GV</p>
+            <p class="text-xs text-slate-400 mt-2">Net platform cut after splits</p>
         </div>
     </div>
 </div>
@@ -78,7 +78,7 @@
         <div class="relative z-10">
             <p class="text-sm font-bold text-emerald-100 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <span class="material-symbols-outlined text-lg">account_balance_wallet</span>
-                Ví Stripe: Có thể rút ngay
+                Stripe Balance: Available Now
             </p>
             <p class="text-4xl font-black">$@Model.Withdraw.Balance.Available.ToString("N2")</p>
             <p class="text-xs text-emerald-200 mt-2">Available Balance</p>
@@ -90,7 +90,7 @@
         <div class="relative z-10">
             <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <span class="material-symbols-outlined text-lg text-amber-500">schedule</span>
-                Ví Stripe: Đang chờ vào ví
+                Stripe Balance: In Transit
             </p>
             <p class="text-3xl font-black text-slate-900">$@Model.Withdraw.Balance.Incoming.ToString("N2")</p>
             <p class="text-xs text-slate-400 mt-2">Incoming (Pending)</p>
@@ -102,11 +102,11 @@
         <div class="relative z-10">
             <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <span class="material-symbols-outlined text-lg text-primary">savings</span>
-                Tổng tài sản Stripe
+                Total Stripe Assets
             </p>
             <p class="text-3xl font-black text-slate-900">$@Model.Withdraw.Balance.Total.ToString("N2")</p>
             <p class="text-xs text-slate-400 mt-2">
-                Lịch rút:
+                Payout Schedule:
                 <span class="font-bold text-primary capitalize">@Model.Withdraw.Balance.PayoutScheduleInterval</span>
                 @if (!string.IsNullOrEmpty(Model.Withdraw.Balance.PayoutScheduleAnchor))
                 {
@@ -118,7 +118,7 @@
 </div>
 
 <!-- ========================================== -->
-<!-- PHẦN 2: THAO TÁC CÀI ĐẶT & RÚT TIỀN        -->
+<!-- SECTION 2: SETTINGS & FUNDS WITHDRAWAL     -->
 <!-- ========================================== -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     
@@ -126,18 +126,18 @@
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
         <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
             <span class="material-symbols-outlined text-primary">tune</span>
-            Cài đặt Tỷ lệ chia sẻ
+            Revenue Share Split Rate
         </h3>
         <form action="/AdminFinance/SetTransferRate" method="post" class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             @Html.AntiForgeryToken()
             <div class="relative flex-1 w-full">
-                <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Giảng viên nhận (%)</label>
+                <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Instructor Share (%)</label>
                 <input type="number" name="rate" min="1" max="100" step="0.01" value="@Model.Dashboard.Summary.CurrentTransferRate" 
                        class="w-full pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-mono font-bold text-slate-900" />
                 <span class="absolute right-4 top-[30px] text-slate-400 font-bold">%</span>
             </div>
             <button type="submit" class="w-full sm:w-auto mt-4 sm:mt-5 py-2.5 px-6 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-sm whitespace-nowrap">
-                Lưu tỷ lệ
+                Save Rate
             </button>
         </form>
     </div>
@@ -146,25 +146,25 @@
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
         <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
             <span class="material-symbols-outlined text-emerald-600">payment</span>
-            Rút tiền về Ngân hàng
+            Withdraw Funds to Bank
         </h3>
-        <form action="/AdminFinance/Withdraw" method="post" class="flex flex-col sm:flex-row items-start sm:items-center gap-4" id="withdraw-form">
+        <form action="/AdminFinance/Withdraw" method="post" class="flex flex-col sm:flex-row items-start sm:items-center gap-4" id="withdraw-form" onsubmit="handleWithdrawSubmit(event)">
             @Html.AntiForgeryToken()
             <div class="relative flex-1 w-full">
-                <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Số tiền rút ($)</label>
+                <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Withdraw Amount ($)</label>
                 <input type="number" name="amount" step="0.01" min="0.50" max="@Model.Withdraw.Balance.Available" value="@Model.Withdraw.Balance.Available"
                        class="w-full pl-4 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all font-mono font-bold text-slate-900"
                        id="withdraw-amount" />
             </div>
             <div class="relative flex-1 w-full">
-                <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Ghi chú (Tùy chọn)</label>
-                <input type="text" name="description" placeholder="VD: Rút LN tháng 5"
+                <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Description (Optional)</label>
+                <input type="text" name="description" placeholder="e.g. May profit withdrawal"
                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm" />
             </div>
-            <button type="submit" onclick="return confirm('⚠️ Xác nhận rút $' + document.getElementById('withdraw-amount').value + ' về ngân hàng?')"
+            <button type="submit"
                     class="w-full sm:w-auto mt-4 sm:mt-5 py-2.5 px-6 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-sm whitespace-nowrap flex items-center justify-center gap-2">
                 <span class="material-symbols-outlined text-sm">send_money</span>
-                Rút ngay
+                Withdraw Now
             </button>
         </form>
     </div>
@@ -172,7 +172,7 @@
 </div>
 
 <!-- ========================================== -->
-<!-- PHẦN 3: LỊCH SỬ GIAO DỊCH VÀ RÚT TIỀN      -->
+<!-- SECTION 3: TRANSACTION & WITHDRAWAL LOGS   -->
 <!-- ========================================== -->
 <div class="flex flex-col gap-8 mb-12">
     
@@ -183,28 +183,28 @@
             <div class="flex items-center gap-1.5 w-full xl:w-auto p-1 bg-slate-200/50 rounded-xl overflow-x-auto">
                 <button id="tab-btn-tx" onclick="switchTab('tx')" class="whitespace-nowrap flex-1 xl:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 @(ViewBag.ActiveTab == "tx" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700")">
                     <span class="material-symbols-outlined text-[18px]">receipt_long</span>
-                    Lịch sử giao dịch
+                    Transaction History
                 </button>
                 <button id="tab-btn-po" onclick="switchTab('po')" class="whitespace-nowrap flex-1 xl:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 @(ViewBag.ActiveTab == "po" ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500 hover:text-slate-700")">
                     <span class="material-symbols-outlined text-[18px]">payments</span>
-                    Thanh toán cho GV
+                    Instructor Payouts
                 </button>
                 <button id="tab-btn-wd" onclick="switchTab('wd')" class="whitespace-nowrap flex-1 xl:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 @(ViewBag.ActiveTab == "wd" ? "bg-white text-rose-600 shadow-sm" : "text-slate-500 hover:text-slate-700")">
                     <span class="material-symbols-outlined text-[18px]">history</span>
-                    Lịch sử Rút tiền
+                    Manager Bank Withdrawals
                 </button>
             </div>
             
             <!-- Indicators -->
             <div class="flex items-center gap-3 px-4 xl:px-2 w-full xl:w-auto overflow-x-auto">
                 <span id="tab-ind-tx" class="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-indigo-50 border border-indigo-100 text-indigo-700 shadow-sm @(ViewBag.ActiveTab == "tx" ? "" : "hidden")">
-                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span> @Model.Transactions.TotalCount giao dịch
+                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span> @Model.Transactions.TotalCount transactions
                 </span>
                 <span id="tab-ind-po" class="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 border border-emerald-100 text-emerald-700 shadow-sm @(ViewBag.ActiveTab == "po" ? "" : "hidden")">
                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span> @Model.Dashboard.Payouts.Count payouts
                 </span>
                 <span id="tab-ind-wd" class="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-rose-50 border border-rose-100 text-rose-700 shadow-sm @(ViewBag.ActiveTab == "wd" ? "" : "hidden")">
-                    <span class="w-2 h-2 rounded-full bg-rose-500"></span> @Model.Withdraw.History.Count lệnh rút
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span> @Model.Withdraw.History.Count withdrawals
                 </span>
             </div>
         </div>
@@ -220,32 +220,32 @@
                     
                     <div class="relative flex-1 w-full">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">search</span>
-                        <input type="text" name="keyword" value="@ViewBag.Keyword" placeholder="Tìm tên KH, học viên, GV..." 
+                        <input type="text" name="keyword" value="@ViewBag.Keyword" placeholder="Search course title, student name, instructor..." 
                                class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all shadow-sm" />
                     </div>
                     
                     <div class="w-full md:w-40">
                         <select name="status" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none shadow-sm cursor-pointer">
-                            <option value="">Tất cả trạng thái</option>
-                            <option value="succeeded" selected="@(ViewBag.Status == "succeeded")">Thành công</option>
-                            <option value="pending" selected="@(ViewBag.Status == "pending")">Đang xử lý</option>
-                            <option value="failed" selected="@(ViewBag.Status == "failed")">Thất bại</option>
+                            <option value="">All Statuses</option>
+                            <option value="succeeded" selected="@(ViewBag.Status == "succeeded")">Succeeded</option>
+                            <option value="pending" selected="@(ViewBag.Status == "pending")">Pending</option>
+                            <option value="failed" selected="@(ViewBag.Status == "failed")">Failed</option>
                         </select>
                     </div>
 
                     <div class="w-full md:w-48">
                         <select name="sortBy" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none shadow-sm cursor-pointer">
-                            <option value="date_desc" selected="@(ViewBag.SortBy == "date_desc")">Ngày: Mới nhất</option>
-                            <option value="date_asc" selected="@(ViewBag.SortBy == "date_asc")">Ngày: Cũ nhất</option>
-                            <option value="amount_desc" selected="@(ViewBag.SortBy == "amount_desc")">Tiền: Cao đến thấp</option>
-                            <option value="amount_asc" selected="@(ViewBag.SortBy == "amount_asc")">Tiền: Thấp đến cao</option>
+                            <option value="date_desc" selected="@(ViewBag.SortBy == "date_desc")">Date: Newest</option>
+                            <option value="date_asc" selected="@(ViewBag.SortBy == "date_asc")">Date: Oldest</option>
+                            <option value="amount_desc" selected="@(ViewBag.SortBy == "amount_desc")">Amount: High to Low</option>
+                            <option value="amount_asc" selected="@(ViewBag.SortBy == "amount_asc")">Amount: Low to High</option>
                         </select>
                     </div>
 
-                    <button type="submit" class="w-full md:w-auto px-5 py-2 bg-indigo-600 text-white font-medium text-sm rounded-lg hover:bg-indigo-700 transition-colors shadow-sm whitespace-nowrap">Lọc</button>
+                    <button type="submit" class="w-full md:w-auto px-5 py-2 bg-indigo-600 text-white font-medium text-sm rounded-lg hover:bg-indigo-700 transition-colors shadow-sm whitespace-nowrap">Filter</button>
                     @if (!string.IsNullOrEmpty(ViewBag.Keyword as string) || !string.IsNullOrEmpty(ViewBag.Status as string) || (ViewBag.SortBy as string) != "date_desc")
                     {
-                        <a href="/AdminFinance?tab=tx" class="w-full md:w-auto px-4 py-2 bg-slate-200 text-slate-700 font-medium text-sm rounded-lg hover:bg-slate-300 transition-colors whitespace-nowrap text-center">Xóa lọc</a>
+                        <a href="/AdminFinance?tab=tx" class="w-full md:w-auto px-4 py-2 bg-slate-200 text-slate-700 font-medium text-sm rounded-lg hover:bg-slate-300 transition-colors whitespace-nowrap text-center">Clear Filters</a>
                     }
                 </form>
             </div>
@@ -255,14 +255,14 @@
                     <thead class="text-[10px] text-slate-500 bg-slate-50 border-b border-slate-200 uppercase font-bold sticky top-0 z-10 shadow-sm">
                         <tr>
                             <th class="px-5 py-3 w-16">ID</th>
-                            <th class="px-5 py-3">Mã Stripe</th>
-                            <th class="px-5 py-3">Khóa học</th>
-                            <th class="px-5 py-3">Người mua</th>
-                            <th class="px-5 py-3">Giảng viên</th>
-                            <th class="px-5 py-3 text-right">Số tiền</th>
-                            <th class="px-5 py-3">Ngày</th>
-                            <th class="px-5 py-3">Trạng thái</th>
-                            <th class="px-5 py-3 text-center">Chi tiết</th>
+                            <th class="px-5 py-3">Stripe Tx ID</th>
+                            <th class="px-5 py-3">Course</th>
+                            <th class="px-5 py-3">Purchased By</th>
+                            <th class="px-5 py-3">Instructor</th>
+                            <th class="px-5 py-3 text-right">Amount</th>
+                            <th class="px-5 py-3">Date</th>
+                            <th class="px-5 py-3">Status</th>
+                            <th class="px-5 py-3 text-center">Details</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
@@ -299,9 +299,9 @@
                                         @{
                                             var (bgClass, textClass, dotClass, label) = item.Status switch
                                             {
-                                                "succeeded" => ("bg-emerald-50", "text-emerald-700", "bg-emerald-500", "Thành công"),
-                                                "failed"    => ("bg-red-50",     "text-red-700",     "bg-red-500",     "Thất bại"),
-                                                "pending"   => ("bg-amber-50",   "text-amber-700",   "bg-amber-400",   "Đang xử lý"),
+                                                "succeeded" => ("bg-emerald-50", "text-emerald-700", "bg-emerald-500", "Succeeded"),
+                                                "failed"    => ("bg-red-50",     "text-red-700",     "bg-red-500",     "Failed"),
+                                                "pending"   => ("bg-amber-50",   "text-amber-700",   "bg-amber-400",   "Pending"),
                                                 _           => ("bg-slate-100",  "text-slate-600",   "bg-slate-400",   item.Status ?? "—")
                                             };
                                         }
@@ -314,7 +314,7 @@
                                         <a href="@Url.Action("Detail", "Transaction", new { id = item.TransactionId })"
                                            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-md transition-all">
                                             <span class="material-symbols-outlined text-[14px]">visibility</span>
-                                            Xem
+                                            View
                                         </a>
                                     </td>
                                 </tr>
@@ -326,7 +326,7 @@
                                 <td colspan="9" class="px-5 py-14 text-center">
                                     <div class="flex flex-col items-center justify-center text-slate-400">
                                         <span class="material-symbols-outlined text-5xl mb-3 text-slate-200">receipt_long</span>
-                                        <p class="text-sm font-medium text-slate-500">Không có giao dịch nào.</p>
+                                        <p class="text-sm font-medium text-slate-500">No transactions matched your criteria.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -339,14 +339,13 @@
             {
                 <div class="px-5 py-3 border-t border-slate-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-3">
                     <p class="text-xs text-slate-500">
-                        Hiển thị @((Model.Transactions.Page - 1) * Model.Transactions.PageSize + 1)–@Math.Min(Model.Transactions.Page * Model.Transactions.PageSize, Model.Transactions.TotalCount)
-                        trong <span class="font-semibold text-slate-700">@Model.Transactions.TotalCount</span> giao dịch
+                        Showing @((Model.Transactions.Page - 1) * Model.Transactions.PageSize + 1)–@Math.Min(Model.Transactions.Page * Model.Transactions.PageSize, Model.Transactions.TotalCount) of <span class="font-semibold text-slate-700">@Model.Transactions.TotalCount</span> transactions
                     </p>
                     <div class="flex items-center gap-1">
                         @if (Model.Transactions.Page > 1)
                         {
                             <a href="@Url.Action("Index", new { page = Model.Transactions.Page - 1, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "tx" })"
-                               class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all">← Trước</a>
+                               class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all">← Prev</a>
                         }
 
                         @for (int p = Math.Max(1, Model.Transactions.Page - 2); p <= Math.Min(Model.Transactions.TotalPages, Model.Transactions.Page + 2); p++)
@@ -365,7 +364,7 @@
                         @if (Model.Transactions.Page < Model.Transactions.TotalPages)
                         {
                             <a href="@Url.Action("Index", new { page = Model.Transactions.Page + 1, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "tx" })"
-                               class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all">Sau →</a>
+                               class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all font-bold">Next →</a>
                         }
                     </div>
                 </div>
@@ -378,17 +377,17 @@
                 <table class="w-full text-sm text-left">
                     <thead class="text-[10px] text-slate-500 bg-slate-50 border-b border-slate-200 uppercase font-bold sticky top-0 z-10 shadow-sm">
                         <tr>
-                            <th class="px-4 py-3">GD/Giảng viên</th>
-                            <th class="px-4 py-3">Số tiền</th>
-                            <th class="px-4 py-3">Trạng thái</th>
-                            <th class="px-4 py-3 text-right">Thao tác</th>
+                            <th class="px-4 py-3">Tx / Instructor</th>
+                            <th class="px-4 py-3">Payout Share</th>
+                            <th class="px-4 py-3">Stripe Status</th>
+                            <th class="px-4 py-3 text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @if (Model.Dashboard.Payouts.Count == 0)
                         {
                             <tr>
-                                <td colspan="4" class="px-6 py-8 text-center text-slate-500">Không có giao dịch nào.</td>
+                                <td colspan="4" class="px-6 py-8 text-center text-slate-500">No payouts recorded.</td>
                             </tr>
                         }
                         else
@@ -402,7 +401,7 @@
                                     </td>
                                     <td class="px-4 py-3">
                                         <p class="font-bold text-slate-900">@p.InstructorReceived.ToString("C")</p>
-                                        <p class="text-[10px] text-slate-500">Tỷ lệ: @p.TransferRate%</p>
+                                        <p class="text-[10px] text-slate-500">Split Rate: @p.TransferRate%</p>
                                     </td>
                                     <td class="px-4 py-3">
                                         @{
@@ -410,30 +409,30 @@
                                         }
                                         @if (status == "paid")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">Đã về NH</span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">Settled to Bank</span>
                                         }
                                         else if (status == "in_transit")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">Đang chuyển</span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">In Transit</span>
                                         }
                                         else if (status == "transferred")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-violet-100 text-violet-700">Đã vào ví Stripe</span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-violet-100 text-violet-700">Stripe Payout Succeeded</span>
                                         }
                                         else if (status == "failed")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">Thất bại</span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">Failed</span>
                                         }
                                         else
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">Chưa thanh toán</span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">Unpaid Escrow</span>
                                         }
                                     </td>
                                     <td class="px-4 py-3 text-right">
                                         @if (!p.IsPaid)
                                         {
                                             <div class="flex flex-col items-end gap-1">
-                                                <form action="/AdminFinance/PayViaStripe" method="post" onsubmit="return confirm('Xác nhận lệnh CHUYỂN TIỀN THẬT qua Stripe Connect API?');">
+                                                <form action="/AdminFinance/PayViaStripe" method="post" onsubmit="handleStripePaySubmit(event)">
                                                     @Html.AntiForgeryToken()
                                                     <input type="hidden" name="payoutId" value="@p.PayoutId" />
                                                     <button type="submit" class="text-[10px] font-bold px-2 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-all shadow-sm">Pay via Stripe</button>
@@ -442,7 +441,7 @@
                                         }
                                         else
                                         {
-                                            <span class="text-slate-300 text-[10px] font-medium cursor-not-allowed">Hoàn tất</span>
+                                            <span class="text-slate-300 text-[10px] font-medium cursor-not-allowed">Completed</span>
                                         }
                                     </td>
                                 </tr>
@@ -459,10 +458,10 @@
                 <table class="w-full text-sm text-left">
                     <thead class="text-[10px] text-slate-500 bg-slate-50 border-b border-slate-200 uppercase font-bold sticky top-0 z-10 shadow-sm">
                         <tr>
-                            <th class="px-4 py-3">Mã</th>
-                            <th class="px-4 py-3">Số tiền</th>
-                            <th class="px-4 py-3">Trạng thái</th>
-                            <th class="px-4 py-3">Ngày tạo</th>
+                            <th class="px-4 py-3">Reference ID</th>
+                            <th class="px-4 py-3">Amount</th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3">Initiated Date</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -472,7 +471,7 @@
                                 <td colspan="4" class="px-6 py-12 text-center">
                                     <div class="flex flex-col items-center gap-3">
                                         <span class="material-symbols-outlined text-4xl text-slate-300">account_balance</span>
-                                        <p class="text-slate-500 font-medium">Chưa có lệnh rút tiền nào.</p>
+                                        <p class="text-slate-500 font-medium">No bank withdrawals made yet.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -495,23 +494,23 @@
                                     <td class="px-4 py-3">
                                         @if (w.Status == "paid")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">Đã về NH</span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">Paid</span>
                                         }
                                         else if (w.Status == "in_transit")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">Đang chuyển</span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">In Transit</span>
                                         }
                                         else if (w.Status == "pending")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">Đang xử lý</span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">Pending</span>
                                         }
                                         else if (w.Status == "failed")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">Thất bại</span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">Failed</span>
                                         }
                                         else
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">Đã hủy</span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">Canceled</span>
                                         }
                                     </td>
                                     <td class="px-4 py-3">
@@ -569,5 +568,54 @@
                 connection.invoke("JoinAdminGroup").catch(err => console.error(err));
             })
             .catch(err => console.error("❌ SignalR Error: ", err));
+
+        async function handleWithdrawSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const amount = document.getElementById('withdraw-amount').value;
+
+            const confirmResult = await Swal.fire({
+                title: 'Confirm Withdrawal',
+                html: `Are you absolutely sure you want to withdraw <b class="text-emerald-600">$${amount}</b> from the Stripe balance to your corporate bank account?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Confirm & Initiate',
+                cancelButtonText: 'Cancel',
+                background: '#ffffff',
+                customClass: {
+                    popup: 'rounded-2xl border border-slate-100 shadow-xl'
+                }
+            });
+
+            if (confirmResult.isConfirmed) {
+                form.submit();
+            }
+        }
+
+        async function handleStripePaySubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+
+            const confirmResult = await Swal.fire({
+                title: 'Confirm Stripe Connect Transfer',
+                text: 'Are you absolutely sure you want to execute a REAL-MONEY bank transfer via the Stripe Connected Account API to this Instructor?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#ef4444',
+                confirmButtonText: 'Execute Payout',
+                cancelButtonText: 'Cancel',
+                background: '#ffffff',
+                customClass: {
+                    popup: 'rounded-2xl border border-slate-100 shadow-xl'
+                }
+            });
+
+            if (confirmResult.isConfirmed) {
+                form.submit();
+            }
+        }
     </script>
 }

@@ -146,6 +146,34 @@ public class CheckoutController : ControllerBase
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // GET /api/checkout/cancel?order_id=123
+    // Frontend gọi API này sau khi user hủy thanh toán trên Stripe.
+    // ═══════════════════════════════════════════════════════════════════════
+    /// <summary>
+    // Xử lý khi user bấm "Quay lại" hoặc hủy trên trang thanh toán của Stripe.
+    /// Update Order/Transaction thành failed để không bị pending mãi mãi.
+    /// </summary>
+    [HttpGet("cancel")]
+    public async Task<IActionResult> Cancel([FromQuery(Name = "order_id")] int orderId)
+    {
+        Console.WriteLine($"[BE-CONTROLLER] ═══ CheckoutController.Cancel ENTRY ═══ order_id={orderId}");
+
+        if (orderId <= 0)
+            return BadRequest(ApiResponse<string>.ErrorResponse("Thiếu order_id hợp lệ."));
+
+        try
+        {
+            await _checkoutService.ProcessPaymentCancelAsync(orderId);
+            return Ok(ApiResponse<string>.SuccessResponse("Đã cập nhật trạng thái hủy thanh toán."));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[BE-CONTROLLER] ❌ EXCEPTION: {ex.Message}\n{ex.StackTrace}");
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi cập nhật hủy thanh toán: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // POST /api/checkout/retry-transfers?session_id=cs_xxx
     // Retry tạo Stripe Transfers cho các đơn hàng đã thanh toán nhưng chưa chia tiền.
     // (Dùng cho trường hợp code cũ chạy trước khi có logic transfer)

@@ -8,7 +8,7 @@ namespace CourseMarketplaceFE.Controllers;
 /// <summary>
 /// Frontend MVC Controller xử lý luồng Giảng viên:
 /// GET/POST /Instructor/Apply       → Form nộp đơn
-/// GET      /Instructor/Dashboard   → Dashboard giảng viên
+/// GET      /Instructor/ApplicationStatus   → Trạng thái đăng ký giảng viên
 /// POST     /Instructor/SetupPayout → Gọi API setup Stripe → redirect
 /// GET      /Instructor/StripeReturn → Stripe redirect về → verify → hiển thị kết quả
 /// </summary>
@@ -67,12 +67,13 @@ public class InstructorController : Controller
                         // Kiểm tra email đã xác thực
                         await LoadEmailVerifiedAsync();
                         model.AvailableCountries = await LoadStripeCountriesAsync();
+                        model.AvailableCategories = await LoadCategoriesAsync();
                         return View(model);
                     }
                 }
 
-                // Pending hoặc Approved → redirect Dashboard xem trạng thái
-                return RedirectToAction("Dashboard");
+                // Pending hoặc Approved → redirect ApplicationStatus xem trạng thái
+                return RedirectToAction("ApplicationStatus");
             }
         }
         catch { }
@@ -82,6 +83,7 @@ public class InstructorController : Controller
 
         var applyModel = new InstructorApplyViewModel();
         applyModel.AvailableCountries = await LoadStripeCountriesAsync();
+        applyModel.AvailableCategories = await LoadCategoriesAsync();
         return View(applyModel);
     }
 
@@ -152,6 +154,52 @@ public class InstructorController : Controller
         return items;
     }
 
+    /// <summary>Load danh sách lĩnh vực chuyên môn (Categories).</summary>
+    private async Task<List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>> LoadCategoriesAsync()
+    {
+        var items = new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+        try
+        {
+            var response = await _api.GetAsync("public/courses/categories");
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("data", out var data))
+                {
+                    foreach (var cat in data.EnumerateArray())
+                    {
+                        // Kiểm tra cả camelCase và snake_case để chắc chắn
+                        string? name = null;
+                        if (cat.TryGetProperty("categoriesName", out var prop1)) name = prop1.GetString();
+                        else if (cat.TryGetProperty("categories_name", out var prop2)) name = prop2.GetString();
+                        else if (cat.TryGetProperty("CategoriesName", out var prop3)) name = prop3.GetString();
+
+                        if (name != null)
+                        {
+                            items.Add(new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                            {
+                                Value = name,
+                                Text = name
+                            });
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Log lỗi nếu cần
+                var error = await response.Content.ReadAsStringAsync();
+                System.Diagnostics.Debug.WriteLine($"API Category Error: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"LoadCategoriesAsync Exception: {ex.Message}");
+        }
+        return items;
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Apply(InstructorApplyViewModel model)
@@ -160,6 +208,7 @@ public class InstructorController : Controller
         {
             await LoadEmailVerifiedAsync();
             model.AvailableCountries = await LoadStripeCountriesAsync();
+            model.AvailableCategories = await LoadCategoriesAsync();
             return View(model);
         }
 
@@ -170,6 +219,8 @@ public class InstructorController : Controller
             content.Add(new StringContent(model.ProfessionalTitle ?? ""), "ProfessionalTitle");
             content.Add(new StringContent(model.ExpertiseCategories ?? ""), "ExpertiseCategories");
             content.Add(new StringContent(model.LinkedinUrl ?? ""), "LinkedinUrl");
+            content.Add(new StringContent(model.YoutubeUrl ?? ""), "YoutubeUrl");
+            content.Add(new StringContent(model.FacebookUrl ?? ""), "FacebookUrl");
             content.Add(new StringContent(model.StripeCountry ?? "SG"), "StripeCountry");
 
             if (model.DocumentFile != null)
@@ -184,12 +235,12 @@ public class InstructorController : Controller
 
             if (response.IsSuccessStatusCode)
             {
-                TempData["SuccessMessage"] = "Đơn đăng ký đã được gửi thành công! Vui lòng chờ Admin duyệt.";
-                return RedirectToAction("Dashboard");
+                TempData["SuccessMessage"] = "Your application has been submitted successfully! Please wait for admin approval.";
+                return RedirectToAction("ApplicationStatus");
             }
 
             // Parse lỗi
-            var errorMsg = "Có lỗi xảy ra.";
+            var errorMsg = "An error occurred.";
             if (!string.IsNullOrWhiteSpace(json))
             {
                 try
@@ -200,22 +251,24 @@ public class InstructorController : Controller
                 }
                 catch { }
             }
-            ModelState.AddModelError("", errorMsg);
+            ViewBag.ApiError = errorMsg;
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("", $"Lỗi: {ex.Message}");
+            ViewBag.ApiError = $"Error: {ex.Message}";
         }
 
         model.AvailableCountries = await LoadStripeCountriesAsync();
+        model.AvailableCategories = await LoadCategoriesAsync();
         return View(model);
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    // 2. DASHBOARD GIẢNG VIÊN
+    // 2. TRẠNG THÁI ĐĂNG KÝ GIẢNG VIÊN
     // ═══════════════════════════════════════════════════════════════════
     [HttpGet]
-    public async Task<IActionResult> Dashboard()
+    [Route("Instructor/ApplicationStatus")]
+    public async Task<IActionResult> ApplicationStatus()
     {
         try
         {
@@ -239,16 +292,22 @@ public class InstructorController : Controller
                         FullName = dataEl.TryGetProperty("fullName", out var fn) ? fn.GetString() : null
                     };
 
+                    // ★ Lưu trạng thái duyệt vào Cookie để các phần khác kiểm tra nhanh
+                    var statusCookieOpts = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7), Path = "/" };
+                    Response.Cookies.Append("InstructorApprovalStatus", model.ApprovalStatus ?? "None", statusCookieOpts);
+
                     // ★ Set cookie UserRole = instructor ngay khi Approved (không chờ Stripe)
                     if (model.ApprovalStatus == "Approved")
                     {
-                        var cookieOpts = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7), Path = "/" };
-                        Response.Cookies.Append("UserRole", "instructor", cookieOpts);
+                        Response.Cookies.Append("UserRole", "instructor", statusCookieOpts);
                     }
 
                     return View(model);
                 }
             }
+
+            // Chưa đăng ký -> Xóa cookie trạng thái
+            Response.Cookies.Delete("InstructorApprovalStatus", new CookieOptions { Path = "/" });
 
             // Chưa đăng ký → redirect về form Apply
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -257,6 +316,13 @@ public class InstructorController : Controller
         catch { }
 
         return RedirectToAction("Apply");
+    }
+
+    [HttpGet]
+    [Route("Instructor/Dashboard")]
+    public IActionResult DashboardRedirect()
+    {
+        return RedirectToAction("ApplicationStatus");
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -282,14 +348,14 @@ public class InstructorController : Controller
                 }
             }
 
-            TempData["ErrorMessage"] = "Không thể thiết lập Stripe. Vui lòng thử lại.";
+            TempData["ErrorMessage"] = "Could not set up Stripe. Please try again.";
         }
         catch (Exception ex)
         {
-            TempData["ErrorMessage"] = $"Lỗi: {ex.Message}";
+            TempData["ErrorMessage"] = $"Error: {ex.Message}";
         }
 
-        return RedirectToAction("Dashboard");
+        return RedirectToAction("ApplicationStatus");
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -308,7 +374,7 @@ public class InstructorController : Controller
                 using var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
 
-                var message = root.TryGetProperty("message", out var m) ? m.GetString() : "Đang xử lý...";
+                var message = root.TryGetProperty("message", out var m) ? m.GetString() : "Processing...";
                 var stripeStatus = root.TryGetProperty("stripeStatus", out var ss) ? ss.GetString() : "Pending";
 
                 if (response.IsSuccessStatusCode)
@@ -334,10 +400,10 @@ public class InstructorController : Controller
         }
         catch (Exception ex)
         {
-            TempData["ErrorMessage"] = $"Lỗi xác thực Stripe: {ex.Message}";
+            TempData["ErrorMessage"] = $"Stripe authentication error: {ex.Message}";
         }
 
-        return RedirectToAction("Dashboard");
+        return RedirectToAction("ApplicationStatus");
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -346,8 +412,8 @@ public class InstructorController : Controller
     [HttpGet]
     public IActionResult OnboardingRefresh()
     {
-        ViewBag.Title = "Link đã hết hạn";
-        ViewBag.Message = "Link thiết lập Stripe đã hết hạn. Vui lòng vào Dashboard để tạo lại.";
+        ViewBag.Title = "Link Expired";
+        ViewBag.Message = "The Stripe setup link has expired. Please go to the Application Status page to generate a new one.";
         ViewBag.IsSuccess = false;
         return View("OnboardingResult");
     }
@@ -356,6 +422,11 @@ public class InstructorController : Controller
     [Route("Instructor/Notifications")]
     public async Task<IActionResult> Notifications()
     {
+        // Guard
+        var approvalStatus = Request.Cookies["InstructorApprovalStatus"];
+        if (approvalStatus != "Approved") 
+            return RedirectToAction("ApplicationStatus", "Instructor");
+
         var response = await _api.GetAsync("notification");
         if (response.IsSuccessStatusCode)
         {
@@ -402,16 +473,16 @@ public class InstructorController : Controller
             var response = await _api.PostAsync("instructor/sync-payouts");
             if (response.IsSuccessStatusCode)
             {
-                TempData["SuccessMessage"] = "Đã đồng bộ dữ liệu thanh toán từ Stripe thành công!";
+                TempData["SuccessMessage"] = "Payout data synced from Stripe successfully!";
             }
             else
             {
-                TempData["ErrorMessage"] = "Không thể đồng bộ dữ liệu. Vui lòng thử lại sau.";
+                TempData["ErrorMessage"] = "Could not sync data. Please try again later.";
             }
         }
         catch (Exception ex)
         {
-            TempData["ErrorMessage"] = $"Lỗi đồng bộ: {ex.Message}";
+            TempData["ErrorMessage"] = $"Sync error: {ex.Message}";
         }
 
         return RedirectToAction("Instructor", "Transaction");
@@ -438,5 +509,33 @@ public class InstructorController : Controller
         public int Page { get; set; }
         public int PageSize { get; set; }
         public int TotalPages { get; set; }
+    }
+    // ═══════════════════════════════════════════════════════════════════
+    // 7. PUBLIC PROFILE — GET: /Instructor/Profile/{id}
+    // ═══════════════════════════════════════════════════════════════════
+    [HttpGet]
+    public async Task<IActionResult> Profile(int id)
+    {
+        try
+        {
+            var response = await _api.GetAsync($"instructor/profile/{id}");
+            if (!response.IsSuccessStatusCode)
+                return RedirectToAction("Index", "Home");
+
+            var json = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<ApiResponse<InstructorPublicProfileViewModel>>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (result == null || result.Data == null)
+                return RedirectToAction("Index", "Home");
+
+            return View(result.Data);
+        }
+        catch
+        {
+            return RedirectToAction("Index", "Home");
+        }
     }
 }

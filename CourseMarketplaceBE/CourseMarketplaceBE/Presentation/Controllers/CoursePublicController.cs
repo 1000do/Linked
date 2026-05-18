@@ -26,13 +26,20 @@ public class CoursePublicController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAllCourses()
+    public async Task<IActionResult> GetAllCourses(
+        [FromQuery] string? query = null,
+        [FromQuery] string? category = null,
+        [FromQuery] string? sort = null,
+        [FromQuery] string? price = null,
+        [FromQuery] string? rating = null,
+        [FromQuery] int? page = null,
+        [FromQuery] int? pageSize = null)
     {
         try
         {
             var userId = GetUserId();
-            var courses = await _courseService.GetAllPublishedCoursesAsync(userId);
-            return Ok(ApiResponse<object>.SuccessResponse(courses, "Retrieved courses successfully."));
+            var result = await _courseService.GetPublishedCoursesPagedAsync(query, category, sort, price, rating, page, pageSize, userId);
+            return Ok(ApiResponse<object>.SuccessResponse(result, "Retrieved courses successfully."));
         }
         catch (Exception ex)
         {

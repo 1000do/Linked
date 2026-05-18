@@ -41,4 +41,10 @@ public interface ICheckoutService
     /// <param name="failOnTransferFailure">Nếu true thì ném exception khi transfers không thành công.
     /// Nếu false thì vẫn tiếp tục hoàn tất order/enrollment nhưng ghi payout thất bại để retry sau.</param>
     Task ProcessPaymentSuccessAsync(string sessionId, bool failOnTransferFailure = false);
+
+    /// <summary>
+    /// Xử lý khi user hủy checkout (CancelUrl).
+    /// Hủy Transaction, Hủy Order để dọn dẹp các đơn ảo.
+    /// </summary>
+    Task ProcessPaymentCancelAsync(int orderId);
 }

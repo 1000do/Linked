@@ -1,0 +1,186 @@
+@using CourseMarketplaceFE.Controllers
+@model TransactionController.TransactionPagedVM
+@{
+    ViewData["Title"] = "Purchase History";
+    Layout = "_Layout";
+}
+
+<div class="min-h-screen bg-[#f8fafc] pb-20">
+    @* Header Section *@
+    <div class="bg-white border-b border-slate-200 sticky top-0 z-30 backdrop-blur-md bg-white/80">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 py-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h1 class="text-3xl font-black text-slate-900 tracking-tight">Purchase History</h1>
+                    <p class="text-slate-500 font-medium mt-1">Track the courses you have purchased and their payment statuses.</p>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-indigo-600">receipt_long</span>
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-wider text-indigo-400 leading-none mb-1">Total Purchases</p>
+                            <p class="text-lg font-black text-indigo-900 leading-none">@Model.TotalCount</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 lg:px-12 py-10">
+        <div class="flex flex-col lg:flex-row gap-10">
+            @* Sidebar Filter *@
+            <aside class="w-full lg:w-72 flex-shrink-0">
+                <div class="bg-white rounded-[2rem] p-6 shadow-xl shadow-slate-200/50 border border-slate-100 sticky top-32">
+                    <form method="get" action="/Transaction/History" class="space-y-6">
+                        <input type="hidden" name="page" value="1" />
+                        <input type="hidden" name="pageSize" value="@Model.PageSize" />
+
+                        <div>
+                            <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Search</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[20px]">search</span>
+                                <input type="text" name="keyword" value="@ViewBag.Keyword" placeholder="Search by course title..." 
+                                       class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all font-medium" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Status</label>
+                            <select name="status" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all font-medium appearance-none cursor-pointer">
+                                <option value="">All Statuses</option>
+                                <option value="succeeded" selected="@(ViewBag.Status == "succeeded")">Success</option>
+                                <option value="pending" selected="@(ViewBag.Status == "pending")">Pending</option>
+                                <option value="failed" selected="@(ViewBag.Status == "failed")">Failed</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Sort By</label>
+                            <select name="sortBy" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all font-medium appearance-none cursor-pointer">
+                                <option value="date_desc" selected="@(ViewBag.SortBy == "date_desc")">Newest</option>
+                                <option value="date_asc" selected="@(ViewBag.SortBy == "date_asc")">Oldest</option>
+                                <option value="amount_desc" selected="@(ViewBag.SortBy == "amount_desc")">Price: High to Low</option>
+                                <option value="amount_asc" selected="@(ViewBag.SortBy == "amount_asc")">Price: Low to High</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-indigo-600 transition-all shadow-lg shadow-slate-900/10 active:scale-95">
+                            Apply Filters
+                        </button>
+
+                        @if (!string.IsNullOrEmpty(ViewBag.Keyword) || !string.IsNullOrEmpty(ViewBag.Status) || ViewBag.SortBy != "date_desc")
+                        {
+                            <a href="/Transaction/History" class="block w-full py-4 bg-slate-100 text-slate-600 text-center font-bold rounded-2xl hover:bg-slate-200 transition-all">
+                                Reset Filters
+                            </a>
+                        }
+                    </form>
+                </div>
+            </aside>
+
+            @* Main List *@
+            <div class="flex-grow space-y-4">
+                @if (Model.Items != null && Model.Items.Any())
+                {
+                    @foreach (var item in Model.Items)
+                    {
+                        <div class="group bg-white rounded-[2rem] p-6 border border-slate-100 hover:border-indigo-200 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-500 flex flex-col md:flex-row items-center gap-6">
+                            @* Transaction Info *@
+                            <div class="w-16 h-16 rounded-3xl bg-slate-50 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-50 transition-colors">
+                                <span class="material-symbols-outlined text-slate-400 group-hover:text-indigo-500 transition-colors">shopping_bag</span>
+                            </div>
+
+                            <div class="flex-grow text-center md:text-left">
+                                <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-1">
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">#@item.TransactionId</span>
+                                    <span class="text-slate-300">•</span>
+                                    <span class="text-[10px] font-bold text-slate-500">@(item.Date.HasValue ? item.Date.Value.ToString("dd MMM, yyyy HH:mm") : "—")</span>
+                                </div>
+                                <h3 class="text-lg font-black text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">@item.CourseTitle</h3>
+                                <p class="text-sm text-slate-500 font-medium mt-0.5">Instructor: <span class="text-slate-700 font-bold">@item.InstructorName</span></p>
+                            </div>
+
+                            <div class="flex flex-col items-center md:items-end gap-3 flex-shrink-0">
+                                <div class="text-xl font-black text-slate-900">
+                                    @((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
+                                </div>
+                                
+                                @{
+                                    var (bgClass, textClass, dotClass, label) = item.Status switch
+                                    {
+                                        "succeeded" => ("bg-emerald-50", "text-emerald-600", "bg-emerald-500", "Completed"),
+                                        "failed"    => ("bg-rose-50",    "text-rose-600",    "bg-rose-500",    "Failed"),
+                                        "pending"   => ("bg-amber-50",   "text-amber-600",   "bg-amber-400",   "Pending"),
+                                        _           => ("bg-slate-50",   "text-slate-500",   "bg-slate-400",   item.Status ?? "—")
+                                    };
+                                }
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider @bgClass @textClass">
+                                    <span class="w-1.5 h-1.5 rounded-full @dotClass"></span>
+                                    @label
+                                </span>
+                            </div>
+
+                            <div class="flex-shrink-0">
+                                <a href="@Url.Action("HistoryDetail", "Transaction", new { id = item.TransactionId })" 
+                                   class="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all active:scale-90">
+                                    <span class="material-symbols-outlined">chevron_right</span>
+                                </a>
+                            </div>
+                        </div>
+                    }
+
+                    @* Pagination *@
+                    @if (Model.TotalPages > 1)
+                    {
+                        <div class="mt-12 flex items-center justify-center gap-2">
+                            @if (Model.Page > 1)
+                            {
+                                <a href="@Url.Action("History", new { page = Model.Page - 1, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status })" 
+                                   class="w-12 h-12 rounded-2xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-white hover:border-indigo-500 hover:text-indigo-500 transition-all">
+                                    <span class="material-symbols-outlined">chevron_left</span>
+                                </a>
+                            }
+
+                            @for (int p = 1; p <= Model.TotalPages; p++)
+                            {
+                                if (p == Model.Page)
+                                {
+                                    <span class="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black shadow-lg shadow-slate-900/20">@p</span>
+                                }
+                                else if (p <= 3 || p > Model.TotalPages - 2 || (p >= Model.Page - 1 && p <= Model.Page + 1))
+                                {
+                                    <a href="@Url.Action("History", new { page = p, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status })" 
+                                       class="w-12 h-12 rounded-2xl border border-slate-200 bg-white flex items-center justify-center font-bold text-slate-600 hover:border-indigo-500 hover:text-indigo-500 transition-all">@p</a>
+                                }
+                            }
+
+                            @if (Model.Page < Model.TotalPages)
+                            {
+                                <a href="@Url.Action("History", new { page = Model.Page + 1, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status })" 
+                                   class="w-12 h-12 rounded-2xl border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-white hover:border-indigo-500 hover:text-indigo-500 transition-all">
+                                    <span class="material-symbols-outlined">chevron_right</span>
+                                </a>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="bg-white rounded-[3rem] p-20 text-center border border-slate-100 shadow-xl shadow-slate-200/40">
+                        <div class="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-6">
+                            <span class="material-symbols-outlined text-5xl text-slate-200">receipt_long</span>
+                        </div>
+                        <h2 class="text-2xl font-black text-slate-900 mb-2">No transactions found</h2>
+                        <p class="text-slate-500 font-medium max-w-sm mx-auto">You have not made any purchases yet, or no transactions match your criteria.</p>
+                        <a href="/Home" class="inline-flex items-center gap-2 mt-8 px-8 py-4 bg-primary text-white font-bold rounded-2xl hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-95">
+                            Explore Courses
+                            <span class="material-symbols-outlined text-[20px]">explore</span>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

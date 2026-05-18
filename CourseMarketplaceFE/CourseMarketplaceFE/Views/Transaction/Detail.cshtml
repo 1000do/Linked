@@ -1,16 +1,16 @@
 @using CourseMarketplaceFE.Controllers
 @model TransactionController.TransactionDetailVM
 @{
-    ViewData["Title"] = $"Giao dịch #{Model.TransactionId}";
-    ViewData["PageHeader"] = "Chi tiết Giao dịch";
+    ViewData["Title"] = $"Transaction #{Model.TransactionId}";
+    ViewData["PageHeader"] = "Transaction Details";
     Layout = "_AdminLayout";
 
     var statusBg   = Model.Status == "succeeded" ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                    : Model.Status == "failed"    ? "bg-red-50 text-red-700 border-red-200"
                    : "bg-amber-50 text-amber-700 border-amber-200";
-    var statusLabel = Model.Status == "succeeded" ? "Thành công"
-                    : Model.Status == "failed"    ? "Thất bại"
-                    : Model.Status == "pending"   ? "Đang xử lý"
+    var statusLabel = Model.Status == "succeeded" ? "Completed"
+                    : Model.Status == "failed"    ? "Failed"
+                    : Model.Status == "pending"   ? "Pending"
                     : Model.Status ?? "—";
     var dotColor    = Model.Status == "succeeded" ? "bg-emerald-500"
                     : Model.Status == "failed"    ? "bg-red-500"
@@ -21,17 +21,17 @@
     <div class="flex items-center gap-3">
         <button type="button" onclick="window.print()" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
             <span class="material-symbols-outlined text-[18px]">print</span>
-            In biên lai
+            Print Receipt
         </button>
         @if (Model.Status == "succeeded") {
             <button type="button" onclick="confirmRefund()" class="inline-flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-100 rounded-lg text-sm font-bold text-red-600 hover:bg-red-100 transition-all shadow-sm">
                 <span class="material-symbols-outlined text-[18px]">currency_exchange</span>
-                Hoàn tiền
+                Refund
             </button>
         } else if (Model.Status == "refunded") {
             <span class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-bold text-slate-400 cursor-not-allowed">
                 <span class="material-symbols-outlined text-[18px]">check_circle</span>
-                Đã hoàn tiền
+                Refunded
             </span>
         }
     </div>
@@ -45,10 +45,10 @@
     <a href="@Url.Action("Index", "Transaction")"
        class="inline-flex items-center gap-1.5 text-sm font-bold text-slate-400 hover:text-slate-900 transition-colors">
         <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-        Danh sách giao dịch
+        Transaction List
     </a>
     <span class="text-slate-300">/</span>
-    <span class="text-sm font-bold text-slate-900">Chi tiết giao dịch #@Model.TransactionId</span>
+    <span class="text-sm font-bold text-slate-900">Transaction Details #@Model.TransactionId</span>
 </div>
 
 @* TempData Toast Notifications *@
@@ -77,21 +77,21 @@
             </div>
             <div>
                 <div class="flex items-center gap-3 mb-1">
-                    <h1 class="text-2xl font-display font-black tracking-tight">Giao dịch #@Model.TransactionId</h1>
+                    <h1 class="text-2xl font-display font-black tracking-tight">Transaction #@Model.TransactionId</h1>
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/20 backdrop-blur-md border border-white/10">
                         <span class="w-1.5 h-1.5 rounded-full @dotColor"></span>
                         @statusLabel
                     </span>
                 </div>
                 <p class="text-slate-400 text-sm font-medium">
-                    @(Model.Date.HasValue ? Model.Date.Value.ToString("dd MMMM, yyyy 'lúc' HH:mm") : "Không rõ ngày")
+                    @(Model.Date.HasValue ? Model.Date.Value.ToString("dd MMMM, yyyy 'at' HH:mm") : "Unknown date")
                 </p>
             </div>
         </div>
         
         <div class="flex items-center gap-8 md:border-l md:border-white/10 md:pl-8">
             <div class="text-right">
-                <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1">Số tiền thanh toán</p>
+                <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-1">Payment Amount</p>
                 <p class="text-3xl font-display font-black">
                     <span class="text-primary text-xl mr-1">@Model.Currency?.ToUpper()</span>@Model.GrossAmount.ToString("N2")
                 </p>
@@ -101,15 +101,15 @@
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    @* CỘT TRÁI - 2/3 width *@
+    @* LEFT COLUMN - 2/3 width *@
     <div class="lg:col-span-2 space-y-8">
         
-        @* Thông tin Khóa học *@
+        @* Course Info *@
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
                 <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
                     <span class="material-symbols-outlined text-primary text-[20px]">school</span>
-                    Sản phẩm & Nội dung
+                    Product & Details
                 </h3>
             </div>
             <div class="p-6">
@@ -141,14 +141,14 @@
             </div>
         </div>
 
-        @* Thông tin Đối tác *@
+        @* User Partners *@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             @* Buyer *@
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
                     <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
                         <span class="material-symbols-outlined text-indigo-500 text-[20px]">person</span>
-                        Thông tin Người mua
+                        Purchaser Details
                     </h3>
                 </div>
                 <div class="p-6 space-y-4">
@@ -162,7 +162,7 @@
                         </div>
                     </div>
                     <div class="pt-4 border-t border-slate-50 flex items-center justify-between text-xs font-bold">
-                        <span class="text-slate-400 uppercase tracking-wider">Vai trò</span>
+                        <span class="text-slate-400 uppercase tracking-wider">Role</span>
                         <span class="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">STUDENT</span>
                     </div>
                 </div>
@@ -173,7 +173,7 @@
                 <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
                     <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
                         <span class="material-symbols-outlined text-emerald-500 text-[20px]">co_present</span>
-                        Thông tin Giảng viên
+                        Instructor Details
                     </h3>
                 </div>
                 <div class="p-6 space-y-4">
@@ -187,16 +187,16 @@
                         </div>
                     </div>
                     <div class="pt-4 border-t border-slate-50 flex items-center justify-between text-xs font-bold">
-                        <span class="text-slate-400 uppercase tracking-wider">Tình trạng payout</span>
+                        <span class="text-slate-400 uppercase tracking-wider">Payout Status</span>
                         @if (Model.IsPaid) {
                             <span class="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded flex items-center gap-1">
                                 <span class="material-symbols-outlined text-[12px]">check_circle</span>
-                                ĐÃ CHUYỂN
+                                PAID
                             </span>
                         } else {
                             <span class="text-amber-600 bg-amber-50 px-2 py-0.5 rounded flex items-center gap-1">
                                 <span class="material-symbols-outlined text-[12px]">schedule</span>
-                                CHỜ CHUYỂN
+                                PENDING
                             </span>
                         }
                     </div>
@@ -209,12 +209,12 @@
             <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                 <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
                     <span class="material-symbols-outlined text-indigo-600 text-[20px]">payments</span>
-                    Dữ liệu tham chiếu Cổng thanh toán
+                    Stripe Payment Gateway References
                 </h3>
                 @if (!string.IsNullOrEmpty(Model.StripeSessionId)) {
                     <a href="https://dashboard.stripe.com/payments/@Model.StripePaymentIntentId" target="_blank" 
                        class="text-[10px] font-black bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700 transition-colors uppercase tracking-widest">
-                        Xem trên Stripe
+                        View on Stripe
                     </a>
                 }
             </div>
@@ -247,34 +247,55 @@
         </div>
     </div>
 
-    @* CỘT PHẢI - 1/3 width *@
+    @* RIGHT COLUMN - 1/3 width *@
     <div class="lg:col-span-1 space-y-8">
         
-        @* Phân bổ Tài chính *@
+        @* Split Breakdown *@
         <div class="bg-white rounded-3xl border border-slate-200 shadow-lg overflow-hidden relative">
             <div class="absolute top-0 left-0 w-full h-1.5 bg-primary"></div>
             <div class="p-8">
-                <h3 class="text-lg font-black text-slate-900 mb-6 font-display">Biên lai Phân bổ</h3>
+                <h3 class="text-lg font-black text-slate-900 mb-6 font-display">Split Summary</h3>
                 
                 <div class="space-y-4">
                     <div class="flex items-center justify-between text-sm">
-                        <span class="text-slate-500 font-medium">Giá bán khóa học</span>
-                        <span class="text-slate-900 font-bold">@Model.Currency?.ToUpper() @Model.GrossAmount.ToString("N2")</span>
+                        <span class="text-slate-500 font-medium">Course Original Price</span>
+                        <span class="text-slate-900 font-bold">@Model.Currency?.ToUpper() @Model.OriginalPrice.ToString("N2")</span>
                     </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-slate-500 font-medium">Chiết khấu / Coupon</span>
-                        <span class="text-slate-400 font-bold">@Model.Currency?.ToUpper() 0.00</span>
-                    </div>
+                    @if (Model.CouponUsed) {
+                        <div class="flex items-center justify-between text-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="text-slate-500 font-medium">Discount / Coupon</span>
+                                @if (!string.IsNullOrEmpty(Model.CouponCode)) {
+                                    <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200">
+                                        @Model.CouponCode
+                                    </span>
+                                }
+                            </div>
+                            <span class="text-emerald-600 font-bold">- @Model.Currency?.ToUpper() @Model.DiscountAmount.ToString("N2")</span>
+                        </div>
+                    } else {
+                         <div class="flex items-center justify-between text-sm">
+                            <span class="text-slate-500 font-medium">Discount / Coupon</span>
+                            <span class="text-slate-400 font-bold">@Model.Currency?.ToUpper() 0.00</span>
+                        </div>
+                    }
                     <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
-                        <span class="text-base font-black text-slate-900 uppercase">Tổng thu thực tế</span>
-                        <span class="text-2xl font-display font-black text-slate-900">@Model.Currency?.ToUpper() @Model.GrossAmount.ToString("N2")</span>
+                        <span class="text-base font-black text-slate-900 uppercase">Total Gross Revenue</span>
+                        <div class="text-right">
+                            @if (Model.CouponUsed) {
+                                <div class="text-sm text-slate-400 line-through mb-1">
+                                    @Model.Currency?.ToUpper() @Model.OriginalPrice.ToString("N2")
+                                </div>
+                            }
+                            <span class="text-2xl font-display font-black text-slate-900">@Model.Currency?.ToUpper() @Model.GrossAmount.ToString("N2")</span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="mt-8 space-y-3">
                     <div class="bg-indigo-50/50 rounded-2xl p-4 border border-indigo-100/50">
                         <div class="flex items-center justify-between mb-1">
-                            <p class="text-[11px] font-black text-indigo-400 uppercase tracking-widest">Phí nền tảng (Sàn)</p>
+                            <p class="text-[11px] font-black text-indigo-400 uppercase tracking-widest">Platform Profit Fee</p>
                             <span class="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded">@(100 - Model.TransferRate)%</span>
                         </div>
                         <p class="text-xl font-display font-black text-indigo-700">@Model.Currency?.ToUpper() @Model.PlatformProfit.ToString("N2")</p>
@@ -282,7 +303,7 @@
 
                     <div class="@(Model.IsPaid ? "bg-emerald-50/50 border-emerald-100/50" : "bg-amber-50/50 border-amber-100/50") rounded-2xl p-4 border transition-all">
                         <div class="flex items-center justify-between mb-1">
-                            <p class="text-[11px] font-black @(Model.IsPaid ? "text-emerald-400" : "text-amber-400") uppercase tracking-widest">Giảng viên nhận</p>
+                            <p class="text-[11px] font-black @(Model.IsPaid ? "text-emerald-400" : "text-amber-400") uppercase tracking-widest">Instructor Net Income</p>
                             <span class="text-[10px] font-bold @(Model.IsPaid ? "text-emerald-600 bg-emerald-100" : "text-amber-600 bg-amber-100") px-1.5 py-0.5 rounded">@Model.TransferRate%</span>
                         </div>
                         <p class="text-xl font-display font-black @(Model.IsPaid ? "text-emerald-700" : "text-amber-700")">@Model.Currency?.ToUpper() @Model.InstructorPayout.ToString("N2")</p>
@@ -295,7 +316,7 @@
                             <span class="material-symbols-outlined text-primary text-[20px]">verified</span>
                         </div>
                         <div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trạng thái cuối</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Settlement Status</p>
                             <p class="text-sm font-bold">@statusLabel</p>
                         </div>
                     </div>
@@ -305,14 +326,14 @@
 
         @* Quick Actions Card *@
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Ghi chú & Thao tác</h3>
+            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Notes & Action Plan</h3>
             <p class="text-xs text-slate-500 leading-relaxed italic">
-                * Tỷ lệ hoa hồng được cố định tại thời điểm thanh toán để đảm bảo tính minh bạch cho cả Sàn và Giảng viên.
+                * The transfer rate is locked at the exact checkout time to guarantee absolute transparency between the platform and the instructor.
             </p>
             <div class="mt-6 flex flex-col gap-2">
                 <button class="w-full py-2.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
                     <span class="material-symbols-outlined text-[18px]">contact_support</span>
-                    Liên hệ Hỗ trợ
+                    Contact Support
                 </button>
             </div>
         </div>
@@ -328,7 +349,7 @@
                     toast: true,
                     position: 'top-end',
                     icon: 'success',
-                    title: 'Đã sao chép vào bộ nhớ tạm',
+                    title: 'Copied to clipboard',
                     showConfirmButton: false,
                     timer: 2000,
                     timerProgressBar: true
@@ -338,27 +359,27 @@
 
         function confirmRefund() {
             Swal.fire({
-                title: 'Hoàn tiền giao dịch #@Model.TransactionId',
+                title: 'Refund Transaction #@Model.TransactionId',
                 html: `
                     <p class="text-sm text-gray-600 mb-4">
-                        Hành động này sẽ:<br>
-                        • Hoàn tiền <strong>@Model.Currency?.ToUpper() @Model.GrossAmount.ToString("N2")</strong> cho khách hàng<br>
-                        • Thu hồi tiền đã chuyển cho giảng viên (nếu có)<br>
-                        • Thu hồi quyền truy cập khóa học
+                        This action will:<br>
+                        • Refund <strong>@Model.Currency?.ToUpper() @Model.GrossAmount.ToString("N2")</strong> back to the customer<br>
+                        • Revoke payouts processed for the instructor (if applicable)<br>
+                        • Revoke course enrollment access
                     </p>
-                    <label class="block text-left text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Lý do hoàn tiền</label>
+                    <label class="block text-left text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Refund Reason</label>
                     <select id="swal-reason" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-300 focus:border-red-400">
-                        <option value="requested_by_customer">Khách hàng yêu cầu</option>
-                        <option value="duplicate">Giao dịch trùng lặp</option>
-                        <option value="fraudulent">Gian lận</option>
+                        <option value="requested_by_customer">Requested by Customer</option>
+                        <option value="duplicate">Duplicate Transaction</option>
+                        <option value="fraudulent">Fraudulent Activity</option>
                     </select>
                 `,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: '<i class="material-symbols-outlined text-[16px] align-middle mr-1">currency_exchange</i> Xác nhận hoàn tiền',
-                cancelButtonText: 'Hủy bỏ',
+                confirmButtonText: '<i class="material-symbols-outlined text-[16px] align-middle mr-1">currency_exchange</i> Confirm Refund',
+                cancelButtonText: 'Cancel',
                 showLoaderOnConfirm: true,
                 preConfirm: () => {
                     const reason = document.getElementById('swal-reason').value;
@@ -371,5 +392,3 @@
         }
     </script>
 }
-
-

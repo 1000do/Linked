@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using CourseMarketplaceFE.Helpers;
 using CourseMarketplaceFE.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -43,7 +43,7 @@ namespace CourseMarketplaceFE.Controllers
                 return Json(new { success = true });
             }
 
-            return Json(new { success = false, message = "Lỗi khi xử lý từ Server" });
+            return Json(new { success = false, message = "Error processing on Server" });
         }
     }
 }

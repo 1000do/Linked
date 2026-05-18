@@ -23,6 +23,43 @@ public class CartController : Controller
         _api = api;
     }
 
+    private Dictionary<int, string> GetCouponMapFromCookie()
+    {
+        var cookie = HttpContext.Request.Cookies[CouponCookieName];
+        var map = new Dictionary<int, string>();
+        if (string.IsNullOrWhiteSpace(cookie)) return map;
+
+        var parts = cookie.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var part in parts)
+        {
+            var kvp = part.Split(':');
+            if (kvp.Length == 2 && int.TryParse(kvp[0], out int cid))
+            {
+                map[cid] = kvp[1].Trim().ToUpper();
+            }
+        }
+        return map;
+    }
+
+    private void SaveCouponMapToCookie(Dictionary<int, string> map)
+    {
+        var cookieValue = string.Join(",", map.Select(kvp => $"{kvp.Key}:{kvp.Value}"));
+        if (string.IsNullOrWhiteSpace(cookieValue))
+        {
+            HttpContext.Response.Cookies.Delete(CouponCookieName);
+        }
+        else
+        {
+            HttpContext.Response.Cookies.Append(CouponCookieName, cookieValue, new CookieOptions
+            {
+                Expires  = DateTimeOffset.UtcNow.AddHours(1),
+                HttpOnly = false,
+                SameSite = SameSiteMode.Lax,
+                Path     = "/"
+            });
+        }
+    }
+
     // ─── 1. XEM GIỎ HÀNG ─────────────────────────────────────────────────
     /// <summary>
     /// GET /Cart
@@ -34,10 +71,11 @@ public class CartController : Controller
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
             return Redirect("/Account/Login");
 
-        // Đọc coupon code từ Cookie (nhất quán với cách dùng AccessToken cookie)
-        var couponCode = HttpContext.Request.Cookies[CouponCookieName];
+        // Đọc map coupon từ Cookie
+        var couponMap = GetCouponMapFromCookie();
+        var couponCode = string.Join(",", couponMap.Values.Distinct());
 
-        // Gọi API BE summary, truyền couponCode vào query string nếu có
+        // Gọi API BE summary, truyền danh sách couponCode vào query string nếu có
         var url = string.IsNullOrWhiteSpace(couponCode)
             ? "cart/summary"
             : $"cart/summary?couponCode={Uri.EscapeDataString(couponCode)}";
@@ -86,18 +124,13 @@ public class CartController : Controller
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult ApplyCoupon(string couponCode)
+    public IActionResult ApplyCoupon(string couponCode, int? courseId)
     {
-        if (!string.IsNullOrWhiteSpace(couponCode))
+        if (!string.IsNullOrWhiteSpace(couponCode) && courseId.HasValue)
         {
-            // Lưu vào Cookie — hết hạn sau 1 giờ, không cần HttpOnly (không nhạy cảm)
-            HttpContext.Response.Cookies.Append(CouponCookieName, couponCode.Trim().ToUpper(), new CookieOptions
-            {
-                Expires  = DateTimeOffset.UtcNow.AddHours(1),
-                HttpOnly = false,
-                SameSite = SameSiteMode.Lax,
-                Path     = "/"
-            });
+            var map = GetCouponMapFromCookie();
+            map[courseId.Value] = couponCode.Trim().ToUpper();
+            SaveCouponMapToCookie(map);
         }
 
         return RedirectToAction(nameof(Index));
@@ -106,13 +139,18 @@ public class CartController : Controller
     // ─── 3. XÓA COUPON ───────────────────────────────────────────────────
     /// <summary>
     /// POST /Cart/RemoveCoupon
-    /// Xóa cookie coupon.
+    /// Xóa coupon của một khóa học cụ thể.
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult RemoveCoupon()
+    public IActionResult RemoveCoupon(int courseId)
     {
-        HttpContext.Response.Cookies.Delete(CouponCookieName);
+        var map = GetCouponMapFromCookie();
+        if (map.ContainsKey(courseId))
+        {
+            map.Remove(courseId);
+            SaveCouponMapToCookie(map);
+        }
         return RedirectToAction(nameof(Index));
     }
 
@@ -132,7 +170,7 @@ public class CartController : Controller
         if (!response.IsSuccessStatusCode)
         {
             var json = await response.Content.ReadAsStringAsync();
-            string errorMsg = "Có lỗi xảy ra.";
+            string errorMsg = "An error occurred.";
             try
             {
                 using var doc = JsonDocument.Parse(json);
@@ -144,7 +182,7 @@ public class CartController : Controller
         }
         else
         {
-            TempData["CartSuccess"] = "Đã thêm khóa học vào giỏ hàng!";
+            TempData["CartSuccess"] = "Course added to cart!";
         }
 
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -191,9 +229,9 @@ public class CartController : Controller
         var response = await _api.DeleteAsync($"cart/remove/{courseId}");
 
         if (!response.IsSuccessStatusCode)
-            TempData["CartError"] = "Không thể xóa khóa học khỏi giỏ hàng.";
+            TempData["CartError"] = "Cannot remove course from cart.";
         else
-            TempData["CartSuccess"] = "Đã xóa khóa học khỏi giỏ hàng.";
+            TempData["CartSuccess"] = "Course removed from cart.";
 
         return RedirectToAction(nameof(Index));
     }
@@ -211,8 +249,9 @@ public class CartController : Controller
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
             return Redirect("/Account/Login");
 
-        // Đọc coupon code từ Cookie (nhất quán với trang giỏ hàng)
-        var couponCode = HttpContext.Request.Cookies[CouponCookieName];
+        // Đọc map coupon từ Cookie và ghép thành chuỗi phân tách bằng dấu phẩy
+        var couponMap = GetCouponMapFromCookie();
+        var couponCode = string.Join(",", couponMap.Values.Distinct());
 
         // Tạo base URL của FE (dựa vào Request context)
         var baseUrl = $"{Request.Scheme}://{Request.Host}";
@@ -222,13 +261,13 @@ public class CartController : Controller
         {
             couponCode = couponCode,
             successUrl = $"{baseUrl}/Cart/CheckoutSuccess?session_id={{CHECKOUT_SESSION_ID}}",
-            cancelUrl = $"{baseUrl}/Cart"
+            cancelUrl = $"{baseUrl}/Cart/CheckoutCancel"
         });
 
         if (!response.IsSuccessStatusCode)
         {
             var errorJson = await response.Content.ReadAsStringAsync();
-            string errorMsg = "Có lỗi xảy ra khi tạo phiên thanh toán.";
+            string errorMsg = "An error occurred while creating checkout session.";
             try
             {
                 using var doc = System.Text.Json.JsonDocument.Parse(errorJson);
@@ -261,7 +300,7 @@ public class CartController : Controller
         }
         catch { }
 
-        TempData["CartError"] = "Không thể tạo phiên thanh toán. Vui lòng thử lại.";
+        TempData["CartError"] = "Cannot create checkout session. Please try again.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -270,7 +309,7 @@ public class CartController : Controller
     public async Task<IActionResult> DirectCheckout(int id)
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
-            return Json(new { success = false, message = "Vui lòng đăng nhập trước khi mua." });
+            return Json(new { success = false, message = "Please login before purchasing." });
 
         var baseUrl = $"{Request.Scheme}://{Request.Host}";
         
@@ -278,13 +317,13 @@ public class CartController : Controller
         {
             courseId = id,
             successUrl = $"{baseUrl}/Cart/CheckoutSuccess?session_id={{CHECKOUT_SESSION_ID}}",
-            cancelUrl = $"{baseUrl}/Course/Details/{id}"
+            cancelUrl = $"{baseUrl}/Cart/CheckoutCancel"
         });
 
         if (!response.IsSuccessStatusCode)
         {
             var errorJson = await response.Content.ReadAsStringAsync();
-            string errorMsg = "Có lỗi xảy ra khi tạo phiên thanh toán.";
+            string errorMsg = "An error occurred while creating checkout session.";
             try
             {
                 using var doc = System.Text.Json.JsonDocument.Parse(errorJson);
@@ -311,7 +350,7 @@ public class CartController : Controller
         }
         catch { }
 
-        return Json(new { success = false, message = "Không thể đọc dữ liệu phản hồi từ máy chủ." });
+        return Json(new { success = false, message = "Cannot read response data from server." });
     }
 
     // ─── 7. CHECKOUT SUCCESS — STRIPE REDIRECT VỀ ĐÂY ───────────────────
@@ -328,7 +367,7 @@ public class CartController : Controller
         if (string.IsNullOrWhiteSpace(sessionId))
         {
             Console.WriteLine("[FE-CHECKOUT] ❌ session_id is EMPTY!");
-            TempData["CartError"] = "Phiên thanh toán không hợp lệ.";
+            TempData["CartError"] = "Invalid checkout session.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -344,7 +383,7 @@ public class CartController : Controller
             if (response.IsSuccessStatusCode)
             {
                 Console.WriteLine("[FE-CHECKOUT] ✅ SUCCESS — redirecting to /Course");
-                TempData["CartSuccess"] = "🎉 Thanh toán thành công! Chúc bạn học vui vẻ!";
+                TempData["CartSuccess"] = "🎉 Payment successful! Happy learning!";
                 return Redirect("/Course");
             }
 
@@ -352,15 +391,32 @@ public class CartController : Controller
             var errorBody = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"[FE-CHECKOUT] ❌ BE ERROR: {errorBody}");
 
-            TempData["CartError"] = "Có lỗi xảy ra khi xử lý thanh toán. Vui lòng liên hệ hỗ trợ.";
+            TempData["CartError"] = "An error occurred while processing payment. Please contact support.";
             return RedirectToAction(nameof(Index));
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[FE-CHECKOUT] ❌ EXCEPTION: {ex.Message}\n{ex.StackTrace}");
-            TempData["CartError"] = "Có lỗi xảy ra khi xử lý thanh toán. Vui lòng liên hệ hỗ trợ.";
+            TempData["CartError"] = "An error occurred while processing payment. Please contact support.";
             return RedirectToAction(nameof(Index));
         }
+    }
+
+    // ─── 8. CHECKOUT CANCEL — STRIPE REDIRECT VỀ ĐÂY KHI HỦY ─────────────────
+    /// <summary>
+    /// GET /Cart/CheckoutCancel?order_id=123
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> CheckoutCancel([FromQuery(Name = "order_id")] int orderId)
+    {
+        if (orderId > 0)
+        {
+            // Gọi API backend để cập nhật trạng thái
+            await _api.GetAsync($"checkout/cancel?order_id={orderId}");
+        }
+
+        TempData["CartError"] = "You have not paid successfully or cancelled the transaction. The current order is no longer valid.";
+        return RedirectToAction(nameof(Index));
     }
 }
 

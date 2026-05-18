@@ -195,12 +195,12 @@ public class AdminFinanceController : Controller
 
         if (response.IsSuccessStatusCode)
         {
-            TempData["FinanceSuccess"] = $"✅ Đã cập nhật: Giảng viên nhận {rate}%, Sàn nhận {100 - rate}%.";
+            TempData["FinanceSuccess"] = $"✅ Updated: Instructor gets {rate}%, Platform gets {100 - rate}%.";
         }
         else
         {
             var errorBody = await response.Content.ReadAsStringAsync();
-            TempData["FinanceError"] = $"❌ Lỗi: {errorBody}";
+            TempData["FinanceError"] = $"❌ Error: {errorBody}";
         }
 
         return RedirectToAction(nameof(Index));
@@ -217,12 +217,12 @@ public class AdminFinanceController : Controller
 
         if (response.IsSuccessStatusCode)
         {
-            TempData["FinanceSuccess"] = "✅ Đã đánh dấu thanh toán thành công.";
+            TempData["FinanceSuccess"] = "✅ Marked as paid successfully.";
         }
         else
         {
             var errorBody = await response.Content.ReadAsStringAsync();
-            TempData["FinanceError"] = $"❌ Lỗi: {errorBody}";
+            TempData["FinanceError"] = $"❌ Error: {errorBody}";
         }
 
         return RedirectToAction(nameof(Index));
@@ -243,7 +243,7 @@ public class AdminFinanceController : Controller
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);
             var transferId = doc.RootElement.GetProperty("data").GetString();
-            TempData["FinanceSuccess"] = $"✅ Đã chuyển tiền thành công qua Stripe! (Mã GD: {transferId})";
+            TempData["FinanceSuccess"] = $"✅ Money transferred successfully via Stripe! (TX ID: {transferId})";
         }
         else
         {
@@ -257,7 +257,7 @@ public class AdminFinanceController : Controller
             }
             catch { }
             
-            TempData["FinanceError"] = $"❌ Lỗi Stripe: {errorBody}";
+            TempData["FinanceError"] = $"❌ Stripe Error: {errorBody}";
         }
 
         return RedirectToAction(nameof(Index));
@@ -284,7 +284,7 @@ public class AdminFinanceController : Controller
         if (response.IsSuccessStatusCode)
         {
             var json = await response.Content.ReadAsStringAsync();
-            TempData["WithdrawSuccess"] = "✅ Lệnh rút tiền đã được tạo thành công! Tiền sẽ về ngân hàng trong 1-3 ngày.";
+            TempData["WithdrawSuccess"] = "✅ Withdrawal request created successfully! Funds will arrive in your bank in 1-3 days.";
         }
         else
         {
@@ -297,7 +297,7 @@ public class AdminFinanceController : Controller
             }
             catch { }
 
-            TempData["WithdrawError"] = $"❌ Lỗi: {errorBody}";
+            TempData["WithdrawError"] = $"❌ Error: {errorBody}";
         }
 
         return RedirectToAction(nameof(Index));
@@ -326,10 +326,10 @@ public class AdminFinanceController : Controller
             var amount = data.GetProperty("refundedAmount").GetDecimal();
             var enrollRevoked = data.GetProperty("enrollmentRevoked").GetBoolean();
 
-            TempData["FinanceSuccess"] = $"✅ Hoàn tiền thành công! " +
+            TempData["FinanceSuccess"] = $"✅ Refund successful! " +
                 $"Stripe Refund: {refundId} | " +
-                $"Số tiền: ${amount:F2} | " +
-                $"Thu hồi quyền truy cập: {(enrollRevoked ? "Đã thu hồi" : "Không áp dụng")}";
+                $"Amount: ${amount:F2} | " +
+                $"Access revoked: {(enrollRevoked ? "Yes" : "N/A")}";
         }
         else
         {
@@ -342,7 +342,7 @@ public class AdminFinanceController : Controller
             }
             catch { }
 
-            TempData["FinanceError"] = $"❌ Lỗi hoàn tiền: {errorBody}";
+            TempData["FinanceError"] = $"❌ Refund Error: {errorBody}";
         }
 
         return RedirectToAction("Detail", "Transaction", new { id = transactionId });

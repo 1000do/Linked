@@ -26,4 +26,9 @@ public interface ITransactionRepository
     /// Lấy danh sách giao dịch của một giảng viên cụ thể.
     /// </summary>
     Task<(List<TransactionListDto> Items, int TotalCount)> GetInstructorTransactionsAsync(int instructorId, int page, int pageSize, string? keyword = null, string? sortBy = "date_desc", string? status = null);
+
+    /// <summary>
+    /// Lấy danh sách giao dịch của một người dùng (người mua) cụ thể.
+    /// </summary>
+    Task<(List<TransactionListDto> Items, int TotalCount)> GetUserTransactionsAsync(int userId, int page, int pageSize, string? keyword = null, string? sortBy = "date_desc", string? status = null);
 }

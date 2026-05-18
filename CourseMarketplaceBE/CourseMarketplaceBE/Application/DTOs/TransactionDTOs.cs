@@ -67,8 +67,26 @@ public class TransactionDetailDto
     public string InstructorEmail { get; set; } = string.Empty;
 
     // ── Phân bổ tài chính ★ ───────────────────────────────────────────────
-    /// <summary>Tổng khách trả</summary>
+    /// <summary>Tổng khách trả (sau giảm giá)</summary>
     public decimal GrossAmount { get; set; }
+
+    /// <summary>Giá gốc khóa học (trước giảm giá)</summary>
+    public decimal OriginalPrice { get; set; }
+
+    /// <summary>Số tiền được giảm = OriginalPrice - GrossAmount</summary>
+    public decimal DiscountAmount { get; set; }
+
+    /// <summary>Có sử dụng mã giảm giá không</summary>
+    public bool CouponUsed { get; set; }
+
+    /// <summary>Mã giảm giá đã áp dụng (null nếu không có)</summary>
+    public string? CouponCode { get; set; }
+
+    /// <summary>Loại coupon: percentage / fixed_amount</summary>
+    public string? CouponType { get; set; }
+
+    /// <summary>Giá trị coupon (ví dụ: 20 nếu giảm 20%)</summary>
+    public decimal? CouponDiscountValue { get; set; }
 
     /// <summary>Tỷ lệ giảng viên nhận (%) lúc giao dịch</summary>
     public decimal TransferRate { get; set; }

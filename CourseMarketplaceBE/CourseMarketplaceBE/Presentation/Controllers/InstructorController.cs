@@ -326,6 +326,29 @@ public class InstructorController : ControllerBase
         });
     }
 
+    // ─── 11. PUBLIC PROFILE ──────────────────────────────────────────
+    /// <summary>
+    /// GET /api/instructor/profile/{id}
+    /// Trả về thông tin công khai của giảng viên (không yêu cầu login).
+    /// </summary>
+    [HttpGet("profile/{id}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetPublicProfile(int id)
+    {
+        try
+        {
+            var profile = await _instructorService.GetPublicProfileAsync(id);
+            if (profile == null)
+                return NotFound(new { status = 404, message = "Không tìm thấy thông tin giảng viên hoặc đơn chưa được duyệt." });
+
+            return Ok(new { status = 200, data = profile });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = 500, message = $"Lỗi server: {ex.Message}" });
+        }
+    }
+
     // ─── HELPER ──────────────────────────────────────────────────────
     private int? GetUserId()
     {

@@ -100,6 +100,77 @@ public class CourseService : ICourseService
         });
     }
 
+    public async Task<PaginatedCoursesResponse> GetPublishedCoursesPagedAsync(
+        string? query = null,
+        string? category = null,
+        string? sort = null,
+        string? price = null,
+        string? rating = null,
+        int? page = null,
+        int? pageSize = null,
+        int? userId = null)
+    {
+        var (courses, totalCount) = await _courseRepository.GetAllPublishedCoursesPagedAsync(query, category, sort, price, rating, page, pageSize);
+        var courseIds = courses.Select(c => c.CourseId).ToList();
+
+        // Fetch stats for these courses
+        var stats = await _courseRepository.GetCourseStatsAsync(courseIds);
+
+        // Check enrollment if user is logged in
+        var enrolledCourseIds = new List<int>();
+        if (userId.HasValue)
+        {
+            foreach (var cid in courseIds)
+            {
+                if (await _courseRepository.IsEnrolledAsync(userId.Value, cid))
+                {
+                    enrolledCourseIds.Add(cid);
+                }
+            }
+        }
+
+        var courseResponses = courses.Select(c =>
+        {
+            var s = stats.FirstOrDefault(st => st.CourseId == c.CourseId);
+            return new CourseResponse
+            {
+                CourseId = c.CourseId,
+                InstructorId = c.InstructorId,
+                CategoryId = c.CategoryId,
+                Title = c.Title,
+                Description = c.Description,
+                Price = c.Price,
+                CourseThumbnailUrl = c.CourseThumbnailUrl,
+                CourseStatus = c.CourseStatus,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt,
+                WhatYouWillLearn = c.WhatYouWillLearn,
+                Requirements = c.Requirements,
+                CategoryName = c.Category?.CategoriesName,
+                InstructorName = c.Instructor?.InstructorNavigation?.FullName ?? "Unknown Instructor",
+                InstructorAvatarUrl = c.Instructor?.InstructorNavigation?.UserNavigation?.AvatarUrl,
+                TotalStudents = s?.TotalStudents ?? 0,
+                RatingAverage = (decimal)(s?.RatingAverage ?? 0),
+                IsEnrolled = enrolledCourseIds.Contains(c.CourseId),
+                IsOwner = userId.HasValue && c.InstructorId == userId.Value,
+                TotalReviews = s?.TotalReviews ?? 0
+            };
+        }).ToList();
+
+        int finalPage = page ?? 1;
+        int finalPageSize = pageSize ?? 12;
+        int totalPages = (int)Math.Ceiling(totalCount / (double)finalPageSize);
+
+        return new PaginatedCoursesResponse
+        {
+            Courses = courseResponses,
+            TotalItems = totalCount,
+            TotalPages = totalPages > 0 ? totalPages : 1,
+            CurrentPage = finalPage,
+            PageSize = finalPageSize
+        };
+    }
+
     public async Task<bool> IsEnrolledAsync(int userId, int courseId)
     {
         return await _courseRepository.IsEnrolledAsync(userId, courseId);
@@ -136,6 +207,55 @@ public class CourseService : ICourseService
         });
     }
 
+    public async Task<PaginatedCoursesResponse> GetInstructorCoursesPagedAsync(
+        int instructorId,
+        string? search = null,
+        string? status = null,
+        int? page = null,
+        int? pageSize = null)
+    {
+        var (courses, totalCount) = await _courseRepository.GetInstructorCoursesPagedAsync(instructorId, search, status, page, pageSize);
+        var courseIds = courses.Select(c => c.CourseId).ToList();
+
+        // Fetch stats for these courses
+        var stats = await _courseRepository.GetCourseStatsAsync(courseIds);
+
+        var courseResponses = courses.Select(c =>
+        {
+            var s = stats.FirstOrDefault(st => st.CourseId == c.CourseId);
+            return new CourseResponse
+            {
+                CourseId = c.CourseId,
+                InstructorId = c.InstructorId,
+                CategoryId = c.CategoryId,
+                Title = c.Title,
+                Description = c.Description,
+                Price = c.Price,
+                CourseThumbnailUrl = c.CourseThumbnailUrl,
+                CourseStatus = c.CourseStatus,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt,
+                WhatYouWillLearn = c.WhatYouWillLearn,
+                Requirements = c.Requirements,
+                TotalStudents = s?.TotalStudents ?? 0,
+                RatingAverage = (decimal)(s?.RatingAverage ?? 0)
+            };
+        }).ToList();
+
+        int finalPage = page ?? 1;
+        int finalPageSize = pageSize ?? 6;
+        int totalPages = (int)Math.Ceiling(totalCount / (double)finalPageSize);
+
+        return new PaginatedCoursesResponse
+        {
+            Courses = courseResponses,
+            TotalItems = totalCount,
+            TotalPages = totalPages > 0 ? totalPages : 1,
+            CurrentPage = finalPage,
+            PageSize = finalPageSize
+        };
+    }
+
     public async Task<CourseDetailResponse?> GetCourseWithDetailsAsync(int courseId, int instructorId, int? userId = null)
     {
         string cacheKey = CacheKeys.CourseDetail.GetKey(courseId);
@@ -166,6 +286,9 @@ public class CourseService : ICourseService
                 WhatYouWillLearn = course.WhatYouWillLearn,
                 Requirements = course.Requirements,
                 CategoryName = course.Category?.CategoriesName,
+                AppliedCouponCode = course.Coupon?.CouponCode,
+                AppliedCouponType = course.Coupon?.CouponType,
+                AppliedCouponValue = course.Coupon?.DiscountValue,
                 InstructorName = course.Instructor?.InstructorNavigation?.FullName ?? "Unknown Instructor",
                 InstructorAvatarUrl = course.Instructor?.InstructorNavigation?.UserNavigation?.AvatarUrl,
                 InstructorBio = course.Instructor?.InstructorNavigation?.Bio,
@@ -245,6 +368,17 @@ public class CourseService : ICourseService
         }
 
 
+        // ★ Kiểm tra trùng lặp tiêu đề (Case-insensitive)
+        var titleLower = request.Title.Trim().ToLower();
+        var existingCourse = await _courseRepository.GetAllPublishedCoursesAsync(); // Hoặc dùng một phương thức chuyên biệt
+        // Thực tế nên dùng một phương thức CheckTitleExists trong Repository để tối ưu hơn.
+        // Tôi sẽ tạm thời kiểm tra thông qua GetInstructorCoursesAsync để tránh load quá nhiều dữ liệu nếu chưa có hàm chuyên biệt.
+        var allCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
+        if (allCourses.Any(c => c.Title.Trim().ToLower() == titleLower && !c.IsRemoved))
+        {
+            throw new BadRequestException("Bạn đã có một khóa học với tiêu đề này. Vui lòng chọn tiêu đề khác.");
+        }
+
         // ★ Nếu chưa hoàn tất Stripe → ép giá = 0 (chỉ tạo khóa free)
         var coursePrice = isStripeActive ? request.Price : 0m;
 
@@ -314,6 +448,17 @@ public class CourseService : ICourseService
 
         if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot modify course while it is pending review.");
+
+        // ★ Kiểm tra trùng lặp tiêu đề khi cập nhật (nếu tiêu đề thay đổi)
+        if (!string.Equals(course.Title, request.Title, StringComparison.OrdinalIgnoreCase))
+        {
+            var titleLower = request.Title.Trim().ToLower();
+            var instructorCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
+            if (instructorCourses.Any(c => c.Title.Trim().ToLower() == titleLower && c.CourseId != courseId && !c.IsRemoved))
+            {
+                throw new BadRequestException("Bạn đã có một khóa học khác với tiêu đề này.");
+            }
+        }
 
         string? thumbnailUrl = request.CourseThumbnailUrl ?? course.CourseThumbnailUrl;
 

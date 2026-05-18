@@ -1,0 +1,196 @@
+@using CourseMarketplaceFE.Controllers
+@model TransactionController.TransactionDetailVM
+@{
+    ViewData["Title"] = "Chi tiết hóa đơn";
+    Layout = "_Layout";
+
+    var statusBg = Model.Status == "succeeded" ? "bg-emerald-50 text-emerald-600"
+                 : Model.Status == "failed" ? "bg-rose-50 text-rose-600"
+                 : "bg-amber-50 text-amber-600";
+    
+    var statusLabel = Model.Status == "succeeded" ? "Thành công"
+                    : Model.Status == "failed" ? "Thất bại"
+                    : Model.Status == "pending" ? "Đang xử lý"
+                    : Model.Status ?? "—";
+
+    var dotColor = Model.Status == "succeeded" ? "bg-emerald-500"
+                 : Model.Status == "failed" ? "bg-rose-500"
+                 : "bg-amber-400";
+}
+
+<div class="min-h-screen bg-[#f8fafc] pb-20">
+    <div class="max-w-4xl mx-auto px-6 pt-10">
+        @* Back button *@
+        <a href="/Transaction/History" class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 font-bold transition-colors mb-8 group">
+            <span class="material-symbols-outlined text-[20px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
+            Quay lại lịch sử
+        </a>
+
+        <div class="bg-white rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden relative">
+            @* Top Decoration *@
+            <div class="h-2 w-full bg-gradient-to-r from-primary to-secondary"></div>
+
+            <div class="p-8 md:p-12">
+                @* Invoice Header *@
+                <div class="flex flex-col md:flex-row justify-between items-start gap-8 mb-12">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest @statusBg mb-4">
+                            <span class="w-1.5 h-1.5 rounded-full @dotColor"></span>
+                            @statusLabel
+                        </div>
+                        <h1 class="text-4xl font-black text-slate-900 tracking-tight">Hóa đơn điện tử</h1>
+                        <p class="text-slate-400 font-bold mt-1 uppercase tracking-widest text-xs">Mã giao dịch: #@Model.TransactionId</p>
+                    </div>
+
+                    <div class="text-left md:text-right">
+                        <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-1">Ngày thanh toán</p>
+                        <p class="text-lg font-black text-slate-800">@(Model.Date.HasValue ? Model.Date.Value.ToString("dd MMMM, yyyy") : "—")</p>
+                        <p class="text-sm text-slate-500 font-medium">@(Model.Date.HasValue ? Model.Date.Value.ToString("HH:mm") : "")</p>
+                    </div>
+                </div>
+
+                @* Invoice Body *@
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+                    <div>
+                        <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Thông tin khách hàng</h3>
+                        <div class="bg-slate-50 rounded-3xl p-6 border border-slate-100">
+                            <p class="font-black text-slate-900 text-lg">@Model.BuyerName</p>
+                            <p class="text-slate-500 font-medium mt-1">@Model.BuyerEmail</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Phương thức thanh toán</h3>
+                        <div class="bg-slate-50 rounded-3xl p-6 border border-slate-100 flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-sm">
+                                <span class="material-symbols-outlined text-primary">payments</span>
+                            </div>
+                            <div>
+                                <p class="font-black text-slate-900">Thanh toán qua Stripe</p>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Thanh toán trực tuyến bảo mật</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @* Item Detail *@
+                <div class="mb-12">
+                    <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Chi tiết khóa học</h3>
+                    <div class="border border-slate-100 rounded-[2.5rem] overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50/80">
+                                <tr>
+                                    <th class="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-wider">Mô tả khóa học</th>
+                                    <th class="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-wider text-right">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50">
+                                <tr>
+                                    <td class="px-8 py-8">
+                                        <div class="flex items-center gap-5">
+                                            <div class="w-24 h-16 rounded-2xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                                                @if (!string.IsNullOrEmpty(Model.CourseThumbnail)) {
+                                                    <img src="@Model.CourseThumbnail" class="w-full h-full object-cover" />
+                                                } else {
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <span class="material-symbols-outlined text-slate-300">school</span>
+                                                    </div>
+                                                }
+                                            </div>
+                                            <div>
+                                                <p class="font-black text-slate-900 text-lg leading-tight mb-1">@Model.CourseTitle</p>
+                                                <p class="text-sm text-slate-500 font-medium">Giảng viên: <span class="text-slate-800 font-bold">@Model.InstructorName</span></p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-8 py-8 text-right font-black text-slate-900 text-xl">
+                                        @((Model.Currency ?? "VND").ToUpper()) @Model.GrossAmount.ToString("N2")
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                @* Total Summary *@
+                <div class="flex flex-col items-end gap-4 border-t border-slate-100 pt-10">
+                    <div class="w-full md:w-80 space-y-3">
+                        <div class="flex justify-between items-center text-slate-500 font-medium">
+                            <span>Tạm tính</span>
+                            <span>@((Model.Currency ?? "VND").ToUpper()) @Model.OriginalPrice.ToString("N2")</span>
+                        </div>
+                        @if (Model.CouponUsed) {
+                            <div class="flex justify-between items-center text-slate-500 font-medium">
+                                <div class="flex items-center gap-2">
+                                    <span>Giảm giá</span>
+                                    @if (!string.IsNullOrEmpty(Model.CouponCode)) {
+                                        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 uppercase">
+                                            @Model.CouponCode
+                                        </span>
+                                    }
+                                </div>
+                                <span class="text-emerald-500 font-bold">- @((Model.Currency ?? "VND").ToUpper()) @Model.DiscountAmount.ToString("N2")</span>
+                            </div>
+                        } else {
+                            <div class="flex justify-between items-center text-slate-500 font-medium">
+                                <span>Giảm giá</span>
+                                <span class="text-slate-400 font-bold">- 0 VND</span>
+                            </div>
+                        }
+                        
+                        <div class="flex justify-between items-center pt-4 border-t border-slate-100">
+                            <span class="text-lg font-black text-slate-900 uppercase tracking-wider">Tổng cộng</span>
+                            <div class="text-right">
+                                @if (Model.CouponUsed) {
+                                    <div class="text-sm text-slate-400 line-through mb-1">
+                                        @((Model.Currency ?? "VND").ToUpper()) @Model.OriginalPrice.ToString("N2")
+                                    </div>
+                                }
+                                <span class="text-3xl font-black text-primary">@((Model.Currency ?? "VND").ToUpper()) @Model.GrossAmount.ToString("N2")</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @* Footer Actions *@
+                <div class="mt-16 flex flex-col md:flex-row items-center justify-between gap-6 pt-10 border-t border-dashed border-slate-200">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-slate-400 text-[20px]">help_center</span>
+                        </div>
+                        <p class="text-xs text-slate-500 font-medium max-w-xs leading-relaxed">
+                            Nếu bạn có bất kỳ thắc mắc nào về hóa đơn này, vui lòng liên hệ <a href="mailto:support@linkedlearn.com" class="text-primary font-bold hover:underline">Bộ phận hỗ trợ</a>.
+                        </p>
+                    </div>
+
+                    <button onclick="window.print()" class="flex items-center gap-2 px-8 py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-primary transition-all active:scale-95 shadow-xl shadow-slate-900/10">
+                        <span class="material-symbols-outlined text-[20px]">print</span>
+                        Tải hóa đơn (PDF)
+                    </button>
+                </div>
+            </div>
+
+            @* Bottom Decoration *@
+            <div class="bg-slate-50 px-8 py-6 text-center border-t border-slate-100">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Cảm ơn bạn đã tin tưởng và học tập cùng LinkedLearn</p>
+            </div>
+        </div>
+        
+        <p class="text-center text-slate-400 text-xs mt-10 font-medium">
+            Đây là hóa đơn điện tử được tạo tự động bởi hệ thống LinkedLearn.
+        </p>
+    </div>
+</div>
+
+<style>
+    @@media print {
+        body { background: white !important; }
+        .min-h-screen { padding-bottom: 0 !important; }
+        .max-w-4xl { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+        nav, aside, footer, button, .group { display: none !important; }
+        .shadow-2xl, .shadow-xl, .shadow-sm { box-shadow: none !important; }
+        .bg-[#f8fafc] { background: white !important; }
+        .border { border-color: #f1f5f9 !important; }
+        .rounded-[3rem] { border-radius: 0 !important; }
+    }
+</style>

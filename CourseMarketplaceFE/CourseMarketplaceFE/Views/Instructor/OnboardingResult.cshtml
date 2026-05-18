@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = ViewBag.Title ?? "Kết quả Onboarding";
+    ViewData["Title"] = ViewBag.Title ?? "Onboarding Result";
     var isSuccess = (bool)(ViewBag.IsSuccess ?? false);
     var message = (string)(ViewBag.Message ?? "");
 }
@@ -38,11 +38,11 @@
                 <a href="/InstructorCourse"
                    class="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-primary to-primary/80 text-white font-bold rounded-2xl shadow-lg shadow-primary/25 hover:shadow-xl hover:scale-105 transition-all duration-300">
                     <span class="material-symbols-outlined">add_circle</span>
-                    Tạo khóa học đầu tiên
+                    Create Your First Course
                 </a>
                 <div>
                     <a href="/" class="text-sm text-slate-400 hover:text-primary transition-colors">
-                        ← Về trang chủ
+                        ← Back to Homepage
                     </a>
                 </div>
             </div>
@@ -50,14 +50,14 @@
         else
         {
             <div class="space-y-3">
-                <a href="/Instructor/Dashboard"
+                <a href="/Instructor/ApplicationStatus"
                    class="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-2xl shadow-lg shadow-amber-200/50 hover:shadow-xl hover:scale-105 transition-all duration-300">
                     <span class="material-symbols-outlined">refresh</span>
-                    Về Dashboard để thử lại
+                    Back to Dashboard to Try Again
                 </a>
                 <div>
                     <a href="/" class="text-sm text-slate-400 hover:text-primary transition-colors">
-                        ← Về trang chủ
+                        ← Back to Homepage
                     </a>
                 </div>
             </div>

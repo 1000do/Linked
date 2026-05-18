@@ -562,6 +562,8 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.ProfessionalTitle).HasMaxLength(255).HasColumnName("professional_title");
             entity.Property(e => e.ExpertiseCategories).HasMaxLength(255).HasColumnName("expertise_categories");
             entity.Property(e => e.LinkedinUrl).HasColumnName("linkedin_url");
+            entity.Property(e => e.YoutubeUrl).HasColumnName("youtube_url");
+            entity.Property(e => e.FacebookUrl).HasColumnName("facebook_url");
             entity.Property(e => e.DocumentUrl).HasColumnName("document_url");
             entity.Property(e => e.ApprovalStatus).HasMaxLength(50).HasDefaultValue("Pending").HasColumnName("approval_status");
 

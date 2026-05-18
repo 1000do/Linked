@@ -18,6 +18,8 @@ public class InstructorApplicationRequest
     public string ExpertiseCategories { get; set; } = null!;
 
     public string? LinkedinUrl { get; set; }
+    public string? YoutubeUrl { get; set; }
+    public string? FacebookUrl { get; set; }
 
     /// <summary>File CV/CMND upload lên Cloudinary</summary>
     public IFormFile? DocumentFile { get; set; }
@@ -45,6 +47,8 @@ public class InstructorDashboardDto
     public string? ProfessionalTitle { get; set; }
     public string? ExpertiseCategories { get; set; }
     public string? LinkedinUrl { get; set; }
+    public string? YoutubeUrl { get; set; }
+    public string? FacebookUrl { get; set; }
     public string? DocumentUrl { get; set; }
     public string? ApprovalStatus { get; set; }
     public string? StripeAccountId { get; set; }
@@ -83,4 +87,39 @@ public class InstructorPayoutPagedDto
     public int Page { get; set; }
     public int PageSize { get; set; }
     public int TotalPages => (int)Math.Ceiling((double)TotalCount / (PageSize > 0 ? PageSize : 1));
+}
+
+/// <summary>
+/// DTO cho trang Instructor Public Profile.
+/// </summary>
+public class InstructorPublicProfileDto
+{
+    public int InstructorId { get; set; }
+    public string? FullName { get; set; }
+    public string? AvatarUrl { get; set; }
+    public string? ProfessionalTitle { get; set; }
+    public string? ExpertiseCategories { get; set; }
+    public string? Bio { get; set; }
+    public string? LinkedinUrl { get; set; }
+    public string? YoutubeUrl { get; set; }
+    public string? FacebookUrl { get; set; }
+
+    // Statistics
+    public int TotalStudents { get; set; }
+    public int TotalCourses { get; set; }
+    public decimal AverageRating { get; set; }
+    public int TotalReviews { get; set; }
+
+    // Courses list
+    public List<InstructorCourseDto> Courses { get; set; } = new();
+}
+
+public class InstructorCourseDto
+{
+    public int CourseId { get; set; }
+    public string? Title { get; set; }
+    public string? ThumbnailUrl { get; set; }
+    public decimal Price { get; set; }
+    public decimal Rating { get; set; }
+    public int TotalStudents { get; set; }
 }
