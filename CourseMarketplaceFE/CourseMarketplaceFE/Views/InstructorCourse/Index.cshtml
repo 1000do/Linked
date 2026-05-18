@@ -448,8 +448,8 @@
         function confirmDelete(id, name, students) {
             if (students > 0) {
                 Swal.fire({
-                    title: 'Không thể xóa!',
-                    text: `Khóa học "${name}" đang có ${students} học viên đang theo học. Bạn không thể xóa khóa học này để bảo vệ quyền lợi của họ.`,
+                    title: 'Cannot Delete!',
+                    text: `The course "${name}" currently has ${students} enrolled learners. You cannot delete this course to protect their learning access.`,
                     icon: 'warning',
                     confirmButtonColor: '#006a62'
                 });
@@ -484,18 +484,18 @@
         // Toggle Hide/Show
         async function toggleHide(id, newStatus) {
             const confirmText = (newStatus === 'archived' || newStatus === 'Hidden') 
-                ? 'Bạn có chắc muốn ẩn khóa học này? Học viên mới sẽ không thể tìm thấy nó.' 
-                : 'Bạn muốn công khai lại khóa học này?';
+                ? 'Are you sure you want to hide this course? New students will not be able to find it.' 
+                : 'Do you want to make this course visible again?';
                 
             const { isConfirmed } = await Swal.fire({
-                title: 'Xác nhận thay đổi',
+                title: 'Confirm Change',
                 text: confirmText,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#006a62',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Đồng ý',
-                cancelButtonText: 'Hủy'
+                confirmButtonText: 'Yes',
+                cancelButtonText: 'Cancel'
             });
 
             if (isConfirmed) {
@@ -512,9 +512,9 @@
                     if (result.success) {
                         location.reload();
                     } else {
-                        Swal.fire('Lỗi', result.message || 'Không thể cập nhật trạng thái', 'error');
+                        Swal.fire('Error', result.message || 'Could not update status', 'error');
                     }
-                } catch(e) { Swal.fire('Lỗi', 'Có lỗi xảy ra: ' + e.message, 'error'); }
+                } catch(e) { Swal.fire('Error', 'An error occurred: ' + e.message, 'error'); }
             }
         }
         

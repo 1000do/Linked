@@ -1,7 +1,7 @@
 @using System.Net
 @{
-    ViewData["Title"] = "Quản lý thông báo";
-    ViewData["PageHeader"] = "Thông báo hệ thống";
+    ViewData["Title"] = "Notification Settings";
+    ViewData["PageHeader"] = "System Notifications";
     Layout = "_AdminLayout";
 
     var token = Context.Request.Cookies["AccessToken"] ?? "";
@@ -10,7 +10,7 @@
 @section HeaderActions {
     <button onclick="openModal()" class="flex items-center gap-2 px-3 py-1.5 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-md transition-colors shadow-sm">
         <span class="material-symbols-outlined text-[18px]">add</span>
-        Tạo thông báo
+        Create Notification
     </button>
 }
 
@@ -19,10 +19,10 @@
         <table class="w-full text-left border-collapse">
             <thead class="sticky top-0 bg-slate-50/90 backdrop-blur-sm z-10 border-b border-slate-200">
                 <tr>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-[25%]">Người nhận</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-[45%]">Nội dung</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-[20%]">Thời gian</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-[10%] text-center">Trạng thái</th>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-[25%]">Recipient</th>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-[45%]">Message Content</th>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-[20%]">Timestamp</th>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-[10%] text-center">Status</th>
                 </tr>
             </thead>
             <tbody id="admin-table-body" class="divide-y divide-slate-100 text-sm">
@@ -32,7 +32,7 @@
     </div>
 
     <div class="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
-        <div class="text-xs font-medium text-slate-500" id="pagination-info">Đang tải...</div>
+        <div class="text-xs font-medium text-slate-500" id="pagination-info">Loading...</div>
         <div class="flex items-center gap-1" id="pagination-controls"></div>
     </div>
 </div>
@@ -43,7 +43,7 @@
     
     <div class="bg-white w-full max-w-lg rounded-xl shadow-xl relative z-10 flex flex-col overflow-hidden border border-slate-200">
         <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-            <h3 class="font-semibold text-slate-900">Soạn thông báo mới</h3>
+            <h3 class="font-semibold text-slate-900">Compose New Notification</h3>
             <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
                 <span class="material-symbols-outlined text-[20px]">close</span>
             </button>
@@ -51,25 +51,25 @@
 
         <form id="form-advanced" class="p-5 space-y-5">
             <div class="space-y-1.5">
-                <label class="text-xs font-medium text-slate-700">Đối tượng nhận</label>
+                <label class="text-xs font-medium text-slate-700">Recipient Group</label>
                 <select id="targetType" onchange="toggleEmailInput()" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow">
-                    <option value="SINGLE">Người dùng cụ thể (Email)</option>
-                    <option value="ALL">Toàn bộ hệ thống</option>
+                    <option value="SINGLE">Specific User (Email)</option>
+                    <option value="ALL">Broadcast (All Users)</option>
                 </select>
             </div>
 
             <div id="email-section" class="relative space-y-1.5">
-                <label class="text-xs font-medium text-slate-700">Email người nhận</label>
+                <label class="text-xs font-medium text-slate-700">Recipient Email(s)</label>
                 <div id="tag-box" class="flex flex-wrap gap-1.5 p-2 border border-slate-300 rounded-md min-h-[42px] bg-white focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-shadow cursor-text" onclick="document.getElementById('emailInput').focus()">
-                    <input type="text" id="emailInput" class="flex-1 bg-transparent border-none text-sm outline-none px-1 min-w-[150px]" placeholder="Nhập email...">
+                    <input type="text" id="emailInput" class="flex-1 bg-transparent border-none text-sm outline-none px-1 min-w-[150px]" placeholder="Type email addresses...">
                 </div>
                 <div id="suggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 shadow-lg rounded-md z-20 max-h-48 overflow-y-auto py-1"></div>
             </div>
 
             <div class="space-y-1.5">
-                <label class="text-xs font-medium text-slate-700">Nội dung</label>
-                <input type="text" id="title" maxlength="100" required class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow mb-3" placeholder="Tiêu đề thông báo...">
-                <textarea id="content" rows="4" maxlength="100" required class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow resize-none" placeholder="Chi tiết thông báo..."></textarea>
+                <label class="text-xs font-medium text-slate-700">Message Details</label>
+                <input type="text" id="title" maxlength="100" required class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow mb-3" placeholder="Message Title...">
+                <textarea id="content" rows="4" maxlength="100" required class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow resize-none" placeholder="Write message details..."></textarea>
                 <div class="flex justify-end mt-1">
                     <span class="text-[10px] text-slate-400 font-medium"><span id="char-count">0</span> / 100</span>
                 </div>
@@ -77,10 +77,10 @@
 
             <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
                 <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-md transition-colors">
-                    Hủy
+                    Cancel
                 </button>
                 <button type="submit" id="btnSubmit" class="px-4 py-2 text-sm font-medium bg-primary hover:bg-secondary text-white rounded-md transition-colors shadow-sm">
-                    Gửi thông báo
+                    Send Notification
                 </button>
             </div>
         </form>
@@ -99,7 +99,7 @@
 
         function formatDateTime(dateString) {
             const date = new Date(dateString);
-            return date.toLocaleString('vi-VN', {
+            return date.toLocaleString('en-US', {
                 hour: '2-digit', minute: '2-digit',
                 day: '2-digit', month: '2-digit', year: 'numeric',
                 hour12: false
@@ -130,7 +130,7 @@
                 tbody.innerHTML = `<tr><td colspan="4" class="px-5 py-12 text-center">
                     <div class="flex flex-col items-center justify-center text-slate-400">
                         <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">inbox</span>
-                        <p class="text-sm">Chưa có thông báo nào</p>
+                        <p class="text-sm">No notifications found</p>
                     </div>
                 </td></tr>`;
                 updatePaginationInfo(0, 0, 0);
@@ -140,7 +140,7 @@
             tbody.innerHTML = pagedData.map(n => `
                 <tr class="hover:bg-slate-50/50 transition-colors">
                     <td class="px-5 py-3 align-top">
-                        <div class="font-medium text-slate-900 truncate">${n.receiverFullName || 'Hệ thống'}</div>
+                        <div class="font-medium text-slate-900 truncate">${n.receiverFullName || 'System Broadcast'}</div>
                         <div class="text-xs text-slate-500 truncate mt-0.5">${n.receiverEmail || 'all-users@system.com'}</div>
                     </td>
                     <td class="px-5 py-3 align-top">
@@ -152,8 +152,8 @@
                     </td>
                     <td class="px-5 py-3 align-top text-center">
                         ${n.isRead 
-                            ? `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Đã xem</span>`
-                            : `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Chờ đọc</span>`
+                            ? `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Read</span>`
+                            : `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Unread</span>`
                         }
                     </td>
                 </tr>
@@ -164,7 +164,7 @@
         }
 
         function updatePaginationInfo(start, end, total) {
-            document.getElementById('pagination-info').innerText = total > 0 ? `${start} - ${end} của ${total}` : 'Không có dữ liệu';
+            document.getElementById('pagination-info').innerText = total > 0 ? `${start} - ${end} of ${total}` : 'No data available';
         }
 
         function renderPaginationControls() {
@@ -244,11 +244,21 @@
         document.getElementById('form-advanced').onsubmit = async (e) => {
             e.preventDefault();
             const type = document.getElementById('targetType').value;
-            if (type === 'SINGLE' && selectedEmails.length === 0) { alert("Vui lòng chọn ít nhất một email."); return; }
+            if (type === 'SINGLE' && selectedEmails.length === 0) {
+                Swal.fire({
+                    title: 'Missing Field',
+                    text: "Please select at least one recipient email.",
+                    icon: 'warning',
+                    confirmButtonColor: '#10b981',
+                    background: '#ffffff',
+                    customClass: { popup: 'rounded-2xl shadow-xl' }
+                });
+                return;
+            }
 
             const btn = document.getElementById('btnSubmit');
             const originalText = btn.innerText;
-            btn.disabled = true; btn.innerText = "Đang gửi...";
+            btn.disabled = true; btn.innerText = "Sending...";
 
             try {
                 const res = await fetch(`${API_URL}/send-advanced`, {
@@ -263,10 +273,37 @@
                 });
 
                 if (res.ok) {
+                    Swal.fire({
+                        title: 'Sent Successfully!',
+                        text: 'The notification was broadcasted to recipients successfully.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl' }
+                    });
                     closeModal();
                     loadHistory();
-                } else { alert("Có lỗi xảy ra khi gửi thông báo."); }
-            } catch (err) { alert("Lỗi kết nối."); }
+                } else {
+                    Swal.fire({
+                        title: 'Send Error',
+                        text: "An internal server error occurred while sending.",
+                        icon: 'error',
+                        confirmButtonColor: '#10b981',
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl' }
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    title: 'Connection Failure',
+                    text: "Failed to establish connection to the notification server.",
+                    icon: 'error',
+                    confirmButtonColor: '#10b981',
+                    background: '#ffffff',
+                    customClass: { popup: 'rounded-2xl shadow-xl' }
+                });
+            }
             btn.disabled = false; btn.innerText = originalText;
         };
 

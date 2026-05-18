@@ -1,14 +1,14 @@
 @model List<CourseMarketplaceFE.Models.NotificationViewModel>
 @{
     Layout = "_InstructorLayout";
-    ViewData["Title"] = "Thông báo";
+    ViewData["Title"] = "Notifications";
 }
 
 <div class="p-6 bg-white min-h-screen">
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
             <span class="material-symbols-outlined">notifications</span>
-            Thông báo của tôi
+            My Notifications
         </h2>
     </div>
 
@@ -16,7 +16,7 @@
         @if (Model == null || !Model.Any())
         {
             <div id="empty-message" class="py-20 text-center text-slate-400 border border-dashed border-slate-200 rounded-lg">
-                Không có thông báo nào.
+                No notifications yet.
             </div>
         }
         else
@@ -90,7 +90,7 @@
                 .build();
 
             window.notiConn.on("ReceiveNotification", function (noti) {
-                console.log("🔔 Nhận thông báo:", noti);
+                console.log("🔔 Received notification:", noti);
                 
                 const container = document.getElementById('notification-container');
                 const emptyMsg = document.getElementById('empty-message');
@@ -115,7 +115,7 @@
                                 <div class="col-span-3 font-bold text-slate-700 truncate">${noti.title}</div>
                                 <div class="col-span-6 text-slate-500 text-sm truncate">${noti.content}</div>
                                 <div class="col-span-3 text-right text-[11px] text-slate-400 font-medium">
-                                    ${new Date(noti.createdAt || Date.now()).toLocaleTimeString('vi-VN')} ${new Date(noti.createdAt || Date.now()).toLocaleDateString('vi-VN')}
+                                    ${new Date(noti.createdAt || Date.now()).toLocaleTimeString('en-US')} ${new Date(noti.createdAt || Date.now()).toLocaleDateString('en-US')}
                                 </div>
                             </div>
                         </div>
@@ -140,9 +140,9 @@
             });
 
             window.notiConn.start()
-                .then(() => console.log("✅ SignalR đã sẵn sàng!"))
+                .then(() => console.log("✅ SignalR connection established!"))
                 .catch(err => {
-                    console.error("❌ Lỗi kết nối:", err);
+                    console.error("❌ Connection error:", err);
                 });
         }
     })();
@@ -164,7 +164,22 @@
     // 3. Hàm xử lý nút bấm
     async function handleAction(id, action) {
         if (!id || id === 0) { location.reload(); return; }
-        if (action === 'DeleteNotification' && !confirm("Bạn muốn xóa thông báo này?")) return;
+        
+        if (action === 'DeleteNotification') {
+            const confirmResult = await Swal.fire({
+                title: 'Confirm Deletion',
+                text: "Are you sure you want to delete this notification?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel',
+                background: '#ffffff',
+                customClass: { popup: 'rounded-2xl shadow-xl' }
+            });
+            if (!confirmResult.isConfirmed) return;
+        }
 
         try {
             const response = await fetch(`/Instructor/${action}?id=${id}`, {
@@ -182,10 +197,19 @@
                             element.remove();
                             const container = document.getElementById('notification-container');
                             if (container && container.querySelectorAll('div[id^="noti-"]').length === 0) {
-                                container.innerHTML = `<div id="empty-message" class="py-20 text-center text-slate-400 border border-dashed border-slate-200 rounded-lg">Không có thông báo nào.</div>`;
+                                container.innerHTML = `<div id="empty-message" class="py-20 text-center text-slate-400 border border-dashed border-slate-200 rounded-lg">No notifications yet.</div>`;
                             }
                         }, 300);
                     }
+                    Swal.fire({
+                        title: 'Deleted!',
+                        text: 'The notification has been successfully deleted.',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl' }
+                    });
                 } else {
                     markNotificationAsReadInDOM(id);
                 }

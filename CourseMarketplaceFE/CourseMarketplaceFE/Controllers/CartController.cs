@@ -170,7 +170,7 @@ public class CartController : Controller
         if (!response.IsSuccessStatusCode)
         {
             var json = await response.Content.ReadAsStringAsync();
-            string errorMsg = "Có lỗi xảy ra.";
+            string errorMsg = "An error occurred.";
             try
             {
                 using var doc = JsonDocument.Parse(json);
@@ -182,7 +182,7 @@ public class CartController : Controller
         }
         else
         {
-            TempData["CartSuccess"] = "Đã thêm khóa học vào giỏ hàng!";
+            TempData["CartSuccess"] = "Course added to cart!";
         }
 
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -229,9 +229,9 @@ public class CartController : Controller
         var response = await _api.DeleteAsync($"cart/remove/{courseId}");
 
         if (!response.IsSuccessStatusCode)
-            TempData["CartError"] = "Không thể xóa khóa học khỏi giỏ hàng.";
+            TempData["CartError"] = "Cannot remove course from cart.";
         else
-            TempData["CartSuccess"] = "Đã xóa khóa học khỏi giỏ hàng.";
+            TempData["CartSuccess"] = "Course removed from cart.";
 
         return RedirectToAction(nameof(Index));
     }
@@ -267,7 +267,7 @@ public class CartController : Controller
         if (!response.IsSuccessStatusCode)
         {
             var errorJson = await response.Content.ReadAsStringAsync();
-            string errorMsg = "Có lỗi xảy ra khi tạo phiên thanh toán.";
+            string errorMsg = "An error occurred while creating checkout session.";
             try
             {
                 using var doc = System.Text.Json.JsonDocument.Parse(errorJson);
@@ -300,7 +300,7 @@ public class CartController : Controller
         }
         catch { }
 
-        TempData["CartError"] = "Không thể tạo phiên thanh toán. Vui lòng thử lại.";
+        TempData["CartError"] = "Cannot create checkout session. Please try again.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -309,7 +309,7 @@ public class CartController : Controller
     public async Task<IActionResult> DirectCheckout(int id)
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
-            return Json(new { success = false, message = "Vui lòng đăng nhập trước khi mua." });
+            return Json(new { success = false, message = "Please login before purchasing." });
 
         var baseUrl = $"{Request.Scheme}://{Request.Host}";
         
@@ -323,7 +323,7 @@ public class CartController : Controller
         if (!response.IsSuccessStatusCode)
         {
             var errorJson = await response.Content.ReadAsStringAsync();
-            string errorMsg = "Có lỗi xảy ra khi tạo phiên thanh toán.";
+            string errorMsg = "An error occurred while creating checkout session.";
             try
             {
                 using var doc = System.Text.Json.JsonDocument.Parse(errorJson);
@@ -350,7 +350,7 @@ public class CartController : Controller
         }
         catch { }
 
-        return Json(new { success = false, message = "Không thể đọc dữ liệu phản hồi từ máy chủ." });
+        return Json(new { success = false, message = "Cannot read response data from server." });
     }
 
     // ─── 7. CHECKOUT SUCCESS — STRIPE REDIRECT VỀ ĐÂY ───────────────────
@@ -367,7 +367,7 @@ public class CartController : Controller
         if (string.IsNullOrWhiteSpace(sessionId))
         {
             Console.WriteLine("[FE-CHECKOUT] ❌ session_id is EMPTY!");
-            TempData["CartError"] = "Phiên thanh toán không hợp lệ.";
+            TempData["CartError"] = "Invalid checkout session.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -383,7 +383,7 @@ public class CartController : Controller
             if (response.IsSuccessStatusCode)
             {
                 Console.WriteLine("[FE-CHECKOUT] ✅ SUCCESS — redirecting to /Course");
-                TempData["CartSuccess"] = "🎉 Thanh toán thành công! Chúc bạn học vui vẻ!";
+                TempData["CartSuccess"] = "🎉 Payment successful! Happy learning!";
                 return Redirect("/Course");
             }
 
@@ -391,13 +391,13 @@ public class CartController : Controller
             var errorBody = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"[FE-CHECKOUT] ❌ BE ERROR: {errorBody}");
 
-            TempData["CartError"] = "Có lỗi xảy ra khi xử lý thanh toán. Vui lòng liên hệ hỗ trợ.";
+            TempData["CartError"] = "An error occurred while processing payment. Please contact support.";
             return RedirectToAction(nameof(Index));
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[FE-CHECKOUT] ❌ EXCEPTION: {ex.Message}\n{ex.StackTrace}");
-            TempData["CartError"] = "Có lỗi xảy ra khi xử lý thanh toán. Vui lòng liên hệ hỗ trợ.";
+            TempData["CartError"] = "An error occurred while processing payment. Please contact support.";
             return RedirectToAction(nameof(Index));
         }
     }
@@ -415,7 +415,7 @@ public class CartController : Controller
             await _api.GetAsync($"checkout/cancel?order_id={orderId}");
         }
 
-        TempData["CartError"] = "Bạn chưa thanh toán thành công hoặc đã hủy giao dịch. Đơn hàng hiện tại không còn hiệu lực.";
+        TempData["CartError"] = "You have not paid successfully or cancelled the transaction. The current order is no longer valid.";
         return RedirectToAction(nameof(Index));
     }
 }

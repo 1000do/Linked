@@ -1,8 +1,8 @@
 @model List<CourseMarketplaceFE.Models.UserReportModerationViewModel>
 @{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Quản lý Khiếu nại";
-    ViewData["PageHeader"] = "Quản lý Khiếu nại";
+    ViewData["Title"] = "Report Management";
+    ViewData["PageHeader"] = "Report Management";
 }
 
 <div class="space-y-6">
@@ -13,7 +13,7 @@
                 <span class="material-symbols-outlined text-red-600">report_problem</span>
             </div>
             <div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Khiếu nại mới</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">New Reports</p>
                 <h3 id="pending-count" class="text-2xl font-display font-extrabold text-slate-900">@Model.Count(@r => r.Status == "pending")</h3>
             </div>
         </div>
@@ -22,7 +22,7 @@
                 <span class="material-symbols-outlined text-emerald-600">check_circle</span>
             </div>
             <div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Đã giải quyết</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Resolved Reports</p>
                 <h3 id="resolved-count" class="text-2xl font-display font-extrabold text-slate-900">@Model.Count(@r => r.Status != "pending")</h3>
             </div>
         </div>
@@ -34,11 +34,11 @@
             <table class="w-full border-collapse">
                 <thead>
                     <tr class="bg-slate-50/50 border-b border-slate-100">
-                        <th class="px-8 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Người báo cáo</th>
-                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Lý do & Chi tiết</th>
-                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Ngày gửi</th>
-                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Trạng thái</th>
-                        <th class="px-8 py-5 text-right text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Thao tác</th>
+                        <th class="px-8 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Reporter</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Reason & Details</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Timestamp</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                        <th class="px-8 py-5 text-right text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
@@ -50,8 +50,8 @@
                                     <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                                         <span class="material-symbols-outlined text-slate-300 text-4xl">thumb_up</span>
                                     </div>
-                                    <h4 class="text-slate-900 font-display font-bold">Sạch bóng khiếu nại!</h4>
-                                    <p class="text-slate-400 text-sm">Hiện không có báo cáo vi phạm nào cần xử lý.</p>
+                                    <h4 class="text-slate-900 font-display font-bold">Zero Reports!</h4>
+                                    <p class="text-slate-400 text-sm">Everything is clear. No active abuse reports to moderate.</p>
                                 </div>
                             </td>
                         </tr>
@@ -82,7 +82,7 @@
                                 {
                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[11px] font-bold uppercase tracking-wider">
                                         <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                                        Chờ xử lý
+                                        Pending
                                     </span>
                                 }
                                 else
@@ -97,14 +97,14 @@
                                 <div class="flex items-center justify-end gap-2">
                                     @if (item.ChatId.HasValue)
                                     {
-                                        <a href="/Chat/MockChat?actor=Admin" class="flex items-center justify-center w-9 h-9 bg-white text-slate-400 hover:text-primary hover:bg-primary/5 border border-slate-100 rounded-xl transition-all" title="Xem hội thoại">
+                                        <a href="/Chat/MockChat?actor=Admin" class="flex items-center justify-center w-9 h-9 bg-white text-slate-400 hover:text-primary hover:bg-primary/5 border border-slate-100 rounded-xl transition-all" title="View Chat">
                                             <span class="material-symbols-outlined text-[20px]">forum</span>
                                         </a>
                                     }
                                     @if (item.Status == "pending")
                                     {
                                         <button onclick="resolveReport(@item.ReportId)" class="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-900/20 active:scale-95">
-                                            <span class="material-symbols-outlined text-[18px]">verified_user</span> Xử lý
+                                            <span class="material-symbols-outlined text-[18px]">verified_user</span> Moderate
                                         </button>
                                     }
                                 </div>
@@ -121,26 +121,26 @@
 <script>
     async function resolveReport(id) {
         const { value: formValues } = await Swal.fire({
-            title: 'Giải quyết khiếu nại',
+            title: 'Moderate Report',
             html:
                 '<div class="text-left space-y-4 px-1">' +
                 '<div>' +
-                '<label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Kết quả xử lý</label>' +
+                '<label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Resolution Action</label>' +
                 '<select id="swal-status" class="w-full rounded-xl border-slate-200 focus:ring-emerald-500 text-sm">' +
-                '<option value="resolved">Chấp nhận khiếu nại (Hợp lệ)</option>' +
-                '<option value="rejected">Bác bỏ khiếu nại (Không hợp lệ)</option>' +
+                '<option value="resolved">Accept Report (Valid / Abuse Found)</option>' +
+                '<option value="rejected">Dismiss Report (Invalid / No Action)</option>' +
                 '</select>' +
                 '</div>' +
                 '<div>' +
-                '<label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Ghi chú phản hồi</label>' +
-                '<textarea id="swal-note" class="w-full rounded-xl border-slate-200 focus:ring-emerald-500 text-sm h-24" placeholder="Nhập lý do hoặc hướng giải quyết..."></textarea>' +
+                '<label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Moderator Note</label>' +
+                '<textarea id="swal-note" class="w-full rounded-xl border-slate-200 focus:ring-emerald-500 text-sm h-24" placeholder="Write resolution reason or mitigation actions..."></textarea>' +
                 '</div>' +
                 '</div>',
             focusConfirm: false,
             showCancelButton: true,
-            confirmButtonText: 'Hoàn tất xử lý',
+            confirmButtonText: 'Submit Action',
             confirmButtonColor: '#10b981',
-            cancelButtonText: 'Đóng',
+            cancelButtonText: 'Close',
             customClass: {
                 popup: 'rounded-[32px] p-8',
                 title: 'font-display font-extrabold text-slate-900 mb-6',
@@ -167,8 +167,8 @@
             if (result.success) {
                 Swal.fire({
                     icon: 'success',
-                    title: 'Đã giải quyết',
-                    text: 'Trạng thái khiếu nại đã được cập nhật.',
+                    title: 'Report Resolved',
+                    text: 'The report ticket status has been successfully updated.',
                     confirmButtonColor: '#10b981',
                     customClass: { popup: 'rounded-3xl' }
                 }).then(async () => {
@@ -177,8 +177,8 @@
             } else {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Lỗi',
-                    text: 'Có lỗi xảy ra khi xử lý khiếu nại.',
+                    title: 'Moderation Failure',
+                    text: 'An internal server error occurred while updating the ticket.',
                     confirmButtonColor: '#ef4444'
                 });
             }

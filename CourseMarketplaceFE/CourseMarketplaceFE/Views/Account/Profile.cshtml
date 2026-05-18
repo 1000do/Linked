@@ -19,11 +19,11 @@
                     </a>
                     <a href="/Transaction/History" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all">
                         <span class="material-symbols-outlined">receipt_long</span>
-                        <span>Lịch sử mua hàng</span>
+                        <span>Purchase History</span>
                     </a>
                     <a href="/Account/ChangePassword" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all mt-2 border-t border-slate-100 pt-4">
                         <span class="material-symbols-outlined">lock</span>
-                        <span>Đổi mật khẩu</span>
+                        <span>Change Password</span>
                     </a>
                 </nav>
             </div>
@@ -58,19 +58,19 @@
                             {
                                 <div class="mt-2 flex items-center gap-3">
                                     <span class="text-red-500 text-sm font-semibold">
-                                        Email chưa xác thực
+                                        Email unverified
                                     </span>
 
                                     <a href="/Account/SendVerifyOtp"
                                        class="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:opacity-90">
-                                        Xác thực
+                                        Verify
                                     </a>
                                 </div>
                             }
                             else
                             {
                                 <span class="text-green-500 text-sm font-semibold">
-                                    ✔ Đã xác thực
+                                    ✔ Verified
                                 </span>
                             }
 
@@ -80,7 +80,7 @@
                         </a>
                     </div>
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                        <p class="text-sm italic text-slate-600">@(string.IsNullOrEmpty(Model.Bio) ? "Chưa có giới thiệu." : Model.Bio)</p>
+                        <p class="text-sm italic text-slate-600">@(string.IsNullOrEmpty(Model.Bio) ? "No bio written yet." : Model.Bio)</p>
                     </div>
                 </div>
             </section>
@@ -90,8 +90,8 @@
                 <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
                     <div class="bg-blue-50 p-3 rounded-2xl text-blue-600"><span class="material-symbols-outlined">call</span></div>
                     <div>
-                        <p class="text-xs text-slate-400 font-bold uppercase">Số điện thoại</p>
-                        <p class="font-bold text-slate-700">@(Model.PhoneNumber ?? "Chưa cập nhật")</p>
+                        <p class="text-xs text-slate-400 font-bold uppercase">Phone Number</p>
+                        <p class="font-bold text-slate-700">@(Model.PhoneNumber ?? "Not updated")</p>
                     </div>
                 </div>
             </div>
@@ -103,8 +103,8 @@
                         <span class="material-symbols-outlined text-amber-600 text-xl">military_tech</span>
                     </div>
                     <div>
-                        <h3 class="text-xl font-extrabold text-slate-800">Khung Avatar & Thành tựu</h3>
-                        <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Thể hiện đẳng cấp của bạn</p>
+                        <h3 class="text-xl font-extrabold text-slate-800">Avatar Frames & Achievements</h3>
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Showcase your status</p>
                     </div>
                 </div>
 
@@ -119,7 +119,7 @@
                             ShowFrame = true,
                             FrameUrl = ""
                         })
-                        <span class="text-[10px] font-extrabold text-primary uppercase mt-2">Đang dùng</span>
+                        <span class="text-[10px] font-extrabold text-primary uppercase mt-2">Active</span>
                         <p class="text-xs font-bold text-slate-700">@userRole.ToUpper() Frame</p>
                     </div>
 
@@ -131,7 +131,7 @@
                         <div class="w-20 h-20 border-2 border-slate-100 rounded-2xl flex items-center justify-center bg-white">
                             <span class="material-symbols-outlined text-slate-200 text-4xl">workspace_premium</span>
                         </div>
-                        <span class="text-[10px] font-extrabold text-slate-400 uppercase">Chưa sở hữu</span>
+                        <span class="text-[10px] font-extrabold text-slate-400 uppercase">Locked</span>
                         <p class="text-xs font-bold text-slate-500">Top Learner</p>
                     </div>
                     
@@ -142,7 +142,7 @@
                         <div class="w-20 h-20 border-2 border-slate-100 rounded-2xl flex items-center justify-center bg-white">
                             <span class="material-symbols-outlined text-slate-200 text-4xl">local_fire_department</span>
                         </div>
-                        <span class="text-[10px] font-extrabold text-slate-400 uppercase">Chưa sở hữu</span>
+                        <span class="text-[10px] font-extrabold text-slate-400 uppercase">Locked</span>
                         <p class="text-xs font-bold text-slate-500">7-Day Streak</p>
                     </div>
                 </div>
@@ -158,7 +158,7 @@
                             <div class="bg-gradient-to-br from-primary to-secondary p-3 rounded-2xl">
                                 <span class="material-symbols-outlined text-white text-xl">school</span>
                             </div>
-                            <h3 class="text-xl font-extrabold text-slate-800">Thông tin Giảng viên</h3>
+                            <h3 class="text-xl font-extrabold text-slate-800">Instructor Profile</h3>
                         </div>
 
                         @* Badge trạng thái *@
@@ -171,9 +171,9 @@
                             };
                             var statusText = Model.ApprovalStatus switch
                             {
-                                "Approved" => "✔ Đã duyệt",
-                                "Rejected" => "✘ Bị từ chối",
-                                _ => "⏳ Đang chờ duyệt"
+                                "Approved" => "✔ Approved",
+                                "Rejected" => "✘ Rejected",
+                                _ => "⏳ Pending Approval"
                             };
                         }
                         <span class="px-4 py-1.5 rounded-full text-xs font-bold @statusColor">
@@ -185,17 +185,17 @@
                         <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="material-symbols-outlined text-primary text-lg">badge</span>
-                                <p class="text-xs text-slate-400 font-bold uppercase">Chức danh chuyên môn</p>
+                                <p class="text-xs text-slate-400 font-bold uppercase">Professional Title</p>
                             </div>
-                            <p class="font-bold text-slate-700">@(Model.ProfessionalTitle ?? "Chưa cập nhật")</p>
+                            <p class="font-bold text-slate-700">@(Model.ProfessionalTitle ?? "Not updated")</p>
                         </div>
 
                         <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="material-symbols-outlined text-primary text-lg">category</span>
-                                <p class="text-xs text-slate-400 font-bold uppercase">Lĩnh vực chuyên môn</p>
+                                <p class="text-xs text-slate-400 font-bold uppercase">Expertise Area</p>
                             </div>
-                            <p class="font-bold text-slate-700">@(Model.ExpertiseCategories ?? "Chưa cập nhật")</p>
+                            <p class="font-bold text-slate-700">@(Model.ExpertiseCategories ?? "Not updated")</p>
                         </div>
 
                         @if (!string.IsNullOrEmpty(Model.LinkedinUrl))
@@ -203,7 +203,7 @@
                             <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 md:col-span-2">
                                 <div class="flex items-center gap-2 mb-2">
                                     <span class="material-symbols-outlined text-primary text-lg">link</span>
-                                    <p class="text-xs text-slate-400 font-bold uppercase">LinkedIn</p>
+                                    <p class="text-xs text-slate-400 font-bold uppercase">LinkedIn Profile</p>
                                 </div>
                                 <a href="@Model.LinkedinUrl" target="_blank"
                                    class="font-bold text-primary hover:underline break-all">
@@ -216,11 +216,11 @@
                     @if (Model.ApprovalStatus == "Rejected")
                     {
                         <div class="mt-6 pt-6 border-t border-slate-100 flex items-center justify-between">
-                            <p class="text-sm text-slate-500">Đơn đăng ký đã bị từ chối. Bạn có thể nộp lại đơn.</p>
+                            <p class="text-sm text-slate-500">Your application has been rejected. You can resubmit again.</p>
                             <a href="/Instructor/Apply"
                                class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all text-sm">
                                 <span class="material-symbols-outlined text-lg">refresh</span>
-                                Nộp lại đơn
+                                Resubmit Application
                             </a>
                         </div>
                     }
@@ -236,14 +236,14 @@
                             <div class="inline-flex items-center justify-center w-16 h-16 bg-slate-200 rounded-full mb-4">
                                 <span class="material-symbols-outlined text-slate-400 text-3xl">lock</span>
                             </div>
-                            <h3 class="text-lg font-bold text-slate-600 mb-2">Chưa đăng ký Giảng viên</h3>
+                            <h3 class="text-lg font-bold text-slate-600 mb-2">Not Registered as Instructor</h3>
                             <p class="text-sm text-slate-500 mb-5 max-w-sm">
-                                Trở thành giảng viên để mở khóa thông tin chuyên môn và bắt đầu tạo khóa học.
+                                Apply to become an instructor to unlock professional details and publish courses.
                             </p>
                             <a href="/Instructor/Apply"
                                class="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-sm">
                                 <span class="material-symbols-outlined text-lg">school</span>
-                                Đăng ký làm Giảng viên
+                                Apply to Become Instructor
                             </a>
                         </div>
                     </div>
@@ -254,15 +254,15 @@
                             <div class="bg-gradient-to-br from-primary to-secondary p-3 rounded-2xl">
                                 <span class="material-symbols-outlined text-white text-xl">school</span>
                             </div>
-                            <h3 class="text-xl font-extrabold text-slate-800">Thông tin Giảng viên</h3>
+                            <h3 class="text-xl font-extrabold text-slate-800">Instructor Profile</h3>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                                <p class="text-xs text-slate-400 font-bold uppercase mb-2">Chức danh chuyên môn</p>
+                                <p class="text-xs text-slate-400 font-bold uppercase mb-2">Professional Title</p>
                                 <div class="h-5 bg-slate-200 rounded-lg w-3/4"></div>
                             </div>
                             <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                                <p class="text-xs text-slate-400 font-bold uppercase mb-2">Lĩnh vực chuyên môn</p>
+                                <p class="text-xs text-slate-400 font-bold uppercase mb-2">Expertise Area</p>
                                 <div class="h-5 bg-slate-200 rounded-lg w-2/3"></div>
                             </div>
                         </div>

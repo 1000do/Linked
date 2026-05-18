@@ -9,20 +9,20 @@ namespace CourseMarketplaceFE.Models;
 public class BecomeInstructorViewModel
 {
     /// <summary>Chức danh chuyên môn</summary>
-    [Required(ErrorMessage = "Vui lòng nhập chức danh chuyên môn.")]
-    [Display(Name = "Chức danh chuyên môn")]
-    [StringLength(200, ErrorMessage = "Chức danh không được quá 200 ký tự.")]
+    [Required(ErrorMessage = "Please enter your professional title.")]
+    [Display(Name = "Professional Title")]
+    [StringLength(200, ErrorMessage = "Title cannot exceed 200 characters.")]
     public string ProfessionalTitle { get; set; } = null!;
 
     /// <summary>Giới thiệu bản thân</summary>
-    [Required(ErrorMessage = "Vui lòng nhập phần giới thiệu.")]
-    [Display(Name = "Giới thiệu bản thân")]
-    [StringLength(2000, ErrorMessage = "Giới thiệu không được quá 2000 ký tự.")]
+    [Required(ErrorMessage = "Please enter your bio.")]
+    [Display(Name = "Bio")]
+    [StringLength(2000, ErrorMessage = "Bio cannot exceed 2000 characters.")]
     public string Bio { get; set; } = null!;
 
     /// <summary>Lĩnh vực chuyên môn</summary>
-    [Required(ErrorMessage = "Vui lòng nhập lĩnh vực chuyên môn.")]
-    [Display(Name = "Lĩnh vực chuyên môn")]
-    [StringLength(500, ErrorMessage = "Lĩnh vực chuyên môn không được quá 500 ký tự.")]
+    [Required(ErrorMessage = "Please enter your expertise categories.")]
+    [Display(Name = "Expertise Categories")]
+    [StringLength(500, ErrorMessage = "Expertise categories cannot exceed 500 characters.")]
     public string Expertise { get; set; } = null!;
 }

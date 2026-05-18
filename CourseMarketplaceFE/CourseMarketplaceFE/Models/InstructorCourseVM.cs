@@ -30,8 +30,15 @@ namespace CourseMarketplaceFE.Models
         [Required(ErrorMessage = "Price is required")]
         [Range(0, 10000, ErrorMessage = "Price must be between 0 and 10000")]
         public decimal Price { get; set; }       
-        public string? WhatYouWillLearn { get; set; }
-        public string? Requirements { get; set; }
+
+        [Required(ErrorMessage = "What you will learn is required")]
+        [MinLength(10, ErrorMessage = "What you will learn must be at least 10 characters long")]
+        public string WhatYouWillLearn { get; set; } = null!;
+
+        [Required(ErrorMessage = "Requirements are required")]
+        [MinLength(10, ErrorMessage = "Requirements must be at least 10 characters long")]
+        public string Requirements { get; set; } = null!;
+
         public int? CouponId { get; set; }
         public List<CategoryViewModel> AvailableCategories { get; set; } = new();
     }

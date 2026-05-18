@@ -1,6 +1,6 @@
 @model List<CourseMarketplaceFE.Models.PublicCourseViewModel>
 @{
-    ViewData["Title"] = "Trang chủ - Nền tảng học tập trực tuyến";
+    ViewData["Title"] = "Home - Online Learning Platform";
 }
 
 @* 
@@ -12,7 +12,7 @@
 }
 
 <style>
-    /* Custom Ease cho micro-interactions mượt mà */
+    /* Custom Ease for smooth micro-interactions */
     .ease-out-expo { transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1); }
     
     @@keyframes marquee {
@@ -40,16 +40,16 @@
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
                 </span>
-                Hơn @stats.TotalStudents.ToString("N0") học viên đã tham gia
+                Over @stats.TotalStudents.ToString("N0") learners joined
             </div>
 
             <h1 class="text-5xl lg:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-8">
-                Làm chủ kỹ năng mới. <br />
-                <span class="text-primary">Kiến tạo tương lai.</span>
+                Master new skills. <br />
+                <span class="text-primary">Shape your future.</span>
             </h1>
             
             <p class="text-lg lg:text-xl text-slate-600 leading-relaxed mb-10 max-w-2xl mx-auto lg:mx-0">
-                Nền tảng học tập trực tuyến hàng đầu với hàng ngàn khóa học chất lượng cao từ các chuyên gia thực chiến. Học mọi lúc, mọi nơi.
+                Leading online learning platform with thousands of high-quality courses taught by industry experts. Learn anytime, anywhere.
             </p>
 
             <div class="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto lg:mx-0">
@@ -57,21 +57,21 @@
                     <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
                     <input type="text" 
                            class="w-full h-14 pl-14 pr-6 bg-white border-2 border-slate-200 rounded-2xl text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all ease-out-expo text-base font-medium shadow-sm"
-                           placeholder="Bạn muốn học gì hôm nay?" />
+                           placeholder="What do you want to learn today?" />
                 </div>
                 <button class="h-14 px-8 bg-primary text-white text-base font-bold rounded-2xl shadow-lg shadow-primary/30 hover:bg-primary/90 hover:-translate-y-0.5 active:translate-y-0 active:shadow-md transition-all ease-out-expo whitespace-nowrap">
-                    Khám phá ngay
+                    Explore Now
                 </button>
             </div>
         </div>
 
         <div class="flex-1 w-full relative hidden lg:block">
             <div class="relative w-full max-w-lg mx-auto aspect-square flex items-center justify-center">
-                @* Phông nền Blob trừu tượng *@
+                @* Abstract Blob Background *@
                 <div class="absolute inset-0 bg-primary/10 rounded-[30%_70%_70%_30%_/_30%_30%_70%_70%] animate-[spin_15s_linear_infinite] blur-2xl"></div>
                 <div class="absolute inset-10 bg-emerald-400/20 rounded-[70%_30%_30%_70%_/_70%_70%_30%_30%] animate-[spin_20s_linear_infinite_reverse] blur-2xl"></div>
                 
-                @* Hình ảnh với Organic Mask (Blob Shape) *@
+                @* Image with Organic Mask (Blob Shape) *@
                 <div class="relative z-10 w-[90%] h-[90%] overflow-hidden shadow-2xl transition-all duration-700 hover:scale-105" 
                      style="border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;">
                     <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1000&auto=format&fit=crop" 
@@ -80,7 +80,7 @@
                     <div class="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent"></div>
                 </div>
 
-                @* Trang trí nổi *@
+                @* Floating Decorations *@
                 <div class="absolute top-0 right-0 w-24 h-24 bg-amber-400/10 rounded-full blur-xl animate-pulse"></div>
                 <div class="absolute -bottom-8 -left-8 w-32 h-32 bg-primary/10 rounded-full blur-xl animate-pulse" style="animation-delay: 2s;"></div>
             </div>
@@ -95,17 +95,17 @@
 
             <div class="flex flex-col items-center">
                 <div class="text-3xl lg:text-4xl font-black text-white mb-1 tracking-tighter">@stats.TotalStudents.ToString("N0")+</div>
-                <div class="text-[10px] lg:text-xs font-bold text-emerald-200/60 uppercase tracking-widest">Học viên tin dùng</div>
+                <div class="text-[10px] lg:text-xs font-bold text-emerald-200/60 uppercase tracking-widest">Active Learners</div>
             </div>
             <div class="w-px h-10 bg-white/10 hidden lg:block"></div>
             <div class="flex flex-col items-center">
                 <div class="text-3xl lg:text-4xl font-black text-white mb-1 tracking-tighter">@stats.TotalCourses.ToString("N0")+</div>
-                <div class="text-[10px] lg:text-xs font-bold text-emerald-200/60 uppercase tracking-widest">Khóa học</div>
+                <div class="text-[10px] lg:text-xs font-bold text-emerald-200/60 uppercase tracking-widest">Courses</div>
             </div>
             <div class="w-px h-10 bg-white/10 hidden lg:block"></div>
             <div class="flex flex-col items-center">
                 <div class="text-3xl lg:text-4xl font-black text-white mb-1 tracking-tighter">@stats.TotalInstructors.ToString("N0")+</div>
-                <div class="text-[10px] lg:text-xs font-bold text-emerald-200/60 uppercase tracking-widest">Giảng viên tham gia</div>
+                <div class="text-[10px] lg:text-xs font-bold text-emerald-200/60 uppercase tracking-widest">Expert Instructors</div>
             </div>
             <div class="w-px h-10 bg-white/10 hidden lg:block"></div>
             <div class="flex flex-col items-center">
@@ -113,7 +113,7 @@
                 <div class="flex gap-0.5 mb-0.5">
                     @for(int i=0; i<5; i++) { <span class="material-symbols-outlined text-[12px] text-amber-300 @(i < Math.Floor((double)stats.SatisfactionRate) ? "fill-current" : "")">star</span> }
                 </div>
-                <div class="text-[10px] lg:text-xs font-bold text-emerald-200/60 uppercase tracking-widest">Đánh giá trung bình</div>
+                <div class="text-[10px] lg:text-xs font-bold text-emerald-200/60 uppercase tracking-widest">Average Rating</div>
             </div>
         </div>
     </div>
@@ -127,14 +127,14 @@
         }
         
         <div class="mb-12">
-            <h2 class="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">Khóa học nổi bật</h2>
-            <p class="text-lg text-slate-500 leading-relaxed">Những khóa học đỉnh cao được cộng đồng bình chọn. Top 3 sẽ nhận được huy hiệu danh dự.</p>
+            <h2 class="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">Featured Courses</h2>
+            <p class="text-lg text-slate-500 leading-relaxed">Top courses highly rated by our community. The top 3 receive honor badges.</p>
         </div>
 
         @if (!featuredCourses.Any())
         {
             <div class="py-24 flex flex-col items-center justify-center text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200 mb-24">
-                <h3 class="text-xl font-bold text-slate-700 mb-2">Đang cập nhật danh sách nổi bật...</h3>
+                <h3 class="text-xl font-bold text-slate-700 mb-2">Updating featured list...</h3>
             </div>
         }
         else
@@ -216,14 +216,14 @@
             </div>
         }
 
-        <!-- Mới cập nhật -->
+        <!-- New Releases -->
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div class="max-w-2xl">
-                <h2 class="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">Mới cập nhật</h2>
-                <p class="text-lg text-slate-500 leading-relaxed">Top 8 khóa học vừa cập nhật kiến thức mới nhất trong tuần này.</p>
+                <h2 class="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">New Releases</h2>
+                <p class="text-lg text-slate-500 leading-relaxed">Top 8 recently released courses with the latest skills this week.</p>
             </div>
             <a href="/Course?sort=newest" class="inline-flex items-center gap-2 text-primary font-bold hover:text-primary/80 transition-colors group">
-                Xem tất cả 
+                View All 
                 <span class="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform ease-out-expo">arrow_forward</span>
             </a>
         </div>
@@ -269,7 +269,7 @@
                             <div class="text-xl font-extrabold text-slate-900 tracking-tight">
                                 @if (course.Price == 0)
                                 {
-                                    <span class="text-emerald-600 uppercase text-lg">Miễn phí</span>
+                                    <span class="text-emerald-600 uppercase text-lg">Free</span>
                                 }
                                 else
                                 {
@@ -279,7 +279,7 @@
 
                             @if (course.IsEnrolled)
                             {
-                                <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm" title="Đã sở hữu">
+                                <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm" title="Enrolled">
                                     <span class="material-symbols-outlined text-[18px]">check_circle</span>
                                 </div>
                             }
@@ -291,7 +291,7 @@
                                     <button type="submit" 
                                             class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all duration-300"
                                             onclick="event.stopPropagation();"
-                                            title="Thêm vào giỏ hàng">
+                                            title="Add to cart">
                                         <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
                                     </button>
                                 </form>
@@ -309,8 +309,8 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div class="text-center max-w-2xl mx-auto mb-16">
-            <h2 class="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">Khám phá danh mục</h2>
-            <p class="text-lg text-slate-500">Mở rộng kỹ năng của bạn với các chuyên ngành đa dạng được giảng dạy bởi chuyên gia.</p>
+            <h2 class="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">Explore Categories</h2>
+            <p class="text-lg text-slate-500">Expand your skills with diverse specializations taught by industry leaders.</p>
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
@@ -318,15 +318,19 @@
                 var displayCategories = ViewBag.Categories as List<CourseMarketplaceFE.Models.CategoryViewModel> ?? new List<CourseMarketplaceFE.Models.CategoryViewModel>();
                 var iconMap = new Dictionary<string, (string Icon, string Color, string Bg)>
                 {
-                    { "Lập trình", ("code", "text-blue-600", "bg-blue-50") },
-                    { "Thiết kế", ("brush", "text-orange-600", "bg-orange-50") },
+                    { "Development", ("code", "text-blue-600", "bg-blue-50") },
+                    { "Design", ("brush", "text-orange-600", "bg-orange-50") },
                     { "Marketing", ("monitoring", "text-emerald-600", "bg-emerald-50") },
-                    { "Kinh doanh", ("account_balance", "text-indigo-600", "bg-indigo-50") },
-                    { "Nhiếp ảnh", ("photo_camera", "text-pink-600", "bg-pink-50") },
-                    { "Âm nhạc", ("music_note", "text-purple-600", "bg-purple-50") },
-                    { "Ngoại ngữ", ("language", "text-amber-600", "bg-amber-50") },
-                    { "Sức khỏe & Đời sống", ("favorite", "text-rose-600", "bg-rose-50") },
-                    { "Khoa học dữ liệu", ("database", "text-cyan-600", "bg-cyan-50") }
+                    { "Business", ("account_balance", "text-indigo-600", "bg-indigo-50") },
+                    { "Photography & Video", ("photo_camera", "text-pink-600", "bg-pink-50") },
+                    { "Music", ("music_note", "text-purple-600", "bg-purple-50") },
+                    { "Languages", ("language", "text-amber-600", "bg-amber-50") },
+                    { "Health & Fitness", ("favorite", "text-rose-600", "bg-rose-50") },
+                    { "Data Science", ("database", "text-cyan-600", "bg-cyan-50") },
+                    { "Personal Development", ("psychology", "text-teal-600", "bg-teal-50") },
+                    { "Finance & Investing", ("finance", "text-violet-600", "bg-violet-50") },
+                    { "Office Productivity", ("table_chart", "text-sky-600", "bg-sky-50") },
+                    { "Lifestyle", ("home", "text-lime-600", "bg-lime-50") }
                 };
             }
 

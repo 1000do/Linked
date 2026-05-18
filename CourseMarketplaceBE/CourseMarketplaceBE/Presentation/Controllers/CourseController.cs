@@ -34,13 +34,17 @@ public class CourseController : ControllerBase
     }
 
     [HttpGet("my-courses")]
-    public async Task<IActionResult> GetMyCourses()
+    public async Task<IActionResult> GetMyCourses(
+        [FromQuery] string? search = null,
+        [FromQuery] string? status = null,
+        [FromQuery] int? page = null,
+        [FromQuery] int? pageSize = null)
     {
         try
         {
             var instructorId = GetInstructorId();
-            var courses = await _courseService.GetInstructorCoursesAsync(instructorId);
-            return Ok(ApiResponse<object>.SuccessResponse(courses, "Retrieved courses successfully."));
+            var result = await _courseService.GetInstructorCoursesPagedAsync(instructorId, search, status, page, pageSize);
+            return Ok(ApiResponse<object>.SuccessResponse(result, "Retrieved courses successfully."));
         }
         catch (UnauthorizedAccessException ex)
         {

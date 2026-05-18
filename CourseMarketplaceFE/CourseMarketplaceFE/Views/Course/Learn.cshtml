@@ -63,8 +63,8 @@
                         <span class="material-symbols-outlined text-[24px]">stars</span>
                     </div>
                 </div>
-                <h2 class="text-3xl font-bold text-slate-900 mb-2">Chúc mừng bạn!</h2>
-                <p class="text-slate-500">Bạn đã hoàn thành xuất sắc khóa học này.</p>
+                <h2 class="text-3xl font-bold text-slate-900 mb-2">Congratulations!</h2>
+                <p class="text-slate-500">You have successfully completed this course.</p>
             </div>
             
             <!-- The Certificate UI -->
@@ -84,15 +84,15 @@
                 <div class="flex justify-between w-full mt-8 border-t border-slate-200 pt-8">
                     <div class="text-center">
                         <p class="font-bold text-slate-900">@Model.InstructorName</p>
-                        <p class="text-xs text-slate-500">Giảng viên hướng dẫn</p>
+                        <p class="text-xs text-slate-500">Lead Instructor</p>
                     </div>
                     <div class="text-center">
                         <p class="font-bold text-slate-900">@DateTime.Now.ToString("dd/MM/yyyy")</p>
-                        <p class="text-xs text-slate-500">Ngày hoàn thành</p>
+                        <p class="text-xs text-slate-500">Completion Date</p>
                     </div>
                     <div class="text-center">
                         <p class="font-bold text-[#006a62]">LINKED ACADEMY</p>
-                        <p class="text-xs text-slate-500">Nền tảng học tập trực tuyến</p>
+                        <p class="text-xs text-slate-500">Online Learning Platform</p>
                     </div>
                 </div>
             </div>
@@ -100,10 +100,10 @@
             <div class="p-6 bg-white flex justify-center gap-4">
                 <button onclick="downloadCertificate()" class="flex items-center gap-2 bg-[#006a62] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#00534c] transition-all shadow-lg shadow-[#006a62]/20">
                     <span class="material-symbols-outlined">download</span>
-                    Tải chứng chỉ (PDF)
+                    Download Certificate (PDF)
                 </button>
                 <button onclick="closeCertificate()" class="flex items-center gap-2 border border-slate-200 text-slate-500 px-6 py-3 rounded-xl font-bold hover:bg-slate-50 transition-all">
-                    Đóng
+                    Close
                 </button>
             </div>
         </div>
@@ -157,11 +157,11 @@
                             <div class="w-16 h-16 bg-[#006a62]/10 text-[#006a62] rounded-full flex items-center justify-center mx-auto mb-4">
                                 <span class="material-symbols-outlined text-[32px]">download_for_offline</span>
                             </div>
-                            <h3 class="text-lg font-bold text-slate-800 mb-2">Tài liệu đính kèm</h3>
-                            <p class="text-sm text-slate-500 mb-6">Định dạng file này không hỗ trợ xem trực tiếp trên trình duyệt. Vui lòng tải về để xem.</p>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2">Attached Resource</h3>
+                            <p class="text-sm text-slate-500 mb-6">This file format is not supported for direct viewing in the browser. Please download to view.</p>
                             <a id="doc-download-btn" href="@(!isFirstVideo ? firstMaterial?.MaterialUrl : "#")" target="_blank" download class="bg-[#006a62] text-white px-6 py-2.5 rounded-full font-bold hover:bg-[#00544e] transition-colors flex items-center justify-center gap-2">
                                 <span class="material-symbols-outlined text-[20px]">download</span>
-                                Tải xuống tài liệu
+                                Download Resource
                             </a>
                         </div>
                     </div>
@@ -214,8 +214,8 @@
                             <!-- Submit Review Form (conditionally shown by JS) -->
                             <div id="learn-review-form" class="hidden">
                                 <div class="bg-gradient-to-r from-[#006a62]/5 to-[#43e8d8]/10 p-6 rounded-2xl border border-[#006a62]/20 mb-8">
-                                    <h4 class="font-bold text-sm mb-1 text-[#006a62]">✍️ Viết đánh giá của bạn</h4>
-                                    <p class="text-xs text-slate-500 mb-4">Đánh giá sau khi bạn đã trải nghiệm bài học</p>
+                                    <h4 class="font-bold text-sm mb-1 text-[#006a62]">✍️ Write your review</h4>
+                                    <p class="text-xs text-slate-500 mb-4">Review after you have experienced the lesson</p>
                                     <div class="flex gap-1 mb-4" id="rating-input">
                                         @for (int i = 1; i <= 5; i++) {
                                             <button onclick="setRating(@i)" class="star-btn text-slate-300 hover:text-amber-500 transition-colors">
@@ -224,10 +224,10 @@
                                         }
                                         <input type="hidden" id="selected-rating" value="0" />
                                     </div>
-                                    <textarea id="review-comment" rows="3" class="w-full bg-white border border-slate-200 rounded-lg p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#006a62]/20 mb-4" placeholder="Chia sẻ trải nghiệm học tập của bạn..."></textarea>
+                                    <textarea id="review-comment" rows="3" class="w-full bg-white border border-slate-200 rounded-lg p-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#006a62]/20 mb-4" placeholder="Share your learning experience..."></textarea>
                                     <button onclick="submitReview()" id="submit-review-btn" class="bg-[#006a62] text-white px-6 py-2.5 rounded-full font-bold text-sm hover:bg-[#00544e] transition-all flex items-center gap-2">
                                         <span class="material-symbols-outlined text-[18px]">send</span>
-                                        Gửi đánh giá
+                                        Submit Review
                                     </button>
                                 </div>
                             </div>
@@ -238,7 +238,7 @@
                                     <span class="material-symbols-outlined text-[#006a62] text-xl mt-0.5">school</span>
                                     <div>
                                         <p id="learn-blocked-msg" class="text-sm font-medium text-slate-700"></p>
-                                        <p class="text-xs text-slate-500 mt-1">Hoàn thành ít nhất 1 bài học để mở khóa chức năng đánh giá.</p>
+                                        <p class="text-xs text-slate-500 mt-1">Complete at least 1 lesson to unlock the review feature.</p>
                                     </div>
                                 </div>
                             </div>
@@ -384,7 +384,7 @@
                 if (result.success && result.data) {
                     const d = result.data;
                     document.getElementById('learn-stats-avg').textContent = (d.averageRating || 0).toFixed(1);
-                    document.getElementById('learn-stats-total').textContent = `${d.totalReviews || 0} đánh giá`;
+                    document.getElementById('learn-stats-total').textContent = `${d.totalReviews || 0} reviews`;
                     const avg = Math.round(d.averageRating || 0);
                     document.getElementById('learn-stats-stars').innerHTML = Array(5).fill(0).map((_, i) =>
                         `<span class="material-symbols-outlined text-[20px] ${i < avg ? 'fill-1' : ''}">star</span>`
@@ -427,7 +427,7 @@
                         document.getElementById('learn-review-form').classList.add('hidden');
                         document.getElementById('learn-review-blocked').classList.remove('hidden');
                         document.getElementById('learn-blocked-msg').textContent = 
-                            d.reviewBlockedReason || 'Bạn cần học ít nhất 1 bài học trước khi đánh giá.';
+                            d.reviewBlockedReason || 'You need to complete at least 1 lesson before reviewing.';
                     }
                 }
             } catch(e) {}
@@ -455,12 +455,12 @@
         async function submitReview() {
             const rating = document.getElementById('selected-rating').value;
             const comment = document.getElementById('review-comment').value;
-            if (rating == 0) return Swal.fire('Lỗi', 'Vui lòng chọn số sao.', 'warning');
-            if (!comment.trim()) return Swal.fire('Lỗi', 'Vui lòng nhập nội dung đánh giá.', 'warning');
+            if (rating == 0) return Swal.fire('Error', 'Please select a rating.', 'warning');
+            if (!comment.trim()) return Swal.fire('Error', 'Please write a comment.', 'warning');
 
             const btn = document.getElementById('submit-review-btn');
             btn.disabled = true;
-            btn.innerHTML = '<span class="animate-spin material-symbols-outlined text-[18px]">sync</span> Đang gửi...';
+            btn.innerHTML = '<span class="animate-spin material-symbols-outlined text-[18px]">sync</span> Submitting...';
 
             try {
                 const response = await fetch('/Course/SubmitReview?source=learn', {
@@ -475,19 +475,19 @@
                 });
                 const result = await response.json();
                 if (result.success) {
-                    Swal.fire('Thành công!', 'Đánh giá bài học đã được gửi.', 'success');
+                    Swal.fire('Success!', 'Lesson review has been submitted.', 'success');
                     document.getElementById('review-comment').value = '';
                     setRating(0);
                     loadReviews();
                     loadLearnStats();
                 } else {
-                    Swal.fire('Lỗi', result.message || 'Không thể gửi đánh giá.', 'error');
+                    Swal.fire('Error', result.message || 'Could not submit review.', 'error');
                 }
             } catch (e) {
-                Swal.fire('Lỗi', 'Không thể gửi đánh giá.', 'error');
+                Swal.fire('Error', 'Could not submit review.', 'error');
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">send</span> Gửi đánh giá';
+                btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">send</span> Submit Review';
             }
         }
 
@@ -504,9 +504,9 @@
                     if (result.success && result.data && result.data.length > 0) {
                         lessonList.innerHTML = result.data.map(r => renderReviewItem(r)).join('');
                     } else {
-                        lessonList.innerHTML = '<p class="text-slate-400 italic">Chưa có đánh giá nào cho bài học này.</p>';
+                        lessonList.innerHTML = '<p class="text-slate-400 italic">No reviews yet for this lesson.</p>';
                     }
-                } catch (e) { lessonList.innerHTML = '<p class="text-red-400">Lỗi tải đánh giá bài học.</p>'; }
+                } catch (e) { lessonList.innerHTML = '<p class="text-red-400">Error loading lesson reviews.</p>'; }
             }
 
             // Load Course Reviews
@@ -516,22 +516,22 @@
                 if (result.success && result.data && result.data.length > 0) {
                     courseList.innerHTML = result.data.map(r => renderReviewItem(r)).join('');
                 } else {
-                    courseList.innerHTML = '<p class="text-slate-400 italic">Chưa có đánh giá tổng quát cho khóa học này.</p>';
+                    courseList.innerHTML = '<p class="text-slate-400 italic">No general reviews yet for this course.</p>';
                 }
-            } catch (e) { courseList.innerHTML = '<p class="text-red-400">Lỗi tải đánh giá khóa học.</p>'; }
+            } catch (e) { courseList.innerHTML = '<p class="text-red-400">Error loading course reviews.</p>'; }
         }
 
         async function reportReview(reviewId, type) {
             const { value: reason } = await Swal.fire({
-                title: 'Báo cáo đánh giá',
+                title: 'Report Review',
                 input: 'select',
                 inputOptions: {
-                    'spam': 'Nội dung rác (Spam)',
-                    'offensive': 'Ngôn từ gây hấn/Xúc phạm',
-                    'fake': 'Đánh giá giả mạo',
-                    'other': 'Lý do khác'
+                    'spam': 'Spam content',
+                    'offensive': 'Offensive/Harassment',
+                    'fake': 'Fake review',
+                    'other': 'Other reason'
                 },
-                inputPlaceholder: 'Chọn lý do báo cáo',
+                inputPlaceholder: 'Select report reason',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 confirmButtonText: 'Gửi báo cáo'
@@ -546,12 +546,12 @@
                     });
                     const result = await response.json();
                     if (result.success) {
-                        Swal.fire('Đã báo cáo', 'Cảm ơn bạn đã đóng góp, quản trị viên sẽ xem xét đánh giá này.', 'success');
+                        Swal.fire('Reported', 'Thank you for your feedback, a moderator will review this.', 'success');
                     } else {
-                        Swal.fire('Lỗi', 'Không thể gửi báo cáo lúc này.', 'error');
+                        Swal.fire('Error', 'Could not send report at this time.', 'error');
                     }
                 } catch (e) {
-                    Swal.fire('Lỗi', 'Lỗi kết nối máy chủ.', 'error');
+                    Swal.fire('Error', 'Server connection error.', 'error');
                 }
             }
         }
@@ -571,7 +571,7 @@
                                 </h4>
                                 <div class="flex items-center gap-3">
                                     <span class="text-[11px] text-slate-400 font-medium">${new Date(r.createdAt).toLocaleDateString('vi-VN')}</span>
-                                    <button onclick="reportReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}')" class="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500" title="Báo cáo vi phạm">
+                                    <button onclick="reportReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}')" class="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500" title="Report review">
                                         <span class="material-symbols-outlined text-[16px]">flag</span>
                                     </button>
                                 </div>
@@ -590,7 +590,7 @@
                                 ` : `
                                     <div class="flex items-center gap-1 bg-amber-50 text-amber-600 text-[10px] px-2 py-0.5 rounded border border-amber-200">
                                         <span class="material-symbols-outlined text-[12px]">auto_awesome</span>
-                                        Khóa học tổng quát
+                                        General review
                                     </div>
                                 `}
                             </div>
@@ -622,7 +622,14 @@
 
         function playMaterial(url, title, description, element, type, materialId, lessonId) {
             if (!url) {
-                alert('This material has no content yet.');
+                Swal.fire({
+                    title: 'Empty Material',
+                    text: 'This lesson does not have any uploaded materials yet.',
+                    icon: 'info',
+                    confirmButtonColor: '#006a62',
+                    background: '#ffffff',
+                    customClass: { popup: 'rounded-2xl shadow-xl' }
+                });
                 return;
             }
             currentMaterialId = materialId;
@@ -678,7 +685,7 @@
                     const txtViewer = document.getElementById('doc-txt-viewer');
                     const txtContent = document.getElementById('doc-txt-content');
                     if (txtViewer) txtViewer.classList.remove('hidden');
-                    if (txtContent) txtContent.textContent = 'Đang tải nội dung...';
+                    if (txtContent) txtContent.textContent = 'Loading content...';
 
                     fetch(url)
                         .then(res => res.arrayBuffer())
@@ -687,7 +694,7 @@
                             txtContent.textContent = decoder.decode(buffer);
                         })
                         .catch(err => {
-                            txtContent.textContent = 'Lỗi tải file: ' + err.message;
+                            txtContent.textContent = 'Error loading file: ' + err.message;
                         });
                     
                     markAsCompleted(materialId); // Mark text as completed immediately on view
@@ -726,8 +733,8 @@
                     
                     if (pct < 100) {
                         Swal.fire({
-                            title: 'Chưa hoàn thành',
-                            text: `Bạn mới hoàn thành ${Math.round(pct)}%. Hãy hoàn thành 100% bài học để nhận chứng chỉ nhé!`,
+                            title: 'Not Completed',
+                            text: `You have only completed ${Math.round(pct)}%. Complete 100% of the lessons to receive your certificate!`,
                             icon: 'warning'
                         });
                         return;
@@ -746,15 +753,15 @@
 
         function downloadCertificate() {
             Swal.fire({
-                title: 'Đang khởi tạo PDF',
-                text: 'Hệ thống đang tạo bản PDF cho chứng chỉ của bạn...',
+                title: 'Generating PDF',
+                text: 'The system is generating a PDF copy of your certificate...',
                 timer: 2000,
                 showConfirmButton: false,
                 didOpen: () => {
                     Swal.showLoading();
                 }
             }).then(() => {
-                Swal.fire('Thành công', 'Chứng chỉ đã được tải xuống.', 'success');
+                Swal.fire('Success!', 'Certificate has been downloaded.', 'success');
             });
         }
 

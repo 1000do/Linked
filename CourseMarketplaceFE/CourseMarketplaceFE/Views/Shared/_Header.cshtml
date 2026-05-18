@@ -23,13 +23,13 @@
             <div class="relative hidden md:block" id="categories-dropdown">
                 <button onclick="toggleCategories()" 
                         class="px-4 py-2 text-sm font-bold text-slate-700 hover:text-primary transition-colors flex items-center gap-1">
-                    Chủ Đề Tôi Cần
+                    Explore Topics
                     <span class="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
                 </button>
                 <div id="categories-box" 
                      class="hidden absolute left-0 mt-3 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-[60] py-2">
                     <div id="categories-items-container" class="max-h-96 overflow-y-auto">
-                        <div class="px-4 py-3 text-xs text-slate-400">Đang tải danh mục...</div>
+                        <div class="px-4 py-3 text-xs text-slate-400">Loading categories...</div>
                     </div>
                 </div>
             </div>
@@ -41,14 +41,14 @@
                     <form action="/Course" method="get" id="header-search-form">
                         <input type="text" name="query" autocomplete="off" id="header-search-input"
                                class="w-full h-10 pl-12 pr-4 bg-slate-100 border border-slate-200 rounded-full text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
-                               placeholder="Tìm kiếm nội dung bất kỳ..." />
+                               placeholder="Search anything..." />
                     </form>
                     
                     @* Sleek autocomplete dropdown in premium light glassmorphic theme *@
                     <div id="header-search-results" 
                          class="hidden absolute left-0 right-0 mt-3 bg-white/95 backdrop-blur-md border border-slate-100 rounded-2xl shadow-2xl overflow-hidden z-[100] transition-all duration-300">
                         <div class="p-4 border-b border-slate-100 bg-slate-50/50">
-                            <span class="text-xs font-bold text-slate-500">KẾT QUẢ TÌM KIẾM: <span id="search-keyword-highlight" class="text-[#a435f0] font-extrabold uppercase"></span></span>
+                            <span class="text-xs font-bold text-slate-500">SEARCH RESULTS: <span id="search-keyword-highlight" class="text-[#a435f0] font-extrabold uppercase"></span></span>
                         </div>
                         <div id="header-search-results-list" class="max-h-[350px] overflow-y-auto divide-y divide-slate-100">
                             <!-- Items populated dynamically via JS -->
@@ -103,7 +103,7 @@
                         <a href="/Instructor/Apply"
                            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-primary to-secondary rounded-full shadow-md shadow-primary/20 hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-300">
                             <span class="material-symbols-outlined text-[16px]" style='font-variation-settings: "FILL" 1;'>school</span>
-                            Trở thành Giảng viên
+                            Become an Instructor
                         </a>
                         <div class="w-px h-6 bg-slate-200 mx-2"></div>
                     }
@@ -123,12 +123,12 @@
                             <div id="cart-box"
                                  class="hidden absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[60]">
                                 <div class="p-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                                    <span class="font-bold text-slate-800 text-sm">Giỏ hàng</span>
-                                    <a href="/Cart" class="text-[11px] text-primary font-bold hover:underline">Xem tất cả</a>
+                                    <span class="font-bold text-slate-800 text-sm">Shopping Cart</span>
+                                    <a href="/Cart" class="text-[11px] text-primary font-bold hover:underline">View All</a>
                                 </div>
 
                                 <div id="cart-items-container" class="max-h-72 overflow-y-auto">
-                                    <div class="p-4 text-center text-slate-400 text-xs">Đang tải...</div>
+                                    <div class="p-4 text-center text-slate-400 text-xs">Loading...</div>
                                 </div>
 
                                 <div class="p-3 border-t border-slate-100">
@@ -142,12 +142,12 @@
                         </div>
 
                         @* 📚 MY COURSES ICON *@
-                        <a href="/Course/MyCourses" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Khóa học của tôi">
+                        <a href="/Course/MyCourses" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="My Learning">
                             <span class="material-symbols-outlined text-[24px]">school</span>
                         </a>
 
                         @* ❤️ WISHLIST ICON *@
-                        <a href="/Wishlist" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Danh sách yêu thích">
+                        <a href="/Wishlist" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="My Wishlist">
                             <span class="material-symbols-outlined text-[24px]">favorite</span>
                             <span id="wishlist-badge"
                                   class="hidden absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
@@ -155,7 +155,7 @@
                         </a>
 
                         @* 💬 CHAT ICON *@
-                        <a href="/Chat/Learner" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Tin nhắn">
+                        <a href="/Chat/Learner" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Messages">
                             <span class="material-symbols-outlined text-[24px]">chat_bubble</span>
                             <span class="absolute top-2 right-2 w-2 h-2 bg-indigo-500 rounded-full border-2 border-white"></span>
                         </a>
@@ -169,17 +169,17 @@
 
                         <div id="noti-box" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[60]">
                             <div class="p-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                                <span class="font-bold text-slate-800 text-sm">Thông báo</span>
-                                <a href="/Notification" class="text-[11px] text-primary font-bold hover:underline">Xem tất cả</a>
+                                <span class="font-bold text-slate-800 text-sm">Notifications</span>
+                                <a href="/Notification" class="text-[11px] text-primary font-bold hover:underline">View All</a>
                             </div>
                             <div id="notification-items-container" class="max-h-80 overflow-y-auto">
-                                <div class="p-4 text-center text-slate-400 text-xs">Đang tải...</div>
+                                <div class="p-4 text-center text-slate-400 text-xs">Loading...</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="hidden sm:flex flex-col items-end">
-                        <span class="text-xs font-bold text-slate-700">Chào, @userName</span>
+                        <span class="text-xs font-bold text-slate-700">Hi, @userName</span>
                         @* POST logout để revoke refresh token trên BE (bảo mật hơn GET) *@
                         <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
                             @Html.AntiForgeryToken()
@@ -278,7 +278,7 @@
                 container.innerHTML = `
                     <div class="py-8 flex flex-col items-center gap-2 text-slate-400">
                         <span class="material-symbols-outlined text-4xl text-slate-200">shopping_cart</span>
-                        <p class="text-xs">Giỏ hàng đang trống</p>
+                        <p class="text-xs">Your cart is empty</p>
                     </div>`;
                 return;
             }
@@ -326,7 +326,7 @@
             const result = await res.json();
             const categories = result?.data ?? [];
             if (categories.length === 0) {
-                container.innerHTML = `<div class="px-4 py-3 text-xs text-slate-400">Chưa có danh mục nào</div>`;
+                container.innerHTML = `<div class="px-4 py-3 text-xs text-slate-400">No categories found</div>`;
                 return;
             }
             container.innerHTML = categories.map(cat => `
@@ -420,7 +420,7 @@
                         resultsList.innerHTML = `
                             <div class="p-8 text-center text-slate-400 flex flex-col items-center gap-2">
                                 <span class="material-symbols-outlined text-3xl opacity-30">search_off</span>
-                                <p class="text-xs">Không tìm thấy khóa học nào phù hợp</p>
+                                <p class="text-xs">No matching courses found</p>
                             </div>
                         `;
                     }

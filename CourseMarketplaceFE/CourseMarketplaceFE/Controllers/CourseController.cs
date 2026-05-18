@@ -47,62 +47,37 @@ namespace CourseMarketplaceFE.Controllers
             public int CourseId { get; set; }
         }
 
-        public async Task<IActionResult> Index(string query, string category, string sort, int page = 1)
+        public async Task<IActionResult> Index(string query, string category, string sort, string price, string rating, int page = 1)
         {
-            var response = await _apiClient.GetAsync("public/courses");
+            int pageSize = 12;
+            var url = $"public/courses?query={Uri.EscapeDataString(query ?? "")}&category={Uri.EscapeDataString(category ?? "")}&sort={Uri.EscapeDataString(sort ?? "")}&price={Uri.EscapeDataString(price ?? "")}&rating={Uri.EscapeDataString(rating ?? "")}&page={page}&pageSize={pageSize}";
+            var response = await _apiClient.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
                 var json = JsonDocument.Parse(content);
-                var data = json.RootElement.GetProperty("data").ToString();
-                var allCourses = JsonSerializer.Deserialize<List<PublicCourseViewModel>>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<PublicCourseViewModel>();
+                var data = json.RootElement.GetProperty("data");
                 
+                var coursesJson = data.GetProperty("courses").ToString();
+                var paginatedCourses = JsonSerializer.Deserialize<List<PublicCourseViewModel>>(coursesJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<PublicCourseViewModel>();
+                
+                int totalItems = data.GetProperty("totalItems").GetInt32();
+                int totalPages = data.GetProperty("totalPages").GetInt32();
+                int currentPage = data.GetProperty("currentPage").GetInt32();
+
                 // Check wishlist status
                 var wishlistIds = await GetWishlistIdsAsync();
-                foreach (var c in allCourses)
+                foreach (var c in paginatedCourses)
                 {
                     c.IsInWishlist = wishlistIds.Contains(c.CourseId);
                 }
 
-                // Filtering
-                var filtered = allCourses.AsQueryable();
-                if (!string.IsNullOrEmpty(query))
-                {
-                    filtered = filtered.Where(c => c.Title.Contains(query, StringComparison.OrdinalIgnoreCase) || 
-                                                 (c.Description != null && c.Description.Contains(query, StringComparison.OrdinalIgnoreCase)));
-                }
-                if (!string.IsNullOrEmpty(category))
-                {
-                    filtered = filtered.Where(c => string.Equals(c.CategoryName, category, StringComparison.OrdinalIgnoreCase));
-                }
-                
-                // Sorting
-                if (sort == "price_asc")
-                    filtered = filtered.OrderBy(c => c.Price);
-                else if (sort == "price_desc")
-                    filtered = filtered.OrderByDescending(c => c.Price);
-                else if (sort == "rating")
-                    filtered = filtered.OrderByDescending(c => c.RatingAverage);
-                else // default: newest
-                    filtered = filtered.OrderByDescending(c => c.CreatedAt);
-
-                var final = filtered.ToList();
-
-                // Pagination
-                int pageSize = 12;
-                int totalItems = final.Count;
-                int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
-                page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
-
-                var paginatedCourses = final
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToList();
-                
                 ViewBag.Query = query;
                 ViewBag.Category = category;
                 ViewBag.Sort = sort;
-                ViewBag.CurrentPage = page;
+                ViewBag.Price = price;
+                ViewBag.Rating = rating;
+                ViewBag.CurrentPage = currentPage;
                 ViewBag.TotalPages = totalPages;
                 ViewBag.TotalItems = totalItems;
 
@@ -123,22 +98,18 @@ namespace CourseMarketplaceFE.Controllers
         [HttpGet]
         public async Task<IActionResult> SearchCoursesJson(string query)
         {
-            var response = await _apiClient.GetAsync("public/courses");
+            var url = $"public/courses?query={Uri.EscapeDataString(query ?? "")}&page=1&pageSize=8";
+            var response = await _apiClient.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
                 var json = JsonDocument.Parse(content);
-                var data = json.RootElement.GetProperty("data").ToString();
-                var allCourses = JsonSerializer.Deserialize<List<PublicCourseViewModel>>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<PublicCourseViewModel>();
+                var data = json.RootElement.GetProperty("data");
+                
+                var coursesJson = data.GetProperty("courses").ToString();
+                var courses = JsonSerializer.Deserialize<List<PublicCourseViewModel>>(coursesJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<PublicCourseViewModel>();
 
-                if (!string.IsNullOrEmpty(query))
-                {
-                    allCourses = allCourses.Where(c => c.Title.Contains(query, StringComparison.OrdinalIgnoreCase) || 
-                                                 (c.Description != null && c.Description.Contains(query, StringComparison.OrdinalIgnoreCase)))
-                                           .ToList();
-                }
-
-                var results = allCourses.Take(8).Select(c => new {
+                var results = courses.Select(c => new {
                     c.CourseId,
                     c.Title,
                     c.InstructorName,

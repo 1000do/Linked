@@ -1,7 +1,7 @@
 @using CourseMarketplaceFE.Controllers
 @model TransactionController.TransactionPagedVM
 @{
-    ViewData["Title"] = "Lịch sử mua hàng";
+    ViewData["Title"] = "Purchase History";
     Layout = "_Layout";
 }
 
@@ -11,15 +11,15 @@
         <div class="max-w-7xl mx-auto px-6 lg:px-12 py-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h1 class="text-3xl font-black text-slate-900 tracking-tight">Lịch sử giao dịch</h1>
-                    <p class="text-slate-500 font-medium mt-1">Theo dõi các khóa học bạn đã mua và trạng thái thanh toán.</p>
+                    <h1 class="text-3xl font-black text-slate-900 tracking-tight">Purchase History</h1>
+                    <p class="text-slate-500 font-medium mt-1">Track the courses you have purchased and their payment statuses.</p>
                 </div>
                 
                 <div class="flex items-center gap-3">
                     <div class="bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100 flex items-center gap-3">
                         <span class="material-symbols-outlined text-indigo-600">receipt_long</span>
                         <div>
-                            <p class="text-[10px] font-black uppercase tracking-wider text-indigo-400 leading-none mb-1">Tổng giao dịch</p>
+                            <p class="text-[10px] font-black uppercase tracking-wider text-indigo-400 leading-none mb-1">Total Purchases</p>
                             <p class="text-lg font-black text-indigo-900 leading-none">@Model.TotalCount</p>
                         </div>
                     </div>
@@ -38,42 +38,42 @@
                         <input type="hidden" name="pageSize" value="@Model.PageSize" />
 
                         <div>
-                            <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Tìm kiếm</label>
+                            <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Search</label>
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[20px]">search</span>
-                                <input type="text" name="keyword" value="@ViewBag.Keyword" placeholder="Tên khóa học..." 
+                                <input type="text" name="keyword" value="@ViewBag.Keyword" placeholder="Search by course title..." 
                                        class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all font-medium" />
                             </div>
                         </div>
 
                         <div>
-                            <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Trạng thái</label>
+                            <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Status</label>
                             <select name="status" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all font-medium appearance-none cursor-pointer">
-                                <option value="">Tất cả</option>
-                                <option value="succeeded" selected="@(ViewBag.Status == "succeeded")">Thành công</option>
-                                <option value="pending" selected="@(ViewBag.Status == "pending")">Đang xử lý</option>
-                                <option value="failed" selected="@(ViewBag.Status == "failed")">Thất bại</option>
+                                <option value="">All Statuses</option>
+                                <option value="succeeded" selected="@(ViewBag.Status == "succeeded")">Success</option>
+                                <option value="pending" selected="@(ViewBag.Status == "pending")">Pending</option>
+                                <option value="failed" selected="@(ViewBag.Status == "failed")">Failed</option>
                             </select>
                         </div>
 
                         <div>
-                            <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Sắp xếp</label>
+                            <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Sort By</label>
                             <select name="sortBy" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all font-medium appearance-none cursor-pointer">
-                                <option value="date_desc" selected="@(ViewBag.SortBy == "date_desc")">Mới nhất</option>
-                                <option value="date_asc" selected="@(ViewBag.SortBy == "date_asc")">Cũ nhất</option>
-                                <option value="amount_desc" selected="@(ViewBag.SortBy == "amount_desc")">Giá cao nhất</option>
-                                <option value="amount_asc" selected="@(ViewBag.SortBy == "amount_asc")">Giá thấp nhất</option>
+                                <option value="date_desc" selected="@(ViewBag.SortBy == "date_desc")">Newest</option>
+                                <option value="date_asc" selected="@(ViewBag.SortBy == "date_asc")">Oldest</option>
+                                <option value="amount_desc" selected="@(ViewBag.SortBy == "amount_desc")">Price: High to Low</option>
+                                <option value="amount_asc" selected="@(ViewBag.SortBy == "amount_asc")">Price: Low to High</option>
                             </select>
                         </div>
 
                         <button type="submit" class="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-indigo-600 transition-all shadow-lg shadow-slate-900/10 active:scale-95">
-                            Áp dụng bộ lọc
+                            Apply Filters
                         </button>
 
                         @if (!string.IsNullOrEmpty(ViewBag.Keyword) || !string.IsNullOrEmpty(ViewBag.Status) || ViewBag.SortBy != "date_desc")
                         {
                             <a href="/Transaction/History" class="block w-full py-4 bg-slate-100 text-slate-600 text-center font-bold rounded-2xl hover:bg-slate-200 transition-all">
-                                Xóa tất cả
+                                Reset Filters
                             </a>
                         }
                     </form>
@@ -99,20 +99,20 @@
                                     <span class="text-[10px] font-bold text-slate-500">@(item.Date.HasValue ? item.Date.Value.ToString("dd MMM, yyyy HH:mm") : "—")</span>
                                 </div>
                                 <h3 class="text-lg font-black text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">@item.CourseTitle</h3>
-                                <p class="text-sm text-slate-500 font-medium mt-0.5">Giảng viên: <span class="text-slate-700 font-bold">@item.InstructorName</span></p>
+                                <p class="text-sm text-slate-500 font-medium mt-0.5">Instructor: <span class="text-slate-700 font-bold">@item.InstructorName</span></p>
                             </div>
 
                             <div class="flex flex-col items-center md:items-end gap-3 flex-shrink-0">
                                 <div class="text-xl font-black text-slate-900">
-                                    @((item.Currency ?? "VND").ToUpper()) @item.Amount.ToString("N2")
+                                    @((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
                                 </div>
                                 
                                 @{
                                     var (bgClass, textClass, dotClass, label) = item.Status switch
                                     {
-                                        "succeeded" => ("bg-emerald-50", "text-emerald-600", "bg-emerald-500", "Thành công"),
-                                        "failed"    => ("bg-rose-50",    "text-rose-600",    "bg-rose-500",    "Thất bại"),
-                                        "pending"   => ("bg-amber-50",   "text-amber-600",   "bg-amber-400",   "Đang xử lý"),
+                                        "succeeded" => ("bg-emerald-50", "text-emerald-600", "bg-emerald-500", "Completed"),
+                                        "failed"    => ("bg-rose-50",    "text-rose-600",    "bg-rose-500",    "Failed"),
+                                        "pending"   => ("bg-amber-50",   "text-amber-600",   "bg-amber-400",   "Pending"),
                                         _           => ("bg-slate-50",   "text-slate-500",   "bg-slate-400",   item.Status ?? "—")
                                     };
                                 }
@@ -172,10 +172,10 @@
                         <div class="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-6">
                             <span class="material-symbols-outlined text-5xl text-slate-200">receipt_long</span>
                         </div>
-                        <h2 class="text-2xl font-black text-slate-900 mb-2">Không tìm thấy giao dịch</h2>
-                        <p class="text-slate-500 font-medium max-w-sm mx-auto">Bạn chưa thực hiện giao dịch nào hoặc kết quả tìm kiếm không khớp.</p>
+                        <h2 class="text-2xl font-black text-slate-900 mb-2">No transactions found</h2>
+                        <p class="text-slate-500 font-medium max-w-sm mx-auto">You have not made any purchases yet, or no transactions match your criteria.</p>
                         <a href="/Home" class="inline-flex items-center gap-2 mt-8 px-8 py-4 bg-primary text-white font-bold rounded-2xl hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-95">
-                            Khám phá khóa học
+                            Explore Courses
                             <span class="material-symbols-outlined text-[20px]">explore</span>
                         </a>
                     </div>

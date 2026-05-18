@@ -4,7 +4,7 @@
     else if (actor == "Instructor") { Layout = "_InstructorLayout"; }
     else { Layout = "_Layout"; }
     
-    ViewData["Title"] = "Tin nhắn & Hỗ trợ";
+    ViewData["Title"] = "Messages & Support";
     
     // Lấy Token từ Cookie
     var token = Context.Request.Cookies["AccessToken"] ?? "";
@@ -24,29 +24,29 @@
     <aside class="chat-sidebar">
         <div class="sidebar-header flex flex-col gap-3">
             <div class="d-flex justify-content-between align-items-center">
-                <h4 class="m-0 font-bold text-slate-800">Trò chuyện</h4>
+                <h4 class="m-0 font-bold text-slate-800">Chats</h4>
             </div>
             
             <div class="search-box">
                 <span class="material-symbols-outlined">search</span>
-                <input type="text" id="search-chats" placeholder="Tìm kiếm người dùng...">
+                <input type="text" id="search-chats" placeholder="Search users...">
             </div>
 
             @* Compact Premium Sort and Filter controls *@
             <div class="flex gap-2 items-center w-full">
                 <div class="relative flex-1">
                     <select id="chat-filter-status" class="w-full appearance-none border border-slate-200 rounded-lg pl-2.5 pr-8 py-1.5 text-xs font-semibold bg-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-slate-600 cursor-pointer shadow-sm">
-                        <option value="all">Tất cả tin</option>
-                        <option value="unread">Chưa đọc</option>
+                        <option value="all">All Messages</option>
+                        <option value="unread">Unread</option>
                     </select>
                     <span class="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[16px]">arrow_drop_down</span>
                 </div>
 
                 <div class="relative flex-1">
                     <select id="chat-sort" class="w-full appearance-none border border-slate-200 rounded-lg pl-2.5 pr-8 py-1.5 text-xs font-semibold bg-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-slate-600 cursor-pointer shadow-sm">
-                        <option value="recent">Mới hoạt động</option>
-                        <option value="name">Tên (A-Z)</option>
-                        <option value="unread-first">Chưa đọc trước</option>
+                        <option value="recent">Recently Active</option>
+                        <option value="name">Name (A-Z)</option>
+                        <option value="unread-first">Unread First</option>
                     </select>
                     <span class="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[16px]">arrow_drop_down</span>
                 </div>
@@ -63,20 +63,20 @@
             <div class="p-5 bg-white rounded-circle shadow-sm mb-4">
                 <span class="material-symbols-outlined text-4xl text-emerald-500">forum</span>
             </div>
-            <h5 class="font-bold text-slate-700">Chào mừng trở lại!</h5>
-            <p class="text-sm">Chọn một cuộc hội thoại để bắt đầu kết nối.</p>
+            <h5 class="font-bold text-slate-700">Welcome back!</h5>
+            <p class="text-sm">Select a conversation to start chatting.</p>
         </div>
 
         <div id="chat-content" class="chat-content-panel flex-1 flex flex-col min-h-0 overflow-hidden" style="display:none;">
             <header class="chat-header">
                 <div class="d-flex align-items-center gap-3">
                     <div class="avatar-wrapper">
-                        <img id="header-avatar" src="" class="avatar-img shadow-sm">
+                        <img id="header-avatar" src="" class="avatar-img shadow-sm" onerror="this.src='/img/default-avatar.png'">
                         <div class="status-dot"></div>
                     </div>
                     <div>
                         <h6 id="header-name" class="m-0 font-bold text-slate-800">...</h6>
-                        <span id="header-status" class="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Đang trực tuyến</span>
+                        <span id="header-status" class="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Online</span>
                     </div>
                 </div>
             </header>
@@ -98,12 +98,12 @@
                     }
                     else
                     {
-                        <span class="material-symbols-outlined text-slate-200 cursor-not-allowed" title="Tính năng gửi file đang bị tắt">attach_file</span>
+                        <span class="material-symbols-outlined text-slate-200 cursor-not-allowed" title="File sharing is currently disabled">attach_file</span>
                     }
                     <div id="attachment-preview" class="hidden absolute bottom-full left-0 right-0 bg-white border-t border-slate-100 p-2 flex gap-2 overflow-x-auto shadow-lg rounded-t-xl">
                         <!-- Preview selected files -->
                     </div>
-                    <textarea id="msg-input" class="chat-input-area custom-scroll" placeholder="Viết gì đó cho đối phương..." rows="1"></textarea>
+                    <textarea id="msg-input" class="chat-input-area custom-scroll" placeholder="Type a message..." rows="1"></textarea>
                     <button id="btn-send" class="btn-chat-send">
                         <span class="material-symbols-outlined">send</span>
                     </button>
@@ -172,7 +172,7 @@
             connection.on("UserTyping", (data) => {
                 const typingBox = document.getElementById('typing-box');
                 if (activeChatId === data.chatId && data.accountId !== myAccountId) {
-                    typingBox.innerText = `${data.name} đang soạn tin...`;
+                    typingBox.innerText = `${data.name} is typing...`;
                     typingBox.style.display = data.isTyping ? 'block' : 'none';
                 }
             });
@@ -195,7 +195,7 @@
             if (chats.length === 0) {
                 container.innerHTML = `
                     <div class="p-6 text-center text-xs text-slate-400">
-                        Không tìm thấy hội thoại nào.
+                        No conversations found.
                     </div>
                 `;
                 return;
@@ -205,7 +205,7 @@
                 <div class="chat-card ${activeChatId === c.chatId ? 'active' : ''}" 
                      onclick="selectChat(${c.chatId}, '${c.partnerName}', '${c.partnerAvatar}')">
                     <div class="avatar-wrapper">
-                        <img src="${c.partnerAvatar || '/img/default-avatar.png'}" class="avatar-img">
+                        <img src="${c.partnerAvatar || '/img/default-avatar.png'}" class="avatar-img" onerror="this.src='/img/default-avatar.png'">
                         <div class="status-dot" style="background: #10b981"></div>
                     </div>
                     <div class="flex-1 min-w-0">
@@ -214,7 +214,7 @@
                             <span class="text-[10px] text-slate-400">${c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-1">
-                            <p class="text-xs text-slate-500 m-0 truncate">${c.lastMessage || 'Bắt đầu trò chuyện...'}</p>
+                            <p class="text-xs text-slate-500 m-0 truncate">${c.lastMessage || 'Start chatting...'}</p>
                             ${c.unreadCount > 0 ? `<span class="unread-count">${c.unreadCount}</span>` : ''}
                         </div>
                     </div>
@@ -246,7 +246,7 @@
             if (sortVal === 'recent') {
                 filtered.sort((a, b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0));
             } else if (sortVal === 'name') {
-                filtered.sort((a, b) => a.partnerName.localeCompare(b.partnerName, 'vi'));
+                filtered.sort((a, b) => a.partnerName.localeCompare(b.partnerName, 'en'));
             } else if (sortVal === 'unread-first') {
                 filtered.sort((a, b) => (b.unreadCount || 0) - (a.unreadCount || 0));
             }
@@ -274,7 +274,12 @@
             document.getElementById('empty-state').style.display = 'none';
             document.getElementById('chat-content').style.display = 'flex';
             document.getElementById('header-name').innerText = name;
-            document.getElementById('header-avatar').src = avatar || '/img/default-avatar.png';
+            
+            let cleanAvatar = avatar;
+            if (!cleanAvatar || cleanAvatar === 'null' || cleanAvatar === 'undefined' || cleanAvatar.trim() === '') {
+                cleanAvatar = '/img/default-avatar.png';
+            }
+            document.getElementById('header-avatar').src = cleanAvatar;
 
             loadChats(); // Update active class
 
@@ -311,7 +316,7 @@
                             } else {
                                 return `<a href="${a.fileUrl}" target="_blank" class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100 hover:bg-slate-100 transition-colors text-xs text-slate-700 max-w-[250px]">
                                             <span class="material-symbols-outlined text-slate-400">description</span>
-                                            <span class="truncate flex-1">${a.fileName || 'Tài liệu'}</span>
+                                            <span class="truncate flex-1">${a.fileName || 'Document'}</span>
                                             <span class="material-symbols-outlined text-slate-400 text-sm">download</span>
                                         </a>`;
                             }
@@ -347,7 +352,7 @@
                         <div class="avatar-frame ${frameClass}"></div>
                     </div>
                     <div class="bubble-container">
-                        <div class="sender-name">${isMe ? 'Bạn' : m.senderName}</div>
+                        <div class="sender-name">${isMe ? 'You' : m.senderName}</div>
                         <div class="bubble shadow-sm">
                             <div>${m.content}</div>
                             ${attachmentHtml}
@@ -381,7 +386,7 @@
             try {
                 await connection.invoke("SendMessage", {
                     chatId: activeChatId,
-                    content: content || (attachments.length > 0 ? "Đã gửi tệp đính kèm" : ""),
+                    content: content || (attachments.length > 0 ? "Sent an attachment" : ""),
                     attachments: attachments
                 });
                 input.value = "";
@@ -486,7 +491,13 @@
             const urlParams = new URLSearchParams(window.location.search);
             const chatId = urlParams.get('chatId');
             if (chatId) {
-                selectChat(parseInt(chatId), "Hỗ trợ kỹ thuật", "");
+                const parsedId = parseInt(chatId);
+                const foundChat = allChats.find(c => c.chatId === parsedId);
+                if (foundChat) {
+                    selectChat(parsedId, foundChat.partnerName, foundChat.partnerAvatar);
+                } else {
+                    selectChat(parsedId, "Technical Support", "/img/default-avatar.png");
+                }
             }
         });
     </script>

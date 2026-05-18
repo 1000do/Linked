@@ -148,14 +148,14 @@
 
         async function restoreMaterial(id, name) {
             const { isConfirmed } = await Swal.fire({
-                title: 'Khôi phục tài liệu?',
-                text: `Bạn có chắc muốn khôi phục "${name}" về bài học cũ không?`,
+                title: 'Restore material?',
+                text: `Are you sure you want to restore "${name}" back to its original lesson?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#006a62',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Có, khôi phục',
-                cancelButtonText: 'Hủy'
+                confirmButtonText: 'Yes, restore',
+                cancelButtonText: 'Cancel'
             });
 
             if (isConfirmed) {
@@ -170,30 +170,30 @@
                     const result = await resp.json();
                     if (result.success) {
                         Swal.fire({
-                            title: 'Đã khôi phục!',
-                            text: `"${name}" đã được đưa trở lại bài học thành công.`,
+                            title: 'Restored!',
+                            text: `"${name}" has been successfully restored to the lesson.`,
                             icon: 'success',
                             confirmButtonColor: '#006a62'
                         }).then(() => dismissRow(id));
                     } else {
-                        Swal.fire('Lỗi', result.message || 'Không thể khôi phục tài liệu', 'error');
+                        Swal.fire('Error', result.message || 'Could not restore material', 'error');
                     }
                 } catch(e) {
-                    Swal.fire('Lỗi', 'Đã có lỗi xảy ra: ' + e.message, 'error');
+                    Swal.fire('Error', 'An error occurred: ' + e.message, 'error');
                 }
             }
         }
 
         async function confirmPermanentDelete(id, name) {
             const { isConfirmed } = await Swal.fire({
-                title: 'Xóa vĩnh viễn?',
-                text: `Bạn đang chuẩn bị xóa vĩnh viễn "${name}" khỏi Cloudinary và cơ sở dữ liệu. Hành động này không thể hoàn tác!`,
+                title: 'Delete forever?',
+                text: `You are about to permanently delete "${name}" from Cloudinary and the database. This action cannot be undone!`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Vâng, xóa vĩnh viễn',
-                cancelButtonText: 'Hủy'
+                confirmButtonText: 'Yes, delete forever',
+                cancelButtonText: 'Cancel'
             });
 
             if (isConfirmed) {
@@ -208,16 +208,16 @@
                     const result = await resp.json();
                     if (result.success) {
                         Swal.fire({
-                            title: 'Đã xóa!',
-                            text: 'Tài liệu đã được xóa vĩnh viễn thành công.',
+                            title: 'Deleted!',
+                            text: 'The material has been permanently deleted.',
                             icon: 'success',
                             confirmButtonColor: '#006a62'
                         }).then(() => dismissRow(id));
                     } else {
-                        Swal.fire('Lỗi', result.message || 'Không thể xóa tài liệu', 'error');
+                        Swal.fire('Error', result.message || 'Could not delete material', 'error');
                     }
                 } catch(e) { 
-                    Swal.fire('Lỗi', 'Đã có lỗi xảy ra: ' + e.message, 'error'); 
+                    Swal.fire('Error', 'An error occurred: ' + e.message, 'error'); 
                 }
             }
         }

@@ -138,46 +138,46 @@
             
             <a href="/AdminApproval" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
                 <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">how_to_reg</span> 
-                Duyệt Giảng viên
+                Instructor Approvals
             </a>
             <a href="/AdminModeration/Courses" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
                 <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">school</span> 
-                Duyệt Khóa học
+                Course Moderation
             </a>
             <a href="/AdminModeration/Reports" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
                 <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">report</span> 
-                Khiếu nại
+                User Reports
             </a>
             <a href="/Notification/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group relative">
                 <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">notifications</span> 
-                Thông báo
+                Notifications
                 <span class="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-red-500 hidden" id="admin-noti-badge"></span>
             </a>
             @if (!isStaff) {
                 <a href="/Coupon/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
                     <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">local_activity</span> 
-                    Coupon & Khuyến mãi
+                    Coupons & Offers
                 </a>
             }
             <a href="/Chat/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
                 <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">forum</span> 
-                Giám sát Chat
+                Monitor Chats
             </a>
             <a href="/AdminAvatarFrame" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
                 <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">military_tech</span> 
-                Quản lý Khung Avatar
+                Manage Avatar Frames
             </a>
 
             @if (!isStaff) {
-                <div class="px-3 mb-3 mt-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tài chính & Giao dịch</div>
+                <div class="px-3 mb-3 mt-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Finance & Transactions</div>
                 
                 <a href="/AdminFinance" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
                     <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">monitoring</span> 
-                    Tổng quan doanh thu
+                    Revenue Dashboard
                 </a>
                 <a href="/Transaction/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
                     <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">receipt_long</span> 
-                    Lịch sử giao dịch
+                    Transaction Logs
                 </a>
             }
             
@@ -197,11 +197,11 @@
                 FrameUrl = ""
             })
             <div class="flex flex-col flex-1 overflow-hidden">
-                <span class="text-xs font-bold text-slate-700 truncate">Chào, @managerName</span>
+                <span class="text-xs font-bold text-slate-700 truncate">Hi, @managerName</span>
                 <form method="post" action="/Account/Logout" class="m-0">
                     @Html.AntiForgeryToken()
                     <button type="submit" class="text-[10px] text-red-500 hover:underline font-medium bg-transparent border-none p-0 cursor-pointer text-left">
-                        Đăng xuất tài khoản
+                        Logout Account
                     </button>
                 </form>
             </div>

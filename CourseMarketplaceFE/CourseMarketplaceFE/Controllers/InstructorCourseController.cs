@@ -54,7 +54,7 @@ namespace CourseMarketplaceFE.Controllers
 
                         if (status != "Approved")
                         {
-                            context.Result = RedirectToAction("Dashboard", "Instructor");
+                            context.Result = RedirectToAction("ApplicationStatus", "Instructor");
                             return;
                         }
                     }
@@ -110,18 +110,21 @@ namespace CourseMarketplaceFE.Controllers
                     viewModel.TotalRevenue = statsData.GetProperty("totalRevenue").GetDecimal();
                 }
 
-                // 2. Fetch Courses
-                var resp = await _api.GetAsync("courses/my-courses");
+                // 2. Fetch Courses from the new paged, database-driven endpoint!
+                int pageSize = 6;
+                var url = $"courses/my-courses?search={Uri.EscapeDataString(searchTerm ?? "")}&status={Uri.EscapeDataString(status ?? "")}&page={page}&pageSize={pageSize}";
+                var resp = await _api.GetAsync(url);
                 if (resp.IsSuccessStatusCode)
                 {
                     var json = await resp.Content.ReadAsStringAsync();
                     using var doc = JsonDocument.Parse(json);
                     var root = doc.RootElement;
 
-                    if (root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array)
+                    if (root.TryGetProperty("data", out var dataEl))
                     {
+                        var coursesEl = dataEl.GetProperty("courses");
                         var allCourses = new List<CourseListViewModel>();
-                        foreach (var item in dataEl.EnumerateArray())
+                        foreach (var item in coursesEl.EnumerateArray())
                         {
                             allCourses.Add(new CourseListViewModel
                             {
@@ -136,28 +139,9 @@ namespace CourseMarketplaceFE.Controllers
                             });
                         }
 
-                        // Apply Search & Filter
-                        var filtered = allCourses.AsQueryable();
-                        if (!string.IsNullOrEmpty(searchTerm))
-                        {
-                            filtered = filtered.Where(c => c.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
-                        }
-                        if (!string.IsNullOrEmpty(status) && status != "All")
-                        {
-                            filtered = filtered.Where(c => c.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
-                        }
-
-                        // Pagination
-                        int pageSize = 6;
-                        var final = filtered.ToList();
-                        viewModel.TotalItems = final.Count;
-                        viewModel.TotalPages = (int)Math.Ceiling(viewModel.TotalItems / (double)pageSize);
-                        
-                        viewModel.Courses = final
-                            .OrderByDescending(c => c.UpdatedAt)
-                            .Skip((page - 1) * pageSize)
-                            .Take(pageSize)
-                            .ToList();
+                        viewModel.TotalItems = dataEl.GetProperty("totalItems").GetInt32();
+                        viewModel.TotalPages = dataEl.GetProperty("totalPages").GetInt32();
+                        viewModel.Courses = allCourses;
                     }
                 }
             }
