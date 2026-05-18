@@ -1,12 +1,13 @@
-using CourseMarketplaceBE.Application.DTOs;
-using CourseMarketplaceBE.Application.IServices;
-using CourseMarketplaceBE.Domain.Entities;
-using CourseMarketplaceBE.Domain.IRepositories;
-using CourseMarketplaceBE.Domain.Constants;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
+using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Constants;
+using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.IRepositories;
 using Microsoft.Extensions.Logging;
 
 namespace CourseMarketplaceBE.Application.Services
@@ -28,10 +29,13 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly ICourseService _courseService;
         private readonly ILessonService _lessonService;
         private readonly ILogger<ModerationService> _logger;
- 
+
+
         public ModerationService(
-            ICourseRepository courseRepository, 
-            IChatRepository chatRepository, 
+            ICourseRepository courseRepository,
+
+            IChatRepository chatRepository,
+
             INotificationService notificationService,
             IMaterialRepository materialRepository,
             ILessonRepository lessonRepository,
@@ -170,7 +174,8 @@ namespace CourseMarketplaceBE.Application.Services
 
             var currentFlags = (course.CourseFlagCount ?? 0) + 1;
             course.CourseFlagCount = currentFlags;
-            course.CourseStatus = CourseStatus.Flagged.ToValue(); 
+            course.CourseStatus = CourseStatus.Flagged.ToValue();
+
             course.ModerationFeedback = $"[VIOLATION FLAG #{currentFlags}] {reason}";
             course.UpdatedAt = DateTime.Now;
 
@@ -196,7 +201,8 @@ namespace CourseMarketplaceBE.Application.Services
                 {
                     subject = "Thông báo ngừng kinh doanh khóa học vĩnh viễn (Lần 3)";
                     message = $"Khóa học '{course.Title}' của bạn đã vi phạm chính sách lần thứ 3. Hệ thống quyết định ngừng kinh doanh khóa học này vĩnh viễn. Bạn sẽ không thể chỉnh sửa nội dung hoặc nhận học viên mới, nhưng học viên cũ vẫn có thể truy cập nội dung đã mua.";
-                    
+
+
                     course.CourseStatus = CourseStatus.Archived.ToValue();
                     _courseRepository.Update(course);
                     await _courseRepository.SaveChangesAsync();
@@ -351,7 +357,8 @@ namespace CourseMarketplaceBE.Application.Services
             report.UserReportsStatus = dto.Status;
             report.ResolutionNote = dto.ResolutionNote;
             report.ResolvedAt = DateTime.Now;
-            
+
+
             await _chatRepository.SaveChangesAsync();
             return true;
         }
@@ -409,9 +416,12 @@ namespace CourseMarketplaceBE.Application.Services
         public async Task<AssignAIModeratorsToCourseResult> AssignAIModeratorsToCourseAsync(int courseId)
         {
             var thresholds = await _aiModerationService.GetScoreThresholdConfigAsync(SystemConfigKeys.ModerationThreshold);
-            var models = await _aiModerationService.GetModelsByTypeAsync(AiModelType.Moderator);
-            var modelIds = models.Select(m => m.model_id).ToList();
-            
+            var classifiers = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.Classifier);
+            var generators = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.Generator);
+            var modelIds = classifiers.Concat(generators).Select(m => m.model_id).ToList();
+
+
+
             foreach (var mid in modelIds)
             {
                 var existing = await _courseService.GetByModelAndCourseAsync(mid, courseId);
@@ -421,7 +431,7 @@ namespace CourseMarketplaceBE.Application.Services
                     {
                         CourseId = courseId,
                         ModelId = mid,
-                        Role = "moderator",
+                        Role = AiModelConst.Moderator,
                         IsEnabled = true,
                         ConfigJson = thresholds
                     });
@@ -444,9 +454,11 @@ namespace CourseMarketplaceBE.Application.Services
                 var materialIds = course?.Lessons?
                     .SelectMany(lesson => lesson.LearningMaterials?.Select(material => material.MaterialId) ?? [])
                     .ToList() ?? [];
-                
+
+
                 await PrepareMaterialEmbeddingsAsync();
-                return new PrepareForCourseAIModerationResult{
+                return new PrepareForCourseAIModerationResult
+                {
                     CourseId = courseId,
                     MaterialIds = materialIds,
                     ModelIds = assignmentResult.ModelIds,
@@ -460,7 +472,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
         }
 
-        public async Task ResolveCourseAIModerationResult(CourseAIModerationResult result)
+        public async Task ResolveCourseAIModerationResult(CourseModerationResult result)
         {
             var courseId = result.CourseId;
             var course = await _courseService.GetCourseWithDetailsAsync(courseId, 0);
@@ -672,7 +684,8 @@ namespace CourseMarketplaceBE.Application.Services
                 {
                     subject = "Thông báo ngừng kinh doanh khóa học vĩnh viễn (Lần 3)";
                     message = $"Khóa học '{course.Title}' của bạn đã vi phạm chính sách lần thứ 3. Chi tiết:\n{detailedReason}\nHệ thống quyết định ngừng kinh doanh khóa học này vĩnh viễn. Bạn sẽ không thể chỉnh sửa nội dung hoặc nhận học viên mới, nhưng học viên cũ vẫn có thể truy cập nội dung đã mua.";
-                    
+
+
                     course.CourseStatus = CourseStatus.Archived.ToValue();
                     _courseRepository.Update(course);
                     await _courseRepository.SaveChangesAsync();
@@ -692,45 +705,59 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task LogCourseAiModeration(LogCourseAiModerationCommand command)
         {
-            var result = command.CourseAIModerationResult;
+            _logger.LogInformation("Logging course AI moderation for course {CourseId}", command.CourseModerationResult.CourseId);
+            var result = command.CourseModerationResult;
             foreach (var stage in result.stageLogs)
             {
+                _logger.LogInformation("Logging course AI moderation for course {CourseId} and stage {Stage}", command.CourseModerationResult.CourseId, stage.stage);
                 var integration = await _aiIntegrationRepository.GetByModelAndCourseAsync(stage.model_id, result.CourseId);
-                if(integration == null) continue;
+                if (integration == null)
+                {
+                    _logger.LogWarning("Integration not found for course {CourseId} and model {ModelId}", result.CourseId, stage.model_id);
+                    continue;
+                }
 
                 var semRq = command.SemanticDuplicationRequest;
                 var harmRq = command.CourseHarmfulRequest;
 
+                _logger.LogInformation("Saving Log for course AI moderation for course {CourseId} and integration {IntegrationId}", command.CourseModerationResult.CourseId, integration.Id);
+                var inputJson = JsonSerializer.Serialize(new CourseAiUsageLogInput
+                {
+                    CourseId = result.CourseId,
+                    MaterialIds = semRq.MaterialIds,
+                    SimilarityScoreThreshold = semRq.similarityScoreThreshold,
+                    SpamScoreThreshold = harmRq.spamScoreThreshold,
+                    ToxicScoreThreshold = harmRq.toxicScoreThreshold
+                });
+                _logger.LogInformation("Input JSON for course AI moderation for course {CourseId} and integration {IntegrationId}: {InputJson}", command.CourseModerationResult.CourseId, integration.Id, inputJson);
+                var outputJson = JsonSerializer.Serialize(new CourseAiUsageLogOutput
+                {
+                    Stage = stage.stage,
+                    Step = stage.step,
+                    Timestamp = stage.timestamp,
+                    Result = stage.result,
+                    Reason = stage.reason,
+                    FlaggedFields = stage.flaggedFields,
+                    Details = stage.details,
+                    ConfidenceScore = stage.confidence_score
+
+                });
+                _logger.LogInformation("Output JSON for course AI moderation for course {CourseId} and integration {IntegrationId}: {OutputJson}", command.CourseModerationResult.CourseId, integration.Id, outputJson);
                 await _aiModerationService.SaveCourseAiUsageLog(new SaveCourseAiUsageLogCommand
                 {
                     integration_id = integration.Id,
                     interaction_type = command.InteractionType,
-                    input_json = new Dictionary<string, object> 
-                    { 
-                        { "course_id", result.CourseId },
-                        { "material_ids", semRq.MaterialIds },
-                        {"similarity_threshold",semRq.similarityScoreThreshold},
-                        { "spam_threshold", harmRq.spamScoreThreshold },
-                        { "toxic_threshold", harmRq.toxicScoreThreshold}
-                    },
-                    output_json = new Dictionary<string, object> 
-                    { 
-                        { "stage", stage.result ?? "N/A" }, 
-                        { "result", stage.result ?? "N/A" }, 
-                        { "result", stage.result ?? "N/A" }, 
-                        { "result", stage.result ?? "N/A" }, 
-                        { "result", stage.result ?? "N/A" }, 
-                        { "reason", stage.reason ?? "N/A" }, 
-                        { "details", stage.details ?? new() } 
-                    },
+                    input_json = inputJson,
+                    output_json = outputJson,
                     latency_ms = stage.latency_ms,
                     token_usage = 0,
                     error_message = command.ErrorMessage
                 });
+                _logger.LogInformation("Saved Log for course AI moderation for course {CourseId} and integration {IntegrationId}", command.CourseModerationResult.CourseId, integration.Id);
             }
         }
 
-        public async Task<CourseAIModerationResult> HandleCourseModerationWithAIAsync(CouresModerationRequest request)
+        public async Task<CourseModerationResult> HandleCourseModerationWithAIAsync(CouresModerationRequest request)
         {
             try
             {
@@ -738,14 +765,15 @@ namespace CourseMarketplaceBE.Application.Services
                 if (!isHealthy)
                 {
                     await NotifyAdminAsync("AI Service Unhealthy", $"Course {request.CourseId} requires manual review due to AI service being unhealthy.", "/AdminModeration/Courses");
-                    return new CourseAIModerationResult { CourseId = request.CourseId, ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
+                    return new CourseModerationResult { CourseId = request.CourseId, ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
                 }
 
                 var prep = await PrepareForCourseAIModeration(request.CourseId);
 
                 var thresholds = prep.Thresholds;
                 var materialIds = prep.MaterialIds;
-                
+
+
                 var semanticReq = new SemanticDuplicationRequest
                 {
                     CourseId = request.CourseId,
@@ -761,7 +789,8 @@ namespace CourseMarketplaceBE.Application.Services
                 };
 
                 var result = await _aiModerationService.ModerateCourseFullPipelineAsync(semanticReq, harmfulReq);
-                
+
+
                 if (result.ModerationStatus == ModerationStatus.ManualAudit.ToValue())
                 {
                     await NotifyAdminAsync("Manual Audit Required", $"Course {request.CourseId} flagged for manual review by AI.", "/AdminModeration/Courses");
@@ -775,7 +804,7 @@ namespace CourseMarketplaceBE.Application.Services
                 {
                     SemanticDuplicationRequest = semanticReq,
                     CourseHarmfulRequest = harmfulReq,
-                    CourseAIModerationResult = result,
+                    CourseModerationResult = result,
                     InteractionType = "moderation",
                     ErrorMessage = null
                 });
@@ -789,12 +818,13 @@ namespace CourseMarketplaceBE.Application.Services
             }
         }
 
-        public async Task HandleCourseModerationAsync(CouresModerationRequest request)
+        public async Task<CourseModerationResult> HandleCourseModerationAsync(CouresModerationRequest request)
         {
             try
             {
                 await _courseService.UpdateCourseStatusAsync(request.CourseId, CourseStatus.Pending.ToValue(), request.InstructorId);
-                
+
+
                 var dupResult = await CheckExactDuplication(request.CourseId);
                 if (dupResult.IsDup)
                 {
@@ -809,10 +839,20 @@ namespace CourseMarketplaceBE.Application.Services
                         CourseId = request.CourseId,
                         Items = items
                     });
-                    return;
+
+
+                    return new CourseModerationResult
+                    {
+                        CourseId = request.CourseId,
+                        ModerationStatus = ModerationStatus.Rejected.ToValue(),
+                        flaggedFields = dupResult.DupFields,
+                        overall_confidence_score = 1.0f,
+                        total_latency_ms = 0,
+                        stageLogs = []
+                    };
                 }
 
-                await HandleCourseModerationWithAIAsync(request);
+                return await HandleCourseModerationWithAIAsync(request);
             }
             catch (Exception ex)
             {
