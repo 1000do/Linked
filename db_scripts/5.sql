@@ -462,7 +462,8 @@ CREATE TABLE ai_models (
     model_status VARCHAR(50),
     description TEXT,
     model_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    model_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    model_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	model_path VARCHAR(255)
 );
 
 CREATE TABLE courses_ai_integrations (
@@ -724,3 +725,15 @@ BEGIN
 
     RAISE NOTICE 'Seeding Admin, Staff & Avatar Frames hoàn tất!';
 END $$;
+
+
+
+
+	INSERT INTO 
+	ai_models (model_name,model_type,model_provider,model_version, model_path, model_status,description)
+	VALUES
+	('spam_text_classifier','moderator','local','1','/app/models/spam_1/','active','a spam text classifier that was fine-tuned from distilbert multilingual cased'),
+	('toxic_text_classifier','moderator','local','3','/app/models/toxic_3/','active','a toxic text classifier that was fine-tuned from distilbert multilingual cased'),
+	('clip','generator','openai','1','openai/clip-vit-base-patch32','active','a multimodal model that was used to generate embeddings'),
+	('distilbert','generator','hugging_face','1','distilbert-base-multilingual-cased','active','a language model that was used to generate embeddings')
+	
