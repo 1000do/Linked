@@ -1,20 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
+using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Constants;
+using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.IRepositories;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
-using CourseMarketplaceBE.Application.DTOs;
-using CourseMarketplaceBE.Application.IServices;
-using CourseMarketplaceBE.Domain.Entities;
-using CourseMarketplaceBE.Domain.IRepositories;
-using CourseMarketplaceBE.Domain.Constants;
-using System.Linq;
 
 namespace CourseMarketplaceBE.Application.Services
 {
@@ -33,10 +33,12 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly IRedisService _redisService;
         private readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy;
         private readonly IAsyncPolicy<HttpResponseMessage> _circuitBreakerPolicy;
- 
+
+
         private const int MaxRetries = 3;
         private const string BaseUrl = "http://ai-moderation:8000";
- 
+
+
         public AiModerationService(
             HttpClient httpClient,
             ILogger<AiModerationService> logger,
@@ -53,8 +55,9 @@ namespace CourseMarketplaceBE.Application.Services
             _configRepository = configRepository;
             _courseRepository = courseRepository;
             _redisService = redisService;
- 
+
             // Setup retry policy
+
             _retryPolicy = Policy
                 .Handle<HttpRequestException>()
                 .Or<TaskCanceledException>()
@@ -66,8 +69,9 @@ namespace CourseMarketplaceBE.Application.Services
                     {
                         _logger.LogWarning($"Retry {retryCount} after {timespan.TotalSeconds}s");
                     });
- 
+
             // Setup circuit breaker policy
+
             _circuitBreakerPolicy = Policy
                 .Handle<HttpRequestException>()
                 .Or<TaskCanceledException>()
@@ -84,36 +88,46 @@ namespace CourseMarketplaceBE.Application.Services
                         _logger.LogInformation("Circuit breaker reset");
                     });
         }
- 
-        public async Task<CourseAIModerationResult> ModerateCourseFullPipelineAsync(SemanticDuplicationRequest semanticReq, CourseHarmfulRequest harmfulReq)
+
+
+        public async Task<CourseModerationResult> ModerateCourseFullPipelineAsync(SemanticDuplicationRequest semanticReq, CourseHarmfulRequest harmfulReq)
         {
             var request = new
             {
                 semantic = semanticReq,
                 harmful = harmfulReq
             };
- 
+
+
             var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/moderation/full-pipeline", request);
             response.EnsureSuccessStatusCode();
-            return await response.Content.ReadFromJsonAsync<CourseAIModerationResult>() ?? new CourseAIModerationResult();
+            return await response.Content.ReadFromJsonAsync<CourseModerationResult>() ?? new CourseModerationResult();
         }
- 
+
+
         public async Task<Dictionary<string, float>> GetScoreThresholdConfigAsync(string key)
         {
             var val = await _configRepository.GetValueAsync(key);
-            if (string.IsNullOrEmpty(val)) 
+            if (string.IsNullOrEmpty(val))
+
             {
-                return new Dictionary<string, float> 
-                { 
-                    { "similarity", Domain.Constants.SystemConfigKeys.DefaultSimilarityScoreThreshold }, 
-                    { "spam", Domain.Constants.SystemConfigKeys.DefaultSpamScoreThreshold }, 
-                    { "toxic", Domain.Constants.SystemConfigKeys.DefaultToxicScoreThreshold } 
+                return new Dictionary<string, float>
+                {
+
+                    { "similarity", Domain.Constants.SystemConfigKeys.DefaultSimilarityScoreThreshold },
+
+                    { "spam", Domain.Constants.SystemConfigKeys.DefaultSpamScoreThreshold },
+
+                    { "toxic", Domain.Constants.SystemConfigKeys.DefaultToxicScoreThreshold }
+
                 };
             }
-            
+
+
             return JsonSerializer.Deserialize<Dictionary<string, float>>(val) ?? new Dictionary<string, float>();
         }
- 
+
+
         public async Task<List<int>> GetModelIdsByType(string type)
         {
             var models = await _aiModelRepository.GetByTypeAsync(type);
@@ -151,8 +165,8 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 IntegrationId = command.integration_id,
                 InteractionType = command.interaction_type,
-                InputJson = JsonSerializer.Serialize(command.input_json),
-                OutputJson = JsonSerializer.Serialize(command.output_json),
+                InputJson = command.input_json,
+                OutputJson = command.output_json,
                 LatencyMs = command.latency_ms,
                 TokenUsage = command.token_usage,
                 ErrorMessage = command.error_message,
