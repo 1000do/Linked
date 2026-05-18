@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json.Serialization;
+using CourseMarketplaceBE.Domain.Constants;
 
 
 namespace CourseMarketplaceBE.Application.DTOs
@@ -158,8 +159,8 @@ namespace CourseMarketplaceBE.Application.DTOs
     {
         public int? integration_id { get; set; }
         public string? interaction_type { get; set; }
-        public Dictionary<string, object>? input_json { get; set; }
-        public Dictionary<string, object>? output_json { get; set; }
+        public string? input_json { get; set; }
+        public string? output_json { get; set; }
         public float latency_ms { get; set; }
         public float token_usage { get; set; }
         public string? error_message { get; set; }
@@ -191,15 +192,51 @@ namespace CourseMarketplaceBE.Application.DTOs
         public string? model_version { get; set; }
         public string? model_status { get; set; }
         public string? description { get; set; }
+        public string? model_path { get; set; }
     }
 
     public class LogCourseAiModerationCommand
     {
         public SemanticDuplicationRequest SemanticDuplicationRequest { get; set; } = null!;
         public CourseHarmfulRequest CourseHarmfulRequest { get; set; } = null!;
-        public CourseAIModerationResult CourseAIModerationResult { get; set; } = null!;
+        public CourseModerationResult CourseModerationResult { get; set; } = null!;
         public string InteractionType { get; set; } = "moderation";
         public string? ErrorMessage { get; set; }
+    }
+
+    
+    public class CourseAiUsageLogInput
+    {
+        [JsonPropertyName("course_id")]
+        public int CourseId { get; set; }
+        [JsonPropertyName("material_ids")]
+        public List<int> MaterialIds { get; set; } = [];
+        [JsonPropertyName("similarity_score_threshold")]
+        public float SimilarityScoreThreshold { get; set; } 
+        [JsonPropertyName("spam_score_threshold")]
+        public float SpamScoreThreshold { get; set; } 
+        [JsonPropertyName("toxic_score_threshold")]
+        public float ToxicScoreThreshold { get; set; } 
+    }
+
+    public class CourseAiUsageLogOutput{
+        [JsonPropertyName("stage")]
+        public int Stage { get; set; }
+        [JsonPropertyName("step")]
+        public int Step { get; set; }
+        [JsonPropertyName("timestamp")]
+        public DateTime Timestamp { get; set; }
+        [JsonPropertyName("result")]
+        public string? Result { get; set; } = "";
+        [JsonPropertyName("reason")]
+        public string? Reason { get; set; } = "";
+        [JsonPropertyName("flagged_fields")]
+        public List<string>? FlaggedFields { get; set; } = [];
+        [JsonPropertyName("details")]
+        public Dictionary<string,object>? Details { get; set; } = [];
+        [JsonPropertyName("confidence_score")]
+        public float ConfidenceScore { get; set; } 
+        
     }
 
     /// <summary>
@@ -214,7 +251,7 @@ namespace CourseMarketplaceBE.Application.DTOs
         public float toxic_score_threshold { get; set; }
     }
 
-    public class CourseAIModerationResult
+    public class CourseModerationResult
     {
         public int CourseId { get; set; }
         public string ModerationStatus { get; set; } = null!; // APPROVED, FLAGGED, MANUAL_AUDIT, PENDING
@@ -237,22 +274,23 @@ namespace CourseMarketplaceBE.Application.DTOs
         public string thumbnail_hash { get; set; } = string.Empty;
     }
 
-    public class CourseAIIntegrationResult{
+    public class CourseAIIntegrationResult
+    {
         public int CourseId { get; set; }
-        public int ModelId { get; set; } 
+        public int ModelId { get; set; }
         public bool IsEnabled { get; set; } = true;
         public Dictionary<string, float> ConfigJson { get; set; } = new();
-        public string? Role { get; set; } 
-        
+        public string? Role { get; set; }
+
     }
 
     public class AssignAIModeratorsToCourseResult
     {
         public int CourseId { get; set; }
         public List<int> ModelIds { get; set; } = [];
-        public Dictionary<string,float> Thresholds { get; set; } = new();
-        
-        
+        public Dictionary<string, float> Thresholds { get; set; } = new();
+
+
     }
 
     public class PrepareForCourseAIModerationResult
@@ -260,7 +298,7 @@ namespace CourseMarketplaceBE.Application.DTOs
         public int CourseId { get; set; }
         public List<int> MaterialIds { get; set; } = [];
         public List<int> ModelIds { get; set; } = [];
-        public Dictionary<string,float> Thresholds { get; set; } = new();
+        public Dictionary<string, float> Thresholds { get; set; } = new();
     }
 
     public class CourseAiIntegrationResponse
@@ -271,5 +309,5 @@ namespace CourseMarketplaceBE.Application.DTOs
         public Dictionary<string, float> ConfigJson { get; set; } = new();
         public string? Role { get; set; }
     }
-}    
-    
+}
+
