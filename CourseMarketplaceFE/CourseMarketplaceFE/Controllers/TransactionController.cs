@@ -160,6 +160,11 @@ public class TransactionController : Controller
     public async Task<IActionResult> Instructor(int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null, string tab = "tx",
         int payoutPage = 1, int payoutPageSize = 20, string? payoutKeyword = null, string? payoutSortBy = "date_desc", string? payoutStatus = null)
     {
+        // Guard: Chỉ giảng viên đã duyệt mới được xem Earnings
+        var approvalStatus = Request.Cookies["InstructorApprovalStatus"];
+        if (approvalStatus != "Approved") 
+            return RedirectToAction("ApplicationStatus", "Instructor");
+
         var vm = new InstructorFinancePageVM();
         vm.Transactions.Page = page;
         vm.Transactions.PageSize = pageSize;
@@ -231,13 +236,13 @@ public class TransactionController : Controller
 
         if (resp.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
-            TempData["Error"] = $"Không tìm thấy giao dịch #{id}.";
+            TempData["Error"] = $"Transaction #{id} not found.";
             return RedirectToAction(nameof(Index));
         }
 
         if (!resp.IsSuccessStatusCode)
         {
-            TempData["Error"] = "Không thể tải chi tiết giao dịch.";
+            TempData["Error"] = "Cannot load transaction details.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -246,7 +251,7 @@ public class TransactionController : Controller
 
         if (parsed?.Data == null)
         {
-            TempData["Error"] = "Dữ liệu giao dịch không hợp lệ.";
+            TempData["Error"] = "Invalid transaction data.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -267,13 +272,13 @@ public class TransactionController : Controller
 
         if (resp.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
-            TempData["Error"] = $"Không tìm thấy giao dịch #{id}.";
+            TempData["Error"] = $"Transaction #{id} not found.";
             return RedirectToAction(nameof(History));
         }
 
         if (!resp.IsSuccessStatusCode)
         {
-            TempData["Error"] = "Không thể tải chi tiết giao dịch.";
+            TempData["Error"] = "Cannot load transaction details.";
             return RedirectToAction(nameof(History));
         }
 
@@ -282,7 +287,7 @@ public class TransactionController : Controller
 
         if (parsed?.Data == null)
         {
-            TempData["Error"] = "Dữ liệu giao dịch không hợp lệ.";
+            TempData["Error"] = "Invalid transaction data.";
             return RedirectToAction(nameof(History));
         }
 

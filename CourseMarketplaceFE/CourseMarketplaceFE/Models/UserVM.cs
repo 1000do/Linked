@@ -4,30 +4,30 @@ namespace LinkedLearn.Models.UserVM
 {
     public class RegisterViewModel
     {
-        [Required(ErrorMessage = "Vui lòng nhập họ tên")]
+        [Required(ErrorMessage = "Please enter your full name")]
         public string FullName { get; set; } = null!;
 
-        [Required(ErrorMessage = "Vui lòng nhập Email")]
-        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
-        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@gmail\.com$", ErrorMessage = "Chỉ chấp nhận địa chỉ @gmail.com")]
+        [Required(ErrorMessage = "Please enter your Email")]
+        [EmailAddress(ErrorMessage = "Invalid Email")]
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@gmail\.com$", ErrorMessage = "Only @gmail.com addresses are accepted")]
         public string Email { get; set; } = null!;
 
-        [Required(ErrorMessage = "Vui lòng nhập mật khẩu")]
-        [MinLength(6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự")]
+        [Required(ErrorMessage = "Please enter your password")]
+        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
         public string Password { get; set; } = null!;
 
-        [Required(ErrorMessage = "Vui lòng xác nhận mật khẩu")]
-        [Compare("Password", ErrorMessage = "Mật khẩu không khớp")]
+        [Required(ErrorMessage = "Please confirm your password")]
+        [Compare("Password", ErrorMessage = "Passwords do not match")]
         public string ConfirmPassword { get; set; } = null!;
     }
 
     public class LoginViewModel
     {
-        [Required(ErrorMessage = "Vui lòng nhập Gmail")]
-        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@gmail\.com$", ErrorMessage = "Tài khoản phải là @gmail.com")]
+        [Required(ErrorMessage = "Please enter your Gmail")]
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@gmail\.com$", ErrorMessage = "Account must be a @gmail.com address")]
         public string Identifier { get; set; } = null!;
 
-        [Required(ErrorMessage = "Vui lòng nhập mật khẩu")]
+        [Required(ErrorMessage = "Please enter your password")]
         public string Password { get; set; } = null!;
     }
 

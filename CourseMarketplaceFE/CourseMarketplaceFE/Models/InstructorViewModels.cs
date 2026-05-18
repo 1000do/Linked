@@ -15,14 +15,14 @@ public class ApiResponse<T>
 /// </summary>
 public class InstructorApplyViewModel
 {
-    [Required(ErrorMessage = "Vui lòng nhập chức danh chuyên môn.")]
+    [Required(ErrorMessage = "Please enter your professional title.")]
     [StringLength(255)]
-    [Display(Name = "Chức danh chuyên môn")]
+    [Display(Name = "Professional Title")]
     public string ProfessionalTitle { get; set; } = null!;
 
-    [Required(ErrorMessage = "Vui lòng nhập lĩnh vực chuyên môn.")]
+    [Required(ErrorMessage = "Please enter your expertise categories.")]
     [StringLength(255)]
-    [Display(Name = "Lĩnh vực chuyên môn")]
+    [Display(Name = "Expertise Categories")]
     public string ExpertiseCategories { get; set; } = null!;
 
     [Display(Name = "LinkedIn URL")]
@@ -34,7 +34,7 @@ public class InstructorApplyViewModel
     [Display(Name = "Facebook URL")]
     public string? FacebookUrl { get; set; }
 
-    [Display(Name = "Tài liệu CV / CMND")]
+    [Display(Name = "CV / ID Document")]
     public IFormFile? DocumentFile { get; set; }
 
     /// <summary>URL tài liệu cũ (khi nộp lại sau khi bị Rejected)</summary>
@@ -43,8 +43,8 @@ public class InstructorApplyViewModel
     /// <summary>True nếu đang nộp lại (status cũ = Rejected)</summary>
     public bool IsResubmit { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn quốc gia cho tài khoản Stripe.")]
-    [Display(Name = "Quốc gia Stripe")]
+    [Required(ErrorMessage = "Please select a country for your Stripe account.")]
+    [Display(Name = "Stripe Country")]
     public string StripeCountry { get; set; } = null!;
 
     /// <summary>Danh sách quốc gia để bind vào dropdown</summary>

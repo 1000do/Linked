@@ -20,7 +20,6 @@
     </div>
 
     <form method="post" asp-action="Create" id="createCourseForm">
-        <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm mb-4 bg-red-50 p-4 rounded-xl border border-red-200" style="display:none"></div>
         <input type="hidden" asp-for="CourseThumbnailUrl" id="CourseThumbnailUrl" />
         
         <!-- Section 1: Core Identity -->
@@ -97,6 +96,34 @@
             </div>
         </div>
 
+        <!-- Section 3.1: What you will learn -->
+        <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">3.1</div>
+                <h2 class="text-xl font-headline font-bold text-slate-900">"What you will learn"<span class="text-red-500">*</span></h2>
+            </div>
+            <label asp-for="WhatYouWillLearn" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">What will students achieve? <span class="text-red-500">*</span></label>
+            <div class="bg-white rounded-xl">
+                <div id="learn-editor" class="bg-slate-50"></div>
+                <input type="hidden" asp-for="WhatYouWillLearn" id="LearnInput" />
+            </div>
+            <span asp-validation-for="WhatYouWillLearn" class="text-red-500 text-xs mt-1 block"></span>
+        </div>
+
+        <!-- Section 3.2: Requirements -->
+        <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">3.2</div>
+                <h2 class="text-xl font-headline font-bold text-slate-900">Requirements <span class="text-red-500">*</span></h2>
+            </div>
+            <label asp-for="Requirements" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">What do students need before starting? <span class="text-red-500">*</span></label>
+            <div class="bg-white rounded-xl">
+                <div id="req-editor" class="bg-slate-50"></div>
+                <input type="hidden" asp-for="Requirements" id="ReqInput" />
+            </div>
+            <span asp-validation-for="Requirements" class="text-red-500 text-xs mt-1 block"></span>
+        </div>
+
         <!-- Section 4: Access & Pricing -->
         <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
             <div class="flex items-center gap-3 mb-6">
@@ -121,15 +148,15 @@
                             <span class="material-symbols-outlined text-[28px]">lock</span>
                         </div>
                         <div class="flex-1">
-                            <h3 class="font-bold text-amber-900 mb-1">Khóa học miễn phí</h3>
+                            <h3 class="font-bold text-amber-900 mb-1">Free Course</h3>
                             <p class="text-sm text-amber-700 mb-3">
-                                Bạn chưa đăng ký Stripe nên chỉ có thể tạo khóa học <strong>miễn phí (Free)</strong>. 
-                                Để bán khóa học có phí, vui lòng đăng ký tài khoản Stripe trước.
+                                You have not set up Stripe payments yet, so you can only create a <strong>free course</strong>. 
+                                To sell premium paid courses, please connect your Stripe account first.
                             </p>
-                            <a href="/Instructor/Dashboard" 
+                            <a href="/Instructor/ApplicationStatus" 
                                class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-sm">
                                 <span class="material-symbols-outlined text-lg">credit_card</span>
-                                Đăng ký Stripe ngay
+                                Set up Stripe now
                             </a>
                         </div>
                     </div>
@@ -143,9 +170,9 @@
                         </div>
                         <div class="flex flex-wrap gap-2 mt-3">
                             <span class="px-3 py-1.5 text-xs font-bold rounded-lg border border-primary bg-primary/10 text-primary">Free ✓</span>
-                            <span class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed" title="Vui lòng đăng ký Stripe để mở khóa">$9.99 🔒</span>
-                            <span class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed" title="Vui lòng đăng ký Stripe để mở khóa">$19.99 🔒</span>
-                            <span class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed" title="Vui lòng đăng ký Stripe để mở khóa">$49.99 🔒</span>
+                            <span class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed" title="Please register Stripe to unlock">$9.99 🔒</span>
+                            <span class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed" title="Please register Stripe to unlock">$19.99 🔒</span>
+                            <span class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed" title="Please register Stripe to unlock">$49.99 🔒</span>
                         </div>
                     </div>
                     <div class="bg-slate-50 rounded-xl p-4 flex gap-4 border border-slate-100">
@@ -155,7 +182,7 @@
                         <div>
                             <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Instructor Revenue</p>
                             <p class="font-bold text-slate-900 text-lg">Free Course</p>
-                            <p class="text-[10px] text-slate-500 mt-1">Đăng ký Stripe để bán khóa học với giá tùy chọn</p>
+                            <p class="text-[10px] text-slate-500 mt-1">Connect Stripe to sell courses at premium price tiers</p>
                         </div>
                     </div>
                 </div>
@@ -206,9 +233,9 @@
                 <div class="flex flex-col gap-1">
                     <span class="text-sm font-bold text-slate-800 flex items-center gap-2">
                         <span class="material-symbols-outlined text-emerald-600 text-[18px]">loyalty</span>
-                        Áp dụng coupon cho khóa học này
+                        Apply coupon to this course
                     </span>
-                    <span class="text-[11px] text-slate-500">Giảm giá khóa học bằng mã giảm giá do hệ thống Linked tài trợ</span>
+                    <span class="text-[11px] text-slate-500">Allow learners to apply system-wide discount codes sponsored by LinkedLearn</span>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" id="coupon-toggle" class="sr-only peer" />
@@ -223,10 +250,10 @@
                 <!-- Select Button if not selected -->
                 <div id="no-voucher-selected-state" class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
                     <span class="material-symbols-outlined text-slate-400 text-[32px] mb-2">confirmation_number</span>
-                    <p class="text-xs text-slate-505 font-bold mb-4 text-slate-500">Chưa có voucher nào được áp dụng cho khóa học này</p>
+                    <p class="text-xs text-slate-505 font-bold mb-4 text-slate-500">No voucher selected for this course yet</p>
                     <button type="button" onclick="openCouponModal()" class="px-5 py-2.5 bg-slate-900 text-white hover:bg-slate-800 text-xs font-black rounded-xl uppercase tracking-widest transition-all active:scale-95 shadow-md flex items-center gap-2">
                         <span class="material-symbols-outlined text-[16px]">add_circle</span>
-                        Chọn Voucher từ Hệ thống
+                        Select System Voucher
                     </button>
                 </div>
 
@@ -242,112 +269,131 @@
                         <div>
                             <div class="flex items-center gap-2 mb-0.5">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                                <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Đang áp dụng</p>
+                                <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Active</p>
                             </div>
                             <h4 id="display-coupon-code" class="text-lg font-black text-slate-900 tracking-widest font-mono">CODE</h4>
                             <div class="flex items-center gap-3 mt-1.5">
-                                <span id="display-coupon-discount" class="px-2.5 py-0.5 bg-emerald-500 text-white text-[9px] font-black rounded-lg uppercase shadow-sm">Giảm 0%</span>
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">HSD: <span id="display-coupon-expiry">2026</span></span>
+                                <span id="display-coupon-discount" class="px-2.5 py-0.5 bg-emerald-500 text-white text-[9px] font-black rounded-lg uppercase shadow-sm">0% Discount</span>
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Exp: <span id="display-coupon-expiry">2026</span></span>
                             </div>
                         </div>
                     </div>
                     <button type="button" onclick="openCouponModal()" class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-[10px] font-black rounded-xl uppercase tracking-widest border border-slate-200 transition-all shadow-sm active:scale-95 flex items-center gap-1.5">
-                        <span class="material-symbols-outlined text-[14px]">edit</span> Thay đổi
+                        <span class="material-symbols-outlined text-[14px]">edit</span> Change
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Premium Coupon Selection Modal -->
-        <div id="coupon-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300">
-            <!-- Backdrop with deeper blur -->
-            <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[12px] opacity-0 transition-opacity duration-300 modal-backdrop" onclick="closeCouponModal()"></div>
 
-            <!-- Modal Content -->
-            <div class="bg-white/95 w-full max-w-2xl rounded-[2.5rem] shadow-[0_20px_70px_-10px_rgba(0,0,0,0.2)] relative z-10 flex flex-col overflow-hidden border border-white transform scale-90 opacity-0 transition-all duration-500 modal-content">
-                <!-- Header with Glass effect -->
-                <div class="px-10 py-8 border-b border-slate-100/50 flex justify-between items-center bg-white/50">
-                    <div class="flex items-center gap-5">
-                        <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-2xl shadow-slate-200">
-                            <span class="material-symbols-outlined text-[32px]">auto_awesome</span>
-                        </div>
-                        <div>
-                            <h3 class="text-2xl font-black text-slate-900 tracking-tight">Voucher Siêu Cấp</h3>
-                            <p class="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-[0.2em] flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                Cập nhật từ hệ thống Linked
-                            </p>
-                        </div>
-                    </div>
-                    <button type="button" onclick="closeCouponModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all duration-300">
-                        <span class="material-symbols-outlined text-[28px]">close</span>
-                    </button>
-                </div>
-
-                <!-- Body -->
-                <div class="p-10 max-h-[50vh] overflow-y-auto custom-scrollbar bg-slate-50/30">
-                    <div id="coupon-list-container" class="grid grid-cols-1 gap-6">
-                        <!-- Data populated by JS -->
-                        <div class="flex flex-col items-center justify-center py-20 gap-4">
-                            <div class="relative">
-                                <div class="w-12 h-12 border-4 border-slate-100 border-t-primary rounded-full animate-spin"></div>
-                                <div class="absolute inset-0 flex items-center justify-center">
-                                    <div class="w-2 h-2 bg-primary rounded-full"></div>
-                                </div>
-                            </div>
-                            <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Đang săn tìm Voucher...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="px-10 py-8 bg-white border-t border-slate-100 flex justify-between items-center">
-                    <div class="flex flex-col gap-1">
-                        <p class="text-[10px] font-black text-slate-900 uppercase tracking-widest">Trợ giúp Marketing</p>
-                        <p class="text-[11px] font-medium text-slate-400">Chọn mã có tỉ lệ giảm cao nhất để thu hút học viên.</p>
-                    </div>
-                    <button type="button" onclick="closeCouponModal()" class="px-8 py-3.5 text-xs font-black text-white bg-slate-900 rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95 uppercase tracking-widest">
-                        Đã hiểu
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <style>
-            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-            .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-            .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
-            
-            #coupon-modal.modal-visible { display: flex !important; }
-            #coupon-modal.modal-visible .modal-backdrop { opacity: 1; }
-            #coupon-modal.modal-visible .modal-content { transform: scale(1); opacity: 1; }
-
-            /* Voucher Card Styling */
-            .voucher-card-glass {
-                background: rgba(255, 255, 255, 0.8);
-                backdrop-filter: blur(8px);
-                border: 1px solid rgba(255, 255, 255, 0.5);
-            }
-        </style>
     </form>
 </div>
 
-<!-- Floating Action Bar -->
-<div class="fixed bottom-0 left-64 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 p-4 z-50">
-    <div class="max-w-4xl mx-auto flex items-center justify-between">
-        <div class="flex items-center gap-2 text-sm text-slate-500">
-            <span id="save-indicator" class="w-2 h-2 rounded-full bg-slate-300"></span>
-            <span id="save-status">Not saved yet</span>
-        </div>
-        <div class="flex items-center gap-4">
-            <a href="/InstructorCourse" class="px-6 py-2.5 bg-slate-200 text-slate-700 font-bold rounded-lg hover:bg-slate-300 transition-colors">Cancel</a>
-            <button type="submit" form="createCourseForm" class="px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/20">Create Course</button>
+@section Scripts {
+    <!-- Floating Action Bar (Moved here to escape layout transform stacking context) -->
+    <div class="fixed bottom-0 left-0 md:left-64 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 p-4 z-[90] shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.1)] transition-all duration-300">
+        <div class="max-w-4xl mx-auto flex items-center justify-end">
+            <div class="flex items-center gap-4">
+                <a href="/InstructorCourse" class="px-6 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-all active:scale-95">Cancel</a>
+                <button type="submit" form="createCourseForm" class="px-8 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-secondary transition-all shadow-lg shadow-primary/20 active:scale-95">Create Course</button>
+            </div>
         </div>
     </div>
-</div>
 
-@section Scripts {
+    <!-- Premium Coupon Selection Modal (Moved here to escape layout transform stacking context) -->
+    <div id="coupon-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300">
+        <!-- Backdrop with deeper blur -->
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-[12px] opacity-0 transition-opacity duration-300 modal-backdrop" onclick="closeCouponModal()"></div>
+
+        <!-- Modal Content -->
+        <div class="bg-white/95 w-full max-w-2xl rounded-[2.5rem] shadow-[0_20px_70px_-10px_rgba(0,0,0,0.3)] relative z-10 flex flex-col overflow-hidden border border-white transform scale-90 opacity-0 transition-all duration-500 modal-content">
+            <!-- Header with Glass effect -->
+            <div class="px-10 py-8 border-b border-slate-100/50 flex justify-between items-center bg-white/50">
+                <div class="flex items-center gap-5">
+                    <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-2xl shadow-slate-200">
+                        <span class="material-symbols-outlined text-[32px]">auto_awesome</span>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-black text-slate-900 tracking-tight">Elite Vouchers</h3>
+                        <p class="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-[0.2em] flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            Updated from LinkedLearn Platform
+                        </p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCouponModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all duration-300">
+                    <span class="material-symbols-outlined text-[28px]">close</span>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="p-10 max-h-[50vh] overflow-y-auto custom-scrollbar bg-slate-50/30">
+                <div id="coupon-list-container" class="grid grid-cols-1 gap-6">
+                    <!-- Data populated by JS -->
+                    <div class="flex flex-col items-center justify-center py-20 gap-4">
+                        <div class="relative">
+                            <div class="w-12 h-12 border-4 border-slate-100 border-t-primary rounded-full animate-spin"></div>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <div class="w-2 h-2 bg-primary rounded-full"></div>
+                            </div>
+                        </div>
+                        <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Đang săn tìm Voucher...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-10 py-8 bg-white border-t border-slate-100 flex justify-between items-center">
+                <div class="flex flex-col gap-1">
+                    <p class="text-[10px] font-black text-slate-900 uppercase tracking-widest">Marketing Tips</p>
+                    <p class="text-[11px] font-medium text-slate-400">Select a higher discount value to boost student sign-ups.</p>
+                </div>
+                <button type="button" onclick="closeCouponModal()" class="px-8 py-3.5 text-xs font-black text-white bg-slate-900 rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95 uppercase tracking-widest">
+                    Got it
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        
+        #coupon-modal.modal-visible { display: flex !important; }
+        #coupon-modal.modal-visible .modal-backdrop { opacity: 1; }
+        #coupon-modal.modal-visible .modal-content { transform: scale(1); opacity: 1; }
+
+        /* Voucher Card Styling */
+        .voucher-card-glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+    </style>
+
+    @if (ViewBag.ApiError != null)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var errorData = @Html.Raw(Json.Serialize(ViewBag.ApiError));
+                var message = errorData;
+                
+                try {
+                    var json = JSON.parse(errorData);
+                    message = json.message || errorData;
+                } catch(e) {}
+
+                Swal.fire({
+                    title: 'System Error',
+                    text: message,
+                    icon: 'error',
+                    confirmButtonColor: '#006a62'
+                });
+            });
+        </script>
+    }
     <script>
         // Quill
         var quill = new Quill('#editor', {
@@ -357,6 +403,20 @@
         const descriptionInput = document.getElementById('DescriptionInput');
         if(descriptionInput.value) quill.clipboard.dangerouslyPasteHTML(descriptionInput.value);
 
+        var learnQuill = new Quill('#learn-editor', {
+            theme: 'snow', placeholder: 'What will students achieve?',
+            modules: { toolbar: [['bold','italic'],[{'list':'ordered'},{'list':'bullet'}]] }
+        });
+        const learnInput = document.getElementById('LearnInput');
+        if(learnInput.value) learnQuill.clipboard.dangerouslyPasteHTML(learnInput.value);
+
+        var reqQuill = new Quill('#req-editor', {
+            theme: 'snow', placeholder: 'What do students need before starting?',
+            modules: { toolbar: [['bold','italic'],[{'list':'ordered'},{'list':'bullet'}]] }
+        });
+        const reqInput = document.getElementById('ReqInput');
+        if(reqInput.value) reqQuill.clipboard.dangerouslyPasteHTML(reqInput.value);
+
         // Show validation summary if it has content
         const valSummary = document.querySelector('[data-valmsg-summary]') || document.querySelector('.text-red-500.bg-red-50');
         if (valSummary && valSummary.querySelector('li')) valSummary.style.display = 'block';
@@ -364,25 +424,35 @@
         // Sync Quill + submit with validation
         document.getElementById('createCourseForm').addEventListener('submit', function(e) {
             const html = quill.root.innerHTML;
+            const learnHtml = learnQuill.root.innerHTML;
+            const reqHtml = reqQuill.root.innerHTML;
+
             const title = document.getElementById('Title').value;
             const catId = document.getElementById('CategoryId').value;
             const thumb = document.getElementById('CourseThumbnailUrl').value;
+            
             const desc = (html === '<p><br></p>') ? '' : html;
+            const learnText = (learnHtml === '<p><br></p>') ? '' : learnHtml;
+            const reqText = (reqHtml === '<p><br></p>') ? '' : reqHtml;
             
             descriptionInput.value = desc;
+            learnInput.value = learnText;
+            reqInput.value = reqText;
 
             // CLIENT-SIDE VALIDATION
             let errors = [];
-            if (!title || title.trim() === '') errors.push("Tiêu đề khóa học");
-            if (!catId || catId === '0') errors.push("Danh mục");
-            if (!thumb || thumb === '') errors.push("Ảnh đại diện (Thumbnail)");
-            if (!desc || desc.trim() === '') errors.push("Mô tả khóa học");
+            if (!title || title.trim() === '') errors.push("Course Title");
+            if (!catId || catId === '0') errors.push("Category");
+            if (!thumb || thumb === '') errors.push("Thumbnail");
+            if (!desc || desc.trim() === '') errors.push("Course Description");
+            if (!learnText || learnText.trim() === '') errors.push("What you will learn");
+            if (!reqText || reqText.trim() === '') errors.push("Requirements");
 
             if (errors.length > 0) {
                 e.preventDefault(); // Stop form submission
                 Swal.fire({
-                    title: 'Thông tin chưa đầy đủ',
-                    html: `<div class="text-left">Vui lòng hoàn thiện các mục sau:<ul class="list-disc ml-6 mt-2 text-red-600 font-semibold">${errors.map(err => `<li>${err}</li>`).join('')}</ul></div>`,
+                    title: 'Incomplete Information',
+                    html: `<div class="text-left">Please complete the following fields:<ul class="list-disc ml-6 mt-2 text-red-600 font-semibold">${errors.map(err => `<li>${err}</li>`).join('')}</ul></div>`,
                     icon: 'warning',
                     confirmButtonColor: '#006a62'
                 });
@@ -403,6 +473,8 @@
         }
         ['Title','CategoryId','Price'].forEach(id => { const el = document.getElementById(id); if(el) { el.addEventListener('input', updateProgressBar); el.addEventListener('change', updateProgressBar); } });
         quill.on('text-change', updateProgressBar);
+        learnQuill.on('text-change', updateProgressBar);
+        reqQuill.on('text-change', updateProgressBar);
 
         // Cloudinary Upload
         const CLOUD_NAME = 'df8i0azc5';
@@ -423,7 +495,17 @@
 
         function handleFiles(files) { if (files.length > 0) uploadFile(files[0]); }
         function uploadFile(file) {
-            if (!file.type.startsWith('image/')) { alert('Please select an image file.'); return; }
+            if (!file.type.startsWith('image/')) {
+                Swal.fire({
+                    title: 'Invalid File Format',
+                    text: 'Please select image files only.',
+                    icon: 'error',
+                    confirmButtonColor: '#006a62',
+                    background: '#ffffff',
+                    customClass: { popup: 'rounded-2xl shadow-xl' }
+                });
+                return;
+            }
             progressEl.classList.remove('hidden');
             const fd = new FormData();
             fd.append('upload_preset', UPLOAD_PRESET); fd.append('file', file);
@@ -510,7 +592,7 @@
             container.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-20 gap-4">
                     <div class="w-10 h-10 border-4 border-slate-100 border-t-primary rounded-full animate-spin"></div>
-                    <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Đang săn tìm Voucher...</p>
+                    <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Searching for vouchers...</p>
                 </div>
             `;
             
@@ -521,12 +603,12 @@
                 if (result.success && result.data && result.data.length > 0) {
                     container.innerHTML = result.data.map(c => {
                         const discountText = c.couponType === 'percentage' ? `${c.discountValue}%` : `$${c.discountValue}`;
-                        const expiryText = c.endDate ? new Date(c.endDate).toLocaleDateString('vi-VN') : 'Vĩnh viễn';
+                        const expiryText = c.endDate ? new Date(c.endDate).toLocaleDateString('en-US') : 'Lifetime';
                         const isCurrent = couponInput.value === String(c.couponId);
                         
                         return `
                             <div class="group relative overflow-hidden rounded-[2rem] p-6 border-2 ${isCurrent ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-100 bg-white'} hover:border-emerald-500/40 hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-500">
-                                ${isCurrent ? '<div class="absolute top-0 right-0 bg-emerald-500 text-white text-[8px] font-black px-4 py-1.5 rounded-bl-xl uppercase tracking-widest">Đang chọn</div>' : ''}
+                                ${isCurrent ? '<div class="absolute top-0 right-0 bg-emerald-500 text-white text-[8px] font-black px-4 py-1.5 rounded-bl-xl uppercase tracking-widest">Selected</div>' : ''}
                                 
                                 <div class="flex items-center justify-between gap-6">
                                     <div class="flex items-center gap-5">
@@ -538,28 +620,28 @@
                                             <h4 class="text-lg font-black text-slate-900 tracking-widest font-mono">${c.couponCode}</h4>
                                             <div class="flex items-center gap-2 mt-1.5">
                                                 <span class="material-symbols-outlined text-slate-300 text-[14px]">event_available</span>
-                                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Hết hạn: ${expiryText}</p>
+                                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Expires: ${expiryText}</p>
                                             </div>
                                         </div>
                                     </div>
                                     
                                     ${isCurrent ? `
                                         <div class="flex items-center gap-2 px-4 py-2.5 bg-emerald-100 text-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest">
-                                            <span class="material-symbols-outlined text-[16px]">check_circle</span> Đã chọn
+                                            <span class="material-symbols-outlined text-[16px]">check_circle</span> Selected
                                         </div>
                                     ` : `
-                                        <button type="button" onclick="selectPlatformCoupon(${c.couponId}, '${c.couponCode}', 'Giảm ${discountText}', '${expiryText}')" class="px-6 py-3 bg-slate-900 text-white hover:bg-emerald-500 text-[10px] font-black rounded-xl uppercase tracking-widest transition-all duration-300 active:scale-95 shadow-lg shadow-slate-200 hover:shadow-emerald-500/20 shrink-0">Áp dụng</button>
+                                        <button type="button" onclick="selectPlatformCoupon(${c.couponId}, '${c.couponCode}', '${discountText} Discount', '${expiryText}')" class="px-6 py-3 bg-slate-900 text-white hover:bg-emerald-500 text-[10px] font-black rounded-xl uppercase tracking-widest transition-all duration-300 active:scale-95 shadow-lg shadow-slate-200 hover:shadow-emerald-500/20 shrink-0">Apply</button>
                                     `}
                                 </div>
                             </div>
                         `;
                     }).join('');
                 } else {
-                    container.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400 font-bold text-sm bg-slate-50 border border-slate-100 rounded-2xl">Hiện tại không có voucher nào khả dụng.</div>';
+                    container.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400 font-bold text-sm bg-slate-50 border border-slate-100 rounded-2xl">No vouchers currently available.</div>';
                 }
             } catch (err) {
                 console.error(err);
-                container.innerHTML = '<div class="col-span-full py-8 text-center text-rose-500 font-bold text-sm bg-rose-50 border border-rose-100 rounded-2xl">Lỗi hệ thống khi tải danh sách voucher.</div>';
+                container.innerHTML = '<div class="col-span-full py-8 text-center text-rose-500 font-bold text-sm bg-rose-50 border border-rose-100 rounded-2xl">System error loading voucher list.</div>';
             }
         }
 

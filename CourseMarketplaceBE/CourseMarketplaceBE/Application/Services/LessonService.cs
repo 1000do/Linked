@@ -44,7 +44,7 @@ public class LessonService : ILessonService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to add a lesson to this course.");
 
-        if (course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+        if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot add lessons while the course is pending review.");
 
         // ★ Limit: Max 5 lessons for unlinked Stripe
@@ -60,6 +60,13 @@ public class LessonService : ILessonService
             {
                 throw new BadRequestException("Instructor chưa liên kết Stripe chỉ được phép tạo tối đa 5 bài học mỗi khóa học.");
             }
+        }
+
+        // Duplicate Title Check (Case-insensitive)
+        var allLessons = await _lessonRepository.GetByCourseIdAsync(request.CourseId);
+        if (allLessons.Any(l => !l.IsRemoved && l.Title.Trim().Equals(request.Title.Trim(), StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new BadRequestException("Tên bài học đã tồn tại trong khóa học này. Vui lòng chọn tên khác.");
         }
 
 
@@ -87,7 +94,7 @@ public class LessonService : ILessonService
 
         await _lessonRepository.AddAsync(lesson);
         
-        if (course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        if ("published".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
         {
             course.CourseStatus = "draft";
             course.ModerationFeedback = null;
@@ -122,7 +129,7 @@ public class LessonService : ILessonService
         if (lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to add material to this lesson.");
 
-        if (lesson.Course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+        if ("pending".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot add materials while the course is pending review.");
 
         // ★ Limit: Max 1 resource for unlinked Stripe
@@ -156,41 +163,62 @@ public class LessonService : ILessonService
         var allMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
         fileType = request.MaterialMetadata?.FileType ?? "video";
         
-        LearningMaterial? existingMaterial = null;
-        // For videos: enforce one-per-lesson (replace). For documents: allow multiple.
+        LearningMaterial? existingActiveVideo = null;
         if (fileType == "video")
         {
-            existingMaterial = allMaterials.FirstOrDefault(m => 
-                (m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || 
-                (m.MaterialMetadata == null));
+            existingActiveVideo = allMaterials.FirstOrDefault(m => 
+                m.LearningStatus == "active" &&
+                ((m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || (m.MaterialMetadata == null)));
         }
 
         LearningMaterial material;
-        if (existingMaterial != null)
+        // Nếu là video và đã có video đang hoạt động -> Chuyển video cũ vào Trash, tạo bản ghi mới
+        if (fileType == "video" && existingActiveVideo != null && !string.IsNullOrEmpty(materialUrl))
         {
-            material = existingMaterial;
+            // 1. Chuyển video hiện tại vào trash
+            if (!string.IsNullOrEmpty(existingActiveVideo.MaterialUrl))
+            {
+                var trashUrl = await _uploadService.MoveToTrashAsync(existingActiveVideo.MaterialUrl);
+                var cloudId = _uploadService.GetPublicIdFromUrl(existingActiveVideo.MaterialUrl);
+                existingActiveVideo.MaterialUrl = trashUrl ?? existingActiveVideo.MaterialUrl;
+                existingActiveVideo.CloudPublicId = cloudId;
+            }
+            existingActiveVideo.LearningStatus = "removed";
+            existingActiveVideo.UpdatedAt = DateTime.UtcNow;
+            _materialRepository.Update(existingActiveVideo);
+
+            // 2. Tạo bản ghi mới cho video mới
+            material = new LearningMaterial
+            {
+                LessonId = lessonId,
+                Title = request.Title,
+                Description = request.Description,
+                MaterialUrl = materialUrl,
+                MaterialMetadata = request.MaterialMetadata ?? new MaterialMetadata { FileType = "video" },
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                LearningStatus = "active"
+            };
+            await _materialRepository.AddAsync(material);
+        }
+        else if (fileType == "video" && existingActiveVideo != null && string.IsNullOrEmpty(materialUrl))
+        {
+            // Trường hợp chỉ cập nhật Title/Description cho video hiện tại (không upload file mới)
+            material = existingActiveVideo;
             material.Title = request.Title;
             material.Description = request.Description;
-            if (!string.IsNullOrEmpty(materialUrl)) {
-                // Xóa file cũ trên Cloudinary trước khi cập nhật link mới
-                if (!string.IsNullOrEmpty(material.MaterialUrl))
-                {
-                    await _uploadService.DeleteFileAsync(material.MaterialUrl);
-                }
-                material.MaterialUrl = materialUrl;
-            }
-            if (request.MaterialMetadata != null) {
+            if (request.MaterialMetadata != null)
+            {
                 if (material.MaterialMetadata == null) material.MaterialMetadata = new MaterialMetadata();
                 material.MaterialMetadata.FileType = request.MaterialMetadata.FileType;
                 if (request.MaterialMetadata.Duration.HasValue) material.MaterialMetadata.Duration = request.MaterialMetadata.Duration;
             }
-            material.LearningStatus = "active";
             material.UpdatedAt = DateTime.UtcNow;
-            
             _materialRepository.Update(material);
         }
         else
         {
+            // Trường hợp thêm mới (không phải video hoặc chưa có video active)
             material = new LearningMaterial
             {
                 LessonId = lessonId,
@@ -207,7 +235,7 @@ public class LessonService : ILessonService
 
         await _materialRepository.SaveChangesAsync();
         
-        if (lesson.Course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        if ("published".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
         {
             lesson.Course.CourseStatus = "draft";
             lesson.Course.ModerationFeedback = null;
@@ -245,8 +273,8 @@ public class LessonService : ILessonService
         if (lesson == null || lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to remove this material.");
 
-        if (lesson.Course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Cannot remove materials while the course is pending review.");
+        if ("pending".Equals(lesson.Course?.CourseStatus, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cannot update material while the course is pending review.");
 
         // Move file to trash on Cloudinary instead of deleting
         if (!string.IsNullOrEmpty(material.MaterialUrl))
@@ -267,7 +295,7 @@ public class LessonService : ILessonService
         _materialRepository.Update(material);
         await _materialRepository.SaveChangesAsync();
 
-        if (lesson.Course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        if ("published".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
         {
             lesson.Course.CourseStatus = "draft";
             lesson.Course.ModerationFeedback = null;
@@ -291,7 +319,7 @@ public class LessonService : ILessonService
         if (lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to delete this lesson.");
 
-        if (lesson.Course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+        if ("pending".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot delete lessons while the course is pending review.");
 
         // Soft delete all materials of this lesson
@@ -319,7 +347,7 @@ public class LessonService : ILessonService
         _lessonRepository.Update(lesson);
         await _lessonRepository.SaveChangesAsync();
 
-        if (lesson.Course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        if ("published".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
         {
             lesson.Course.CourseStatus = "draft";
             lesson.Course.ModerationFeedback = null;
@@ -396,13 +424,13 @@ public class LessonService : ILessonService
         if (lesson == null || lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to restore this material.");
 
-        if (lesson.Course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+        if ("pending".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot restore materials while the course is pending review.");
 
         var course = lesson.Course;
 
         // If course is published, move it back to draft as this is an update
-        if (course.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+        if ("published".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
         {
             course.CourseStatus = "draft";
             course.ModerationFeedback = null;
@@ -420,7 +448,17 @@ public class LessonService : ILessonService
             
             if (activeVideo != null)
             {
-                throw new InvalidOperationException("Bài học này đã có một video đang hoạt động. Vui lòng xóa video hiện tại trước khi khôi phục video này.");
+                // Thay vì throw lỗi, ta move video hiện tại vào trash để "tráo đổi"
+                if (!string.IsNullOrEmpty(activeVideo.MaterialUrl))
+                {
+                    var trashUrl = await _uploadService.MoveToTrashAsync(activeVideo.MaterialUrl);
+                    var cloudId = _uploadService.GetPublicIdFromUrl(activeVideo.MaterialUrl);
+                    activeVideo.MaterialUrl = trashUrl ?? activeVideo.MaterialUrl;
+                    activeVideo.CloudPublicId = cloudId;
+                }
+                activeVideo.LearningStatus = "removed";
+                activeVideo.UpdatedAt = DateTime.UtcNow;
+                _materialRepository.Update(activeVideo);
             }
         }
 

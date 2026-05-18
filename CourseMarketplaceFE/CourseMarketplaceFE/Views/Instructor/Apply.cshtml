@@ -60,26 +60,6 @@
                 </div>
             }
 
-            @* ── VALIDATION ERRORS ────────────────────────────────── *@
-            if (!ViewData.ModelState.IsValid)
-            {
-                var errors = ViewData.ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-                if (errors.Any())
-                {
-                    <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-                        <div class="flex items-center gap-2 text-red-700 font-semibold text-sm mb-2">
-                            <span class="material-symbols-outlined text-lg">error</span>
-                            Có lỗi xảy ra:
-                        </div>
-                        <ul class="list-disc list-inside text-sm text-red-600 space-y-1">
-                            @foreach (var error in errors)
-                            {
-                                <li>@error</li>
-                            }
-                        </ul>
-                    </div>
-                }
-            }
 
             @* ── FORM ─────────────────────────────────────────────── *@
             <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-8">
@@ -113,6 +93,7 @@
                         </label>
                         <input asp-for="ProfessionalTitle" type="text" placeholder="VD: Senior .NET Developer, Data Scientist..."
                                class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm" />
+                        <span asp-validation-for="ProfessionalTitle" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
 
                     @* Expertise Categories *@
@@ -121,10 +102,9 @@
                             <span class="material-symbols-outlined text-lg text-primary">category</span>
                             Lĩnh vực chuyên môn <span class="text-red-500">*</span>
                         </label>
-                        <select asp-for="ExpertiseCategories" asp-items="Model.AvailableCategories"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm bg-white cursor-pointer">
-                            <option value="">-- Chọn lĩnh vực --</option>
-                        </select>
+                        <input asp-for="ExpertiseCategories" type="text" placeholder="VD: C#, Cloud Computing, Machine Learning..."
+                               class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm" />
+                        <span asp-validation-for="ExpertiseCategories" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
 
                     @* LinkedIn URL *@
@@ -135,6 +115,7 @@
                         </label>
                         <input asp-for="LinkedinUrl" type="url" placeholder="https://linkedin.com/in/yourname"
                                class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm" />
+                        <span asp-validation-for="LinkedinUrl" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
@@ -212,3 +193,18 @@
         }
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    @if (ViewBag.ApiError != null)
+    {
+        <script>
+            Swal.fire({
+                title: 'Lỗi nộp đơn',
+                text: '@Html.Raw(ViewBag.ApiError)',
+                icon: 'error',
+                confirmButtonColor: '#006a62'
+            });
+        </script>
+    }
+}

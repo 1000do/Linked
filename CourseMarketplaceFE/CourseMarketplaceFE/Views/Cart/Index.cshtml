@@ -1,6 +1,6 @@
 @model CourseMarketplaceFE.Models.CartViewModel
 @{
-    ViewData["Title"] = "Giỏ hàng";
+    ViewData["Title"] = "Shopping Cart";
 }
 
 <div class="min-h-screen pt-8 pb-16 bg-surface">
@@ -10,67 +10,87 @@
         <div class="mb-8">
             <h1 class="text-3xl font-headline font-extrabold text-on-surface flex items-center gap-3">
                 <span class="material-symbols-outlined text-primary text-4xl" style='font-variation-settings:"FILL" 1;'>shopping_cart</span>
-                Giỏ hàng của tôi
+                My Shopping Cart
             </h1>
-            <p class="text-slate-500 mt-1 text-sm">@Model.Items.Count khóa học đang chờ bạn</p>
+            <p class="text-slate-500 mt-1 text-sm">@Model.Items.Count courses waiting for you</p>
         </div>
 
-        @* ── TOAST MESSAGES (Now handled via SweetAlert2 popup) ── *@
-
-        @if (!Model.Items.Any())
-        {
-            @* ── GIỎ HÀNG RỖNG ──────────────────────────────────────────── *@
-            <div class="flex flex-col items-center justify-center py-24 text-center">
-                <div class="w-28 h-28 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-                    <span class="material-symbols-outlined text-slate-300 text-6xl">shopping_cart</span>
+        @* ── TOAST MESSAGES ───────────────────────────────────────────────── *@
+        <div id="cart-toasts-container">
+            @if (TempData["CartSuccess"] != null)
+            {
+                <div class="mb-6 flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                    <span class="material-symbols-outlined text-emerald-500">check_circle</span>
+                    <span class="text-sm font-medium text-emerald-700">@TempData["CartSuccess"]</span>
                 </div>
-                <h2 class="text-xl font-bold text-slate-700 mb-2">Giỏ hàng đang trống</h2>
-                <p class="text-slate-400 text-sm mb-6">Hãy khám phá các khóa học thú vị và thêm vào giỏ hàng!</p>
-                <a href="/"
-                   class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all text-sm">
-                    <span class="material-symbols-outlined text-lg">explore</span>
-                    Khám phá khóa học
-                </a>
-            </div>
-        }
-        else
-        {
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            }
+            @if (TempData["CartError"] != null)
+            {
+                <div class="mb-6 flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                    <span class="material-symbols-outlined text-red-500">error</span>
+                    <span class="text-sm font-medium text-red-700">@TempData["CartError"]</span>
+                </div>
+            }
+        </div>
 
-                @* ════ CỘT TRÁI — DANH SÁCH KHÓA HỌC ════ *@
-                <div class="lg:col-span-2 space-y-4">
-                    @foreach (var item in Model.Items)
-                    {
-                        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex gap-4 hover:shadow-md transition-shadow group">
-
-                            @* Thumbnail *@
-                            <a href="/Course/Details/@item.CourseId" class="shrink-0">
-                                @if (!string.IsNullOrEmpty(item.ThumbnailUrl))
-                                {
-                                    <img src="@item.ThumbnailUrl" alt="@item.Title"
-                                         class="w-32 h-20 object-cover rounded-xl bg-slate-100" loading="lazy" />
-                                }
-                                else
-                                {
-                                    <div class="w-32 h-20 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                                        <span class="material-symbols-outlined text-primary text-3xl">school</span>
-                                    </div>
-                                }
-                            </a>
-
-                            @* Thông tin khóa học *@
-                            <div class="flex-1 min-w-0">
-                                <a href="/Course/Details/@item.CourseId"
-                                   class="font-bold text-slate-800 text-sm leading-snug line-clamp-2 hover:text-primary transition-colors">
-                                    @item.Title
+        <div id="cart-main-container">
+            @if (!Model.Items.Any())
+            {
+                @* ── GIỎ HÀNG RỖNG ──────────────────────────────────────────── *@
+                <div class="flex flex-col items-center justify-center py-24 text-center">
+                    <div class="w-28 h-28 bg-slate-100 rounded-full flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-slate-300 text-6xl">shopping_cart</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-700 mb-2">Your cart is empty</h2>
+                    <p class="text-slate-400 text-sm mb-6">Explore interesting courses and add them to your cart!</p>
+                    <a href="/"
+                       class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all text-sm">
+                        <span class="material-symbols-outlined text-lg">explore</span>
+                        Explore Courses
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+                    @* ════ CỘT TRÁI — DANH SÁCH KHÓA HỌC ════ *@
+                    <div class="lg:col-span-2 space-y-4">
+                        @foreach (var item in Model.Items)
+                        {
+                            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex gap-4 hover:shadow-md transition-shadow group">
+    
+                                @* Thumbnail *@
+                                <a href="/Course/Details/@item.CourseId" class="shrink-0">
+                                    @if (!string.IsNullOrEmpty(item.ThumbnailUrl))
+                                    {
+                                        <img src="@item.ThumbnailUrl" alt="@item.Title"
+                                             class="w-32 h-20 object-cover rounded-xl bg-slate-100" loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <div class="w-32 h-20 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                                            <span class="material-symbols-outlined text-primary text-3xl">school</span>
+                                        </div>
+                                    }
                                 </a>
-                                @if (!string.IsNullOrEmpty(item.InstructorName))
-                                {
-                                    <p class="text-xs text-slate-400 mt-1 flex items-center gap-1">
-                                        <span class="material-symbols-outlined text-sm">person</span>
-                                        @item.InstructorName
+    
+                                @* Thông tin khóa học *@
+                                <div class="flex-1 min-w-0">
+                                    <a href="/Course/Details/@item.CourseId"
+                                       class="font-bold text-slate-800 text-sm leading-snug line-clamp-2 hover:text-primary transition-colors">
+                                        @item.Title
+                                    </a>
+                                    @if (!string.IsNullOrEmpty(item.InstructorName))
+                                    {
+                                        <p class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-sm">person</span>
+                                            @item.InstructorName
+                                        </p>
+                                    }
+                                    <p class="text-base font-extrabold text-primary mt-2">
+                                        $@item.Price.ToString("N2")
                                     </p>
-                                }
                                 
                                 <div class="mt-2 flex items-baseline gap-2">
                                     @if (!string.IsNullOrEmpty(item.AppliedCouponCode))
@@ -94,7 +114,7 @@
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="courseId" value="@item.CourseId" />
                                             <button type="submit" class="text-[10px] text-red-500 hover:text-red-700 font-extrabold ml-1.5 transition-colors uppercase">
-                                                Gỡ mã
+                                                Remove
                                             </button>
                                         </form>
                                     </div>
@@ -106,12 +126,12 @@
                                                 class="flex items-center gap-1.5 px-3 py-1.5 border border-dashed border-primary/40 hover:border-primary hover:bg-emerald-50/20 rounded-xl transition-all group/btn text-left">
                                             <span class="text-xs">🎫</span>
                                             <span class="text-xs font-bold text-primary group-hover/btn:text-secondary transition-colors">
-                                                Áp dụng Voucher
+                                                Apply Voucher
                                             </span>
                                             @if (Model.AvailableCoupons.Any(c => c.CourseId == item.CourseId && c.IsEligible))
                                             {
                                                 <span class="text-[9px] font-extrabold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded-full ml-1 uppercase">
-                                                    Có thể dùng
+                                                    Applicable
                                                 </span>
                                             }
                                         </button>
@@ -121,13 +141,12 @@
 
                             @* Nút xóa *@
                             <div class="shrink-0 flex items-start">
-                                <form asp-action="RemoveFromCart" asp-controller="Cart" method="post">
+                                <form asp-action="RemoveFromCart" asp-controller="Cart" method="post" onsubmit="handleRemoveFromCart(event)">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="courseId" value="@item.CourseId" />
                                     <button type="submit"
-                                            title="Xóa khỏi giỏ hàng"
-                                            class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all"
-                                            onclick="return confirm('Xóa khóa học này khỏi giỏ hàng?')">
+                                            title="Remove from cart"
+                                            class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">
                                         <span class="material-symbols-outlined text-xl">delete</span>
                                     </button>
                                 </form>
@@ -142,7 +161,7 @@
 
                         <h2 class="text-lg font-bold text-slate-800 mb-5 flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary">receipt_long</span>
-                            Tóm tắt đơn hàng
+                            Order Summary
                         </h2>
 
                         @* ── PHÂN TÁCH ────────────────────────────────────── *@
@@ -150,7 +169,7 @@
 
                             @* Tạm tính *@
                             <div class="flex justify-between items-center text-sm">
-                                <span class="text-slate-500">Tạm tính</span>
+                                <span class="text-slate-500">Subtotal</span>
                                 <span class="font-semibold text-slate-700">$@Model.SubTotal.ToString("N2")</span>
                             </div>
 
@@ -160,7 +179,7 @@
                                 <div class="flex justify-between items-center text-sm">
                                     <span class="text-emerald-600 flex items-center gap-1">
                                         <span class="material-symbols-outlined text-sm">local_offer</span>
-                                        Giảm giá
+                                        Discount
                                     </span>
                                     <span class="font-bold text-emerald-600">-$@Model.DiscountAmount.ToString("N2")</span>
                                 </div>
@@ -168,7 +187,7 @@
 
                             @* Tổng thanh toán *@
                             <div class="border-t border-slate-100 pt-3 flex justify-between items-center">
-                                <span class="font-bold text-slate-800">Tổng thanh toán</span>
+                                <span class="font-bold text-slate-800">Total Price</span>
                                 <div class="text-right">
                                     <span class="text-2xl font-extrabold text-primary block">
                                         $@Model.Total.ToString("N2")
@@ -183,20 +202,20 @@
                             <button type="submit" id="checkout-btn"
                                class="mt-6 w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-sm uppercase tracking-wider">
                                 <span class="material-symbols-outlined text-lg">payment</span>
-                                Tiến hành thanh toán
+                                Proceed to Checkout
                             </button>
                         </form>
 
                         <a href="/"
                            class="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 text-sm text-slate-500 hover:text-primary font-medium transition-colors">
                             <span class="material-symbols-outlined text-base">arrow_back</span>
-                            Tiếp tục mua sắm
+                            Continue Shopping
                         </a>
                     </div>
                 </div>
-
             </div>
         }
+        </div>
     </div>
 </div>
 
@@ -208,7 +227,7 @@
         @* Modal Header *@
         <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
             <div>
-                <h3 class="text-base font-bold text-slate-900">🎫 Áp dụng Voucher</h3>
+                <h3 class="text-base font-bold text-slate-900">🎫 Apply Voucher</h3>
                 <p class="text-xs text-slate-500 mt-1 font-semibold text-primary" id="modal-course-title"></p>
             </div>
             <button type="button" onclick="closeVoucherModal()"
@@ -223,12 +242,12 @@
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="courseId" id="manual-coupon-course-id" />
                 <input type="text" name="couponCode" id="manual-coupon-input"
-                       placeholder="Nhập mã thủ công..."
+                       placeholder="Enter code manually..."
                        class="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all uppercase bg-white"
                        style="text-transform:uppercase" />
                 <button type="submit"
                         class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-secondary transition-colors whitespace-nowrap">
-                    Áp dụng
+                    Apply
                 </button>
             </form>
         </div>
@@ -237,8 +256,8 @@
         <div class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
             <div id="no-vouchers-message" class="hidden flex flex-col items-center justify-center py-16 text-center">
                 <span class="text-5xl mb-3">🎟️</span>
-                <p class="text-slate-500 font-medium">Không có voucher khả dụng</p>
-                <p class="text-xs text-slate-400 mt-1">Khóa học này hiện không tham gia chương trình ưu đãi.</p>
+                <p class="text-slate-500 font-medium">No vouchers available</p>
+                <p class="text-xs text-slate-400 mt-1">This course is currently not participating in any discount promotions.</p>
             </div>
 
             @if (Model.AvailableCoupons.Any())
@@ -263,17 +282,17 @@
                             <div class="flex items-center gap-2 mb-0.5">
                                 <span class="font-mono font-bold text-slate-900 text-sm">@voucher.CouponCode</span>
                                 <span class="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded uppercase">
-                                    @(voucher.CouponType == "percentage" ? "%" : "Cố định")
+                                    @(voucher.CouponType == "percentage" ? "%" : "Fixed amount")
                                 </span>
                             </div>
                             <p class="text-sm font-semibold text-primary">@voucher.ConditionMessage</p>
                             @if (voucher.MinOrderValue > 0)
                             {
-                                <p class="text-[11px] text-slate-500 mt-0.5">Đơn tối thiểu $@voucher.MinOrderValue.ToString("N2")</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Min order $@voucher.MinOrderValue.ToString("N2")</p>
                             }
                             @if (voucher.EndDate.HasValue)
                             {
-                                <p class="text-[10px] text-slate-400 mt-0.5">HSD: @voucher.EndDate.Value.ToString("dd/MM/yyyy")</p>
+                                <p class="text-[10px] text-slate-400 mt-0.5">Exp: @voucher.EndDate.Value.ToString("dd/MM/yyyy")</p>
                             }
                         </div>
 
@@ -285,7 +304,7 @@
                                 <input type="hidden" name="courseId" class="voucher-apply-course-id" value="" />
                                 <button type="submit"
                                         class="px-3 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-secondary transition-colors whitespace-nowrap shadow-sm shadow-primary/30">
-                                    Dùng
+                                    Apply
                                 </button>
                             </form>
                         </div>
@@ -309,21 +328,21 @@
                             <div class="flex items-center gap-2 mb-0.5">
                                 <span class="font-mono font-bold text-slate-500 text-sm">@voucher.CouponCode</span>
                                 <span class="text-[10px] font-bold text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded uppercase">
-                                    @(voucher.CouponType == "percentage" ? "%" : "Cố định")
+                                    @(voucher.CouponType == "percentage" ? "%" : "Fixed amount")
                                 </span>
                             </div>
                             <p class="text-sm font-semibold text-slate-600">@voucher.ConditionMessage</p>
-                            <p class="text-[11px] text-slate-500 mt-0.5">Đơn tối thiểu $@voucher.MinOrderValue.ToString("N2")</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Min order $@voucher.MinOrderValue.ToString("N2")</p>
                             @if (voucher.EndDate.HasValue)
                             {
-                                <p class="text-[10px] text-slate-400 mt-0.5">HSD: @voucher.EndDate.Value.ToString("dd/MM/yyyy")</p>
+                                <p class="text-[10px] text-slate-400 mt-0.5">Exp: @voucher.EndDate.Value.ToString("dd/MM/yyyy")</p>
                             }
                         </div>
 
                         <div class="flex items-center px-3 shrink-0">
                             <button type="button" disabled
                                     class="px-3 py-2 bg-slate-200 text-slate-400 text-xs font-bold rounded-lg cursor-not-allowed whitespace-nowrap">
-                                Dùng
+                                Apply
                             </button>
                         </div>
                     </div>
@@ -334,13 +353,40 @@
         @* Modal Footer *@
         <div class="px-5 py-3 border-t border-slate-100 bg-slate-50">
             <p class="text-xs text-slate-400 text-center">
-                Mỗi đơn hàng chỉ áp dụng được tối đa 1 mã giảm giá
+                Only one voucher can be applied per order
             </p>
         </div>
     </div>
 </div>
 
 <script>
+    async function handleRemoveFromCart(event) {
+        if (event.currentTarget.dataset.confirmed) {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        const form = event.currentTarget;
+
+        const confirmResult = await Swal.fire({
+            title: 'Remove from cart?',
+            text: "Are you sure you want to remove this course from your cart?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Remove',
+            cancelButtonText: 'Cancel',
+            background: '#ffffff',
+            customClass: { popup: 'rounded-2xl shadow-xl' }
+        });
+
+        if (confirmResult.isConfirmed) {
+            form.dataset.confirmed = "true";
+            form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        }
+    }
+
     function openVoucherModalForItem(courseId, courseTitle) {
         // Cập nhật tiêu đề modal với tên khóa học
         document.getElementById('modal-course-title').innerText = courseTitle;
@@ -390,6 +436,100 @@
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') closeVoucherModal();
     });
+
+    // Intercept form submissions inside cart-main-container and voucher-modal for AJAX updates
+    document.addEventListener('submit', async function(e) {
+        const form = e.target;
+        if (form.closest('#cart-main-container') || form.closest('#voucher-modal') || form.id === 'manual-coupon-form') {
+            if (form.id === 'checkout-form') return;
+            
+            e.preventDefault();
+            
+            const submitBtn = form.querySelector('button[type="submit"]');
+            let originalContent = '';
+            if (submitBtn) {
+                originalContent = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[16px] mr-1">sync</span>';
+            }
+            
+            try {
+                const formData = new FormData(form);
+                const action = form.getAttribute('action') || form.action;
+                const method = form.getAttribute('method') || form.method || 'POST';
+                
+                const response = await fetch(action, {
+                    method: method,
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (response.ok) {
+                    await refreshCartDOM();
+                } else {
+                    console.error("Cart AJAX failed.");
+                }
+            } catch(err) {
+                console.error("Error submitting cart action:", err);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalContent;
+                }
+            }
+        }
+    });
+
+    async function refreshCartDOM() {
+        const mainContainer = document.getElementById('cart-main-container');
+        const toastsContainer = document.getElementById('cart-toasts-container');
+        const modalContainer = document.getElementById('voucher-modal');
+        
+        if (mainContainer) {
+            mainContainer.style.opacity = '0.5';
+            mainContainer.style.transition = 'opacity 0.15s ease';
+        }
+        
+        try {
+            const resp = await fetch('/Cart');
+            const htmlText = await resp.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
+            
+            const newMain = doc.getElementById('cart-main-container');
+            if (newMain && mainContainer) {
+                mainContainer.innerHTML = newMain.innerHTML;
+            }
+            
+            const newToasts = doc.getElementById('cart-toasts-container');
+            if (newToasts && toastsContainer) {
+                toastsContainer.innerHTML = newToasts.innerHTML;
+            }
+            
+            const newModal = doc.getElementById('voucher-modal');
+            if (newModal && modalContainer) {
+                // Preserving classes/modal states while updating the lists/inputs
+                const isHidden = modalContainer.classList.contains('hidden');
+                modalContainer.innerHTML = newModal.innerHTML;
+                if (isHidden) {
+                    modalContainer.classList.add('hidden');
+                } else {
+                    modalContainer.classList.remove('hidden');
+                }
+            }
+            
+            // Dispatch global event so the header badge and header mini-dropdown updates too!
+            document.dispatchEvent(new CustomEvent('cartUpdated'));
+        } catch(err) {
+            console.error("Error refreshing cart DOM:", err);
+        } finally {
+            if (mainContainer) {
+                mainContainer.style.opacity = '1';
+            }
+        }
+    }
 </script>
 
 @section Scripts {
@@ -401,9 +541,9 @@
                 <text>
                 Swal.fire({
                     icon: 'success',
-                    title: 'Thành công!',
+                    title: 'Success!',
                     text: '@Html.Raw(TempData["CartSuccess"].ToString().Replace("'", "\\'"))',
-                    confirmButtonColor: '#059669'
+                    confirmButtonColor: '#006a62'
                 });
                 </text>
             }
@@ -413,7 +553,7 @@
                 <text>
                 Swal.fire({
                     icon: 'error',
-                    title: 'Thông báo',
+                    title: 'Notification',
                     text: '@Html.Raw(TempData["CartError"].ToString().Replace("'", "\\'"))',
                     confirmButtonColor: '#ef4444'
                 });

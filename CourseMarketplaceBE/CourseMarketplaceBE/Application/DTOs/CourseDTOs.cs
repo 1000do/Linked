@@ -73,3 +73,12 @@ public class CategoryResponse
     public int CategoryId { get; set; }
     public string CategoriesName { get; set; } = null!;
 }
+
+public class PaginatedCoursesResponse
+{
+    public IEnumerable<CourseResponse> Courses { get; set; } = new List<CourseResponse>();
+    public int TotalItems { get; set; }
+    public int TotalPages { get; set; }
+    public int CurrentPage { get; set; }
+    public int PageSize { get; set; }
+}

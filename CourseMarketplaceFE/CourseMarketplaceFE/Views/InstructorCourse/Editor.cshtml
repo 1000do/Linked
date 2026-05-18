@@ -44,7 +44,7 @@
         <div class="mb-6 bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start gap-3 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
             <span class="material-symbols-outlined text-amber-600">report</span>
             <div class="flex-1">
-                <h4 class="text-sm font-bold text-amber-900 mb-1">Phản hồi kiểm duyệt:</h4>
+                <h4 class="text-sm font-bold text-amber-900 mb-1">Moderation Feedback:</h4>
                 <p class="text-sm text-amber-800 leading-relaxed">@moderationFeedback</p>
             </div>
             <button onclick="this.parentElement.remove()" class="text-amber-400 hover:text-amber-600">
@@ -79,10 +79,10 @@
                             <span class="material-symbols-outlined text-amber-600">info</span>
                         </div>
                         <div class="flex-1">
-                            <h3 class="font-bold text-amber-900">Tài khoản chưa liên kết Stripe</h3>
+                            <h3 class="font-bold text-amber-900">Stripe account not connected</h3>
                             <p class="text-amber-800 text-sm mt-1 leading-relaxed">
-                                Bạn đang ở chế độ giới hạn: Tối đa <strong>2 khóa học</strong>, <strong>5 bài học/khóa</strong>, <strong>1 tài liệu/bài học</strong> và <strong>30 phút video</strong> toàn khóa. 
-                                <a href="/Instructor/StripeOnboarding" class="font-bold underline hover:text-amber-700 ml-1">Liên kết Stripe ngay</a> để gỡ bỏ giới hạn và bắt đầu kiếm tiền.
+                                You are in limited mode: Maximum <strong>2 courses</strong>, <strong>5 lessons/course</strong>, <strong>1 resource/lesson</strong> and <strong>30 minutes of video</strong> in total. 
+                                <a href="/Instructor/StripeOnboarding" class="font-bold underline hover:text-amber-700 ml-1">Connect Stripe now</a> to remove limits and start earning.
                             </p>
                         </div>
                     </div>
@@ -94,9 +94,9 @@
                             <span class="material-symbols-outlined text-blue-600">info</span>
                         </div>
                         <div class="flex-1">
-                            <h3 class="font-bold text-blue-900">Khóa học Miễn phí</h3>
+                            <h3 class="font-bold text-blue-900">Free Course</h3>
                             <p class="text-blue-800 text-sm mt-1 leading-relaxed">
-                                Đối với khóa học miễn phí, tổng thời lượng video toàn khóa bị giới hạn tối đa là <strong>60 phút</strong>.
+                                For free courses, total course video duration is limited to a maximum of <strong>60 minutes</strong>.
                             </p>
                         </div>
                     </div>
@@ -175,10 +175,9 @@
 
                                 @if (!isStripeActiveEditor)
                                 {
-                                    <!-- ★ Stripe chưa kích hoạt → Khóa giá = Free, hiện prompt -->
                                     <div class="flex items-center justify-between">
                                         <label class="text-sm font-bold text-slate-900 block">Price (USD)</label>
-                                        <span class="text-xs text-amber-600 font-bold bg-amber-50 px-2 py-1 rounded border border-amber-200">🔒 Chỉ Free</span>
+                                        <span class="text-xs text-amber-600 font-bold bg-amber-50 px-2 py-1 rounded border border-amber-200">🔒 Free Only</span>
                                     </div>
                                     <div class="relative">
                                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -194,11 +193,11 @@
                                                 <span class="material-symbols-outlined text-[22px]">lock</span>
                                             </div>
                                             <div class="flex-1">
-                                                <p class="text-sm font-bold text-amber-900 mb-1">Muốn bán khóa học có phí?</p>
-                                                <p class="text-xs text-amber-700 mb-2">Đăng ký tài khoản Stripe để mở khóa tính năng đặt giá.</p>
-                                                <a href="/Instructor/Dashboard" class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-lg shadow hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-xs">
+                                                <p class="text-sm font-bold text-amber-900 mb-1">Want to sell premium paid courses?</p>
+                                                <p class="text-xs text-amber-700 mb-2">Connect your Stripe account to unlock custom pricing.</p>
+                                                <a href="/Instructor/ApplicationStatus" class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-lg shadow hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-xs">
                                                     <span class="material-symbols-outlined text-[16px]">credit_card</span>
-                                                    Đăng ký Stripe
+                                                    Set up Stripe
                                                 </a>
                                             </div>
                                         </div>
@@ -206,7 +205,6 @@
                                 }
                                 else
                                 {
-                                    <!-- ✅ Stripe đã kích hoạt → Cho phép đặt giá -->
                                     <div class="flex items-center justify-between">
                                         <label class="text-sm font-bold text-slate-900 block">Price (USD)</label>
                                         <span class="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-1 rounded">Min: $0.00</span>
@@ -252,9 +250,9 @@
                                     <div class="flex flex-col gap-1">
                                         <span class="text-xs font-bold text-slate-800 flex items-center gap-2">
                                             <span class="material-symbols-outlined text-emerald-600 text-[16px]">loyalty</span>
-                                            Áp dụng coupon cho khóa học này
+                                            Apply coupon to this course
                                         </span>
-                                        <span class="text-[10px] text-slate-400">Tăng tỷ lệ mua hàng bằng Voucher do hệ thống tài trợ</span>
+                                        <span class="text-[10px] text-slate-400">Boost enrollments with LinkedLearn-sponsored vouchers</span>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" id="coupon-toggle" class="sr-only peer" @(ViewBag.CouponCode != null ? "checked" : "") />
@@ -267,10 +265,10 @@
                                     <!-- Select Button if not selected -->
                                     <div id="no-voucher-selected-state" class="@(ViewBag.CouponCode == null ? "" : "hidden") flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
                                         <span class="material-symbols-outlined text-slate-400 text-[32px] mb-2">confirmation_number</span>
-                                        <p class="text-xs text-slate-505 font-bold mb-4 text-slate-500">Chưa có voucher nào được áp dụng cho khóa học này</p>
+                                        <p class="text-xs text-slate-500 font-bold mb-4">No voucher selected for this course yet</p>
                                         <button type="button" onclick="openCouponModal()" class="px-5 py-2.5 bg-slate-900 text-white hover:bg-slate-800 text-xs font-black rounded-xl uppercase tracking-widest transition-all active:scale-95 shadow-md flex items-center gap-2">
                                             <span class="material-symbols-outlined text-[16px]">add_circle</span>
-                                            Chọn Voucher từ Hệ thống
+                                            Select System Voucher
                                         </button>
                                     </div>
 
@@ -286,16 +284,16 @@
                                              <div>
                                                  <div class="flex items-center gap-2 mb-0.5">
                                                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                                                     <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Đang áp dụng</p>
+                                                     <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Active</p>
                                                  </div>
                                                  <h4 id="display-coupon-code" class="text-lg font-black text-slate-900 tracking-widest font-mono">@ViewBag.CouponCode</h4>
                                                  <div class="flex items-center gap-3 mt-1.5">
-                                                     <span id="display-coupon-discount" class="px-2.5 py-0.5 bg-emerald-500 text-white text-[9px] font-black rounded-lg uppercase shadow-sm">Giảm @(ViewBag.CouponType == "percentage" ? ViewBag.CouponValue + "%" : "$" + ViewBag.CouponValue)</span>
+                                                     <span id="display-coupon-discount" class="px-2.5 py-0.5 bg-emerald-500 text-white text-[9px] font-black rounded-lg uppercase shadow-sm">Discount @(ViewBag.CouponType == "percentage" ? ViewBag.CouponValue + "%" : "$" + ViewBag.CouponValue)</span>
                                                  </div>
                                              </div>
                                          </div>
                                          <button type="button" onclick="openCouponModal()" class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-[10px] font-black rounded-xl uppercase tracking-widest border border-slate-200 transition-all shadow-sm active:scale-95 flex items-center gap-1.5">
-                                             <span class="material-symbols-outlined text-[14px]">edit</span> Thay đổi
+                                             <span class="material-symbols-outlined text-[14px]">edit</span> Change
                                          </button>
                                      </div>
                                  </div>
@@ -303,84 +301,11 @@
                                  <div class="flex items-start gap-2 px-1">
                                      <span class="material-symbols-outlined text-amber-500 text-[14px] mt-0.5">verified_user</span>
                                      <p class="text-[10px] font-bold text-slate-400 italic leading-relaxed">
-                                         Mã giảm giá được tài trợ bởi hệ thống. Bạn không mất thêm chi phí khi áp dụng.
+                                         Discount sponsored by LinkedLearn. No additional cost to you.
                                      </p>
                                  </div>
                              </div>
                          </div>
-
-                        <!-- Premium Coupon Selection Modal -->
-                        <div id="coupon-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300">
-                            <!-- Backdrop with deeper blur -->
-                            <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[12px] opacity-0 transition-opacity duration-300 modal-backdrop" onclick="closeCouponModal()"></div>
-
-                            <!-- Modal Content -->
-                            <div class="bg-white/95 w-full max-w-2xl rounded-[2.5rem] shadow-[0_20px_70px_-10px_rgba(0,0,0,0.2)] relative z-10 flex flex-col overflow-hidden border border-white transform scale-90 opacity-0 transition-all duration-500 modal-content">
-                                <!-- Header with Glass effect -->
-                                <div class="px-10 py-8 border-b border-slate-100/50 flex justify-between items-center bg-white/50">
-                                    <div class="flex items-center gap-5">
-                                        <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-2xl shadow-slate-200">
-                                            <span class="material-symbols-outlined text-[32px]">auto_awesome</span>
-                                        </div>
-                                        <div>
-                                            <h3 class="text-2xl font-black text-slate-900 tracking-tight">Voucher Siêu Cấp</h3>
-                                            <p class="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-[0.2em] flex items-center gap-2">
-                                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                                Cập nhật từ hệ thống Linked
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <button type="button" onclick="closeCouponModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all duration-300">
-                                        <span class="material-symbols-outlined text-[28px]">close</span>
-                                    </button>
-                                </div>
-
-                                <!-- Body -->
-                                <div class="p-10 max-h-[50vh] overflow-y-auto custom-scrollbar bg-slate-50/30">
-                                    <div id="coupon-list-container" class="grid grid-cols-1 gap-6">
-                                        <!-- Data populated by JS -->
-                                        <div class="flex flex-col items-center justify-center py-20 gap-4">
-                                            <div class="relative">
-                                                <div class="w-12 h-12 border-4 border-slate-100 border-t-primary rounded-full animate-spin"></div>
-                                                <div class="absolute inset-0 flex items-center justify-center">
-                                                    <div class="w-2 h-2 bg-primary rounded-full"></div>
-                                                </div>
-                                            </div>
-                                            <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Đang săn tìm Voucher...</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Footer -->
-                                <div class="px-10 py-8 bg-white border-t border-slate-100 flex justify-between items-center">
-                                    <div class="flex flex-col gap-1">
-                                        <p class="text-[10px] font-black text-slate-900 uppercase tracking-widest">Trợ giúp Marketing</p>
-                                        <p class="text-[11px] font-medium text-slate-400">Chọn mã có tỉ lệ giảm cao nhất để thu hút học viên.</p>
-                                    </div>
-                                    <button type="button" onclick="closeCouponModal()" class="px-8 py-3.5 text-xs font-black text-white bg-slate-900 rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95 uppercase tracking-widest">
-                                        Đã hiểu
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <style>
-                            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-                            .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                            .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-                            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
-                            
-                            #coupon-modal.modal-visible { display: flex !important; }
-                            #coupon-modal.modal-visible .modal-backdrop { opacity: 1; }
-                            #coupon-modal.modal-visible .modal-content { transform: scale(1); opacity: 1; }
-
-                            /* Voucher Card Styling */
-                            .voucher-card-glass {
-                                background: rgba(255, 255, 255, 0.8);
-                                backdrop-filter: blur(8px);
-                                border: 1px solid rgba(255, 255, 255, 0.5);
-                            }
-                        </style>
 
                         <!-- Coupon JS - ALWAYS rendered regardless of coupon state -->
                         <script>
@@ -415,7 +340,7 @@
                                 container.innerHTML = `
                                     <div class="flex flex-col items-center justify-center py-20 gap-4">
                                         <div class="w-10 h-10 border-4 border-slate-100 border-t-primary rounded-full animate-spin"></div>
-                                        <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Đang săn tìm Voucher...</p>
+                                        <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Searching for vouchers...</p>
                                     </div>
                                 `;
                                 
@@ -426,12 +351,12 @@
                                     if (result.success && result.data && result.data.length > 0) {
                                         container.innerHTML = result.data.map(c => {
                                             const discountText = c.couponType === 'percentage' ? `${c.discountValue}%` : `$${c.discountValue}`;
-                                            const expiryText = c.endDate ? new Date(c.endDate).toLocaleDateString('vi-VN') : 'Vĩnh viễn';
+                                            const expiryText = c.endDate ? new Date(c.endDate).toLocaleDateString('en-US') : 'Lifetime';
                                             const isCurrent = c.couponCode === currentCouponCode;
                                             
                                             return `
                                                 <div class="group relative overflow-hidden rounded-[2rem] p-6 border-2 ${isCurrent ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-100 bg-white'} hover:border-emerald-500/40 hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-500">
-                                                    ${isCurrent ? '<div class="absolute top-0 right-0 bg-emerald-500 text-white text-[8px] font-black px-4 py-1.5 rounded-bl-xl uppercase tracking-widest">Đang dùng</div>' : ''}
+                                                    ${isCurrent ? '<div class="absolute top-0 right-0 bg-emerald-500 text-white text-[8px] font-black px-4 py-1.5 rounded-bl-xl uppercase tracking-widest">Selected</div>' : ''}
                                                     
                                                     <div class="flex items-center justify-between gap-6">
                                                         <div class="flex items-center gap-5">
@@ -443,28 +368,28 @@
                                                                 <h4 class="text-lg font-black text-slate-900 tracking-widest font-mono">${c.couponCode}</h4>
                                                                 <div class="flex items-center gap-2 mt-1.5">
                                                                     <span class="material-symbols-outlined text-slate-300 text-[14px]">event_available</span>
-                                                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Hết hạn: ${expiryText}</p>
+                                                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Expires: ${expiryText}</p>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         
                                                         ${isCurrent ? `
                                                             <div class="flex items-center gap-2 px-4 py-2.5 bg-emerald-100 text-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest">
-                                                                <span class="material-symbols-outlined text-[16px]">check_circle</span> Đã chọn
+                                                                <span class="material-symbols-outlined text-[16px]">check_circle</span> Selected
                                                             </div>
                                                         ` : `
-                                                            <button type="button" onclick="applyPlatformCoupon(${c.couponId})" class="px-6 py-3 bg-slate-900 text-white hover:bg-emerald-500 text-[10px] font-black rounded-xl uppercase tracking-widest transition-all duration-300 active:scale-95 shadow-lg shadow-slate-200 hover:shadow-emerald-500/20 shrink-0">Áp dụng</button>
+                                                            <button type="button" onclick="applyPlatformCoupon(${c.couponId})" class="px-6 py-3 bg-slate-900 text-white hover:bg-emerald-500 text-[10px] font-black rounded-xl uppercase tracking-widest transition-all duration-300 active:scale-95 shadow-lg shadow-slate-200 hover:shadow-emerald-500/20 shrink-0">Apply</button>
                                                         `}
                                                     </div>
                                                 </div>
                                             `;
                                         }).join('');
                                     } else {
-                                        container.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400 font-bold text-sm bg-slate-50 border border-slate-100 rounded-2xl">Hiện tại không có voucher nào khả dụng.</div>';
+                                        container.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400 font-bold text-sm bg-slate-50 border border-slate-100 rounded-2xl">No vouchers currently available.</div>';
                                     }
                                 } catch (err) {
                                     console.error(err);
-                                    container.innerHTML = '<div class="col-span-full py-8 text-center text-rose-500 font-bold text-sm bg-rose-50 border border-rose-100 rounded-2xl">Lỗi hệ thống khi tải danh sách voucher.</div>';
+                                    container.innerHTML = '<div class="col-span-full py-8 text-center text-rose-500 font-bold text-sm bg-rose-50 border border-rose-100 rounded-2xl">System error loading voucher list.</div>';
                                 }
                             }
 
@@ -474,13 +399,13 @@
                                 } else {
                                     // User toggled it OFF. Confirm removal.
                                     const confirmRemove = await Swal.fire({ 
-                                        title: 'Hủy bỏ ưu đãi?', 
-                                        text: 'Khóa học sẽ quay về giá gốc.', 
+                                        title: 'Cancel Promotion?', 
+                                        text: 'The course will revert to its original price.', 
                                         icon: 'warning', 
                                         showCancelButton: true, 
                                         confirmButtonColor: '#0f172a', 
-                                        confirmButtonText: 'Đồng ý hủy', 
-                                        cancelButtonText: 'Giữ lại' 
+                                        confirmButtonText: 'Yes, remove', 
+                                        cancelButtonText: 'Keep it' 
                                     });
                                     
                                     if (confirmRemove.isConfirmed) {
@@ -494,7 +419,7 @@
 
                             window.applyPlatformCoupon = async function(id) {
                                 try {
-                                    Swal.fire({ title: 'Đang áp dụng...', allowOutsideClick: false, showConfirmButton: false, didOpen: () => Swal.showLoading() });
+                                    Swal.fire({ title: 'Applying...', allowOutsideClick: false, showConfirmButton: false, didOpen: () => Swal.showLoading() });
                                     const res = await fetch('/Coupon/PlatformApply', { 
                                         method: 'POST', 
                                         headers: { 'Content-Type': 'application/json' }, 
@@ -502,30 +427,30 @@
                                     });
                                     const result = await res.json();
                                     if (result.success) {
-                                        Swal.fire({ icon: 'success', title: 'Thành công!', text: 'Mã giảm giá đã được áp dụng.', timer: 1500, showConfirmButton: false });
+                                        Swal.fire({ icon: 'success', title: 'Success!', text: 'Platform coupon applied successfully.', timer: 1500, showConfirmButton: false });
                                         setTimeout(() => location.reload(), 1500);
                                     } else {
-                                        Swal.fire('Lỗi', result.message || 'Không thể áp dụng mã này.', 'error');
+                                        Swal.fire('Error', result.message || 'Unable to apply this coupon.', 'error');
                                     }
                                 } catch (err) { 
-                                    Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ.', 'error'); 
+                                    Swal.fire('Error', 'Cannot connect to server.', 'error'); 
                                 }
                             };
 
                             window.removeCoupon = async function() {
                                 try {
-                                    Swal.fire({ title: 'Đang xử lý...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                                    Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                                     const res = await fetch(`/Coupon/PlatformRemove?courseId=${courseId}`, { method: 'DELETE' });
                                     const result = await res.json();
                                     if (result.success) { 
-                                        Swal.fire({ icon: 'success', title: 'Đã gỡ bỏ', timer: 1500, showConfirmButton: false }); 
+                                        Swal.fire({ icon: 'success', title: 'Removed!', timer: 1500, showConfirmButton: false }); 
                                         setTimeout(() => location.reload(), 1500); 
                                     } else { 
-                                        Swal.fire('Lỗi', result.message, 'error'); 
+                                        Swal.fire('Error', result.message, 'error'); 
                                         couponToggle.checked = true; // reset toggle to ON
                                     }
                                 } catch (err) { 
-                                    Swal.fire('Lỗi', 'Không thể kết nối.', 'error'); 
+                                    Swal.fire('Error', 'Unable to connect.', 'error'); 
                                     couponToggle.checked = true; // reset toggle to ON
                                 }
                             };
@@ -745,13 +670,13 @@
                             <!-- Usage Instructions -->
                             <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl">
                                 <h5 class="text-xs font-bold text-amber-800 uppercase tracking-wider mb-2 flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-[16px]">info</span> Cách thêm tài liệu
+                                    <span class="material-symbols-outlined text-[16px]">info</span> How to add resources
                                 </h5>
                                 <ul class="text-[11px] text-amber-700 space-y-1.5 leading-relaxed">
-                                    <li>1. Nhập <b>Tiêu đề/Mô tả</b> trước (nếu muốn).</li>
-                                    <li>2. Chọn file để bắt đầu tải lên.</li>
-                                    <li>3. Hệ thống sẽ <b>tự động lưu</b> ngay khi tải xong.</li>
-                                    <li>* Nếu để trống tiêu đề, hệ thống sẽ tự lấy theo tên file.</li>
+                                    <li>1. Enter <b>Title/Description</b> first (optional).</li>
+                                    <li>2. Select a file to start uploading.</li>
+                                    <li>3. The resource will be <b>automatically saved</b> once fully uploaded.</li>
+                                    <li>* If you leave the title blank, the file name will be used.</li>
                                 </ul>
                             </div>
 
@@ -801,10 +726,10 @@
                     <span class="material-symbols-outlined text-[32px]">auto_awesome</span>
                 </div>
                 <div>
-                    <h3 class="text-2xl font-black text-slate-900 tracking-tight">Voucher Siêu Cấp</h3>
+                    <h3 class="text-2xl font-black text-slate-900 tracking-tight">Elite Vouchers</h3>
                     <p class="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-[0.2em] flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        Cập nhật từ hệ thống Linked
+                        Updated from LinkedLearn Platform
                     </p>
                 </div>
             </div>
@@ -824,7 +749,7 @@
                             <div class="w-2 h-2 bg-primary rounded-full"></div>
                         </div>
                     </div>
-                    <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Đang săn tìm Voucher...</p>
+                    <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Searching for vouchers...</p>
                 </div>
             </div>
         </div>
@@ -832,11 +757,11 @@
         <!-- Footer -->
         <div class="px-10 py-8 bg-white border-t border-slate-100 flex justify-between items-center">
             <div class="flex flex-col gap-1">
-                <p class="text-[10px] font-black text-slate-900 uppercase tracking-widest">Trợ giúp Marketing</p>
-                <p class="text-[11px] font-medium text-slate-400">Chọn mã có tỉ lệ giảm cao nhất để thu hút học viên.</p>
+                <p class="text-[10px] font-black text-slate-900 uppercase tracking-widest">Marketing Tips</p>
+                <p class="text-[11px] font-medium text-slate-400">Select a higher discount value to boost student sign-ups.</p>
             </div>
             <button type="button" onclick="closeCouponModal()" class="px-8 py-3.5 text-xs font-black text-white bg-slate-900 rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95 uppercase tracking-widest">
-                Đã hiểu
+                Got it
             </button>
         </div>
     </div>
@@ -867,7 +792,7 @@
             <div class="w-8 h-8 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center">
                 <span class="material-symbols-outlined text-[20px]">lock</span>
             </div>
-            <p class="text-sm font-bold text-slate-900">Khóa học đang chờ duyệt — Chế độ chỉ đọc</p>
+            <p class="text-sm font-bold text-slate-900">Course pending moderation — Read-only mode</p>
         </div>
     </div>
 }
@@ -876,6 +801,10 @@
 @section Scripts {
     <script>
         // --- GLOBAL FUNCTIONS AT THE TOP ---
+        let initialVideoDesc = "";
+        let isResourceUploading = false;
+        let isSubmitting = false;
+
         window.addNewLesson = function() {
             console.log("Add New Lesson clicked");
             const modal = document.getElementById('add-lesson-modal');
@@ -913,6 +842,13 @@
         window.videoQuill = new Quill('#video-editor', { ...quillConfig, placeholder: 'Describe the video content...' });
         window.resourceQuill = new Quill('#resource-editor', { ...quillConfig, placeholder: 'Describe this resource...' });
         
+        // Auto-save listeners for Video description
+        const debouncedSaveVideo = debounce(() => {
+            saveVideoMaterial(true);
+        }, 1500);
+
+        window.videoQuill.on('text-change', debouncedSaveVideo);
+
         // Course Landing Page Quills
         window.courseDescQuill = new Quill('#course-description-editor', { ...quillConfig, placeholder: 'Detailed course description...' });
         window.courseLearnQuill = new Quill('#course-learn-editor', { ...quillConfig, placeholder: 'What will students achieve?' });
@@ -970,8 +906,7 @@
             }
         };
 
-        window.saveCourseDetails = function(skipAlert = false) {
-            const btn = document.getElementById('save-course-details-btn');
+        window.saveCourseDetails = function() {
             const title = document.getElementById('course-title-input').value;
             const price = document.getElementById('course-price-input').value;
             const catId = document.getElementById('course-category-input').value;
@@ -984,24 +919,10 @@
             const autoSaveEl = document.getElementById('landing-autosave-status');
             const autoSaveText = autoSaveEl?.querySelector('span:last-child') || { textContent: '' };
 
-            // Validation (only alert if NOT auto-saving)
-            if (!title || title.trim() === '') { 
-                if (!skipAlert) Swal.fire('Thiếu thông tin', 'Vui lòng nhập Tiêu đề khóa học.', 'warning'); 
-                return; 
-            }
-            if (!desc || desc.trim() === '' || desc === '<p><br></p>') { 
-                if (!skipAlert) Swal.fire('Thiếu thông tin', 'Vui lòng nhập Mô tả khóa học.', 'warning'); 
-                return; 
-            }
-            if (catId == "0") {
-                if (!skipAlert) Swal.fire('Thiếu thông tin', 'Vui lòng chọn Danh mục khóa học.', 'warning');
-                return;
-            }
-
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Saving...';
-            }
+            // Validation (silently return on invalid fields for auto-save flow)
+            if (!title || title.trim() === '') return;
+            if (!desc || desc.trim() === '' || desc === '<p><br></p>') return;
+            if (catId == "0") return;
             
             if (autoSaveEl) {
                 autoSaveEl.classList.remove('hidden');
@@ -1021,16 +942,14 @@
             fd.append('whatYouWillLearn', learn);
             fd.append('requirements', req);
 
-            fetch('/InstructorCourse/UpdateDetails', { method: 'POST', body: fd })
+            return fetch('/InstructorCourse/UpdateDetails', { method: 'POST', body: fd })
                 .then(res => res.json())
                 .then(json => {
                     if (json.success) {
                         if (json.status && json.status.toLowerCase() === 'pending') {
+                            isSubmitting = true;
                             location.reload();
                         } else {
-                            if (!skipAlert) {
-                                Swal.fire({ icon: 'success', title: 'Saved!', text: 'Course details updated successfully.', timer: 1500, showConfirmButton: false });
-                            }
                             const h1El = document.querySelector('h1');
                             if (h1El) h1El.textContent = title;
                             const thumbPrevEl = document.getElementById('course-thumbnail-preview');
@@ -1048,19 +967,11 @@
                             }
                         }
                     } else {
-                        if (!skipAlert) Swal.fire('Error', json.message || 'Failed to update details', 'error');
                         if (autoSaveEl) autoSaveEl.classList.add('hidden');
                     }
                 })
                 .catch(e => {
-                    if (!skipAlert) Swal.fire('Error', 'An error occurred', 'error');
                     if (autoSaveEl) autoSaveEl.classList.add('hidden');
-                })
-                .finally(() => {
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">save</span> Save Course Details';
-                    }
                 });
         };
 
@@ -1074,7 +985,7 @@
         }
 
         const debouncedSaveLanding = debounce(() => {
-            saveCourseDetails(true);
+            saveCourseDetails();
         }, 1500);
 
         // Attach listeners for landing page fields
@@ -1452,7 +1363,7 @@
                                         <div class="mt-3 bg-red-50 border border-red-200 p-3 rounded-xl flex items-start gap-2">
                                             <span class="material-symbols-outlined text-red-500 text-[18px] mt-0.5">error</span>
                                             <div>
-                                                <p class="text-xs font-bold text-red-700 mb-0.5">Phản hồi kiểm duyệt:</p>
+                                                <p class="text-xs font-bold text-red-700 mb-0.5">Moderation Feedback:</p>
                                                 <p class="text-xs text-red-600">${mModerationFeedback}</p>
                                             </div>
                                         </div>
@@ -1475,7 +1386,7 @@
                                     <div class="mt-2 bg-red-50 border border-red-200 p-2.5 rounded-lg flex items-start gap-2">
                                         <span class="material-symbols-outlined text-red-500 text-[16px] mt-0.5">error</span>
                                         <div>
-                                            <p class="text-[11px] font-bold text-red-700 mb-0.5">Phản hồi kiểm duyệt:</p>
+                                            <p class="text-[11px] font-bold text-red-700 mb-0.5">Moderation Feedback:</p>
                                             <p class="text-[11px] text-red-600">${mModerationFeedback}</p>
                                         </div>
                                     </div>` : '';
@@ -1512,6 +1423,9 @@
             }
             const durationEl = document.getElementById('editing-lesson-duration');
             if(durationEl) durationEl.textContent = durationDisplay;
+
+            // Capture initial video description for unsaved warning check
+            initialVideoDesc = window.videoQuill ? window.videoQuill.root.innerHTML : "";
         };
 
 
@@ -1546,11 +1460,25 @@
                             }, 50);
                             closeLessonModal();
                         } else {
-                            alert('Failed to add lesson: ' + (json.message || 'Unknown error'));
+                            Swal.fire({
+                                title: 'Failed to Create Lesson',
+                                text: json.message || 'Unknown error',
+                                icon: 'error',
+                                confirmButtonColor: '#006a62',
+                                background: '#ffffff',
+                                customClass: { popup: 'rounded-2xl shadow-xl' }
+                            });
                         }
                     })
                     .catch(e => {
-                        alert('Error adding lesson');
+                        Swal.fire({
+                            title: 'System Error',
+                            text: 'An error occurred while creating the lesson.',
+                            icon: 'error',
+                            confirmButtonColor: '#006a62',
+                            background: '#ffffff',
+                            customClass: { popup: 'rounded-2xl shadow-xl' }
+                        });
                     })
                     .finally(() => {
                         btn.disabled = false;
@@ -1738,14 +1666,26 @@
         window.resetVideoUpload = resetVideoUpload;
 
         // ─── Auto-Save Video Material ───
-        window.saveVideoMaterial = function() {
+        window.saveVideoMaterial = function(isAutoSave = false) {
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
             const lessonId = lessonIdEl.dataset.lessonId;
             const title = lessonIdEl.dataset.title;
             const description = window.videoQuill.root.innerHTML;
-            const materialUrl = document.getElementById('MaterialUrl').value;
-            if (!materialUrl) return;
+            
+            // If it's an auto-save of description, we might not have a NEW materialUrl
+            // In that case, backend logic for "string.IsNullOrEmpty(materialUrl)" will update existing video
+            let materialUrl = document.getElementById('MaterialUrl').value;
+            
+            // If we are just updating the description, we should send empty MaterialUrl 
+            // to hit the backend update logic instead of the "swap" logic
+            if (isAutoSave && materialUrl) {
+                // If we have a materialUrl but it's already the active one, we should send empty to just update desc
+                // Actually, let's just always send empty if we are just updating metadata
+                materialUrl = ""; 
+            }
+
+            if (!isAutoSave && !materialUrl) return;
 
             const statusEl = document.getElementById('video-save-status');
             const autoSaveEl = document.getElementById('video-autosave-status');
@@ -1760,11 +1700,13 @@
             fd.append('type', 'video');
             
             const matUrlInput = document.getElementById('MaterialUrl');
-            if (matUrlInput.dataset.duration) fd.append('duration', matUrlInput.dataset.duration);
-            if (matUrlInput.dataset.fileSize) fd.append('fileSize', matUrlInput.dataset.fileSize);
-            if (matUrlInput.dataset.format) fd.append('fileExtension', matUrlInput.dataset.format);
+            if (!isAutoSave) {
+                if (matUrlInput.dataset.duration) fd.append('duration', matUrlInput.dataset.duration);
+                if (matUrlInput.dataset.fileSize) fd.append('fileSize', matUrlInput.dataset.fileSize);
+                if (matUrlInput.dataset.format) fd.append('fileExtension', matUrlInput.dataset.format);
+            }
             
-            fetch('/InstructorCourse/AddMaterial', { method: 'POST', body: fd })
+            return fetch('/InstructorCourse/AddMaterial', { method: 'POST', body: fd })
                 .then(res => {
                     if(res.ok) return res.json();
                     throw new Error('HTTP ' + res.status);
@@ -1773,6 +1715,8 @@
                     if(json.success) {
                         if (statusEl) statusEl.textContent = '✓ Saved automatically';
                         if (json.data) updateLocalMaterials(lessonId, json.data, 'video');
+                        // Update initial video description so subsequent changes check works
+                        initialVideoDesc = window.videoQuill ? window.videoQuill.root.innerHTML : "";
                     } else {
                         if (statusEl) statusEl.textContent = '✗ ' + (json.message || 'Save failed');
                     }
@@ -1914,7 +1858,7 @@
                 <div class="mt-2 bg-red-50 border border-red-200 p-2.5 rounded-lg flex items-start gap-2">
                     <span class="material-symbols-outlined text-red-500 text-[16px] mt-0.5">error</span>
                     <div>
-                        <p class="text-[11px] font-bold text-red-700 mb-0.5">Phản hồi kiểm duyệt:</p>
+                        <p class="text-[11px] font-bold text-red-700 mb-0.5">Moderation Feedback:</p>
                         <p class="text-[11px] text-red-600">${mModerationFeedback}</p>
                     </div>
                 </div>` : '';
@@ -1979,8 +1923,8 @@
             if (!title || title.trim() === '' || !desc || desc === '<p><br></p>' || catId == "0") {
                 switchMainTab('landing'); 
                 Swal.fire({
-                    title: 'Thông tin chưa đầy đủ',
-                    text: 'Vui lòng hoàn thiện Tiêu đề, Mô tả và Danh mục tại tab "Course Landing Page" trước khi gửi duyệt.',
+                    title: 'Incomplete Information',
+                    text: 'Please complete the Course Title, Description, and Category on the Course Landing Page tab before submitting.',
                     icon: 'warning',
                     confirmButtonColor: '#006a62'
                 });
@@ -1991,8 +1935,30 @@
             if (!lessonsData || lessonsData.length === 0) {
                 switchMainTab('curriculum');
                 Swal.fire({
-                    title: 'Giáo trình trống',
-                    text: 'Khóa học cần có ít nhất một bài học (Lesson) để gửi duyệt.',
+                    title: 'Curriculum is Empty',
+                    text: 'Your course must have at least one lesson to submit for review.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+                return;
+            }
+
+            // ─── CHECK ACTIVE UPLOADS ───
+            if (currentXHR && currentXHR.readyState !== 4) {
+                switchMainTab('curriculum');
+                Swal.fire({
+                    title: 'Upload in Progress',
+                    text: 'A video upload is currently in progress. Please wait for it to complete before submitting.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+                return;
+            }
+            if (isResourceUploading) {
+                switchMainTab('curriculum');
+                Swal.fire({
+                    title: 'Upload in Progress',
+                    text: 'A resource upload is currently in progress. Please wait for it to complete before submitting.',
                     icon: 'warning',
                     confirmButtonColor: '#006a62'
                 });
@@ -2001,14 +1967,27 @@
 
             // Unsaved changes check
             let hasUnsavedChanges = false;
+            
+            // Normalize values for comparison
+            const normPrice = parseFloat(price || 0).toFixed(2);
+            const initialPrice = parseFloat(initialCourseData.price || 0).toFixed(2);
+
             if (title !== initialCourseData.title ||
                 desc !== initialCourseData.desc ||
                 catId !== initialCourseData.catId ||
-                price !== initialCourseData.price ||
+                normPrice !== initialPrice ||
                 thumb !== initialCourseData.thumb ||
                 learn !== initialCourseData.learn ||
                 req !== initialCourseData.req) {
                 hasUnsavedChanges = true;
+            }
+
+            let hasUnsavedVideoDesc = false;
+            if (window.videoQuill) {
+                const currentVideoDesc = window.videoQuill.root.innerHTML;
+                if (currentVideoDesc !== initialVideoDesc && currentVideoDesc !== '<p><br></p>') {
+                    hasUnsavedVideoDesc = true;
+                }
             }
             
             const proceedWithSubmit = () => {
@@ -2021,8 +2000,8 @@
                 if (emptyLessons.length > 0) {
                     switchMainTab('curriculum');
                     Swal.fire({
-                        title: 'Bài học chưa có nội dung',
-                        text: `Bạn có ${emptyLessons.length} bài học chưa tải video hoặc tài liệu. Vui lòng bổ sung nội dung trước khi gửi duyệt.`,
+                        title: 'Lesson has no content',
+                        text: `You have ${emptyLessons.length} lesson(s) without video or files. Please add content before submitting for review.`,
                         icon: 'warning',
                         confirmButtonColor: '#006a62'
                     });
@@ -2039,6 +2018,7 @@
                     confirmButtonText: 'Yes, submit it!'
                 }).then((result) => {
                     if (result.isConfirmed) {
+                        isSubmitting = true;
                         fetch('/InstructorCourse/UpdateCourseStatus', { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -2048,41 +2028,71 @@
                         .then(json => {
                             if (json.success) {
                                 Swal.fire({
-                                    title: 'Đã gửi xét duyệt!',
+                                    title: 'Submitted for Review!',
                                     html: `
                                         <div class="text-left space-y-3">
-                                            <p class="text-slate-600">Khóa học của bạn đã được gửi đến đội ngũ quản trị viên.</p>
+                                            <p class="text-slate-600">Your course has been submitted to the moderation team.</p>
                                             <div class="bg-primary/5 border border-primary/10 p-4 rounded-xl">
                                                 <div class="flex items-center gap-2 text-primary mb-1">
                                                     <span class="material-symbols-outlined text-[20px]">schedule</span>
-                                                    <span class="font-bold">Thời gian dự kiến: 3-5 ngày làm việc</span>
+                                                    <span class="font-bold">Estimated time: 3-5 business days</span>
                                                 </div>
-                                                <p class="text-xs text-slate-500">Chúng tôi sẽ thông báo cho bạn ngay khi có kết quả xét duyệt.</p>
+                                                <p class="text-xs text-slate-500">We will notify you as soon as the review is complete.</p>
                                             </div>
-                                            <p class="text-xs text-amber-600 font-medium italic">Lưu ý: Khóa học sẽ bị khóa chỉnh sửa trong lúc chờ duyệt.</p>
+                                            <p class="text-xs text-amber-600 font-medium italic">Note: The course details will be locked during the moderation process.</p>
                                         </div>
                                     `,
                                     icon: 'success',
-                                    confirmButtonText: 'Đã hiểu',
+                                    confirmButtonText: 'Got it',
                                     confirmButtonColor: '#006a62'
                                 }).then(() => {
                                     location.reload();
                                 });
                             } else {
+                                isSubmitting = false;
                                 Swal.fire('Error', json.message || 'Failed to update course status.', 'error');
                             }
                         })
                         .catch(e => {
+                            isSubmitting = false;
                             Swal.fire('Error', 'An error occurred while communicating with the server.', 'error');
                         });
                     }
                 });
             };
 
-            if (hasUnsavedChanges) {
+            const checkLandingPageAndProceed = () => {
+                if (hasUnsavedChanges) {
+                    Swal.fire({
+                        title: 'Unsaved Changes',
+                        text: 'There are unsaved changes in Course Landing Page, do you want to save before proceed?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#006a62',
+                        cancelButtonColor: '#cbd5e1',
+                        confirmButtonText: 'YES',
+                        cancelButtonText: 'NO'
+                    }).then((saveResult) => {
+                        if (saveResult.isConfirmed) {
+                            // YES -> save then submit
+                            saveCourseDetails(true).then(() => {
+                                proceedWithSubmit();
+                            });
+                        } else if (saveResult.dismiss === Swal.DismissReason.cancel) {
+                            // NO -> continue with original data, don't save
+                            proceedWithSubmit();
+                        }
+                    });
+                } else {
+                    proceedWithSubmit();
+                }
+            };
+
+            // Chain check for unsaved video description first
+            if (hasUnsavedVideoDesc) {
                 Swal.fire({
-                    title: 'Unsaved Changes',
-                    text: 'There are unsaved changes in Course Landing Page, do you want to save before proceed?',
+                    title: 'Unsaved Video Description',
+                    text: 'You have unsaved changes in your video description. Do you want to save them before proceeding?',
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#006a62',
@@ -2091,17 +2101,25 @@
                     cancelButtonText: 'NO'
                 }).then((saveResult) => {
                     if (saveResult.isConfirmed) {
-                        // YES -> save then submit
-                        saveCourseDetails(true).then(() => {
-                            proceedWithSubmit();
+                        // YES -> save video material and then proceed
+                        Swal.fire({
+                            title: 'Saving video description...',
+                            allowOutsideClick: false,
+                            didOpen: () => { Swal.showLoading(); }
+                        });
+                        saveVideoMaterial(true).then(() => {
+                            Swal.close();
+                            checkLandingPageAndProceed();
+                        }).catch(() => {
+                            Swal.fire('Error', 'Failed to save video description.', 'error');
                         });
                     } else if (saveResult.dismiss === Swal.DismissReason.cancel) {
-                        // NO -> continue with original data, don't save
-                        proceedWithSubmit();
+                        // NO -> proceed without saving
+                        checkLandingPageAndProceed();
                     }
                 });
             } else {
-                proceedWithSubmit();
+                checkLandingPageAndProceed();
             }
         };
 
@@ -2167,7 +2185,7 @@
                                 return mStatus !== 'removed' && (fType === 'document' || fType === 'file' || fType === 'raw');
                             });
                             if (resources.length >= 1) {
-                                Swal.fire('Giới hạn tài liệu', 'Instructor chưa liên kết Stripe chỉ được phép đính kèm tối đa 1 tài liệu mỗi bài học.', 'warning');
+                                Swal.fire('Resource Limit Exceeded', 'Instructors without Stripe setup can only attach a maximum of 1 resource per lesson.', 'warning');
                                 this.value = '';
                                 return;
                             }
@@ -2193,6 +2211,7 @@
 
                 resourceBtnEl.classList.add('hidden');
                 resourceProgressEl.classList.remove('hidden');
+                isResourceUploading = true;
                 
                 const CLOUD_NAME = 'df8i0azc5';
                 const UPLOAD_PRESET = 'course_marketplace_preset';
@@ -2202,6 +2221,7 @@
                 fetch(url, { method: 'POST', body: fd })
                 .then(res => res.json())
                 .then(data => {
+                    isResourceUploading = false;
                     resourceProgressEl.classList.add('hidden');
                     resourceBtnEl.classList.remove('hidden');
                     if (data.secure_url) {
@@ -2226,6 +2246,7 @@
                     }
                 })
                 .catch(err => {
+                    isResourceUploading = false;
                     resourceProgressEl.classList.add('hidden');
                     resourceBtnEl.classList.remove('hidden');
                     Swal.fire('Resource Upload Failed', 'An error occurred while uploading your resource.', 'error');
@@ -2281,5 +2302,49 @@
                 if (el) el.classList.add('hidden');
             });
         }
+        // ─── Before Unload Warning ───
+        window.onbeforeunload = function() {
+            if (isSubmitting) return;
+
+            // 1. Check if active uploads are in progress
+            if (currentXHR && currentXHR.readyState !== 4) {
+                return "A video upload is currently in progress. If you leave now, the upload will be cancelled.";
+            }
+            if (isResourceUploading) {
+                return "A resource upload is currently in progress. If you leave now, the upload will be cancelled.";
+            }
+
+            // 2. Check unsaved changes in Video description (Curriculum)
+            if (window.videoQuill) {
+                const currentVideoDesc = window.videoQuill.root.innerHTML;
+                if (currentVideoDesc !== initialVideoDesc && currentVideoDesc !== '<p><br></p>') {
+                    return "You have unsaved changes in your video description. Are you sure you want to leave?";
+                }
+            }
+
+            // 3. Check Landing Page unsaved changes
+            const title = document.getElementById('course-title-input')?.value;
+            const price = document.getElementById('course-price-input')?.value;
+            const catId = document.getElementById('course-category-input')?.value;
+            const thumb = document.getElementById('course-thumbnail-input')?.value;
+            const desc = window.courseDescQuill?.root.innerHTML;
+            const learn = window.courseLearnQuill?.root.innerHTML;
+            const req = window.courseReqQuill?.root.innerHTML;
+
+            if (initialCourseData) {
+                const normPrice = parseFloat(price || 0).toFixed(2);
+                const initialPrice = parseFloat(initialCourseData.price || 0).toFixed(2);
+
+                if (title !== initialCourseData.title ||
+                    desc !== initialCourseData.desc ||
+                    catId !== initialCourseData.catId ||
+                    normPrice !== initialPrice ||
+                    thumb !== initialCourseData.thumb ||
+                    learn !== initialCourseData.learn ||
+                    req !== initialCourseData.req) {
+                    return "You have unsaved changes in Course Landing Page. Are you sure you want to leave?";
+                }
+            }
+        };
     </script>
 }

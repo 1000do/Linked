@@ -1,4 +1,19 @@
 @using Microsoft.AspNetCore.Http
+<style>
+    #header-search-results-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    #header-search-results-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    #header-search-results-list::-webkit-scrollbar-thumb {
+        background: #cbd5e1; /* slate-300 */
+        border-radius: 9999px;
+    }
+    #header-search-results-list::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8; /* slate-400 */
+    }
+</style>
 <nav class="fixed top-0 w-full z-50 bg-[#f0fcfb]/40 border-b border-primary/10 glass-nav">
     <div class="flex items-center px-8 py-2 w-full">
         <div class="flex items-center gap-6">
@@ -8,26 +23,37 @@
             <div class="relative hidden md:block" id="categories-dropdown">
                 <button onclick="toggleCategories()" 
                         class="px-4 py-2 text-sm font-bold text-slate-700 hover:text-primary transition-colors flex items-center gap-1">
-                    Chủ Đề Tôi Cần
+                    Explore Topics
                     <span class="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
                 </button>
                 <div id="categories-box" 
                      class="hidden absolute left-0 mt-3 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-[60] py-2">
                     <div id="categories-items-container" class="max-h-96 overflow-y-auto">
-                        <div class="px-4 py-3 text-xs text-slate-400">Đang tải danh mục...</div>
+                        <div class="px-4 py-3 text-xs text-slate-400">Loading categories...</div>
                     </div>
                 </div>
             </div>
 
             @* 🔍 GLOBAL SEARCH BAR *@
-            <div class="hidden lg:flex items-center flex-1 max-w-5xl px-12 group">
+            <div class="hidden lg:flex items-center flex-1 max-w-5xl px-12 group relative" id="header-search-container">
                 <div class="relative w-full">
                     <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
-                    <form action="/Course" method="get">
-                        <input type="text" name="query" 
+                    <form action="/Course" method="get" id="header-search-form">
+                        <input type="text" name="query" autocomplete="off" id="header-search-input"
                                class="w-full h-10 pl-12 pr-4 bg-slate-100 border border-slate-200 rounded-full text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
-                               placeholder="Tìm kiếm nội dung bất kỳ..." />
+                               placeholder="Search anything..." />
                     </form>
+                    
+                    @* Sleek autocomplete dropdown in premium light glassmorphic theme *@
+                    <div id="header-search-results" 
+                         class="hidden absolute left-0 right-0 mt-3 bg-white/95 backdrop-blur-md border border-slate-100 rounded-2xl shadow-2xl overflow-hidden z-[100] transition-all duration-300">
+                        <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+                            <span class="text-xs font-bold text-slate-500">SEARCH RESULTS: <span id="search-keyword-highlight" class="text-[#a435f0] font-extrabold uppercase"></span></span>
+                        </div>
+                        <div id="header-search-results-list" class="max-h-[350px] overflow-y-auto divide-y divide-slate-100">
+                            <!-- Items populated dynamically via JS -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -77,7 +103,7 @@
                         <a href="/Instructor/Apply"
                            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-primary to-secondary rounded-full shadow-md shadow-primary/20 hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-300">
                             <span class="material-symbols-outlined text-[16px]" style='font-variation-settings: "FILL" 1;'>school</span>
-                            Trở thành Giảng viên
+                            Become an Instructor
                         </a>
                         <div class="w-px h-6 bg-slate-200 mx-2"></div>
                     }
@@ -97,12 +123,12 @@
                             <div id="cart-box"
                                  class="hidden absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[60]">
                                 <div class="p-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                                    <span class="font-bold text-slate-800 text-sm">Giỏ hàng</span>
-                                    <a href="/Cart" class="text-[11px] text-primary font-bold hover:underline">Xem tất cả</a>
+                                    <span class="font-bold text-slate-800 text-sm">Shopping Cart</span>
+                                    <a href="/Cart" class="text-[11px] text-primary font-bold hover:underline">View All</a>
                                 </div>
 
                                 <div id="cart-items-container" class="max-h-72 overflow-y-auto">
-                                    <div class="p-4 text-center text-slate-400 text-xs">Đang tải...</div>
+                                    <div class="p-4 text-center text-slate-400 text-xs">Loading...</div>
                                 </div>
 
                                 <div class="p-3 border-t border-slate-100">
@@ -116,12 +142,12 @@
                         </div>
 
                         @* 📚 MY COURSES ICON *@
-                        <a href="/Course/MyCourses" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Khóa học của tôi">
+                        <a href="/Course/MyCourses" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="My Learning">
                             <span class="material-symbols-outlined text-[24px]">school</span>
                         </a>
 
                         @* ❤️ WISHLIST ICON *@
-                        <a href="/Wishlist" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Danh sách yêu thích">
+                        <a href="/Wishlist" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="My Wishlist">
                             <span class="material-symbols-outlined text-[24px]">favorite</span>
                             <span id="wishlist-badge"
                                   class="hidden absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
@@ -129,7 +155,7 @@
                         </a>
 
                         @* 💬 CHAT ICON *@
-                        <a href="/Chat/Learner" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Tin nhắn">
+                        <a href="/Chat/Learner" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative group" title="Messages">
                             <span class="material-symbols-outlined text-[24px]">chat_bubble</span>
                             <span class="absolute top-2 right-2 w-2 h-2 bg-indigo-500 rounded-full border-2 border-white"></span>
                         </a>
@@ -143,17 +169,17 @@
 
                         <div id="noti-box" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[60]">
                             <div class="p-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                                <span class="font-bold text-slate-800 text-sm">Thông báo</span>
-                                <a href="/Notification" class="text-[11px] text-primary font-bold hover:underline">Xem tất cả</a>
+                                <span class="font-bold text-slate-800 text-sm">Notifications</span>
+                                <a href="/Notification" class="text-[11px] text-primary font-bold hover:underline">View All</a>
                             </div>
                             <div id="notification-items-container" class="max-h-80 overflow-y-auto">
-                                <div class="p-4 text-center text-slate-400 text-xs">Đang tải...</div>
+                                <div class="p-4 text-center text-slate-400 text-xs">Loading...</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="hidden sm:flex flex-col items-end">
-                        <span class="text-xs font-bold text-slate-700">Chào, @userName</span>
+                        <span class="text-xs font-bold text-slate-700">Hi, @userName</span>
                         @* POST logout để revoke refresh token trên BE (bảo mật hơn GET) *@
                         <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
                             @Html.AntiForgeryToken()
@@ -178,63 +204,69 @@
 </nav>
 
 <script>
-       function toggleNoti() {
-        const box = document.getElementById('noti-box');
-        box.classList.toggle('hidden');
-        if (!box.classList.contains('hidden')) {
-            document.getElementById('noti-badge').classList.add('hidden');
-           
+    // ─── DROPDOWNS MANAGEMENT ───
+    function toggleCategories() {
+        const box = document.getElementById('categories-box');
+        const isHidden = box.classList.contains('hidden');
+        closeAllDropdowns();
+        if (isHidden) {
+            box.classList.remove('hidden');
+            loadCategories();
         }
     }
-
-    
-
-    window.addEventListener('click', function(e) {
-        const dropdown = document.getElementById('notification-dropdown');
-        if (dropdown && !dropdown.contains(e.target)) {
-            document.getElementById('noti-box').classList.add('hidden');
-        }
-    });
-</script>
-
-<script>
-    // ─── CART MINI DROPDOWN ───
-    const cartApiUrl = "http://localhost:5207/api/cart/summary";
-    const accessToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`;
 
     function toggleCart() {
         const box = document.getElementById('cart-box');
         const isHidden = box.classList.contains('hidden');
-        // Đóng notification nếu đang mở
-        document.getElementById('noti-box')?.classList.add('hidden');
-        box.classList.toggle('hidden');
-        if (isHidden) loadCartPreview();
+        closeAllDropdowns();
+        if (isHidden) {
+            box.classList.remove('hidden');
+            loadCartPreview();
+        }
     }
+
+    function toggleNoti() {
+        const box = document.getElementById('noti-box');
+        const isHidden = box.classList.contains('hidden');
+        closeAllDropdowns();
+        if (isHidden) {
+            box.classList.remove('hidden');
+            document.getElementById('noti-badge').classList.add('hidden');
+        }
+    }
+
+    function closeAllDropdowns() {
+        document.getElementById('categories-box')?.classList.add('hidden');
+        document.getElementById('cart-box')?.classList.add('hidden');
+        document.getElementById('noti-box')?.classList.add('hidden');
+    }
+
+    window.addEventListener('click', function(e) {
+        if (!document.getElementById('categories-dropdown')?.contains(e.target)) 
+            document.getElementById('categories-box')?.classList.add('hidden');
+        if (!document.getElementById('cart-dropdown')?.contains(e.target)) 
+            document.getElementById('cart-box')?.classList.add('hidden');
+        if (!document.getElementById('notification-dropdown')?.contains(e.target)) 
+            document.getElementById('noti-box')?.classList.add('hidden');
+    });
+
+    // ─── DATA LOADING ───
+    const cartApiUrl = "http://localhost:5207/api/cart/summary";
+    const headerToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`;
 
     async function loadCartPreview() {
         const container = document.getElementById('cart-items-container');
         const badge    = document.getElementById('cart-badge');
-        if (!container) return;
-
-        if (!accessToken) {
-            container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">Vui lòng đăng nhập</div>`;
-            return;
-        }
+        if (!container || !headerToken) return;
 
         try {
             const res = await fetch(cartApiUrl, {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
+                headers: { 'Authorization': `Bearer ${headerToken}` }
             });
-
-            if (!res.ok) {
-                container.innerHTML = `<div class="p-4 text-center text-xs text-red-400">Lỗi tải giỏ hàng</div>`;
-                return;
-            }
-
+            if (!res.ok) return;
             const result = await res.json();
             const items  = result?.data?.items ?? [];
 
-            // Cập nhật số lượng trên badge
             if (items.length > 0) {
                 badge.textContent = items.length > 9 ? '9+' : items.length;
                 badge.classList.remove('hidden');
@@ -246,7 +278,7 @@
                 container.innerHTML = `
                     <div class="py-8 flex flex-col items-center gap-2 text-slate-400">
                         <span class="material-symbols-outlined text-4xl text-slate-200">shopping_cart</span>
-                        <p class="text-xs">Giỏ hàng đang trống</p>
+                        <p class="text-xs">Your cart is empty</p>
                     </div>`;
                 return;
             }
@@ -266,71 +298,37 @@
                         <p class="text-xs font-bold text-primary mt-1">${item.price.toLocaleString('vi-VN')} VND</p>
                     </div>
                 </a>`).join('');
-
-        } catch (err) {
-            container.innerHTML = `<div class="p-4 text-center text-xs text-red-400">Lỗi kết nối</div>`;
-        }
+        } catch (err) { }
     }
 
-    // Load badge ngay khi trang load (không cần mở dropdown)
     async function initCartBadge() {
         const badge = document.getElementById('cart-badge');
-        if (!badge || !accessToken) return;
+        if (!badge || !headerToken) return;
         try {
-            const res = await fetch(cartApiUrl, {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-            if (!res.ok) return;
-            const result = await res.json();
-            const count  = result?.data?.items?.length ?? 0;
-            if (count > 0) {
-                badge.textContent = count > 9 ? '9+' : count;
-                badge.classList.remove('hidden');
+            const res = await fetch(cartApiUrl, { headers: { 'Authorization': `Bearer ${headerToken}` } });
+            if (res.ok) {
+                const result = await res.json();
+                const count  = result?.data?.items?.length ?? 0;
+                if (count > 0) {
+                    badge.textContent = count > 9 ? '9+' : count;
+                    badge.classList.remove('hidden');
+                }
             }
         } catch { }
-    }
-
-    // Đóng cart khi click ra ngoài
-    window.addEventListener('click', function(e) {
-        const cartEl = document.getElementById('cart-dropdown');
-        if (cartEl && !cartEl.contains(e.target))
-            document.getElementById('cart-box')?.classList.add('hidden');
-    });
-
-    document.addEventListener('DOMContentLoaded', initCartBadge);
-
-    // ─── CATEGORIES DROPDOWN ───
-    function toggleCategories() {
-        const box = document.getElementById('categories-box');
-        const isHidden = box.classList.contains('hidden');
-        
-        // Đóng các dropdown khác
-        document.getElementById('cart-box')?.classList.add('hidden');
-        document.getElementById('noti-box')?.classList.add('hidden');
-        
-        box.classList.toggle('hidden');
-        if (isHidden) loadCategories();
     }
 
     async function loadCategories() {
         const container = document.getElementById('categories-items-container');
         if (!container) return;
-
         try {
             const res = await fetch("http://localhost:5207/api/public/courses/categories");
-            if (!res.ok) {
-                container.innerHTML = `<div class="px-4 py-3 text-xs text-red-400">Không thể tải danh mục</div>`;
-                return;
-            }
-
+            if (!res.ok) return;
             const result = await res.json();
             const categories = result?.data ?? [];
-
             if (categories.length === 0) {
-                container.innerHTML = `<div class="px-4 py-3 text-xs text-slate-400">Chưa có danh mục nào</div>`;
+                container.innerHTML = `<div class="px-4 py-3 text-xs text-slate-400">No categories found</div>`;
                 return;
             }
-
             container.innerHTML = categories.map(cat => `
                 <a href="/Course?category=${encodeURIComponent(cat.categoriesName)}" 
                    class="flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition-colors group">
@@ -338,19 +336,15 @@
                     <span class="material-symbols-outlined text-[18px] text-slate-300 group-hover:text-primary transition-transform group-hover:translate-x-1">chevron_right</span>
                 </a>
             `).join('');
-
-        } catch (err) {
-            container.innerHTML = `<div class="px-4 py-3 text-xs text-red-400">Lỗi kết nối</div>`;
-        }
+        } catch (err) { }
     }
 
-    // ─── WISHLIST MINI BADGE ───
     async function updateWishlistBadge() {
         const badge = document.getElementById('wishlist-badge');
-        if (!badge || !accessToken) return;
+        if (!badge || !headerToken) return;
         try {
             const res = await fetch("http://localhost:5207/api/Wishlist/count", {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
+                headers: { 'Authorization': `Bearer ${headerToken}` }
             });
             if (!res.ok) return;
             const data = await res.json();
@@ -363,16 +357,100 @@
         } catch { }
     }
 
-    // Đóng dropdown khi click ra ngoài
-    window.addEventListener('click', function(e) {
-        const catDropdown = document.getElementById('categories-dropdown');
-        if (catDropdown && !catDropdown.contains(e.target)) {
-            document.getElementById('categories-box')?.classList.add('hidden');
-        }
-    });
+    // ─── REAL-TIME GLOBAL SEARCH BAR DROP-DOWN ───
+    const searchInput = document.getElementById('header-search-input');
+    const searchResults = document.getElementById('header-search-results');
+    const resultsList = document.getElementById('header-search-results-list');
+    const keywordHighlight = document.getElementById('search-keyword-highlight');
+    let searchDebounceTimer;
+
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchDebounceTimer);
+            const query = e.target.value.trim();
+
+            if (query.length < 2) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+
+            keywordHighlight.textContent = query;
+
+            searchDebounceTimer = setTimeout(async () => {
+                try {
+                    const res = await fetch(`/Course/SearchCoursesJson?query=${encodeURIComponent(query)}`);
+                    const result = await res.json();
+                    
+                    if (result.success && result.data && result.data.length > 0) {
+                        searchResults.classList.remove('hidden');
+                        
+                        resultsList.innerHTML = result.data.map(c => {
+                            // Highlight keyword
+                            const regex = new RegExp(`(${query})`, 'gi');
+                            const highlightedTitle = c.title.replace(regex, '<span class="text-[#a435f0] font-extrabold">$1</span>');
+                            
+                            const priceDisplay = c.price === 0 
+                                ? '<span class="text-emerald-700 font-bold uppercase text-[11px] bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full shrink-0">Miễn phí</span>' 
+                                : `<span class="text-[#a435f0] font-extrabold text-[11px] bg-[#a435f0]/5 border border-[#a435f0]/10 px-2.5 py-1 rounded-full shrink-0">$${c.price.toFixed(2)}</span>`;
+                            
+                            return `
+                                <a href="/Course/Details/${c.courseId}" 
+                                   class="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50/80 hover:pl-6 transition-all duration-300 group">
+                                    <img src="${c.courseThumbnailUrl || 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800&auto=format&fit=crop'}" 
+                                         class="w-14 h-10 object-cover rounded-lg border border-slate-100 group-hover:scale-105 transition-all duration-300 shrink-0" />
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-[#a435f0] transition-colors leading-snug">${highlightedTitle}</h4>
+                                        <p class="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
+                                            <span class="font-medium text-slate-600 truncate">${c.instructorName}</span>
+                                            <span class="text-slate-300">•</span>
+                                            <span class="flex items-center text-amber-500 gap-0.5">
+                                                <span class="material-symbols-outlined text-[12px] fill-1">star</span>
+                                                <span class="font-bold text-[11px]">${c.ratingAverage.toFixed(1)}</span>
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="text-right shrink-0">
+                                        ${priceDisplay}
+                                    </div>
+                                </a>
+                            `;
+                        }).join('');
+                    } else {
+                        searchResults.classList.remove('hidden');
+                        resultsList.innerHTML = `
+                            <div class="p-8 text-center text-slate-400 flex flex-col items-center gap-2">
+                                <span class="material-symbols-outlined text-3xl opacity-30">search_off</span>
+                                <p class="text-xs">No matching courses found</p>
+                            </div>
+                        `;
+                    }
+                } catch (err) {
+                    console.error("Lỗi khi tìm kiếm khóa học:", err);
+                }
+            }, 300);
+        });
+
+        // Close dropdown when clicking outside
+        window.addEventListener('click', (e) => {
+            if (!document.getElementById('header-search-container')?.contains(e.target)) {
+                searchResults.classList.add('hidden');
+            }
+        });
+
+        // Show again on focus if query has length
+        searchInput.addEventListener('focus', () => {
+            if (searchInput.value.trim().length >= 2) {
+                searchResults.classList.remove('hidden');
+            }
+        });
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
         initCartBadge();
         updateWishlistBadge();
+    });
+
+    document.addEventListener('cartUpdated', () => {
+        initCartBadge();
     });
 </script>

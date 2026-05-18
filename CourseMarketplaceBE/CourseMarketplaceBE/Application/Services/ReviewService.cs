@@ -152,6 +152,8 @@ public class ReviewService : IReviewService
         // Nếu là chủ nhân → bypass, không tạo record DB khi chỉ xem status
         if (isOwner)
         {
+            var courseStats = await _courseRepo.GetCourseStatsAsync(courseId);
+            var totalMats = courseStats?.TotalMaterials ?? 0;
             var ownerEnrollment = await _checkoutRepo.GetEnrollmentWithProgressAsync(userId, courseId);
             bool hasReviewed = ownerEnrollment != null && (await _reviewRepo.GetCourseReviewByEnrollmentAsync(ownerEnrollment.EnrollmentId)) != null;
 
@@ -160,8 +162,8 @@ public class ReviewService : IReviewService
                 IsEnrolled = true, // Bypass: Luôn coi như đã ghi danh
                 IsCompleted = true,
                 ProgressPercentage = 100,
-                LearnedMaterialCount = 0,
-                TotalMaterialCount = 0,
+                LearnedMaterialCount = totalMats,
+                TotalMaterialCount = totalMats,
                 CanReview = true, 
                 ReviewBlockedReason = null,
                 HasReviewed = hasReviewed,

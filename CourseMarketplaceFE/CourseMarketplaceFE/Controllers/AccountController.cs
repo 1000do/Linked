@@ -32,7 +32,7 @@ namespace CourseMarketplaceFE.Controllers
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (!string.IsNullOrEmpty(model.Email) && !model.Email.EndsWith("@gmail.com"))
-                ModelState.AddModelError("Email", "Chỉ hỗ trợ đăng ký bằng Gmail.");
+                ModelState.AddModelError("Email", "Only Gmail registration is supported.");
 
             if (!ModelState.IsValid) return View(model);
 
@@ -48,7 +48,7 @@ namespace CourseMarketplaceFE.Controllers
 
             if (response.IsSuccessStatusCode)
             {
-                TempData["SuccessMessage"] = "Đăng ký thành công!";
+                TempData["SuccessMessage"] = "Registration successful!";
                 return RedirectToAction("Login");
             }
 
@@ -82,7 +82,7 @@ namespace CourseMarketplaceFE.Controllers
 
                 if (result == null)
                 {
-                    ViewBag.ErrorMessage = "Phản hồi từ server không hợp lệ.";
+                    ViewBag.ErrorMessage = "Invalid server response.";
                     return View(model);
                 }
 
@@ -124,7 +124,7 @@ namespace CourseMarketplaceFE.Controllers
 
                 if (string.IsNullOrEmpty(result.Role))
                 {
-                    return Content("LỖI GIAO TIẾP VỚI BACKEND: API không trả về biến Role. Điều này chắc chắn 100% là do Backend chưa được biên dịch và chạy lại (vẫn đang chạy code cũ). Vui lòng TẮT HẲN Backend, Build lại và chạy lại!");
+                    return Content("BACKEND COMMUNICATION ERROR: API did not return Role variable. This is 100% because the Backend has not been recompiled and restarted (still running old code). Please FULLY STOP Backend, Rebuild and run again!");
                 }
 
                 // ── 4. Redirect theo role ──────────────────────────────────────────
@@ -136,7 +136,7 @@ namespace CourseMarketplaceFE.Controllers
 
             }
                 var errorJson = await response.Content.ReadAsStringAsync();
-                ViewBag.ErrorMessage = ParseErrorMessage(errorJson, "Email hoặc mật khẩu không chính xác.");
+                ViewBag.ErrorMessage = ParseErrorMessage(errorJson, "Incorrect email or password.");
                 return View(model);
             
             }
@@ -270,11 +270,11 @@ namespace CourseMarketplaceFE.Controllers
                     Response.Cookies.Append("AvatarUrl", updated?.AvatarUrl ?? "", cookieOptions);
                 }
 
-                TempData["SuccessMessage"] = "Cập nhật thành công!";
+                TempData["SuccessMessage"] = "Updated successfully!";
                 return RedirectToAction("Profile");
             }
 
-            ViewBag.ErrorMessage = "Không thể cập nhật hồ sơ.";
+            ViewBag.ErrorMessage = "Cannot update profile.";
             return View(model);
         }
 
@@ -292,7 +292,7 @@ namespace CourseMarketplaceFE.Controllers
 
             if (newPassword != confirmNewPassword)
             {
-                ViewBag.ErrorMessage = "Mật khẩu xác nhận không khớp.";
+                ViewBag.ErrorMessage = "Password confirmation does not match.";
                 return View();
             }
 
@@ -314,12 +314,12 @@ namespace CourseMarketplaceFE.Controllers
                 Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
                 Response.Cookies.Delete("UserRole", new CookieOptions { Path = "/" });
 
-                TempData["SuccessMessage"] = "Đổi mật khẩu thành công! Vui lòng đăng nhập lại.";
+                TempData["SuccessMessage"] = "Password changed successfully! Please login again.";
                 return RedirectToAction("Login");
             }
 
             var errorJson = await response.Content.ReadAsStringAsync();
-            ViewBag.ErrorMessage = ParseErrorMessage(errorJson, "Lỗi khi đổi mật khẩu.");
+            ViewBag.ErrorMessage = ParseErrorMessage(errorJson, "Error changing password.");
             return View();
         }
 
@@ -328,7 +328,7 @@ namespace CourseMarketplaceFE.Controllers
         private async Task HandleApiError(HttpResponseMessage response)
         {
             var errorJson = await response.Content.ReadAsStringAsync();
-            ModelState.AddModelError(string.Empty, ParseErrorMessage(errorJson, "Lỗi Server."));
+            ModelState.AddModelError(string.Empty, ParseErrorMessage(errorJson, "Server error."));
         }
 
         private string ParseErrorMessage(string json, string defaultMsg)
@@ -461,7 +461,7 @@ namespace CourseMarketplaceFE.Controllers
 
             if (!res.IsSuccessStatusCode)
             {
-                ViewBag.ErrorMessage = "OTP không đúng hoặc đã hết hạn";
+                ViewBag.ErrorMessage = "Incorrect or expired OTP";
                 ViewBag.Email = email;
 
                 if (isEmailVerify)
@@ -483,7 +483,7 @@ namespace CourseMarketplaceFE.Controllers
                 TempData.Remove("IsVerifyFlow");
                 TempData.Remove("VerifyEmail");
 
-                TempData["SuccessMessage"] = "Xác thực email thành công!";
+                TempData["SuccessMessage"] = "Email verification successful!";
                 return RedirectToAction("Profile");
             }
 
@@ -524,12 +524,12 @@ namespace CourseMarketplaceFE.Controllers
 
             if (res.IsSuccessStatusCode)
             {
-                TempData["SuccessMessage"] = "Đổi mật khẩu thành công";
+                TempData["SuccessMessage"] = "Password changed successfully";
                 return RedirectToAction("Login");
             }
 
             // ❗ FIX QUAN TRỌNG
-            ViewBag.ErrorMessage = "OTP sai hoặc hết hạn";
+            ViewBag.ErrorMessage = "Incorrect or expired OTP";
 
             ViewBag.Email = email;
             ViewBag.Otp = otp;
@@ -568,7 +568,7 @@ namespace CourseMarketplaceFE.Controllers
 
             if (!res.IsSuccessStatusCode)
             {
-                TempData["ErrorMessage"] = "Không gửi được OTP";
+                TempData["ErrorMessage"] = "Could not send OTP";
                 return RedirectToAction("Profile");
             }
 

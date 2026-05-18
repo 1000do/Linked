@@ -81,11 +81,12 @@ public class EnrollmentService : IEnrollmentService
             var course = await _courseRepo.GetByIdAsync(courseId);
             if (course != null && course.InstructorId == userId)
             {
+                var courseStats = await _courseRepo.GetCourseStatsAsync(courseId);
                 return new DTOs.ProgressResponse
                 {
-                    EnrollmentId = 0, // Không có record thực
-                    LearnedMaterialCount = 0,
-                    TotalMaterialCount = 0,
+                    EnrollmentId = 0, 
+                    LearnedMaterialCount = courseStats?.TotalMaterials ?? 0, // Chủ sở hữu coi như học hết
+                    TotalMaterialCount = courseStats?.TotalMaterials ?? 0,
                     CompletedMaterialIds = new List<int>()
                 };
             }
@@ -109,9 +110,20 @@ public class EnrollmentService : IEnrollmentService
     public async Task UpdateProgressAsync(int userId, int courseId, int materialId)
     {
         var enrollment = await _repo.GetEnrollmentWithProgressAsync(userId, courseId);
-        if (enrollment == null) throw new InvalidOperationException("Enrollment not found.");
+        
+        // Nếu không tìm thấy enrollment, kiểm tra xem có phải owner không
+        if (enrollment == null) 
+        {
+            var isOwner = await _courseRepo.IsOwnerAsync(userId, courseId);
+            if (isOwner) 
+            {
+                // Giảng viên xem bài học của chính mình -> Không cần lưu tiến độ vào DB
+                return;
+            }
+            throw new InvalidOperationException("Bạn chưa ghi danh khóa học này.");
+        }
 
-        // 1. Mark this specific material as completed if not already
+        // 1. Đánh dấu tài liệu này đã hoàn thành
         var alreadyCompleted = await _repo.IsMaterialCompletedAsync(enrollment.EnrollmentId, materialId);
         if (!alreadyCompleted)
         {
@@ -119,37 +131,41 @@ public class EnrollmentService : IEnrollmentService
             {
                 EnrollmentId = enrollment.EnrollmentId,
                 MaterialId = materialId,
-                CompletedAt = DateTime.Now
+                CompletedAt = DateTime.UtcNow
             };
             await _repo.AddMaterialCompletionAsync(completion);
 
-            // 2. Sync the old LearnedMaterialCount for backward compatibility
+            // Lưu thay đổi ngay để các hàm đếm phía sau chính xác
+            await _repo.SaveChangesAsync();
+
+            // 2. Cập nhật số lượng bài đã học trong bảng Progress
             if (enrollment.Progress == null)
             {
                 enrollment.Progress = new EnrollmentProgress
                 {
                     EnrollmentId = enrollment.EnrollmentId,
                     LearnedMaterialCount = 1,
-                    LastModifiedAt = DateTime.Now
+                    LastModifiedAt = DateTime.UtcNow
                 };
                 await _repo.AddEnrollmentProgressAsync(enrollment.Progress);
             }
             else
             {
+                // Đếm chính xác số lượng từ DB sau khi đã SaveChanges bản ghi mới
                 var actualCount = await _repo.GetCompletedMaterialCountAsync(enrollment.EnrollmentId);
-                enrollment.Progress.LearnedMaterialCount = actualCount + 1;
-                enrollment.Progress.LastModifiedAt = DateTime.Now;
+                enrollment.Progress.LearnedMaterialCount = actualCount;
+                enrollment.Progress.LastModifiedAt = DateTime.UtcNow;
             }
 
-            // 3. Mark enrollment as completed if reached total
+            // 3. Kiểm tra hoàn thành khóa học
             var stats = await _courseRepo.GetCourseStatsAsync(courseId);
             var totalMaterials = stats?.TotalMaterials ?? 0;
-            var currentLearned = await _repo.GetCompletedMaterialCountAsync(enrollment.EnrollmentId) + 1;
+            var currentLearned = enrollment.Progress.LearnedMaterialCount;
 
             if (currentLearned >= totalMaterials && totalMaterials > 0)
             {
                 enrollment.IsCompleted = true;
-                enrollment.CompletedDate = DateOnly.FromDateTime(DateTime.Now);
+                enrollment.CompletedDate = DateOnly.FromDateTime(DateTime.UtcNow);
             }
 
             await _repo.SaveChangesAsync();

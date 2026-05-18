@@ -1,8 +1,8 @@
 @using System.Net
 @model List<CourseMarketplaceFE.Models.InstructorApprovalViewModel>
 @{
-    ViewData["Title"] = "Quản lý xét duyệt";
-    ViewData["PageHeader"] = "Đơn đăng ký giảng viên";
+    ViewData["Title"] = "Approval Management";
+    ViewData["PageHeader"] = "Instructor Registration Requests";
     Layout = "_AdminLayout";
 }
 
@@ -11,11 +11,11 @@
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="border-b border-slate-200 bg-slate-50/50">
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Giảng viên</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Chuyên môn</th>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Instructor</th>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Specialization</th>
                     <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">LinkedIn</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Hồ sơ</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Thao tác</th>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Portfolio / Resume</th>
+                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                 </tr>
             </thead>
             <tbody id="approval-table-body" class="divide-y divide-slate-100 text-sm">
@@ -44,13 +44,13 @@
                                 @if (!string.IsNullOrEmpty(item.LinkedInUrl) && item.LinkedInUrl != "#")
                                 {
                                     <a href="@item.LinkedInUrl" target="_blank"
-                                       class="inline-flex text-slate-400 hover:text-blue-600 transition-colors" title="Xem LinkedIn">
+                                       class="inline-flex text-slate-400 hover:text-blue-600 transition-colors" title="View LinkedIn Profile">
                                         <span class="material-symbols-outlined text-[20px]">link</span>
                                     </a>
                                 }
                                 else
                                 {
-                                    <span class="text-xs text-slate-400 italic">Trống</span>
+                                    <span class="text-xs text-slate-400 italic">Empty</span>
                                 }
                             </td>
 
@@ -66,17 +66,17 @@
                                 }
                                 else
                                 {
-                                    <span class="text-xs text-slate-400 italic">Không có</span>
+                                    <span class="text-xs text-slate-400 italic">None</span>
                                 }
                             </td>
 
                             <td class="px-5 py-4 align-top text-right">
                                 <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onclick="processAction(@item.InstructorId, 'Approved')" class="px-3 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-md transition-colors border border-emerald-200">
-                                        Duyệt
+                                        Approve
                                     </button>
                                     <button onclick="processAction(@item.InstructorId, 'Rejected')" class="px-3 py-1.5 text-xs font-medium bg-white text-slate-600 hover:bg-slate-50 hover:text-red-600 border border-slate-200 rounded-md transition-colors">
-                                        Từ chối
+                                        Reject
                                     </button>
                                 </div>
                             </td>
@@ -89,7 +89,7 @@
                         <td colspan="5" class="px-5 py-12 text-center">
                             <div class="flex flex-col items-center justify-center text-slate-400">
                                 <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">inbox</span>
-                                <p class="text-sm">Không có đơn đăng ký nào chờ duyệt.</p>
+                                <p class="text-sm">No pending instructor registrations at the moment.</p>
                             </div>
                         </td>
                     </tr>
@@ -102,8 +102,26 @@
 @section Scripts {
     <script>
         async function processAction(id, status) {
-            const actionText = status === 'Approved' ? 'duyệt' : 'từ chối';
-            if (!confirm(`Xác nhận ${actionText} hồ sơ này?`)) return;
+            const actionText = status === 'Approved' ? 'approved' : 'rejected';
+            const actionColor = status === 'Approved' ? '#10b981' : '#ef4444';
+            const confirmBtnText = status === 'Approved' ? 'Approve Application' : 'Reject Application';
+
+            const confirmResult = await Swal.fire({
+                title: 'Confirm Action',
+                text: `Are you absolutely sure you want to change this status to ${actionText}?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: actionColor,
+                cancelButtonColor: '#64748b',
+                confirmButtonText: confirmBtnText,
+                cancelButtonText: 'Cancel',
+                background: '#ffffff',
+                customClass: {
+                    popup: 'rounded-2xl border border-slate-100 shadow-xl'
+                }
+            });
+
+            if (!confirmResult.isConfirmed) return;
 
             try {
                 const response = await fetch(`/AdminApproval/Process?id=${id}&status=${status}`, {
@@ -113,19 +131,57 @@
 
                 const result = await response.json();
                 if (result.success) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: `The instructor profile has been successfully ${actionText}.`,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#ffffff',
+                        customClass: {
+                            popup: 'rounded-2xl border border-slate-100 shadow-xl'
+                        }
+                    });
+
                     const row = document.getElementById(`row-${id}`);
                     row.style.opacity = '0';
                     setTimeout(() => {
                         row.remove();
                         if (document.querySelectorAll('#approval-table-body tr').length === 0) {
-                            location.reload();
+                            document.getElementById('approval-table-body').innerHTML = `
+                                <tr>
+                                    <td colspan="5" class="px-5 py-12 text-center">
+                                        <div class="flex flex-col items-center justify-center text-slate-400">
+                                            <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">inbox</span>
+                                            <p class="text-sm">No pending instructor registrations at the moment.</p>
+                                        </div>
+                                    </td>
+                                </tr>`;
                         }
                     }, 200);
                 } else {
-                    alert(result.message || "Lỗi khi xử lý.");
+                    Swal.fire({
+                        title: 'Execution Error',
+                        text: result.message || "Failed to process execution.",
+                        icon: 'error',
+                        confirmButtonColor: '#10b981',
+                        background: '#ffffff',
+                        customClass: {
+                            popup: 'rounded-2xl'
+                        }
+                    });
                 }
             } catch (err) {
-                alert("Lỗi kết nối server.");
+                Swal.fire({
+                    title: 'Connection Error',
+                    text: "Could not connect to the remote server.",
+                    icon: 'error',
+                    confirmButtonColor: '#10b981',
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'rounded-2xl'
+                    }
+                });
             }
         }
     </script>

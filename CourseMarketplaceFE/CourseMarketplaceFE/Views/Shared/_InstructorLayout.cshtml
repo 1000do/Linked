@@ -8,7 +8,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Instructor Studio</title>
+    <title>@ViewData["Title"] - LinkedLearn Instructor</title>
+    <link rel="icon" type="image/png" href="~/img/default-avatar.png" />
 
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -57,6 +58,35 @@
         /* Custom styles for Quills editor to match Tailwind */
         .ql-toolbar.ql-snow { border-radius: 0.5rem 0.5rem 0 0; border-color: #e2e8f0; background-color: #f8fafc; }
         .ql-container.ql-snow { border-radius: 0 0 0.5rem 0.5rem; border-color: #e2e8f0; min-height: 150px; font-family: 'Inter', sans-serif; }
+
+        /* Top Progress Bar Page Transition */
+        #top-progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #006a62, #43e8d8, #006b60);
+            z-index: 9999;
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.08, 0.82, 0.17, 1);
+            box-shadow: 0 0 8px #006a62;
+            pointer-events: none;
+        }
+
+        /* Premium Page Entry Transition */
+        @@keyframes pageFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .page-transition-enter {
+            animation: pageFadeIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -80,6 +110,12 @@
             bool isCurriculumEditor = isEditor;
         }
         
+        @{
+            var approvalStatus = Context.Request.Cookies["InstructorApprovalStatus"];
+            bool isApproved = approvalStatus == "Approved";
+            string disabledClass = !isApproved ? "opacity-50 pointer-events-none cursor-not-allowed" : "";
+        }
+        
         <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
             <a href="/InstructorCourse" class="flex items-center gap-3 px-4 py-3 @(isMyCourses ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative">
                 @if (isMyCourses) {
@@ -88,7 +124,7 @@
                 <span class="material-symbols-outlined text-[20px]">dashboard</span>
                 <span class="text-sm @(isMyCourses ? "font-bold" : "font-semibold")">Dashboard</span>
             </a>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors @disabledClass">
                 <span class="material-symbols-outlined text-[20px]">bar_chart</span>
                 <span class="text-sm font-semibold">Analytics</span>
             </a>
@@ -96,7 +132,7 @@
             @{
                 bool isTransaction = currentController == "Transaction" && currentAction == "Instructor";
             }
-            <a href="/Transaction/Instructor" class="flex items-center gap-3 px-4 py-3 @(isTransaction ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative">
+            <a href="/Transaction/Instructor" class="flex items-center gap-3 px-4 py-3 @(isTransaction ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative @disabledClass">
                 @if (isTransaction) {
                     <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></span>
                 }
@@ -108,7 +144,7 @@
                 bool isNotifications = currentAction == "Notifications" && currentController == "Instructor";
             }
             <a href="/Instructor/Notifications"
-               class="flex items-center gap-3 px-4 py-3 @(isNotifications ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative">
+               class="flex items-center gap-3 px-4 py-3 @(isNotifications ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative @disabledClass">
                 @if (isNotifications)
                 {
                     <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></span>
@@ -124,7 +160,7 @@
                 bool isChat = currentController == "Chat";
             }
             <a href="/Chat/Instructor"
-               class="flex items-center gap-3 px-4 py-3 @(isChat ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative">
+               class="flex items-center gap-3 px-4 py-3 @(isChat ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative @disabledClass">
                 @if (isChat)
                 {
                     <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></span>
@@ -174,7 +210,7 @@
                     })
                 </a>
                 <div class="flex flex-col flex-1 overflow-hidden">
-                    <span class="text-xs font-bold text-slate-700 truncate">Chào, @userName</span>
+                    <span class="text-xs font-bold text-slate-700 truncate">Hi, @userName</span>
                     <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
                         @Html.AntiForgeryToken()
                         <button type="submit" class="text-[10px] text-red-500 hover:underline font-medium bg-transparent border-none p-0 cursor-pointer text-left">Logout</button>
@@ -190,7 +226,7 @@
 
 
         <!-- MAIN CONTENT AREA -->
-        <main role="main" class="flex-1 overflow-y-auto bg-slate-50">
+        <main role="main" class="flex-1 overflow-y-auto bg-slate-50 page-transition-enter">
             @RenderBody()
         </main>
     </div>
@@ -301,7 +337,7 @@
             if (!container) return;
 
             if (!LAYOUT_TOKEN || LAYOUT_TOKEN === "") {
-                container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">Vui lòng đăng nhập</div>`;
+                container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">Please log in</div>`;
                 return;
             }
 
@@ -315,7 +351,7 @@
                     const top3 = data.slice(0, 3);
 
                     if (top3.length === 0) {
-                        container.innerHTML = `<div class="px-4 py-8 text-center text-slate-400 text-sm">Không có thông báo mới</div>`;
+                        container.innerHTML = `<div class="px-4 py-8 text-center text-slate-400 text-sm">No new notifications</div>`;
                         return;
                     }
                     container.innerHTML = top3.map(n => `
@@ -329,7 +365,7 @@
                                     <p class="text-[11px] text-slate-500 mt-1 line-clamp-2">${n.content}</p>
                                     <div class="flex justify-between items-center mt-2">
                                         <p class="text-[9px] text-slate-300 uppercase font-medium">
-                                            ${new Date(n.createdAt).toLocaleTimeString('vi-VN')}
+                                            ${new Date(n.createdAt).toLocaleTimeString('en-US')}
                                         </p>
                                     </div>
                                 </div>
@@ -339,13 +375,39 @@
                 }
             } catch (err) {
                 console.error("Fetch error:", err);
-                container.innerHTML = `<div class="p-4 text-center text-xs text-red-400">Lỗi kết nối máy chủ</div>`;
+                container.innerHTML = `<div class="p-4 text-center text-xs text-red-400">Server connection error</div>`;
             }
         }
 
         document.addEventListener("DOMContentLoaded", () => {
             loadTopNotifications();
             loadUnreadSummary();
+
+            // Create beautiful top progress bar element
+            const progressBar = document.createElement('div');
+            progressBar.id = 'top-progress-bar';
+            document.body.appendChild(progressBar);
+
+            // Intercept internal sidebar & system navigation clicks for high-end loading feedback
+            document.querySelectorAll('a').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('/') && !href.startsWith('#') && !link.getAttribute('target')) {
+                    link.addEventListener('click', (e) => {
+                        if (e.metaKey || e.ctrlKey) return;
+                        
+                        // Slide progress bar to 70% instantly
+                        progressBar.style.width = '70%';
+                        
+                        // Gently dim and scale-out the active content area
+                        const mainContent = document.querySelector('main');
+                        if (mainContent) {
+                            mainContent.style.transition = 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+                            mainContent.style.opacity = '0.5';
+                            mainContent.style.transform = 'scale(0.995)';
+                        }
+                    });
+                }
+            });
         });
     </script>
 </body>

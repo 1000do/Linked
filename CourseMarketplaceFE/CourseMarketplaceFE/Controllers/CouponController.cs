@@ -28,7 +28,7 @@ namespace CourseMarketplaceFE.Controllers
             var resp = await _api.GetAsync("coupon/platform/active");
             var body = await resp.Content.ReadAsStringAsync();
             if (string.IsNullOrWhiteSpace(body)) {
-                body = "{\"success\":false,\"message\":\"Lỗi hoặc không có quyền truy cập.\"}";
+                body = "{\"success\":false,\"message\":\"Error or unauthorized access.\"}";
             }
             return Content(body, "application/json");
         }
@@ -43,7 +43,7 @@ namespace CourseMarketplaceFE.Controllers
             var resp = await _api.PostJsonAsync("coupon/platform/apply", req);
             var body = await resp.Content.ReadAsStringAsync();
             if (string.IsNullOrWhiteSpace(body)) {
-                body = "{\"success\":false,\"message\":\"Lỗi hoặc không có quyền truy cập.\"}";
+                body = "{\"success\":false,\"message\":\"Error or unauthorized access.\"}";
             }
             return Content(body, "application/json");
         }
