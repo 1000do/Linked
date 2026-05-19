@@ -20,8 +20,8 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         public async Task<IActionResult> GrantFrame([FromBody] GrantFrameRequest request)
         {
             var success = await _frameService.GrantFrameToUserAsync(request.UserId, request.FrameId);
-            if (success) return Ok(new { message = "Đã tặng khung thành công!" });
-            return BadRequest(new { message = "Không thể tặng khung. Kiểm tra lại UserId hoặc FrameId." });
+            if (success) return Ok(new { message = "Avatar frame granted successfully!" });
+            return BadRequest(new { message = "Cannot grant avatar frame. Please verify UserId or FrameId." });
         }
 
         [HttpGet("list")]
@@ -35,8 +35,8 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         public async Task<IActionResult> CreateFrame([FromBody] dynamic frameDto)
         {
             var success = await _frameService.CreateFrameAsync(frameDto);
-            if (success) return Ok(new { message = "Đã tạo khung mới thành công!" });
-            return BadRequest(new { message = "Lỗi khi tạo khung." });
+            if (success) return Ok(new { message = "Avatar frame created successfully!" });
+            return BadRequest(new { message = "Error creating avatar frame." });
         }
     }
 

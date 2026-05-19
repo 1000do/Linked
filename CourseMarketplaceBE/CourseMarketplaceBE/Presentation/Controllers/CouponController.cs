@@ -46,11 +46,11 @@ public class CouponController : ControllerBase
         {
             var isAdmin = User.IsInRole("admin");
             var data = await _service.GetAll(GetUserId(), isActive, type, search, isAdmin);
-            return Ok(ApiResponse<List<CouponResponse>>.SuccessResponse(data, "Danh sách mã giảm giá."));
+            return Ok(ApiResponse<List<CouponResponse>>.SuccessResponse(data, "Voucher list."));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -64,12 +64,12 @@ public class CouponController : ControllerBase
             var isAdmin = User.IsInRole("admin");
             var data = await _service.GetById(id, GetUserId(), isAdmin);
             if (data == null)
-                return NotFound(ApiResponse<string>.ErrorResponse($"Không tìm thấy mã #{id}."));
-            return Ok(ApiResponse<CouponResponse>.SuccessResponse(data, "Chi tiết mã giảm giá."));
+                return NotFound(ApiResponse<string>.ErrorResponse($"Coupon #{id} not found."));
+            return Ok(ApiResponse<CouponResponse>.SuccessResponse(data, "Coupon details."));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -81,7 +81,7 @@ public class CouponController : ControllerBase
         try
         {
             await _service.Create(req, GetUserId());
-            return Ok(ApiResponse<string>.SuccessResponse("OK", "Tạo mã giảm giá thành công."));
+            return Ok(ApiResponse<string>.SuccessResponse("OK", "Coupon created successfully."));
         }
         catch (InvalidOperationException ex)
         {
@@ -93,7 +93,7 @@ public class CouponController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -109,7 +109,7 @@ public class CouponController : ControllerBase
         {
             var isAdmin = User.IsInRole("admin");
             await _service.Update(id, req, GetUserId(), isAdmin);
-            return Ok(ApiResponse<string>.SuccessResponse("OK", "Cập nhật mã giảm giá thành công."));
+            return Ok(ApiResponse<string>.SuccessResponse("OK", "Coupon updated successfully."));
         }
         catch (KeyNotFoundException ex)
         {
@@ -121,7 +121,7 @@ public class CouponController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -137,7 +137,7 @@ public class CouponController : ControllerBase
         {
             var isAdmin = User.IsInRole("admin");
             await _service.SoftDelete(id, GetUserId(), isAdmin);
-            return Ok(ApiResponse<string>.SuccessResponse("OK", "Đã vô hiệu hóa mã giảm giá."));
+            return Ok(ApiResponse<string>.SuccessResponse("OK", "Coupon disabled successfully."));
         }
         catch (KeyNotFoundException ex)
         {
@@ -145,7 +145,7 @@ public class CouponController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -164,11 +164,11 @@ public class CouponController : ControllerBase
         try
         {
             var data = await _service.GetActivePlatformCouponsAsync();
-            return Ok(ApiResponse<List<CouponResponse>>.SuccessResponse(data, "Danh sách mã giảm giá khả dụng."));
+            return Ok(ApiResponse<List<CouponResponse>>.SuccessResponse(data, "Available coupon list."));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -183,7 +183,7 @@ public class CouponController : ControllerBase
         try
         {
             await _service.ApplyCouponToCourseAsync(req.CourseId, req.CouponId, GetUserId());
-            return Ok(ApiResponse<string>.SuccessResponse("OK", "Đã gắn mã giảm giá vào khóa học."));
+            return Ok(ApiResponse<string>.SuccessResponse("OK", "Coupon applied to course successfully."));
         }
         catch (KeyNotFoundException ex)
         {
@@ -199,7 +199,7 @@ public class CouponController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -214,7 +214,7 @@ public class CouponController : ControllerBase
         try
         {
             await _service.RemoveCouponFromCourseAsync(courseId, GetUserId());
-            return Ok(ApiResponse<string>.SuccessResponse("OK", "Đã gỡ mã giảm giá khỏi khóa học."));
+            return Ok(ApiResponse<string>.SuccessResponse("OK", "Coupon removed from course successfully."));
         }
         catch (KeyNotFoundException ex)
         {
@@ -226,7 +226,7 @@ public class CouponController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 }

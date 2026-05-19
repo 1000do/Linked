@@ -31,12 +31,12 @@ public class EnrollmentController : ControllerBase
     {
         var userId = GetUserId();
         if (userId == null)
-            return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
 
         try
         {
             await _enrollmentService.EnrollFreeAsync(userId.Value, courseId);
-            return Ok(ApiResponse<string>.SuccessResponse("Ghi danh thành công!"));
+            return Ok(ApiResponse<string>.SuccessResponse("Enrolled successfully!"));
         }
         catch (InvalidOperationException ex)
         {
@@ -44,7 +44,7 @@ public class EnrollmentController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi server: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Server error: {ex.Message}"));
         }
     }
 
@@ -82,16 +82,16 @@ public class EnrollmentController : ControllerBase
     {
         var userId = GetUserId();
         if (userId == null)
-            return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
 
         try
         {
             var courses = await _enrollmentService.GetMyEnrolledCoursesAsync(userId.Value);
-            return Ok(ApiResponse<object>.SuccessResponse(courses, "Lấy danh sách khóa học thành công."));
+            return Ok(ApiResponse<object>.SuccessResponse(courses, "Enrolled courses retrieved successfully."));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 }

@@ -36,7 +36,7 @@ public class WishlistController : ControllerBase
         try
         {
             await _wishlistService.AddToWishlistAsync(userId.Value, courseId);
-            return Ok(new { message = "Đã thêm vào danh sách yêu thích" });
+            return Ok(new { message = "Added to wishlist successfully" });
         }
         catch (InvalidOperationException ex)
         {
@@ -53,7 +53,7 @@ public class WishlistController : ControllerBase
         try
         {
             await _wishlistService.RemoveFromWishlistAsync(userId.Value, courseId);
-            return Ok(new { message = "Đã xóa khỏi danh sách yêu thích" });
+            return Ok(new { message = "Removed from wishlist successfully" });
         }
         catch (KeyNotFoundException ex)
         {
@@ -70,7 +70,7 @@ public class WishlistController : ControllerBase
         var isInWishlist = await _wishlistService.ToggleWishlistAsync(userId.Value, courseId);
         return Ok(new 
         { 
-            message = isInWishlist ? "Đã thêm vào danh sách yêu thích" : "Đã xóa khỏi danh sách yêu thích", 
+            message = isInWishlist ? "Added to wishlist successfully" : "Removed from wishlist successfully", 
             isInWishlist 
         });
     }

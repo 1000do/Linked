@@ -80,7 +80,7 @@ public class ReviewController : ControllerBase
         {
             bool requireCompletion = string.Equals(source, "detail", StringComparison.OrdinalIgnoreCase);
             await _reviewService.SubmitReviewAsync(userId.Value, request, requireCompletion);
-            return Ok(ApiResponse<string>.SuccessResponse("Đánh giá đã được gửi thành công!"));
+            return Ok(ApiResponse<string>.SuccessResponse("Review submitted successfully!"));
         }
         catch (InvalidOperationException ex)
         {
@@ -100,7 +100,7 @@ public class ReviewController : ControllerBase
         try
         {
             await _reviewService.ReportReviewAsync(userId.Value, request.ReviewId, request.Type, request.Reason);
-            return Ok(ApiResponse<string>.SuccessResponse("Đã gửi báo cáo đánh giá."));
+            return Ok(ApiResponse<string>.SuccessResponse("Report submitted successfully."));
         }
         catch (Exception ex)
         {

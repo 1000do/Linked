@@ -52,7 +52,7 @@ public class WishlistService : IWishlistService
     {
         if (await _wishlistRepository.ExistsAsync(userId, courseId))
         {
-            throw new InvalidOperationException("Khóa học đã có trong danh sách yêu thích");
+            throw new InvalidOperationException("Course is already in your wishlist.");
         }
 
         var newItem = new WishlistItem
@@ -71,7 +71,7 @@ public class WishlistService : IWishlistService
         var item = await _wishlistRepository.GetByUserAndCourseAsync(userId, courseId);
         if (item == null)
         {
-            throw new KeyNotFoundException("Không tìm thấy khóa học trong danh sách yêu thích");
+            throw new KeyNotFoundException("Course not found in your wishlist.");
         }
 
         await _wishlistRepository.RemoveAsync(item);

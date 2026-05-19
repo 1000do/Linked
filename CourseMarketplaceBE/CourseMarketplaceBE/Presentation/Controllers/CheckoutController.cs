@@ -49,13 +49,13 @@ public class CheckoutController : ControllerBase
     {
         var userId = GetUserId();
         if (userId == null)
-            return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
 
         try
         {
             // Lấy trực tiếp từ request DTO do FE truyền vào (để giải quyết vấn đề DNS/Docker network)
             if (string.IsNullOrWhiteSpace(request.SuccessUrl) || string.IsNullOrWhiteSpace(request.CancelUrl))
-                return BadRequest(ApiResponse<string>.ErrorResponse("Thiếu SuccessUrl hoặc CancelUrl."));
+                return BadRequest(ApiResponse<string>.ErrorResponse("SuccessUrl or CancelUrl is missing."));
 
             var result = await _checkoutService.InitiateCheckoutAsync(
                 userId.Value,
@@ -63,7 +63,7 @@ public class CheckoutController : ControllerBase
                 request.SuccessUrl,
                 request.CancelUrl);
 
-            return Ok(ApiResponse<CheckoutResponse>.SuccessResponse(result, "Đã tạo phiên thanh toán."));
+            return Ok(ApiResponse<CheckoutResponse>.SuccessResponse(result, "Checkout session created."));
         }
         catch (InvalidOperationException ex)
         {
@@ -71,7 +71,7 @@ public class CheckoutController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi server: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Server error: {ex.Message}"));
         }
     }
 
@@ -84,12 +84,12 @@ public class CheckoutController : ControllerBase
     {
         var userId = GetUserId();
         if (userId == null)
-            return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
 
         try
         {
             if (string.IsNullOrWhiteSpace(request.SuccessUrl) || string.IsNullOrWhiteSpace(request.CancelUrl))
-                return BadRequest(ApiResponse<string>.ErrorResponse("Thiếu SuccessUrl hoặc CancelUrl."));
+                return BadRequest(ApiResponse<string>.ErrorResponse("SuccessUrl or CancelUrl is missing."));
 
             var result = await _checkoutService.InitiateDirectCheckoutAsync(
                 userId.Value,
@@ -98,7 +98,7 @@ public class CheckoutController : ControllerBase
                 request.SuccessUrl,
                 request.CancelUrl);
 
-            return Ok(ApiResponse<CheckoutResponse>.SuccessResponse(result, "Đã tạo phiên thanh toán."));
+            return Ok(ApiResponse<CheckoutResponse>.SuccessResponse(result, "Checkout session created."));
         }
         catch (InvalidOperationException ex)
         {
@@ -106,7 +106,7 @@ public class CheckoutController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi server: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Server error: {ex.Message}"));
         }
     }
 
@@ -124,14 +124,14 @@ public class CheckoutController : ControllerBase
         Console.WriteLine($"[BE-CONTROLLER] ═══ CheckoutController.Success ENTRY ═══ session_id={sessionId}");
 
         if (string.IsNullOrWhiteSpace(sessionId))
-            return BadRequest(ApiResponse<string>.ErrorResponse("Thiếu session_id."));
+            return BadRequest(ApiResponse<string>.ErrorResponse("Missing session_id."));
 
         try
         {
             Console.WriteLine($"[BE-CONTROLLER] Calling _checkoutService.ProcessPaymentSuccessAsync...");
             await _checkoutService.ProcessPaymentSuccessAsync(sessionId);
             Console.WriteLine($"[BE-CONTROLLER] ✅ ProcessPaymentSuccessAsync completed WITHOUT exception.");
-            return Ok(ApiResponse<string>.SuccessResponse("Thanh toán thành công và đã cấp quyền truy cập khóa học."));
+            return Ok(ApiResponse<string>.SuccessResponse("Payment successful and course access granted."));
         }
         catch (InvalidOperationException ex)
         {
@@ -141,7 +141,7 @@ public class CheckoutController : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine($"[BE-CONTROLLER] ❌ EXCEPTION: {ex.Message}\n{ex.StackTrace}");
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi xử lý thanh toán: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Payment processing error: {ex.Message}"));
         }
     }
 
@@ -159,17 +159,17 @@ public class CheckoutController : ControllerBase
         Console.WriteLine($"[BE-CONTROLLER] ═══ CheckoutController.Cancel ENTRY ═══ order_id={orderId}");
 
         if (orderId <= 0)
-            return BadRequest(ApiResponse<string>.ErrorResponse("Thiếu order_id hợp lệ."));
+            return BadRequest(ApiResponse<string>.ErrorResponse("Missing valid order_id."));
 
         try
         {
             await _checkoutService.ProcessPaymentCancelAsync(orderId);
-            return Ok(ApiResponse<string>.SuccessResponse("Đã cập nhật trạng thái hủy thanh toán."));
+            return Ok(ApiResponse<string>.SuccessResponse("Payment cancellation status updated."));
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[BE-CONTROLLER] ❌ EXCEPTION: {ex.Message}\n{ex.StackTrace}");
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi cập nhật hủy thanh toán: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error updating payment cancellation: {ex.Message}"));
         }
     }
 
@@ -187,16 +187,16 @@ public class CheckoutController : ControllerBase
     public async Task<IActionResult> RetryTransfers([FromQuery(Name = "session_id")] string sessionId)
     {
         if (string.IsNullOrWhiteSpace(sessionId))
-            return BadRequest(ApiResponse<string>.ErrorResponse("Thiếu session_id."));
+            return BadRequest(ApiResponse<string>.ErrorResponse("Missing session_id."));
 
         try
         {
             await _checkoutService.ProcessPaymentSuccessAsync(sessionId, true);
-            return Ok(ApiResponse<string>.SuccessResponse("Đã retry xử lý transfers thành công."));
+            return Ok(ApiResponse<string>.SuccessResponse("Transfers retry completed successfully."));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi retry: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Retry error: {ex.Message}"));
         }
     }
 

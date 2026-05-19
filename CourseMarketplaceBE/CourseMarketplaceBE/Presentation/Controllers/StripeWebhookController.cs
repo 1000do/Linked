@@ -312,7 +312,7 @@ public class StripeWebhookController : ControllerBase
     public async Task<IActionResult> TestForcePaid(string payoutId)
     {
         var dbPayouts = await _financeRepo.GetPayoutsByStripePayoutIdAsync(payoutId);
-        if (dbPayouts == null || !dbPayouts.Any()) return NotFound("Không tìm thấy Payout ID này trong DB.");
+        if (dbPayouts == null || !dbPayouts.Any()) return NotFound("This Payout ID was not found in the DB.");
 
         foreach (var p in dbPayouts)
         {
@@ -334,6 +334,6 @@ public class StripeWebhookController : ControllerBase
             });
         }
 
-        return Ok($"Đã ép {dbPayouts.Count} giao dịch sang trạng thái PAID!");
+        return Ok($"Successfully forced {dbPayouts.Count} transactions to PAID status!");
     }
 }
