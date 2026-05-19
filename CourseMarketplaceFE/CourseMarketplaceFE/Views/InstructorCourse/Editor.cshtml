@@ -2095,7 +2095,8 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         isSubmitting = true;
-                        fetch('/InstructorCourse/ModerateCourse', { 
+                        // fetch('/InstructorCourse/ModerateCourse', { 
+                        fetch('/InstructorCourse/UpdateCourseStatus', { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                             body: new URLSearchParams({ courseId: courseId })

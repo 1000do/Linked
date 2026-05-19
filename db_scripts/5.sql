@@ -389,6 +389,7 @@ CREATE TABLE chat_participants (
     PRIMARY KEY (chat_id, account_id)
 );
 
+
 CREATE TABLE messages (
     message_id SERIAL PRIMARY KEY,
     chat_id INT REFERENCES chats(chat_id) ON DELETE CASCADE,
@@ -422,17 +423,44 @@ CREATE TABLE notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE user_reports (
-    report_id SERIAL PRIMARY KEY,
+CREATE TABLE course_reports (
+    course_report_id SERIAL PRIMARY KEY,
     reporter_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
-    target_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
+    course_id INT REFERENCES courses(course_id) ON DELETE SET NULL,
+    resolver_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
+    reason VARCHAR(255),
+    description TEXT,
+    course_reports_status VARCHAR(50),
+    resolution_note TEXT,
+    resolved_at TIMESTAMP,
+    access_granted_until TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE course_review_reports (
+    course_review_report_id SERIAL PRIMARY KEY,
+    reporter_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
+    course_review_id INT REFERENCES course_reviews(course_review_id) ON DELETE SET NULL,
     resolver_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
     reason VARCHAR(255),
     description TEXT,
     user_reports_status VARCHAR(50),
     resolution_note TEXT,
     resolved_at TIMESTAMP,
-    chat_id INT REFERENCES chats(chat_id),
+    access_granted_until TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE lesson_review_reports (
+    lesson_review_report_id SERIAL PRIMARY KEY,
+    reporter_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
+    lesson_review_id INT REFERENCES lesson_reviews(lesson_review_id) ON DELETE SET NULL,
+    resolver_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
+    reason VARCHAR(255),
+    description TEXT,
+    user_reports_status VARCHAR(50),
+    resolution_note TEXT,
+    resolved_at TIMESTAMP,
     access_granted_until TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
