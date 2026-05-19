@@ -235,10 +235,10 @@ public class AuthService : IAuthService
         var otp = _otpService.GenerateOtp(email, "verify");
 
         var body = $@"
-        <h3>Xác Thực Email</h3>
-    <p>Mã OTP của bạn là: <b>{otp}</b></p>
-    <p>Sẽ hết hạn trong 2 phút</p>
-    <p>Nếu đây không phải là bạn, vui lòng liên hệ đội ngũ hỗ trợ để được giải quyết.</p>
+        <h3>Email Verification</h3>
+    <p>Your OTP code is: <b>{otp}</b></p>
+    <p>Expires in 2 minutes</p>
+    <p>If this was not you, please contact support.</p>
     ";
 
         await _emailService.SendEmailAsync(email, "Email Verification", body);
@@ -261,21 +261,21 @@ public class AuthService : IAuthService
         var acc = await _userRepo.GetAccountByEmailAsync(email.ToLower());
 
         if (acc == null)
-            return "Không tìm thấy Email";
+            return "Email not found";
 
         if (acc.AuthProvider == "google")
-            return "Tài khoản này được đăng nhập bằng Google";
+            return "This account uses Google login";
 
         if (!acc.IsVerified)
-            return "Email chưa được xác thực";
+            return "Email is not verified";
 
         var otp = _otpService.GenerateOtp(email, "reset");
 
         var body = $@"
         <h3>Reset Password</h3>
-         <p>Mã OTP của bạn là: <b>{otp}</b></p>
-    <p>Sẽ hết hạn trong 2 phút</p>
-    <p>Nếu đây không phải là bạn, vui lòng liên hệ đội ngũ hỗ trợ để được giải quyết.</p>
+         <p>Your OTP code is: <b>{otp}</b></p>
+    <p>Expires in 2 minutes</p>
+    <p>If this was not you, please contact support.</p>
     ";
 
         await _emailService.SendEmailAsync(email, "Reset Password", body);

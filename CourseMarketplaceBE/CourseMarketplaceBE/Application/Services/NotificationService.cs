@@ -95,7 +95,7 @@ namespace CourseMarketplaceBE.Application.Services
                 CreatedAt = n.CreatedAt,
                 // Chống null để tránh lỗi runtime
                 ReceiverEmail = n.Receiver?.Email ?? "all-users@system.com",
-                ReceiverFullName = n.Receiver?.User?.FullName ?? "Hệ thống"
+                ReceiverFullName = n.Receiver?.User?.FullName ?? "System"
             }).ToList();
         }
 

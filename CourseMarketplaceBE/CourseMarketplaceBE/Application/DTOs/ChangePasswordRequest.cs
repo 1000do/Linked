@@ -4,10 +4,10 @@ namespace CourseMarketplaceBE.Application.DTOs;
 
 public class ChangePasswordRequest
 {
-    [Required(ErrorMessage = "Vui lòng nhập mật khẩu hiện tại.")]
+    [Required(ErrorMessage = "Please enter the current password.")]
     public string CurrentPassword { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Vui lòng nhập mật khẩu mới.")]
-    [MinLength(6, ErrorMessage = "Mật khẩu mới phải có ít nhất 6 ký tự.")]
+    [Required(ErrorMessage = "Please enter the new password.")]
+    [MinLength(6, ErrorMessage = "New password must be at least 6 characters long.")]
     public string NewPassword { get; set; } = string.Empty;
 }

@@ -90,12 +90,12 @@ public class ChatHub : Hub
         var role = Context.User?.FindFirst(ClaimTypes.Role)?.Value;
         if (role != "admin")
         {
-            await Clients.Caller.SendAsync("Error", "Chỉ Admin mới có quyền broadcast.");
+            await Clients.Caller.SendAsync("Error", "Only Admin is authorized to broadcast.");
             return;
         }
 
         // Ghi Audit Log
-        await _chatService.LogActionAsync(accountId, "broadcast", "system", null, $"Tiêu đề: {title}");
+        await _chatService.LogActionAsync(accountId, "broadcast", "system", null, $"Title: {title}");
 
         await Clients.All.SendAsync("ReceiveBroadcast", new { Title = title, Content = content, SentAt = DateTime.Now });
     }
@@ -103,7 +103,7 @@ public class ChatHub : Hub
     public async Task Typing(int chatId, bool isTyping)
     {
         var accountId = GetAccountId();
-        var name = Context.User?.FindFirst(ClaimTypes.Name)?.Value ?? "Ai đó";
+        var name = Context.User?.FindFirst(ClaimTypes.Name)?.Value ?? "Someone";
         
         await Clients.Group($"Chat_{chatId}").SendAsync("UserTyping", new { ChatId = chatId, AccountId = accountId, Name = name, IsTyping = isTyping });
     }

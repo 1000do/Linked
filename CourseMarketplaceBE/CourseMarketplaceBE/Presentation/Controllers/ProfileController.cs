@@ -24,12 +24,12 @@ public class ProfileController : ControllerBase
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (!int.TryParse(userIdStr, out int userId))
-            return Unauthorized(new { status = 401, message = "Phiên đăng nhập không hợp lệ." });
+            return Unauthorized(new { status = 401, message = "Invalid login session." });
 
         var profile = await _profileService.GetUserProfileAsync(userId);
 
         if (profile == null)
-            return NotFound(new { status = 404, message = "Không tìm thấy thông tin người dùng." });
+            return NotFound(new { status = 404, message = "User profile not found." });
 
         return Ok(new { status = 200, data = profile });
     }
@@ -41,14 +41,14 @@ public class ProfileController : ControllerBase
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (!int.TryParse(userIdStr, out int userId))
-            return Unauthorized(new { status = 401, message = "Phiên đăng nhập không hợp lệ." });
+            return Unauthorized(new { status = 401, message = "Invalid login session." });
 
         var result = await _profileService.UpdateProfileAsync(userId, request);
 
         if (result)
-            return Ok(new { status = 200, message = "Cập nhật thông tin hồ sơ thành công!" });
+            return Ok(new { status = 200, message = "Profile updated successfully!" });
 
-        return BadRequest(new { status = 400, message = "Cập nhật thất bại." });
+        return BadRequest(new { status = 400, message = "Profile update failed." });
     }
 
     [HttpPost("change-password")]
@@ -56,13 +56,13 @@ public class ProfileController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return BadRequest(new { status = 400, message = "Dữ liệu không hợp lệ.", errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage) });
+            return BadRequest(new { status = 400, message = "Invalid data.", errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage) });
         }
 
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (!int.TryParse(userIdStr, out int userId))
-            return Unauthorized(new { status = 401, message = "Phiên đăng nhập không hợp lệ." });
+            return Unauthorized(new { status = 401, message = "Invalid login session." });
 
         var (success, message) = await _profileService.ChangePasswordAsync(userId, request.CurrentPassword, request.NewPassword);
 

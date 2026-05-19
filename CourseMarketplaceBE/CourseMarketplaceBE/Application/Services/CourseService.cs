@@ -363,7 +363,7 @@ public class CourseService : ICourseService
             var instructorCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
             if (instructorCourses.Count(c => !c.IsRemoved) >= 2)
             {
-                throw new BadRequestException("Instructor chưa liên kết Stripe chỉ được phép tạo tối đa 2 khóa học.");
+                throw new BadRequestException("Instructors who have not linked a Stripe account are only allowed to create up to 2 courses.");
             }
         }
 
@@ -376,7 +376,7 @@ public class CourseService : ICourseService
         var allCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
         if (allCourses.Any(c => c.Title.Trim().ToLower() == titleLower && !c.IsRemoved))
         {
-            throw new BadRequestException("Bạn đã có một khóa học với tiêu đề này. Vui lòng chọn tiêu đề khác.");
+            throw new BadRequestException("You already have a course with this title. Please choose a different title.");
         }
 
         // ★ Nếu chưa hoàn tất Stripe → ép giá = 0 (chỉ tạo khóa free)
@@ -443,7 +443,7 @@ public class CourseService : ICourseService
         // ★ Block updates if course is archived by moderation (3+ flags)
         if (string.Equals(course.CourseStatus, "archived", StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
         {
-            throw new BadRequestException("Khóa học đã bị ngừng kinh doanh vĩnh viễn do vi phạm chính sách và không thể chỉnh sửa.");
+            throw new BadRequestException("This course has been permanently discontinued due to policy violations and cannot be edited.");
         }
 
         if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
@@ -456,7 +456,7 @@ public class CourseService : ICourseService
             var instructorCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
             if (instructorCourses.Any(c => c.Title.Trim().ToLower() == titleLower && c.CourseId != courseId && !c.IsRemoved))
             {
-                throw new BadRequestException("Bạn đã có một khóa học khác với tiêu đề này.");
+                throw new BadRequestException("You already have another course with this title.");
             }
         }
 
@@ -561,7 +561,7 @@ public class CourseService : ICourseService
         // ★ Block status changes if course is archived by moderation (3+ flags)
         if (string.Equals(course.CourseStatus, "archived", StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
         {
-            throw new BadRequestException("Khóa học đã bị ngừng kinh doanh vĩnh viễn do vi phạm chính sách và không thể thay đổi trạng thái.");
+            throw new BadRequestException("This course has been permanently discontinued due to policy violations and its status cannot be changed.");
         }
 
         // Instructor chỉ được gửi yêu cầu duyệt (pending) hoặc ẩn khóa học (archived)
@@ -602,13 +602,13 @@ public class CourseService : ICourseService
 
             if (!isStripeActive && totalMinutes > 30)
             {
-                throw new BadRequestException($"Tổng thời lượng video của khóa học hiện tại là {Math.Round(totalMinutes, 1)} phút. Instructor chưa liên kết Stripe chỉ được phép tối đa 30 phút.");
+                throw new BadRequestException($"The total video duration of the course is currently {Math.Round(totalMinutes, 1)} minutes. Instructors who have not linked a Stripe account are only allowed a maximum of 30 minutes.");
             }
             
             bool isFreeCourse = course.Price == 0;
             if (isFreeCourse && totalMinutes > 60)
             {
-                throw new BadRequestException($"Tổng thời lượng video của khóa học miễn phí hiện tại là {Math.Round(totalMinutes, 1)} phút. Khóa học miễn phí chỉ được phép tối đa 60 phút.");
+                throw new BadRequestException($"The total video duration of the free course is currently {Math.Round(totalMinutes, 1)} minutes. Free courses are only allowed a maximum of 60 minutes.");
             }
 
             // Clear moderation feedback when resubmitting

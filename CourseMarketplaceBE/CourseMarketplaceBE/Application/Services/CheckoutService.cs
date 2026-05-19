@@ -63,7 +63,7 @@ public class CheckoutService : ICheckoutService
         // ── 1.1 Lấy cart items kèm Course + Instructor ──────────────────────
         var cartItems = await _repo.GetCartItemsWithCourseAndInstructorAsync(userId);
         if (!cartItems.Any())
-            throw new InvalidOperationException("Giỏ hàng trống. Không thể thanh toán.");
+            throw new InvalidOperationException("Cart is empty. Cannot checkout.");
 
         // Lấy TransferRate từ system_configs
         var currentTransferRate = await _adminFinanceService.GetCurrentTransferRateAsync();
@@ -73,7 +73,7 @@ public class CheckoutService : ICheckoutService
         {
             if (item.CourseId.HasValue && await _repo.IsEnrolledAsync(userId, item.CourseId.Value))
                 throw new InvalidOperationException(
-                    $"Bạn đã mua khóa học \"{item.Course?.Title}\" rồi. Vui lòng xóa khỏi giỏ hàng.");
+                    $"You have already purchased the course \"{item.Course?.Title}\". Please remove it from the cart.");
         }
 
         // ── 1.3 Tính toán coupon (Hỗ trợ nhiều mã phân tách bằng dấu phẩy) ────
@@ -179,7 +179,7 @@ public class CheckoutService : ICheckoutService
 
                 paymentLineItems.Add(new PaymentLineItem
                 {
-                    CourseName = cartItem.Course?.Title ?? "Khóa học",
+                    CourseName = cartItem.Course?.Title ?? "Course",
                     ThumbnailUrl = cartItem.Course?.CourseThumbnailUrl,
                     UnitPrice = purchasePrice
                 });
@@ -256,14 +256,14 @@ public class CheckoutService : ICheckoutService
     {
         var course = await _repo.GetCourseWithInstructorAsync(courseId);
         if (course == null)
-            throw new InvalidOperationException("Khóa học không tồn tại.");
+            throw new InvalidOperationException("Course not found.");
 
         if (await _repo.IsEnrolledAsync(userId, courseId))
-            throw new InvalidOperationException($"Bạn đã mua khóa học \"{course.Title}\" rồi.");
+            throw new InvalidOperationException($"You have already purchased the course \"{course.Title}\".");
 
         var stripeAccountId = await _repo.GetInstructorStripeAccountIdAsync(course.InstructorId ?? 0);
         if (string.IsNullOrEmpty(stripeAccountId))
-            throw new InvalidOperationException("Giảng viên chưa kết nối tài khoản thanh toán Stripe.");
+            throw new InvalidOperationException("The instructor has not connected a Stripe payment account.");
 
         // Lấy TransferRate từ system_configs
         var currentTransferRate = await _adminFinanceService.GetCurrentTransferRateAsync();
@@ -279,12 +279,12 @@ public class CheckoutService : ICheckoutService
             {
                 if (course.CouponId != coupon.CouponId)
                 {
-                    throw new InvalidOperationException("Mã giảm giá này không áp dụng cho khóa học này.");
+                    throw new InvalidOperationException("This coupon is not applicable to this course.");
                 }
 
                 if (originalPrice < coupon.MinOrderValue)
                 {
-                    throw new InvalidOperationException($"Mã này yêu cầu giá trị khóa học tối thiểu là ${coupon.MinOrderValue:N2}.");
+                    throw new InvalidOperationException($"This coupon requires a minimum course value of ${coupon.MinOrderValue:N2}.");
                 }
 
                 discountAmount = coupon.CouponType == "percentage"
@@ -294,7 +294,7 @@ public class CheckoutService : ICheckoutService
             }
             else
             {
-                throw new InvalidOperationException("Mã giảm giá không tồn tại hoặc đã hết hạn.");
+                throw new InvalidOperationException("Coupon does not exist or has expired.");
             }
         }
 
@@ -336,7 +336,7 @@ public class CheckoutService : ICheckoutService
             {
                 new PaymentLineItem
                 {
-                    CourseName = course.Title ?? "Khóa học",
+                    CourseName = course.Title ?? "Course",
                     ThumbnailUrl = course.CourseThumbnailUrl,
                     UnitPrice = purchasePrice
                 }
@@ -402,8 +402,8 @@ public class CheckoutService : ICheckoutService
             var transactions = await _repo.GetTransactionsBySessionIdAsync(sessionId);
             if (!transactions.Any())
             {
-                Console.WriteLine($"[CHECKOUT-DEBUG] ❌ ERROR: Không tìm thấy transactions cho session {sessionId}");
-                throw new InvalidOperationException("Không tìm thấy giao dịch cho session này.");
+                Console.WriteLine($"[CHECKOUT-DEBUG] ❌ ERROR: Transactions not found for session {sessionId}");
+                throw new InvalidOperationException("No transaction found for this session.");
             }
 
             Console.WriteLine($"[CHECKOUT-DEBUG] Found {transactions.Count} transactions.");
@@ -420,13 +420,13 @@ public class CheckoutService : ICheckoutService
             // Lấy order từ transaction đầu tiên
             var firstTransaction = transactions.First();
             var orderId = firstTransaction.OrderItem?.OrderId;
-            if (!orderId.HasValue) throw new InvalidOperationException("Không tìm thấy đơn hàng.");
+            if (!orderId.HasValue) throw new InvalidOperationException("Order not found.");
 
             var order = await _repo.GetOrderWithDetailsAsync(orderId.Value);
-            if (order == null) throw new InvalidOperationException("Đơn hàng không tồn tại.");
+            if (order == null) throw new InvalidOperationException("Order does not exist.");
 
             var userId = order.UserId;
-            if (!userId.HasValue) throw new InvalidOperationException("Không xác định người mua.");
+            if (!userId.HasValue) throw new InvalidOperationException("Buyer is undefined.");
 
             // ★ Lấy PaymentIntent ID từ Stripe Session
             Console.WriteLine("[CHECKOUT-DEBUG] Fetching Stripe PaymentIntent...");
@@ -524,11 +524,11 @@ public class CheckoutService : ICheckoutService
                     // ── NEW: Thông báo cho giảng viên ──
                     if (instructorId.HasValue)
                     {
-                        var courseTitle = txn.OrderItem?.Course?.Title ?? "Khóa học của bạn";
+                        var courseTitle = txn.OrderItem?.Course?.Title ?? "your course";
                         await _notificationService.SendNotificationAsync(
                             instructorId.Value,
-                            "Bạn có đơn hàng mới",
-                            $"Khóa học '{courseTitle}' vừa được bán thành công. Số tiền thu về dự kiến: {payoutAmount:N0} VND.",
+                            "You have a new order",
+                            $"The course '{courseTitle}' has been successfully sold. Expected revenue: {payoutAmount:N0} VND.",
                             $"/Instructor/Payouts"
                         );
                     }
@@ -575,7 +575,7 @@ public class CheckoutService : ICheckoutService
             var order = await _repo.GetOrderWithDetailsAsync(orderId);
             if (order == null || order.OrderStatus != "pending")
             {
-                Console.WriteLine($"[CHECKOUT-DEBUG] Không tìm thấy order pending cho ID {orderId}");
+                Console.WriteLine($"[CHECKOUT-DEBUG] Pending order not found for ID {orderId}");
                 return;
             }
 
@@ -596,7 +596,7 @@ public class CheckoutService : ICheckoutService
                 await _repo.SaveChangesAsync();
                 await dbTransaction.CommitAsync();
                 
-                Console.WriteLine("[CHECKOUT-DEBUG] Đã XÓA Order/Transactions ảo thành công do user hủy thanh toán.");
+                Console.WriteLine("[CHECKOUT-DEBUG] Successfully DELETED pending order/transactions due to user canceling payment.");
             }
             catch
             {

@@ -112,8 +112,8 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 await _notificationService.SendNotificationAsync(
                     course.InstructorId.Value,
-                    "Khóa học đã được phê duyệt",
-                    $"Khóa học '{course.Title}' của bạn đã được phê duyệt và hiện đã hiển thị trên cửa hàng. {feedback}",
+                    "Course Approved",
+                    $"Your course '{course.Title}' has been approved and is now published in the store. {feedback}",
                     $"/Course/Details/{courseId}"
                 );
 
@@ -125,8 +125,8 @@ namespace CourseMarketplaceBE.Application.Services
                     {
                         await _notificationService.SendNotificationAsync(
                             studentId,
-                            "Khóa học đã có nội dung mới",
-                            $"Khóa học '{course.Title}' bạn đang tham gia vừa được giảng viên cập nhật nội dung mới. Hãy vào xem ngay!",
+                            "Course Content Updated",
+                            $"The course '{course.Title}' you enrolled in has been updated with new content. Check it out now!",
                             $"/Course/Learn?id={courseId}"
                         );
                     }
@@ -155,8 +155,8 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 await _notificationService.SendNotificationAsync(
                     course.InstructorId.Value,
-                    "Khóa học bị từ chối",
-                    $"Khóa học '{course.Title}' của bạn không được phê duyệt. Lý do: {reason}",
+                    "Course Rejected",
+                    $"Your course '{course.Title}' was not approved. Reason: {reason}",
                     $"/InstructorCourse/Editor?id={courseId}"
                 );
             }
@@ -184,26 +184,25 @@ namespace CourseMarketplaceBE.Application.Services
 
             if (course.InstructorId.HasValue)
             {
-                string subject = "Cảnh báo vi phạm khóa học";
+                string subject = "Course Violation Warning";
                 string message = "";
 
                 if (currentFlags == 1)
                 {
-                    subject = "Nhắc nhở vi phạm khóa học (Lần 1)";
-                    message = $"Khóa học '{course.Title}' của bạn đã bị gắn cờ vi phạm lần đầu và tạm ẩn. Lý do: {reason}. Vui lòng kiểm tra lại nội dung và tuân thủ quy định.";
+                    subject = "Course Violation Reminder (1st Time)";
+                    message = $"Your course '{course.Title}' has been flagged for a violation and temporarily hidden. Reason: {reason}. Please review the content and ensure compliance.";
                 }
                 else if (currentFlags == 2)
                 {
-                    subject = "Cảnh báo vi phạm nghiêm trọng (Lần 2)";
-                    message = $"Khóa học '{course.Title}' của bạn tiếp tục vi phạm lần thứ 2. Đây là cảnh báo mạnh mẽ. Nếu tiếp tục vi phạm, khóa học sẽ bị xóa vĩnh viễn.";
+                    subject = "Severe Violation Warning (2nd Time)";
+                    message = $"Your course '{course.Title}' continues to violate policies (2nd time). This is a strong warning. If the violation continues, the course will be permanently deleted.";
                 }
                 else
                 {
-                    subject = "Thông báo ngừng kinh doanh khóa học vĩnh viễn (Lần 3)";
-                    message = $"Khóa học '{course.Title}' của bạn đã vi phạm chính sách lần thứ 3. Hệ thống quyết định ngừng kinh doanh khóa học này vĩnh viễn. Bạn sẽ không thể chỉnh sửa nội dung hoặc nhận học viên mới, nhưng học viên cũ vẫn có thể truy cập nội dung đã mua.";
-
-
-                    course.CourseStatus = CourseStatus.Archived.ToValue();
+                    subject = "Permanent Course Discontinuation Notice (3rd Time)";
+                    message = $"Your course '{course.Title}' has violated policies for the 3rd time. The platform has decided to permanently discontinue this course. You will not be able to edit the content or accept new students, but existing students can still access their purchased content.";
+                    
+                    course.CourseStatus = "archived";
                     _courseRepository.Update(course);
                     await _courseRepository.SaveChangesAsync();
                 }
@@ -285,11 +284,11 @@ namespace CourseMarketplaceBE.Application.Services
                     // Aggregate course-level feedback
                     var label = item.Target switch
                     {
-                        "course.title" => "Tiêu đề",
-                        "course.description" => "Mô tả",
+                        "course.title" => "Title",
+                        "course.description" => "Description",
                         "course.thumbnail" => "Thumbnail",
-                        "course.what_you_will_learn" => "Nội dung học được",
-                        "course.requirements" => "Yêu cầu",
+                        "course.what_you_will_learn" => "What You Will Learn",
+                        "course.requirements" => "Requirements",
                         _ => item.Target
                     };
                     courseFeedbackParts.Add($"[@{label}] {item.Reason}");
@@ -312,7 +311,7 @@ namespace CourseMarketplaceBE.Application.Services
             course.CourseStatus = CourseStatus.Rejected.ToValue();
             course.ModerationFeedback = courseFeedbackParts.Count > 0
                 ? string.Join("\n", courseFeedbackParts)
-                : "Khóa học bị từ chối. Vui lòng kiểm tra các file bị đánh dấu.";
+                : "Course rejected. Please check flagged files.";
             course.UpdatedAt = DateTime.Now;
 
             _courseRepository.Update(course);
@@ -322,8 +321,8 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 await _notificationService.SendNotificationAsync(
                     course.InstructorId.Value,
-                    "Khóa học bị từ chối",
-                    $"Khóa học '{course.Title}' của bạn không được phê duyệt. Vui lòng kiểm tra chi tiết trong trang chỉnh sửa.",
+                    "Course Rejected",
+                    $"Your course '{course.Title}' was not approved. Please check details in the course editor.",
                     $"/InstructorCourse/Editor?id={request.CourseId}"
                 );
             }

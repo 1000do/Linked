@@ -23,9 +23,6 @@ secrets.json
 node_modules/
 private/
 ai_models/
-
-
-
-
+.env.example
 
 

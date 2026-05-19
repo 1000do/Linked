@@ -28,9 +28,9 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             var result = await _service.ApproveOrRejectAsync(dto);
             if (result)
             {
-                return Ok(new { status = 200, message = "Thao tác thành công" });
+                return Ok(new { status = 200, message = "Operation successful" });
             }
-            return BadRequest(new { status = 400, message = "Không tìm thấy giảng viên hoặc có lỗi xảy ra" });
+            return BadRequest(new { status = 400, message = "Instructor not found or an error occurred" });
         }
     }
 }
