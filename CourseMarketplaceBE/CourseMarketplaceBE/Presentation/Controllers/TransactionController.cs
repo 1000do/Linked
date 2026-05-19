@@ -45,11 +45,11 @@ public class TransactionController : ControllerBase
         try
         {
             var result = await _transactionService.GetTransactionsAsync(page, pageSize, keyword, sortBy, status);
-            return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Danh sách giao dịch."));
+            return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Transaction list."));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -68,9 +68,9 @@ public class TransactionController : ControllerBase
         {
             var detail = await _transactionService.GetTransactionDetailAsync(id);
             if (detail == null)
-                return NotFound(ApiResponse<string>.ErrorResponse($"Không tìm thấy giao dịch #{id}."));
+                return NotFound(ApiResponse<string>.ErrorResponse($"Transaction #{id} not found."));
 
-            return Ok(ApiResponse<TransactionDetailDto>.SuccessResponse(detail, "Chi tiết giao dịch."));
+            return Ok(ApiResponse<TransactionDetailDto>.SuccessResponse(detail, "Transaction details."));
         }
         catch (ArgumentException ex)
         {
@@ -78,7 +78,7 @@ public class TransactionController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -98,14 +98,14 @@ public class TransactionController : ControllerBase
         {
             var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdStr, out int userId))
-                return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
+                return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
 
             var result = await _transactionService.GetInstructorTransactionsAsync(userId, page, pageSize, keyword, sortBy, status);
-            return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Danh sách giao dịch của giảng viên."));
+            return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Instructor transaction list."));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -125,14 +125,14 @@ public class TransactionController : ControllerBase
         {
             var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdStr, out int userId))
-                return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
+                return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
 
             var result = await _transactionService.GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status);
-            return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Danh sách giao dịch của bạn."));
+            return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Your transaction list."));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 }

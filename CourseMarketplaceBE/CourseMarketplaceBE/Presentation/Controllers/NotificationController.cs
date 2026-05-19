@@ -50,9 +50,9 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             var result = await _notiService.MarkAsReadAsync(id, userId);
 
             if (!result)
-                return NotFound(new { message = "Không tìm thấy thông báo hoặc bạn không có quyền" });
+                return NotFound(new { message = "Notification not found or access denied." });
 
-            return Ok(new { message = "Đã đánh dấu đã đọc thành công" });
+            return Ok(new { message = "Notification marked as read successfully." });
         }
 
         [HttpDelete("{id}")]
@@ -61,7 +61,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
             var result = await _notiService.DeleteNotificationAsync(id, userId);
 
-            if (!result) return BadRequest("Không thể xóa thông báo");
+            if (!result) return BadRequest("Could not delete notification.");
             return Ok();
         }
 
@@ -78,7 +78,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         public async Task<IActionResult> SendTest([FromBody] NotificationSendDto dto)
         {
             await _notiService.SendNotificationAsync(dto.ReceiverId, dto.Title, dto.Content, null);
-            return Ok("Đã gửi thành công");
+            return Ok("Sent successfully.");
         }
         [Authorize(Roles = "admin,staff")]
         [HttpPost("send-advanced")]
@@ -86,11 +86,11 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             // Validation cơ bản để chống tràn dữ liệu ngay từ Backend
             if (dto.Title.Length > 100 || dto.Content.Length > 100)
-                return BadRequest("Tiêu đề tối đa 100 ký tự, nội dung tối đa 100 ký tự.");
+                return BadRequest("Title maximum 100 characters, content maximum 100 characters.");
 
             var count = await _notiService.SendAdvancedAsync(dto);
-            if (count < 0) return BadRequest("Dữ liệu không hợp lệ");
-            return Ok(new { message = "Gửi thành công", count });
+            if (count < 0) return BadRequest("Invalid data.");
+            return Ok(new { message = "Sent successfully.", count });
         }
 
         [HttpGet("unread-summary")]

@@ -40,12 +40,12 @@ public class CartController : ControllerBase
     {
         var userId = GetUserId();
         if (userId == null)
-            return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
 
         try
         {
             await _cartService.AddToCartAsync(userId.Value, courseId);
-            return Ok(ApiResponse<string>.SuccessResponse("ok", "Đã thêm khóa học vào giỏ hàng."));
+            return Ok(ApiResponse<string>.SuccessResponse("ok", "Course added to cart successfully."));
         }
         catch (InvalidOperationException ex)
         {
@@ -53,7 +53,7 @@ public class CartController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi server: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Server error: {ex.Message}"));
         }
     }
 
@@ -67,12 +67,12 @@ public class CartController : ControllerBase
     {
         var userId = GetUserId();
         if (userId == null)
-            return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
 
         try
         {
             await _cartService.RemoveFromCartAsync(userId.Value, courseId);
-            return Ok(ApiResponse<string>.SuccessResponse("ok", "Đã xóa khóa học khỏi giỏ hàng."));
+            return Ok(ApiResponse<string>.SuccessResponse("ok", "Course removed from cart successfully."));
         }
         catch (InvalidOperationException ex)
         {
@@ -80,7 +80,7 @@ public class CartController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi server: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Server error: {ex.Message}"));
         }
     }
 
@@ -95,7 +95,7 @@ public class CartController : ControllerBase
     {
         var userId = GetUserId();
         if (userId == null)
-            return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
 
         try
         {
@@ -107,7 +107,7 @@ public class CartController : ControllerBase
             var fullError = ex.InnerException != null
                 ? $"{ex.Message} → {ex.InnerException.Message}"
                 : ex.Message;
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi server: {fullError} | StackTrace: {ex.StackTrace}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Server error: {fullError} | StackTrace: {ex.StackTrace}"));
         }
     }
 }

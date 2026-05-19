@@ -25,14 +25,14 @@ public class ChatAttachmentController : ControllerBase
     public async Task<IActionResult> UploadAttachment(IFormFile file)
     {
         if (!_configuration.GetValue<bool>("ChatSettings:EnableAttachments"))
-            return BadRequest(new { message = "Tính năng gửi file đang bị tắt." });
+            return BadRequest(new { message = "File attachment feature is disabled." });
 
         if (file == null || file.Length == 0)
-            return BadRequest(new { message = "Vui lòng chọn file." });
+            return BadRequest(new { message = "Please choose a file." });
 
         // Giới hạn 10MB
         if (file.Length > 10 * 1024 * 1024)
-            return BadRequest(new { message = "File không được vượt quá 10MB." });
+            return BadRequest(new { message = "File size must not exceed 10MB." });
 
         string? url = null;
         var contentType = file.ContentType.ToLower();
@@ -45,7 +45,7 @@ public class ChatAttachmentController : ControllerBase
             url = await _fileUploadService.UploadFileAsync(file);
 
         if (string.IsNullOrEmpty(url))
-            return StatusCode(500, new { message = "Lỗi khi upload file lên Cloudinary." });
+            return StatusCode(500, new { message = "Error uploading file to Cloudinary." });
 
         return Ok(new
         {

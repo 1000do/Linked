@@ -113,11 +113,11 @@ public class Program
         if (!string.IsNullOrWhiteSpace(stripeSecretKey))
         {
             StripeConfiguration.ApiKey = stripeSecretKey;
-            Console.WriteLine("✅ Stripe API Key đã được cấu hình.");
+            Console.WriteLine("✅ Stripe API Key has been configured.");
         }
         else
         {
-            Console.WriteLine("⚠️  Warning: Stripe Secret Key chưa được cấu hình. Tính năng thanh toán sẽ không hoạt động.");
+            Console.WriteLine("⚠️  Warning: Stripe Secret Key is not configured. Payments will not function.");
         }
 
         // 🔥 3. JWT Settings
@@ -298,7 +298,7 @@ public class Program
 
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                Description = "Nhập JWT token",
+                Description = "Enter JWT token",
                 Name = "Authorization",
                 In = ParameterLocation.Header,
                 Type = SecuritySchemeType.Http,

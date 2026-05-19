@@ -99,7 +99,7 @@ public class UserProfileService : IUserProfileService
         var user = await _userRepo.GetUserByIdAsync(userId);
         if (user == null || user.UserNavigation == null)
         {
-            return (false, "Không tìm thấy thông tin người dùng.");
+            return (false, "User profile not found.");
         }
 
         var account = user.UserNavigation;
@@ -107,14 +107,14 @@ public class UserProfileService : IUserProfileService
         // If the account was created with Google/Facebook, it might not have a password
         if (string.IsNullOrEmpty(account.PasswordHash))
         {
-            return (false, "Tài khoản của bạn đăng nhập qua bên thứ ba và không sử dụng mật khẩu.");
+            return (false, "Your account is linked to a third-party login and does not use a password.");
         }
 
         // Verify current password
         bool isPasswordValid = BCrypt.Net.BCrypt.Verify(currentPassword, account.PasswordHash);
         if (!isPasswordValid)
         {
-            return (false, "Mật khẩu hiện tại không chính xác.");
+            return (false, "Current password is incorrect.");
         }
 
         // Hash and update new password
@@ -129,11 +129,11 @@ public class UserProfileService : IUserProfileService
 
         if (updated)
         {
-            return (true, "Đổi mật khẩu thành công.");
+            return (true, "Password changed successfully.");
         }
         else
         {
-            return (false, "Đã xảy ra lỗi khi đổi mật khẩu.");
+            return (false, "An error occurred while changing password.");
         }
     }
 }

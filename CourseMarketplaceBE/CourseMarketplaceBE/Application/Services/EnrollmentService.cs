@@ -24,18 +24,18 @@ public class EnrollmentService : IEnrollmentService
         // 1. Check if course exists and is free
         var course = await _courseRepo.GetByIdAsync(courseId);
         if (course == null)
-            throw new InvalidOperationException("Khóa học không tồn tại.");
+            throw new InvalidOperationException("Course not found.");
 
         if (course.Price > 0)
-            throw new InvalidOperationException("Khóa học này không miễn phí. Vui lòng thanh toán qua giỏ hàng.");
+            throw new InvalidOperationException("This course is not free. Please complete the purchase via your cart.");
 
         // 1b. Check if instructor is trying to enroll in their own course
         if (course.InstructorId == userId)
-            throw new InvalidOperationException("Bạn không thể ghi danh vào khóa học của chính mình.");
+            throw new InvalidOperationException("You cannot enroll in your own course.");
 
         // 2. Check if already enrolled
         if (await _repo.IsEnrolledAsync(userId, courseId))
-            throw new InvalidOperationException("Bạn đã ghi danh vào khóa học này rồi.");
+            throw new InvalidOperationException("You have already enrolled in this course.");
 
         // 3. Perform enrollment
         await using var transaction = await _repo.BeginTransactionAsync();
@@ -120,7 +120,7 @@ public class EnrollmentService : IEnrollmentService
                 // Giảng viên xem bài học của chính mình -> Không cần lưu tiến độ vào DB
                 return;
             }
-            throw new InvalidOperationException("Bạn chưa ghi danh khóa học này.");
+            throw new InvalidOperationException("You are not enrolled in this course.");
         }
 
         // 1. Đánh dấu tài liệu này đã hoàn thành

@@ -9,11 +9,11 @@ namespace CourseMarketplaceBE.Application.DTOs;
 /// </summary>
 public class InstructorApplicationRequest
 {
-    [Required(ErrorMessage = "Vui lòng nhập chức danh chuyên môn.")]
+    [Required(ErrorMessage = "Please enter your professional title.")]
     [StringLength(255)]
     public string ProfessionalTitle { get; set; } = null!;
 
-    [Required(ErrorMessage = "Vui lòng nhập lĩnh vực chuyên môn.")]
+    [Required(ErrorMessage = "Please enter your areas of expertise.")]
     [StringLength(255)]
     public string ExpertiseCategories { get; set; } = null!;
 
@@ -24,7 +24,7 @@ public class InstructorApplicationRequest
     /// <summary>File CV/CMND upload lên Cloudinary</summary>
     public IFormFile? DocumentFile { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn quốc gia cho tài khoản Stripe.")]
+    [Required(ErrorMessage = "Please select the country for your Stripe account.")]
     [StringLength(2)]
     public string StripeCountry { get; set; } = null!;
 }

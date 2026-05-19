@@ -26,7 +26,7 @@ public class AuthController : ControllerBase
         var result = await _authService.RegisterAsync(request);
 
         if (result == "Success")
-            return Ok(new { status = 200, message = "Đăng ký tài khoản thành công!" });
+            return Ok(new { status = 200, message = "Account registered successfully!" });
 
         return BadRequest(new { status = 400, message = result });
     }
@@ -37,12 +37,12 @@ public class AuthController : ControllerBase
     {
         if (string.IsNullOrEmpty(request.Email))
         {
-            return BadRequest(new { status = 400, message = "Tài khoản phải có định dạng @gmail.com." });
+            return BadRequest(new { status = 400, message = "Account must end with @gmail.com." });
         }
         var result = await _authService.LoginAsync(request);
     
         if (result == null)
-            return Unauthorized(new { status = 401, message = "Email hoặc mật khẩu không chính xác." });
+            return Unauthorized(new { status = 401, message = "Incorrect email or password." });
 
         // Access token: HttpOnly cookie, dài hạn (24 giờ — khớp JWT)
         Response.Cookies.Append("AccessToken", result.AccessToken, new CookieOptions
@@ -67,7 +67,7 @@ public class AuthController : ControllerBase
         return Ok(new
         {
             status = 200,
-            message = "Đăng nhập thành công",
+            message = "Login successful",
             accessToken = result.AccessToken,   // Trả về để FE lưu in-memory
             refreshToken = result.RefreshToken,
             fullName = result.FullName,
@@ -85,12 +85,12 @@ public class AuthController : ControllerBase
                         ?? Request.Headers["X-Refresh-Token"].ToString();
 
         if (string.IsNullOrWhiteSpace(refreshToken))
-            return BadRequest(new { status = 400, message = "Refresh token không được để trống." });
+            return BadRequest(new { status = 400, message = "Refresh token is required." });
 
         var result = await _authService.RefreshTokenAsync(refreshToken);
 
         if (result == null)
-            return Unauthorized(new { status = 401, message = "Refresh token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại." });
+            return Unauthorized(new { status = 401, message = "Invalid or expired refresh token. Please login again." });
 
         // Cấp lại cả 2 cookie (access + refresh mới, do đã rotate)
         Response.Cookies.Append("AccessToken", result.AccessToken, new CookieOptions
@@ -114,7 +114,7 @@ public class AuthController : ControllerBase
         return Ok(new
         {
             status = 200,
-            message = "Token đã được làm mới",
+            message = "Token refreshed",
             accessToken = result.AccessToken,
             avatarUrl = result.AvatarUrl,
             isVerified = result.IsVerified
@@ -135,7 +135,7 @@ public class AuthController : ControllerBase
         Response.Cookies.Delete("AccessToken", new CookieOptions { Path = "/" });
         Response.Cookies.Delete("RefreshToken", new CookieOptions { Path = "/api/auth/refresh" });
 
-        return Ok(new { status = 200, message = "Đã đăng xuất thành công." });
+        return Ok(new { status = 200, message = "Logged out successfully." });
     }
 
     [HttpPost("google-login")]

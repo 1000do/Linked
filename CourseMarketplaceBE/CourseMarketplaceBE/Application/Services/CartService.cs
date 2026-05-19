@@ -28,15 +28,15 @@ public class CartService : ICartService
         // Kiểm tra khóa học có tồn tại và đang được published không
         var course = await _repo.GetPublishedCourseAsync(courseId);
         if (course == null)
-            throw new InvalidOperationException("Khóa học không tồn tại hoặc chưa được phát hành.");
+            throw new InvalidOperationException("Course does not exist or is not published.");
 
         // Kiểm tra user đã enrolled chưa (không cần mua lại)
         if (await _repo.IsEnrolledAsync(userId, courseId))
-            throw new InvalidOperationException("Bạn đã mua khóa học này rồi.");
+            throw new InvalidOperationException("You have already purchased this course.");
 
         // Kiểm tra khóa học đã có trong giỏ chưa
         if (await _repo.IsCourseInCartAsync(userId, courseId))
-            throw new InvalidOperationException("Khóa học đã có trong giỏ hàng.");
+            throw new InvalidOperationException("Course is already in the cart.");
 
         // Thêm vào giỏ với giá hiện tại của khóa học (snapshot price)
         var cartItem = new CartItem
@@ -58,7 +58,7 @@ public class CartService : ICartService
     {
         var item = await _repo.GetCartItemAsync(userId, courseId);
         if (item == null)
-            throw new InvalidOperationException("Không tìm thấy khóa học trong giỏ hàng.");
+            throw new InvalidOperationException("Course not found in the cart.");
 
         _repo.RemoveCartItem(item);
         await _repo.SaveChangesAsync();
@@ -76,7 +76,7 @@ public class CartService : ICartService
         var items = cartItems.Select(c => new CartItemDto
         {
             CourseId       = c.CourseId ?? 0,
-            Title          = c.Course?.Title ?? "(Khóa học không tìm thấy)",
+            Title          = c.Course?.Title ?? "(Course not found)",
             ThumbnailUrl   = c.Course?.CourseThumbnailUrl,
             InstructorName = c.Course?.Instructor?.InstructorNavigation?.FullName,
             // Ưu tiên snapshot giá lúc add; nếu null thì lấy giá hiện tại
@@ -140,8 +140,8 @@ public class CartService : ICartService
                     appliedCoupons.Add(coupon.CouponCode);
 
                     var msg = coupon.CouponType == "percentage"
-                        ? $"giảm {coupon.DiscountValue:0.##}%"
-                        : $"giảm ${coupon.DiscountValue:N2}";
+                        ? $"off {coupon.DiscountValue:0.##}%"
+                        : $"off ${coupon.DiscountValue:N2}";
                     couponMessages.Add($"{coupon.CouponCode} ({msg})");
 
                     // Cập nhật giá trị giảm giá cho từng item cụ thể!
@@ -166,13 +166,13 @@ public class CartService : ICartService
 
             if (appliedCoupons.Any())
             {
-                response.Total = Math.Round(Math.Max(subTotal - response.DiscountAmount, 0m), 2);
+                response.Total = Math.Round(Math.Round(subTotal - response.DiscountAmount, 2), 2); // Tránh nested math
                 response.AppliedCouponCode = string.Join(",", appliedCoupons);
-                response.CouponMessage = "Đã áp dụng: " + string.Join(", ", couponMessages);
+                response.CouponMessage = "Applied: " + string.Join(", ", couponMessages);
             }
             else
             {
-                response.CouponMessage = "Không có mã giảm giá hợp lệ được áp dụng.";
+                response.CouponMessage = "No valid coupon applied.";
             }
         }
 
@@ -192,17 +192,17 @@ public class CartService : ICartService
             string conditionMessage;
             if (eligibleSubTotal == 0)
             {
-                conditionMessage = "Không áp dụng cho khóa học nào trong giỏ";
+                conditionMessage = "Not applicable to any course in the cart";
             }
             else if (!isEligible)
             {
-                conditionMessage = $"Mua thêm {cp.MinOrderValue - eligibleSubTotal:N0}đ để dùng mã này";
+                conditionMessage = $"Spend another ${(cp.MinOrderValue - eligibleSubTotal):N2} to use this coupon";
             }
             else
             {
                 conditionMessage = cp.CouponType == "percentage"
-                    ? $"Giảm {cp.DiscountValue:0.##}%"
-                    : $"Giảm {cp.DiscountValue:N0}đ";
+                    ? $"Off {cp.DiscountValue:0.##}%"
+                    : $"Off ${cp.DiscountValue:N2}";
             }
 
             return new AvailableCouponDto
