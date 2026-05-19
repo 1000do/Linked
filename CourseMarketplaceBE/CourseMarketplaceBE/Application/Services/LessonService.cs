@@ -7,6 +7,7 @@ using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Application.Exceptions;
+using CourseMarketplaceBE.Domain.Constants;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -18,6 +19,7 @@ public class LessonService : ILessonService
     private readonly IFileUploadService _uploadService;
     private readonly IRedisService _redisService;
     private readonly IInstructorRepository _instructorRepository;
+    private readonly IMaterialEmbeddingRepository _materialEmbeddingRepository;
 
     public LessonService(
         ILessonRepository lessonRepository, 
@@ -25,7 +27,8 @@ public class LessonService : ILessonService
         IMaterialRepository materialRepository,
         IFileUploadService uploadService,
         IRedisService redisService,
-        IInstructorRepository instructorRepository)
+        IInstructorRepository instructorRepository,
+        IMaterialEmbeddingRepository materialEmbeddingRepository)
     {
         _lessonRepository = lessonRepository;
         _courseRepository = courseRepository;
@@ -33,6 +36,7 @@ public class LessonService : ILessonService
         _uploadService = uploadService;
         _redisService = redisService;
         _instructorRepository = instructorRepository;
+        _materialEmbeddingRepository = materialEmbeddingRepository;
     }
 
     public async Task<LessonResponse> CreateLessonAsync(LessonCreateRequest request, int instructorId)
@@ -94,9 +98,9 @@ public class LessonService : ILessonService
 
         await _lessonRepository.AddAsync(lesson);
         
-        if ("published".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
-            course.CourseStatus = "draft";
+            course.CourseStatus = CourseStatus.Draft.ToValue();
             course.ModerationFeedback = null;
             _courseRepository.Update(course);
         }
@@ -104,7 +108,7 @@ public class LessonService : ILessonService
         await _lessonRepository.SaveChangesAsync();
 
         // Invalidate Course Cache
-        await _redisService.RemoveCacheAsync($"course:detail:{request.CourseId}");
+        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(request.CourseId));
 
         return new LessonResponse
         {
@@ -246,9 +250,9 @@ public class LessonService : ILessonService
 
         await _materialRepository.SaveChangesAsync();
         
-        if ("published".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
-            lesson.Course.CourseStatus = "draft";
+            lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
             lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
             await _courseRepository.SaveChangesAsync();
@@ -257,7 +261,7 @@ public class LessonService : ILessonService
         // Invalidate Course Cache
         if (lesson.CourseId.HasValue)
         {
-            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
         }
 
         return new MaterialResponse
@@ -306,9 +310,9 @@ public class LessonService : ILessonService
         _materialRepository.Update(material);
         await _materialRepository.SaveChangesAsync();
 
-        if ("published".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
-            lesson.Course.CourseStatus = "draft";
+            lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
             lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
             await _courseRepository.SaveChangesAsync();
@@ -317,7 +321,7 @@ public class LessonService : ILessonService
         // Invalidate Course Cache
         if (lesson.CourseId.HasValue)
         {
-            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
         }
     }
 
@@ -330,7 +334,7 @@ public class LessonService : ILessonService
         if (lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to delete this lesson.");
 
-        if ("pending".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot delete lessons while the course is pending review.");
 
         // Soft delete all materials of this lesson
@@ -358,9 +362,9 @@ public class LessonService : ILessonService
         _lessonRepository.Update(lesson);
         await _lessonRepository.SaveChangesAsync();
 
-        if ("published".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
-            lesson.Course.CourseStatus = "draft";
+            lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
             lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
             await _courseRepository.SaveChangesAsync();
@@ -369,7 +373,7 @@ public class LessonService : ILessonService
         // Invalidate Course Cache
         if (lesson.CourseId.HasValue)
         {
-            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
         }
     }
 
@@ -422,7 +426,7 @@ public class LessonService : ILessonService
         // Invalidate Course Cache
         if (courseId.HasValue)
         {
-            await _redisService.RemoveCacheAsync($"course:detail:{courseId.Value}");
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId.Value));
         }
     }
 
@@ -435,15 +439,15 @@ public class LessonService : ILessonService
         if (lesson == null || lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to restore this material.");
 
-        if ("pending".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot restore materials while the course is pending review.");
 
         var course = lesson.Course;
 
         // If course is published, move it back to draft as this is an update
-        if ("published".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
-            course.CourseStatus = "draft";
+            course.CourseStatus = CourseStatus.Draft.ToValue();
             course.ModerationFeedback = null;
             _courseRepository.Update(course);
         }
@@ -504,7 +508,29 @@ public class LessonService : ILessonService
         // Invalidate Course Cache
         if (lesson.CourseId.HasValue)
         {
-            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
         }
+    }
+
+    public async Task<List<MaterialEmbedding>> GetAllMaterialEmbeddingsAsync()
+    {
+        return await _materialEmbeddingRepository.GetAllAsync();
+    }
+
+    public async Task SaveMaterialEmbeddingsAsync(int materialId, List<float> embedding)
+    {
+        var entity = new MaterialEmbedding
+        {
+            MaterialId = materialId,
+            Embedding = System.Text.Json.JsonSerializer.Serialize(embedding),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _materialEmbeddingRepository.AddAsync(entity);
+        await _materialEmbeddingRepository.SaveChangesAsync();
+
+        // Invalidate redis cache for material_embedding
+        await _redisService.RemoveCacheAsync(CacheKeys.MaterialEmbedding.GetKey(materialId));
+        await _redisService.RemoveCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey());
     }
 }

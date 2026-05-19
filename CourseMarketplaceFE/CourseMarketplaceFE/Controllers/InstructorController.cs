@@ -445,7 +445,7 @@ public class InstructorController : Controller
     public async Task<IActionResult> MarkAsRead(int id)
     {
         // Gọi trực tiếp đến Backend API từ Server
-        var response = await _api.PutAsync($"notification/mark-as-read/{id}", null);
+        var response = await _api.PutAsync($"notification/mark-as-read/{id}", null!);
         if (response.IsSuccessStatusCode) return Ok();
         return BadRequest();
     }

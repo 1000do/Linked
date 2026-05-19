@@ -966,8 +966,10 @@
                                 setTimeout(() => autoSaveEl.classList.add('hidden'), 3000);
                             }
                         }
+                        return true;
                     } else {
                         if (autoSaveEl) autoSaveEl.classList.add('hidden');
+                        return false;
                     }
                 })
                 .catch(e => {
@@ -1079,6 +1081,80 @@
             learn: window.courseLearnQuill?.root.innerHTML || '',
             req: window.courseReqQuill?.root.innerHTML || ''
         };
+
+        window.checkUnsavedChanges = function() {
+            const title = document.getElementById('course-title-input')?.value || '';
+            const price = document.getElementById('course-price-input')?.value || '0';
+            const catId = document.getElementById('course-category-input')?.value || '0';
+            const thumb = document.getElementById('course-thumbnail-input')?.value || '';
+            
+            const desc = window.courseDescQuill?.root.innerHTML || '';
+            const learn = window.courseLearnQuill?.root.innerHTML || '';
+            const req = window.courseReqQuill?.root.innerHTML || '';
+
+            const cleanHtml = (h) => {
+                if (!h) return '';
+                const trimmed = h.trim();
+                return (trimmed === '<p><br></p>' || trimmed === '<p></p>') ? '' : trimmed;
+            };
+
+            const parsePrice = (p) => {
+                const parsed = parseFloat(p);
+                return isNaN(parsed) ? 0 : parsed;
+            };
+
+            return title.trim() !== (initialCourseData.title || '').trim() ||
+                cleanHtml(desc) !== cleanHtml(initialCourseData.desc) ||
+                catId !== initialCourseData.catId ||
+                parsePrice(price) !== parsePrice(initialCourseData.price) ||
+                thumb !== initialCourseData.thumb ||
+                cleanHtml(learn) !== cleanHtml(initialCourseData.learn) ||
+                cleanHtml(req) !== cleanHtml(initialCourseData.req);
+        };
+
+        window.addEventListener('beforeunload', function (e) {
+            if (window.checkUnsavedChanges()) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes in your Course Landing Page. Are you sure you want to leave?';
+                return e.returnValue;
+            }
+        });
+
+        // Intercept back button click with SweetAlert confirmation
+        setTimeout(() => {
+            const backBtn = document.querySelector('a[href="/InstructorCourse"]');
+            if (backBtn) {
+                backBtn.addEventListener('click', function(e) {
+                    if (window.checkUnsavedChanges()) {
+                        e.preventDefault();
+                        Swal.fire({
+                            title: 'Bạn có thay đổi chưa lưu!',
+                            text: 'Bạn có chắc chắn muốn quay lại mà không lưu các thay đổi trên Landing Page?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#ef4444',
+                            cancelButtonColor: '#cbd5e1',
+                            confirmButtonText: 'Rời đi',
+                            cancelButtonText: 'Ở lại'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Temporarily reset initialCourseData to bypass beforeunload warning
+                                initialCourseData = {
+                                    title: document.getElementById('course-title-input')?.value || '',
+                                    desc: window.courseDescQuill?.root.innerHTML || '',
+                                    price: document.getElementById('course-price-input')?.value || '0',
+                                    catId: document.getElementById('course-category-input')?.value || '0',
+                                    thumb: document.getElementById('course-thumbnail-input')?.value || '',
+                                    learn: window.courseLearnQuill?.root.innerHTML || '',
+                                    req: window.courseReqQuill?.root.innerHTML || ''
+                                };
+                                window.location.href = backBtn.href;
+                            }
+                        });
+                    }
+                });
+            }
+        }, 100);
         
         // Show API error if any
         @if (ViewBag.ApiError != null) {
@@ -2019,10 +2095,11 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         isSubmitting = true;
+                        // fetch('/InstructorCourse/ModerateCourse', { 
                         fetch('/InstructorCourse/UpdateCourseStatus', { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: new URLSearchParams({ courseId: courseId, status: 'pending' })
+                            body: new URLSearchParams({ courseId: courseId })
                         })
                         .then(res => res.json())
                         .then(json => {

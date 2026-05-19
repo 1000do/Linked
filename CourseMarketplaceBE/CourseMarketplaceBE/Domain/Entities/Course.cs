@@ -32,7 +32,10 @@ public partial class Course
     // TotalLessons, RatingAverage, TotalStudents đã bị xóa trong SQL v2
     // Dùng VIEW view_course_stats để lấy các giá trị này (tính động)
 
-    public virtual ICollection<AiModelsCourse> AiModelsCourses { get; set; } = new List<AiModelsCourse>();
+    public virtual ICollection<CourseAiIntegration> CourseAiIntegrations { get; set; } = new List<CourseAiIntegration>();
+    
+
+
 
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 

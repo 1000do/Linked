@@ -1,0 +1,38 @@
+# Web Framework
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+
+# ML/Deep Learning
+
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+transformers
+scikit-learn
+numpy
+
+# Cache & Data
+redis
+python-multipart
+
+# File Processing
+pillow
+opencv-python
+pytesseract
+pdf2image
+python-pptx
+openpyxl
+python-docx
+
+# Audio
+
+openai-whisper
+
+
+# Utilities
+requests
+python-dotenv
+
+# Logging
+python-json-logger

@@ -10,6 +10,10 @@ public partial class CourseExt
 
     public string? DescriptionHash { get; set; }
 
+    public string? WhatYouWillLearnHash { get; set; }
+
+    public string? RequirementsHash { get; set; }
+
     public string? ThumbnailHash { get; set; }
 
     public virtual Course Course { get; set; } = null!;

@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Net.Http;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Domain.Constants;
+using Microsoft.Extensions.Logging;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -18,8 +21,22 @@ public class CourseService : ICourseService
     private readonly IMaterialRepository _materialRepository;
     private readonly ILessonRepository _lessonRepository;
     private readonly IRedisService _redisService;
+    private readonly IContentHashService _contentHashService;
+    private readonly ICourseAiIntegrationRepository _aiIntegrationRepository;
+    private readonly ILogger<CourseService> _logger;
+    private readonly HttpClient _httpClient;
 
-    public CourseService(ICourseRepository courseRepository, IInstructorRepository instructorRepository, IFileUploadService uploadService, IMaterialRepository materialRepository, ILessonRepository lessonRepository, IRedisService redisService)
+    public CourseService(
+        ICourseRepository courseRepository, 
+        IInstructorRepository instructorRepository, 
+        IFileUploadService uploadService, 
+        IMaterialRepository materialRepository, 
+        ILessonRepository lessonRepository, 
+        IRedisService redisService,
+        IContentHashService contentHashService,
+        ICourseAiIntegrationRepository aiIntegrationRepository,
+        ILogger<CourseService> logger,
+        HttpClient httpClient)
     {
         _courseRepository = courseRepository;
         _instructorRepository = instructorRepository;
@@ -27,6 +44,10 @@ public class CourseService : ICourseService
         _materialRepository = materialRepository;
         _lessonRepository = lessonRepository;
         _redisService = redisService;
+        _contentHashService = contentHashService;
+        _aiIntegrationRepository = aiIntegrationRepository;
+        _logger = logger;
+        _httpClient = httpClient;
     }
 
     public async Task<IEnumerable<CourseResponse>> GetAllPublishedCoursesAsync(int? userId = null)
@@ -237,7 +258,7 @@ public class CourseService : ICourseService
 
     public async Task<CourseDetailResponse?> GetCourseWithDetailsAsync(int courseId, int instructorId, int? userId = null)
     {
-        string cacheKey = $"course:detail:{courseId}";
+        string cacheKey = CacheKeys.CourseDetail.GetKey(courseId);
         var response = await _redisService.GetCacheAsync<CourseDetailResponse>(cacheKey);
 
         if (response == null)
@@ -305,7 +326,7 @@ public class CourseService : ICourseService
                 }).ToList()
             };
 
-            await _redisService.SetCacheAsync(cacheKey, response, TimeSpan.FromHours(1));
+            await _redisService.SetCacheAsync(cacheKey, response, CacheTtl.Short.GetTtl());
         }
 
         // Cập nhật thông tin định danh riêng cho từng User (Không cache phần này)
@@ -389,6 +410,9 @@ public class CourseService : ICourseService
 
         await _courseRepository.AddAsync(course);
         await _courseRepository.SaveChangesAsync();
+
+        // 2. Compute & store hashes for deduplication
+        await UpdateCourseHashesAsync(course);
 
         return new CourseResponse
         {
@@ -474,8 +498,10 @@ public class CourseService : ICourseService
         _courseRepository.Update(course);
         await _courseRepository.SaveChangesAsync();
 
-        // Invalidate Cache
-        await _redisService.RemoveCacheAsync($"course:detail:{course.CourseId}");
+        // Update Hashes
+        await UpdateCourseHashesAsync(course);
+
+        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(course.CourseId));
 
         return new CourseResponse
         {
@@ -492,6 +518,35 @@ public class CourseService : ICourseService
             WhatYouWillLearn = course.WhatYouWillLearn,
             Requirements = course.Requirements
         };
+    }
+
+    private async Task UpdateCourseHashesAsync(Course course)
+    {
+        string? thumbHash = null;
+        if (!string.IsNullOrEmpty(course.CourseThumbnailUrl))
+        {
+            try
+            {
+                var bytes = await _httpClient.GetByteArrayAsync(course.CourseThumbnailUrl);
+                thumbHash = await _contentHashService.ComputeFileHashAsync(bytes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"Failed to download thumbnail for hashing: {ex.Message}");
+            }
+        }
+
+        var command = new SaveCourseHashesCommand
+        {
+            CourseId = course.CourseId,
+            title_hash = await _contentHashService.ComputeCourseHashAsync(course.Title),
+            description_hash = await _contentHashService.ComputeCourseHashAsync(course.Description ?? ""),
+            what_you_will_learn_hash = await _contentHashService.ComputeCourseHashAsync(course.WhatYouWillLearn ?? ""),
+            requirements_hash = await _contentHashService.ComputeCourseHashAsync(course.Requirements ?? ""),
+            thumbnail_hash = thumbHash
+        };
+
+        await _contentHashService.SaveCourseHashesAsync(command);
     }
 
     public async Task UpdateCourseStatusAsync(int courseId, string status, int instructorId)
@@ -589,7 +644,7 @@ public class CourseService : ICourseService
         await _courseRepository.SaveChangesAsync();
 
         // Invalidate Cache
-        await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
+        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
     }
 
     public async Task DeleteCourseAsync(int courseId, int instructorId)
@@ -623,7 +678,7 @@ public class CourseService : ICourseService
         await _courseRepository.SaveChangesAsync();
 
         // Invalidate Cache
-        await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
+        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
     }
 
     public async Task<IEnumerable<CategoryResponse>> GetCategoriesAsync()
@@ -634,5 +689,61 @@ public class CourseService : ICourseService
             CategoryId = c.CategoryId,
             CategoriesName = c.CategoriesName
         });
+    }
+
+    public async Task<CourseAIIntegrationResult> IntegrateAItoCourseAsync(CourseAIIntegrationCommand command)
+    {
+        var integration = new CourseAiIntegration
+        {
+            CourseId = command.CourseId,
+            ModelId = command.ModelId,
+            Role = command.Role,
+            IsEnabled = command.IsEnabled,
+            ConfigJson = System.Text.Json.JsonSerializer.Serialize(command.ConfigJson)
+        };
+
+        await _aiIntegrationRepository.AddAsync(integration);
+        await _aiIntegrationRepository.SaveChangesAsync();
+        return new CourseAIIntegrationResult
+        {
+            CourseId = command.CourseId,
+            ModelId = command.ModelId,
+            IsEnabled = command.IsEnabled,
+            ConfigJson = command.ConfigJson 
+            ?? new Dictionary<string, float> { { "similarity", 0.8f }, { "spam", 0.7f }, { "toxic", 0.7f } },
+            Role = command.Role
+        };
+    }
+
+    public async Task<CourseAiIntegrationResponse> GetByModelAndCourseAsync(int modelId, int courseId)
+    {
+        var integration = await _aiIntegrationRepository.GetByModelAndCourseAsync(modelId, courseId);
+        if (integration == null) return null!;
+        return new CourseAiIntegrationResponse
+        {
+            CourseId = integration.CourseId ?? 0,
+            ModelId = integration.ModelId ?? 0,
+            IsEnabled = integration.IsEnabled,
+            ConfigJson = !string.IsNullOrEmpty(integration.ConfigJson)
+                ? System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, float>>(integration.ConfigJson) ?? new Dictionary<string, float>()
+                : new Dictionary<string, float>(),
+            Role = integration.Role
+        };
+    }
+
+    public async Task UpdateCourseStatusAndFeedbackAsync(int courseId, string status, string? feedback)
+    {
+        var course = await _courseRepository.GetByIdAsync(courseId);
+        if (course != null)
+        {
+            course.CourseStatus = status.ToLower();
+            course.ModerationFeedback = feedback;
+            course.UpdatedAt = DateTime.UtcNow;
+            _courseRepository.Update(course);
+            await _courseRepository.SaveChangesAsync();
+
+            // Invalidate Cache
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
+        }
     }
 }

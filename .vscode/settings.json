@@ -1,6 +1,13 @@
 {
     "dotrush.roslyn.projectOrSolutionFiles": [
-        "c:\\Users\\HP\\Documents\\Linked\\CourseMarketplaceBE\\CourseMarketplaceBE.sln",
-        "c:\\Users\\HP\\Documents\\Linked\\CourseMarketplaceFE\\CourseMarketplaceFE.sln"
+        "c:\\Users\\anhkc\\Desktop\\Linked\\CourseMarketplaceBE\\CourseMarketplaceBE.sln",
+        "c:\\Users\\anhkc\\Desktop\\Linked\\CourseMarketplaceFE\\CourseMarketplaceFE.sln"
+    ],
+    "python-envs.pythonProjects": [
+        {
+            "path": "AIModeration",
+            "envManager": "ms-python.python:venv",
+            "packageManager": "ms-python.python:pip"
+        }
     ]
 }
