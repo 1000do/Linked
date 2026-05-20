@@ -153,13 +153,13 @@ public class TransactionController : ControllerBase
         {
             var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdStr, out int userId))
-                return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
+                return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
 
             if (string.IsNullOrWhiteSpace(request.Reason))
-                return BadRequest(ApiResponse<string>.ErrorResponse("Lý do hoàn tiền không được để trống."));
+                return BadRequest(ApiResponse<string>.ErrorResponse("Refund reason cannot be empty."));
 
             await _financeService.RequestRefundAsync(transactionId, userId, request.Reason);
-            return Ok(ApiResponse<string>.SuccessResponse("Gửi yêu cầu hoàn tiền thành công. Vui lòng chờ Admin phê duyệt."));
+            return Ok(ApiResponse<string>.SuccessResponse("Refund request submitted successfully. Please wait for Admin approval."));
         }
         catch (InvalidOperationException ex)
         {
@@ -167,7 +167,7 @@ public class TransactionController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi hệ thống: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"System error: {ex.Message}"));
         }
     }
 }

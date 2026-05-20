@@ -155,11 +155,11 @@ public class AdminFinanceController : ControllerBase
         try
         {
             await _financeService.SyncAllPayoutsWithStripeAsync();
-            return Ok(ApiResponse<string>.SuccessResponse("Đồng bộ trạng thái payout thành công.", "Thành công."));
+            return Ok(ApiResponse<string>.SuccessResponse("Synchronized payout status successfully.", "Success."));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi hệ thống: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"System error: {ex.Message}"));
         }
     }
 
@@ -278,11 +278,11 @@ public class AdminFinanceController : ControllerBase
         try
         {
             var list = await _financeService.GetPendingRefundRequestsAsync();
-            return Ok(ApiResponse<List<Domain.Entities.Transaction>>.SuccessResponse(list, "Danh sách yêu cầu hoàn tiền đang chờ duyệt."));
+            return Ok(ApiResponse<List<Domain.Entities.Transaction>>.SuccessResponse(list, "List of pending refund requests."));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -295,8 +295,8 @@ public class AdminFinanceController : ControllerBase
     {
         try
         {
-            await _financeService.ApproveRefundAsync(transactionId, request.AdminNote ?? "Được chấp nhận bởi Admin.");
-            return Ok(ApiResponse<string>.SuccessResponse("Đã phê duyệt hoàn tiền thành công."));
+            await _financeService.ApproveRefundAsync(transactionId, request.AdminNote ?? "Approved by Admin.");
+            return Ok(ApiResponse<string>.SuccessResponse("Refund approved successfully."));
         }
         catch (InvalidOperationException ex)
         {
@@ -304,7 +304,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi hệ thống: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"System error: {ex.Message}"));
         }
     }
 
@@ -317,8 +317,8 @@ public class AdminFinanceController : ControllerBase
     {
         try
         {
-            await _financeService.RejectRefundAsync(transactionId, request.AdminNote ?? "Bị từ chối bởi Admin.");
-            return Ok(ApiResponse<string>.SuccessResponse("Đã từ chối yêu cầu hoàn tiền."));
+            await _financeService.RejectRefundAsync(transactionId, request.AdminNote ?? "Rejected by Admin.");
+            return Ok(ApiResponse<string>.SuccessResponse("Refund request rejected."));
         }
         catch (InvalidOperationException ex)
         {
@@ -326,7 +326,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi hệ thống: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"System error: {ex.Message}"));
         }
     }
 }

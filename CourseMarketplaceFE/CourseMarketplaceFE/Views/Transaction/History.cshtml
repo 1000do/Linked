@@ -50,10 +50,10 @@
                             <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Status</label>
                             <select name="status" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all font-medium appearance-none cursor-pointer">
                                 <option value="">All Statuses</option>
-                                <option value="succeeded" selected="@(ViewBag.Status == "succeeded")">Thành công</option>
-                                <option value="refund_pending" selected="@(ViewBag.Status == "refund_pending")">Chờ duyệt hoàn tiền</option>
-                                <option value="refunded" selected="@(ViewBag.Status == "refunded")">Đã hoàn tiền</option>
-                                <option value="failed" selected="@(ViewBag.Status == "failed")">Thất bại</option>
+                                <option value="succeeded" selected="@(ViewBag.Status == "succeeded")">Success</option>
+                                <option value="refund_pending" selected="@(ViewBag.Status == "refund_pending")">Refund Pending</option>
+                                <option value="refunded" selected="@(ViewBag.Status == "refunded")">Refunded</option>
+                                <option value="failed" selected="@(ViewBag.Status == "failed")">Failed</option>
                             </select>
                         </div>
 
@@ -111,11 +111,11 @@
                                 @{
                                     var (bgClass, textClass, dotClass, label) = item.Status switch
                                     {
-                                        "succeeded"      => ("bg-emerald-50", "text-emerald-600", "bg-emerald-500", "Thành công"),
-                                        "failed"         => ("bg-rose-50",    "text-rose-600",    "bg-rose-500",    "Thất bại"),
-                                        "pending"        => ("bg-amber-50",   "text-amber-600",   "bg-amber-400",   "Đang xử lý"),
-                                        "refund_pending" => ("bg-orange-50",  "text-orange-600",  "bg-orange-500",  "Chờ duyệt hoàn tiền"),
-                                        "refunded"       => ("bg-violet-50",  "text-violet-600",  "bg-violet-500",  "Đã hoàn tiền"),
+                                        "succeeded"      => ("bg-emerald-50", "text-emerald-600", "bg-emerald-500", "Success"),
+                                        "failed"         => ("bg-rose-50",    "text-rose-600",    "bg-rose-500",    "Failed"),
+                                        "pending"        => ("bg-amber-50",   "text-amber-600",   "bg-amber-400",   "Pending"),
+                                        "refund_pending" => ("bg-orange-50",  "text-orange-600",  "bg-orange-500",  "Refund Pending"),
+                                        "refunded"       => ("bg-violet-50",  "text-violet-600",  "bg-violet-500",  "Refunded"),
                                         _                => ("bg-slate-50",   "text-slate-500",   "bg-slate-400",   item.Status ?? "—")
                                     };
                                 }
@@ -208,19 +208,19 @@
     <script>
         function requestRefund(transactionId, courseTitle) {
             Swal.fire({
-                title: 'Yêu cầu hoàn tiền',
+                title: 'Request Refund',
                 html: `<div class="text-left font-sans">
-                        <p class="text-sm text-slate-500 mb-4">Bạn đang yêu cầu hoàn tiền cho khóa học <strong>${courseTitle}</strong>. 
-                        Vui lòng nhập lý do cụ thể để Admin phê duyệt.</p>
+                        <p class="text-sm text-slate-500 mb-4">You are requesting a refund for the course <strong>${courseTitle}</strong>. 
+                        Please enter a specific reason for Admin approval.</p>
                        </div>`,
                 input: 'textarea',
-                inputPlaceholder: 'Nhập lý do hoàn tiền ở đây...',
+                inputPlaceholder: 'Enter refund reason here...',
                 inputAttributes: {
-                    'aria-label': 'Nhập lý do hoàn tiền ở đây'
+                    'aria-label': 'Enter refund reason here'
                 },
                 showCancelButton: true,
-                confirmButtonText: 'Gửi yêu cầu',
-                cancelButtonText: 'Hủy',
+                confirmButtonText: 'Submit Request',
+                cancelButtonText: 'Cancel',
                 confirmButtonColor: '#e11d48',
                 cancelButtonColor: '#64748b',
                 buttonsStyling: true,
@@ -232,7 +232,7 @@
                 },
                 inputValidator: (value) => {
                     if (!value || value.trim() === '') {
-                        return 'Bạn phải nhập lý do hoàn tiền!';
+                        return 'You must enter a refund reason!';
                     }
                 },
                 showLoaderOnConfirm: true,
@@ -260,17 +260,17 @@
                         });
                     })
                     .catch(error => {
-                        Swal.showValidationMessage(`Yêu cầu thất bại: ${error.message}`);
+                        Swal.showValidationMessage(`Request failed: ${error.message}`);
                     });
                 },
                 allowOutsideClick: () => !Swal.isLoading()
             }).then((result) => {
                 if (result.isConfirmed) {
                     Swal.fire({
-                        title: 'Đã gửi yêu cầu!',
+                        title: 'Request Submitted!',
                         text: result.value.message,
                         icon: 'success',
-                        confirmButtonText: 'Đóng',
+                        confirmButtonText: 'Close',
                         confirmButtonColor: '#10b981',
                         customClass: {
                             popup: 'rounded-3xl',

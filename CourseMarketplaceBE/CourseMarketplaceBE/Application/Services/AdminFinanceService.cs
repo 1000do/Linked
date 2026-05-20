@@ -719,23 +719,23 @@ public class AdminFinanceService : IAdminFinanceService
     {
         var txn = await _repo.GetTransactionWithFullGraphAsync(transactionId);
         if (txn == null)
-            throw new InvalidOperationException("Không tìm thấy giao dịch.");
+            throw new InvalidOperationException("Transaction not found.");
 
         if (txn.AccountFrom != studentId)
-            throw new InvalidOperationException("Bạn không sở hữu giao dịch này.");
+            throw new InvalidOperationException("You do not own this transaction.");
 
         if (txn.TransactionsStatus == "refund_pending")
-            throw new InvalidOperationException("Giao dịch này đang ở trạng thái chờ duyệt hoàn tiền.");
+            throw new InvalidOperationException("This transaction is currently pending refund approval.");
 
         if (txn.TransactionsStatus == "refunded")
-            throw new InvalidOperationException("Giao dịch này đã được hoàn tiền.");
+            throw new InvalidOperationException("This transaction has already been refunded.");
 
         if (txn.TransactionsStatus != "succeeded")
-            throw new InvalidOperationException($"Chỉ có thể hoàn tiền cho giao dịch thành công. Trạng thái hiện tại: {txn.TransactionsStatus}");
+            throw new InvalidOperationException($"Refunds are only allowed for successful transactions. Current status: {txn.TransactionsStatus}");
 
         // Kiểm tra thời hạn 14 ngày hoàn tiền
         if (txn.TransactionCreatedAt.HasValue && txn.TransactionCreatedAt.Value < DateTime.UtcNow.AddDays(-14))
-            throw new InvalidOperationException("Giao dịch đã vượt quá thời hạn 14 ngày hoàn tiền theo quy định của nền tảng.");
+            throw new InvalidOperationException("The transaction has exceeded the 14-day refund period required by platform rules.");
 
         txn.TransactionsStatus = "refund_pending";
         txn.RefundReason = reason;
@@ -748,8 +748,8 @@ public class AdminFinanceService : IAdminFinanceService
         {
             await _notiService.SendNotificationAsync(
                 1, // Admin mặc định hoặc hệ thống
-                "Yêu cầu hoàn tiền mới",
-                $"Học viên gửi yêu cầu hoàn tiền cho giao dịch #{transactionId}. Lý do: {reason}",
+                "New Refund Request",
+                $"A student has submitted a refund request for transaction #{transactionId}. Reason: {reason}",
                 $"/AdminFinance/Refunds"
             );
         }
@@ -765,10 +765,10 @@ public class AdminFinanceService : IAdminFinanceService
     {
         var txn = await _repo.GetTransactionWithFullGraphAsync(transactionId);
         if (txn == null)
-            throw new InvalidOperationException("Không tìm thấy giao dịch.");
+            throw new InvalidOperationException("Transaction not found.");
 
         if (txn.TransactionsStatus != "refund_pending")
-            throw new InvalidOperationException("Giao dịch không ở trạng thái chờ duyệt hoàn tiền.");
+            throw new InvalidOperationException("Transaction is not in pending refund approval status.");
 
         // Thực thi refund Stripe & Reverse Transfer & Revoke Enrollment
         var refundResult = await RefundTransactionAsync(transactionId, txn.RefundReason);
@@ -784,8 +784,8 @@ public class AdminFinanceService : IAdminFinanceService
             {
                 await _notiService.SendNotificationAsync(
                     txn.AccountFrom.Value,
-                    "Yêu cầu hoàn tiền được CHẤP NHẬN",
-                    $"Yêu cầu hoàn tiền giao dịch #{transactionId} của bạn đã được Admin phê duyệt. Số tiền hoàn: {txn.Amount:N0} {txn.Currency}. Ghi chú: {adminNote}",
+                    "Refund Request APPROVED",
+                    $"Your refund request for transaction #{transactionId} has been approved by the Admin. Refunded amount: {txn.Amount:N0} {txn.Currency}. Admin Note: {adminNote}",
                     "/Transaction/History"
                 );
             }
@@ -797,10 +797,10 @@ public class AdminFinanceService : IAdminFinanceService
     {
         var txn = await _repo.GetTransactionWithFullGraphAsync(transactionId);
         if (txn == null)
-            throw new InvalidOperationException("Không tìm thấy giao dịch.");
+            throw new InvalidOperationException("Transaction not found.");
 
         if (txn.TransactionsStatus != "refund_pending")
-            throw new InvalidOperationException("Giao dịch không ở trạng thái chờ duyệt hoàn tiền.");
+            throw new InvalidOperationException("Transaction is not in pending refund approval status.");
 
         // Khôi phục trạng thái thành công ban đầu và lưu ghi chú từ chối
         txn.TransactionsStatus = "succeeded";
@@ -815,8 +815,8 @@ public class AdminFinanceService : IAdminFinanceService
             {
                 await _notiService.SendNotificationAsync(
                     txn.AccountFrom.Value,
-                    "Yêu cầu hoàn tiền bị TỪ CHỐI",
-                    $"Yêu cầu hoàn tiền giao dịch #{transactionId} của bạn đã bị Admin từ chối. Ghi chú: {adminNote}",
+                    "Refund Request REJECTED",
+                    $"Your refund request for transaction #{transactionId} has been rejected by the Admin. Admin Note: {adminNote}",
                     "/Transaction/History"
                 );
             }

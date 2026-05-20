@@ -190,7 +190,7 @@ public class CheckoutService : ICheckoutService
 
         var stripeAccountId = await _repo.GetInstructorStripeAccountIdAsync(course.InstructorId ?? 0);
         if (string.IsNullOrEmpty(stripeAccountId))
-            throw new InvalidOperationException("Giảng viên chưa kết nối tài khoản thanh toán Stripe.");
+            throw new InvalidOperationException("Instructor has not connected a Stripe payment account.");
 
         Coupon? coupon = null;
         decimal discountAmount = 0m;
@@ -229,7 +229,7 @@ public class CheckoutService : ICheckoutService
         {
             new PaymentLineItem
             {
-                CourseName = course.Title ?? "Khóa học",
+                CourseName = course.Title ?? "Course",
                 ThumbnailUrl = course.CourseThumbnailUrl,
                 UnitPrice = purchasePrice
             }
@@ -296,7 +296,7 @@ public class CheckoutService : ICheckoutService
             var metadata = await _paymentGateway.GetSessionMetadataAsync(sessionId);
             if (metadata == null || !metadata.TryGetValue("userId", out var userIdStr))
             {
-                throw new InvalidOperationException("Không tìm thấy metadata hợp lệ hoặc thông tin UserId trên Stripe Session.");
+                throw new InvalidOperationException("Valid metadata or UserId was not found in the Stripe Session.");
             }
 
             int userId = int.Parse(userIdStr);
@@ -306,7 +306,7 @@ public class CheckoutService : ICheckoutService
 
             if (string.IsNullOrEmpty(courseIdsStr))
             {
-                throw new InvalidOperationException("Không tìm thấy danh sách Course ID hợp lệ trong Stripe Session.");
+                throw new InvalidOperationException("Valid Course ID list was not found in the Stripe Session.");
             }
 
             var courseIds = courseIdsStr.Split(',', StringSplitOptions.RemoveEmptyEntries)

@@ -232,7 +232,7 @@
             {
                 <p class="text-xs text-amber-600 font-bold flex items-center gap-1 mt-1 bg-amber-50 border border-amber-100 p-2.5 rounded-xl">
                     <span class="material-symbols-outlined text-[16px]">info</span>
-                    Số dư khả dụng tối thiểu để rút tiền là $0.50 (Hiện tại: $@Model.Withdraw.Balance.Available.ToString("N2")).
+                    The minimum available balance to withdraw is $0.50 (Current: $@Model.Withdraw.Balance.Available.ToString("N2")).
                 </p>
             }
         </form>
@@ -744,9 +744,9 @@
             <div class="px-5 py-4 border-b border-slate-200 bg-white">
                 <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
                     <span class="material-symbols-outlined text-orange-500">pending_actions</span>
-                    Danh sách yêu cầu hoàn tiền đang chờ duyệt
+                    Pending Refund Requests
                 </h3>
-                <p class="text-xs text-slate-500 mt-1">Các yêu cầu hoàn tiền do học viên gửi trong vòng 14 ngày kể từ ngày mua. Bạn có thể chấp nhận (hoàn tiền qua Stripe & thu hồi quyền truy cập khóa học) hoặc từ chối yêu cầu.</p>
+                <p class="text-xs text-slate-500 mt-1">Refund requests submitted by students within 14 days of purchase. You can approve (refund via Stripe & revoke course access) or reject the request.</p>
             </div>
 
             <div class="overflow-x-auto max-h-[600px] flex-1">
@@ -754,13 +754,13 @@
                     <thead class="text-[10px] text-slate-500 bg-slate-50 border-b border-slate-200 uppercase font-bold sticky top-0 z-10 shadow-sm">
                         <tr>
                             <th class="px-5 py-3 w-16">ID</th>
-                            <th class="px-5 py-3">Khóa học</th>
-                            <th class="px-5 py-3">Học viên</th>
-                            <th class="px-5 py-3 text-right">Số tiền</th>
-                            <th class="px-5 py-3">Ngày mua</th>
-                            <th class="px-5 py-3">Ngày yêu cầu</th>
-                            <th class="px-5 py-3">Lý do hoàn tiền</th>
-                            <th class="px-5 py-3 text-center">Thao tác</th>
+                            <th class="px-5 py-3">Course</th>
+                            <th class="px-5 py-3">Student</th>
+                            <th class="px-5 py-3 text-right">Amount</th>
+                            <th class="px-5 py-3">Purchase Date</th>
+                            <th class="px-5 py-3">Request Date</th>
+                            <th class="px-5 py-3">Refund Reason</th>
+                            <th class="px-5 py-3 text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
@@ -791,19 +791,19 @@
                                             <a href="@Url.Action("Detail", "Transaction", new { id = item.TransactionId })"
                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 font-bold text-xs rounded-xl border border-slate-100 hover:border-indigo-200 transition-all shadow-sm active:scale-95">
                                                 <span class="material-symbols-outlined text-[16px]">visibility</span>
-                                                Chi tiết
+                                                Details
                                             </a>
                                             <button type="button" 
                                                     onclick="approveRefund(@item.TransactionId, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.CourseTitle))')"
                                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-700 font-bold text-xs rounded-xl border border-emerald-100 hover:border-emerald-200 transition-all shadow-sm active:scale-95">
                                                 <span class="material-symbols-outlined text-[16px]">check_circle</span>
-                                                Duyệt
+                                                Approve
                                             </button>
                                             <button type="button" 
                                                     onclick="rejectRefund(@item.TransactionId, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.CourseTitle))')"
                                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 font-bold text-xs rounded-xl border border-rose-100 hover:border-rose-200 transition-all shadow-sm active:scale-95">
                                                 <span class="material-symbols-outlined text-[16px]">cancel</span>
-                                                Từ chối
+                                                Reject
                                             </button>
                                         </div>
                                     </td>
@@ -816,7 +816,7 @@
                                 <td colspan="8" class="px-5 py-14 text-center">
                                     <div class="flex flex-col items-center justify-center text-slate-400">
                                         <span class="material-symbols-outlined text-5xl mb-3 text-slate-200">restart_alt</span>
-                                        <p class="text-sm font-medium text-slate-500">Không có yêu cầu hoàn tiền nào đang chờ duyệt.</p>
+                                        <p class="text-sm font-medium text-slate-500">No pending refund requests.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -1052,16 +1052,16 @@
 
         function approveRefund(transactionId, courseTitle) {
             Swal.fire({
-                title: 'Phê duyệt hoàn tiền',
+                title: 'Approve Refund',
                 html: `<div class="text-left font-sans">
-                        <p class="text-sm text-slate-500 mb-4">Bạn có chắc chắn muốn phê duyệt hoàn tiền cho giao dịch khóa học <strong>${courseTitle}</strong>? 
-                        Hệ thống sẽ thực hiện hoàn trả tiền về ví/thẻ của học viên thông qua Stripe Connect và thu hồi quyền truy cập học tập của học viên đối với khóa học này.</p>
+                        <p class="text-sm text-slate-500 mb-4">Are you sure you want to approve the refund for the course <strong>${courseTitle}</strong>? 
+                        The system will refund the student via Stripe Connect and revoke their learning access to this course.</p>
                        </div>`,
                 input: 'textarea',
-                inputPlaceholder: 'Nhập ghi chú phản hồi học viên (không bắt buộc)...',
+                inputPlaceholder: 'Enter feedback note for student (optional)...',
                 showCancelButton: true,
-                confirmButtonText: 'Đồng ý & Hoàn tiền',
-                cancelButtonText: 'Hủy',
+                confirmButtonText: 'Approve & Refund',
+                cancelButtonText: 'Cancel',
                 confirmButtonColor: '#10b981',
                 cancelButtonColor: '#64748b',
                 buttonsStyling: true,
@@ -1095,17 +1095,17 @@
                         });
                     })
                     .catch(error => {
-                        Swal.showValidationMessage(`Thao tác thất bại: ${error.message}`);
+                        Swal.showValidationMessage(`Action failed: ${error.message}`);
                     });
                 },
                 allowOutsideClick: () => !Swal.isLoading()
             }).then((result) => {
                 if (result.isConfirmed) {
                     Swal.fire({
-                        title: 'Thành công!',
+                        title: 'Success!',
                         text: result.value.message,
                         icon: 'success',
-                        confirmButtonText: 'Đóng',
+                        confirmButtonText: 'Close',
                         confirmButtonColor: '#10b981',
                         customClass: {
                             popup: 'rounded-3xl',
@@ -1121,16 +1121,16 @@
 
         function rejectRefund(transactionId, courseTitle) {
             Swal.fire({
-                title: 'Từ chối hoàn tiền',
+                title: 'Reject Refund',
                 html: `<div class="text-left font-sans">
-                        <p class="text-sm text-slate-500 mb-4">Bạn đang từ chối yêu cầu hoàn tiền cho giao dịch khóa học <strong>${courseTitle}</strong>. 
-                        Bạn phải nhập lý do từ chối cụ thể để phản hồi lại cho học viên.</p>
+                        <p class="text-sm text-slate-500 mb-4">You are rejecting the refund request for the course <strong>${courseTitle}</strong>. 
+                        You must enter a specific reason to respond to the student.</p>
                        </div>`,
                 input: 'textarea',
-                inputPlaceholder: 'Nhập lý do từ chối hoàn tiền ở đây...',
+                inputPlaceholder: 'Enter rejection reason here...',
                 showCancelButton: true,
-                confirmButtonText: 'Từ chối yêu cầu',
-                cancelButtonText: 'Hủy',
+                confirmButtonText: 'Reject Request',
+                cancelButtonText: 'Cancel',
                 confirmButtonColor: '#e11d48',
                 cancelButtonColor: '#64748b',
                 buttonsStyling: true,
@@ -1142,7 +1142,7 @@
                 },
                 inputValidator: (value) => {
                     if (!value || value.trim() === '') {
-                        return 'Bạn phải nhập lý do từ chối hoàn tiền!';
+                        return 'You must enter a rejection reason!';
                     }
                 },
                 showLoaderOnConfirm: true,
@@ -1169,17 +1169,17 @@
                         });
                     })
                     .catch(error => {
-                        Swal.showValidationMessage(`Thao tác thất bại: ${error.message}`);
+                        Swal.showValidationMessage(`Action failed: ${error.message}`);
                     });
                 },
                 allowOutsideClick: () => !Swal.isLoading()
             }).then((result) => {
                 if (result.isConfirmed) {
                     Swal.fire({
-                        title: 'Đã từ chối!',
+                        title: 'Rejected!',
                         text: result.value.message,
                         icon: 'warning',
-                        confirmButtonText: 'Đóng',
+                        confirmButtonText: 'Close',
                         confirmButtonColor: '#64748b',
                         customClass: {
                             popup: 'rounded-3xl',

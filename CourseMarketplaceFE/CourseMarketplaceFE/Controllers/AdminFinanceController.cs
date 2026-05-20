@@ -476,16 +476,16 @@ public class AdminFinanceController : Controller
     {
         var response = await _api.PostJsonAsync($"admin/finance/refunds/{transactionId}/approve", new
         {
-            AdminNote = adminNote ?? "Được chấp nhận bởi Admin."
+            AdminNote = adminNote ?? "Approved by Admin."
         });
 
         if (response.IsSuccessStatusCode)
         {
-            return Json(new { success = true, message = "Đã phê duyệt hoàn tiền thành công qua Stripe!" });
+            return Json(new { success = true, message = "Refund approved successfully via Stripe!" });
         }
 
         var errorBody = await response.Content.ReadAsStringAsync();
-        var message = "Lỗi khi phê duyệt yêu cầu hoàn tiền.";
+        var message = "Error approving refund request.";
         try
         {
             using var doc = JsonDocument.Parse(errorBody);
@@ -503,16 +503,16 @@ public class AdminFinanceController : Controller
     {
         var response = await _api.PostJsonAsync($"admin/finance/refunds/{transactionId}/reject", new
         {
-            AdminNote = adminNote ?? "Bị từ chối bởi Admin."
+            AdminNote = adminNote ?? "Rejected by Admin."
         });
 
         if (response.IsSuccessStatusCode)
         {
-            return Json(new { success = true, message = "Đã từ chối yêu cầu hoàn tiền thành công." });
+            return Json(new { success = true, message = "Refund request successfully rejected." });
         }
 
         var errorBody = await response.Content.ReadAsStringAsync();
-        var message = "Lỗi khi từ chối yêu cầu hoàn tiền.";
+        var message = "Error rejecting refund request.";
         try
         {
             using var doc = JsonDocument.Parse(errorBody);

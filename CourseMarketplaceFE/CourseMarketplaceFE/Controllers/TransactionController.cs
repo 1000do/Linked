@@ -312,7 +312,7 @@ public class TransactionController : Controller
     {
         if (string.IsNullOrWhiteSpace(reason))
         {
-            return Json(new { success = false, message = "Lý do hoàn tiền không được để trống." });
+            return Json(new { success = false, message = "Refund reason cannot be empty." });
         }
 
         var response = await _api.PostJsonAsync($"transactions/{transactionId}/request-refund", new
@@ -322,11 +322,11 @@ public class TransactionController : Controller
 
         if (response.IsSuccessStatusCode)
         {
-            return Json(new { success = true, message = "Gửi yêu cầu hoàn tiền thành công. Vui lòng chờ Admin phê duyệt." });
+            return Json(new { success = true, message = "Refund request submitted successfully. Please wait for Admin approval." });
         }
 
         var errorBody = await response.Content.ReadAsStringAsync();
-        var message = "Lỗi hệ thống khi gửi yêu cầu hoàn tiền.";
+        var message = "System error when submitting the refund request.";
         try
         {
             using var doc = JsonDocument.Parse(errorBody);
