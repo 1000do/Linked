@@ -23,13 +23,58 @@
 
 <div class="min-h-screen pt-28 pb-16 max-w-7xl mx-auto px-4">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6">
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-            <h1 class="text-3xl font-headline font-extrabold text-slate-900 tracking-tight">Revenue & Payouts</h1>
+            <h1 class="text-3xl font-headline font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                <span class="material-symbols-outlined text-indigo-600 text-3xl font-bold">payments</span>
+                Revenue & Payouts
+            </h1>
             <p class="text-slate-500 mt-2 text-sm font-medium">Track your cash flow, net revenue, and payout history.</p>
         </div>
         
-        <div class="flex items-center gap-4">
+        <div class="flex flex-wrap items-center gap-4">
+            <!-- Month/Year Filter Form -->
+            <form id="periodFilterForm" method="get" action="/Transaction/Instructor" class="flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200 shadow-sm">
+                <input type="hidden" name="tab" value="@ViewBag.ActiveTab" />
+                <div class="flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-slate-400 text-sm pl-1">calendar_month</span>
+                    <select name="month" class="bg-transparent border-0 text-slate-700 font-bold text-sm focus:ring-0 focus:outline-none cursor-pointer p-0 pr-6">
+                        @for (int m = 1; m <= 12; m++)
+                        {
+                            var monthName = System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(m);
+                            if (m == (int)ViewBag.Month)
+                            {
+                                <option value="@m" selected>@monthName</option>
+                            }
+                            else
+                            {
+                                <option value="@m">@monthName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="w-[1px] h-5 bg-slate-300"></div>
+                <div class="flex items-center">
+                    <select name="year" class="bg-transparent border-0 text-slate-700 font-bold text-sm focus:ring-0 focus:outline-none cursor-pointer p-0 pr-6">
+                        @for (int y = DateTime.UtcNow.Year; y <= DateTime.UtcNow.Year + 5; y++)
+                        {
+                            if (y == (int)ViewBag.Year)
+                            {
+                                <option value="@y" selected>@y</option>
+                            }
+                            else
+                            {
+                                <option value="@y">@y</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm">
+                    <span class="material-symbols-outlined text-[14px]">filter_alt</span>
+                    Filter
+                </button>
+            </form>
+
             <form action="/Instructor/SyncPayouts" method="post" class="inline-block" id="syncForm">
                 @Html.AntiForgeryToken()
                 <button type="submit" class="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-600 px-4 py-2.5 rounded-xl text-sm font-bold border border-slate-200 transition-all shadow-sm group" id="syncBtn">
@@ -66,7 +111,7 @@
     <!-- ========================================== -->
     
     <!-- 4 Thẻ Thống Kê -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div id="stats-overview" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Tổng Doanh Thu (Từ các Payout) -->
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between group hover:border-primary transition-colors">
             <div class="flex items-center justify-between mb-4">
@@ -127,7 +172,7 @@
     </div>
 
     <!-- Chart Area -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col mb-12">
+    <div id="chart-card" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col mb-12">
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-base font-bold text-slate-800 tracking-tight">Transaction Revenue Chart (Page @Model.Transactions.Page)</h3>
             <div class="flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
@@ -137,6 +182,14 @@
         <div class="relative w-full h-[300px]">
             <canvas id="profitChart"></canvas>
         </div>
+        <!-- Hidden input storing serialized chart items for AJAX updates -->
+        <div id="chart-data-json" class="hidden" data-chart="@System.Text.Json.JsonSerializer.Serialize(
+            Model.Transactions.Items?.OrderBy(x => x.Date).Select(x => new {
+                date = x.Date?.ToString("dd/MM"),
+                amount = x.Amount,
+                currency = x.PayoutCurrency ?? x.Currency
+            }).ToList() ?? new List<object>().Select(x => new { date = "", amount = 0m, currency = "USD" }).ToList()
+        )"></div>
     </div>
 
 
@@ -144,28 +197,28 @@
     <!-- PHẦN 2: LỊCH SỬ GIAO DỊCH & PAYOUTS        -->
     <!-- Tab chuyển đổi bên trong Card              -->
     <!-- ========================================== -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-12">
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden mb-12 transition-all duration-300 hover:shadow-md/5">
         <!-- Card Header with Tabs -->
-        <div class="border-b border-slate-200 bg-slate-50/80 flex flex-col sm:flex-row items-center justify-between px-2 py-2">
-            <div class="flex items-center gap-1.5 w-full sm:w-auto p-1 bg-slate-200/50 rounded-xl">
-                <button id="tab-btn-tx" onclick="switchTable('tx')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold bg-white text-primary shadow-sm transition-all duration-200">
+        <div class="border-b border-slate-100 bg-slate-50/40 flex flex-col sm:flex-row items-center justify-between px-6 py-4 gap-4">
+            <div class="flex items-center gap-1 w-full sm:w-auto p-1 bg-slate-100 rounded-2xl">
+                <button id="tab-btn-tx" onclick="switchTable('tx')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-primary shadow-sm transition-all duration-300">
                     <span class="material-symbols-outlined text-[18px]">receipt_long</span>
                     Learner Purchases
                 </button>
-                <button id="tab-btn-po" onclick="switchTable('po')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold text-slate-500 hover:text-slate-700 transition-all duration-200">
+                <button id="tab-btn-po" onclick="switchTable('po')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-800 transition-all duration-300">
                     <span class="material-symbols-outlined text-[18px]">payments</span>
                     Payout History
                 </button>
             </div>
             
-            <div class="hidden sm:flex px-4 py-2" id="tab-indicator-tx">
-                <div class="text-xs font-bold text-slate-500 px-3 py-1 bg-white border border-slate-200 rounded-lg shadow-sm">
+            <div class="flex items-center" id="tab-indicator-tx">
+                <div class="text-xs font-bold text-slate-500 px-3.5 py-1.5 bg-white border border-slate-200/80 rounded-xl shadow-sm/5">
                     Total: <span class="text-slate-800">@Model.Transactions.TotalCount</span> records
                 </div>
             </div>
-            <div class="hidden sm:hidden px-4 py-2" id="tab-indicator-po">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 shadow-sm">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Paid: @Model.Payouts.Items.Count(x => x.IsPaid)
+            <div class="hidden flex items-center" id="tab-indicator-po">
+                <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white border border-slate-200/80 text-slate-600 shadow-sm/5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Paid: @Model.Payouts.Items.Count(x => x.IsPaid)
                 </span>
             </div>
         </div>
@@ -173,19 +226,21 @@
         <!-- ================= CONTENT: TRANSACTIONS ================= -->
         <div id="tab-content-tx" class="flex flex-col animate-fadeIn">
             <!-- Bộ lọc & Tìm kiếm -->
-            <div class="px-5 py-4 border-b border-slate-200 bg-white">
-                <form method="get" action="/Transaction/Instructor" class="flex flex-col md:flex-row items-center gap-3 w-full">
+            <div class="px-6 py-5 border-b border-slate-100 bg-white">
+                <form method="get" action="/Transaction/Instructor" class="flex flex-col lg:flex-row items-center gap-4 w-full">
                     <input type="hidden" name="page" value="1" />
                     <input type="hidden" name="pageSize" value="@Model.Transactions.PageSize" />
+                    <input type="hidden" name="year" value="@ViewBag.Year" />
+                    <input type="hidden" name="month" value="@ViewBag.Month" />
                     
                     <div class="relative flex-1 w-full">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">search</span>
+                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">search</span>
                         <input type="text" name="keyword" value="@ViewBag.Keyword" placeholder="Search by purchaser or learner name..." 
-                               class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
+                               class="w-full pl-10 pr-4 py-2.5 bg-slate-50/70 border border-slate-200/80 rounded-xl text-slate-700 text-sm focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all duration-300 shadow-sm/5" />
                     </div>
                     
-                    <div class="w-full md:w-40">
-                        <select name="status" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                    <div class="w-full lg:w-44">
+                        <select name="status" class="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200/80 rounded-xl text-slate-600 text-sm focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none shadow-sm/5 cursor-pointer">
                             <option value="">All Statuses</option>
                             <option value="succeeded" selected="@(ViewBag.Status == "succeeded")">Completed</option>
                             <option value="pending" selected="@(ViewBag.Status == "pending")">Pending</option>
@@ -193,8 +248,8 @@
                         </select>
                     </div>
 
-                    <div class="w-full md:w-48">
-                        <select name="sortBy" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                    <div class="w-full lg:w-52">
+                        <select name="sortBy" class="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200/80 rounded-xl text-slate-600 text-sm focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none shadow-sm/5 cursor-pointer">
                             <option value="date_desc" selected="@(ViewBag.SortBy == "date_desc")">Date: Newest</option>
                             <option value="date_asc" selected="@(ViewBag.SortBy == "date_asc")">Date: Oldest</option>
                             <option value="amount_desc" selected="@(ViewBag.SortBy == "amount_desc")">Amount: High to Low</option>
@@ -202,23 +257,25 @@
                         </select>
                     </div>
 
-                    <button type="submit" class="w-full md:w-auto px-4 py-2 bg-primary text-white font-bold text-sm rounded-lg hover:bg-secondary transition-colors shadow-sm whitespace-nowrap">Filter</button>
-                    @if (!string.IsNullOrEmpty(ViewBag.Keyword as string) || !string.IsNullOrEmpty(ViewBag.Status as string) || (ViewBag.SortBy as string) != "date_desc")
-                    {
-                        <a href="/Transaction/Instructor" class="w-full md:w-auto px-4 py-2 bg-slate-100 text-slate-600 font-bold text-sm rounded-lg hover:bg-slate-200 transition-colors whitespace-nowrap text-center">Reset Filters</a>
-                    }
+                    <div class="flex items-center gap-3 w-full lg:w-auto">
+                        <button type="submit" class="flex-1 lg:flex-none px-6 py-2.5 bg-primary text-white font-bold text-sm rounded-xl hover:bg-primary/95 transition-all duration-200 shadow-sm whitespace-nowrap active:scale-[0.98]">Filter</button>
+                        @if (!string.IsNullOrEmpty(ViewBag.Keyword as string) || !string.IsNullOrEmpty(ViewBag.Status as string) || (ViewBag.SortBy as string) != "date_desc")
+                        {
+                            <a href="/Transaction/Instructor" class="flex-1 lg:flex-none px-5 py-2.5 bg-slate-100 text-slate-600 font-bold text-sm rounded-xl hover:bg-slate-200/80 transition-colors whitespace-nowrap text-center">Reset</a>
+                        }
+                    </div>
                 </form>
             </div>
 
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
-                    <thead class="text-[10px] text-slate-500 bg-slate-50 border-b border-slate-200 uppercase font-bold sticky top-0 z-10 shadow-sm">
-                        <tr>
-                            <th class="px-4 py-3">Date</th>
-                            <th class="px-4 py-3">Course / Purchaser</th>
-                            <th class="px-4 py-3 text-right">Net Earnings</th>
-                            <th class="px-4 py-3">Status</th>
-                            <th class="px-4 py-3 text-right">Actions</th>
+                    <thead>
+                        <tr class="text-[10px] font-bold text-slate-400 tracking-wider bg-slate-50/40 border-b border-slate-100 uppercase sticky top-0 z-10">
+                            <th class="pl-6 pr-4 py-3.5">Date</th>
+                            <th class="px-4 py-3.5">Course / Purchaser</th>
+                            <th class="px-4 py-3.5 text-right">Net Earnings</th>
+                            <th class="px-4 py-3.5">Status</th>
+                            <th class="pl-4 pr-6 py-3.5 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
@@ -226,38 +283,50 @@
                         {
                             foreach (var item in Model.Transactions.Items)
                             {
-                                <tr class="hover:bg-slate-50/80 transition-colors group">
-                                    <td class="px-4 py-3 align-top w-20">
-                                        <p class="text-xs font-bold text-slate-700">@(item.Date.HasValue ? item.Date.Value.ToString("dd/MM") : "—")</p>
-                                        <p class="text-[10px] text-slate-400 font-medium">@(item.Date.HasValue ? item.Date.Value.ToString("HH:mm") : "—")</p>
+                                <tr class="hover:bg-slate-50/50 group/row border-b border-slate-100 transition-all duration-300">
+                                    <td class="pl-6 pr-4 py-4.5 align-middle w-24">
+                                        <div class="flex flex-col">
+                                            <span class="text-xs font-extrabold text-slate-800 tracking-tight">@(item.Date.HasValue ? item.Date.Value.ToString("dd/MM") : "—")</span>
+                                            <span class="text-[10px] text-slate-400 font-bold mt-0.5 font-mono">@(item.Date.HasValue ? item.Date.Value.ToString("HH:mm") : "—")</span>
+                                        </div>
                                     </td>
-                                    <td class="px-4 py-3 align-top max-w-[180px]">
-                                        <p class="font-bold text-slate-800 text-xs line-clamp-2" title="@item.CourseTitle">@item.CourseTitle</p>
-                                        <p class="text-[10px] text-slate-500 mt-0.5">By: <span class="font-semibold text-slate-700">@item.BuyerName</span></p>
-                                        <p class="font-mono text-slate-400 text-[9px] mt-0.5">#@item.TransactionId</p>
+                                    <td class="px-4 py-4.5 align-middle max-w-[280px]">
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-slate-900 text-sm tracking-tight leading-snug line-clamp-1 group-hover/row:text-primary transition-colors" title="@item.CourseTitle">@item.CourseTitle</span>
+                                            <div class="flex items-center gap-1 text-[11px] text-slate-500 font-medium mt-1">
+                                                <span class="material-symbols-outlined text-[12px] text-slate-400">person</span>
+                                                By: <span class="font-semibold text-slate-700">@item.BuyerName</span>
+                                            </div>
+                                            <div class="mt-1 flex items-center">
+                                                <span class="font-mono text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">#@item.TransactionId</span>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td class="px-4 py-3 text-right align-top whitespace-nowrap">
-                                        <span class="text-sm font-extrabold text-slate-900 tracking-tight font-black">
-                                            @((item.PayoutCurrency ?? item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
-                                        </span>
+                                    <td class="px-4 py-4.5 text-right align-middle whitespace-nowrap">
+                                        <div class="flex flex-col items-end">
+                                            <span class="text-sm font-black text-slate-900 tracking-tight font-black">
+                                                @((item.PayoutCurrency ?? item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
+                                            </span>
+                                            <span class="text-[9px] text-slate-400 font-bold mt-0.5 uppercase tracking-wider">Net Amount</span>
+                                        </div>
                                     </td>
-                                    <td class="px-4 py-3 align-top">
+                                    <td class="px-4 py-4.5 align-middle">
                                         @{
                                             var (bgClass, textClass, dotClass, label) = item.Status switch
                                             {
-                                                "succeeded" => ("bg-emerald-50", "text-emerald-700", "bg-emerald-500", "Completed"),
-                                                "failed"    => ("bg-red-50", "text-red-700", "bg-red-500", "Failed"),
-                                                "pending"   => ("bg-amber-50", "text-amber-800", "bg-amber-400", "Pending"),
-                                                _           => ("bg-slate-100", "text-slate-600", "bg-slate-400", item.Status ?? "—")
+                                                "succeeded" => ("bg-emerald-50 text-emerald-700 border-emerald-100/50", "text-emerald-700", "bg-emerald-500", "Completed"),
+                                                "failed"    => ("bg-red-50 text-red-700 border-red-100/50", "text-red-700", "bg-red-500", "Failed"),
+                                                "pending"   => ("bg-amber-50 text-amber-800 border-amber-100/50", "text-amber-800", "bg-amber-400", "Pending"),
+                                                _           => ("bg-slate-100 text-slate-600 border-slate-200/50", "text-slate-600", "bg-slate-400", item.Status ?? "—")
                                             };
                                         }
-                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded @bgClass @textClass text-[9px] font-extrabold uppercase tracking-wide">
-                                            <span class="w-1 h-1 rounded-full @dotClass"></span>
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-extrabold border uppercase tracking-wider @bgClass shadow-sm/5">
+                                            <span class="w-1.5 h-1.5 rounded-full @dotClass animate-pulse"></span>
                                             @label
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3 align-top text-right">
-                                        <a href="/Transaction/Detail/@item.TransactionId" class="inline-flex items-center justify-center w-8 h-8 rounded bg-slate-100 text-slate-500 hover:bg-primary hover:text-white transition-colors" title="View Details">
+                                    <td class="pl-4 pr-6 py-4.5 align-middle text-right w-16">
+                                        <a href="/Transaction/Detail/@item.TransactionId" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:bg-primary hover:text-white hover:rotate-12 transition-all duration-300 shadow-sm/5" title="View Details">
                                             <span class="material-symbols-outlined text-[16px]">visibility</span>
                                         </a>
                                     </td>
@@ -267,8 +336,11 @@
                         else
                         {
                             <tr>
-                                <td colspan="5" class="px-6 py-12 text-center bg-slate-50/30">
-                                    <p class="text-sm font-bold text-slate-700">No transactions recorded yet.</p>
+                                <td colspan="5" class="px-6 py-16 text-center">
+                                    <div class="flex flex-col items-center justify-center text-slate-400">
+                                        <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">receipt_long</span>
+                                        <p class="text-sm font-bold text-slate-700">No purchases recorded for this period.</p>
+                                    </div>
                                 </td>
                             </tr>
                         }
@@ -279,25 +351,36 @@
             <!-- Pagination cho Transactions -->
             @if (Model.Transactions.TotalPages > 1)
             {
-                <div class="px-4 py-3 border-t border-slate-200 flex items-center justify-between bg-white shrink-0">
-                    <p class="text-[11px] font-medium text-slate-500">
-                        Showing <span class="font-bold text-slate-800">@((Model.Transactions.Page - 1) * Model.Transactions.PageSize + 1)</span> - <span class="font-bold text-slate-800">@Math.Min(Model.Transactions.Page * Model.Transactions.PageSize, Model.Transactions.TotalCount)</span>
+                <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
+                    <p class="text-xs font-semibold text-slate-500">
+                        Showing <span class="font-bold text-slate-800">@((Model.Transactions.Page - 1) * Model.Transactions.PageSize + 1)</span> – <span class="font-bold text-slate-800">@Math.Min(Model.Transactions.Page * Model.Transactions.PageSize, Model.Transactions.TotalCount)</span> of <span class="font-bold text-slate-800">@Model.Transactions.TotalCount</span>
                     </p>
-                    <div class="flex items-center gap-1">
+                    <div class="flex items-center gap-1.5">
                         @if (Model.Transactions.Page > 1)
                         {
-                            <a href="@Url.Action("Instructor", new { page = Model.Transactions.Page - 1, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "tx", payoutPage = Model.Payouts.Page, payoutPageSize = Model.Payouts.PageSize, payoutKeyword = ViewBag.PayoutKeyword, payoutSortBy = ViewBag.PayoutSortBy, payoutStatus = ViewBag.PayoutStatus })"
-                               class="w-7 h-7 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors">
+                            <a href="@Url.Action("Instructor", new { page = Model.Transactions.Page - 1, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "tx", payoutPage = Model.Payouts.Page, payoutPageSize = Model.Payouts.PageSize, payoutKeyword = ViewBag.PayoutKeyword, payoutSortBy = ViewBag.PayoutSortBy, payoutStatus = ViewBag.PayoutStatus, year = ViewBag.Year, month = ViewBag.Month })"
+                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5">
                                 <span class="material-symbols-outlined text-[16px]">chevron_left</span>
                             </a>
                         }
 
-                        <span class="w-7 h-7 flex items-center justify-center rounded bg-primary text-white font-bold text-xs">@Model.Transactions.Page</span>
+                        @for (int p = Math.Max(1, Model.Transactions.Page - 2); p <= Math.Min(Model.Transactions.TotalPages, Model.Transactions.Page + 2); p++)
+                        {
+                            if (p == Model.Transactions.Page)
+                            {
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-white font-extrabold text-xs shadow-md shadow-primary/10">@p</span>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("Instructor", new { page = p, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "tx", payoutPage = Model.Payouts.Page, payoutPageSize = Model.Payouts.PageSize, payoutKeyword = ViewBag.PayoutKeyword, payoutSortBy = ViewBag.PayoutSortBy, payoutStatus = ViewBag.PayoutStatus, year = ViewBag.Year, month = ViewBag.Month })"
+                                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-600 hover:bg-white hover:text-slate-800 font-bold text-xs transition-all shadow-sm/5">@p</a>
+                            }
+                        }
 
                         @if (Model.Transactions.Page < Model.Transactions.TotalPages)
                         {
-                            <a href="@Url.Action("Instructor", new { page = Model.Transactions.Page + 1, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "tx", payoutPage = Model.Payouts.Page, payoutPageSize = Model.Payouts.PageSize, payoutKeyword = ViewBag.PayoutKeyword, payoutSortBy = ViewBag.PayoutSortBy, payoutStatus = ViewBag.PayoutStatus })"
-                               class="w-7 h-7 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors">
+                            <a href="@Url.Action("Instructor", new { page = Model.Transactions.Page + 1, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "tx", payoutPage = Model.Payouts.Page, payoutPageSize = Model.Payouts.PageSize, payoutKeyword = ViewBag.PayoutKeyword, payoutSortBy = ViewBag.PayoutSortBy, payoutStatus = ViewBag.PayoutStatus, year = ViewBag.Year, month = ViewBag.Month })"
+                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5">
                                 <span class="material-symbols-outlined text-[16px]">chevron_right</span>
                             </a>
                         }
@@ -309,26 +392,28 @@
         <!-- ================= CONTENT: PAYOUTS ================= -->
         <div id="tab-content-po" class="hidden flex-col animate-fadeIn">
             <!-- Filter Form for Payouts -->
-            <div class="px-5 py-4 border-b border-slate-200 bg-white">
-                <form method="get" action="/Transaction/Instructor" class="flex flex-col md:flex-row items-center gap-3 w-full">
+            <div class="px-6 py-5 border-b border-slate-100 bg-white">
+                <form method="get" action="/Transaction/Instructor" class="flex flex-col lg:flex-row items-center gap-4 w-full">
                     <input type="hidden" name="page" value="@Model.Transactions.Page" />
                     <input type="hidden" name="pageSize" value="@Model.Transactions.PageSize" />
                     <input type="hidden" name="keyword" value="@ViewBag.Keyword" />
                     <input type="hidden" name="sortBy" value="@ViewBag.SortBy" />
                     <input type="hidden" name="status" value="@ViewBag.Status" />
+                    <input type="hidden" name="year" value="@ViewBag.Year" />
+                    <input type="hidden" name="month" value="@ViewBag.Month" />
                     
                     <input type="hidden" name="payoutPage" value="1" />
                     <input type="hidden" name="payoutPageSize" value="@Model.Payouts.PageSize" />
                     <input type="hidden" name="tab" value="po" />
                     
                     <div class="relative flex-1 w-full">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">search</span>
+                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">search</span>
                         <input type="text" name="payoutKeyword" value="@ViewBag.PayoutKeyword" placeholder="Search by course title or stripe ID..." 
-                               class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 outline-none transition-all shadow-sm" />
+                               class="w-full pl-10 pr-4 py-2.5 bg-slate-50/70 border border-slate-200/80 rounded-xl text-slate-700 text-sm focus:bg-white focus:ring-4 focus:ring-emerald-600/10 focus:border-emerald-600 outline-none transition-all duration-300 shadow-sm/5" />
                     </div>
                     
-                    <div class="w-full md:w-40">
-                        <select name="payoutStatus" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 outline-none shadow-sm cursor-pointer">
+                    <div class="w-full lg:w-44">
+                        <select name="payoutStatus" class="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200/80 rounded-xl text-slate-600 text-sm focus:bg-white focus:ring-4 focus:ring-emerald-600/10 focus:border-emerald-600 outline-none shadow-sm/5 cursor-pointer">
                             <option value="">All Statuses</option>
                             <option value="succeeded" selected="@(ViewBag.PayoutStatus == "succeeded")">Success</option>
                             <option value="pending" selected="@(ViewBag.PayoutStatus == "pending")">In Progress</option>
@@ -336,8 +421,8 @@
                         </select>
                     </div>
 
-                    <div class="w-full md:w-48">
-                        <select name="payoutSortBy" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 outline-none shadow-sm cursor-pointer">
+                    <div class="w-full lg:w-52">
+                        <select name="payoutSortBy" class="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200/80 rounded-xl text-slate-600 text-sm focus:bg-white focus:ring-4 focus:ring-emerald-600/10 focus:border-emerald-600 outline-none shadow-sm/5 cursor-pointer">
                             <option value="date_desc" selected="@(ViewBag.PayoutSortBy == "date_desc")">Date: Newest</option>
                             <option value="date_asc" selected="@(ViewBag.PayoutSortBy == "date_asc")">Date: Oldest</option>
                             <option value="amount_desc" selected="@(ViewBag.PayoutSortBy == "amount_desc")">Amount: High to Low</option>
@@ -345,30 +430,35 @@
                         </select>
                     </div>
 
-                    <button type="submit" class="w-full md:w-auto px-5 py-2 bg-emerald-600 text-white font-medium text-sm rounded-lg hover:bg-emerald-700 transition-colors shadow-sm whitespace-nowrap">Filter</button>
-                    @if (!string.IsNullOrEmpty(ViewBag.PayoutKeyword as string) || !string.IsNullOrEmpty(ViewBag.PayoutStatus as string) || (ViewBag.PayoutSortBy as string) != "date_desc")
-                    {
-                        <a href="/Transaction/Instructor?tab=po&page=@Model.Transactions.Page&pageSize=@Model.Transactions.PageSize&keyword=@ViewBag.Keyword&sortBy=@ViewBag.SortBy&status=@ViewBag.Status" class="w-full md:w-auto px-4 py-2 bg-slate-200 text-slate-700 font-medium text-sm rounded-lg hover:bg-slate-300 transition-colors whitespace-nowrap text-center">Reset Filters</a>
-                    }
+                    <div class="flex items-center gap-3 w-full lg:w-auto">
+                        <button type="submit" class="flex-1 lg:flex-none px-6 py-2.5 bg-emerald-600 text-white font-bold text-sm rounded-xl hover:bg-emerald-700 transition-all duration-200 shadow-sm whitespace-nowrap active:scale-[0.98]">Filter</button>
+                        @if (!string.IsNullOrEmpty(ViewBag.PayoutKeyword as string) || !string.IsNullOrEmpty(ViewBag.PayoutStatus as string) || (ViewBag.PayoutSortBy as string) != "date_desc")
+                        {
+                            <a href="/Transaction/Instructor?tab=po&page=@Model.Transactions.Page&pageSize=@Model.Transactions.PageSize&keyword=@ViewBag.Keyword&sortBy=@ViewBag.SortBy&status=@ViewBag.Status&year=@ViewBag.Year&month=@ViewBag.Month" class="flex-1 lg:flex-none px-5 py-2.5 bg-slate-100 text-slate-600 font-bold text-sm rounded-xl hover:bg-slate-200/80 transition-colors whitespace-nowrap text-center">Reset</a>
+                        }
+                    </div>
                 </form>
             </div>
 
-            <div class="overflow-y-auto max-h-[600px] flex-1">
+            <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
-                    <thead class="text-[10px] text-slate-500 bg-slate-50 border-b border-slate-200 uppercase font-bold sticky top-0 z-10 shadow-sm">
-                        <tr>
-                            <th class="px-4 py-3">Payout Date</th>
-                            <th class="px-4 py-3">Course Title</th>
-                            <th class="px-4 py-3 text-right">Net Payout</th>
-                            <th class="px-4 py-3">Status</th>
+                    <thead>
+                        <tr class="text-[10px] font-bold text-slate-400 tracking-wider bg-slate-50/40 border-b border-slate-100 uppercase sticky top-0 z-10">
+                            <th class="pl-6 pr-4 py-3.5">Payout Date</th>
+                            <th class="px-4 py-3.5">Course Title</th>
+                            <th class="px-4 py-3.5 text-right">Net Payout</th>
+                            <th class="pl-4 pr-6 py-3.5">Status</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
                         @if (Model.Payouts.Items == null || !Model.Payouts.Items.Any())
                         {
                             <tr>
-                                <td colspan="4" class="px-6 py-12 text-center bg-slate-50/30">
-                                    <p class="text-sm font-bold text-slate-700">No payouts recorded yet.</p>
+                                <td colspan="4" class="px-6 py-16 text-center">
+                                    <div class="flex flex-col items-center justify-center text-slate-400">
+                                        <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">payments</span>
+                                        <p class="text-sm font-bold text-slate-700">No payouts recorded for this period.</p>
+                                    </div>
                                 </td>
                             </tr>
                         }
@@ -376,45 +466,69 @@
                         {
                             @foreach (var item in Model.Payouts.Items)
                             {
-                                <tr class="hover:bg-slate-50/80 transition-colors group">
-                                    <td class="px-4 py-3 align-top w-20">
-                                        <p class="text-xs font-bold text-slate-900">@item.PayoutDate.ToString("dd/MM")</p>
-                                        <p class="text-[10px] text-slate-400 font-medium">@item.PayoutDate.ToString("yyyy")</p>
+                                <tr class="hover:bg-slate-50/50 group/row border-b border-slate-100 transition-all duration-300">
+                                    <td class="pl-6 pr-4 py-4.5 align-middle w-24">
+                                        <div class="flex flex-col">
+                                            <span class="text-xs font-extrabold text-slate-900 tracking-tight">@item.PayoutDate.ToString("dd/MM")</span>
+                                            <span class="text-[10px] text-slate-400 font-bold mt-0.5 font-mono">@item.PayoutDate.ToString("yyyy")</span>
+                                        </div>
                                     </td>
-                                    <td class="px-4 py-3 align-top max-w-[180px]">
-                                        <p class="text-xs font-bold text-slate-700 leading-snug line-clamp-2" title="@item.CourseTitle">@item.CourseTitle</p>
-                                        <p class="text-[9px] text-slate-400 font-mono mt-0.5 line-through">@item.TotalAmount.ToString("C")</p>
+                                    <td class="px-4 py-4.5 align-middle max-w-[280px]">
+                                        <div class="flex flex-col">
+                                            <span class="text-sm font-bold text-slate-900 leading-snug line-clamp-1 group-hover/row:text-emerald-700 transition-colors" title="@item.CourseTitle">@item.CourseTitle</span>
+                                            <span class="text-[10px] text-slate-400 font-mono mt-1.5 bg-slate-50 px-1.5 py-0.5 border border-slate-100 rounded w-fit">Escrow Split: @item.TotalAmount.ToString("C")</span>
+                                        </div>
                                     </td>
-                                    <td class="px-4 py-3 text-right align-top whitespace-nowrap">
-                                        <p class="text-sm font-black text-emerald-700 tracking-tight font-black">@item.Amount.ToString("C")</p>
+                                    <td class="px-4 py-4.5 text-right align-middle whitespace-nowrap">
+                                        <div class="flex flex-col items-end">
+                                            <span class="text-sm font-black text-emerald-700 tracking-tight font-black">@item.Amount.ToString("C")</span>
+                                            <span class="text-[9px] text-slate-400 font-bold mt-0.5 uppercase tracking-wider">Credited</span>
+                                        </div>
                                     </td>
-                                    <td class="px-4 py-3 align-top">
+                                    <td class="pl-4 pr-6 py-4.5 align-middle">
                                         @{
                                             var status = item.PayoutStatus?.ToLower();
                                         }
                                         @if (status == "paid")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[9px] font-extrabold uppercase tracking-wide">To Bank</span>
-                                            if (item.PaidToBankAt.HasValue)
-                                            {
-                                                <p class="text-[9px] text-slate-400 mt-1">@item.PaidToBankAt.Value.ToString("dd/MM")</p>
-                                            }
+                                            <div class="flex flex-col items-start gap-1">
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                    To Bank
+                                                </span>
+                                                @if (item.PaidToBankAt.HasValue)
+                                                {
+                                                    <span class="text-[9px] text-slate-400 font-mono font-medium ml-1">@item.PaidToBankAt.Value.ToString("dd/MM/yyyy")</span>
+                                                }
+                                            </div>
                                         }
                                         else if (status == "in_transit")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[9px] font-extrabold uppercase tracking-wide animate-pulse">In Transit</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5 animate-pulse">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                In Transit
+                                            </span>
                                         }
                                         else if (status == "transferred")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 text-[9px] font-extrabold uppercase tracking-wide">Stripe Wallet</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-violet-50 text-violet-700 border border-violet-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse"></span>
+                                                Stripe Wallet
+                                            </span>
                                         }
                                         else if (status == "failed")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-50 text-red-700 text-[9px] font-extrabold uppercase tracking-wide">Failed</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-red-50 text-red-700 border border-red-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                                Failed
+                                            </span>
                                         }
                                         else
                                         {
-                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 text-[9px] font-extrabold uppercase tracking-wide">Unpaid</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-50 text-amber-800 border border-amber-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                Unpaid
+                                            </span>
                                         }
                                     </td>
                                 </tr>
@@ -424,18 +538,18 @@
                 </table>
             </div>
             
+            <!-- Pagination cho Payouts -->
             @if (Model.Payouts.TotalPages > 1)
             {
-                <div class="px-5 py-3 border-t border-slate-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <p class="text-xs text-slate-500">
-                        Showing @((Model.Payouts.Page - 1) * Model.Payouts.PageSize + 1)–@Math.Min(Model.Payouts.Page * Model.Payouts.PageSize, Model.Payouts.TotalCount)
-                        of <span class="font-semibold text-slate-700">@Model.Payouts.TotalCount</span> payouts
+                <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
+                    <p class="text-xs font-semibold text-slate-500">
+                        Showing <span class="font-bold text-slate-800">@((Model.Payouts.Page - 1) * Model.Payouts.PageSize + 1)</span> – <span class="font-bold text-slate-800">@Math.Min(Model.Payouts.Page * Model.Payouts.PageSize, Model.Payouts.TotalCount)</span> of <span class="font-bold text-slate-800">@Model.Payouts.TotalCount</span>
                     </p>
-                    <div class="flex items-center gap-1">
+                    <div class="flex items-center gap-1.5">
                         @if (Model.Payouts.Page > 1)
                         {
-                            <a href="@Url.Action("Instructor", new { page = Model.Transactions.Page, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "po", payoutPage = Model.Payouts.Page - 1, payoutPageSize = Model.Payouts.PageSize, payoutKeyword = ViewBag.PayoutKeyword, payoutSortBy = ViewBag.PayoutSortBy, payoutStatus = ViewBag.PayoutStatus })"
-                               class="w-7 h-7 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors">
+                            <a href="@Url.Action("Instructor", new { page = Model.Transactions.Page, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "po", payoutPage = Model.Payouts.Page - 1, payoutPageSize = Model.Payouts.PageSize, payoutKeyword = ViewBag.PayoutKeyword, payoutSortBy = ViewBag.PayoutSortBy, payoutStatus = ViewBag.PayoutStatus, year = ViewBag.Year, month = ViewBag.Month })"
+                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5">
                                 <span class="material-symbols-outlined text-[16px]">chevron_left</span>
                             </a>
                         }
@@ -444,19 +558,19 @@
                         {
                             if (p == Model.Payouts.Page)
                             {
-                                <span class="w-7 h-7 flex items-center justify-center rounded bg-emerald-600 text-white font-bold text-xs shadow-sm">@p</span>
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-600 text-white font-extrabold text-xs shadow-md shadow-emerald-600/10">@p</span>
                             }
                             else
                             {
-                                <a href="@Url.Action("Instructor", new { page = Model.Transactions.Page, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "po", payoutPage = p, payoutPageSize = Model.Payouts.PageSize, payoutKeyword = ViewBag.PayoutKeyword, payoutSortBy = ViewBag.PayoutSortBy, payoutStatus = ViewBag.PayoutStatus })"
-                                   class="w-7 h-7 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium text-xs transition-colors">@p</a>
+                                <a href="@Url.Action("Instructor", new { page = Model.Transactions.Page, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "po", payoutPage = p, payoutPageSize = Model.Payouts.PageSize, payoutKeyword = ViewBag.PayoutKeyword, payoutSortBy = ViewBag.PayoutSortBy, payoutStatus = ViewBag.PayoutStatus, year = ViewBag.Year, month = ViewBag.Month })"
+                                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-600 hover:bg-white hover:text-slate-800 font-bold text-xs transition-all shadow-sm/5">@p</a>
                             }
                         }
 
                         @if (Model.Payouts.Page < Model.Payouts.TotalPages)
                         {
-                            <a href="@Url.Action("Instructor", new { page = Model.Transactions.Page, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "po", payoutPage = Model.Payouts.Page + 1, payoutPageSize = Model.Payouts.PageSize, payoutKeyword = ViewBag.PayoutKeyword, payoutSortBy = ViewBag.PayoutSortBy, payoutStatus = ViewBag.PayoutStatus })"
-                               class="w-7 h-7 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors">
+                            <a href="@Url.Action("Instructor", new { page = Model.Transactions.Page, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "po", payoutPage = Model.Payouts.Page + 1, payoutPageSize = Model.Payouts.PageSize, payoutKeyword = ViewBag.PayoutKeyword, payoutSortBy = ViewBag.PayoutSortBy, payoutStatus = ViewBag.PayoutStatus, year = ViewBag.Year, month = ViewBag.Month })"
+                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5">
                                 <span class="material-symbols-outlined text-[16px]">chevron_right</span>
                             </a>
                         }
@@ -465,6 +579,7 @@
             }
         </div>
     </div>
+
 
     <!-- ========================================== -->
     <!-- PHẦN 3: HƯỚNG DẪN RÚT TIỀN                 -->
@@ -523,55 +638,44 @@
             const indPo = document.getElementById('tab-indicator-po');
 
             if (tabId === 'tx') {
-                btnTx.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold bg-white text-primary shadow-sm transition-all duration-200';
-                btnPo.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold text-slate-500 hover:text-slate-700 transition-all duration-200';
+                btnTx.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-primary shadow-sm transition-all duration-300';
+                btnPo.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-800 transition-all duration-300';
                 contentTx.classList.remove('hidden');
                 contentTx.classList.add('flex');
                 contentPo.classList.add('hidden');
                 contentPo.classList.remove('flex');
                 
                 indTx.classList.remove('hidden');
-                indTx.classList.add('sm:flex');
+                indTx.classList.add('flex');
                 indPo.classList.add('hidden');
-                indPo.classList.remove('sm:flex');
+                indPo.classList.remove('flex');
             } else {
-                btnPo.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold bg-white text-primary shadow-sm transition-all duration-200';
-                btnTx.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold text-slate-500 hover:text-slate-700 transition-all duration-200';
+                btnPo.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-primary shadow-sm transition-all duration-300';
+                btnTx.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-800 transition-all duration-300';
                 contentPo.classList.remove('hidden');
                 contentPo.classList.add('flex');
                 contentTx.classList.add('hidden');
                 contentTx.classList.remove('flex');
                 
                 indPo.classList.remove('hidden');
-                indPo.classList.add('sm:flex');
+                indPo.classList.add('flex');
                 indTx.classList.add('hidden');
-                indTx.classList.remove('sm:flex');
+                indTx.classList.remove('flex');
             }
         }
 
         // CHART LOGIC
-        document.addEventListener("DOMContentLoaded", function () {
-            // Restore active tab
-            var activeTab = '@ViewBag.ActiveTab';
-            if (activeTab === 'po') {
-                switchTable('po');
-            } else {
-                switchTable('tx');
-            }
-
+        let profitChartInstance = null;
+        window.drawProfitChart = function(items) {
             const ctx = document.getElementById('profitChart');
             if (!ctx) return;
 
-            const items = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-                Model.Transactions.Items?.OrderBy(x => x.Date).Select(x => new {
-                    date = x.Date?.ToString("dd/MM"),
-                    amount = x.Amount,
-                    currency = x.PayoutCurrency ?? x.Currency
-                }).ToList() ?? new List<object>().Select(x => new { date = "", amount = 0m, currency = "USD" }).ToList()
-            ));
+            if (profitChartInstance) {
+                profitChartInstance.destroy();
+            }
 
-            if (items.length === 0) {
-                new Chart(ctx, {
+            if (!items || items.length === 0) {
+                profitChartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
@@ -611,7 +715,7 @@
             gradient.addColorStop(0, 'rgba(0, 106, 98, 0.2)'); 
             gradient.addColorStop(1, 'rgba(0, 106, 98, 0)');
 
-            new Chart(ctx, {
+            profitChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
@@ -676,6 +780,25 @@
                     }
                 }
             });
+        };
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // Restore active tab
+            var activeTab = '@ViewBag.ActiveTab';
+            if (activeTab === 'po') {
+                switchTable('po');
+            } else {
+                switchTable('tx');
+            }
+
+            const initialItems = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                Model.Transactions.Items?.OrderBy(x => x.Date).Select(x => new {
+                    date = x.Date?.ToString("dd/MM"),
+                    amount = x.Amount,
+                    currency = x.PayoutCurrency ?? x.Currency
+                }).ToList() ?? new List<object>().Select(x => new { date = "", amount = 0m, currency = "USD" }).ToList()
+            ));
+            window.drawProfitChart(initialItems);
         });
 
         // SIGNALR & SYNC LOGIC
@@ -736,5 +859,142 @@
             icon.classList.add('animate-spin');
             btn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">sync</span> Syncing...`;
         });
+
+        // AJAX Dynamic Month/Year Dropdown Loading for Instructor
+        document.addEventListener('DOMContentLoaded', () => {
+            const filterForm = document.getElementById('periodFilterForm');
+            if (filterForm) {
+                const selects = filterForm.querySelectorAll('select');
+                selects.forEach(select => {
+                    select.addEventListener('change', () => {
+                        ajaxReloadInstructor();
+                    });
+                });
+                filterForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    ajaxReloadInstructor();
+                });
+            }
+        });
+
+        async function ajaxReloadInstructor() {
+            const form = document.getElementById('periodFilterForm');
+            if (!form) return;
+
+            // Show a premium blurred loading overlay
+            const loader = document.createElement('div');
+            loader.className = 'fixed inset-0 bg-slate-900/10 backdrop-blur-[1px] flex items-center justify-center z-[9999] transition-all duration-300 opacity-0';
+            loader.innerHTML = `
+                <div class="bg-white p-4 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-100 animate-fadeIn">
+                    <div class="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-xs font-bold text-slate-700">Recalculating revenue splits...</span>
+                </div>
+            `;
+            document.body.appendChild(loader);
+            setTimeout(() => loader.classList.remove('opacity-0'), 50);
+
+            try {
+                const formData = new FormData(form);
+                const params = new URLSearchParams(formData);
+
+                // Preserve active tab
+                const activeBtn = document.querySelector('[id^="tab-btn-"].text-primary') || document.querySelector('[id^="tab-btn-"].bg-white');
+                const activeTab = activeBtn ? activeBtn.id.replace('tab-btn-', '') : 'tx';
+                params.set('tab', activeTab);
+
+                // Preserve active filters
+                const searchForm = document.querySelector(`form[action="/Transaction/Instructor"]:not(#periodFilterForm)`);
+                if (searchForm) {
+                    const searchData = new FormData(searchForm);
+                    for (const [key, value] of searchData.entries()) {
+                        if (value && key !== 'year' && key !== 'month' && key !== 'tab') {
+                            params.set(key, value);
+                        }
+                    }
+                }
+
+                const url = `/Transaction/Instructor?${params.toString()}`;
+                const response = await fetch(url);
+                if (response.ok) {
+                    const html = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // 1. Swap 4 Stats Cards using robust ID
+                    const oldStats = document.getElementById('stats-overview');
+                    const newStats = doc.getElementById('stats-overview');
+                    if (oldStats && newStats) oldStats.innerHTML = newStats.innerHTML;
+
+                    // 2. Swap All Tab Contents to keep them synchronized
+                    ['tx', 'po'].forEach(t => {
+                        const oldTabContent = document.getElementById('tab-content-' + t);
+                        const newTabContent = doc.getElementById('tab-content-' + t);
+                        if (oldTabContent && newTabContent) oldTabContent.innerHTML = newTabContent.innerHTML;
+                    });
+
+                    // 3. Swap counters
+                    ['tx', 'po'].forEach(t => {
+                        const oldInd = document.getElementById('tab-indicator-' + t);
+                        const newInd = doc.getElementById('tab-indicator-' + t);
+                        if (oldInd && newInd) oldInd.innerHTML = newInd.innerHTML;
+                    });
+
+                    // 4. Update Year/Month inside all forms
+                    const targetYear = params.get('year');
+                    const targetMonth = params.get('month');
+                    document.querySelectorAll('form input[name="year"]').forEach(input => {
+                        input.value = targetYear;
+                    });
+                    document.querySelectorAll('form input[name="month"]').forEach(input => {
+                        input.value = targetMonth;
+                    });
+
+                    // Push state
+                    history.pushState(null, '', url);
+
+                    // 5. Swap Chart Card Title & Data Element
+                    const oldChartCard = document.getElementById('chart-card');
+                    const newChartCard = doc.getElementById('chart-card');
+                    if (oldChartCard && newChartCard) {
+                        // We replace the title and headers, and recreate the canvas to ensure it renders correctly
+                        const oldCanvasContainer = oldChartCard.querySelector('.relative.w-full.h-\\[300px\\]');
+                        const newCanvasContainer = newChartCard.querySelector('.relative.w-full.h-\\[300px\\]');
+                        if (oldCanvasContainer && newCanvasContainer) {
+                            oldCanvasContainer.innerHTML = newCanvasContainer.innerHTML;
+                        }
+                        
+                        // Swap the title
+                        const oldTitle = oldChartCard.querySelector('h3');
+                        const newTitle = newChartCard.querySelector('h3');
+                        if (oldTitle && newTitle) oldTitle.innerHTML = newTitle.innerHTML;
+                        
+                        // Get the new serialized chart data and render the new chart
+                        const newDataEl = newChartCard.querySelector('#chart-data-json');
+                        if (newDataEl) {
+                            const newItems = JSON.parse(newDataEl.getAttribute('data-chart') || '[]');
+                            window.drawProfitChart(newItems);
+                        }
+                    }
+
+                    // Alert Toast
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'Earnings statistics updated'
+                    });
+                }
+            } catch (err) {
+                console.error("AJAX error: ", err);
+            } finally {
+                loader.classList.add('opacity-0');
+                setTimeout(() => loader.remove(), 300);
+            }
+        }
     </script>
 }

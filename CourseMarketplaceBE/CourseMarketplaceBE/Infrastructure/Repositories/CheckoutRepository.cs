@@ -120,6 +120,12 @@ public class CheckoutRepository : ICheckoutRepository
                 .ThenInclude(oi => oi.Course)
             .FirstOrDefaultAsync(o => o.OrderId == orderId);
 
+    public async Task<List<OrderInfo>> GetPendingOrdersByUserAsync(int userId)
+        => await _context.OrderInfos
+            .Where(o => o.UserId == userId && o.OrderStatus == "pending")
+            .Include(o => o.OrderItems)
+            .ToListAsync();
+
     public async Task<string?> GetInstructorStripeAccountIdAsync(int instructorId)
         => await _context.Instructors
             .Where(i => i.InstructorId == instructorId)

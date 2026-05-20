@@ -1,6 +1,6 @@
 {
     "dotrush.roslyn.projectOrSolutionFiles": [
-        "c:\\Users\\HP\\Documents\\Linked\\CourseMarketplaceBE\\CourseMarketplaceBE.sln",
-        "c:\\Users\\HP\\Documents\\Linked\\CourseMarketplaceFE\\CourseMarketplaceFE.sln"
+        "CourseMarketplaceBE\\CourseMarketplaceBE.sln",
+        "CourseMarketplaceFE\\CourseMarketplaceFE.sln"
     ]
 }

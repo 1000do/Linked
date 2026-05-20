@@ -33,6 +33,12 @@ public partial class Transaction
 
     public DateTime? TransactionCreatedAt { get; set; }
 
+    public string? RefundReason { get; set; }
+
+    public string? RefundAdminNote { get; set; }
+
+    public DateTime? RefundRequestedAt { get; set; }
+
     public virtual OrderItem? OrderItem { get; set; }
 
     public virtual Account? AccountFromNavigation { get; set; }

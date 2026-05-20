@@ -21,10 +21,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class TransactionController : ControllerBase
 {
     private readonly ITransactionService _transactionService;
+    private readonly IAdminFinanceService _financeService;
 
-    public TransactionController(ITransactionService transactionService)
+    public TransactionController(ITransactionService transactionService, IAdminFinanceService financeService)
     {
         _transactionService = transactionService;
+        _financeService = financeService;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -40,11 +42,13 @@ public class TransactionController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? keyword = null,
         [FromQuery] string? sortBy = "date_desc",
-        [FromQuery] string? status = null)
+        [FromQuery] string? status = null,
+        [FromQuery] int? year = null,
+        [FromQuery] int? month = null)
     {
         try
         {
-            var result = await _transactionService.GetTransactionsAsync(page, pageSize, keyword, sortBy, status);
+            var result = await _transactionService.GetTransactionsAsync(page, pageSize, keyword, sortBy, status, year, month);
             return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Danh sách giao dịch."));
         }
         catch (Exception ex)
@@ -92,7 +96,9 @@ public class TransactionController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? keyword = null,
         [FromQuery] string? sortBy = "date_desc",
-        [FromQuery] string? status = null)
+        [FromQuery] string? status = null,
+        [FromQuery] int? year = null,
+        [FromQuery] int? month = null)
     {
         try
         {
@@ -100,7 +106,7 @@ public class TransactionController : ControllerBase
             if (!int.TryParse(userIdStr, out int userId))
                 return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
 
-            var result = await _transactionService.GetInstructorTransactionsAsync(userId, page, pageSize, keyword, sortBy, status);
+            var result = await _transactionService.GetInstructorTransactionsAsync(userId, page, pageSize, keyword, sortBy, status, year, month);
             return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Danh sách giao dịch của giảng viên."));
         }
         catch (Exception ex)
@@ -135,4 +141,38 @@ public class TransactionController : ControllerBase
             return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/transactions/{transactionId}/request-refund
+    // Học viên gửi yêu cầu hoàn tiền
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("{transactionId:int}/request-refund")]
+    public async Task<IActionResult> RequestRefund(int transactionId, [FromBody] StudentRefundRequest request)
+    {
+        try
+        {
+            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId))
+                return Unauthorized(ApiResponse<string>.ErrorResponse("Phiên đăng nhập không hợp lệ."));
+
+            if (string.IsNullOrWhiteSpace(request.Reason))
+                return BadRequest(ApiResponse<string>.ErrorResponse("Lý do hoàn tiền không được để trống."));
+
+            await _financeService.RequestRefundAsync(transactionId, userId, request.Reason);
+            return Ok(ApiResponse<string>.SuccessResponse("Gửi yêu cầu hoàn tiền thành công. Vui lòng chờ Admin phê duyệt."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi hệ thống: {ex.Message}"));
+        }
+    }
+}
+
+public class StudentRefundRequest
+{
+    public string Reason { get; set; } = string.Empty;
 }

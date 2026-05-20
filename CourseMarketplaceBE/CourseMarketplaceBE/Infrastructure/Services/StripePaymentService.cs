@@ -33,7 +33,8 @@ public class StripePaymentService : IPaymentGatewayService
         string? orderReference = null,
         string currency = "usd",
         string? destinationAccountId = null,
-        decimal? applicationFee = null)
+        decimal? applicationFee = null,
+        Dictionary<string, string>? metadata = null)
     {
         // Map DTO sang Stripe LineItem format
         // USD là two-decimal currency → Stripe yêu cầu giá tính bằng CENTS
@@ -85,6 +86,7 @@ public class StripePaymentService : IPaymentGatewayService
             SuccessUrl = successUrl,
             CancelUrl = cancelUrl,
             CustomerEmail = customerEmail,
+            Metadata = metadata,
             PaymentIntentData = paymentIntentData.TransferData != null || !string.IsNullOrEmpty(paymentIntentData.TransferGroup) 
                 ? paymentIntentData 
                 : null
@@ -109,6 +111,13 @@ public class StripePaymentService : IPaymentGatewayService
         var service = new SessionService();
         var session = await service.GetAsync(sessionId);
         return session?.PaymentIntentId;
+    }
+
+    public async Task<Dictionary<string, string>?> GetSessionMetadataAsync(string sessionId)
+    {
+        var service = new SessionService();
+        var session = await service.GetAsync(sessionId);
+        return session?.Metadata;
     }
 
     /// <summary>
@@ -176,15 +185,22 @@ public class StripePaymentService : IPaymentGatewayService
     public async Task<string> RefundAsync(string paymentIntentId, string? reason = null)
     {
         var refundService = new RefundService();
+        var metadata = new Dictionary<string, string>
+        {
+            { "source", "admin_dashboard" },
+            { "refunded_at", DateTime.UtcNow.ToString("O") }
+        };
+
+        if (!string.IsNullOrEmpty(reason))
+        {
+            metadata.Add("reason", reason);
+        }
+
         var options = new RefundCreateOptions
         {
             PaymentIntent = paymentIntentId,
-            Reason = reason ?? "requested_by_customer",
-            Metadata = new Dictionary<string, string>
-            {
-                { "source", "admin_dashboard" },
-                { "refunded_at", DateTime.UtcNow.ToString("O") }
-            }
+            Reason = "requested_by_customer", // Phải là 1 trong: duplicate, fraudulent, requested_by_customer
+            Metadata = metadata
         };
 
         var refund = await refundService.CreateAsync(options);

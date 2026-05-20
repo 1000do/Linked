@@ -154,17 +154,15 @@ public class CheckoutController : ControllerBase
     /// Update Order/Transaction thành failed để không bị pending mãi mãi.
     /// </summary>
     [HttpGet("cancel")]
-    public async Task<IActionResult> Cancel([FromQuery(Name = "order_id")] int orderId)
+    public async Task<IActionResult> Cancel([FromQuery(Name = "order_id")] int orderId = 0)
     {
         Console.WriteLine($"[BE-CONTROLLER] ═══ CheckoutController.Cancel ENTRY ═══ order_id={orderId}");
 
-        if (orderId <= 0)
-            return BadRequest(ApiResponse<string>.ErrorResponse("Thiếu order_id hợp lệ."));
-
         try
         {
+            // Không còn rác pending trong DB để dọn dẹp nên trả về thành công luôn
             await _checkoutService.ProcessPaymentCancelAsync(orderId);
-            return Ok(ApiResponse<string>.SuccessResponse("Đã cập nhật trạng thái hủy thanh toán."));
+            return Ok(ApiResponse<string>.SuccessResponse("Đã hủy thanh toán thành công (không tạo rác DB)."));
         }
         catch (Exception ex)
         {

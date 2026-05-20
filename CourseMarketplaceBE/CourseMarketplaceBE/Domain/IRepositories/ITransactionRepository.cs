@@ -14,7 +14,7 @@ public interface ITransactionRepository
     ///       transactions → account_from → users (buyer)
     ///       transactions → instructor_payouts
     /// </summary>
-    Task<(List<TransactionListDto> Items, int TotalCount)> GetTransactionsAsync(int page, int pageSize, string? keyword = null, string? sortBy = "date_desc", string? status = null);
+    Task<(List<TransactionListDto> Items, int TotalCount)> GetTransactionsAsync(int page, int pageSize, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null);
 
     /// <summary>
     /// UC-114: Lấy chi tiết 1 giao dịch theo ID.
@@ -25,7 +25,7 @@ public interface ITransactionRepository
     /// <summary>
     /// Lấy danh sách giao dịch của một giảng viên cụ thể.
     /// </summary>
-    Task<(List<TransactionListDto> Items, int TotalCount)> GetInstructorTransactionsAsync(int instructorId, int page, int pageSize, string? keyword = null, string? sortBy = "date_desc", string? status = null);
+    Task<(List<TransactionListDto> Items, int TotalCount)> GetInstructorTransactionsAsync(int instructorId, int page, int pageSize, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null);
 
     /// <summary>
     /// Lấy danh sách giao dịch của một người dùng (người mua) cụ thể.

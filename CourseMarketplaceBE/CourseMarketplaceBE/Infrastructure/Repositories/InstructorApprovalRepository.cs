@@ -149,7 +149,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
         public async Task<int> CountActiveCoursesAsync(int instructorId)
             => await _context.Courses.CountAsync(c => c.InstructorId == instructorId && c.CourseStatus == "published");
 
-        public async Task<InstructorPayoutPagedDto> GetPayoutsAsync(int instructorId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null)
+        public async Task<InstructorPayoutPagedDto> GetPayoutsAsync(int instructorId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
         {
             var query = _context.InstructorPayouts
                 .Where(p => p.InstructorId == instructorId)
@@ -157,6 +157,13 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                     .ThenInclude(t => t!.OrderItem)
                         .ThenInclude(oi => oi!.Course)
                 .AsQueryable();
+
+            if (year.HasValue && month.HasValue)
+            {
+                var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
+                var endDate = startDate.AddMonths(1);
+                query = query.Where(p => p.Transaction != null && p.Transaction.TransactionCreatedAt >= startDate && p.Transaction.TransactionCreatedAt < endDate);
+            }
 
             if (!string.IsNullOrEmpty(keyword))
             {

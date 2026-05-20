@@ -6,15 +6,21 @@
 
     var statusBg = Model.Status == "succeeded" ? "bg-emerald-50 text-emerald-600"
                  : Model.Status == "failed" ? "bg-rose-50 text-rose-600"
+                 : Model.Status == "refund_pending" ? "bg-orange-50 text-orange-600"
+                 : Model.Status == "refunded" ? "bg-violet-50 text-violet-600"
                  : "bg-amber-50 text-amber-600";
     
     var statusLabel = Model.Status == "succeeded" ? "Thành công"
                     : Model.Status == "failed" ? "Thất bại"
                     : Model.Status == "pending" ? "Đang xử lý"
+                    : Model.Status == "refund_pending" ? "Chờ duyệt hoàn tiền"
+                    : Model.Status == "refunded" ? "Đã hoàn tiền"
                     : Model.Status ?? "—";
 
     var dotColor = Model.Status == "succeeded" ? "bg-emerald-500"
                  : Model.Status == "failed" ? "bg-rose-500"
+                 : Model.Status == "refund_pending" ? "bg-orange-500"
+                 : Model.Status == "refunded" ? "bg-violet-500"
                  : "bg-amber-400";
 }
 
@@ -25,6 +31,69 @@
             <span class="material-symbols-outlined text-[20px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
             Quay lại lịch sử
         </a>
+        @if (Model.Status == "refund_pending") {
+            <div class="mb-8 p-6 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-3xl shadow-sm flex items-start gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center border border-orange-200 shadow-inner shrink-0">
+                    <span class="material-symbols-outlined text-orange-600 text-[24px]">restart_alt</span>
+                </div>
+                <div>
+                    <h3 class="text-base font-black text-slate-900 mb-1">Yêu cầu hoàn tiền đang chờ duyệt</h3>
+                    <p class="text-sm text-slate-600">
+                        Yêu cầu hoàn tiền của bạn đã được gửi thành công vào lúc <span class="font-bold text-slate-800">@(Model.RefundRequestedAt?.ToString("dd/MM/yyyy HH:mm") ?? "—")</span> và đang được Admin xem xét.
+                    </p>
+                    <div class="mt-3 p-3 bg-white border border-orange-100 rounded-2xl">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Lý do bạn yêu cầu hoàn tiền</p>
+                        <p class="text-sm text-slate-800 italic">"@Model.RefundReason"</p>
+                    </div>
+                </div>
+            </div>
+        } else if (Model.Status == "refunded") {
+            <div class="mb-8 p-6 bg-gradient-to-r from-rose-50 to-red-50 border border-rose-200 rounded-3xl shadow-sm flex items-start gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center border border-rose-200 shadow-inner shrink-0">
+                    <span class="material-symbols-outlined text-rose-600 text-[24px]">verified_user</span>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-base font-black text-slate-900 mb-1">Giao dịch đã được hoàn tiền thành công</h3>
+                    <p class="text-sm text-slate-600">
+                        Hệ thống đã phê duyệt yêu cầu hoàn trả tiền cho giao dịch này. Quyền truy cập khóa học học tập đã bị thu hồi.
+                    </p>
+                    <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-3 bg-white border border-rose-100 rounded-2xl">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Lý do hoàn tiền của bạn</p>
+                            <p class="text-sm text-slate-800 italic">"@Model.RefundReason"</p>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.RefundAdminNote)) {
+                            <div class="p-3 bg-white border border-rose-100 rounded-2xl">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Phản hồi của Admin</p>
+                                <p class="text-sm text-slate-800 font-bold">"@Model.RefundAdminNote"</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        } else if (Model.Status == "succeeded" && !string.IsNullOrEmpty(Model.RefundAdminNote)) {
+            <div class="mb-8 p-6 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-3xl shadow-sm flex items-start gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-slate-200 flex items-center justify-center border border-slate-300 shrink-0 shadow-inner">
+                    <span class="material-symbols-outlined text-slate-600 text-[24px]">cancel</span>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-base font-black text-slate-900 mb-1">Yêu cầu hoàn tiền trước đó đã bị từ chối</h3>
+                    <p class="text-sm text-slate-600">
+                        Yêu cầu hoàn tiền bạn gửi vào lúc <span class="font-bold text-slate-800">@(Model.RefundRequestedAt?.ToString("dd/MM/yyyy HH:mm") ?? "—")</span> đã bị Admin từ chối phê duyệt.
+                    </p>
+                    <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-3 bg-white border border-slate-200 rounded-2xl">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Lý do hoàn tiền ban đầu của bạn</p>
+                            <p class="text-sm text-slate-800 italic">"@Model.RefundReason"</p>
+                        </div>
+                        <div class="p-3 bg-white border border-slate-200 rounded-2xl">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Phản hồi từ Admin</p>
+                            <p class="text-sm text-slate-800 font-bold">"@Model.RefundAdminNote"</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
 
         <div class="bg-white rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden relative">
             @* Top Decoration *@

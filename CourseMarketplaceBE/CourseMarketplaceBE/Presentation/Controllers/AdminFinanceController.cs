@@ -28,11 +28,11 @@ public class AdminFinanceController : ControllerBase
     // GET /api/admin/finance/summary
     // ═══════════════════════════════════════════════════════════════════════
     [HttpGet("summary")]
-    public async Task<IActionResult> GetFinancialSummary()
+    public async Task<IActionResult> GetFinancialSummary([FromQuery] int? year, [FromQuery] int? month)
     {
         try
         {
-            var summary = await _financeService.GetFinancialSummaryAsync();
+            var summary = await _financeService.GetFinancialSummaryAsync(year, month);
             return Ok(ApiResponse<FinancialSummaryResponse>.SuccessResponse(summary, "Thống kê tài chính."));
         }
         catch (Exception ex)
@@ -45,11 +45,11 @@ public class AdminFinanceController : ControllerBase
     // GET /api/admin/finance/payouts
     // ═══════════════════════════════════════════════════════════════════════
     [HttpGet("payouts")]
-    public async Task<IActionResult> GetPayouts()
+    public async Task<IActionResult> GetPayouts([FromQuery] int? year, [FromQuery] int? month)
     {
         try
         {
-            var payouts = await _financeService.GetInstructorPayoutsAsync();
+            var payouts = await _financeService.GetInstructorPayoutsAsync(year, month);
             return Ok(ApiResponse<List<PayoutDetailResponse>>.SuccessResponse(payouts, "Danh sách chia tiền."));
         }
         catch (Exception ex)
@@ -144,6 +144,24 @@ public class AdminFinanceController : ControllerBase
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/admin/finance/payouts/sync-all
+    // Đồng bộ tất cả Payouts của giảng viên từ Stripe
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("payouts/sync-all")]
+    public async Task<IActionResult> SyncAllPayouts()
+    {
+        try
+        {
+            await _financeService.SyncAllPayoutsWithStripeAsync();
+            return Ok(ApiResponse<string>.SuccessResponse("Đồng bộ trạng thái payout thành công.", "Thành công."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi hệ thống: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // POST /api/admin/finance/reset-stripe/{instructorId}
     // ★ Reset Stripe account bị lỗi region → xóa account cũ, cho phép tạo lại
     // ═══════════════════════════════════════════════════════════════════════
@@ -209,11 +227,15 @@ public class AdminFinanceController : ControllerBase
 
     /// <summary>GET /api/admin/finance/withdrawals — Lịch sử rút tiền</summary>
     [HttpGet("withdrawals")]
-    public async Task<IActionResult> GetWithdrawalHistory()
+    public async Task<IActionResult> GetWithdrawalHistory([FromQuery] int? year, [FromQuery] int? month)
     {
         try
         {
             var history = await _financeService.GetWithdrawalHistoryAsync();
+            if (year.HasValue && month.HasValue)
+            {
+                history = history.Where(w => w.CreatedAt.Year == year.Value && w.CreatedAt.Month == month.Value).ToList();
+            }
             return Ok(ApiResponse<List<WithdrawalHistoryItem>>.SuccessResponse(history, "Lịch sử rút tiền."));
         }
         catch (Exception ex)
@@ -243,4 +265,71 @@ public class AdminFinanceController : ControllerBase
             return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi hệ thống: {ex.Message}"));
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET /api/admin/finance/refunds/pending
+    // Lấy danh sách các yêu cầu hoàn tiền đang chờ duyệt
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpGet("refunds/pending")]
+    public async Task<IActionResult> GetPendingRefundRequests()
+    {
+        try
+        {
+            var list = await _financeService.GetPendingRefundRequestsAsync();
+            return Ok(ApiResponse<List<Domain.Entities.Transaction>>.SuccessResponse(list, "Danh sách yêu cầu hoàn tiền đang chờ duyệt."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/admin/finance/refunds/{transactionId}/approve
+    // Phê duyệt yêu cầu hoàn tiền (gọi Stripe)
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("refunds/{transactionId:int}/approve")]
+    public async Task<IActionResult> ApproveRefund(int transactionId, [FromBody] RefundDecisionRequest request)
+    {
+        try
+        {
+            await _financeService.ApproveRefundAsync(transactionId, request.AdminNote ?? "Được chấp nhận bởi Admin.");
+            return Ok(ApiResponse<string>.SuccessResponse("Đã phê duyệt hoàn tiền thành công."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi hệ thống: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/admin/finance/refunds/{transactionId}/reject
+    // Từ chối yêu cầu hoàn tiền
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("refunds/{transactionId:int}/reject")]
+    public async Task<IActionResult> RejectRefund(int transactionId, [FromBody] RefundDecisionRequest request)
+    {
+        try
+        {
+            await _financeService.RejectRefundAsync(transactionId, request.AdminNote ?? "Bị từ chối bởi Admin.");
+            return Ok(ApiResponse<string>.SuccessResponse("Đã từ chối yêu cầu hoàn tiền."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi hệ thống: {ex.Message}"));
+        }
+    }
+}
+
+public class RefundDecisionRequest
+{
+    public string? AdminNote { get; set; }
 }

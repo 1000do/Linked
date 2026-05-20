@@ -1,6 +1,8 @@
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Stripe;
 
 namespace CourseMarketplaceBE.Application.Services;
@@ -24,6 +26,7 @@ public class AdminFinanceService : IAdminFinanceService
     private readonly IPaymentGatewayService _paymentGateway;
     private readonly IInstructorRepository _instructorRepo;
     private readonly INotificationService _notiService;
+    private readonly IHubContext<FinanceHub> _hubContext;
     private readonly ILogger<AdminFinanceService> _logger;
 
     // Key trong bảng system_configs
@@ -35,12 +38,14 @@ public class AdminFinanceService : IAdminFinanceService
         IPaymentGatewayService paymentGateway,
         IInstructorRepository instructorRepo,
         INotificationService notiService,
+        IHubContext<FinanceHub> hubContext,
         ILogger<AdminFinanceService> logger)
     {
         _repo = repo;
         _paymentGateway = paymentGateway;
         _instructorRepo = instructorRepo;
         _notiService = notiService;
+        _hubContext = hubContext;
         _logger = logger;
     }
 
@@ -106,12 +111,13 @@ public class AdminFinanceService : IAdminFinanceService
     //   PlatformNetProfit  = GrossRevenue - TotalPaidOut - PendingEscrow
     //                      = Tiền sàn THỰC SỰ giữ được
     // ═══════════════════════════════════════════════════════════════════════
-    public async Task<FinancialSummaryResponse> GetFinancialSummaryAsync()
+    public async Task<FinancialSummaryResponse> GetFinancialSummaryAsync(int? year = null, int? month = null)
     {
-        var grossRevenue = await _repo.GetGrossRevenueAsync();
-        var totalPaidOut = await _repo.GetTotalPaidOutAsync();
-        var pendingEscrow = await _repo.GetPendingEscrowAsync();
-        var totalTransactions = await _repo.GetSucceededTransactionCountAsync();
+        var grossRevenue = await _repo.GetGrossRevenueAsync(year, month);
+        var totalPaidOut = await _repo.GetTotalPaidOutAsync(year, month);
+        var pendingEscrow = await _repo.GetPendingEscrowAsync(year, month);
+        var maturedEscrow = await _repo.GetMaturedEscrowAsync(year, month);
+        var totalTransactions = await _repo.GetSucceededTransactionCountAsync(year, month);
         var currentRate = await GetCurrentTransferRateAsync();
 
         return new FinancialSummaryResponse
@@ -119,8 +125,9 @@ public class AdminFinanceService : IAdminFinanceService
             GrossRevenue = grossRevenue,
             TotalPaidOut = totalPaidOut,
             PendingEscrow = pendingEscrow,
-            // ★ Net Profit = Tổng thu - Tổng đã trả GV - Tổng đang giữ hộ GV
-            PlatformNetProfit = grossRevenue - totalPaidOut - pendingEscrow,
+            MaturedEscrow = maturedEscrow,
+            // ★ Net Profit = Tổng thu - Tổng đã trả GV - Tổng đang giữ hộ GV (bao gồm cả Pending và Matured)
+            PlatformNetProfit = grossRevenue - totalPaidOut - pendingEscrow - maturedEscrow,
             CurrentTransferRate = currentRate,
             TotalTransactions = totalTransactions
         };
@@ -134,9 +141,9 @@ public class AdminFinanceService : IAdminFinanceService
     //
     // PlatformReceived = TotalAmount - InstructorReceived
     // ═══════════════════════════════════════════════════════════════════════
-    public async Task<List<PayoutDetailResponse>> GetInstructorPayoutsAsync()
+    public async Task<List<PayoutDetailResponse>> GetInstructorPayoutsAsync(int? year = null, int? month = null)
     {
-        var projections = await _repo.GetPayoutDetailsAsync();
+        var projections = await _repo.GetPayoutDetailsAsync(year, month);
 
         return projections.Select(p => new PayoutDetailResponse
         {
@@ -182,10 +189,25 @@ public class AdminFinanceService : IAdminFinanceService
             throw new InvalidOperationException("Khoản thanh toán này đã được đánh dấu là Đã trả.");
 
         payout.IsPaid = true;
+        payout.PayoutStatus = "paid";
         // Có thể update PayoutDate = DateTime.Now nếu muốn ghi nhận ngày trả thực tế
         payout.PayoutDate = DateTime.Now;
 
         await _repo.SaveChangesAsync();
+
+        // 🔥 Broadcast real-time update to Admin and Instructor portals
+        try
+        {
+            await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new { refresh = true });
+            if (payout.InstructorId.HasValue)
+            {
+                await _hubContext.Clients.Group($"InstructorFinance_{payout.InstructorId.Value}").SendAsync("UpdatePayoutStatus", new { refresh = true });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi gửi SignalR trong MarkPayoutAsPaidAsync");
+        }
     }
 
     public async Task<string> PerformStripeTransferAsync(int payoutId)
@@ -232,6 +254,20 @@ public class AdminFinanceService : IAdminFinanceService
             payout.PayoutDate = DateTime.UtcNow;
             await _repo.SaveChangesAsync();
 
+            // 🔥 Broadcast real-time update to Admin and Instructor portals immediately
+            try
+            {
+                await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new { refresh = true });
+                if (payout.InstructorId.HasValue)
+                {
+                    await _hubContext.Clients.Group($"InstructorFinance_{payout.InstructorId.Value}").SendAsync("UpdatePayoutStatus", new { refresh = true });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi gửi SignalR trong PerformStripeTransferAsync");
+            }
+
             return transfer.Id;
         }
         catch (StripeException ex)
@@ -239,6 +275,18 @@ public class AdminFinanceService : IAdminFinanceService
             // ★ Đánh dấu thất bại vào DB để Admin biết
             payout.PayoutStatus = "failed";
             await _repo.SaveChangesAsync();
+
+            // 🔥 Broadcast failure update to Admin and Instructor portals
+            try
+            {
+                await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new { refresh = true });
+                if (payout.InstructorId.HasValue)
+                {
+                    await _hubContext.Clients.Group($"InstructorFinance_{payout.InstructorId.Value}").SendAsync("UpdatePayoutStatus", new { refresh = true });
+                }
+            }
+            catch { }
+
             throw new InvalidOperationException($"Lỗi Stripe Transfer: {ex.Message}");
         }
     }
@@ -364,6 +412,16 @@ public class AdminFinanceService : IAdminFinanceService
 
         await _repo.AddWithdrawalAsync(withdrawal);
 
+        // 🔥 Broadcast real-time update to Admin portals immediately
+        try
+        {
+            await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new { refresh = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi gửi SignalR trong CreateWithdrawalAsync");
+        }
+
         return new WithdrawResponse
         {
             WithdrawalId = withdrawal.WithdrawalId,
@@ -449,9 +507,9 @@ public class AdminFinanceService : IAdminFinanceService
         if (txn.TransactionsStatus == "refunded")
             throw new InvalidOperationException("Giao dịch này đã được hoàn tiền trước đó.");
 
-        if (txn.TransactionsStatus != "succeeded")
+        if (txn.TransactionsStatus != "succeeded" && txn.TransactionsStatus != "refund_pending")
             throw new InvalidOperationException(
-                $"Chỉ hoàn tiền được giao dịch thành công. Trạng thái hiện tại: {txn.TransactionsStatus}.");
+                $"Chỉ hoàn tiền được giao dịch thành công hoặc đang chờ duyệt hoàn tiền. Trạng thái hiện tại: {txn.TransactionsStatus}.");
 
         if (string.IsNullOrEmpty(txn.StripePaymentintentId))
             throw new InvalidOperationException(
@@ -511,8 +569,7 @@ public class AdminFinanceService : IAdminFinanceService
 
         if (payout != null)
         {
-            payout.PayoutStatus = "refunded";
-            payout.IsPaid = false;
+            _repo.RemoveInstructorPayout(payout);
         }
 
         // ── 5. REVOKE ENROLLMENT ────────────────────────────────────────
@@ -540,9 +597,229 @@ public class AdminFinanceService : IAdminFinanceService
             "✅ REFUND COMPLETE | TxnId={TxnId} | RefundId={RfId} | ReversalId={RvId} | EnrollRevoked={ER}",
             transactionId, refundId, reversalId, enrollmentRevoked);
 
+        // 🔥 Broadcast real-time update to Admin and Instructor portals immediately
+        try
+        {
+            await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new { refresh = true });
+            if (payout != null && payout.InstructorId.HasValue)
+            {
+                await _hubContext.Clients.Group($"InstructorFinance_{payout.InstructorId.Value}").SendAsync("UpdatePayoutStatus", new { refresh = true });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi gửi SignalR trong RefundTransactionAsync");
+        }
+
         result.StripeRefundId = refundId;
         result.StripeReversalId = reversalId;
         result.EnrollmentRevoked = enrollmentRevoked;
         return result;
+    }
+
+    public async Task SyncAllPayoutsWithStripeAsync()
+    {
+        var instructors = await _instructorRepo.GetInstructorsWithStripeAsync();
+        if (instructors == null || !instructors.Any()) return;
+
+        var payoutService = new PayoutService();
+        var btService = new BalanceTransactionService();
+
+        foreach (var ins in instructors)
+        {
+            if (string.IsNullOrEmpty(ins.StripeAccountId)) continue;
+
+            try
+            {
+                var stripePayouts = await payoutService.ListAsync(new PayoutListOptions
+                {
+                    Limit = 100,
+                    Expand = new List<string> { "data.destination" }
+                }, new RequestOptions
+                {
+                    StripeAccount = ins.StripeAccountId
+                });
+
+                if (!stripePayouts.Any()) continue;
+
+                foreach (var sp in stripePayouts)
+                {
+                    var dbPayouts = await _repo.GetPayoutsByStripePayoutIdAsync(sp.Id);
+
+                    if (!dbPayouts.Any())
+                    {
+                        var balanceTransactions = await btService.ListAsync(new BalanceTransactionListOptions
+                        {
+                            Payout = sp.Id,
+                            Limit = 100
+                        }, new RequestOptions
+                        {
+                            StripeAccount = ins.StripeAccountId
+                        });
+
+                        foreach (var bt in balanceTransactions)
+                        {
+                            if ((bt.Type != "transfer" && bt.Type != "payment") || string.IsNullOrEmpty(bt.SourceId)) continue;
+
+                            var localPayout = await _repo.GetPayoutByTransferIdAsync(bt.SourceId);
+                            if (localPayout != null)
+                            {
+                                localPayout.StripePayoutId = sp.Id;
+                                UpdatePayoutStatusFromStripeLocal(localPayout, sp);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (var dbp in dbPayouts)
+                        {
+                            UpdatePayoutStatusFromStripeLocal(dbp, sp);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Lỗi đồng bộ payout cho Giảng viên {ins.InstructorId} (Stripe ID: {ins.StripeAccountId})");
+            }
+        }
+
+        await _repo.SaveChangesAsync();
+
+        // 🔥 Broadcast real-time update to all Admin and Instructor screens!
+        try
+        {
+            await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new { refresh = true });
+            await _hubContext.Clients.All.SendAsync("UpdatePayoutStatus", new { refresh = true });
+        }
+        catch { }
+    }
+
+    private void UpdatePayoutStatusFromStripeLocal(Domain.Entities.InstructorPayout dbp, Payout sp)
+    {
+        if (sp.Status == "paid")
+        {
+            dbp.PayoutStatus = "paid";
+            dbp.IsPaid = true;
+            dbp.PaidToBankAt = sp.ArrivalDate;
+        }
+        else if (sp.Status == "in_transit" || sp.Status == "pending")
+        {
+            dbp.PayoutStatus = "in_transit";
+        }
+        else if (sp.Status == "failed" || sp.Status == "canceled")
+        {
+            dbp.PayoutStatus = "failed";
+            dbp.IsPaid = false;
+        }
+    }
+
+    public async Task RequestRefundAsync(int transactionId, int studentId, string reason)
+    {
+        var txn = await _repo.GetTransactionWithFullGraphAsync(transactionId);
+        if (txn == null)
+            throw new InvalidOperationException("Không tìm thấy giao dịch.");
+
+        if (txn.AccountFrom != studentId)
+            throw new InvalidOperationException("Bạn không sở hữu giao dịch này.");
+
+        if (txn.TransactionsStatus == "refund_pending")
+            throw new InvalidOperationException("Giao dịch này đang ở trạng thái chờ duyệt hoàn tiền.");
+
+        if (txn.TransactionsStatus == "refunded")
+            throw new InvalidOperationException("Giao dịch này đã được hoàn tiền.");
+
+        if (txn.TransactionsStatus != "succeeded")
+            throw new InvalidOperationException($"Chỉ có thể hoàn tiền cho giao dịch thành công. Trạng thái hiện tại: {txn.TransactionsStatus}");
+
+        // Kiểm tra thời hạn 14 ngày hoàn tiền
+        if (txn.TransactionCreatedAt.HasValue && txn.TransactionCreatedAt.Value < DateTime.UtcNow.AddDays(-14))
+            throw new InvalidOperationException("Giao dịch đã vượt quá thời hạn 14 ngày hoàn tiền theo quy định của nền tảng.");
+
+        txn.TransactionsStatus = "refund_pending";
+        txn.RefundReason = reason;
+        txn.RefundRequestedAt = DateTime.UtcNow;
+
+        await _repo.SaveChangesAsync();
+
+        // Gửi thông báo cho Admin & Học viên
+        try
+        {
+            await _notiService.SendNotificationAsync(
+                1, // Admin mặc định hoặc hệ thống
+                "Yêu cầu hoàn tiền mới",
+                $"Học viên gửi yêu cầu hoàn tiền cho giao dịch #{transactionId}. Lý do: {reason}",
+                $"/AdminFinance/Refunds"
+            );
+        }
+        catch { }
+    }
+
+    public async Task<List<Domain.Entities.Transaction>> GetPendingRefundRequestsAsync()
+    {
+        return await _repo.GetPendingRefundRequestsAsync();
+    }
+
+    public async Task ApproveRefundAsync(int transactionId, string adminNote)
+    {
+        var txn = await _repo.GetTransactionWithFullGraphAsync(transactionId);
+        if (txn == null)
+            throw new InvalidOperationException("Không tìm thấy giao dịch.");
+
+        if (txn.TransactionsStatus != "refund_pending")
+            throw new InvalidOperationException("Giao dịch không ở trạng thái chờ duyệt hoàn tiền.");
+
+        // Thực thi refund Stripe & Reverse Transfer & Revoke Enrollment
+        var refundResult = await RefundTransactionAsync(transactionId, txn.RefundReason);
+
+        // Lưu thông tin duyệt của Admin
+        txn.RefundAdminNote = adminNote;
+        await _repo.SaveChangesAsync();
+
+        // Gửi thông báo đến học viên
+        if (txn.AccountFrom.HasValue)
+        {
+            try
+            {
+                await _notiService.SendNotificationAsync(
+                    txn.AccountFrom.Value,
+                    "Yêu cầu hoàn tiền được CHẤP NHẬN",
+                    $"Yêu cầu hoàn tiền giao dịch #{transactionId} của bạn đã được Admin phê duyệt. Số tiền hoàn: {txn.Amount:N0} {txn.Currency}. Ghi chú: {adminNote}",
+                    "/Transaction/History"
+                );
+            }
+            catch { }
+        }
+    }
+
+    public async Task RejectRefundAsync(int transactionId, string adminNote)
+    {
+        var txn = await _repo.GetTransactionWithFullGraphAsync(transactionId);
+        if (txn == null)
+            throw new InvalidOperationException("Không tìm thấy giao dịch.");
+
+        if (txn.TransactionsStatus != "refund_pending")
+            throw new InvalidOperationException("Giao dịch không ở trạng thái chờ duyệt hoàn tiền.");
+
+        // Khôi phục trạng thái thành công ban đầu và lưu ghi chú từ chối
+        txn.TransactionsStatus = "succeeded";
+        txn.RefundAdminNote = adminNote;
+
+        await _repo.SaveChangesAsync();
+
+        // Gửi thông báo đến học viên
+        if (txn.AccountFrom.HasValue)
+        {
+            try
+            {
+                await _notiService.SendNotificationAsync(
+                    txn.AccountFrom.Value,
+                    "Yêu cầu hoàn tiền bị TỪ CHỐI",
+                    $"Yêu cầu hoàn tiền giao dịch #{transactionId} của bạn đã bị Admin từ chối. Ghi chú: {adminNote}",
+                    "/Transaction/History"
+                );
+            }
+            catch { }
+        }
     }
 }

@@ -27,13 +27,19 @@ public interface IPaymentGatewayService
         string? orderReference = null,
         string currency = "usd",
         string? destinationAccountId = null,
-        decimal? applicationFee = null);
+        decimal? applicationFee = null,
+        Dictionary<string, string>? metadata = null);
 
     /// <summary>
     /// Lấy mã giao dịch thanh toán từ phiên đã hoàn tất (Stripe: PaymentIntent ID từ Session).
     /// Cần để tạo lệnh chuyển tiền cho instructor.
     /// </summary>
     Task<string?> GetPaymentReferenceAsync(string sessionId);
+
+    /// <summary>
+    /// Lấy metadata của một Stripe Session.
+    /// </summary>
+    Task<Dictionary<string, string>?> GetSessionMetadataAsync(string sessionId);
 
     /// <summary>
     /// ★ Lấy Charge ID từ PaymentIntent ID.

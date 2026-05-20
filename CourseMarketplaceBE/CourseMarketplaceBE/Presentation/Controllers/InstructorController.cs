@@ -257,14 +257,14 @@ public class InstructorController : ControllerBase
     // ─── 9. LẤY LỊCH SỬ THANH TOÁN ───────────────────────────────────
     [HttpGet("payouts")]
     [Authorize]
-    public async Task<IActionResult> GetPayouts(int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null)
+    public async Task<IActionResult> GetPayouts(int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, [FromQuery] int? year = null, [FromQuery] int? month = null)
     {
         var userId = GetUserId();
         if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
 
         try
         {
-            var pagedResult = await _instructorService.GetPayoutsAsync(userId.Value, page, pageSize, keyword, sortBy, status);
+            var pagedResult = await _instructorService.GetPayoutsAsync(userId.Value, page, pageSize, keyword, sortBy, status, year, month);
             return Ok(new { status = 200, data = pagedResult });
         }
         catch (Exception ex)

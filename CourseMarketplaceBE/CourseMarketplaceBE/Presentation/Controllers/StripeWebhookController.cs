@@ -278,8 +278,7 @@ public class StripeWebhookController : ControllerBase
             var payout = txn.InstructorPayouts.FirstOrDefault();
             if (payout != null)
             {
-                payout.PayoutStatus = "refunded";
-                payout.IsPaid = false;
+                _financeRepo.RemoveInstructorPayout(payout);
             }
 
             // 4. Thu hồi Enrollment

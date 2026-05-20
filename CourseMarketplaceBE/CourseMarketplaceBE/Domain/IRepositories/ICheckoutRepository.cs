@@ -41,6 +41,9 @@ public interface ICheckoutRepository
     /// <summary>Lấy OrderInfo theo orderId (kèm OrderItems → Course → Instructor).</summary>
     Task<OrderInfo?> GetOrderWithDetailsAsync(int orderId);
 
+    /// <summary>Lấy danh sách đơn hàng pending của user để dọn dẹp trước khi tạo checkout mới.</summary>
+    Task<List<OrderInfo>> GetPendingOrdersByUserAsync(int userId);
+
     /// <summary>Lấy Stripe Connected Account ID của instructor (cần để tạo Transfer).</summary>
     Task<string?> GetInstructorStripeAccountIdAsync(int instructorId);
 
