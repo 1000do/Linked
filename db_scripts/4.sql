@@ -525,7 +525,7 @@ CREATE TABLE ai_models_courses (
     course_id INT REFERENCES courses(course_id) ON DELETE SET NULL,
 	UNIQUE(model_id,course_id),
     role VARCHAR(50),
-    is_enabled BOOLEAN DEFAULT TRUE,
+    is_enabled NOT NULL BOOLEAN DEFAULT TRUE,
     config_json JSONB,
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

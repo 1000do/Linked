@@ -1,4 +1,4 @@
-@model CourseMarketplaceFE.Models.CourseDetailViewModel
+ @model CourseMarketplaceFE.Models.CourseDetailViewModel
 @{
     ViewData["Title"] = Model.Title;
     var userRole = Context.Request.Cookies["UserRole"]?.ToLower();
@@ -494,7 +494,7 @@
             <video id="previewVideo" class="w-full h-full" controls controlsList="nodownload">
                 @{
                     var previewUrl = firstVideo.MaterialUrl;
-                    if (previewUrl != null && previewUrl.Contains("cloudinary.com")) {
+                    if (!string.IsNullOrEmpty(previewUrl) && previewUrl.Contains("cloudinary.com")) {
                         previewUrl = previewUrl.Replace("/video/upload/", "/video/upload/f_auto,q_auto/");
                     }
                 }

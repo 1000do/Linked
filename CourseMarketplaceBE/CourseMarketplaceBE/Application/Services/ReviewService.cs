@@ -179,7 +179,7 @@ public class ReviewService : IReviewService
             {
                 IsEnrolled = false,
                 CanReview = false,
-                ReviewBlockedReason = "Bạn cần ghi danh khóa học trước khi đánh giá.",
+                ReviewBlockedReason = "You need to enroll in the course before writing a review.",
                 IsOwner = false
             };
         }
@@ -200,7 +200,7 @@ public class ReviewService : IReviewService
             LearnedMaterialCount = learnedCount,
             TotalMaterialCount = totalMaterials,
             CanReview = learnedCount > 0,
-            ReviewBlockedReason = learnedCount == 0 ? "Bạn cần học ít nhất 1 bài học trước khi đánh giá." : null,
+            ReviewBlockedReason = learnedCount == 0 ? "You need to complete at least 1 lesson before writing a review." : null,
             HasReviewed = hasReviewedNormal,
             IsOwner = false
         };
@@ -223,27 +223,27 @@ public class ReviewService : IReviewService
         {
             // Người dùng bình thường → kiểm tra enrollment + ràng buộc
             enrollment = await _checkoutRepo.GetEnrollmentWithProgressAsync(userId, request.CourseId)
-                ?? throw new InvalidOperationException("Bạn cần ghi danh khóa học trước khi đánh giá.");
+                ?? throw new InvalidOperationException("You need to enroll in the course before writing a review.");
 
             if (requireCompletion)
             {
                 if (enrollment.IsCompleted != true)
-                    throw new InvalidOperationException("Bạn cần hoàn thành khóa học trước khi đánh giá tại trang chi tiết.");
+                    throw new InvalidOperationException("You need to complete the course before writing a review on the detail page.");
             }
             else
             {
                 var learnedCount = await _checkoutRepo.GetCompletedMaterialCountAsync(enrollment.EnrollmentId);
                 if (learnedCount <= 0)
-                    throw new InvalidOperationException("Bạn cần học ít nhất 1 bài học trước khi đánh giá.");
+                    throw new InvalidOperationException("You need to complete at least 1 lesson before writing a review.");
             }
         }
 
         // ── Validate input ──
         if (request.Rating < 1 || request.Rating > 5)
-            throw new InvalidOperationException("Rating phải từ 1 đến 5 sao.");
+            throw new InvalidOperationException("Rating must be between 1 and 5 stars.");
 
         if (string.IsNullOrWhiteSpace(request.Comment))
-            throw new InvalidOperationException("Nội dung đánh giá không được để trống.");
+            throw new InvalidOperationException("Review content cannot be empty.");
 
         // ── Upsert logic ──
         if (request.LessonId.HasValue)
@@ -310,8 +310,8 @@ public class ReviewService : IReviewService
             {
                 await _notificationService.SendNotificationAsync(
                     course.InstructorId.Value,
-                    "Đánh giá mới",
-                    $"Khóa học '{course.Title}' vừa nhận được đánh giá {request.Rating} sao từ học viên.",
+                    "New Review",
+                    $"Your course '{course.Title}' just received a {request.Rating}-star review from a student.",
                     $"/InstructorCourse/Editor?id={request.CourseId}"
                 );
             }

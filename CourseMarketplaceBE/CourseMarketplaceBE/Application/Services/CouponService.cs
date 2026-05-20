@@ -37,7 +37,7 @@ public class CouponService : ICouponService
     private static string NormalizeType(string? type)
     {
         if (string.IsNullOrWhiteSpace(type))
-            throw new ArgumentException("CouponType là bắt buộc (fixed | percentage).");
+            throw new ArgumentException("CouponType is required (fixed | percentage).");
 
         type = type.Trim().ToLower();
 
@@ -45,23 +45,23 @@ public class CouponService : ICouponService
         {
             "fixed" or "amount" => "fixed",
             "percent" or "percentage" => "percentage",
-            _ => throw new ArgumentException("CouponType không hợp lệ. Chỉ chấp nhận: fixed | percentage.")
+            _ => throw new ArgumentException("Invalid CouponType. Only 'fixed' or 'percentage' are allowed.")
         };
     }
 
     private static void ValidateCreate(string type, decimal value, DateTime? start, DateTime? end, int? usageLimit)
     {
         if (value <= 0)
-            throw new ArgumentException("DiscountValue phải lớn hơn 0.");
+            throw new ArgumentException("DiscountValue must be greater than 0.");
 
         if (type == "percentage" && value > 100)
-            throw new ArgumentException("Phần trăm giảm giá không được vượt quá 100%.");
+            throw new ArgumentException("Discount percentage cannot exceed 100%.");
 
         if (start.HasValue && end.HasValue && start > end)
-            throw new ArgumentException("StartDate phải trước EndDate.");
+            throw new ArgumentException("StartDate must be before EndDate.");
 
         if (usageLimit.HasValue && usageLimit < 1)
-            throw new ArgumentException("UsageLimit phải ≥ 1.");
+            throw new ArgumentException("UsageLimit must be >= 1.");
     }
 
     private static CouponResponse MapToResponse(Coupon x) => new()
@@ -109,7 +109,7 @@ public class CouponService : ICouponService
         // ★ Kiểm tra coupon_code UNIQUE
         var existing = await _repo.GetByCodeAsync(req.CouponCode.Trim());
         if (existing != null)
-            throw new InvalidOperationException($"Mã giảm giá '{req.CouponCode.Trim()}' đã tồn tại.");
+            throw new InvalidOperationException($"Coupon code '{req.CouponCode.Trim()}' already exists.");
 
         var coupon = new Coupon
         {
@@ -141,13 +141,13 @@ public class CouponService : ICouponService
         int? filterId = isAdmin ? null : managerId;
         var coupon = await _repo.GetByIdAsync(id, filterId);
         if (coupon == null)
-            throw new KeyNotFoundException($"Không tìm thấy mã giảm giá #{id}.");
+            throw new KeyNotFoundException($"Coupon #{id} not found.");
 
         // Chỉ sửa end_date nếu được truyền
         if (req.EndDate.HasValue)
         {
             if (coupon.StartDate.HasValue && req.EndDate < coupon.StartDate)
-                throw new ArgumentException("EndDate phải sau StartDate.");
+                throw new ArgumentException("EndDate must be after StartDate.");
             coupon.EndDate = req.EndDate;
         }
 
@@ -156,7 +156,7 @@ public class CouponService : ICouponService
         {
             if (req.UsageLimit < (coupon.UsedCount ?? 0))
                 throw new ArgumentException(
-                    $"UsageLimit ({req.UsageLimit}) không thể nhỏ hơn số lần đã dùng ({coupon.UsedCount}).");
+                    $"UsageLimit ({req.UsageLimit}) cannot be less than the used count ({coupon.UsedCount}).");
             coupon.UsageLimit = req.UsageLimit;
         }
 
@@ -181,7 +181,7 @@ public class CouponService : ICouponService
         int? filterId = isAdmin ? null : managerId;
         var coupon = await _repo.GetByIdAsync(id, filterId);
         if (coupon == null)
-            throw new KeyNotFoundException($"Không tìm thấy mã giảm giá #{id}.");
+            throw new KeyNotFoundException($"Coupon #{id} not found.");
 
         // ★ Luôn soft-delete: set is_active = false + end_date = hôm qua
         coupon.IsActive = false;
@@ -213,29 +213,29 @@ public class CouponService : ICouponService
         // 1. Kiểm tra khóa học tồn tại + JWT ownership
         var course = await _repo.GetCourseWithInstructorAsync(courseId);
         if (course == null)
-            throw new KeyNotFoundException($"Không tìm thấy khóa học #{courseId}.");
+            throw new KeyNotFoundException($"Course #{courseId} not found.");
 
         if (course.Instructor == null || course.Instructor.InstructorId != instructorUserId)
-            throw new UnauthorizedAccessException("Bạn không phải là chủ sở hữu khóa học này.");
+            throw new UnauthorizedAccessException("You are not the owner of this course.");
 
         // 2. Kiểm tra coupon tồn tại
         var coupon = await _repo.GetByIdGlobalAsync(couponId);
         if (coupon == null)
-            throw new KeyNotFoundException($"Không tìm thấy mã giảm giá #{couponId}.");
+            throw new KeyNotFoundException($"Coupon #{couponId} not found.");
 
         // 3. Kiểm tra coupon còn hợp lệ
         var now = DateTime.UtcNow;
         if (coupon.IsActive != true)
-            throw new InvalidOperationException("Mã giảm giá này đã bị vô hiệu hóa.");
+            throw new InvalidOperationException("This coupon has been disabled.");
 
         if (coupon.EndDate.HasValue && coupon.EndDate < now)
-            throw new InvalidOperationException("Mã giảm giá này đã hết hạn.");
+            throw new InvalidOperationException("This coupon has expired.");
 
         if (coupon.StartDate.HasValue && coupon.StartDate > now)
-            throw new InvalidOperationException("Mã giảm giá này chưa bắt đầu.");
+            throw new InvalidOperationException("This coupon has not started yet.");
 
         if (coupon.UsageLimit.HasValue && (coupon.UsedCount ?? 0) >= coupon.UsageLimit)
-            throw new InvalidOperationException("Mã giảm giá này đã hết lượt sử dụng.");
+            throw new InvalidOperationException("This coupon usage limit has been reached.");
 
         // 4. Gắn coupon vào course
         course.CouponId = couponId;
@@ -254,10 +254,10 @@ public class CouponService : ICouponService
     {
         var course = await _repo.GetCourseWithInstructorAsync(courseId);
         if (course == null)
-            throw new KeyNotFoundException($"Không tìm thấy khóa học #{courseId}.");
+            throw new KeyNotFoundException($"Course #{courseId} not found.");
 
         if (course.Instructor == null || course.Instructor.InstructorId != instructorUserId)
-            throw new UnauthorizedAccessException("Bạn không phải là chủ sở hữu khóa học này.");
+            throw new UnauthorizedAccessException("You are not the owner of this course.");
 
         course.CouponId = null;
         _repo.UpdateCourse(course);
@@ -274,20 +274,20 @@ public class CouponService : ICouponService
     public decimal ApplyCoupon(Coupon coupon, decimal originalPrice)
     {
         if (coupon.IsActive != true)
-            throw new InvalidOperationException("Mã giảm giá không hoạt động.");
+            throw new InvalidOperationException("Coupon is not active.");
 
         if (coupon.StartDate.HasValue && DateTime.UtcNow < coupon.StartDate)
-            throw new InvalidOperationException("Mã giảm giá chưa bắt đầu.");
+            throw new InvalidOperationException("Coupon has not started yet.");
 
         if (coupon.EndDate.HasValue && DateTime.UtcNow > coupon.EndDate)
-            throw new InvalidOperationException("Mã giảm giá đã hết hạn.");
+            throw new InvalidOperationException("Coupon has expired.");
 
         if (coupon.UsageLimit.HasValue && coupon.UsedCount >= coupon.UsageLimit)
-            throw new InvalidOperationException("Mã giảm giá đã hết lượt sử dụng.");
+            throw new InvalidOperationException("Coupon usage limit has been reached.");
 
         if (coupon.MinOrderValue > 0 && originalPrice < coupon.MinOrderValue)
             throw new InvalidOperationException(
-                $"Giá trị đơn hàng tối thiểu để dùng mã này là {coupon.MinOrderValue:N0} VND.");
+                $"Minimum order value required to use this coupon is {coupon.MinOrderValue:N0} VND.");
 
         var finalPrice = coupon.CouponType == "percentage"
             ? originalPrice - (originalPrice * coupon.DiscountValue / 100)

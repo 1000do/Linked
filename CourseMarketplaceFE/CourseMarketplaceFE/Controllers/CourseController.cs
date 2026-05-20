@@ -169,12 +169,12 @@ namespace CourseMarketplaceFE.Controllers
             var response = await _apiClient.PostAsync($"enrollment/free-enroll/{id}");
             if (response.IsSuccessStatusCode)
             {
-                return Json(new { success = true, message = "Ghi danh thành công!" });
+                return Json(new { success = true, message = "Enrollment successful!" });
             }
             
             var content = await response.Content.ReadAsStringAsync();
             var json = JsonDocument.Parse(content);
-            var message = json.RootElement.TryGetProperty("message", out var msg) ? msg.GetString() : "Lỗi ghi danh.";
+            var message = json.RootElement.TryGetProperty("message", out var msg) ? msg.GetString() : "Enrollment error.";
             
             return Json(new { success = false, message });
         }
@@ -301,12 +301,12 @@ namespace CourseMarketplaceFE.Controllers
             try
             {
                 var json = JsonDocument.Parse(content);
-                var message = json.RootElement.TryGetProperty("message", out var msg) ? msg.GetString() : "Lỗi gửi đánh giá.";
+                var message = json.RootElement.TryGetProperty("message", out var msg) ? msg.GetString() : "Review submission error.";
                 return Json(new { success = false, message });
             }
             catch
             {
-                return Json(new { success = false, message = "Lỗi gửi đánh giá." });
+                return Json(new { success = false, message = "Review submission error." });
             }
         }
         [HttpPost]

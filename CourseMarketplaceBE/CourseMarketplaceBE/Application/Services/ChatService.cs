@@ -70,7 +70,7 @@ public class ChatService : IChatService
     public async Task<List<MessageDto>> GetChatHistoryAsync(int chatId, int accountId)
     {
         if (!await HasAccessToChatAsync(accountId, chatId))
-            throw new UnauthorizedAccessException("Bạn không có quyền xem cuộc hội thoại này.");
+            throw new UnauthorizedAccessException("You do not have permission to view this chat.");
 
         // Đánh dấu đã xem
         await _chatRepository.MarkAsReadAsync(chatId, accountId);
@@ -108,7 +108,7 @@ public class ChatService : IChatService
         {
             var hasActiveReport = await _chatRepository.HasActiveReportForChatAsync(dto.ChatId);
             if (!hasActiveReport)
-                throw new UnauthorizedAccessException("Bạn không có quyền gửi tin nhắn trong cuộc hội thoại này.");
+                throw new UnauthorizedAccessException("You do not have permission to send messages in this chat.");
         }
 
         var message = new Message
@@ -203,7 +203,7 @@ public class ChatService : IChatService
         }
 
         if (!canCreate)
-            throw new UnauthorizedAccessException("Bạn không có quyền khởi tạo cuộc hội thoại này.");
+            throw new UnauthorizedAccessException("You do not have permission to initiate this conversation.");
 
         // 2. Tìm hoặc tạo mới
         var existingParticipant = await _chatRepository.FindPrivateChatAsync(senderId, dto.TargetAccountId, dto.ContextType, dto.ContextId);

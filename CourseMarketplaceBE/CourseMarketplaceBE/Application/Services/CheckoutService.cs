@@ -61,7 +61,7 @@ public class CheckoutService : ICheckoutService
         // ── 1.1 Lấy cart items kèm Course + Instructor ──────────────────────
         var cartItems = await _repo.GetCartItemsWithCourseAndInstructorAsync(userId);
         if (!cartItems.Any())
-            throw new InvalidOperationException("Giỏ hàng trống. Không thể thanh toán.");
+            throw new InvalidOperationException("Cart is empty. Cannot checkout.");
 
         // Lấy TransferRate từ system_configs
         var currentTransferRate = await _adminFinanceService.GetCurrentTransferRateAsync();
@@ -71,7 +71,7 @@ public class CheckoutService : ICheckoutService
         {
             if (item.CourseId.HasValue && await _repo.IsEnrolledAsync(userId, item.CourseId.Value))
                 throw new InvalidOperationException(
-                    $"Bạn đã mua khóa học \"{item.Course?.Title}\" rồi. Vui lòng xóa khỏi giỏ hàng.");
+                    $"You have already purchased the course \"{item.Course?.Title}\". Please remove it from the cart.");
         }
 
         // ── 1.3 Tính toán coupon (Hỗ trợ nhiều mã phân tách bằng dấu phẩy) ────
@@ -133,13 +133,13 @@ public class CheckoutService : ICheckoutService
 
             purchasePrice = Math.Round(Math.Max(purchasePrice, 0), 2);
 
-            paymentLineItems.Add(new PaymentLineItem
-            {
-                CourseName = cartItem.Course?.Title ?? "Khóa học",
-                ThumbnailUrl = cartItem.Course?.CourseThumbnailUrl,
-                UnitPrice = purchasePrice
-            });
-        }
+                paymentLineItems.Add(new PaymentLineItem
+                {
+                    CourseName = cartItem.Course?.Title ?? "Course",
+                    ThumbnailUrl = cartItem.Course?.CourseThumbnailUrl,
+                    UnitPrice = purchasePrice
+                });
+            }
 
         var sessionCurrency = "usd"; 
         var orderReference = $"tx_{Guid.NewGuid().ToString("N")}";
@@ -183,10 +183,10 @@ public class CheckoutService : ICheckoutService
     {
         var course = await _repo.GetCourseWithInstructorAsync(courseId);
         if (course == null)
-            throw new InvalidOperationException("Khóa học không tồn tại.");
+            throw new InvalidOperationException("Course not found.");
 
         if (await _repo.IsEnrolledAsync(userId, courseId))
-            throw new InvalidOperationException($"Bạn đã mua khóa học \"{course.Title}\" rồi.");
+            throw new InvalidOperationException($"You have already purchased the course \"{course.Title}\".");
 
         var stripeAccountId = await _repo.GetInstructorStripeAccountIdAsync(course.InstructorId ?? 0);
         if (string.IsNullOrEmpty(stripeAccountId))
@@ -203,12 +203,12 @@ public class CheckoutService : ICheckoutService
             {
                 if (course.CouponId != coupon.CouponId)
                 {
-                    throw new InvalidOperationException("Mã giảm giá này không áp dụng cho khóa học này.");
+                    throw new InvalidOperationException("This coupon is not applicable to this course.");
                 }
 
                 if (originalPrice < coupon.MinOrderValue)
                 {
-                    throw new InvalidOperationException($"Mã này yêu cầu giá trị khóa học tối thiểu là ${coupon.MinOrderValue:N2}.");
+                    throw new InvalidOperationException($"This coupon requires a minimum course value of ${coupon.MinOrderValue:N2}.");
                 }
 
                 discountAmount = coupon.CouponType == "percentage"
@@ -218,7 +218,7 @@ public class CheckoutService : ICheckoutService
             }
             else
             {
-                throw new InvalidOperationException("Mã giảm giá không tồn tại hoặc đã hết hạn.");
+                throw new InvalidOperationException("Coupon does not exist or has expired.");
             }
         }
 
@@ -441,14 +441,19 @@ public class CheckoutService : ICheckoutService
                     };
                     await _repo.AddInstructorPayoutAsync(payout);
 
-                    // Gửi thông báo giảng viên
-                    var courseTitle = course.Title ?? "Khóa học của bạn";
-                    await _notificationService.SendNotificationAsync(
-                        course.InstructorId ?? 0,
-                        "Bạn có đơn hàng mới",
-                        $"Khóa học '{courseTitle}' vừa được bán thành công. Số tiền thu về dự kiến: {payoutAmount:N2} USD.",
-                        $"/Instructor/Payouts"
-                    );
+                    var instructorId = course.InstructorId;
+
+                    // ── NEW: Thông báo cho giảng viên ──
+                    if (instructorId.HasValue)
+                    {
+                        var courseTitle =course.Title ?? "your course";
+                        await _notificationService.SendNotificationAsync(
+                            instructorId.Value,
+                            "You have a new order",
+                            $"The course '{courseTitle}' has been successfully sold. Expected revenue: {payoutAmount:N0} VND.",
+                            $"/Instructor/Payouts"
+                        );
+                    }
                 }
 
                 // ── 2.6 CLEAR CART (nếu mua từ Cart) ───────────────────────────

@@ -32,7 +32,7 @@ public class InstructorService : IInstructorService
         // Kiểm tra account tồn tại và đã xác thực email
         var account = await _repo.GetAccountByIdAsync(userId);
         if (account == null)
-            throw new InvalidOperationException("Không tìm thấy tài khoản.");
+            throw new InvalidOperationException("Account not found.");
         if (!account.IsVerified)
             throw new InvalidOperationException("EMAIL_NOT_VERIFIED");
 
@@ -42,13 +42,13 @@ public class InstructorService : IInstructorService
         {
             // Chỉ cho phép nộp lại nếu đơn đang ở trạng thái 'Rejected'
             if (existing.ApprovalStatus != "Rejected")
-                throw new InvalidOperationException("Bạn đã nộp đơn đăng ký Giảng viên trước đó.");
+                throw new InvalidOperationException("You have already submitted an instructor application.");
 
             // Upload file mới nếu có, không thì giữ file cũ
             if (request.DocumentFile != null && request.DocumentFile.Length > 0)
                 existing.DocumentUrl = await _uploadService.UploadImageAsync(request.DocumentFile);
             else if (string.IsNullOrEmpty(existing.DocumentUrl))
-                throw new InvalidOperationException("Vui lòng tải lên CV / Chứng chỉ / CMND.");
+                throw new InvalidOperationException("Please upload your CV / Certificates / ID card.");
 
             existing.ProfessionalTitle   = request.ProfessionalTitle;
             existing.ExpertiseCategories = request.ExpertiseCategories;
@@ -59,12 +59,12 @@ public class InstructorService : IInstructorService
             existing.ApprovalStatus      = "Pending";
 
             await _repo.SaveChangesAsync();
-            return "Đơn đăng ký đã được gửi lại. Vui lòng chờ Admin xét duyệt.";
+            return "Your application has been resubmitted. Please wait for admin approval.";
         }
 
         // ★ CV/Document bắt buộc cho đơn mới
         if (request.DocumentFile == null || request.DocumentFile.Length == 0)
-            throw new InvalidOperationException("Vui lòng tải lên CV / Chứng chỉ / CMND.");
+            throw new InvalidOperationException("Please upload your CV / Certificates / ID card.");
 
         string? documentUrl = await _uploadService.UploadImageAsync(request.DocumentFile);
 
@@ -88,7 +88,7 @@ public class InstructorService : IInstructorService
         await _repo.AddAsync(instructor);
         await _repo.SaveChangesAsync();
 
-        return "Đơn đăng ký đã được gửi. Vui lòng chờ Admin duyệt.";
+        return "Your application has been submitted. Please wait for admin approval.";
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -98,10 +98,10 @@ public class InstructorService : IInstructorService
     {
         var instructor = await _repo.GetByIdAsync(instructorId);
         if (instructor == null)
-            throw new InvalidOperationException("Không tìm thấy đơn đăng ký.");
+            throw new InvalidOperationException("Application not found.");
 
         if (status != "Approved" && status != "Rejected")
-            throw new InvalidOperationException("Trạng thái không hợp lệ. Chỉ chấp nhận 'Approved' hoặc 'Rejected'.");
+            throw new InvalidOperationException("Invalid status. Only 'Approved' or 'Rejected' are allowed.");
 
         instructor.ApprovalStatus = status;
         await _repo.SaveChangesAsync();
@@ -117,10 +117,10 @@ public class InstructorService : IInstructorService
         var instructor = await _repo.GetByIdWithNavigationAsync(userId);
 
         if (instructor == null)
-            throw new InvalidOperationException("Bạn chưa nộp đơn đăng ký Giảng viên.");
+            throw new InvalidOperationException("You have not submitted an instructor application.");
 
         if (instructor.ApprovalStatus != "Approved")
-            throw new InvalidOperationException("Đơn đăng ký chưa được duyệt. Vui lòng chờ Admin xét duyệt.");
+            throw new InvalidOperationException("Application is not approved yet. Please wait for admin approval.");
 
         // Nếu đã có Stripe account → tạo lại Link (tái sử dụng account cũ)
         if (!string.IsNullOrEmpty(instructor.StripeAccountId))
@@ -202,10 +202,10 @@ public class InstructorService : IInstructorService
     {
         var instructor = await _repo.GetByIdAsync(instructorId);
         if (instructor == null)
-            throw new InvalidOperationException("Không tìm thấy Instructor.");
+            throw new InvalidOperationException("Instructor not found.");
 
         if (string.IsNullOrEmpty(instructor.StripeAccountId))
-            throw new InvalidOperationException("Instructor chưa có tài khoản Stripe.");
+            throw new InvalidOperationException("Instructor does not have a Stripe account.");
 
         if (instructor.StripeOnboardingStatus == "Active") return "Active";
 
@@ -273,10 +273,10 @@ public class InstructorService : IInstructorService
     {
         var instructor = await _repo.GetByIdAsync(instructorId);
         if (instructor == null)
-            throw new InvalidOperationException("Không tìm thấy instructor.");
+            throw new InvalidOperationException("Instructor not found.");
 
         if (string.IsNullOrEmpty(instructor.StripeAccountId))
-            throw new InvalidOperationException("Instructor chưa có Stripe account.");
+            throw new InvalidOperationException("Instructor does not have a Stripe account.");
 
         // ★ Xóa Stripe Connected Account trên Stripe
         try
@@ -297,7 +297,7 @@ public class InstructorService : IInstructorService
         instructor.ChargesEnabled = false;
         await _repo.SaveChangesAsync();
 
-        return $"Đã reset Stripe account cho instructor {instructorId}. Giảng viên cần setup lại Stripe.";
+        return $"Stripe account for instructor {instructorId} has been reset. The instructor needs to set up Stripe again.";
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -306,15 +306,15 @@ public class InstructorService : IInstructorService
     public async Task SetStripeCountryAsync(int userId, string countryCode)
     {
         if (string.IsNullOrWhiteSpace(countryCode) || countryCode.Length != 2)
-            throw new InvalidOperationException("Mã quốc gia không hợp lệ (cần đúng 2 ký tự ISO, VD: SG, AU, US).");
+            throw new InvalidOperationException("Invalid country code (must be exactly 2 ISO characters, e.g. SG, AU, US).");
 
         var instructor = await _repo.GetByIdAsync(userId);
         if (instructor == null)
-            throw new InvalidOperationException("Bạn chưa nộp đơn đăng ký Giảng viên.");
+            throw new InvalidOperationException("You have not submitted an instructor application.");
 
         // Nếu đã có Stripe account rồi → không cho đổi country nữa
         if (!string.IsNullOrEmpty(instructor.StripeAccountId))
-            throw new InvalidOperationException("Không thể đổi quốc gia khi đã có tài khoản Stripe. Hãy Reset Stripe trước.");
+            throw new InvalidOperationException("Cannot change country once a Stripe account exists. Please reset Stripe first.");
 
         instructor.StripeCountry = countryCode.ToUpper();
         await _repo.SaveChangesAsync();

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CourseMarketplaceBE.Domain.Entities;
 
-public partial class AiModelsCourse
+public partial class CourseAiIntegration
 {
     public int Id { get; set; }
 
@@ -13,7 +13,7 @@ public partial class AiModelsCourse
 
     public string? Role { get; set; }
 
-    public bool? IsEnabled { get; set; }
+    public bool IsEnabled { get; set; }
 
     public string? ConfigJson { get; set; }
 

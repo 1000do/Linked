@@ -61,12 +61,12 @@ public class AdminFinanceService : IAdminFinanceService
     {
         if (rate < 1 || rate > 100)
             throw new InvalidOperationException(
-                "Tỷ lệ chia sẻ phải từ 1% đến 100%.");
+                "The revenue share rate must be between 1% and 100%.");
 
         await _repo.UpsertConfigAsync(
             TransferRateKey,
             rate.ToString("F2"),
-            $"Tỷ lệ giảng viên nhận: {rate}%, Sàn nhận: {100 - rate}%");
+            $"Instructor share rate: {rate}%, Platform share rate: {100 - rate}%");
 
         // ── UC-XXX: THÔNG BÁO CHO GIẢNG VIÊN ─────────────────────────────────
         // Khi thay đổi tỷ lệ, cần báo cho các đối tác đã liên kết Stripe
@@ -77,8 +77,8 @@ public class AdminFinanceService : IAdminFinanceService
             
             if (instructors.Any())
             {
-                var title = "📢 Cập nhật chính sách chia sẻ doanh thu";
-                var content = $"Hệ thống vừa cập nhật tỷ lệ chia sẻ doanh thu mới. Kể từ bây giờ, bạn sẽ nhận được {rate:F0}% doanh thu từ mỗi khóa học được bán ra.";
+                var title = "📢 Revenue Share Policy Update";
+                var content = $"The system has updated the revenue share rate. From now on, you will receive {rate:F0}% of the revenue from each course sold.";
 
                 foreach (var ins in instructors)
                 {
@@ -91,13 +91,13 @@ public class AdminFinanceService : IAdminFinanceService
                     );
                 }
 
-                _logger.LogInformation("✅ Đã gửi thông báo thay đổi TransferRate ({Rate}%) cho {Count} giảng viên.", rate, instructors.Count);
+                _logger.LogInformation("✅ Sent TransferRate change notification ({Rate}%) to {Count} instructors.", rate, instructors.Count);
             }
         }
         catch (Exception ex)
         {
             // Không throw lỗi ở đây để tránh làm gián đoạn việc lưu config
-            _logger.LogError(ex, "❌ Lỗi khi gửi thông báo cập nhật TransferRate.");
+            _logger.LogError(ex, "❌ Error sending TransferRate update notification.");
         }
     }
 
@@ -183,10 +183,10 @@ public class AdminFinanceService : IAdminFinanceService
     {
         var payout = await _repo.GetPayoutByIdAsync(payoutId);
         if (payout == null)
-            throw new InvalidOperationException("Không tìm thấy khoản thanh toán này.");
+            throw new InvalidOperationException("This payment was not found.");
 
         if (payout.IsPaid)
-            throw new InvalidOperationException("Khoản thanh toán này đã được đánh dấu là Đã trả.");
+            throw new InvalidOperationException("This payment has already been marked as Paid.");
 
         payout.IsPaid = true;
         payout.PayoutStatus = "paid";
@@ -214,13 +214,13 @@ public class AdminFinanceService : IAdminFinanceService
     {
         var payout = await _repo.GetPayoutByIdAsync(payoutId);
         if (payout == null)
-            throw new InvalidOperationException("Không tìm thấy khoản thanh toán.");
+            throw new InvalidOperationException("Payment not found.");
 
         if (payout.IsPaid)
-            throw new InvalidOperationException("Khoản thanh toán này đã được trả trước đó.");
+            throw new InvalidOperationException("This payment was previously paid.");
 
         if (payout.Instructor == null || string.IsNullOrEmpty(payout.Instructor.StripeAccountId))
-            throw new InvalidOperationException("Giảng viên này chưa thiết lập tài khoản Stripe Connect.");
+            throw new InvalidOperationException("This instructor has not set up a Stripe Connect account.");
 
         try
         {
@@ -287,7 +287,8 @@ public class AdminFinanceService : IAdminFinanceService
             }
             catch { }
 
-            throw new InvalidOperationException($"Lỗi Stripe Transfer: {ex.Message}");
+           
+            throw new InvalidOperationException($"Stripe Transfer error: {ex.Message}");
         }
     }
 
@@ -308,7 +309,7 @@ public class AdminFinanceService : IAdminFinanceService
             catch (Exception ex)
             {
                 result.FailCount++;
-                result.Errors.Add($"Payout #{p.PayoutId} (GV: {p.InstructorName}): {ex.Message}");
+                result.Errors.Add($"Payout #{p.PayoutId} (Instructor: {p.InstructorName}): {ex.Message}");
             }
         }
 
@@ -370,11 +371,11 @@ public class AdminFinanceService : IAdminFinanceService
             : balanceResp.Available;
 
         if (amountToWithdraw <= 0)
-            throw new InvalidOperationException("Số tiền rút phải lớn hơn 0.");
+            throw new InvalidOperationException("The withdrawal amount must be greater than 0.");
 
         if (amountToWithdraw > balanceResp.Available)
             throw new InvalidOperationException(
-                $"Số dư không đủ. Available: ${balanceResp.Available:F2}, Yêu cầu: ${amountToWithdraw:F2}");
+                $"Insufficient balance. Available: ${balanceResp.Available:F2}, Requested: ${amountToWithdraw:F2}");
 
         // 2. Tạo Payout trên Stripe (chuyển từ Stripe → ngân hàng Admin)
         var payoutService = new PayoutService();
@@ -395,7 +396,7 @@ public class AdminFinanceService : IAdminFinanceService
         }
         catch (StripeException ex)
         {
-            throw new InvalidOperationException($"Lỗi Stripe Payout: {ex.Message}");
+            throw new InvalidOperationException($"Stripe Payout error: {ex.Message}");
         }
 
         // 3. Lưu vào DB
@@ -502,18 +503,18 @@ public class AdminFinanceService : IAdminFinanceService
         // ── 1. LOAD & VALIDATE ──────────────────────────────────────────
         var txn = await _repo.GetTransactionWithFullGraphAsync(transactionId);
         if (txn == null)
-            throw new InvalidOperationException($"Không tìm thấy giao dịch #{transactionId}.");
+            throw new InvalidOperationException($"Transaction #{transactionId} not found.");
 
         if (txn.TransactionsStatus == "refunded")
-            throw new InvalidOperationException("Giao dịch này đã được hoàn tiền trước đó.");
+            throw new InvalidOperationException("This transaction was previously refunded.");
 
         if (txn.TransactionsStatus != "succeeded" && txn.TransactionsStatus != "refund_pending")
             throw new InvalidOperationException(
-                $"Chỉ hoàn tiền được giao dịch thành công hoặc đang chờ duyệt hoàn tiền. Trạng thái hiện tại: {txn.TransactionsStatus}.");
+                $"Only successful transactions can be refunded. Current status: {txn.TransactionsStatus}.");
 
         if (string.IsNullOrEmpty(txn.StripePaymentintentId))
             throw new InvalidOperationException(
-                "Giao dịch này không có PaymentIntent ID — không thể hoàn tiền qua Stripe.");
+                "This transaction does not have a PaymentIntent ID — cannot refund via Stripe.");
 
         _logger.LogInformation(
             "🔄 REFUND START | TxnId={TxnId} | Amount={Amount} {Currency} | PI={PI}",
@@ -534,8 +535,8 @@ public class AdminFinanceService : IAdminFinanceService
             var stripeTransferId = await _repo.GetStripeTransferIdByDestinationPaymentAsync(payout.StripeTransferId);
             if (string.IsNullOrEmpty(stripeTransferId))
                 throw new InvalidOperationException(
-                    $"Không thể tìm Stripe Transfer ID gốc cho DestPaymentId={payout.StripeTransferId}. " +
-                    "Vui lòng xử lý thủ công trên Stripe Dashboard.");
+                    $"Cannot find original Stripe Transfer ID for DestPaymentId={payout.StripeTransferId}. " +
+                    "Please handle manually on the Stripe Dashboard.");
 
             try
             {
@@ -546,8 +547,8 @@ public class AdminFinanceService : IAdminFinanceService
             {
                 _logger.LogError(ex, "❌ Transfer reversal FAILED");
                 throw new InvalidOperationException(
-                    $"Không thể thu hồi tiền từ giảng viên: {ex.Message}. " +
-                    "Có thể giảng viên đã rút hết tiền khỏi Stripe.");
+                    $"Cannot claw back money from the instructor: {ex.Message}. " +
+                    "The instructor may have already withdrawn all funds from Stripe.");
             }
         }
 
@@ -561,7 +562,7 @@ public class AdminFinanceService : IAdminFinanceService
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Stripe Refund FAILED");
-            throw new InvalidOperationException($"Lỗi hoàn tiền Stripe: {ex.Message}");
+            throw new InvalidOperationException($"Stripe refund error: {ex.Message}");
         }
 
         // ── 4. UPDATE DB STATUS ─────────────────────────────────────────

@@ -16,10 +16,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class CourseController : ControllerBase
 {
     private readonly ICourseService _courseService;
+    private readonly IModerationService _moderationService;
 
-    public CourseController(ICourseService courseService)
+    public CourseController(ICourseService courseService, IModerationService moderationService)
     {
         _courseService = courseService;
+        _moderationService = moderationService;
     }
 
     private int GetInstructorId()
@@ -160,6 +162,23 @@ public class CourseController : ControllerBase
         catch (BadRequestException ex)
         {
             return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
+    [HttpPost("moderate")]
+    public async Task<IActionResult> ModerateCourse([FromBody] CouresModerationRequest request)
+    {
+        try
+        {
+            var instructorId = GetInstructorId();
+            request.InstructorId = instructorId;
+
+            var result = await _moderationService.HandleCourseModerationAsync(request);
+            return Ok(ApiResponse<CourseModerationResult>.SuccessResponse(result, "Moderation has been successfully processed."));
         }
         catch (Exception ex)
         {

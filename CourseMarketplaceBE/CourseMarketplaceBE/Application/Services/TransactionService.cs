@@ -47,7 +47,7 @@ public class TransactionService : ITransactionService
     public async Task<TransactionDetailDto?> GetTransactionDetailAsync(int transactionId)
     {
         if (transactionId <= 0)
-            throw new ArgumentException("Transaction ID không hợp lệ.", nameof(transactionId));
+            throw new ArgumentException("Invalid Transaction ID.", nameof(transactionId));
 
         return await _repo.GetTransactionDetailAsync(transactionId);
     }

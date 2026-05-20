@@ -37,7 +37,7 @@ public class InstructorController : ControllerBase
     public async Task<IActionResult> Apply([FromForm] InstructorApplicationRequest request)
     {
         var userId = GetUserId();
-        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+        if (userId == null) return Unauthorized(new { message = "Invalid login session." });
 
         try
         {
@@ -50,7 +50,7 @@ public class InstructorController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { status = 500, message = $"Lỗi server: {ex.Message}" });
+            return StatusCode(500, new { status = 500, message = $"Server error: {ex.Message}" });
         }
     }
 
@@ -64,10 +64,10 @@ public class InstructorController : ControllerBase
     public async Task<IActionResult> GetApplyInfo()
     {
         var userId = GetUserId();
-        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+        if (userId == null) return Unauthorized(new { message = "Invalid login session." });
 
         var info = await _instructorService.GetRejectedApplicationInfoAsync(userId.Value);
-        if (info == null) return NotFound(new { status = 404, message = "Không tìm thấy đơn bị từ chối." });
+        if (info == null) return NotFound(new { status = 404, message = "Rejected application not found." });
 
         return Ok(new { status = 200, data = info });
     }
@@ -84,7 +84,7 @@ public class InstructorController : ControllerBase
         try
         {
             await _instructorService.ApproveApplicationAsync(id, status);
-            return Ok(new { status = 200, message = $"Đã cập nhật trạng thái thành '{status}'." });
+            return Ok(new { status = 200, message = $"Status updated to '{status}'." });
         }
         catch (InvalidOperationException ex)
         {
@@ -92,7 +92,7 @@ public class InstructorController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { status = 500, message = $"Lỗi server: {ex.Message}" });
+            return StatusCode(500, new { status = 500, message = $"Server error: {ex.Message}" });
         }
     }
 
@@ -106,7 +106,7 @@ public class InstructorController : ControllerBase
     public async Task<IActionResult> SetupPayout()
     {
         var userId = GetUserId();
-        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+        if (userId == null) return Unauthorized(new { message = "Invalid login session." });
 
         try
         {
@@ -124,11 +124,11 @@ public class InstructorController : ControllerBase
         }
         catch (Stripe.StripeException ex)
         {
-            return StatusCode(502, new { status = 502, message = "Lỗi Stripe.", detail = ex.Message });
+            return StatusCode(502, new { status = 502, message = "Stripe error.", detail = ex.Message });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { status = 500, message = $"Lỗi server: {ex.Message}" });
+            return StatusCode(500, new { status = 500, message = $"Server error: {ex.Message}" });
         }
     }
 
@@ -151,7 +151,7 @@ public class InstructorController : ControllerBase
                 return Ok(new
                 {
                     status = 200,
-                    message = "Stripe Onboarding hoàn tất! Bạn đã có thể nhận thanh toán.",
+                    message = "Stripe Onboarding completed! You can now receive payments.",
                     stripeStatus = "Active"
                 });
             }
@@ -160,7 +160,7 @@ public class InstructorController : ControllerBase
                 return Ok(new
                 {
                     status = 200,
-                    message = "Đã lưu hồ sơ Stripe! Vui lòng chờ Stripe xác minh để kích hoạt tính năng thanh toán.",
+                    message = "Stripe account details saved! Please wait for Stripe verification to activate payments.",
                     stripeStatus = "Processing"
                 });
             }
@@ -168,7 +168,7 @@ public class InstructorController : ControllerBase
             return Ok(new
             {
                 status = 200,
-                message = "Bạn chưa hoàn tất thiết lập Stripe.",
+                message = "Stripe setup is not completed.",
                 stripeStatus = "Pending"
             });
         }
@@ -178,7 +178,7 @@ public class InstructorController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { status = 500, message = $"Lỗi server: {ex.Message}" });
+            return StatusCode(500, new { status = 500, message = $"Server error: {ex.Message}" });
         }
     }
 
@@ -197,10 +197,10 @@ public class InstructorController : ControllerBase
     public async Task<IActionResult> GetDashboard()
     {
         var userId = GetUserId();
-        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+        if (userId == null) return Unauthorized(new { message = "Invalid login session." });
 
         var data = await _instructorService.GetInstructorDashboardAsync(userId.Value);
-        if (data == null) return NotFound(new { status = 404, message = "Chưa đăng ký Giảng viên." });
+        if (data == null) return NotFound(new { status = 404, message = "Not registered as an instructor yet." });
 
         return Ok(new { status = 200, data });
     }
@@ -241,12 +241,12 @@ public class InstructorController : ControllerBase
     public async Task<IActionResult> SetStripeCountry([FromBody] SetCountryRequest request)
     {
         var userId = GetUserId();
-        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+        if (userId == null) return Unauthorized(new { message = "Invalid login session." });
 
         try
         {
             await _instructorService.SetStripeCountryAsync(userId.Value, request.CountryCode);
-            return Ok(new { status = 200, message = $"Đã lưu quốc gia Stripe: {request.CountryCode}" });
+            return Ok(new { status = 200, message = $"Saved Stripe country: {request.CountryCode}" });
         }
         catch (InvalidOperationException ex)
         {
@@ -260,7 +260,7 @@ public class InstructorController : ControllerBase
     public async Task<IActionResult> GetPayouts(int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, [FromQuery] int? year = null, [FromQuery] int? month = null)
     {
         var userId = GetUserId();
-        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+        if (userId == null) return Unauthorized(new { message = "Invalid login session." });
 
         try
         {
@@ -269,7 +269,7 @@ public class InstructorController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { status = 500, message = $"Lỗi server: {ex.Message}" });
+            return StatusCode(500, new { status = 500, message = $"Server error: {ex.Message}" });
         }
     }
 
@@ -284,17 +284,17 @@ public class InstructorController : ControllerBase
     public async Task<IActionResult> SyncPayouts()
     {
         var userId = GetUserId();
-        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+        if (userId == null) return Unauthorized(new { message = "Invalid login session." });
 
         try
         {
             await _instructorService.SyncPayoutsWithStripeAsync(userId.Value);
             var pagedResult = await _instructorService.GetPayoutsAsync(userId.Value, 1, 10, null, "date_desc", null);
-            return Ok(new { status = 200, message = "Đồng bộ thành công!", data = pagedResult });
+            return Ok(new { status = 200, message = "Synchronized successfully!", data = pagedResult });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { status = 500, message = $"Lỗi đồng bộ: {ex.Message}" });
+            return StatusCode(500, new { status = 500, message = $"Sync error: {ex.Message}" });
         }
     }
 
@@ -309,10 +309,10 @@ public class InstructorController : ControllerBase
     public async Task<IActionResult> GetStripeStatus()
     {
         var userId = GetUserId();
-        if (userId == null) return Unauthorized(new { message = "Phiên đăng nhập không hợp lệ." });
+        if (userId == null) return Unauthorized(new { message = "Invalid login session." });
 
         var data = await _instructorService.GetInstructorDashboardAsync(userId.Value);
-        if (data == null) return NotFound(new { status = 404, message = "Chưa đăng ký Giảng viên." });
+        if (data == null) return NotFound(new { status = 404, message = "Not registered as an instructor yet." });
 
         var isStripeActive = !string.IsNullOrEmpty(data.StripeAccountId)
             && string.Equals(data.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
@@ -339,13 +339,13 @@ public class InstructorController : ControllerBase
         {
             var profile = await _instructorService.GetPublicProfileAsync(id);
             if (profile == null)
-                return NotFound(new { status = 404, message = "Không tìm thấy thông tin giảng viên hoặc đơn chưa được duyệt." });
+                return NotFound(new { status = 404, message = "Instructor profile not found or application not approved yet." });
 
             return Ok(new { status = 200, data = profile });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { status = 500, message = $"Lỗi server: {ex.Message}" });
+            return StatusCode(500, new { status = 500, message = $"Server error: {ex.Message}" });
         }
     }
 

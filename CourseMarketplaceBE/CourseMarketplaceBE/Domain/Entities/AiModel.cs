@@ -22,8 +22,12 @@ public partial class AiModel
     public DateTime? ModelCreatedAt { get; set; }
 
     public DateTime? ModelUpdatedAt { get; set; }
+    public string? ModelPath { get; set; }
 
-    public virtual ICollection<AiModelsCourse> AiModelsCourses { get; set; } = new List<AiModelsCourse>();
+    public virtual ICollection<CourseAiIntegration> CourseAiIntegrations { get; set; } = new List<CourseAiIntegration>();
+    
+    // Legacy support
+    
     public virtual ICollection<CourseReviewModerationLog> CourseReviewModerationLogs { get; set; } = new List<CourseReviewModerationLog>();
     public virtual ICollection<LessonReviewModerationLog> LessonReviewModerationLogs { get; set; } = new List<LessonReviewModerationLog>();
 

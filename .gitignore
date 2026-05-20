@@ -17,9 +17,12 @@ secrets.json
 *.usersecrets
 .env
 *.env
+**/.env.*
 
 # Node / Frontend
 node_modules/
-
+private/
+ai_models/
+.env.example
 
 

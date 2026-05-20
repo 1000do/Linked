@@ -7,6 +7,7 @@ using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Application.Exceptions;
+using CourseMarketplaceBE.Domain.Constants;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -18,6 +19,7 @@ public class LessonService : ILessonService
     private readonly IFileUploadService _uploadService;
     private readonly IRedisService _redisService;
     private readonly IInstructorRepository _instructorRepository;
+    private readonly IMaterialEmbeddingRepository _materialEmbeddingRepository;
 
     public LessonService(
         ILessonRepository lessonRepository, 
@@ -25,7 +27,8 @@ public class LessonService : ILessonService
         IMaterialRepository materialRepository,
         IFileUploadService uploadService,
         IRedisService redisService,
-        IInstructorRepository instructorRepository)
+        IInstructorRepository instructorRepository,
+        IMaterialEmbeddingRepository materialEmbeddingRepository)
     {
         _lessonRepository = lessonRepository;
         _courseRepository = courseRepository;
@@ -33,6 +36,7 @@ public class LessonService : ILessonService
         _uploadService = uploadService;
         _redisService = redisService;
         _instructorRepository = instructorRepository;
+        _materialEmbeddingRepository = materialEmbeddingRepository;
     }
 
     public async Task<LessonResponse> CreateLessonAsync(LessonCreateRequest request, int instructorId)
@@ -58,7 +62,7 @@ public class LessonService : ILessonService
             var currentLessons = await _lessonRepository.GetByCourseIdAsync(request.CourseId);
             if (currentLessons.Count(l => !l.IsRemoved) >= 5)
             {
-                throw new BadRequestException("Instructor chưa liên kết Stripe chỉ được phép tạo tối đa 5 bài học mỗi khóa học.");
+                throw new BadRequestException("Instructors who have not linked a Stripe account are only allowed to create up to 5 lessons per course.");
             }
         }
 
@@ -66,7 +70,7 @@ public class LessonService : ILessonService
         var allLessons = await _lessonRepository.GetByCourseIdAsync(request.CourseId);
         if (allLessons.Any(l => !l.IsRemoved && l.Title.Trim().Equals(request.Title.Trim(), StringComparison.OrdinalIgnoreCase)))
         {
-            throw new BadRequestException("Tên bài học đã tồn tại trong khóa học này. Vui lòng chọn tên khác.");
+            throw new BadRequestException("Lesson title already exists in this course. Please choose a different title.");
         }
 
 
@@ -94,9 +98,9 @@ public class LessonService : ILessonService
 
         await _lessonRepository.AddAsync(lesson);
         
-        if ("published".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
-            course.CourseStatus = "draft";
+            course.CourseStatus = CourseStatus.Draft.ToValue();
             course.ModerationFeedback = null;
             _courseRepository.Update(course);
         }
@@ -104,7 +108,7 @@ public class LessonService : ILessonService
         await _lessonRepository.SaveChangesAsync();
 
         // Invalidate Course Cache
-        await _redisService.RemoveCacheAsync($"course:detail:{request.CourseId}");
+        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(request.CourseId));
 
         return new LessonResponse
         {
@@ -144,7 +148,7 @@ public class LessonService : ILessonService
             var existingMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
             if (existingMaterials.Count(m => m.LearningStatus != "removed" && (m.MaterialMetadata?.FileType == "document" || m.MaterialMetadata?.FileType == "file" || m.MaterialMetadata?.FileType == "raw")) >= 1)
             {
-                throw new BadRequestException("Instructor chưa liên kết Stripe chỉ được phép đính kèm tối đa 1 tài liệu mỗi bài học.");
+                throw new BadRequestException("Instructors who have not linked a Stripe account are only allowed to attach up to 1 document per lesson.");
             }
         }
 
@@ -163,29 +167,32 @@ public class LessonService : ILessonService
         var allMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
         fileType = request.MaterialMetadata?.FileType ?? "video";
         
-        LearningMaterial? existingActiveVideo = null;
+        var existingActiveVideos = new List<LearningMaterial>();
         if (fileType == "video")
         {
-            existingActiveVideo = allMaterials.FirstOrDefault(m => 
+            existingActiveVideos = allMaterials.Where(m => 
                 m.LearningStatus == "active" &&
-                ((m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || (m.MaterialMetadata == null)));
+                ((m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || (m.MaterialMetadata == null))).ToList();
         }
 
         LearningMaterial material;
-        // Nếu là video và đã có video đang hoạt động -> Chuyển video cũ vào Trash, tạo bản ghi mới
-        if (fileType == "video" && existingActiveVideo != null && !string.IsNullOrEmpty(materialUrl))
+        // Nếu là video và đã có video đang hoạt động -> Chuyển tất cả video cũ vào Trash, tạo bản ghi mới
+        if (fileType == "video" && existingActiveVideos.Any() && !string.IsNullOrEmpty(materialUrl))
         {
-            // 1. Chuyển video hiện tại vào trash
-            if (!string.IsNullOrEmpty(existingActiveVideo.MaterialUrl))
+            foreach (var activeVideo in existingActiveVideos)
             {
-                var trashUrl = await _uploadService.MoveToTrashAsync(existingActiveVideo.MaterialUrl);
-                var cloudId = _uploadService.GetPublicIdFromUrl(existingActiveVideo.MaterialUrl);
-                existingActiveVideo.MaterialUrl = trashUrl ?? existingActiveVideo.MaterialUrl;
-                existingActiveVideo.CloudPublicId = cloudId;
+                // Chuyển video hiện tại vào trash
+                if (!string.IsNullOrEmpty(activeVideo.MaterialUrl))
+                {
+                    var trashUrl = await _uploadService.MoveToTrashAsync(activeVideo.MaterialUrl);
+                    var cloudId = _uploadService.GetPublicIdFromUrl(activeVideo.MaterialUrl);
+                    activeVideo.MaterialUrl = trashUrl ?? activeVideo.MaterialUrl;
+                    activeVideo.CloudPublicId = cloudId;
+                }
+                activeVideo.LearningStatus = "removed";
+                activeVideo.UpdatedAt = DateTime.UtcNow;
+                _materialRepository.Update(activeVideo);
             }
-            existingActiveVideo.LearningStatus = "removed";
-            existingActiveVideo.UpdatedAt = DateTime.UtcNow;
-            _materialRepository.Update(existingActiveVideo);
 
             // 2. Tạo bản ghi mới cho video mới
             material = new LearningMaterial
@@ -201,10 +208,10 @@ public class LessonService : ILessonService
             };
             await _materialRepository.AddAsync(material);
         }
-        else if (fileType == "video" && existingActiveVideo != null && string.IsNullOrEmpty(materialUrl))
+        else if (fileType == "video" && existingActiveVideos.Any() && string.IsNullOrEmpty(materialUrl))
         {
             // Trường hợp chỉ cập nhật Title/Description cho video hiện tại (không upload file mới)
-            material = existingActiveVideo;
+            material = existingActiveVideos.First();
             material.Title = request.Title;
             material.Description = request.Description;
             if (request.MaterialMetadata != null)
@@ -215,6 +222,14 @@ public class LessonService : ILessonService
             }
             material.UpdatedAt = DateTime.UtcNow;
             _materialRepository.Update(material);
+
+            // Dọn dẹp dữ liệu lỗi nếu có nhiều hơn 1 video active
+            foreach (var extraVideo in existingActiveVideos.Skip(1))
+            {
+                extraVideo.LearningStatus = "removed";
+                extraVideo.UpdatedAt = DateTime.UtcNow;
+                _materialRepository.Update(extraVideo);
+            }
         }
         else
         {
@@ -235,9 +250,9 @@ public class LessonService : ILessonService
 
         await _materialRepository.SaveChangesAsync();
         
-        if ("published".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
-            lesson.Course.CourseStatus = "draft";
+            lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
             lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
             await _courseRepository.SaveChangesAsync();
@@ -246,7 +261,7 @@ public class LessonService : ILessonService
         // Invalidate Course Cache
         if (lesson.CourseId.HasValue)
         {
-            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
         }
 
         return new MaterialResponse
@@ -295,9 +310,9 @@ public class LessonService : ILessonService
         _materialRepository.Update(material);
         await _materialRepository.SaveChangesAsync();
 
-        if ("published".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
-            lesson.Course.CourseStatus = "draft";
+            lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
             lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
             await _courseRepository.SaveChangesAsync();
@@ -306,7 +321,7 @@ public class LessonService : ILessonService
         // Invalidate Course Cache
         if (lesson.CourseId.HasValue)
         {
-            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
         }
     }
 
@@ -319,7 +334,7 @@ public class LessonService : ILessonService
         if (lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to delete this lesson.");
 
-        if ("pending".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot delete lessons while the course is pending review.");
 
         // Soft delete all materials of this lesson
@@ -347,9 +362,9 @@ public class LessonService : ILessonService
         _lessonRepository.Update(lesson);
         await _lessonRepository.SaveChangesAsync();
 
-        if ("published".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
-            lesson.Course.CourseStatus = "draft";
+            lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
             lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
             await _courseRepository.SaveChangesAsync();
@@ -358,7 +373,7 @@ public class LessonService : ILessonService
         // Invalidate Course Cache
         if (lesson.CourseId.HasValue)
         {
-            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
         }
     }
 
@@ -411,7 +426,7 @@ public class LessonService : ILessonService
         // Invalidate Course Cache
         if (courseId.HasValue)
         {
-            await _redisService.RemoveCacheAsync($"course:detail:{courseId.Value}");
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId.Value));
         }
     }
 
@@ -424,15 +439,15 @@ public class LessonService : ILessonService
         if (lesson == null || lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to restore this material.");
 
-        if ("pending".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot restore materials while the course is pending review.");
 
         var course = lesson.Course;
 
         // If course is published, move it back to draft as this is an update
-        if ("published".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
-            course.CourseStatus = "draft";
+            course.CourseStatus = CourseStatus.Draft.ToValue();
             course.ModerationFeedback = null;
             _courseRepository.Update(course);
         }
@@ -493,7 +508,29 @@ public class LessonService : ILessonService
         // Invalidate Course Cache
         if (lesson.CourseId.HasValue)
         {
-            await _redisService.RemoveCacheAsync($"course:detail:{lesson.CourseId.Value}");
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
         }
+    }
+
+    public async Task<List<MaterialEmbedding>> GetAllMaterialEmbeddingsAsync()
+    {
+        return await _materialEmbeddingRepository.GetAllAsync();
+    }
+
+    public async Task SaveMaterialEmbeddingsAsync(int materialId, List<float> embedding)
+    {
+        var entity = new MaterialEmbedding
+        {
+            MaterialId = materialId,
+            Embedding = System.Text.Json.JsonSerializer.Serialize(embedding),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _materialEmbeddingRepository.AddAsync(entity);
+        await _materialEmbeddingRepository.SaveChangesAsync();
+
+        // Invalidate redis cache for material_embedding
+        await _redisService.RemoveCacheAsync(CacheKeys.MaterialEmbedding.GetKey(materialId));
+        await _redisService.RemoveCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey());
     }
 }

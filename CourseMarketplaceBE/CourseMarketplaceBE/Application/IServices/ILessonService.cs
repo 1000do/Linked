@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Domain.Entities;
 
 namespace CourseMarketplaceBE.Application.IServices;
 
@@ -12,4 +14,6 @@ public interface ILessonService
     Task<IEnumerable<MaterialTrashResponse>> GetTrashMaterialsAsync(int instructorId);
     Task PermanentDeleteMaterialAsync(int materialId, int instructorId);
     Task RestoreMaterialAsync(int materialId, int instructorId);
+    Task<List<MaterialEmbedding>> GetAllMaterialEmbeddingsAsync();
+    Task SaveMaterialEmbeddingsAsync(int materialId, List<float> embedding);
 }

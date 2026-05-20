@@ -46,7 +46,7 @@ public class CloudinaryUploadService : IFileUploadService
         {
             if (file == null || file.Length == 0)
             {
-                _logger.LogWarning("⚠️ File rỗng hoặc null");
+                _logger.LogWarning("⚠️ File is empty or null");
                 return null;
             }
 
@@ -67,17 +67,17 @@ public class CloudinaryUploadService : IFileUploadService
 
             if (result?.Error != null)
             {
-                _logger.LogError("❌ Upload lỗi: {msg}", result.Error.Message);
+                _logger.LogError("❌ Upload error: {msg}", result.Error.Message);
                 return null;
             }
 
-            _logger.LogInformation("✅ Upload thành công: {url}", result?.SecureUrl);
+            _logger.LogInformation("✅ Upload successful: {url}", result?.SecureUrl);
 
             return result?.SecureUrl?.ToString();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "🔥 Exception khi upload ảnh");
+            _logger.LogError(ex, "🔥 Exception during image upload");
             return null;
         }
     }
@@ -88,7 +88,7 @@ public class CloudinaryUploadService : IFileUploadService
         {
             if (file == null || file.Length == 0)
             {
-                _logger.LogWarning("⚠️ Video rỗng hoặc null");
+                _logger.LogWarning("⚠️ Video is empty or null");
                 return null;
             }
 
@@ -113,17 +113,17 @@ public class CloudinaryUploadService : IFileUploadService
 
             if (result?.Error != null)
             {
-                _logger.LogError("❌ Upload video lỗi: {msg}", result.Error.Message);
+                _logger.LogError("❌ Video upload error: {msg}", result.Error.Message);
                 return null;
             }
 
-            _logger.LogInformation("✅ Upload video thành công: {url}", result?.SecureUrl);
+            _logger.LogInformation("✅ Video upload successful: {url}", result?.SecureUrl);
 
             return result?.SecureUrl?.ToString();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "🔥 Exception khi upload video");
+            _logger.LogError(ex, "🔥 Exception during video upload");
             return null;
         }
     }
@@ -146,7 +146,7 @@ public class CloudinaryUploadService : IFileUploadService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "🔥 Lỗi khi xóa file trên Cloudinary: {url}", fileUrl);
+            _logger.LogError(ex, "🔥 Error deleting file on Cloudinary: {url}", fileUrl);
             return false;
         }
     }
@@ -173,7 +173,7 @@ public class CloudinaryUploadService : IFileUploadService
             
             if (result.Error != null)
             {
-                _logger.LogError("❌ Rename to trash lỗi: {msg}", result.Error.Message);
+                _logger.LogError("❌ Rename to trash error: {msg}", result.Error.Message);
                 return null;
             }
 
@@ -181,7 +181,7 @@ public class CloudinaryUploadService : IFileUploadService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "🔥 Exception khi move file tới trash: {url}", fileUrl);
+            _logger.LogError(ex, "🔥 Exception moving file to trash: {url}", fileUrl);
             return null;
         }
     }
@@ -252,7 +252,7 @@ public class CloudinaryUploadService : IFileUploadService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "🔥 Lỗi khi xóa file bằng publicId: {id}", publicId);
+            _logger.LogError(ex, "🔥 Error deleting file by publicId: {id}", publicId);
             return false;
         }
     }
@@ -294,7 +294,7 @@ public class CloudinaryUploadService : IFileUploadService
             
             if (result.Error != null)
             {
-                _logger.LogWarning("⚠️ Restore với type {type} thất bại, thử các type khác...", resType);
+                _logger.LogWarning("⚠️ Restore with type {type} failed, trying other types...", resType);
                 
                 // Danh sách các type để thử lần lượt
                 var typesToTry = new List<ResourceType> { ResourceType.Image, ResourceType.Video, ResourceType.Raw };
@@ -319,7 +319,7 @@ public class CloudinaryUploadService : IFileUploadService
                     }
                 }
 
-                _logger.LogError("❌ Không thể khôi phục file {id} sau khi thử mọi loại ResourceType.", publicId);
+                _logger.LogError("❌ Failed to restore file {id} after trying all ResourceTypes.", publicId);
                 return null;
             }
 
@@ -327,7 +327,7 @@ public class CloudinaryUploadService : IFileUploadService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "🔥 Exception khi restore file từ trash: {id}", publicId);
+            _logger.LogError(ex, "🔥 Exception restoring file from trash: {id}", publicId);
             return null;
         }
     }

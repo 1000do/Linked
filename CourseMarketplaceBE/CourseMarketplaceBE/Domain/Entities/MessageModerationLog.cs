@@ -10,7 +10,6 @@ public partial class MessageModerationLog
     public string? InputJson { get; set; }
     public string? OutputJson { get; set; }
     public float? LatencyMs { get; set; }
-    public string? LogStatus { get; set; }
     public string? ErrorMessage { get; set; }
     public DateTime? LogCreatedAt { get; set; }
 

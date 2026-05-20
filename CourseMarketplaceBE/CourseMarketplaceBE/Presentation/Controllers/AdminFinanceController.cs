@@ -33,11 +33,12 @@ public class AdminFinanceController : ControllerBase
         try
         {
             var summary = await _financeService.GetFinancialSummaryAsync(year, month);
-            return Ok(ApiResponse<FinancialSummaryResponse>.SuccessResponse(summary, "Thống kê tài chính."));
+            return Ok(ApiResponse<FinancialSummaryResponse>.SuccessResponse(summary, "Financial statistics."));
+           
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -50,11 +51,12 @@ public class AdminFinanceController : ControllerBase
         try
         {
             var payouts = await _financeService.GetInstructorPayoutsAsync(year, month);
-            return Ok(ApiResponse<List<PayoutDetailResponse>>.SuccessResponse(payouts, "Danh sách chia tiền."));
+            return Ok(ApiResponse<List<PayoutDetailResponse>>.SuccessResponse(payouts, "Payout list."));
+            
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -67,11 +69,11 @@ public class AdminFinanceController : ControllerBase
         try
         {
             var rate = await _financeService.GetCurrentTransferRateAsync();
-            return Ok(ApiResponse<decimal>.SuccessResponse(rate, "Tỷ lệ chia sẻ hiện tại."));
+            return Ok(ApiResponse<decimal>.SuccessResponse(rate, "Current share rate."));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -86,8 +88,8 @@ public class AdminFinanceController : ControllerBase
         {
             await _financeService.SetTransferRateAsync(request.Rate);
             return Ok(ApiResponse<string>.SuccessResponse(
-                $"Đã cập nhật: Giảng viên nhận {request.Rate}%, Sàn nhận {100 - request.Rate}%.",
-                "Cập nhật thành công."));
+                $"Updated: Instructor receives {request.Rate}%, Platform receives {100 - request.Rate}%.",
+                "Updated successfully."));
         }
         catch (InvalidOperationException ex)
         {
@@ -95,7 +97,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -109,7 +111,7 @@ public class AdminFinanceController : ControllerBase
         try
         {
             await _financeService.MarkPayoutAsPaidAsync(payoutId);
-            return Ok(ApiResponse<string>.SuccessResponse("Đã đánh dấu khoản thanh toán này là Đã trả.", "Thành công."));
+            return Ok(ApiResponse<string>.SuccessResponse("Marked this payment as Paid.", "Success."));
         }
         catch (InvalidOperationException ex)
         {
@@ -117,7 +119,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -131,7 +133,7 @@ public class AdminFinanceController : ControllerBase
         try
         {
             var transferId = await _financeService.PerformStripeTransferAsync(payoutId);
-            return Ok(ApiResponse<string>.SuccessResponse(transferId, "Chuyển tiền thành công qua Stripe."));
+            return Ok(ApiResponse<string>.SuccessResponse(transferId, "Funds transferred successfully via Stripe."));
         }
         catch (InvalidOperationException ex)
         {
@@ -139,7 +141,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi hệ thống: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"System error: {ex.Message}"));
         }
     }
 
@@ -171,7 +173,7 @@ public class AdminFinanceController : ControllerBase
         try
         {
             var result = await _instructorService.ResetStripeAccountAsync(instructorId);
-            return Ok(ApiResponse<string>.SuccessResponse(result, "Reset thành công."));
+            return Ok(ApiResponse<string>.SuccessResponse(result, "Reset successfully."));
         }
         catch (InvalidOperationException ex)
         {
@@ -179,7 +181,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -194,11 +196,11 @@ public class AdminFinanceController : ControllerBase
         try
         {
             var balance = await _financeService.GetPlatformBalanceAsync();
-            return Ok(ApiResponse<PlatformBalanceResponse>.SuccessResponse(balance, "Số dư Stripe Platform."));
+            return Ok(ApiResponse<PlatformBalanceResponse>.SuccessResponse(balance, "Stripe Platform balance."));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -213,7 +215,7 @@ public class AdminFinanceController : ControllerBase
             int managerId = accountIdClaim != null ? int.Parse(accountIdClaim) : 0;
 
             var result = await _financeService.CreateWithdrawalAsync(request, managerId);
-            return Ok(ApiResponse<WithdrawResponse>.SuccessResponse(result, "Lệnh rút tiền đã được tạo thành công."));
+            return Ok(ApiResponse<WithdrawResponse>.SuccessResponse(result, "Withdrawal request created successfully."));
         }
         catch (InvalidOperationException ex)
         {
@@ -221,7 +223,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -236,11 +238,11 @@ public class AdminFinanceController : ControllerBase
             {
                 history = history.Where(w => w.CreatedAt.Year == year.Value && w.CreatedAt.Month == month.Value).ToList();
             }
-            return Ok(ApiResponse<List<WithdrawalHistoryItem>>.SuccessResponse(history, "Lịch sử rút tiền."));
+            return Ok(ApiResponse<List<WithdrawalHistoryItem>>.SuccessResponse(history,"Withdrawal history."));
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
 
@@ -254,7 +256,7 @@ public class AdminFinanceController : ControllerBase
         try
         {
             var result = await _financeService.RefundTransactionAsync(transactionId, request?.Reason);
-            return Ok(ApiResponse<RefundResultResponse>.SuccessResponse(result, "Hoàn tiền thành công."));
+            return Ok(ApiResponse<RefundResultResponse>.SuccessResponse(result, "Refunded successfully."));
         }
         catch (InvalidOperationException ex)
         {
@@ -262,7 +264,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Lỗi hệ thống: {ex.Message}"));
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"System error: {ex.Message}"));
         }
     }
 

@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Net.Http;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Domain.Constants;
+using Microsoft.Extensions.Logging;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -18,8 +21,22 @@ public class CourseService : ICourseService
     private readonly IMaterialRepository _materialRepository;
     private readonly ILessonRepository _lessonRepository;
     private readonly IRedisService _redisService;
+    private readonly IContentHashService _contentHashService;
+    private readonly ICourseAiIntegrationRepository _aiIntegrationRepository;
+    private readonly ILogger<CourseService> _logger;
+    private readonly HttpClient _httpClient;
 
-    public CourseService(ICourseRepository courseRepository, IInstructorRepository instructorRepository, IFileUploadService uploadService, IMaterialRepository materialRepository, ILessonRepository lessonRepository, IRedisService redisService)
+    public CourseService(
+        ICourseRepository courseRepository, 
+        IInstructorRepository instructorRepository, 
+        IFileUploadService uploadService, 
+        IMaterialRepository materialRepository, 
+        ILessonRepository lessonRepository, 
+        IRedisService redisService,
+        IContentHashService contentHashService,
+        ICourseAiIntegrationRepository aiIntegrationRepository,
+        ILogger<CourseService> logger,
+        HttpClient httpClient)
     {
         _courseRepository = courseRepository;
         _instructorRepository = instructorRepository;
@@ -27,6 +44,10 @@ public class CourseService : ICourseService
         _materialRepository = materialRepository;
         _lessonRepository = lessonRepository;
         _redisService = redisService;
+        _contentHashService = contentHashService;
+        _aiIntegrationRepository = aiIntegrationRepository;
+        _logger = logger;
+        _httpClient = httpClient;
     }
 
     public async Task<IEnumerable<CourseResponse>> GetAllPublishedCoursesAsync(int? userId = null)
@@ -237,7 +258,7 @@ public class CourseService : ICourseService
 
     public async Task<CourseDetailResponse?> GetCourseWithDetailsAsync(int courseId, int instructorId, int? userId = null)
     {
-        string cacheKey = $"course:detail:{courseId}";
+        string cacheKey = CacheKeys.CourseDetail.GetKey(courseId);
         var response = await _redisService.GetCacheAsync<CourseDetailResponse>(cacheKey);
 
         if (response == null)
@@ -305,7 +326,7 @@ public class CourseService : ICourseService
                 }).ToList()
             };
 
-            await _redisService.SetCacheAsync(cacheKey, response, TimeSpan.FromHours(1));
+            await _redisService.SetCacheAsync(cacheKey, response, CacheTtl.Short.GetTtl());
         }
 
         // Cập nhật thông tin định danh riêng cho từng User (Không cache phần này)
@@ -342,7 +363,7 @@ public class CourseService : ICourseService
             var instructorCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
             if (instructorCourses.Count(c => !c.IsRemoved) >= 2)
             {
-                throw new BadRequestException("Instructor chưa liên kết Stripe chỉ được phép tạo tối đa 2 khóa học.");
+                throw new BadRequestException("Instructors who have not linked a Stripe account are only allowed to create up to 2 courses.");
             }
         }
 
@@ -355,7 +376,7 @@ public class CourseService : ICourseService
         var allCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
         if (allCourses.Any(c => c.Title.Trim().ToLower() == titleLower && !c.IsRemoved))
         {
-            throw new BadRequestException("Bạn đã có một khóa học với tiêu đề này. Vui lòng chọn tiêu đề khác.");
+            throw new BadRequestException("You already have a course with this title. Please choose a different title.");
         }
 
         // ★ Nếu chưa hoàn tất Stripe → ép giá = 0 (chỉ tạo khóa free)
@@ -390,6 +411,9 @@ public class CourseService : ICourseService
         await _courseRepository.AddAsync(course);
         await _courseRepository.SaveChangesAsync();
 
+        // 2. Compute & store hashes for deduplication
+        await UpdateCourseHashesAsync(course);
+
         return new CourseResponse
         {
             CourseId = course.CourseId,
@@ -419,7 +443,7 @@ public class CourseService : ICourseService
         // ★ Block updates if course is archived by moderation (3+ flags)
         if (string.Equals(course.CourseStatus, "archived", StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
         {
-            throw new BadRequestException("Khóa học đã bị ngừng kinh doanh vĩnh viễn do vi phạm chính sách và không thể chỉnh sửa.");
+            throw new BadRequestException("This course has been permanently discontinued due to policy violations and cannot be edited.");
         }
 
         if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
@@ -432,7 +456,7 @@ public class CourseService : ICourseService
             var instructorCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
             if (instructorCourses.Any(c => c.Title.Trim().ToLower() == titleLower && c.CourseId != courseId && !c.IsRemoved))
             {
-                throw new BadRequestException("Bạn đã có một khóa học khác với tiêu đề này.");
+                throw new BadRequestException("You already have another course with this title.");
             }
         }
 
@@ -474,8 +498,10 @@ public class CourseService : ICourseService
         _courseRepository.Update(course);
         await _courseRepository.SaveChangesAsync();
 
-        // Invalidate Cache
-        await _redisService.RemoveCacheAsync($"course:detail:{course.CourseId}");
+        // Update Hashes
+        await UpdateCourseHashesAsync(course);
+
+        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(course.CourseId));
 
         return new CourseResponse
         {
@@ -494,6 +520,35 @@ public class CourseService : ICourseService
         };
     }
 
+    private async Task UpdateCourseHashesAsync(Course course)
+    {
+        string? thumbHash = null;
+        if (!string.IsNullOrEmpty(course.CourseThumbnailUrl))
+        {
+            try
+            {
+                var bytes = await _httpClient.GetByteArrayAsync(course.CourseThumbnailUrl);
+                thumbHash = await _contentHashService.ComputeFileHashAsync(bytes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"Failed to download thumbnail for hashing: {ex.Message}");
+            }
+        }
+
+        var command = new SaveCourseHashesCommand
+        {
+            CourseId = course.CourseId,
+            title_hash = await _contentHashService.ComputeCourseHashAsync(course.Title),
+            description_hash = await _contentHashService.ComputeCourseHashAsync(course.Description ?? ""),
+            what_you_will_learn_hash = await _contentHashService.ComputeCourseHashAsync(course.WhatYouWillLearn ?? ""),
+            requirements_hash = await _contentHashService.ComputeCourseHashAsync(course.Requirements ?? ""),
+            thumbnail_hash = thumbHash
+        };
+
+        await _contentHashService.SaveCourseHashesAsync(command);
+    }
+
     public async Task UpdateCourseStatusAsync(int courseId, string status, int instructorId)
     {
         var course = await _courseRepository.GetByIdAsync(courseId);
@@ -506,7 +561,7 @@ public class CourseService : ICourseService
         // ★ Block status changes if course is archived by moderation (3+ flags)
         if (string.Equals(course.CourseStatus, "archived", StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
         {
-            throw new BadRequestException("Khóa học đã bị ngừng kinh doanh vĩnh viễn do vi phạm chính sách và không thể thay đổi trạng thái.");
+            throw new BadRequestException("This course has been permanently discontinued due to policy violations and its status cannot be changed.");
         }
 
         // Instructor chỉ được gửi yêu cầu duyệt (pending) hoặc ẩn khóa học (archived)
@@ -547,13 +602,13 @@ public class CourseService : ICourseService
 
             if (!isStripeActive && totalMinutes > 30)
             {
-                throw new BadRequestException($"Tổng thời lượng video của khóa học hiện tại là {Math.Round(totalMinutes, 1)} phút. Instructor chưa liên kết Stripe chỉ được phép tối đa 30 phút.");
+                throw new BadRequestException($"The total video duration of the course is currently {Math.Round(totalMinutes, 1)} minutes. Instructors who have not linked a Stripe account are only allowed a maximum of 30 minutes.");
             }
             
             bool isFreeCourse = course.Price == 0;
             if (isFreeCourse && totalMinutes > 60)
             {
-                throw new BadRequestException($"Tổng thời lượng video của khóa học miễn phí hiện tại là {Math.Round(totalMinutes, 1)} phút. Khóa học miễn phí chỉ được phép tối đa 60 phút.");
+                throw new BadRequestException($"The total video duration of the free course is currently {Math.Round(totalMinutes, 1)} minutes. Free courses are only allowed a maximum of 60 minutes.");
             }
 
             // Clear moderation feedback when resubmitting
@@ -589,7 +644,7 @@ public class CourseService : ICourseService
         await _courseRepository.SaveChangesAsync();
 
         // Invalidate Cache
-        await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
+        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
     }
 
     public async Task DeleteCourseAsync(int courseId, int instructorId)
@@ -623,7 +678,7 @@ public class CourseService : ICourseService
         await _courseRepository.SaveChangesAsync();
 
         // Invalidate Cache
-        await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
+        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
     }
 
     public async Task<IEnumerable<CategoryResponse>> GetCategoriesAsync()
@@ -634,5 +689,61 @@ public class CourseService : ICourseService
             CategoryId = c.CategoryId,
             CategoriesName = c.CategoriesName
         });
+    }
+
+    public async Task<CourseAIIntegrationResult> IntegrateAItoCourseAsync(CourseAIIntegrationCommand command)
+    {
+        var integration = new CourseAiIntegration
+        {
+            CourseId = command.CourseId,
+            ModelId = command.ModelId,
+            Role = command.Role,
+            IsEnabled = command.IsEnabled,
+            ConfigJson = System.Text.Json.JsonSerializer.Serialize(command.ConfigJson)
+        };
+
+        await _aiIntegrationRepository.AddAsync(integration);
+        await _aiIntegrationRepository.SaveChangesAsync();
+        return new CourseAIIntegrationResult
+        {
+            CourseId = command.CourseId,
+            ModelId = command.ModelId,
+            IsEnabled = command.IsEnabled,
+            ConfigJson = command.ConfigJson 
+            ?? new Dictionary<string, float> { { "similarity", 0.8f }, { "spam", 0.7f }, { "toxic", 0.7f } },
+            Role = command.Role
+        };
+    }
+
+    public async Task<CourseAiIntegrationResponse> GetByModelAndCourseAsync(int modelId, int courseId)
+    {
+        var integration = await _aiIntegrationRepository.GetByModelAndCourseAsync(modelId, courseId);
+        if (integration == null) return null!;
+        return new CourseAiIntegrationResponse
+        {
+            CourseId = integration.CourseId ?? 0,
+            ModelId = integration.ModelId ?? 0,
+            IsEnabled = integration.IsEnabled,
+            ConfigJson = !string.IsNullOrEmpty(integration.ConfigJson)
+                ? System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, float>>(integration.ConfigJson) ?? new Dictionary<string, float>()
+                : new Dictionary<string, float>(),
+            Role = integration.Role
+        };
+    }
+
+    public async Task UpdateCourseStatusAndFeedbackAsync(int courseId, string status, string? feedback)
+    {
+        var course = await _courseRepository.GetByIdAsync(courseId);
+        if (course != null)
+        {
+            course.CourseStatus = status.ToLower();
+            course.ModerationFeedback = feedback;
+            course.UpdatedAt = DateTime.UtcNow;
+            _courseRepository.Update(course);
+            await _courseRepository.SaveChangesAsync();
+
+            // Invalidate Cache
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
+        }
     }
 }
