@@ -35,7 +35,7 @@
                 <div class="flex-1 text-center md:text-left">
                     <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10 mb-6">
                         <span class="w-2 h-2 bg-green-400 rounded-full animate-ping"></span>
-                        <span class="text-[10px] font-black uppercase tracking-widest opacity-80">Giảng viên uy tín</span>
+                        <span class="text-[10px] font-black uppercase tracking-widest opacity-80">Top Instructor</span>
                     </div>
                     
                     <h1 class="text-5xl md:text-7xl font-black mb-4 tracking-tighter leading-none">@Model.FullName</h1>
@@ -44,21 +44,21 @@
                     @* Premium Stats Layout *@
                     <div class="grid grid-cols-3 gap-4 md:gap-12 max-w-2xl">
                         <div class="group">
-                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 group-hover:text-primary transition-colors">Học viên</p>
+                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 group-hover:text-primary transition-colors">Students</p>
                             <div class="flex items-baseline gap-1">
                                 <span class="text-3xl md:text-4xl font-black tabular-nums">@Model.TotalStudents.ToString("N0")</span>
                                 <span class="text-xs font-bold text-slate-500">+</span>
                             </div>
                         </div>
                         <div class="group border-x border-white/5 px-4 md:px-12">
-                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 group-hover:text-amber-400 transition-colors">Đánh giá</p>
+                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 group-hover:text-amber-400 transition-colors">Reviews</p>
                             <div class="flex items-baseline gap-1">
                                 <span class="text-3xl md:text-4xl font-black tabular-nums">@Model.TotalReviews.ToString("N0")</span>
-                                <span class="text-[10px] font-bold text-slate-500">lượt</span>
+                                <span class="text-[10px] font-bold text-slate-500">total</span>
                             </div>
                         </div>
                         <div class="group">
-                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 group-hover:text-indigo-400 transition-colors">Xếp hạng</p>
+                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 group-hover:text-indigo-400 transition-colors">Rating</p>
                             <div class="flex items-center gap-2">
                                 <span class="text-3xl md:text-4xl font-black tabular-nums">@Model.AverageRating.ToString("F1")</span>
                                 <span class="material-symbols-outlined text-amber-400 fill-1 text-2xl animate-pulse">star</span>
@@ -106,7 +106,7 @@
                         <span class="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
                             <span class="material-symbols-outlined">notes</span>
                         </span>
-                        Về giảng viên
+                        About the Instructor
                     </h2>
                     <div class="prose prose-lg max-w-none text-slate-600 leading-relaxed font-medium">
                         @if (!string.IsNullOrEmpty(Model.Bio))
@@ -117,7 +117,7 @@
                         {
                             <div class="py-10 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
                                 <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">person_off</span>
-                                <p class="text-slate-400">Giảng viên chưa cập nhật thông tin giới thiệu.</p>
+                                <p class="text-slate-400">The instructor has not updated their introduction yet.</p>
                             </div>
                         }
                     </div>
@@ -130,9 +130,9 @@
                             <span class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center">
                                 <span class="material-symbols-outlined">auto_stories</span>
                             </span>
-                            Khóa học đang dạy (@Model.TotalCourses)
+                            Teaching Courses (@Model.TotalCourses)
                         </h2>
-                        <a href="#" class="text-sm font-black text-primary hover:underline decoration-2 underline-offset-4">Tất cả khóa học</a>
+                        <a href="#" class="text-sm font-black text-primary hover:underline decoration-2 underline-offset-4">All Courses</a>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -144,7 +144,7 @@
                                          alt="@course.Title" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                                     <div class="absolute bottom-4 left-6 right-6 flex items-center justify-between transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                                        <span class="bg-white text-slate-900 text-xs font-black px-4 py-2 rounded-xl shadow-xl">Xem chi tiết</span>
+                                        <span class="bg-white text-slate-900 text-xs font-black px-4 py-2 rounded-xl shadow-xl">View Details</span>
                                         <span class="text-white font-black text-xl">$@course.Price.ToString("F2")</span>
                                     </div>
                                 </div>
@@ -157,7 +157,7 @@
                                         </div>
                                         <div class="flex items-center gap-2 text-slate-400 text-xs font-bold">
                                             <span class="material-symbols-outlined text-sm">group</span>
-                                            <span>@course.TotalStudents.ToString("N0") học viên</span>
+                                            <span>@course.TotalStudents.ToString("N0") students</span>
                                         </div>
                                     </div>
                                 </div>
@@ -175,7 +175,7 @@
                     <div class="mb-8">
                         <h3 class="text-xl font-black text-slate-900 mb-2 flex items-center gap-3">
                             <span class="material-symbols-outlined text-primary">psychology</span>
-                            Lĩnh vực chuyên môn
+                            Areas of Expertise
                         </h3>
                         <div class="h-1 w-12 bg-primary/20 rounded-full"></div>
                     </div>
@@ -197,10 +197,10 @@
                         <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
                         
                         <div class="relative z-10 text-white">
-                            <h4 class="text-2xl font-black mb-4 leading-tight">Bắt đầu học ngay hôm nay?</h4>
-                            <p class="text-sm opacity-80 mb-8 font-medium leading-relaxed">Tham gia cùng hàng ngàn học viên khác để làm chủ các kỹ năng mới cùng @Model.FullName.</p>
+                            <h4 class="text-2xl font-black mb-4 leading-tight">Start learning today?</h4>
+                            <p class="text-sm opacity-80 mb-8 font-medium leading-relaxed">Join thousands of other students to master new skills with @Model.FullName.</p>
                             <a href="#courses" class="flex items-center justify-center gap-3 w-full py-4 bg-white text-primary font-black rounded-2xl shadow-xl shadow-black/10 hover:shadow-2xl hover:-translate-y-1 active:scale-95 transition-all">
-                                <span>Xem các khóa học</span>
+                                <span>View Courses</span>
                                 <span class="material-symbols-outlined text-sm">arrow_forward</span>
                             </a>
                         </div>
@@ -210,7 +210,7 @@
                     <div class="mt-8 pt-8 border-t border-slate-50">
                         <div class="flex items-center gap-4 text-slate-400">
                             <span class="material-symbols-outlined text-xl">verified_user</span>
-                            <p class="text-[10px] font-bold uppercase tracking-widest leading-relaxed">Nội dung được bảo vệ bởi bản quyền và chính sách LinkedLearn</p>
+                            <p class="text-[10px] font-bold uppercase tracking-widest leading-relaxed">Content protected by copyright and LinkedLearn policies</p>
                         </div>
                     </div>
                 </div>

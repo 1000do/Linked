@@ -36,6 +36,10 @@ public class TransactionListDto
 
     /// <summary>Loại tiền thực tế giảng viên nhận (sau khi quy đổi)</summary>
     public string? PayoutCurrency { get; set; }
+
+    public string? RefundReason { get; set; }
+    public string? RefundAdminNote { get; set; }
+    public DateTime? RefundRequestedAt { get; set; }
 }
 
 /// <summary>
@@ -99,6 +103,10 @@ public class TransactionDetailDto
 
     /// <summary>Đã chuyển tiền cho giảng viên chưa</summary>
     public bool IsPaid { get; set; }
+
+    public string? RefundReason { get; set; }
+    public string? RefundAdminNote { get; set; }
+    public DateTime? RefundRequestedAt { get; set; }
 }
 
 /// <summary>

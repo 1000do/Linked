@@ -18,13 +18,13 @@ public interface IAdminFinanceService
     /// UC-112: Lấy tổng quan tài chính hệ thống.
     /// Bao gồm: Gross Revenue, Net Profit, Pending Escrow, Transfer Rate.
     /// </summary>
-    Task<FinancialSummaryResponse> GetFinancialSummaryAsync();
+    Task<FinancialSummaryResponse> GetFinancialSummaryAsync(int? year = null, int? month = null);
 
     /// <summary>
     /// Lấy danh sách chi tiết chia tiền giảng viên.
     /// JOIN: instructor_payouts → transactions → courses → users.
     /// </summary>
-    Task<List<PayoutDetailResponse>> GetInstructorPayoutsAsync();
+    Task<List<PayoutDetailResponse>> GetInstructorPayoutsAsync(int? year = null, int? month = null);
 
     /// <summary>
     /// Đánh dấu một khoản nợ giảng viên là đã thanh toán thủ công.
@@ -45,6 +45,31 @@ public interface IAdminFinanceService
     /// Quét và thanh toán tất cả công nợ đang chờ qua Stripe.
     /// </summary>
     Task<BulkPayoutResult> BulkPayAllViaStripeAsync();
+
+    /// <summary>
+    /// Đồng bộ trạng thái toàn bộ Payouts của tất cả giảng viên từ Stripe về Ngân hàng (Paid / In Transit / Failed).
+    /// </summary>
+    Task SyncAllPayoutsWithStripeAsync();
+
+    /// <summary>
+    /// Học viên gửi yêu cầu hoàn tiền cho một giao dịch (đơn hàng).
+    /// </summary>
+    Task RequestRefundAsync(int transactionId, int studentId, string reason);
+
+    /// <summary>
+    /// Lấy danh sách các yêu cầu hoàn tiền đang chờ duyệt.
+    /// </summary>
+    Task<List<Domain.Entities.Transaction>> GetPendingRefundRequestsAsync();
+
+    /// <summary>
+    /// Admin duyệt chấp nhận yêu cầu hoàn tiền (gọi Stripe refund thực tế).
+    /// </summary>
+    Task ApproveRefundAsync(int transactionId, string adminNote);
+
+    /// <summary>
+    /// Admin từ chối yêu cầu hoàn tiền.
+    /// </summary>
+    Task RejectRefundAsync(int transactionId, string adminNote);
 
     // ═══════════════════════════════════════════════════════════════════════
     // PLATFORM WITHDRAWAL (Rút tiền lợi nhuận Sàn về ngân hàng)

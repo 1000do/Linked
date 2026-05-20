@@ -21,10 +21,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class TransactionController : ControllerBase
 {
     private readonly ITransactionService _transactionService;
+    private readonly IAdminFinanceService _financeService;
 
-    public TransactionController(ITransactionService transactionService)
+    public TransactionController(ITransactionService transactionService, IAdminFinanceService financeService)
     {
         _transactionService = transactionService;
+        _financeService = financeService;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -40,11 +42,13 @@ public class TransactionController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? keyword = null,
         [FromQuery] string? sortBy = "date_desc",
-        [FromQuery] string? status = null)
+        [FromQuery] string? status = null,
+        [FromQuery] int? year = null,
+        [FromQuery] int? month = null)
     {
         try
         {
-            var result = await _transactionService.GetTransactionsAsync(page, pageSize, keyword, sortBy, status);
+            var result = await _transactionService.GetTransactionsAsync(page, pageSize, keyword, sortBy, status, year, month);
             return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Transaction list."));
         }
         catch (Exception ex)
@@ -92,7 +96,9 @@ public class TransactionController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? keyword = null,
         [FromQuery] string? sortBy = "date_desc",
-        [FromQuery] string? status = null)
+        [FromQuery] string? status = null,
+        [FromQuery] int? year = null,
+        [FromQuery] int? month = null)
     {
         try
         {
@@ -100,7 +106,7 @@ public class TransactionController : ControllerBase
             if (!int.TryParse(userIdStr, out int userId))
                 return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
 
-            var result = await _transactionService.GetInstructorTransactionsAsync(userId, page, pageSize, keyword, sortBy, status);
+            var result = await _transactionService.GetInstructorTransactionsAsync(userId, page, pageSize, keyword, sortBy, status, year, month);
             return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Instructor transaction list."));
         }
         catch (Exception ex)
@@ -135,4 +141,38 @@ public class TransactionController : ControllerBase
             return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/transactions/{transactionId}/request-refund
+    // Học viên gửi yêu cầu hoàn tiền
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("{transactionId:int}/request-refund")]
+    public async Task<IActionResult> RequestRefund(int transactionId, [FromBody] StudentRefundRequest request)
+    {
+        try
+        {
+            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId))
+                return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
+
+            if (string.IsNullOrWhiteSpace(request.Reason))
+                return BadRequest(ApiResponse<string>.ErrorResponse("Refund reason cannot be empty."));
+
+            await _financeService.RequestRefundAsync(transactionId, userId, request.Reason);
+            return Ok(ApiResponse<string>.SuccessResponse("Refund request submitted successfully. Please wait for Admin approval."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"System error: {ex.Message}"));
+        }
+    }
+}
+
+public class StudentRefundRequest
+{
+    public string Reason { get; set; } = string.Empty;
 }

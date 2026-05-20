@@ -7,13 +7,19 @@
 
     var statusBg   = Model.Status == "succeeded" ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                    : Model.Status == "failed"    ? "bg-red-50 text-red-700 border-red-200"
+                   : Model.Status == "refund_pending" ? "bg-orange-50 text-orange-700 border-orange-200"
+                   : Model.Status == "refunded"  ? "bg-rose-50 text-rose-700 border-rose-200"
                    : "bg-amber-50 text-amber-700 border-amber-200";
     var statusLabel = Model.Status == "succeeded" ? "Completed"
                     : Model.Status == "failed"    ? "Failed"
                     : Model.Status == "pending"   ? "Pending"
+                    : Model.Status == "refund_pending" ? "Refund Pending"
+                    : Model.Status == "refunded"  ? "Refunded"
                     : Model.Status ?? "—";
     var dotColor    = Model.Status == "succeeded" ? "bg-emerald-500"
                     : Model.Status == "failed"    ? "bg-red-500"
+                    : Model.Status == "refund_pending" ? "bg-orange-500"
+                    : Model.Status == "refunded"  ? "bg-rose-500"
                     : "bg-amber-400";
 }
 
@@ -29,10 +35,19 @@
                 Refund
             </button>
         } else if (Model.Status == "refunded") {
-            <span class="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-bold text-slate-400 cursor-not-allowed">
+            <span class="inline-flex items-center gap-2 px-4 py-2 bg-rose-50 border border-rose-200 rounded-lg text-sm font-bold text-rose-600 cursor-not-allowed">
                 <span class="material-symbols-outlined text-[18px]">check_circle</span>
                 Refunded
             </span>
+        } else if (Model.Status == "refund_pending") {
+            <button type="button" onclick="approveRefundDetail(@Model.TransactionId, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(Model.CourseTitle))')" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-lg text-sm font-bold text-emerald-600 hover:bg-emerald-100 transition-all shadow-sm">
+                <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                Approve Refund
+            </button>
+            <button type="button" onclick="rejectRefundDetail(@Model.TransactionId, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(Model.CourseTitle))')" class="inline-flex items-center gap-2 px-4 py-2 bg-rose-50 border border-rose-100 rounded-lg text-sm font-bold text-rose-600 hover:bg-rose-100 transition-all shadow-sm">
+                <span class="material-symbols-outlined text-[18px]">cancel</span>
+                Reject
+            </button>
         }
     </div>
     <form id="refundForm" method="post" asp-controller="AdminFinance" asp-action="Refund" asp-route-transactionId="@Model.TransactionId" class="hidden">
@@ -62,6 +77,82 @@
     <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-medium flex items-center gap-3">
         <span class="material-symbols-outlined text-red-600 text-[20px]">error</span>
         @TempData["FinanceError"]
+    </div>
+}
+
+@if (Model.Status == "refund_pending") {
+    <div class="mb-8 p-6 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center border border-orange-200 shadow-inner shrink-0">
+                <span class="material-symbols-outlined text-orange-600 text-[24px]">restart_alt</span>
+            </div>
+            <div>
+                <h3 class="text-base font-black text-slate-900 mb-1">Refund Request Pending Approval</h3>
+                <p class="text-sm text-slate-600">
+                    The student has submitted a refund request for this course on <span class="font-bold text-slate-800">@(Model.RefundRequestedAt?.ToString("dd/MM/yyyy HH:mm") ?? "—")</span>.
+                </p>
+                <div class="mt-3 p-3 bg-white border border-orange-100 rounded-xl">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Student's Refund Reason</p>
+                    <p class="text-sm text-slate-800 italic">"@Model.RefundReason"</p>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0 w-full md:w-auto justify-end">
+            <button type="button" onclick="approveRefundDetail(@Model.TransactionId, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(Model.CourseTitle))')" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95 flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                Approve
+            </button>
+            <button type="button" onclick="rejectRefundDetail(@Model.TransactionId, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(Model.CourseTitle))')" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all active:scale-95 flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">cancel</span>
+                Reject
+            </button>
+        </div>
+    </div>
+} else if (Model.Status == "refunded") {
+    <div class="mb-8 p-6 bg-gradient-to-r from-rose-50 to-red-50 border border-rose-200 rounded-2xl shadow-sm flex items-start gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center border border-rose-200 shadow-inner shrink-0">
+            <span class="material-symbols-outlined text-rose-600 text-[24px]">verified_user</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-base font-black text-slate-900 mb-1">Transaction refunded successfully</h3>
+            <p class="text-sm text-slate-600">
+                The transaction refund procedure has been completed via Stripe Connect and the student's learning access has been revoked.
+            </p>
+            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-3 bg-white border border-rose-100 rounded-xl">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Student's Refund Reason</p>
+                    <p class="text-sm text-slate-800 italic">"@Model.RefundReason"</p>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.RefundAdminNote)) {
+                    <div class="p-3 bg-white border border-rose-100 rounded-xl">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Admin's Approval Note</p>
+                        <p class="text-sm text-slate-800">"@Model.RefundAdminNote"</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+} else if (Model.Status == "succeeded" && !string.IsNullOrEmpty(Model.RefundAdminNote)) {
+    <div class="mb-8 p-6 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 rounded-2xl shadow-sm flex items-start gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-slate-200 flex items-center justify-center border border-slate-300 shrink-0 shadow-inner">
+            <span class="material-symbols-outlined text-slate-600 text-[24px]">cancel</span>
+        </div>
+        <div class="flex-1">
+            <h3 class="text-base font-black text-slate-900 mb-1">Previous refund request was rejected</h3>
+            <p class="text-sm text-slate-600">
+                This transaction previously had a refund request submitted on <span class="font-bold text-slate-800">@(Model.RefundRequestedAt?.ToString("dd/MM/yyyy HH:mm") ?? "—")</span> but it was rejected by Admin.
+            </p>
+            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-3 bg-white border border-slate-200 rounded-xl">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Student's original refund reason</p>
+                    <p class="text-sm text-slate-800 italic">"@Model.RefundReason"</p>
+                </div>
+                <div class="p-3 bg-white border border-slate-200 rounded-xl">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Admin's rejection reason</p>
+                    <p class="text-sm text-slate-800 font-bold">"@Model.RefundAdminNote"</p>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
@@ -388,6 +479,149 @@
                     return false; // Keep the loading state
                 },
                 allowOutsideClick: () => !Swal.isLoading()
+            });
+        }
+
+        function approveRefundDetail(transactionId, courseTitle) {
+            Swal.fire({
+                title: 'Approve Refund',
+                html: `<div class="text-left font-sans">
+                        <p class="text-sm text-slate-500 mb-4">Are you sure you want to approve the refund for the course transaction <strong>${courseTitle}</strong>? 
+                        The system will refund the money to the student's wallet/card via Stripe Connect and revoke their learning access to this course.</p>
+                       </div>`,
+                input: 'textarea',
+                inputPlaceholder: 'Enter feedback note for student (optional)...',
+                showCancelButton: true,
+                confirmButtonText: 'Approve & Refund',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#64748b',
+                buttonsStyling: true,
+                customClass: {
+                    popup: 'rounded-3xl border border-slate-100 p-8 shadow-2xl',
+                    title: 'text-xl font-black text-slate-900 tracking-tight',
+                    confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all',
+                    cancelButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
+                },
+                showLoaderOnConfirm: true,
+                preConfirm: (adminNote) => {
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                    const params = new URLSearchParams();
+                    params.append('transactionId', transactionId);
+                    params.append('adminNote', adminNote || '');
+
+                    return fetch('/AdminFinance/ApproveRefundDecision', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': token
+                        },
+                        body: params
+                    })
+                    .then(response => {
+                        return response.json().then(data => {
+                            if (!response.ok || !data.success) {
+                                throw new Error(data.message || response.statusText);
+                            }
+                            return data;
+                        });
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage(`Action failed: ${error.message}`);
+                    });
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: result.value.message,
+                        icon: 'success',
+                        confirmButtonText: 'Close',
+                        confirmButtonColor: '#10b981',
+                        customClass: {
+                            popup: 'rounded-3xl',
+                            title: 'text-xl font-black text-slate-900',
+                            confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm'
+                        }
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                }
+            });
+        }
+
+        function rejectRefundDetail(transactionId, courseTitle) {
+            Swal.fire({
+                title: 'Reject Refund',
+                html: `<div class="text-left font-sans">
+                        <p class="text-sm text-slate-500 mb-4">You are rejecting the refund request for the course transaction <strong>${courseTitle}</strong>. 
+                        You must enter a specific rejection reason to respond to the student.</p>
+                       </div>`,
+                input: 'textarea',
+                inputPlaceholder: 'Enter rejection reason here...',
+                showCancelButton: true,
+                confirmButtonText: 'Reject Request',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#64748b',
+                buttonsStyling: true,
+                customClass: {
+                    popup: 'rounded-3xl border border-slate-100 p-8 shadow-2xl',
+                    title: 'text-xl font-black text-slate-900 tracking-tight',
+                    confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all',
+                    cancelButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
+                },
+                inputValidator: (value) => {
+                    if (!value || value.trim() === '') {
+                        return 'You must enter a rejection reason!';
+                    }
+                },
+                showLoaderOnConfirm: true,
+                preConfirm: (adminNote) => {
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                    const params = new URLSearchParams();
+                    params.append('transactionId', transactionId);
+                    params.append('adminNote', adminNote);
+
+                    return fetch('/AdminFinance/RejectRefundDecision', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': token
+                        },
+                        body: params
+                    })
+                    .then(response => {
+                        return response.json().then(data => {
+                            if (!response.ok || !data.success) {
+                                throw new Error(data.message || response.statusText);
+                            }
+                            return data;
+                        });
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage(`Action failed: ${error.message}`);
+                    });
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Rejected!',
+                        text: result.value.message,
+                        icon: 'warning',
+                        confirmButtonText: 'Close',
+                        confirmButtonColor: '#64748b',
+                        customClass: {
+                            popup: 'rounded-3xl',
+                            title: 'text-xl font-black text-slate-900',
+                            confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm'
+                        }
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                }
             });
         }
     </script>

@@ -320,9 +320,9 @@ public class InstructorService : IInstructorService
         await _repo.SaveChangesAsync();
     }
 
-    public async Task<InstructorPayoutPagedDto> GetPayoutsAsync(int userId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null)
+    public async Task<InstructorPayoutPagedDto> GetPayoutsAsync(int userId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
     {
-        return await _repo.GetPayoutsAsync(userId, page, pageSize, keyword, sortBy, status);
+        return await _repo.GetPayoutsAsync(userId, page, pageSize, keyword, sortBy, status, year, month);
     }
 
     public async Task SyncPayoutsWithStripeAsync(int userId)
@@ -335,7 +335,7 @@ public class InstructorService : IInstructorService
         var payoutService = new PayoutService();
         var stripePayouts = await payoutService.ListAsync(new PayoutListOptions
         {
-            Limit = 20,
+            Limit = 100,
             Expand = new List<string> { "data.destination" }
         }, new RequestOptions
         {

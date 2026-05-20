@@ -51,7 +51,8 @@
                             <select name="status" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all font-medium appearance-none cursor-pointer">
                                 <option value="">All Statuses</option>
                                 <option value="succeeded" selected="@(ViewBag.Status == "succeeded")">Success</option>
-                                <option value="pending" selected="@(ViewBag.Status == "pending")">Pending</option>
+                                <option value="refund_pending" selected="@(ViewBag.Status == "refund_pending")">Refund Pending</option>
+                                <option value="refunded" selected="@(ViewBag.Status == "refunded")">Refunded</option>
                                 <option value="failed" selected="@(ViewBag.Status == "failed")">Failed</option>
                             </select>
                         </div>
@@ -110,10 +111,12 @@
                                 @{
                                     var (bgClass, textClass, dotClass, label) = item.Status switch
                                     {
-                                        "succeeded" => ("bg-emerald-50", "text-emerald-600", "bg-emerald-500", "Completed"),
-                                        "failed"    => ("bg-rose-50",    "text-rose-600",    "bg-rose-500",    "Failed"),
-                                        "pending"   => ("bg-amber-50",   "text-amber-600",   "bg-amber-400",   "Pending"),
-                                        _           => ("bg-slate-50",   "text-slate-500",   "bg-slate-400",   item.Status ?? "—")
+                                        "succeeded"      => ("bg-emerald-50", "text-emerald-600", "bg-emerald-500", "Success"),
+                                        "failed"         => ("bg-rose-50",    "text-rose-600",    "bg-rose-500",    "Failed"),
+                                        "pending"        => ("bg-amber-50",   "text-amber-600",   "bg-amber-400",   "Pending"),
+                                        "refund_pending" => ("bg-orange-50",  "text-orange-600",  "bg-orange-500",  "Refund Pending"),
+                                        "refunded"       => ("bg-violet-50",  "text-violet-600",  "bg-violet-500",  "Refunded"),
+                                        _                => ("bg-slate-50",   "text-slate-500",   "bg-slate-400",   item.Status ?? "—")
                                     };
                                 }
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider @bgClass @textClass">
@@ -122,9 +125,22 @@
                                 </span>
                             </div>
 
-                            <div class="flex-shrink-0">
+                            <div class="flex-shrink-0 flex items-center gap-3">
+                                @{
+                                    var isRefundable = item.Status == "succeeded" && item.Date.HasValue && item.Date.Value >= DateTime.UtcNow.AddDays(-14);
+                                }
+                                @if (isRefundable)
+                                {
+                                    <button type="button" 
+                                            onclick="requestRefund(@item.TransactionId, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.CourseTitle))')"
+                                            class="flex items-center gap-1.5 px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 font-bold text-xs rounded-xl border border-rose-100 hover:border-rose-200 transition-all shadow-sm active:scale-95">
+                                        <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+                                        Refund Request
+                                    </button>
+                                }
                                 <a href="@Url.Action("HistoryDetail", "Transaction", new { id = item.TransactionId })" 
-                                   class="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all active:scale-90">
+                                   class="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all active:scale-90"
+                                   title="View Details">
                                     <span class="material-symbols-outlined">chevron_right</span>
                                 </a>
                             </div>
@@ -184,3 +200,88 @@
         </div>
     </div>
 </div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function requestRefund(transactionId, courseTitle) {
+            Swal.fire({
+                title: 'Request Refund',
+                html: `<div class="text-left font-sans">
+                        <p class="text-sm text-slate-500 mb-4">You are requesting a refund for the course <strong>${courseTitle}</strong>. 
+                        Please enter a specific reason for Admin approval.</p>
+                       </div>`,
+                input: 'textarea',
+                inputPlaceholder: 'Enter refund reason here...',
+                inputAttributes: {
+                    'aria-label': 'Enter refund reason here'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Submit Request',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#64748b',
+                buttonsStyling: true,
+                customClass: {
+                    popup: 'rounded-3xl border border-slate-100 p-8 shadow-2xl',
+                    title: 'text-xl font-black text-slate-900 tracking-tight',
+                    confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all',
+                    cancelButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
+                },
+                inputValidator: (value) => {
+                    if (!value || value.trim() === '') {
+                        return 'You must enter a refund reason!';
+                    }
+                },
+                showLoaderOnConfirm: true,
+                preConfirm: (reason) => {
+                    // Lấy token anti-forgery từ input ẩn
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                    const params = new URLSearchParams();
+                    params.append('transactionId', transactionId);
+                    params.append('reason', reason);
+
+                    return fetch('/Transaction/RequestRefund', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': token
+                        },
+                        body: params
+                    })
+                    .then(response => {
+                        return response.json().then(data => {
+                            if (!response.ok || !data.success) {
+                                throw new Error(data.message || response.statusText);
+                            }
+                            return data;
+                        });
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage(`Request failed: ${error.message}`);
+                    });
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Request Submitted!',
+                        text: result.value.message,
+                        icon: 'success',
+                        confirmButtonText: 'Close',
+                        confirmButtonColor: '#10b981',
+                        customClass: {
+                            popup: 'rounded-3xl',
+                            title: 'text-xl font-black text-slate-900',
+                            confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm'
+                        }
+                    }).then(() => {
+                        location.reload();
+                    });
+                }
+            });
+        }
+    </script>
+}

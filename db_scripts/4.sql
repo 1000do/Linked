@@ -365,7 +365,10 @@ CREATE TABLE transactions (
     currency VARCHAR(10) DEFAULT 'VND',
     transactions_status VARCHAR(50), -- VD: 'succeeded', 'failed', 'refunded'
     transaction_type VARCHAR(50), -- VD: 'payment', 'refund'
-    transaction_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    transaction_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    refund_reason TEXT,
+    refund_admin_note TEXT,
+    refund_requested_at TIMESTAMP
 );
 
 -- Bảng lưu dữ liệu những giao dịch chuyển tiền từ hệ thống vô tài khoản ngân hàng của instructor
@@ -383,7 +386,7 @@ CREATE TABLE instructor_payouts (
 	-- 'paid'           → Đã về tài khoản ngân hàng thật (Webhook payout.paid xác nhận)
 	-- 'failed'         → Lỗi trong quá trình chuyển tiền
 	payout_status VARCHAR(20) NOT NULL DEFAULT 'pending'
-		CHECK (payout_status IN ('pending', 'transferred', 'in_transit', 'paid', 'failed')),
+		CHECK (payout_status IN ('pending', 'transferred', 'in_transit', 'paid', 'failed', 'refunded')),
 	stripe_transfer_id VARCHAR(255),    -- ID lệnh Transfer từ Sàn → Connected Account (tx_xxx)
 	stripe_payout_id VARCHAR(255),      -- ID lệnh Payout từ Connected Account → Bank (po_xxx)
 	paid_to_bank_at TIMESTAMP           -- Thời điểm Stripe confirm tiền đã về ngân hàng

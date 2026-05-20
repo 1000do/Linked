@@ -1128,14 +1128,14 @@
                     if (window.checkUnsavedChanges()) {
                         e.preventDefault();
                         Swal.fire({
-                            title: 'Bạn có thay đổi chưa lưu!',
-                            text: 'Bạn có chắc chắn muốn quay lại mà không lưu các thay đổi trên Landing Page?',
+                            title: 'Unsaved Changes!',
+                            text: 'Are you sure you want to go back without saving changes to the Landing Page?',
                             icon: 'warning',
                             showCancelButton: true,
                             confirmButtonColor: '#ef4444',
                             cancelButtonColor: '#cbd5e1',
-                            confirmButtonText: 'Rời đi',
-                            cancelButtonText: 'Ở lại'
+                            confirmButtonText: 'Leave',
+                            cancelButtonText: 'Stay'
                         }).then((result) => {
                             if (result.isConfirmed) {
                                 // Temporarily reset initialCourseData to bypass beforeunload warning
@@ -2277,8 +2277,8 @@
                 const videoExtensions = ['.mp4', '.mov', '.avi', '.wmv', '.flv', '.webm', '.mkv'];
                 if (videoExtensions.some(ext => fileName.endsWith(ext)) || file.type.startsWith('video/')) {
                     Swal.fire({
-                        title: 'Định dạng không hợp lệ',
-                        text: 'Phần này chỉ dành cho tài liệu (PDF, Word, Zip...). Vui lòng upload Video ở phần "Video Content".',
+                        title: 'Invalid Format',
+                        text: 'This section is only for documents (PDF, Word, Zip...). Please upload Video under "Video Content".',
                         icon: 'error',
                         confirmButtonColor: '#006a62'
                     });

@@ -22,10 +22,13 @@ public class FinancialSummaryResponse
     /// <summary>Tổng đã trả cho giảng viên (is_paid = true)</summary>
     public decimal TotalPaidOut { get; set; }
 
-    /// <summary>Tổng tiền đang giữ hộ giảng viên (is_paid = false)</summary>
+    /// <summary>Tổng tiền đang giữ hộ giảng viên (is_paid = false) và còn trong 14 ngày</summary>
     public decimal PendingEscrow { get; set; }
 
-    /// <summary>Lợi nhuận ròng = GrossRevenue - TotalPaidOut - PendingEscrow</summary>
+    /// <summary>Tổng tiền đã qua thời gian hoàn trả (> 14 ngày) sẵn sàng thanh toán</summary>
+    public decimal MaturedEscrow { get; set; }
+
+    /// <summary>Lợi nhuận ròng = GrossRevenue - TotalPaidOut - PendingEscrow - MaturedEscrow</summary>
     public decimal PlatformNetProfit { get; set; }
 
     /// <summary>Tỷ lệ chia sẻ hiện tại (VD: 70 = Giảng viên nhận 70%)</summary>

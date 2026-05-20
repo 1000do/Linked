@@ -325,44 +325,56 @@ CREATE TABLE order_items (
 
 CREATE TABLE transactions (
     transaction_id SERIAL PRIMARY KEY,
-    order_item_id INT REFERENCES order_items(id) ON DELETE SET NULL,
-    account_from INT REFERENCES accounts(account_id) ON DELETE SET NULL,
-    account_to INT REFERENCES accounts(account_id) ON DELETE SET NULL,
+    order_item_id INT REFERENCES order_items(id) ON DELETE SET NULL, -- Mỗi transaction tương ứng with 1 item trong order thay vì cả order
+	account_from INT REFERENCES accounts(account_id) ON DELETE SET NULL,
+	account_to INT REFERENCES accounts(account_id) ON DELETE SET NULL,
     amount NUMERIC(10, 2) NOT NULL,
-    transfer_rate NUMERIC(5,2) NOT NULL DEFAULT 100.00,
+	transfer_rate NUMERIC(5,2) NOT NULL DEFAULT 100.00, -- Phần trăm instructor nhận được
     stripe_session_id VARCHAR(255),
     stripe_paymentintent_id VARCHAR(255),
     currency VARCHAR(10) DEFAULT 'VND',
-    transactions_status VARCHAR(50),
-    transaction_type VARCHAR(50),
-    transaction_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    transactions_status VARCHAR(50), -- VD: 'succeeded', 'failed', 'refunded'
+    transaction_type VARCHAR(50), -- VD: 'payment', 'refund'
+    transaction_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    refund_reason TEXT,
+    refund_admin_note TEXT,
+    refund_requested_at TIMESTAMP
 );
 
+-- Bảng lưu dữ liệu những giao dịch chuyển tiền từ hệ thống vô tài khoản ngân hàng của instructor
 CREATE TABLE instructor_payouts (
-    payout_id SERIAL PRIMARY KEY, 
-    transaction_id INT REFERENCES transactions(transaction_id) ON DELETE SET NULL,
-    instructor_id INT REFERENCES instructors(instructor_id) ON DELETE SET NULL,
-    payout_amount NUMERIC(10,2) NOT NULL,
-    payout_date TIMESTAMP NOT NULL,
-    is_paid BOOLEAN NOT NULL DEFAULT FALSE,
-    payout_status VARCHAR(20) NOT NULL DEFAULT 'pending'
-        CHECK (payout_status IN ('pending', 'transferred', 'in_transit', 'paid', 'failed')),
-    stripe_transfer_id VARCHAR(255),
-    stripe_payout_id VARCHAR(255),
-    paid_to_bank_at TIMESTAMP
+	payout_id SERIAL PRIMARY KEY, 
+	transaction_id INT REFERENCES transactions(transaction_id) ON DELETE SET NULL,
+	instructor_id INT REFERENCES instructors(instructor_id) ON DELETE SET NULL,
+	payout_amount NUMERIC(10,2) NOT NULL, -- Số tiền sẽ chuyển cho instructor (đã trừ bớt phần sàn ăn)
+	payout_date TIMESTAMP NOT NULL, -- Ngày mà hệ thống sẽ chuyển tiền cho instructor (theo lịch đã lên) 
+	is_paid BOOLEAN NOT NULL DEFAULT FALSE,
+	-- ★ PAYOUT STATUS: Track trạng thái thanh toán end-to-end
+	-- 'pending'        → Chưa chuyển tiền
+	-- 'transferred'    → Đã chuyển sang ví Stripe của giảng viên (Transfer thành công)
+	-- 'in_transit'     → Stripe đang chuyển từ ví về ngân hàng
+	-- 'paid'           → Đã về tài khoản ngân hàng thật (Webhook payout.paid xác nhận)
+	-- 'failed'         → Lỗi trong quá trình chuyển tiền
+	payout_status VARCHAR(20) NOT NULL DEFAULT 'pending'
+		CHECK (payout_status IN ('pending', 'transferred', 'in_transit', 'paid', 'failed', 'refunded')),
+	stripe_transfer_id VARCHAR(255),    -- ID lệnh Transfer từ Sàn → Connected Account (tx_xxx)
+	stripe_payout_id VARCHAR(255),      -- ID lệnh Payout từ Connected Account → Bank (po_xxx)
+	paid_to_bank_at TIMESTAMP           -- Thời điểm Stripe confirm tiền đã về ngân hàng
 );
 
+-- Bảng lưu lịch sử rút tiền lợi nhuận của Sàn (Admin) từ Stripe về ngân hàng
+DROP TABLE IF EXISTS platform_withdrawals CASCADE;
 CREATE TABLE platform_withdrawals (
-    withdrawal_id SERIAL PRIMARY KEY,
-    manager_id INT REFERENCES managers(manager_id) ON DELETE SET NULL,
-    amount NUMERIC(10,2) NOT NULL,
-    currency VARCHAR(10) DEFAULT 'usd',
-    stripe_payout_id VARCHAR(255),
-    status VARCHAR(20) NOT NULL DEFAULT 'pending'
-        CHECK (status IN ('pending', 'in_transit', 'paid', 'failed', 'canceled')),
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    arrived_at TIMESTAMP
+	withdrawal_id SERIAL PRIMARY KEY,
+	manager_id INT REFERENCES managers(manager_id) ON DELETE SET NULL,
+	amount NUMERIC(10,2) NOT NULL,           -- Số tiền rút (USD)
+	currency VARCHAR(10) DEFAULT 'usd',
+	stripe_payout_id VARCHAR(255),           -- Mã Payout trên Stripe (po_xxx)
+	status VARCHAR(20) NOT NULL DEFAULT 'pending'
+		CHECK (status IN ('pending', 'in_transit', 'paid', 'failed', 'canceled')),
+	description TEXT,                         -- Ghi chú
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	arrived_at TIMESTAMP                     -- Thời điểm tiền về ngân hàng
 );
 
 -- ==============================================================================
@@ -388,7 +400,6 @@ CREATE TABLE chat_participants (
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (chat_id, account_id)
 );
-
 
 CREATE TABLE messages (
     message_id SERIAL PRIMARY KEY,
@@ -468,8 +479,8 @@ CREATE TABLE lesson_review_reports (
 CREATE TABLE audit_logs (
     log_id SERIAL PRIMARY KEY,
     actor_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
-    action_type VARCHAR(100) NOT NULL,
-    target_type VARCHAR(100),
+    action_type VARCHAR(100) NOT NULL, -- 'join_room', 'monitor_room', 'broadcast', 'delete_message'
+    target_type VARCHAR(100), -- 'chat_room', 'message', 'user'
     target_id INT,
     details TEXT,
     ip_address VARCHAR(45),
@@ -667,7 +678,6 @@ VALUES
 (13, 'Lifestyle', 'Cooking, baking, gaming, home improvement, and creative hobbies.', 'active')
 ON CONFLICT (category_id) DO UPDATE SET categories_name = EXCLUDED.categories_name, description = EXCLUDED.description;
 
-
 -- ==============================================================================
 -- 9. SAMPLE DATA FOR PRIMARY ACCOUNT (phuoctai228)
 -- ==============================================================================
@@ -701,6 +711,12 @@ VALUES ('StripeCountries',
     {"code":"US","name":"United States"},{"code":"GB","name":"United Kingdom"}
 ]', 'Danh sách quốc gia mà Stripe Connect hỗ trợ đăng ký tài khoản Express. Giảng viên chọn 1 trong số này khi đăng ký Stripe.')
 ON CONFLICT (config_key) DO UPDATE SET config_value = EXCLUDED.config_value, description = EXCLUDED.description;
+
+-- ==============================================================================
+-- 10. SAMPLE DATA FOR COURSES, LESSONS, MATERIALS
+-- ==============================================================================
+
+
 
 -- ==============================================================================
 -- 11. SYNC SEQUENCES (Prevent duplicate key errors)

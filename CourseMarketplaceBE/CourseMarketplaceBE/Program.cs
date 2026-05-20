@@ -294,7 +294,11 @@ public class Program
             };
         });
         // 🔥 7. Controllers + Swagger
-        builder.Services.AddControllers();
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+            });
         builder.Services.AddEndpointsApiExplorer();
 
         builder.Services.AddSwaggerGen(c =>
@@ -351,6 +355,21 @@ public class Program
             {
                 var context = services.GetRequiredService<AppDbContext>();
                 context.Database.Migrate();
+
+                // Add columns to transactions if they do not exist
+                using (var conn = context.Database.GetDbConnection())
+                {
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"
+                            ALTER TABLE transactions ADD COLUMN IF NOT EXISTS refund_reason TEXT;
+                            ALTER TABLE transactions ADD COLUMN IF NOT EXISTS refund_admin_note TEXT;
+                            ALTER TABLE transactions ADD COLUMN IF NOT EXISTS refund_requested_at TIMESTAMP WITHOUT TIME ZONE;
+                        ";
+                        cmd.ExecuteNonQuery();
+                    }
+                }
             }
             catch (Exception ex)
             {

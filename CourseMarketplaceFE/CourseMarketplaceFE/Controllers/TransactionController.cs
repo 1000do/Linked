@@ -37,6 +37,9 @@ public class TransactionController : Controller
         public string InstructorName { get; set; } = "";
         public string? Currency { get; set; }
         public string? PayoutCurrency { get; set; }
+        public string? RefundReason { get; set; }
+        public string? RefundAdminNote { get; set; }
+        public DateTime? RefundRequestedAt { get; set; }
     }
 
     public class TransactionPagedVM
@@ -82,6 +85,9 @@ public class TransactionController : Controller
         public decimal InstructorPayout { get; set; }
         public decimal PlatformProfit { get; set; }
         public bool IsPaid { get; set; }
+        public string? RefundReason { get; set; }
+        public string? RefundAdminNote { get; set; }
+        public DateTime? RefundRequestedAt { get; set; }
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -158,7 +164,8 @@ public class TransactionController : Controller
     // ═══════════════════════════════════════════════════════════════════════
     [HttpGet]
     public async Task<IActionResult> Instructor(int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null, string tab = "tx",
-        int payoutPage = 1, int payoutPageSize = 20, string? payoutKeyword = null, string? payoutSortBy = "date_desc", string? payoutStatus = null)
+        int payoutPage = 1, int payoutPageSize = 20, string? payoutKeyword = null, string? payoutSortBy = "date_desc", string? payoutStatus = null,
+        int? year = null, int? month = null)
     {
         // Guard: Chỉ giảng viên đã duyệt mới được xem Earnings
         var approvalStatus = Request.Cookies["InstructorApprovalStatus"];
@@ -171,6 +178,10 @@ public class TransactionController : Controller
         vm.Payouts.Page = payoutPage;
         vm.Payouts.PageSize = payoutPageSize;
         
+        // Default to current UTC month/year if not provided
+        int selectedYear = year ?? DateTime.UtcNow.Year;
+        int selectedMonth = month ?? DateTime.UtcNow.Month;
+
         ViewBag.Keyword = keyword;
         ViewBag.SortBy = sortBy;
         ViewBag.Status = status;
@@ -179,13 +190,15 @@ public class TransactionController : Controller
         ViewBag.PayoutSortBy = payoutSortBy;
         ViewBag.PayoutStatus = payoutStatus;
         ViewBag.ActiveTab = tab;
+        ViewBag.Year = selectedYear;
+        ViewBag.Month = selectedMonth;
 
-        var txQuery = $"transactions/instructor?page={page}&pageSize={pageSize}";
+        var txQuery = $"transactions/instructor?page={page}&pageSize={pageSize}&year={selectedYear}&month={selectedMonth}";
         if (!string.IsNullOrEmpty(keyword)) txQuery += $"&keyword={Uri.EscapeDataString(keyword)}";
         if (!string.IsNullOrEmpty(sortBy)) txQuery += $"&sortBy={Uri.EscapeDataString(sortBy)}";
         if (!string.IsNullOrEmpty(status)) txQuery += $"&status={Uri.EscapeDataString(status)}";
 
-        var payoutQuery = $"instructor/payouts?page={payoutPage}&pageSize={payoutPageSize}";
+        var payoutQuery = $"instructor/payouts?page={payoutPage}&pageSize={payoutPageSize}&year={selectedYear}&month={selectedMonth}";
         if (!string.IsNullOrEmpty(payoutKeyword)) payoutQuery += $"&keyword={Uri.EscapeDataString(payoutKeyword)}";
         if (!string.IsNullOrEmpty(payoutSortBy)) payoutQuery += $"&sortBy={Uri.EscapeDataString(payoutSortBy)}";
         if (!string.IsNullOrEmpty(payoutStatus)) payoutQuery += $"&status={Uri.EscapeDataString(payoutStatus)}";
@@ -292,5 +305,36 @@ public class TransactionController : Controller
         }
 
         return View(parsed.Data);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RequestRefund(int transactionId, string reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            return Json(new { success = false, message = "Refund reason cannot be empty." });
+        }
+
+        var response = await _api.PostJsonAsync($"transactions/{transactionId}/request-refund", new
+        {
+            Reason = reason
+        });
+
+        if (response.IsSuccessStatusCode)
+        {
+            return Json(new { success = true, message = "Refund request submitted successfully. Please wait for Admin approval." });
+        }
+
+        var errorBody = await response.Content.ReadAsStringAsync();
+        var message = "System error when submitting the refund request.";
+        try
+        {
+            using var doc = JsonDocument.Parse(errorBody);
+            if (doc.RootElement.TryGetProperty("message", out var m))
+                message = m.GetString() ?? message;
+        }
+        catch { }
+
+        return Json(new { success = false, message = message });
     }
 }
