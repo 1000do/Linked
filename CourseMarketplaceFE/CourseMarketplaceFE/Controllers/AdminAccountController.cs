@@ -131,21 +131,6 @@ public class AdminAccountController : Controller
         }
 
         var response = await _apiClient.PostJsonAsync($"/api/admin/accounts/staff/{id}", model);
-        // Wait! Backend PUT endpoint is at "/api/admin/accounts/staff/{id}".
-        // Let's use PUT via ApiClient or see if ApiClient supports PUT with body.
-        // Wait! Let's check ApiClient's method signatures:
-        // - PatchJsonAsync<T>(string url, T body)
-        // - PutAsync(string url, HttpContent content) -> Wait, PutAsync doesn't serialize JSON directly, it takes HttpContent!
-        // Wait, does backend support PUT, and can we call it via PutAsync using JsonContent or do we have PutJsonAsync in ApiClient?
-        // Let's check: ApiClient has:
-        // public Task<HttpResponseMessage> PutAsync(string url, HttpContent content)
-        // So we can do: PutAsync(url, JsonContent.Create(model)) or we can define PutJsonAsync in ApiClient if it's missing, but actually we can just use PutAsync and wrap the body in JsonContent! Let's see:
-        // Yes: `JsonContent.Create(model)` is standard in .NET. Let's do that!
-        // Wait, is there a PutJsonAsync in ApiClient? No, there is only PutAsync taking HttpContent.
-        // So let's write `JsonContent.Create(model)` which creates a `System.Net.Http.Json.JsonContent` representing the JSON payload.
-        // Wait, let's check if the namespace System.Net.Http.Json is available. Yes, it is standard in .NET 6/7/8.
-        // Let's do that. Or we can just use: `new StringContent(JsonSerializer.Serialize(model), System.Text.Encoding.UTF8, "application/json")` as it is fully standard and doesn't rely on System.Net.Http.Json! That is extremely safe.
-        // Let's write the EditStaff call:
         var jsonContent = new StringContent(JsonSerializer.Serialize(model), System.Text.Encoding.UTF8, "application/json");
         var putResponse = await _apiClient.PutAsync($"/api/admin/accounts/staff/{id}", jsonContent);
 
