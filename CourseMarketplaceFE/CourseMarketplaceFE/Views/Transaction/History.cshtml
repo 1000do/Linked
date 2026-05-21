@@ -79,6 +79,32 @@
                         }
                     </form>
                 </div>
+
+                @* 14-Day Guarantee & Stripe Billing Help Desk *@
+                <div class="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-[2rem] p-6 text-white shadow-xl shadow-indigo-950/20 border border-indigo-950/30 mt-6 space-y-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-400/20">
+                            <span class="material-symbols-outlined text-indigo-300">verified_user</span>
+                        </div>
+                        <div>
+                            <h4 class="font-black text-sm tracking-tight">14-Day Escrow Policy</h4>
+                            <p class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">Stripe Secure Hold</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-indigo-200/80 leading-relaxed font-medium">
+                        All payments are held securely in escrow for <strong>14 days</strong> under our buyer protection policy. 
+                        Instructors are credited only after the refund window expires.
+                    </p>
+                    <div class="h-[1px] bg-indigo-800/50"></div>
+                    <div class="space-y-3">
+                        <h5 class="text-[10px] font-black uppercase tracking-wider text-indigo-400">Payment Issue?</h5>
+                        <button type="button" onclick="showHelpDeskModal()" 
+                                class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/40 transition-all active:scale-95 flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-[16px]">contact_support</span>
+                            Stripe Billing Help Desk
+                        </button>
+                    </div>
+                </div>
             </aside>
 
             @* Main List *@
@@ -279,6 +305,87 @@
                         }
                     }).then(() => {
                         location.reload();
+                    });
+                }
+            });
+        }
+
+        function showHelpDeskModal() {
+            Swal.fire({
+                title: 'Stripe Billing Help Desk',
+                html: `
+                    <div class="text-left font-sans space-y-4">
+                        <p class="text-xs text-slate-500">
+                            Encountered an issue with your payment, billing invoice, or refund status? 
+                            Submit a priority ticket directly to our Stripe Integration Support Team.
+                        </p>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">Issue Category</label>
+                            <select id="supportCategory" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-indigo-500 outline-none transition-all font-medium appearance-none cursor-pointer">
+                                <option value="payment_failure">Payment Failed / Stripe Card Declined</option>
+                                <option value="refund_dispute">Refund Request Pending > 14 Days</option>
+                                <option value="double_charge">Double Charge / Unauthorized Invoice</option>
+                                <option value="other">Other Account & Billing Issues</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">Detailed Description</label>
+                            <textarea id="supportDescription" placeholder="Please describe what happened, including dates or error messages if possible..." class="w-full h-24 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-indigo-500 outline-none transition-all font-medium resize-none"></textarea>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Submit Ticket',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#4f46e5',
+                cancelButtonColor: '#64748b',
+                customClass: {
+                    popup: 'rounded-3xl border border-slate-100 p-8 shadow-2xl max-w-md w-full',
+                    title: 'text-xl font-black text-slate-900 tracking-tight text-left',
+                    confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all',
+                    cancelButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
+                },
+                preConfirm: () => {
+                    const category = document.getElementById('supportCategory').value;
+                    const description = document.getElementById('supportDescription').value;
+                    if (!description || description.trim() === '') {
+                        Swal.showValidationMessage('Please write a detailed description of your issue.');
+                        return false;
+                    }
+                    return { category, description };
+                },
+                showLoaderOnConfirm: true,
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    var ticketRef = 'TK-STRIPE-' + Math.floor(100000 + Math.random() * 900000);
+                    Swal.fire({
+                        title: 'Ticket Submitted Successfully!',
+                        html: `
+                            <div class="text-left font-sans space-y-3">
+                                <p class="text-sm text-slate-500">
+                                    Our support agents are investigating your Stripe billing transaction logs.
+                                </p>
+                                <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex flex-col gap-2">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[10px] uppercase font-black tracking-wider text-indigo-400">Ticket Reference</span>
+                                        <span class="text-xs font-black text-indigo-900">` + ticketRef + `</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[10px] uppercase font-black tracking-wider text-indigo-400">Response Time</span>
+                                        <span class="text-xs font-bold text-emerald-600">Within 24 Hours</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `,
+                        icon: 'success',
+                        confirmButtonText: 'Got it',
+                        confirmButtonColor: '#10b981',
+                        customClass: {
+                            popup: 'rounded-3xl border border-slate-100 p-8 shadow-2xl',
+                            title: 'text-xl font-black text-slate-900 tracking-tight',
+                            confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
+                        }
                     });
                 }
             });

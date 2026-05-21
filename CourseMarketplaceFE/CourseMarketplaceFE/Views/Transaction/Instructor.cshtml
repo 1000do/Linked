@@ -12,6 +12,18 @@
     
     // Đơn vị tiền tệ
     var currency = (Model.Transactions.Items?.FirstOrDefault()?.PayoutCurrency ?? Model.Transactions.Items?.FirstOrDefault()?.Currency ?? "USD").ToUpper();
+
+    // Lấy thông tin ngày quyết toán từ ViewBag
+    var payoutDaysStr = ViewBag.PayoutDays as string ?? "15";
+    var firstPayoutDay = payoutDaysStr.Split(',')[0];
+    int payoutDayInt = 15;
+    int.TryParse(firstPayoutDay, out payoutDayInt);
+    
+    var nextPayoutText = "This Month " + payoutDayInt + "th";
+    if (DateTime.UtcNow.Day > payoutDayInt)
+    {
+        nextPayoutText = "Next Month " + payoutDayInt + "th";
+    }
 }
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -56,7 +68,7 @@
                 <div class="w-[1px] h-5 bg-slate-300"></div>
                 <div class="flex items-center">
                     <select name="year" class="bg-transparent border-0 text-slate-700 font-bold text-sm focus:ring-0 focus:outline-none cursor-pointer p-0 pr-6">
-                        @for (int y = DateTime.UtcNow.Year; y <= DateTime.UtcNow.Year + 5; y++)
+                        @for (int y = DateTime.UtcNow.Year - 10; y <= DateTime.UtcNow.Year + 10; y++)
                         {
                             if (y == (int)ViewBag.Year)
                             {
@@ -105,6 +117,23 @@
             </div>
         </div>
     }
+
+    <!-- Auto Payout Trigger Notice Banner -->
+    <div class="mb-8 bg-gradient-to-r from-violet-500/10 via-indigo-500/5 to-transparent border border-violet-200/50 rounded-[2rem] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm/5 animate-fadeIn">
+        <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                <span class="material-symbols-outlined text-[28px] font-bold">schedule</span>
+            </div>
+            <div>
+                <h4 class="text-base font-black text-slate-900 leading-snug">Auto-Payout Scheduler Active</h4>
+                <p class="text-xs text-slate-500 font-medium mt-1">Earnings from eligible sales are aggregated and transferred to your Connected Stripe Account on the <strong class="text-indigo-600 font-extrabold">day @payoutDaysStr</strong> of every month.</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2.5 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm/5 self-start md:self-auto text-xs font-bold text-slate-600">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            Next Automated Transfer: <span class="text-slate-900 font-black">@nextPayoutText</span>
+        </div>
+    </div>
 
     <!-- ========================================== -->
     <!-- PHẦN 1: TỔNG QUAN DOANH THU                -->
@@ -192,6 +221,69 @@
         )"></div>
     </div>
 
+    <!-- ======================================================= -->
+    <!-- CẨM NANG ĐỐI SOÁT & KỊCH BẢN DÒNG TIỀN & SUPPORT PANEL  -->
+    <!-- ======================================================= -->
+    <!-- SECTION: CẨM NANG ĐỐI SOÁT & KỊCH BẢN DÒNG TIỀN -->
+    <div class="mb-12 animate-fadeIn">
+        <div class="flex items-center gap-2 mb-6">
+            <span class="material-symbols-outlined text-indigo-600 text-2xl font-bold">info</span>
+            <h3 class="text-lg font-black text-slate-900 tracking-tight">Financial Settlement & Escrow Handbook</h3>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Card 1: Chu kỳ quyết toán -->
+            <div class="bg-white rounded-[2rem] p-6 border border-slate-200/80 shadow-sm/5 flex flex-col justify-between hover:shadow-md hover:border-indigo-200 transition-all duration-300">
+                <div>
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-4">
+                        <span class="material-symbols-outlined text-[24px]">published_with_changes</span>
+                    </div>
+                    <h4 class="text-sm font-black text-slate-900 mb-2">1. Monthly Settlement Cycle</h4>
+                    <p class="text-xs text-slate-500 font-medium leading-relaxed">
+                        Course Marketplace operates on a structured monthly cycle. All accumulated earnings from the previous calendar month are automatically processed and batch-transferred to your Connected Stripe Account on the <strong class="text-indigo-600 font-extrabold">day @payoutDaysStr</strong> of every month.
+                    </p>
+                </div>
+                <div class="mt-4 pt-4 border-t border-slate-100 flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
+                    <span class="material-symbols-outlined text-[12px]">calendar_today</span> Fully Automated via Stripe
+                </div>
+            </div>
+
+            <!-- Card 2: 14 ngày giam tiền -->
+            <div class="bg-white rounded-[2rem] p-6 border border-slate-200/80 shadow-sm/5 flex flex-col justify-between hover:shadow-md hover:border-violet-200 transition-all duration-300">
+                <div>
+                    <div class="w-12 h-12 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600 mb-4">
+                        <span class="material-symbols-outlined text-[24px]">shield</span>
+                    </div>
+                    <h4 class="text-sm font-black text-slate-900 mb-2">2. 14-Day Escrow Period</h4>
+                    <p class="text-xs text-slate-500 font-medium leading-relaxed">
+                        To comply with our 14-day learner refund policy and avoid chargeback penalties, each sale undergoes a <strong class="text-violet-600 font-extrabold">14-day holding period</strong>. Once an order exceeds 14 days without a refund request, its funds transition from "Pending" to "Settled" status.
+                    </p>
+                </div>
+                <div class="mt-4 pt-4 border-t border-slate-100 flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
+                    <span class="material-symbols-outlined text-[12px]">lock_clock</span> Secure Escrow Shield
+                </div>
+            </div>
+
+            <!-- Card 3: Các kịch bản dòng tiền -->
+            <div class="bg-white rounded-[2rem] p-6 border border-slate-200/80 shadow-sm/5 flex flex-col justify-between hover:shadow-md hover:border-emerald-200 transition-all duration-300">
+                <div>
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
+                        <span class="material-symbols-outlined text-[24px]">explore</span>
+                    </div>
+                    <h4 class="text-sm font-black text-slate-900 mb-2">3. Flow Scenarios & Refunds</h4>
+                    <p class="text-xs text-slate-500 font-medium leading-relaxed">
+                        Refund events are seamlessly integrated. Approved refunds are deducted directly from your <strong class="text-emerald-600 font-extrabold">Pending Payouts</strong> balance. This ensures your active Stripe Wallet remains untouched and free from negative balance liabilities.
+                    </p>
+                </div>
+                <button type="button" onclick="showScenarioModal()" class="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between text-[11px] font-black text-indigo-600 hover:text-indigo-700 transition-colors w-full group/btn">
+                    <span class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-[14px]">psychology</span> View Real-world Examples
+                    </span>
+                    <span class="material-symbols-outlined text-[14px] group-hover/btn:translate-x-1 transition-transform">arrow_forward</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- ========================================== -->
     <!-- PHẦN 2: LỊCH SỬ GIAO DỊCH & PAYOUTS        -->
@@ -304,9 +396,18 @@
                                     </td>
                                     <td class="px-4 py-4.5 text-right align-middle whitespace-nowrap">
                                         <div class="flex flex-col items-end">
-                                            <span class="text-sm font-black text-slate-900 tracking-tight font-black">
-                                                @((item.PayoutCurrency ?? item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
-                                            </span>
+                                            @if (item.Status == "refunded")
+                                            {
+                                                <span class="text-sm font-black text-rose-600 tracking-tight font-black">
+                                                    - @((item.PayoutCurrency ?? item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-sm font-black text-slate-900 tracking-tight font-black">
+                                                    @((item.PayoutCurrency ?? item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
+                                                </span>
+                                            }
                                             <span class="text-[9px] text-slate-400 font-bold mt-0.5 uppercase tracking-wider">Net Amount</span>
                                         </div>
                                     </td>
@@ -314,10 +415,12 @@
                                         @{
                                             var (bgClass, textClass, dotClass, label) = item.Status switch
                                             {
-                                                "succeeded" => ("bg-emerald-50 text-emerald-700 border-emerald-100/50", "text-emerald-700", "bg-emerald-500", "Completed"),
-                                                "failed"    => ("bg-red-50 text-red-700 border-red-100/50", "text-red-700", "bg-red-500", "Failed"),
-                                                "pending"   => ("bg-amber-50 text-amber-800 border-amber-100/50", "text-amber-800", "bg-amber-400", "Pending"),
-                                                _           => ("bg-slate-100 text-slate-600 border-slate-200/50", "text-slate-600", "bg-slate-400", item.Status ?? "—")
+                                                "succeeded"      => ("bg-emerald-50 text-emerald-700 border-emerald-100/50", "text-emerald-700", "bg-emerald-500", "Completed"),
+                                                "failed"         => ("bg-red-50 text-red-700 border-red-100/50", "text-red-700", "bg-red-500", "Failed"),
+                                                "pending"        => ("bg-amber-50 text-amber-800 border-amber-100/50", "text-amber-800", "bg-amber-400", "Pending"),
+                                                "refunded"       => ("bg-rose-50 text-rose-700 border-rose-100/50", "text-rose-700", "bg-rose-500", "Refunded"),
+                                                "refund_pending" => ("bg-orange-50 text-orange-700 border-orange-100/50", "text-orange-700", "bg-orange-500", "Refund Pending"),
+                                                _                => ("bg-slate-100 text-slate-600 border-slate-200/50", "text-slate-600", "bg-slate-400", item.Status ?? "—")
                                             };
                                         }
                                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-extrabold border uppercase tracking-wider @bgClass shadow-sm/5">
@@ -326,7 +429,7 @@
                                         </span>
                                     </td>
                                     <td class="pl-4 pr-6 py-4.5 align-middle text-right w-16">
-                                        <a href="/Transaction/Detail/@item.TransactionId" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:bg-primary hover:text-white hover:rotate-12 transition-all duration-300 shadow-sm/5" title="View Details">
+                                        <a href="/Transaction/InstructorDetail/@item.TransactionId" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:bg-primary hover:text-white hover:rotate-12 transition-all duration-300 shadow-sm/5" title="View Details">
                                             <span class="material-symbols-outlined text-[16px]">visibility</span>
                                         </a>
                                     </td>
@@ -623,6 +726,68 @@
             </a>
         </div>
     </div>
+
+    <!-- SECTION: TRUNG TÂM HỖ TRỢ TÀI CHÍNH & ĐỐI SOÁT -->
+    <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white rounded-[2.5rem] p-8 md:p-10 shadow-2xl relative overflow-hidden mt-12 mb-6 animate-fadeIn">
+        <div class="absolute -right-16 -top-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-violet-600/10 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
+            <div class="lg:col-span-5 flex flex-col justify-between">
+                <div>
+                    <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-black uppercase tracking-wider mb-4 border border-indigo-400/20">
+                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span> Finance Desk
+                    </span>
+                    <h3 class="text-2xl md:text-3xl font-black tracking-tight leading-tight mb-3">Finance & Stripe Support Hub</h3>
+                    <p class="text-xs text-slate-300 font-medium leading-relaxed">
+                        Need assistance with your payout structure, Stripe account configuration, or noticed a balance discrepancy? Submit an inquiry directly to our billing specialists.
+                    </p>
+                </div>
+                
+                <div class="mt-8 lg:mt-0 space-y-3.5 text-xs font-semibold text-slate-300">
+                    <div class="flex items-center gap-2.5">
+                        <span class="material-symbols-outlined text-[16px] text-indigo-400">mail</span>
+                        <span>billing@coursemarketplace.com</span>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <span class="material-symbols-outlined text-[16px] text-indigo-400">call</span>
+                        <span>+1 (800) 555-PAYOUT (24/7 Priority Line)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-7 bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10">
+                <h4 class="text-sm font-black text-white mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[16px] text-indigo-400">send</span>
+                    Submit Financial Support Inquiry
+                </h4>
+                <form id="financeSupportForm" class="space-y-4" onsubmit="handleSupportSubmit(event)">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-300 uppercase tracking-wider block mb-1.5">Inquiry Category</label>
+                            <select id="inquiryCategory" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 cursor-pointer font-medium">
+                                <option value="balance">Balance Discrepancy (Lệch số dư)</option>
+                                <option value="stripe">Stripe Connect Sync Issues (Lỗi đồng bộ Stripe)</option>
+                                <option value="refund">Refund Dispute (Thắc mắc hoàn tiền)</option>
+                                <option value="other">General Billing Inquiry (Yêu cầu tài chính khác)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-300 uppercase tracking-wider block mb-1.5">Transaction ID (Optional)</label>
+                            <input type="text" id="inquiryTxId" placeholder="e.g. #1042" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-medium font-mono" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-300 uppercase tracking-wider block mb-1.5">Detailed Message</label>
+                        <textarea id="inquiryMessage" rows="3" required placeholder="Describe your question or issue in detail..." class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-medium resize-none"></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/30 transition-all duration-300 flex items-center justify-center gap-1.5 active:scale-[0.98]">
+                        <span class="material-symbols-outlined text-[16px]">contact_support</span> Submit Inquiry Request
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -800,6 +965,89 @@
             ));
             window.drawProfitChart(initialItems);
         });
+
+        window.showScenarioModal = function() {
+            Swal.fire({
+                title: 'Settlement Cashflow Scenarios',
+                html: `
+                    <div class="text-left font-sans text-xs text-slate-600 max-h-[400px] overflow-y-auto pr-2 space-y-4">
+                        <div class="p-4 bg-indigo-50/60 border border-indigo-100 rounded-2xl">
+                            <span class="inline-block px-2 py-0.5 rounded bg-indigo-600 text-white text-[9px] font-black uppercase tracking-wider mb-2">Scenario A: Mid-Month Purchase</span>
+                            <p class="font-bold text-slate-800 text-[11px] mb-1">Course bought on May 5th</p>
+                            <ul class="list-disc pl-4 space-y-1 mt-1 font-medium leading-relaxed">
+                                <li>The order completes the 14-day escrow protection on <strong>May 19th</strong>.</li>
+                                <li>Since May 19th is prior to the end of May, the net revenue is categorized under May Accruals.</li>
+                                <li>The payout is automatically triggered and transferred on the next billing date: <strong>June 15th</strong>.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="p-4 bg-violet-50/60 border border-violet-100 rounded-2xl">
+                            <span class="inline-block px-2 py-0.5 rounded bg-violet-600 text-white text-[9px] font-black uppercase tracking-wider mb-2">Scenario B: End-Month Purchase</span>
+                            <p class="font-bold text-slate-800 text-[11px] mb-1">Course bought on May 28th</p>
+                            <ul class="list-disc pl-4 space-y-1 mt-1 font-medium leading-relaxed">
+                                <li>The order completes the 14-day escrow protection on <strong>June 11th</strong>.</li>
+                                <li>Although June 11th is before June 15th, payouts only settle accrued balances from the <strong>prior calendar month</strong> (May).</li>
+                                <li>Therefore, this June transition pushes this payout to settle on the subsequent cycle: <strong>July 15th</strong>.</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 bg-rose-50/60 border border-rose-100 rounded-2xl">
+                            <span class="inline-block px-2 py-0.5 rounded bg-rose-600 text-white text-[9px] font-black uppercase tracking-wider mb-2">Scenario C: Customer Refund</span>
+                            <p class="font-bold text-slate-800 text-[11px] mb-1">Refund approved on May 10th</p>
+                            <ul class="list-disc pl-4 space-y-1 mt-1 font-medium leading-relaxed">
+                                <li>An order bought on May 3rd is refunded by admin approval on May 10th (within the 14-day limit).</li>
+                                <li>The split amount is reversed automatically: 80% split is deducted from your May Pending Payouts.</li>
+                                <li>Stripe Connect wallet remains untouched and active without debit fees.</li>
+                            </ul>
+                        </div>
+                    </div>
+                `,
+                showCloseButton: true,
+                showConfirmButton: false,
+                customClass: {
+                    popup: 'rounded-3xl border border-slate-100 p-8 shadow-2xl max-w-lg',
+                    title: 'text-xl font-black text-slate-900 tracking-tight pb-3 border-b border-slate-100 flex items-center justify-start'
+                }
+            });
+        };
+
+        window.handleSupportSubmit = function(event) {
+            event.preventDefault();
+            const category = document.getElementById('inquiryCategory').value;
+            const txId = document.getElementById('inquiryTxId').value;
+            const message = document.getElementById('inquiryMessage').value;
+
+            Swal.fire({
+                title: 'Submitting Inquiry...',
+                html: 'Connecting to Billing Desk API...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            setTimeout(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Inquiry Submitted Successfully!',
+                    html: `
+                        <div class="text-left font-sans text-xs text-slate-600 space-y-2 mt-2">
+                            <p class="font-bold text-slate-800">Thank you for contacting Course Marketplace Finance.</p>
+                            <p class="leading-relaxed">We have received your inquiry regarding <strong>${category === 'balance' ? 'Balance Discrepancy' : category === 'stripe' ? 'Stripe Sync Issue' : category === 'refund' ? 'Refund Dispute' : 'Billing Assistance'}</strong>.</p>
+                            <p class="leading-relaxed">A support ticket has been created ${txId ? 'for transaction <strong>' + txId + '</strong>' : ''}. Our account specialists will review and follow up with a resolution to your registered instructor email within <strong>24 business hours</strong>.</p>
+                        </div>
+                    `,
+                    confirmButtonText: 'Great, Thank You!',
+                    confirmButtonColor: '#4f46e5',
+                    customClass: {
+                        popup: 'rounded-[2rem]',
+                        title: 'text-lg font-black text-slate-900',
+                        confirmButton: 'px-6 py-3 font-bold rounded-2xl text-xs shadow-md'
+                    }
+                });
+                document.getElementById('financeSupportForm').reset();
+            }, 1200);
+        };
 
         // SIGNALR & SYNC LOGIC
         function getCookie(name) {

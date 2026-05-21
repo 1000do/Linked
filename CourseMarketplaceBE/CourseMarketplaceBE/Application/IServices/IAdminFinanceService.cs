@@ -37,6 +37,16 @@ public interface IAdminFinanceService
     Task<decimal> GetCurrentTransferRateAsync();
 
     /// <summary>
+    /// Lấy ngày thanh toán tự động định kỳ (ví dụ: "15").
+    /// </summary>
+    Task<string> GetPayoutDaysConfigAsync();
+
+    /// <summary>
+    /// Cập nhật ngày thanh toán tự động định kỳ.
+    /// </summary>
+    Task SetPayoutDaysConfigAsync(string payoutDays);
+
+    /// <summary>
     /// Thực hiện chuyển tiền thật từ ví Sàn sang ví Giảng viên qua Stripe Connect.
     /// </summary>
     Task<string> PerformStripeTransferAsync(int payoutId);

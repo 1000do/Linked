@@ -207,8 +207,10 @@ public class TransactionController : Controller
         var txTask = _api.GetAsync(txQuery);
         // Fetch Payouts
         var payoutTask = _api.GetAsync(payoutQuery);
+        // Fetch Payout Days Config
+        var payoutDaysTask = _api.GetAsync("instructor/payout-days");
 
-        await Task.WhenAll(txTask, payoutTask);
+        await Task.WhenAll(txTask, payoutTask, payoutDaysTask);
 
         var txResp = await txTask;
         if (txResp.IsSuccessStatusCode)
@@ -231,6 +233,17 @@ public class TransactionController : Controller
             if (parsed?.Data != null)
                 vm.Payouts = parsed.Data;
         }
+
+        string payoutDays = "15";
+        var payoutDaysResp = await payoutDaysTask;
+        if (payoutDaysResp.IsSuccessStatusCode)
+        {
+            var json = await payoutDaysResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<string>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+                payoutDays = parsed.Data;
+        }
+        ViewBag.PayoutDays = payoutDays;
 
         return View(vm);
     }
@@ -266,6 +279,42 @@ public class TransactionController : Controller
         {
             TempData["Error"] = "Invalid transaction data.";
             return RedirectToAction(nameof(Index));
+        }
+
+        return View(parsed.Data);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET /Transaction/InstructorDetail/{id}
+    // Chi tiết giao dịch dành cho Giảng viên
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpGet]
+    public async Task<IActionResult> InstructorDetail(int id)
+    {
+        var resp = await _api.GetAsync($"transactions/{id}");
+
+        if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            return RedirectToAction("Login", "Account");
+
+        if (resp.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            TempData["Error"] = $"Transaction #{id} not found.";
+            return RedirectToAction("Instructor");
+        }
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            TempData["Error"] = "Cannot load transaction details.";
+            return RedirectToAction("Instructor");
+        }
+
+        var json = await resp.Content.ReadAsStringAsync();
+        var parsed = JsonSerializer.Deserialize<ApiResp<TransactionDetailVM>>(json, _jsonOpts);
+
+        if (parsed?.Data == null)
+        {
+            TempData["Error"] = "Invalid transaction data.";
+            return RedirectToAction("Instructor");
         }
 
         return View(parsed.Data);

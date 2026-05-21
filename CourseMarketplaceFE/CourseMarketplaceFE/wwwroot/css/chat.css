@@ -1,33 +1,40 @@
-/* Chat & Support UI - Impeccable Product Design */
+/* Chat & Support UI - Impeccable Zalo-Inspired Product Design */
 
 :root {
     /* Brand: Emerald-ish OKLCH */
     --brand-hue: 160;
-    --chat-primary: oklch(65% 0.15 var(--brand-hue));
-    --chat-primary-surface: oklch(98% 0.01 var(--brand-hue));
+    --chat-primary: oklch(60% 0.14 var(--brand-hue));
+    --chat-primary-surface: oklch(96% 0.02 var(--brand-hue));
     
     /* Neutrals: Tinted with brand hue for cohesion */
-    --chat-bg: oklch(99% 0.005 var(--brand-hue));
-    --chat-sidebar-bg: oklch(100% 0 var(--brand-hue));
-    --chat-border: oklch(92% 0.01 var(--brand-hue));
+    --chat-bg: #f4f6f9; /* Soft light background for sidebar */
+    --chat-sidebar-bg: #ffffff; /* Clean white sidebar background */
+    --chat-border: #e2e8f0; /* Thin modern light gray borders */
     
-    --chat-text-main: oklch(25% 0.02 var(--brand-hue));
-    --chat-text-muted: oklch(55% 0.015 var(--brand-hue));
+    --chat-text-main: #1e293b; /* Sleek dark slate text */
+    --chat-text-muted: #64748b; /* Soft slate gray for captions/time */
     
-    --chat-bubble-me: var(--chat-primary);
-    --chat-bubble-them: oklch(96% 0.005 var(--brand-hue));
+    /* Zalo Premium Pastel Tone & Pure White */
+    --chat-bubble-me: #dbedff; /* Soft pastel sky-blue for me */
+    --chat-bubble-me-text: #0b213f; /* Highly legible dark navy text */
+    --chat-bubble-them: #ffffff; /* Clean pure white for them */
+    --chat-bubble-them-text: #1e293b; /* Clear dark slate text */
+}
+
+main {
+    overflow: hidden !important;
 }
 
 .chat-wrapper {
     display: flex;
     background: var(--chat-bg);
     overflow: hidden;
-    /* Chiều cao được kiểm soát bởi inline style trong cshtml */
+    /* Height is controlled via inline style in cshtml */
 }
 
 /* SIDEBAR */
 .chat-sidebar {
-    width: 360px;
+    width: 300px; /* Optimized sidebar width */
     background: var(--chat-sidebar-bg);
     border-right: 1px solid var(--chat-border);
     display: flex;
@@ -38,7 +45,7 @@
 }
 
 @media (max-width: 992px) {
-    .chat-sidebar { width: 300px; }
+    .chat-sidebar { width: 280px; }
 }
 
 @media (max-width: 768px) {
@@ -52,7 +59,7 @@
 }
 
 .sidebar-header {
-    padding: 32px 24px 20px;
+    padding: 16px 20px 12px; /* Reduced vertical and horizontal spacing */
     border-bottom: 1px solid var(--chat-border);
     flex-shrink: 0;
 }
@@ -60,11 +67,11 @@
 .search-box { position: relative; }
 .search-box input {
     width: 100%;
-    padding: 12px 16px 12px 42px;
+    padding: 10px 14px 10px 38px; /* Slightly tighter search box padding */
     background: var(--chat-bg);
     border: 1px solid transparent;
-    border-radius: 12px;
-    font-size: 14px;
+    border-radius: 10px;
+    font-size: 13px;
     transition: all 0.2s ease;
 }
 
@@ -77,25 +84,25 @@
 
 .search-box .material-symbols-outlined {
     position: absolute;
-    left: 14px; top: 50%;
+    left: 12px; top: 50%;
     transform: translateY(-50%);
     color: var(--chat-text-muted);
-    font-size: 20px;
+    font-size: 18px;
 }
 
 .chat-list-container {
     flex: 1;
     overflow-y: auto;
-    padding: 16px 12px;
+    padding: 8px 8px; /* Compact sidebar chat list container padding */
 }
 
 .chat-card {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 16px;
-    margin-bottom: 8px;
-    border-radius: 16px;
+    gap: 12px; /* Tight gap */
+    padding: 10px 12px; /* Tight padding to show more chats */
+    margin-bottom: 4px; /* Reduced margin */
+    border-radius: 12px; /* Modern sleek border radius */
     cursor: pointer;
     transition: all 0.2s;
 }
@@ -104,26 +111,32 @@
 .chat-card.active { background: var(--chat-primary-surface); }
 
 .avatar-wrapper { position: relative; flex-shrink: 0; }
-.avatar-img { width: 52px; height: 52px; border-radius: 18px; object-fit: cover; background: var(--chat-border); }
+.avatar-img { 
+    width: 44px; /* Compact and clean size */
+    height: 44px; 
+    border-radius: 12px; /* Modern squircle border radius */
+    object-fit: cover; 
+    background: var(--chat-border); 
+}
 .status-dot {
     position: absolute;
     bottom: -2px; right: -2px;
-    width: 14px; height: 14px;
+    width: 12px; height: 12px;
     background: oklch(70% 0.2 145);
-    border: 3px solid #fff;
+    border: 2.5px solid #fff;
     border-radius: 50%;
 }
 
 .unread-count {
     background: oklch(60% 0.2 25);
     color: white;
-    font-size: 11px;
-    width: 22px; height: 22px;
-    min-width: 22px;
+    font-size: 10px;
+    width: 20px; height: 20px;
+    min-width: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 11px;
+    border-radius: 10px;
     font-weight: 700;
 }
 
@@ -133,45 +146,54 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    background: #fff;
+    background: #f0f4f8; /* Soft light gray-blue layout background */
     min-height: 0;
     overflow: hidden;
 }
 
 /* Cho phép khối tin nhắn co và cuộn bên trong (flex column + flex-1 child) */
 .chat-content-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0%;
     min-height: 0;
     overflow: hidden;
+    background: #f0f4f8; /* Keep consistent background */
 }
 
 .chat-header {
-    padding: 20px 32px;
+    padding: 12px 20px; /* Reduced header padding to eliminate excess top space */
     background: #fff;
     border-bottom: 1px solid var(--chat-border);
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 
 .message-viewport {
     flex: 1 1 0%;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 24px 28px 16px;
+    padding: 12px 16px; /* Tight viewport padding for clean visual hierarchy */
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px; /* Tighter gap between consecutive messages */
     min-height: 0;
     scrollbar-gutter: stable;
+    background-color: #f0f4f9; /* Soft light gray-blue viewport background - makes bubbles POP! */
 }
 
 /* Tin nhắn đối phương trái, của mình phải — hàng chỉ rộng theo nội dung */
 .msg-row {
     display: flex;
-    gap: 12px;
+    gap: 8px; /* Reduced gap */
     width: fit-content;
-    max-width: min(520px, 88%);
+    max-width: min(520px, 85%);
+    align-items: flex-end;
+    flex-shrink: 0;
+    height: auto;
 }
 
 .msg-row.them {
@@ -186,12 +208,28 @@
     margin-left: auto;
 }
 
+.avatar-container {
+    width: 32px !important; /* Compact size */
+    height: 32px !important;
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50% !important;
+    box-sizing: border-box;
+    margin-bottom: 2px;
+    padding: 2px !important; /* Forces the animated borders to fit elegantly */
+}
+
 .bubble-avatar {
-    width: 40px; height: 40px;
-    border-radius: 50%;
+    width: 26px !important; /* Beautifully sized inside the 32px frame */
+    height: 26px !important;
+    border-radius: 50% !important;
     object-fit: cover;
     flex-shrink: 0;
-    margin-top: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .bubble-container {
@@ -199,52 +237,72 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
+    width: fit-content;
 }
-.them .bubble-container { align-items: flex-start; }
-.me .bubble-container { align-items: flex-end; }
+.them .bubble-container { 
+    align-items: flex-start; 
+    align-self: flex-start; 
+}
+.me .bubble-container { 
+    align-items: flex-end; 
+    align-self: flex-end; 
+}
 
 .sender-name {
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 600;
     color: var(--chat-text-muted);
-    margin-bottom: 6px;
+    margin-bottom: 2px; /* Tight margin */
     padding: 0 4px;
 }
 .me .sender-name { text-align: right; }
 
 .bubble {
-    padding: 14px 20px;
-    font-size: 15px;
-    line-height: 1.6;
+    padding: 8px 12px; /* Compact padding */
+    font-size: 14px;
+    line-height: 1.4; /* Better, tighter text alignment */
     position: relative;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    width: fit-content;
+    max-width: 100%;
+}
+
+.bubble-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .msg-row.me .bubble {
     background: var(--chat-bubble-me);
-    color: white;
-    border-radius: 20px 20px 4px 20px;
+    color: var(--chat-bubble-me-text);
+    border-radius: 12px 12px 2px 12px; /* Sleek, elegant corners */
+    border: 1px solid #d0e3ff; /* Matching thin border */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .msg-row.them .bubble {
     background: var(--chat-bubble-them);
-    color: var(--chat-text-main);
-    border-radius: 20px 20px 20px 4px;
-    border: 1px solid var(--chat-border);
+    color: var(--chat-bubble-them-text);
+    border-radius: 12px 12px 12px 2px;
+    border: 1px solid #e2e8f0; /* Thin border */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .msg-time {
-    font-size: 11px;
-    margin-top: 6px;
+    font-size: 10px;
+    margin-top: 2px; /* Reduced vertical spacing */
     color: var(--chat-text-muted);
     opacity: 0.8;
 }
 .msg-row.me .msg-time {
     text-align: right;
-    color: rgba(255, 255, 255, 0.82);
+    color: var(--chat-text-muted);
 }
 
 .chat-footer {
-    padding: 24px 32px 32px;
+    padding: 12px 20px 16px; /* Greatly reduced footer padding - no more huge empty spacing */
     background: #fff;
     border-top: 1px solid var(--chat-border);
     flex-shrink: 0;
@@ -253,16 +311,16 @@
 .input-group-premium {
     display: flex;
     align-items: flex-end;
-    gap: 16px;
+    gap: 12px; /* Reduced gap */
     background: var(--chat-bg);
-    padding: 12px 12px 12px 20px;
-    border-radius: 20px;
+    padding: 8px 12px 8px 16px; /* Tight spacing for high efficiency */
+    border-radius: 16px; /* Clean rounded look */
     transition: all 0.3s ease;
 }
 
 .input-group-premium:focus-within {
     background: #fff;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.04), 0 0 0 1px var(--chat-primary);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03), 0 0 0 1px var(--chat-primary);
 }
 
 .chat-input-area {
@@ -270,21 +328,22 @@
     background: transparent;
     border: none;
     outline: none;
-    font-size: 15px;
+    font-size: 14px;
     color: var(--chat-text-main);
-    padding: 8px 0;
-    max-height: 150px;
+    padding: 6px 0;
+    max-height: 120px; /* Balanced height limit */
     overflow-y: auto;
     resize: none;
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
 .btn-chat-send {
-    width: 44px; height: 44px;
+    width: 36px; /* Smaller, matches input bar beautifully */
+    height: 36px;
     background: var(--chat-primary);
     color: white;
     border: none;
-    border-radius: 14px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -292,7 +351,7 @@
     flex-shrink: 0;
 }
 
-.btn-chat-send:hover { transform: scale(1.1); filter: brightness(1.1); }
+.btn-chat-send:hover { transform: scale(1.05); filter: brightness(1.1); }
 
 .empty-chat {
     flex: 1;
@@ -303,11 +362,12 @@
     color: var(--chat-text-muted);
     text-align: center;
     padding: 40px;
+    background: #f0f4f8; /* Soft viewport background matching the active chat background */
 }
 
 /* Scrollbar — danh sách chat + ô nhập vẫn mảnh; khung hội thoại dễ thấy hơn */
 .custom-scroll::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
 }
 
 .custom-scroll::-webkit-scrollbar-track {
@@ -316,19 +376,19 @@
 }
 
 .custom-scroll::-webkit-scrollbar-thumb {
-    background: oklch(82% 0.02 var(--brand-hue));
+    background: oklch(70% 0.03 var(--brand-hue));
     border-radius: 10px;
-    border: 2px solid transparent;
+    border: 1px solid transparent;
     background-clip: padding-box;
 }
 
 .custom-scroll::-webkit-scrollbar-thumb:hover {
-    background: oklch(72% 0.03 var(--brand-hue));
+    background: oklch(55% 0.05 var(--brand-hue));
     background-clip: padding-box;
 }
 
 /* Chỉ vùng tin nhắn: luôn chừng chỗ cho thanh cuộn khi nội dung dài */
 .message-viewport.custom-scroll {
     scrollbar-width: thin;
-    scrollbar-color: oklch(78% 0.025 var(--brand-hue)) oklch(97% 0.008 var(--brand-hue));
+    scrollbar-color: oklch(70% 0.03 var(--brand-hue)) oklch(97% 0.008 var(--brand-hue));
 }

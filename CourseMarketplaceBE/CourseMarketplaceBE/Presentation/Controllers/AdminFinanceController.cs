@@ -102,6 +102,51 @@ public class AdminFinanceController : ControllerBase
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // GET /api/admin/finance/payout-days
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpGet("payout-days")]
+    public async Task<IActionResult> GetPayoutDays()
+    {
+        try
+        {
+            var days = await _financeService.GetPayoutDaysConfigAsync();
+            return Ok(ApiResponse<string>.SuccessResponse(days, "Current payout days."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/admin/finance/payout-days
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("payout-days")]
+    public async Task<IActionResult> SetPayoutDays([FromBody] SetPayoutDaysRequest request)
+    {
+        try
+        {
+            await _financeService.SetPayoutDaysConfigAsync(request.PayoutDays);
+            return Ok(ApiResponse<string>.SuccessResponse(
+                $"Updated payout days to: {request.PayoutDays}",
+                "Updated successfully."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
+        }
+    }
+
+    public class SetPayoutDaysRequest
+    {
+        public string PayoutDays { get; set; } = "15";
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // POST /api/admin/finance/payouts/{payoutId}/mark-paid
     // Đánh dấu khoản thanh toán là đã thanh toán
     // ═══════════════════════════════════════════════════════════════════════
