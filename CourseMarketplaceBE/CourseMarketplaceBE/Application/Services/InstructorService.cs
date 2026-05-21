@@ -300,6 +300,20 @@ public class InstructorService : IInstructorService
         return $"Stripe account for instructor {instructorId} has been reset. The instructor needs to set up Stripe again.";
     }
 
+    public async Task<string> GetStripeLoginLinkAsync(int userId)
+    {
+        var instructor = await _repo.GetByIdAsync(userId);
+        if (instructor == null)
+            throw new InvalidOperationException("Instructor not found.");
+
+        if (string.IsNullOrEmpty(instructor.StripeAccountId))
+            throw new InvalidOperationException("You do not have an active Stripe account. Please connect to Stripe first.");
+
+        var loginLinkService = new AccountLoginLinkService();
+        var loginLink = await loginLinkService.CreateAsync(instructor.StripeAccountId);
+        return loginLink.Url;
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // 8. SET STRIPE COUNTRY — Giảng viên chọn quốc gia Stripe Connect
     // ═══════════════════════════════════════════════════════════════════════

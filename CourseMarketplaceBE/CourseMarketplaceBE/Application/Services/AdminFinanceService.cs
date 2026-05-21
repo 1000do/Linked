@@ -176,6 +176,30 @@ public class AdminFinanceService : IAdminFinanceService
         return decimal.TryParse(rateStr, out var rate) ? rate : DefaultTransferRate;
     }
 
+    public async Task<string> GetPayoutDaysConfigAsync()
+    {
+        var days = await _repo.GetConfigValueAsync("PayoutDays");
+        return string.IsNullOrWhiteSpace(days) ? "15" : days;
+    }
+
+    public async Task SetPayoutDaysConfigAsync(string payoutDays)
+    {
+        if (string.IsNullOrWhiteSpace(payoutDays))
+            throw new InvalidOperationException("Payout days configuration cannot be empty.");
+
+        // Validate formatting (comma-separated days of month, e.g., "15" or "5,20")
+        var parts = payoutDays.Split(',');
+        foreach (var p in parts)
+        {
+            if (!int.TryParse(p.Trim(), out var day) || day < 1 || day > 31)
+            {
+                throw new InvalidOperationException("Payout days must be a comma-separated list of integers between 1 and 31 (e.g., '15' or '5, 20').");
+            }
+        }
+
+        await _repo.UpsertConfigAsync("PayoutDays", payoutDays, "Automated payout trigger days of the month (comma-separated, e.g., '15' or '5,20').");
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // MARK PAYOUT AS PAID (Manual payout confirmation)
     // ═══════════════════════════════════════════════════════════════════════
@@ -295,7 +319,21 @@ public class AdminFinanceService : IAdminFinanceService
     public async Task<BulkPayoutResult> BulkPayAllViaStripeAsync()
     {
         var pendingPayouts = await _repo.GetPayoutDetailsAsync();
-        var toProcess = pendingPayouts.Where(p => !p.IsPaid).ToList();
+        
+        // Xác định ngày đầu tiên của tháng hiện tại để thực hiện thanh toán chậm pha (chỉ thanh toán tháng trước trở về trước)
+        var now = DateTime.UtcNow;
+        var firstDayOfCurrentMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        
+        // Thời hạn hoàn tiền tối đa 14 ngày giam quỹ (Holding Period)
+        var refundLimitDate = now.AddDays(-14);
+
+        // Lọc danh sách: Chưa trả && ngày giao dịch thuộc các tháng trước && đã vượt 14 ngày an toàn
+        var toProcess = pendingPayouts
+            .Where(p => !p.IsPaid 
+                     && p.TransactionDate.HasValue 
+                     && p.TransactionDate.Value < firstDayOfCurrentMonth 
+                     && p.TransactionDate.Value < refundLimitDate)
+            .ToList();
         
         var result = new BulkPayoutResult { TotalProcessed = toProcess.Count };
 

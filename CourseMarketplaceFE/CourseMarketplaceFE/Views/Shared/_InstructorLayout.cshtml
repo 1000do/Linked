@@ -130,7 +130,7 @@
             </a>
 
             @{
-                bool isTransaction = currentController == "Transaction" && currentAction == "Instructor";
+                bool isTransaction = currentController == "Transaction" && (currentAction == "Instructor" || currentAction == "InstructorDetail");
             }
             <a href="/Transaction/Instructor" class="flex items-center gap-3 px-4 py-3 @(isTransaction ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative @disabledClass">
                 @if (isTransaction) {
@@ -187,9 +187,15 @@
                 <span class="material-symbols-outlined text-[20px]">menu_book</span>
                 <span class="text-sm font-semibold">Resources</span>
             </a>
-                        <a href="#" class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">
+            @{
+                bool isSettings = currentController == "Instructor" && currentAction == "ApplicationStatus";
+            }
+            <a href="/Instructor/ApplicationStatus" class="flex items-center gap-3 px-4 py-3 @(isSettings ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative">
+                @if (isSettings) {
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></span>
+                }
                 <span class="material-symbols-outlined text-[20px]">settings</span>
-                <span class="text-sm font-semibold">Settings</span>
+                <span class="text-sm @(isSettings ? "font-bold" : "font-semibold")">Settings</span>
             </a>
         </nav>
         

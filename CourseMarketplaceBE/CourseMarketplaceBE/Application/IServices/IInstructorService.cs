@@ -52,6 +52,11 @@ public interface IInstructorService
     Task<string> ResetStripeAccountAsync(int instructorId);
 
     /// <summary>
+    /// Tạo đường dẫn đăng nhập bảo mật (Stripe Login Link) cho giảng viên tự quản lý Express Dashboard.
+    /// </summary>
+    Task<string> GetStripeLoginLinkAsync(int userId);
+
+    /// <summary>
     /// Giảng viên chọn quốc gia cho tài khoản Stripe Connect.
     /// Lưu vào cột stripe_country trong bảng instructors.
     /// </summary>

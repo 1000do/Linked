@@ -156,6 +156,7 @@ public class AdminFinanceController : Controller
         public PayoutPagedVM Payouts { get; set; } = new();
         public WithdrawalPagedVM Withdrawals { get; set; } = new();
         public List<RefundRequestVM> PendingRefunds { get; set; } = new();
+        public string PayoutDays { get; set; } = "15";
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -187,15 +188,26 @@ public class AdminFinanceController : Controller
         if (!string.IsNullOrEmpty(sortBy)) txQuery += $"&sortBy={Uri.EscapeDataString(sortBy)}";
         if (!string.IsNullOrEmpty(status)) txQuery += $"&status={Uri.EscapeDataString(status)}";
 
-        // Gọi song song 6 API để giảm latency
+        // Gọi song song 7 API để giảm latency
         var summaryTask = _api.GetAsync($"admin/finance/summary?year={selectedYear}&month={selectedMonth}");
         var payoutsTask = _api.GetAsync($"admin/finance/payouts?year={selectedYear}&month={selectedMonth}");
         var balanceTask = _api.GetAsync("admin/finance/balance");
         var historyTask = _api.GetAsync($"admin/finance/withdrawals?year={selectedYear}&month={selectedMonth}");
         var txTask = _api.GetAsync(txQuery);
         var refundTask = _api.GetAsync("admin/finance/refunds/pending");
+        var payoutDaysTask = _api.GetAsync("admin/finance/payout-days");
 
-        await Task.WhenAll(summaryTask, payoutsTask, balanceTask, historyTask, txTask, refundTask);
+        await Task.WhenAll(summaryTask, payoutsTask, balanceTask, historyTask, txTask, refundTask, payoutDaysTask);
+
+        // Parse payout days
+        var payoutDaysResp = await payoutDaysTask;
+        if (payoutDaysResp.IsSuccessStatusCode)
+        {
+            var json = await payoutDaysResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<string>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+                vm.PayoutDays = parsed.Data;
+        }
 
         // Parse summary
         var summaryResp = await summaryTask;
@@ -291,6 +303,29 @@ public class AdminFinanceController : Controller
         if (response.IsSuccessStatusCode)
         {
             TempData["FinanceSuccess"] = $"✅ Updated: Instructor gets {rate}%, Platform gets {100 - rate}%.";
+        }
+        else
+        {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            TempData["FinanceError"] = $"❌ Error: {errorBody}";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // POST /AdminFinance/SetPayoutDays
+    // Cập nhật ngày thanh toán tự động định kỳ
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetPayoutDays(string payoutDays)
+    {
+        var response = await _api.PostJsonAsync("admin/finance/payout-days", new { PayoutDays = payoutDays });
+
+        if (response.IsSuccessStatusCode)
+        {
+            TempData["FinanceSuccess"] = $"✅ Updated automated payout days to: {payoutDays}.";
         }
         else
         {

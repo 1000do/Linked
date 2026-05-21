@@ -118,6 +118,7 @@
             height: 300px;
             padding: 15px;
             overflow-y: auto;
+            overflow-x: hidden;
             background: #ffffff;
             display: flex;
             flex-direction: column;
@@ -162,6 +163,8 @@
             border-radius: 15px;
             font-size: 13px;
             line-height: 1.4;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
         .mini-msg.them { background: #f1f5f9; align-self: flex-start; border-bottom-left-radius: 2px; }
         .mini-msg.me { background: #059669; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
@@ -177,6 +180,7 @@
             display: flex;
             flex-direction: column;
             max-width: 85%;
+            width: fit-content;
         }
         .mini-msg-container.me { align-self: flex-end; }
         .mini-msg-container.them { align-self: flex-start; }

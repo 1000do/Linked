@@ -1,0 +1,439 @@
+@model CourseMarketplaceFE.Models.AdminAccountDetailPageViewModel
+@{
+    ViewData["Title"] = "Account Security & Financials";
+    ViewData["PageHeader"] = "Stripe Account Ledger";
+    Layout = "_AdminLayout";
+}
+
+<div class="flex flex-col gap-6 max-w-7xl mx-auto">
+    <!-- Breadcrumb back link -->
+    <div class="flex items-center gap-2">
+        <a href="@Url.Action("Index", "AdminAccount")" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors">
+            <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+            Back to Accounts
+        </a>
+    </div>
+
+    <!-- Account Header Card -->
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div class="flex items-center gap-4">
+            <img src="@(string.IsNullOrEmpty(Model.Account.AvatarUrl) ? "/img/default-avatar.png" : Model.Account.AvatarUrl)" 
+                 class="w-16 h-16 rounded-full object-cover border border-slate-200 bg-slate-50"
+                 onerror="this.src='/img/default-avatar.png'" />
+            <div class="flex flex-col gap-1">
+                <div class="flex items-center gap-2.5 flex-wrap">
+                    <h2 class="text-xl font-bold text-slate-900">@Model.Account.FullName</h2>
+                    @{
+                        string roleBadgeClass = "";
+                        string roleDisplay = Model.Account.Role ?? "user";
+                        switch (Model.Account.Role?.ToLower())
+                        {
+                            case "admin":
+                                roleBadgeClass = "bg-purple-50 text-purple-700 border-purple-200";
+                                roleDisplay = "Super Admin";
+                                break;
+                            case "staff":
+                                roleBadgeClass = "bg-blue-50 text-blue-700 border-blue-200";
+                                roleDisplay = "Staff Support";
+                                break;
+                            case "instructor":
+                                roleBadgeClass = "bg-amber-50 text-amber-700 border-amber-200";
+                                roleDisplay = "Instructor";
+                                break;
+                            default:
+                                roleBadgeClass = "bg-slate-50 text-slate-600 border-slate-200";
+                                roleDisplay = "Student";
+                                break;
+                        }
+                    }
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border @roleBadgeClass">
+                        @roleDisplay
+                    </span>
+                    @if (Model.Account.AccountStatus?.ToLower() == "banned")
+                    {
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                            Suspended
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Active
+                        </span>
+                    }
+                </div>
+                <div class="text-xs text-slate-500 font-medium flex items-center gap-1 flex-wrap">
+                    <span class="font-mono bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">ID: @Model.Account.AccountId</span>
+                    <span class="text-slate-300">•</span>
+                    <span>@Model.Account.Email</span>
+                    @if (!string.IsNullOrEmpty(Model.Account.PhoneNumber))
+                    {
+                        <span class="text-slate-300">•</span>
+                        <span class="font-mono">@Model.Account.PhoneNumber</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2.5 w-full md:w-auto">
+            @if (Model.Account.Role?.ToLower() != "admin")
+            {
+                <button id="detail-ban-btn" onclick="toggleDetailBan(@Model.Account.AccountId)" 
+                        class="w-full md:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold border rounded-lg transition-colors shadow-sm 
+                        @(Model.Account.AccountStatus?.ToLower() == "banned" ? "bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white" : "bg-red-600 hover:bg-red-700 border-red-600 text-white")">
+                    <span class="material-symbols-outlined text-[20px]">@(Model.Account.AccountStatus?.ToLower() == "banned" ? "lock_open" : "block")</span>
+                    @(Model.Account.AccountStatus?.ToLower() == "banned" ? "Unban Account" : "Suspend Account")
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Financial Stats Grid Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        @if (Model.Account.Role?.ToLower() == "instructor" || Model.Account.IsInstructor)
+        {
+            <!-- Revenue -->
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col gap-2 relative overflow-hidden">
+                <div class="absolute right-4 top-4 text-slate-100 pointer-events-none">
+                    <span class="material-symbols-outlined text-[64px]">payments</span>
+                </div>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Gross Platform Revenue</span>
+                <span class="text-3xl font-black text-slate-900 tracking-tight">@Model.Account.TotalRevenue.ToString("C0")</span>
+                <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Accumulated instructor share transfers
+                </p>
+            </div>
+
+            <!-- Payouts / Withdrawn -->
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col gap-2 relative overflow-hidden">
+                <div class="absolute right-4 top-4 text-slate-100 pointer-events-none">
+                    <span class="material-symbols-outlined text-[64px]">account_balance</span>
+                </div>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Payouts Settled</span>
+                <span class="text-3xl font-black text-slate-900 tracking-tight text-indigo-600">@Model.Account.TotalWithdrawn.ToString("C0")</span>
+                <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                    Successfully transferred to bank account
+                </p>
+            </div>
+
+            <!-- Available Wallet Balance -->
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col gap-2 relative overflow-hidden">
+                <div class="absolute right-4 top-4 text-slate-100 pointer-events-none">
+                    <span class="material-symbols-outlined text-[64px]">account_balance_wallet</span>
+                </div>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Available Ledger Balance</span>
+                <span class="text-3xl font-black text-slate-900 tracking-tight text-emerald-600">@Model.Account.AvailableBalance.ToString("C0")</span>
+                <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                    On-hold or ready for next payout cycle
+                </p>
+            </div>
+        }
+        else
+        {
+            <!-- Student / Staff standard stats -->
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col gap-2 relative overflow-hidden">
+                <div class="absolute right-4 top-4 text-slate-100 pointer-events-none">
+                    <span class="material-symbols-outlined text-[64px]">shopping_cart</span>
+                </div>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Course Purchases</span>
+                <span class="text-3xl font-black text-slate-900 tracking-tight">@Model.Account.TotalSpent.ToString("C0")</span>
+                <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                    Lifetime spending in currency value
+                </p>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col gap-2 relative overflow-hidden">
+                <div class="absolute right-4 top-4 text-slate-100 pointer-events-none">
+                    <span class="material-symbols-outlined text-[64px]">school</span>
+                </div>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Enrolled Courses</span>
+                <span class="text-3xl font-black text-slate-900 tracking-tight text-indigo-600">@Model.Account.EnrolledCoursesCount</span>
+                <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                    Number of active lectures in student panel
+                </p>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col gap-2 relative overflow-hidden">
+                <div class="absolute right-4 top-4 text-slate-100 pointer-events-none">
+                    <span class="material-symbols-outlined text-[64px]">security</span>
+                </div>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Security Profile Info</span>
+                <span class="text-3xl font-black text-slate-900 tracking-tight text-slate-700">@Model.Account.AccountFlagCount Reports</span>
+                <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                    Flags submitted by the community
+                </p>
+            </div>
+        }
+    </div>
+
+    <!-- Instructor Stripe Connect Metadata -->
+    @if (Model.Account.Role?.ToLower() == "instructor" || Model.Account.IsInstructor)
+    {
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+            <h3 class="text-sm font-bold text-slate-950 uppercase tracking-wider flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[18px] text-indigo-600">hub</span>
+                Stripe Connected Account Details
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-medium text-slate-600">
+                <div class="bg-slate-50 border border-slate-100 p-3.5 rounded-xl flex flex-col gap-1">
+                    <span class="text-[10px] text-slate-400 uppercase">Stripe Account ID</span>
+                    <span class="font-mono text-slate-900 text-sm">@(string.IsNullOrEmpty(Model.Account.StripeAccountId) ? "Not Connected" : Model.Account.StripeAccountId)</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-100 p-3.5 rounded-xl flex flex-col gap-1">
+                    <span class="text-[10px] text-slate-400 uppercase">Onboarding Status</span>
+                    <span class="text-slate-900 text-sm">@(string.IsNullOrEmpty(Model.Account.StripeOnboardingStatus) ? "None" : Model.Account.StripeOnboardingStatus)</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-100 p-3.5 rounded-xl flex flex-col gap-1">
+                    <span class="text-[10px] text-slate-400 uppercase">Charges Enabled</span>
+                    <span class="text-slate-900 text-sm flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full @(Model.Account.ChargesEnabled == true ? "bg-emerald-500" : "bg-red-400")"></span>
+                        @(Model.Account.ChargesEnabled == true ? "Yes" : "No")
+                    </span>
+                </div>
+                <div class="bg-slate-50 border border-slate-100 p-3.5 rounded-xl flex flex-col gap-1">
+                    <span class="text-[10px] text-slate-400 uppercase">Payouts Enabled</span>
+                    <span class="text-slate-900 text-sm flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full @(Model.Account.PayoutsEnabled == true ? "bg-emerald-500" : "bg-red-400")"></span>
+                        @(Model.Account.PayoutsEnabled == true ? "Yes" : "No")
+                    </span>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Connected Ledger Transactions Card -->
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+        <!-- Stripe Connected Account Ledger Tab Headers -->
+        <div class="px-6 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex overflow-x-auto gap-4 py-3">
+                <button onclick="switchTab('payments')" id="tab-btn-payments" 
+                        class="px-3 py-2 text-sm font-semibold border-b-2 border-slate-900 text-slate-900 transition-colors whitespace-nowrap focus:outline-none">
+                    Payments (Purchases)
+                </button>
+                <button onclick="switchTab('payouts')" id="tab-btn-payouts" 
+                        class="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-900 transition-colors whitespace-nowrap focus:outline-none">
+                    Payouts (Bank Settled)
+                </button>
+            </div>
+            <div class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest py-3">
+                Stripe Financial Ledger
+            </div>
+        </div>
+
+        <!-- ───────────────── TAB: PAYMENTS ───────────────── -->
+        <div id="tab-content-payments" class="tab-content overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200 bg-slate-50/50">
+                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Transaction ID</th>
+                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Purchased Course</th>
+                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Buyer Name</th>
+                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Purchased Date</th>
+                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    @if (Model.Transactions.Payments != null && Model.Transactions.Payments.Any())
+                    {
+                        @foreach (var p in Model.Transactions.Payments)
+                        {
+                            <tr class="hover:bg-slate-50/20 transition-colors">
+                                <td class="px-6 py-3.5 font-mono text-xs text-indigo-600">tx_@p.TransactionId</td>
+                                <td class="px-6 py-3.5 font-semibold text-slate-800">@p.CourseTitle</td>
+                                <td class="px-6 py-3.5 text-slate-600">@p.StudentName</td>
+                                <td class="px-6 py-3.5 font-bold text-slate-900">@p.Amount.ToString("C0")</td>
+                                <td class="px-6 py-3.5 text-slate-500 text-xs">@p.CreatedAt?.ToString("dd MMM yyyy HH:mm")</td>
+                                <td class="px-6 py-3.5 text-right">
+                                    @{
+                                        string statusClass = p.Status?.ToLower() == "success" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-amber-50 text-amber-700 border-amber-100";
+                                    }
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border @statusClass">
+                                        @p.Status
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center justify-center text-slate-400">
+                                    <span class="material-symbols-outlined text-3xl mb-2 text-slate-300">payments</span>
+                                    <p class="text-xs font-semibold text-slate-600">No payment transactions recorded.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+
+        <!-- ───────────────── TAB: PAYOUTS ───────────────── -->
+        <div id="tab-content-payouts" class="tab-content hidden overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200 bg-slate-50/50">
+                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Payout ID</th>
+                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stripe Transfer Ref</th>
+                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stripe Payout Ref</th>
+                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Payout Amount</th>
+                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Scheduled Date</th>
+                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Payout Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    @if (Model.Transactions.Payouts != null && Model.Transactions.Payouts.Any())
+                    {
+                        @foreach (var po in Model.Transactions.Payouts)
+                        {
+                            <tr class="hover:bg-slate-50/20 transition-colors">
+                                <td class="px-6 py-3.5 font-mono text-xs text-indigo-600">po_@po.PayoutId</td>
+                                <td class="px-6 py-3.5 font-mono text-xs text-slate-500">@(string.IsNullOrEmpty(po.StripeTransferId) ? "No reference" : po.StripeTransferId)</td>
+                                <td class="px-6 py-3.5 font-mono text-xs text-slate-500">@(string.IsNullOrEmpty(po.StripePayoutId) ? "No reference" : po.StripePayoutId)</td>
+                                <td class="px-6 py-3.5 font-bold text-slate-900">@po.PayoutAmount.ToString("C0")</td>
+                                <td class="px-6 py-3.5 text-slate-500 text-xs">
+                                    <div class="flex flex-col gap-0.5">
+                                        <span>@po.PayoutDate.ToString("dd MMM yyyy")</span>
+                                        @if (po.PaidToBankAt.HasValue)
+                                        {
+                                            <span class="text-[10px] text-emerald-600">Bank: @po.PaidToBankAt.Value.ToString("dd/MM HH:mm")</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="px-6 py-3.5 text-right">
+                                    @{
+                                        string statusClass = "bg-slate-50 text-slate-600 border-slate-200";
+                                        switch (po.PayoutStatus?.ToLower())
+                                        {
+                                            case "paid":
+                                                statusClass = "bg-emerald-50 text-emerald-700 border-emerald-100";
+                                                break;
+                                            case "in_transit":
+                                                statusClass = "bg-blue-50 text-blue-700 border-blue-100";
+                                                break;
+                                            case "failed":
+                                                statusClass = "bg-red-50 text-red-700 border-red-100";
+                                                break;
+                                            case "pending":
+                                                statusClass = "bg-amber-50 text-amber-700 border-amber-100";
+                                                break;
+                                        }
+                                    }
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border @statusClass">
+                                        @po.PayoutStatus
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center justify-center text-slate-400">
+                                    <span class="material-symbols-outlined text-3xl mb-2 text-slate-300">account_balance</span>
+                                    <p class="text-xs font-semibold text-slate-600">No bank settlements paid out.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // High-performance tab switching logic without refetching
+        function switchTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(el => el.classList.add('hidden'));
+
+            // Remove active classes from all tab buttons
+            const buttons = [
+                document.getElementById('tab-btn-payments'),
+                document.getElementById('tab-btn-payouts')
+            ];
+            buttons.forEach(btn => {
+                btn.classList.remove('border-slate-900', 'text-slate-900');
+                btn.classList.add('border-transparent', 'text-slate-500');
+            });
+
+            // Show current tab content & activate button
+            document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+            const targetBtn = document.getElementById(`tab-btn-${tabName}`);
+            targetBtn.classList.remove('border-transparent', 'text-slate-500');
+            targetBtn.classList.add('border-slate-900', 'text-slate-900');
+        }
+
+        // Toggle account ban inside details
+        async function toggleDetailBan(id) {
+            const btn = document.getElementById('detail-ban-btn');
+            const isBanned = btn.textContent.trim().toLowerCase().includes('unban');
+            const actionText = isBanned ? 'activate' : 'ban / suspend';
+            const confirmBtnText = isBanned ? 'Activate Profile' : 'Suspend Profile';
+            const actionColor = isBanned ? '#10b981' : '#ef4444';
+
+            const confirmResult = await Swal.fire({
+                title: 'Confirm Security Override',
+                text: `Are you absolutely sure you want to ${actionText} this user account?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: actionColor,
+                cancelButtonColor: '#64748b',
+                confirmButtonText: confirmBtnText,
+                cancelButtonText: 'Cancel',
+                background: '#ffffff',
+                customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' }
+            });
+
+            if (!confirmResult.isConfirmed) return;
+
+            try {
+                const response = await fetch(`/AdminAccount/ToggleBan/${id}`, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                const res = await response.json();
+                if (res.success) {
+                    Swal.fire({
+                        title: 'Status Updated!',
+                        text: res.message,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl border border-slate-100' }
+                    });
+
+                    setTimeout(() => location.reload(), 1800);
+                } else {
+                    Swal.fire({
+                        title: 'Failed to apply status',
+                        text: res.message,
+                        icon: 'error',
+                        confirmButtonColor: '#0f172a',
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl' }
+                    });
+                }
+            } catch (err) {
+                Swal.fire({ title: 'Connection Failure', text: 'Could not contact administration server.', icon: 'error', confirmButtonColor: '#0f172a' });
+            }
+        }
+    </script>
+}

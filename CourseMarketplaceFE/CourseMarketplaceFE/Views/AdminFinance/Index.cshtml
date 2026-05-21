@@ -37,7 +37,7 @@
         <div class="w-[1px] h-5 bg-slate-300"></div>
         <div class="flex items-center">
             <select name="year" class="bg-transparent border-0 text-slate-700 font-bold text-sm focus:ring-0 focus:outline-none cursor-pointer p-0 pr-6">
-                @for (int y = DateTime.UtcNow.Year; y <= DateTime.UtcNow.Year + 5; y++)
+                @for (int y = DateTime.UtcNow.Year - 10; y <= DateTime.UtcNow.Year + 10; y++)
                 {
                     if (y == (int)ViewBag.Year)
                     {
@@ -175,54 +175,96 @@
 <!-- ========================================== -->
 <!-- SECTION 2: SETTINGS & FUNDS WITHDRAWAL     -->
 <!-- ========================================== -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
     
     <!-- Cài đặt tỷ lệ chia sẻ -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary">tune</span>
-            Revenue Share Split Rate
-        </h3>
-        <form action="/AdminFinance/SetTransferRate" method="post" class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
+        <div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">tune</span>
+                Revenue Share Split Rate
+            </h3>
+            <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+                Define the percentage of the revenue generated from course sales that is paid out to instructors. The platform keeps the remaining net amount.
+            </p>
+        </div>
+        <form action="/AdminFinance/SetTransferRate" method="post" class="flex flex-col sm:flex-row items-end gap-3 mt-auto w-full">
             @Html.AntiForgeryToken()
             <div class="relative flex-1 w-full">
                 <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Instructor Share (%)</label>
-                <input type="number" name="rate" min="1" max="100" step="0.01" value="@Model.Dashboard.Summary.CurrentTransferRate" 
-                       class="w-full pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-mono font-bold text-slate-900" />
-                <span class="absolute right-4 top-[30px] text-slate-400 font-bold">%</span>
+                <div class="relative">
+                    <input type="number" name="rate" min="1" max="100" step="0.01" value="@Model.Dashboard.Summary.CurrentTransferRate" 
+                           class="w-full pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-mono font-bold text-slate-900" />
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
+                </div>
             </div>
-            <button type="submit" class="w-full sm:w-auto mt-4 sm:mt-5 py-2.5 px-6 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-sm whitespace-nowrap">
+            <button type="submit" class="w-full sm:w-auto py-2.5 px-6 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-sm whitespace-nowrap active:scale-95">
                 Save Rate
             </button>
         </form>
     </div>
 
+    <!-- Cài đặt Ngày Thanh toán Tự động -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
+        <div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-indigo-600">schedule</span>
+                Auto Payout Scheduler
+            </h3>
+            <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+                Configure day(s) of the month to trigger automatic bulk payouts to instructors. Use a comma for multiple days (e.g., <span class="font-mono bg-slate-100 px-1 py-0.5 rounded text-indigo-700 font-bold">15</span> or <span class="font-mono bg-slate-100 px-1 py-0.5 rounded text-indigo-700 font-bold">5, 20</span>).
+            </p>
+        </div>
+        <form action="/AdminFinance/SetPayoutDays" method="post" class="flex flex-col sm:flex-row items-end gap-3 mt-auto w-full">
+            @Html.AntiForgeryToken()
+            <div class="relative flex-1 w-full">
+                <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Trigger Day(s)</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg">calendar_today</span>
+                    <input type="text" name="payoutDays" value="@Model.PayoutDays" placeholder="e.g. 15" required
+                           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-mono font-bold text-slate-900" />
+                </div>
+            </div>
+            <button type="submit" class="w-full sm:w-auto py-2.5 px-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-sm whitespace-nowrap active:scale-95 flex items-center justify-center gap-1">
+                <span class="material-symbols-outlined text-sm">save</span>
+                Save Config
+            </button>
+        </form>
+    </div>
+
     <!-- Form Rút tiền về Ngân hàng -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <span class="material-symbols-outlined text-emerald-600">payment</span>
-            Withdraw Funds to Bank
-        </h3>
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
+        <div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-emerald-600">payment</span>
+                Withdraw Funds to Bank
+            </h3>
+            <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+                Manually withdraw the accumulated platform's net profit from your Stripe available balance directly into your connected bank account.
+            </p>
+        </div>
         @{
             var isWithdrawDisabled = Model.Withdraw.Balance.Available < 0.50m;
         }
-        <form action="/AdminFinance/Withdraw" method="post" class="flex flex-col gap-3" id="withdraw-form" onsubmit="handleWithdrawSubmit(event)">
+        <form action="/AdminFinance/Withdraw" method="post" class="flex flex-col gap-3 mt-auto w-full" id="withdraw-form" onsubmit="handleWithdrawSubmit(event)">
             @Html.AntiForgeryToken()
-            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div class="relative flex-1 w-full">
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Withdraw Amount ($)</label>
-                    <input type="number" name="amount" step="0.01" min="0.50" max="@Model.Withdraw.Balance.Available" value="@Model.Withdraw.Balance.Available"
-                           class="w-full pl-4 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all font-mono font-bold text-slate-900 @(isWithdrawDisabled ? "opacity-60 cursor-not-allowed" : "")"
-                           id="withdraw-amount" @(isWithdrawDisabled ? "disabled" : "") />
-                </div>
-                <div class="relative flex-1 w-full">
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Description (Optional)</label>
-                    <input type="text" name="description" placeholder="e.g. May profit withdrawal"
-                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm @(isWithdrawDisabled ? "opacity-60 cursor-not-allowed" : "")"
-                           @(isWithdrawDisabled ? "disabled" : "") />
+            <div class="flex flex-col gap-3 w-full">
+                <div class="flex gap-3">
+                    <div class="relative flex-1">
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Amount ($)</label>
+                        <input type="number" name="amount" step="0.01" min="0.50" max="@Model.Withdraw.Balance.Available" value="@Model.Withdraw.Balance.Available"
+                               class="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all font-mono font-bold text-slate-900 text-sm @(isWithdrawDisabled ? "opacity-60 cursor-not-allowed" : "")"
+                               id="withdraw-amount" @(isWithdrawDisabled ? "disabled" : "") />
+                    </div>
+                    <div class="relative flex-1">
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Description (Optional)</label>
+                        <input type="text" name="description" placeholder="May withdrawal"
+                               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-xs @(isWithdrawDisabled ? "opacity-60 cursor-not-allowed" : "")"
+                               @(isWithdrawDisabled ? "disabled" : "") />
+                    </div>
                 </div>
                 <button type="submit"
-                        class="w-full sm:w-auto mt-4 sm:mt-5 py-2.5 px-6 font-bold rounded-xl shadow-sm transition-all whitespace-nowrap flex items-center justify-center gap-2 @(isWithdrawDisabled ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95")"
+                        class="w-full py-2 px-6 font-bold rounded-xl shadow-sm transition-all whitespace-nowrap flex items-center justify-center gap-1.5 text-sm @(isWithdrawDisabled ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95")"
                         @(isWithdrawDisabled ? "disabled" : "")>
                     <span class="material-symbols-outlined text-sm">send_money</span>
                     Withdraw Now
@@ -230,14 +272,65 @@
             </div>
             @if (isWithdrawDisabled)
             {
-                <p class="text-xs text-amber-600 font-bold flex items-center gap-1 mt-1 bg-amber-50 border border-amber-100 p-2.5 rounded-xl">
-                    <span class="material-symbols-outlined text-[16px]">info</span>
-                    The minimum available balance to withdraw is $0.50 (Current: $@Model.Withdraw.Balance.Available.ToString("N2")).
+                <p class="text-[10px] text-amber-600 font-bold flex items-center gap-1 mt-1 bg-amber-50 border border-amber-100 p-2 rounded-lg">
+                    <span class="material-symbols-outlined text-[12px]">info</span>
+                    Minimum withdraw is $0.50 (Available: $@Model.Withdraw.Balance.Available.ToString("N2")).
                 </p>
             }
         </form>
     </div>
 
+</div>
+
+<!-- ========================================== -->
+<!-- CHART SECTION: MONTHLY PERFORMANCE         -->
+<!-- ========================================== -->
+<div id="chart-card" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col mb-8 transition-all duration-300 hover:shadow-md">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+            <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <span class="material-symbols-outlined text-indigo-600">monitoring</span>
+                Monthly Financial Performance (<span id="chart-month-name">@System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName((int)ViewBag.Month)</span> @ViewBag.Year)
+            </h3>
+            <p class="text-xs text-slate-500 mt-1">Daily trend of Gross Revenues, Platform Profit, and Instructor Shares.</p>
+        </div>
+        <!-- Legends indicator -->
+        <div class="flex flex-wrap items-center gap-2.5 text-xs font-bold">
+            <button onclick="toggleDataset(0)" id="legend-btn-0" class="inline-flex items-center gap-1.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl border border-indigo-100/50 transition-all active:scale-95">
+                <span class="w-2.5 h-2.5 rounded-full bg-indigo-600" id="legend-dot-0"></span>
+                <span>Gross Revenue</span>
+            </button>
+            <button onclick="toggleDataset(1)" id="legend-btn-1" class="inline-flex items-center gap-1.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-100/50 transition-all active:scale-95">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-600" id="legend-dot-1"></span>
+                <span>Platform Profit</span>
+            </button>
+            <button onclick="toggleDataset(2)" id="legend-btn-2" class="inline-flex items-center gap-1.5 text-amber-600 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-xl border border-amber-100/50 transition-all active:scale-95">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500" id="legend-dot-2"></span>
+                <span>Instructor Share</span>
+            </button>
+        </div>
+    </div>
+    
+    <div class="relative w-full h-[320px]">
+        <canvas id="adminFinancialChart"></canvas>
+    </div>
+
+    <!-- Hidden input storing serialized chart items grouped by day of the selected month -->
+    @{
+        int daysInMonth = DateTime.DaysInMonth((int)ViewBag.Year, (int)ViewBag.Month);
+        var payoutsList = Model.Dashboard.Payouts ?? new List<CourseMarketplaceFE.Controllers.AdminFinanceController.PayoutDetailVM>();
+        var dailyData = Enumerable.Range(1, daysInMonth).Select(day => {
+            var dayPayouts = payoutsList.Where(p => (p.TransactionDate ?? p.PayoutDate).Day == day).ToList();
+            return new {
+                day = day,
+                label = $"{day:D2}/{ViewBag.Month:D2}",
+                gross = dayPayouts.Sum(p => p.TotalAmount),
+                net = dayPayouts.Sum(p => p.PlatformReceived),
+                instructor = dayPayouts.Sum(p => p.InstructorReceived)
+            };
+        }).ToList();
+    }
+    <div id="chart-data-json" class="hidden" data-chart="@System.Text.Json.JsonSerializer.Serialize(dailyData)"></div>
 </div>
 
 <!-- ========================================== -->
@@ -831,7 +924,154 @@
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // CHART LOGIC
+        let adminFinancialChartInstance = null;
+        window.drawAdminChart = function(dailyItems) {
+            const canvas = document.getElementById('adminFinancialChart');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            if (adminFinancialChartInstance) {
+                adminFinancialChartInstance.destroy();
+            }
+
+            if (!dailyItems || dailyItems.length === 0) {
+                return;
+            }
+
+            const labels = dailyItems.map(item => item.label || item.day.toString());
+            const grossData = dailyItems.map(item => item.gross);
+            const netData = dailyItems.map(item => item.net);
+            const instructorData = dailyItems.map(item => item.instructor);
+
+            // Gradients
+            const grossGradient = ctx.createLinearGradient(0, 0, 0, 300);
+            grossGradient.addColorStop(0, 'rgba(79, 70, 229, 0.15)');
+            grossGradient.addColorStop(1, 'rgba(79, 70, 229, 0)');
+
+            const netGradient = ctx.createLinearGradient(0, 0, 0, 300);
+            netGradient.addColorStop(0, 'rgba(16, 185, 129, 0.15)');
+            netGradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+            const instructorGradient = ctx.createLinearGradient(0, 0, 0, 300);
+            instructorGradient.addColorStop(0, 'rgba(245, 158, 11, 0.15)');
+            instructorGradient.addColorStop(1, 'rgba(245, 158, 11, 0)');
+
+            adminFinancialChartInstance = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Gross Revenue',
+                            data: grossData,
+                            borderColor: '#4f46e5',
+                            borderWidth: 2.5,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#4f46e5',
+                            pointBorderWidth: 1.5,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            fill: true,
+                            backgroundColor: grossGradient,
+                            tension: 0.35
+                        },
+                        {
+                            label: 'Platform Net Profit',
+                            data: netData,
+                            borderColor: '#10b981',
+                            borderWidth: 2.5,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#10b981',
+                            pointBorderWidth: 1.5,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            fill: true,
+                            backgroundColor: netGradient,
+                            tension: 0.35
+                        },
+                        {
+                            label: 'Instructor Share',
+                            data: instructorData,
+                            borderColor: '#f59e0b',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#f59e0b',
+                            pointBorderWidth: 1.5,
+                            pointRadius: 2.5,
+                            pointHoverRadius: 4.5,
+                            fill: true,
+                            backgroundColor: instructorGradient,
+                            tension: 0.35
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            titleFont: { family: 'Inter', size: 12, weight: 'bold' },
+                            bodyFont: { family: 'Inter', size: 13 },
+                            padding: 10,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': $' + context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2 });
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9', drawBorder: false },
+                            ticks: {
+                                font: { family: 'Inter', size: 10, weight: '500' },
+                                color: '#94a3b8',
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            },
+                            border: { display: false }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { family: 'Inter', size: 10, weight: '500' },
+                                color: '#64748b',
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 15
+                            },
+                            border: { display: false }
+                        }
+                    }
+                }
+            });
+        };
+
+        window.toggleDataset = function(index) {
+            if (!adminFinancialChartInstance) return;
+            const isVisible = adminFinancialChartInstance.isDatasetVisible(index);
+            if (isVisible) {
+                adminFinancialChartInstance.hide(index);
+                document.getElementById('legend-btn-' + index).classList.add('opacity-40', 'line-through');
+            } else {
+                adminFinancialChartInstance.show(index);
+                document.getElementById('legend-btn-' + index).classList.remove('opacity-40', 'line-through');
+            }
+        };
         function switchTab(tabId) {
             document.querySelectorAll('[id^="tab-content-"]').forEach(el => el.classList.add('hidden'));
             document.getElementById('tab-content-' + tabId).classList.remove('hidden');
@@ -936,6 +1176,13 @@
                     ajaxReloadAdmin();
                 });
             }
+
+            // Draw initial chart
+            const chartDataEl = document.getElementById('chart-data-json');
+            if (chartDataEl) {
+                const initialItems = JSON.parse(chartDataEl.getAttribute('data-chart') || '[]');
+                window.drawAdminChart(initialItems);
+            }
         });
 
         async function ajaxReloadAdmin() {
@@ -1014,6 +1261,32 @@
                     document.querySelectorAll('form input[name="month"]').forEach(input => {
                         input.value = targetMonth;
                     });
+
+                    // 6. Swap Chart Card Canvas Container & Render
+                    const oldChartCard = document.getElementById('chart-card');
+                    const newChartCard = doc.getElementById('chart-card');
+                    if (oldChartCard && newChartCard) {
+                        const oldCanvasContainer = oldChartCard.querySelector('.relative.w-full.h-\\[320px\\]');
+                        const newCanvasContainer = newChartCard.querySelector('.relative.w-full.h-\\[320px\\]');
+                        if (oldCanvasContainer && newCanvasContainer) {
+                            oldCanvasContainer.innerHTML = newCanvasContainer.innerHTML;
+                        }
+                        
+                        const oldTitle = oldChartCard.querySelector('h3');
+                        const newTitle = newChartCard.querySelector('h3');
+                        if (oldTitle && newTitle) oldTitle.innerHTML = newTitle.innerHTML;
+                        
+                        const newDataEl = newChartCard.querySelector('#chart-data-json');
+                        if (newDataEl) {
+                            const newItems = JSON.parse(newDataEl.getAttribute('data-chart') || '[]');
+                            window.drawAdminChart(newItems);
+                            // Reset legend button states
+                            [0, 1, 2].forEach(index => {
+                                const btn = document.getElementById('legend-btn-' + index);
+                                if (btn) btn.classList.remove('opacity-40', 'line-through');
+                            });
+                        }
+                    }
 
                     // Push states
                     history.pushState(null, '', url);

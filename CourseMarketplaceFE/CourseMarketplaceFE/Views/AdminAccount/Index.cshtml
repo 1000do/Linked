@@ -1,0 +1,561 @@
+@model CourseMarketplaceFE.Models.AdminAccountListViewModel
+@{
+    ViewData["Title"] = "Account Management";
+    ViewData["PageHeader"] = "Account & Security Controls";
+    Layout = "_AdminLayout";
+}
+
+<div class="flex flex-col gap-6">
+    <!-- Header with Stats & Actions -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Accounts Overview</h1>
+            <p class="text-sm text-slate-500">Manage user profiles, staff administrative permissions, and security bans.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="openCreateStaffModal()" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-all">
+                <span class="material-symbols-outlined text-[20px]">add</span>
+                Add Staff Member
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Tab Bar & Search -->
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <!-- Tabs -->
+        <div class="flex border-b border-slate-100 md:border-none overflow-x-auto gap-2">
+            @{
+                string activeClass = "bg-slate-900 text-white font-medium";
+                string inactiveClass = "text-slate-600 hover:bg-slate-50 hover:text-slate-900";
+            }
+            <a href="@Url.Action("Index", new { role = "all", keyword = Model.Keyword })" 
+               class="px-4 py-2 text-xs md:text-sm rounded-lg transition-colors whitespace-nowrap @(Model.Role == "all" ? activeClass : inactiveClass)">
+               All Accounts
+            </a>
+            <a href="@Url.Action("Index", new { role = "user", keyword = Model.Keyword })" 
+               class="px-4 py-2 text-xs md:text-sm rounded-lg transition-colors whitespace-nowrap @(Model.Role == "user" ? activeClass : inactiveClass)">
+               Users (Students/Instructors)
+            </a>
+            <a href="@Url.Action("Index", new { role = "staff", keyword = Model.Keyword })" 
+               class="px-4 py-2 text-xs md:text-sm rounded-lg transition-colors whitespace-nowrap @(Model.Role == "staff" ? activeClass : inactiveClass)">
+               Staff Directory (CRUD)
+            </a>
+            <a href="@Url.Action("Index", new { role = "registered_staff", keyword = Model.Keyword })" 
+               class="px-4 py-2 text-xs md:text-sm rounded-lg transition-colors whitespace-nowrap @(Model.Role == "registered_staff" ? activeClass : inactiveClass)">
+               Registered Staff (Verified)
+            </a>
+        </div>
+
+        <!-- Search input form -->
+        <form method="get" action="@Url.Action("Index")" class="flex items-center gap-2 w-full md:w-80">
+            <input type="hidden" name="role" value="@Model.Role" />
+            <div class="relative w-full">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                    <span class="material-symbols-outlined text-[20px]">search</span>
+                </span>
+                <input type="text" name="keyword" value="@Model.Keyword" placeholder="Search by name, email, phone..." 
+                       class="w-full pl-10 pr-8 py-2 text-sm bg-slate-50 hover:bg-slate-100/70 focus:bg-white border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg transition-all" />
+                @if (!string.IsNullOrEmpty(Model.Keyword))
+                {
+                    <a href="@Url.Action("Index", new { role = Model.Role })" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                        <span class="material-symbols-outlined text-[16px]">close</span>
+                    </a>
+                }
+            </div>
+            <button type="submit" class="px-4 py-2 text-sm font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors">
+                Find
+            </button>
+        </form>
+    </div>
+
+    <!-- Main Table Container -->
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200 bg-slate-50/50">
+                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Account Profile</th>
+                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Role & Permissions</th>
+                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Account Status</th>
+                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Date Registered</th>
+                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    @if (Model.Items != null && Model.Items.Any())
+                    {
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr id="row-@item.AccountId" class="hover:bg-slate-50/30 transition-colors group">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <img src="@(string.IsNullOrEmpty(item.AvatarUrl) ? "/img/default-avatar.png" : item.AvatarUrl)"
+                                             class="w-10 h-10 rounded-full object-cover border border-slate-200 bg-slate-100" 
+                                             onerror="this.src='/img/default-avatar.png'" />
+                                        <div class="flex flex-col">
+                                            <span class="font-semibold text-slate-900">@item.FullName</span>
+                                            <span class="text-xs text-slate-500">@item.Email</span>
+                                            @if (!string.IsNullOrEmpty(item.PhoneNumber))
+                                            {
+                                                <span class="text-[11px] text-slate-400 font-mono mt-0.5">@item.PhoneNumber</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="px-6 py-4 align-middle">
+                                    @{
+                                        string roleBadgeClass = "";
+                                        string roleDisplay = item.Role ?? "user";
+                                        switch (item.Role?.ToLower())
+                                        {
+                                            case "admin":
+                                                roleBadgeClass = "bg-purple-50 text-purple-700 border-purple-200";
+                                                roleDisplay = "Super Admin";
+                                                break;
+                                            case "staff":
+                                                roleBadgeClass = "bg-blue-50 text-blue-700 border-blue-200";
+                                                roleDisplay = "Staff Support";
+                                                break;
+                                            case "instructor":
+                                                roleBadgeClass = "bg-amber-50 text-amber-700 border-amber-200";
+                                                roleDisplay = "Instructor";
+                                                break;
+                                            default:
+                                                roleBadgeClass = "bg-slate-50 text-slate-600 border-slate-200";
+                                                roleDisplay = "Student";
+                                                break;
+                                        }
+                                    }
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border @roleBadgeClass">
+                                        @roleDisplay
+                                    </span>
+                                </td>
+
+                                <td class="px-6 py-4 align-middle">
+                                    <div class="flex items-center gap-2">
+                                        @if (item.AccountStatus?.ToLower() == "banned")
+                                        {
+                                            <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+                                            <span id="status-text-@item.AccountId" class="font-medium text-red-600 text-xs">Banned</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                            <span id="status-text-@item.AccountId" class="font-medium text-emerald-600 text-xs">Active</span>
+                                        }
+
+                                        @if (item.AccountFlagCount > 0)
+                                        {
+                                            <span class="ml-1 inline-flex items-center gap-1 px-1.5 py-0.5 bg-rose-50 text-rose-700 border border-rose-100 rounded text-[10px] font-semibold" title="Flags from community">
+                                                <span class="material-symbols-outlined text-[10px]">flag</span>
+                                                @item.AccountFlagCount
+                                            </span>
+                                        }
+                                    </div>
+                                </td>
+
+                                <td class="px-6 py-4 align-middle text-slate-500 text-xs">
+                                    <div class="flex flex-col gap-0.5">
+                                        <span>@item.AccountCreatedAt?.ToString("dd MMM yyyy")</span>
+                                        @if (item.AccountLastLoginAt.HasValue)
+                                        {
+                                            <span class="text-[10px] text-slate-400">Login: @item.AccountLastLoginAt.Value.ToString("dd/MM HH:mm")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-[10px] text-slate-400 italic">Never logged in</span>
+                                        }
+                                    </div>
+                                </td>
+
+                                <td class="px-6 py-4 align-middle text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <!-- General details -->
+                                        <a href="@Url.Action("Detail", "AdminAccount", new { id = item.AccountId })" 
+                                           class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200/80">
+                                            <span class="material-symbols-outlined text-[15px]">visibility</span>
+                                            Details
+                                        </a>
+
+                                        @if (item.Role?.ToLower() != "admin")
+                                        {
+                                            <!-- Staff modification -->
+                                            @if (item.Role?.ToLower() == "staff")
+                                            {
+                                                <button onclick="openEditStaffModal(@item.AccountId, '@item.FullName', '@item.PhoneNumber', '@item.AccountStatus')" 
+                                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200/80">
+                                                    <span class="material-symbols-outlined text-[15px]">edit</span>
+                                                    Edit
+                                                </button>
+                                            }
+
+                                            <!-- Toggle ban/unban button -->
+                                            <button id="ban-btn-@item.AccountId" onclick="toggleAccountBan(@item.AccountId)" 
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold transition-colors border rounded-lg 
+                                                    @(item.AccountStatus?.ToLower() == "banned" ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200" : "bg-red-50 text-red-700 hover:bg-red-100 border-red-200")">
+                                                <span class="material-symbols-outlined text-[15px]">@(item.AccountStatus?.ToLower() == "banned" ? "lock_open" : "block")</span>
+                                                @(item.AccountStatus?.ToLower() == "banned" ? "Activate" : "Ban")
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="px-6 py-16 text-center">
+                                <div class="flex flex-col items-center justify-center text-slate-400">
+                                    <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">manage_search</span>
+                                    <p class="text-sm font-medium text-slate-600">No accounts match your criteria.</p>
+                                    <p class="text-xs text-slate-400 mt-1">Try modifying your search text or switching filter tabs.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Footer -->
+        @if (Model.TotalCount > Model.PageSize)
+        {
+            var totalPages = (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize);
+            <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <span class="text-xs text-slate-500">
+                    Showing pages @Model.Page of @totalPages (@Model.TotalCount absolute records found)
+                </span>
+                <div class="flex items-center gap-1">
+                    <a href="@(Model.Page > 1 ? Url.Action("Index", new { role = Model.Role, keyword = Model.Keyword, page = Model.Page - 1 }) : "#")" 
+                       class="inline-flex items-center px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors @(Model.Page <= 1 ? "opacity-50 pointer-events-none" : "")">
+                        Prev
+                    </a>
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <a href="@Url.Action("Index", new { role = Model.Role, keyword = Model.Keyword, page = i })" 
+                           class="inline-flex items-center px-3.5 py-1.5 text-xs font-semibold rounded-lg border transition-colors 
+                           @(Model.Page == i ? "bg-slate-900 border-slate-900 text-white" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50")">
+                            @i
+                        </a>
+                    }
+                    <a href="@(Model.Page < totalPages ? Url.Action("Index", new { role = Model.Role, keyword = Model.Keyword, page = Model.Page + 1 }) : "#")" 
+                       class="inline-flex items-center px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors @(Model.Page >= totalPages ? "opacity-50 pointer-events-none" : "")">
+                        Next
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: ADD STAFF MEMBER (Glassmorphism backdrop) -->
+<!-- ========================================================================= -->
+<div id="createStaffModal" class="fixed inset-0 z-50 hidden bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 transition-all">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 transition-all">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="text-base font-bold text-slate-900">Provision New Staff Account</h3>
+            <button onclick="closeCreateStaffModal()" class="text-slate-400 hover:text-slate-600">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        <!-- Form Content -->
+        <form id="createStaffForm" onsubmit="submitCreateStaff(event)" class="p-6 flex flex-col gap-4">
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-700">Gmail Address <span class="text-rose-500">*</span></label>
+                <input type="email" id="createEmail" name="email" required placeholder="name@gmail.com" 
+                       class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-700">Display Name <span class="text-rose-500">*</span></label>
+                <input type="text" id="createDisplayName" name="displayName" required placeholder="Staff Fullname" 
+                       class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-700">Temporary Password <span class="text-rose-500">*</span></label>
+                <input type="password" id="createPassword" name="password" required placeholder="Min 6 characters" 
+                       class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-700">Contact Number</label>
+                <input type="text" id="createPhone" name="phoneNumber" placeholder="e.g. +84912345678" 
+                       class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+            </div>
+            <div class="flex items-center gap-3 mt-2">
+                <button type="button" onclick="closeCreateStaffModal()" class="w-full py-2 text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="w-full py-2 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors shadow-sm">
+                    Provision
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: EDIT STAFF MEMBER (Glassmorphism backdrop) -->
+<!-- ========================================================================= -->
+<div id="editStaffModal" class="fixed inset-0 z-50 hidden bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 transition-all">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 transition-all">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="text-base font-bold text-slate-900">Modify Staff Account</h3>
+            <button onclick="closeEditStaffModal()" class="text-slate-400 hover:text-slate-600">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        <!-- Form Content -->
+        <form id="editStaffForm" onsubmit="submitEditStaff(event)" class="p-6 flex flex-col gap-4">
+            <input type="hidden" id="editAccountId" name="accountId" />
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-700">Display Name <span class="text-rose-500">*</span></label>
+                <input type="text" id="editDisplayName" name="displayName" required placeholder="Staff Fullname" 
+                       class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-700">New Password <span class="text-slate-400 font-normal">(Leave empty to keep current)</span></label>
+                <input type="password" id="editPassword" name="password" placeholder="Change password..." 
+                       class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-700">Contact Number</label>
+                <input type="text" id="editPhone" name="phoneNumber" placeholder="e.g. +84912345678" 
+                       class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-700">Administrative Status</label>
+                <select id="editStatus" name="accountStatus" class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors">
+                    <option value="Active">Active</option>
+                    <option value="Banned">Banned (Disable access)</option>
+                </select>
+            </div>
+            <div class="flex items-center gap-3 mt-2">
+                <button type="button" onclick="closeEditStaffModal()" class="w-full py-2 text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="w-full py-2 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors shadow-sm">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Modal toggling controls
+        function openCreateStaffModal() {
+            const modal = document.getElementById('createStaffModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.firstElementChild.classList.remove('scale-95'), 50);
+        }
+
+        function closeCreateStaffModal() {
+            const modal = document.getElementById('createStaffModal');
+            modal.firstElementChild.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 150);
+            document.getElementById('createStaffForm').reset();
+        }
+
+        function openEditStaffModal(id, displayName, phone, status) {
+            document.getElementById('editAccountId').value = id;
+            document.getElementById('editDisplayName').value = displayName;
+            document.getElementById('editPhone').value = phone || '';
+            document.getElementById('editStatus').value = status || 'Active';
+
+            const modal = document.getElementById('editStaffModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.firstElementChild.classList.remove('scale-95'), 50);
+        }
+
+        function closeEditStaffModal() {
+            const modal = document.getElementById('editStaffModal');
+            modal.firstElementChild.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 150);
+            document.getElementById('editStaffForm').reset();
+        }
+
+        // AJAX Provisioning
+        async function submitCreateStaff(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('createEmail').value.trim();
+            const displayName = document.getElementById('createDisplayName').value.trim();
+            const password = document.getElementById('createPassword').value;
+            const phoneNumber = document.getElementById('createPhone').value.trim();
+
+            if (!email.toLowerCase().endsWith('@@gmail.com')) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Staff email address must be a valid @@gmail.com account.',
+                    icon: 'warning',
+                    confirmButtonColor: '#0f172a',
+                    background: '#ffffff',
+                    customClass: { popup: 'rounded-2xl shadow-xl border border-slate-100' }
+                });
+                return;
+            }
+
+            try {
+                const response = await fetch('/AdminAccount/CreateStaff', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({ email, displayName, password, phoneNumber })
+                });
+
+                const res = await response.json();
+                if (res.success) {
+                    Swal.fire({
+                        title: 'Staff Registered!',
+                        text: res.message,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl border border-slate-100' }
+                    });
+                    closeCreateStaffModal();
+                    setTimeout(() => location.reload(), 1800);
+                } else {
+                    Swal.fire({
+                        title: 'Registration Failed',
+                        text: res.message,
+                        icon: 'error',
+                        confirmButtonColor: '#0f172a',
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl' }
+                    });
+                }
+            } catch (err) {
+                Swal.fire({ title: 'Connection Failure', text: 'Could not contact administration server.', icon: 'error', confirmButtonColor: '#0f172a' });
+            }
+        }
+
+        // AJAX Editing
+        async function submitEditStaff(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('editAccountId').value;
+            const displayName = document.getElementById('editDisplayName').value.trim();
+            const password = document.getElementById('editPassword').value;
+            const phoneNumber = document.getElementById('editPhone').value.trim();
+            const accountStatus = document.getElementById('editStatus').value;
+
+            try {
+                const response = await fetch(`/AdminAccount/EditStaff/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({ displayName, password, phoneNumber, accountStatus })
+                });
+
+                const res = await response.json();
+                if (res.success) {
+                    Swal.fire({
+                        title: 'Profile Updated!',
+                        text: res.message,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl border border-slate-100' }
+                    });
+                    closeEditStaffModal();
+                    setTimeout(() => location.reload(), 1800);
+                } else {
+                    Swal.fire({
+                        title: 'Update Failed',
+                        text: res.message,
+                        icon: 'error',
+                        confirmButtonColor: '#0f172a',
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl' }
+                    });
+                }
+            } catch (err) {
+                Swal.fire({ title: 'Connection Failure', text: 'Could not contact administration server.', icon: 'error', confirmButtonColor: '#0f172a' });
+            }
+        }
+
+        // Toggle account suspension/unban
+        async function toggleAccountBan(id) {
+            const statusTextEl = document.getElementById(`status-text-${id}`);
+            const isBanned = statusTextEl.textContent.trim().toLowerCase() === 'banned';
+            const actionText = isBanned ? 'activate' : 'ban / suspend';
+            const confirmBtnText = isBanned ? 'Activate Profile' : 'Suspend Profile';
+            const actionColor = isBanned ? '#10b981' : '#ef4444';
+
+            const confirmResult = await Swal.fire({
+                title: 'Confirm Security Override',
+                text: `Are you absolutely sure you want to ${actionText} this user account?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: actionColor,
+                cancelButtonColor: '#64748b',
+                confirmButtonText: confirmBtnText,
+                cancelButtonText: 'Cancel',
+                background: '#ffffff',
+                customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' }
+            });
+
+            if (!confirmResult.isConfirmed) return;
+
+            try {
+                const response = await fetch(`/AdminAccount/ToggleBan/${id}`, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                const res = await response.json();
+                if (res.success) {
+                    Swal.fire({
+                        title: 'Status Updated!',
+                        text: res.message,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl border border-slate-100' }
+                    });
+
+                    // Update UI elements in row dynamically
+                    const activeState = res.currentStatus === 'Active';
+                    const row = document.getElementById(`row-${id}`);
+                    const statusText = document.getElementById(`status-text-${id}`);
+                    const banBtn = document.getElementById(`ban-btn-${id}`);
+                    const statusDot = statusText.previousElementSibling;
+
+                    if (activeState) {
+                        statusText.textContent = 'Active';
+                        statusText.className = 'font-medium text-emerald-600 text-xs';
+                        statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
+                        
+                        banBtn.className = 'inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-red-50 text-red-700 hover:bg-red-100 border-red-200 border rounded-lg transition-colors';
+                        banBtn.innerHTML = '<span class="material-symbols-outlined text-[15px]">block</span>Ban';
+                    } else {
+                        statusText.textContent = 'Banned';
+                        statusText.className = 'font-medium text-red-600 text-xs';
+                        statusDot.className = 'w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse';
+
+                        banBtn.className = 'inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 border rounded-lg transition-colors';
+                        banBtn.innerHTML = '<span class="material-symbols-outlined text-[15px]">lock_open</span>Activate';
+                    }
+                } else {
+                    Swal.fire({
+                        title: 'Failed to apply status',
+                        text: res.message,
+                        icon: 'error',
+                        confirmButtonColor: '#0f172a',
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl' }
+                    });
+                }
+            } catch (err) {
+                Swal.fire({ title: 'Connection Failure', text: 'Could not contact administration server.', icon: 'error', confirmButtonColor: '#0f172a' });
+            }
+        }
+    </script>
+}

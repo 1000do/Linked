@@ -162,7 +162,7 @@
                                     Set up your Stripe account to receive direct payments from students. 
                                     You will keep <strong>70% of the revenue</strong> from every course enrollment.
                                 </p>
-                                <form asp-action="SetupPayout" asp-controller="Instructor" method="post">
+                                <form asp-action="SetupPayout" asp-controller="Instructor" method="post" target="_blank">
                                     @Html.AntiForgeryToken()
                                     <button type="submit"
                                             class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-sm">
@@ -180,11 +180,36 @@
         @* ── STRIPE INFO ───────────────────────────────────── *@
         @if (!string.IsNullOrEmpty(Model.StripeOnboardingStatus))
         {
-            <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
-                <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary">payments</span>
-                    Stripe Configuration
-                </h2>
+            <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">payments</span>
+                        Stripe Configuration
+                    </h2>
+                    <div class="flex flex-wrap items-center gap-2">
+                        @if (Model.StripeOnboardingStatus == "Active")
+                        {
+                            <form asp-action="AccessStripeDashboard" asp-controller="Instructor" method="post" class="inline-block" target="_blank">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-300">
+                                    <span class="material-symbols-outlined text-sm">open_in_new</span>
+                                    Manage Stripe & Bank card
+                                </button>
+                            </form>
+                        }
+                        
+                        <form asp-action="ResetStripe" asp-controller="Instructor" method="post" class="inline-block" onsubmit="return confirm('Are you sure you want to disconnect your Stripe account? All pending payouts will be preserved, but you must link a new Stripe account to receive payments.');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit"
+                                    class="inline-flex items-center gap-1.5 px-4 py-2 border border-red-200 hover:bg-red-50 text-red-600 text-xs font-bold rounded-xl transition-all duration-200">
+                                <span class="material-symbols-outlined text-sm">link_off</span>
+                                Disconnect Stripe
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <p class="text-xs text-slate-400 uppercase tracking-wider mb-1">Onboarding Status</p>
