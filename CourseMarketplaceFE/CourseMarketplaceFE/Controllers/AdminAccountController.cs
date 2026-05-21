@@ -198,4 +198,39 @@ public class AdminAccountController : Controller
 
         return Json(new { success = false, message = errMsg });
     }
+
+    // POST /AdminAccount/Flag/{id}
+    [HttpPost]
+    public async Task<IActionResult> Flag(int id, [FromBody] FlagAccountFERequest model)
+    {
+        if (model == null)
+        {
+            return Json(new { success = false, message = "Reason is required." });
+        }
+
+        var response = await _apiClient.PostJsonAsync($"/api/admin/accounts/{id}/flag", model);
+        if (response.IsSuccessStatusCode)
+        {
+            var raw = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(raw);
+            var root = doc.RootElement;
+            var currentFlags = root.GetProperty("currentFlags").GetInt32();
+
+            return Json(new { success = true, currentFlags = currentFlags, message = "Account flagged successfully." });
+        }
+
+        var errContent = await response.Content.ReadAsStringAsync();
+        string errMsg = "Failed to flag account.";
+        try
+        {
+            using var doc = JsonDocument.Parse(errContent);
+            if (doc.RootElement.TryGetProperty("message", out var msgEl))
+            {
+                errMsg = msgEl.GetString() ?? errMsg;
+            }
+        }
+        catch { }
+
+        return Json(new { success = false, message = errMsg });
+    }
 }

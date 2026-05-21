@@ -117,3 +117,8 @@ public class UpdateStaffFERequest
     public string? Password { get; set; }
     public string? AccountStatus { get; set; }
 }
+
+public class FlagAccountFERequest
+{
+    public string Reason { get; set; } = string.Empty;
+}

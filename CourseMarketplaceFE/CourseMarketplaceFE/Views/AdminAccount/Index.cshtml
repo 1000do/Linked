@@ -78,7 +78,9 @@
                         <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Role & Permissions</th>
                         <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Account Status</th>
                         <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Date Registered</th>
-                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center w-24">Edit</th>
+                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center w-24">Toggle</th>
+                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center w-24">Flag</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-sm">
@@ -86,7 +88,7 @@
                     {
                         @foreach (var item in Model.Items)
                         {
-                            <tr id="row-@item.AccountId" class="hover:bg-slate-50/30 transition-colors group">
+                            <tr id="row-@item.AccountId" onclick="goToDetail(@item.AccountId)" class="hover:bg-slate-50/30 transition-colors group cursor-pointer">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
                                         <img src="@(string.IsNullOrEmpty(item.AvatarUrl) ? "/img/default-avatar.png" : item.AvatarUrl)"
@@ -134,7 +136,17 @@
 
                                 <td class="px-6 py-4 align-middle">
                                     <div class="flex items-center gap-2">
-                                        @if (item.AccountStatus?.ToLower() == "banned")
+                                        @if (item.AccountStatus?.Equals("Flagged_1", StringComparison.OrdinalIgnoreCase) == true)
+                                        {
+                                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                            <span id="status-text-@item.AccountId" class="font-medium text-amber-600 text-xs">Flagged 1</span>
+                                        }
+                                        else if (item.AccountStatus?.Equals("Flagged_2", StringComparison.OrdinalIgnoreCase) == true)
+                                        {
+                                            <span class="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
+                                            <span id="status-text-@item.AccountId" class="font-medium text-orange-600 text-xs">Flagged 2</span>
+                                        }
+                                        else if (item.AccountStatus?.Equals("Banned", StringComparison.OrdinalIgnoreCase) == true)
                                         {
                                             <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
                                             <span id="status-text-@item.AccountId" class="font-medium text-red-600 text-xs">Banned</span>
@@ -145,13 +157,15 @@
                                             <span id="status-text-@item.AccountId" class="font-medium text-emerald-600 text-xs">Active</span>
                                         }
 
-                                        @if (item.AccountFlagCount > 0)
-                                        {
-                                            <span class="ml-1 inline-flex items-center gap-1 px-1.5 py-0.5 bg-rose-50 text-rose-700 border border-rose-100 rounded text-[10px] font-semibold" title="Flags from community">
-                                                <span class="material-symbols-outlined text-[10px]">flag</span>
-                                                @item.AccountFlagCount
-                                            </span>
-                                        }
+                                         <div id="flag-container-@item.AccountId" class="flex items-center gap-1">
+                                             @if (item.AccountFlagCount > 0)
+                                             {
+                                                 <span class="ml-1 inline-flex items-center gap-1 px-1.5 py-0.5 bg-rose-50 text-rose-700 border border-rose-100 rounded text-[10px] font-semibold" title="Flags from community">
+                                                     <span class="material-symbols-outlined text-[10px]">flag</span>
+                                                     <span id="flag-count-@item.AccountId">@item.AccountFlagCount</span>
+                                                 </span>
+                                             }
+                                         </div>
                                     </div>
                                 </td>
 
@@ -169,36 +183,63 @@
                                     </div>
                                 </td>
 
-                                <td class="px-6 py-4 align-middle text-right">
-                                    <div class="flex items-center justify-end gap-1.5">
-                                        <!-- General details -->
-                                        <a href="@Url.Action("Detail", "AdminAccount", new { id = item.AccountId })" 
-                                           class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200/80">
-                                            <span class="material-symbols-outlined text-[15px]">visibility</span>
-                                            Details
-                                        </a>
+                                <!-- Edit Column -->
+                                <td class="px-6 py-4 align-middle text-center">
+                                    @if (item.Role?.ToLower() != "admin" && item.Role?.ToLower() == "staff")
+                                    {
+                                        <button onclick="event.stopPropagation(); openEditStaffModal(@item.AccountId, '@item.FullName', '@item.PhoneNumber', '@item.AccountStatus')" 
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white text-slate-700 hover:bg-slate-900 hover:text-white rounded-lg transition-all duration-200 border border-slate-200/80 shadow-sm hover:shadow active:scale-95">
+                                            <span class="material-symbols-outlined text-[15px]">edit</span>
+                                            <span>Edit</span>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-slate-300 italic">-</span>
+                                    }
+                                </td>
 
-                                        @if (item.Role?.ToLower() != "admin")
-                                        {
-                                            <!-- Staff modification -->
-                                            @if (item.Role?.ToLower() == "staff")
-                                            {
-                                                <button onclick="openEditStaffModal(@item.AccountId, '@item.FullName', '@item.PhoneNumber', '@item.AccountStatus')" 
-                                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200/80">
-                                                    <span class="material-symbols-outlined text-[15px]">edit</span>
-                                                    Edit
-                                                </button>
-                                            }
-
-                                            <!-- Toggle ban/unban button -->
-                                            <button id="ban-btn-@item.AccountId" onclick="toggleAccountBan(@item.AccountId)" 
-                                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold transition-colors border rounded-lg 
-                                                    @(item.AccountStatus?.ToLower() == "banned" ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200" : "bg-red-50 text-red-700 hover:bg-red-100 border-red-200")">
-                                                <span class="material-symbols-outlined text-[15px]">@(item.AccountStatus?.ToLower() == "banned" ? "lock_open" : "block")</span>
-                                                @(item.AccountStatus?.ToLower() == "banned" ? "Activate" : "Ban")
+                                <!-- Toggle Column -->
+                                <td class="px-6 py-4 align-middle text-center">
+                                    @if (item.Role?.ToLower() != "admin")
+                                    {
+                                        <div class="flex items-center justify-center">
+                                            <button onclick="event.stopPropagation(); toggleAccountBan(@item.AccountId)" 
+                                                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2
+                                                           @(item.AccountStatus?.ToLower() == "banned" ? "bg-slate-200" : "bg-emerald-500")" 
+                                                    id="toggle-ban-@item.AccountId"
+                                                    role="switch" 
+                                                    title="@(item.AccountStatus?.ToLower() == "banned" ? "Deactivated" : "Activated")"
+                                                    aria-checked="@(item.AccountStatus?.ToLower() != "banned" ? "true" : "false")">
+                                                <span class="sr-only">Toggle Account Status</span>
+                                                <span aria-hidden="true" 
+                                                      id="toggle-dot-@item.AccountId"
+                                                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-300 ease-in-out 
+                                                             @(item.AccountStatus?.ToLower() == "banned" ? "translate-x-0" : "translate-x-5")"></span>
                                             </button>
-                                        }
-                                    </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-slate-300 italic">-</span>
+                                    }
+                                </td>
+
+                                <!-- Flag Column -->
+                                <td class="px-6 py-4 align-middle text-center">
+                                    @if (item.Role?.ToLower() != "admin")
+                                    {
+                                        <button id="flag-btn-@item.AccountId" onclick="event.stopPropagation(); flagAccount(@item.AccountId)" 
+                                                class="inline-flex items-center justify-center p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50/50 hover:border-rose-100 border border-transparent transition-all duration-200"
+                                                title="Flag Account"
+                                                @(item.AccountStatus?.ToLower() == "banned" || item.AccountFlagCount >= 3 ? "disabled style=opacity:0.3;cursor:not-allowed;" : "")>
+                                            <span class="material-symbols-outlined text-[18px]">flag</span>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-slate-300 italic">-</span>
+                                    }
                                 </td>
                             </tr>
                         }
@@ -206,7 +247,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="5" class="px-6 py-16 text-center">
+                            <td colspan="7" class="px-6 py-16 text-center">
                                 <div class="flex flex-col items-center justify-center text-slate-400">
                                     <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">manage_search</span>
                                     <p class="text-sm font-medium text-slate-600">No accounts match your criteria.</p>
@@ -522,32 +563,177 @@
                     });
 
                     // Update UI elements in row dynamically
-                    const activeState = res.currentStatus === 'Active';
-                    const row = document.getElementById(`row-${id}`);
+                    const activeState = res.currentStatus.toLowerCase() !== 'banned';
                     const statusText = document.getElementById(`status-text-${id}`);
-                    const banBtn = document.getElementById(`ban-btn-${id}`);
                     const statusDot = statusText.previousElementSibling;
+                    const toggleBtn = document.getElementById(`toggle-ban-${id}`);
+                    const toggleDot = document.getElementById(`toggle-dot-${id}`);
+                    const flagBtn = document.getElementById(`flag-btn-${id}`);
 
                     if (activeState) {
-                        statusText.textContent = 'Active';
-                        statusText.className = 'font-medium text-emerald-600 text-xs';
-                        statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
+                        const statusLower = res.currentStatus.toLowerCase();
+                        if (statusLower === 'flagged_1') {
+                            statusText.textContent = 'Flagged 1';
+                            statusText.className = 'font-medium text-amber-600 text-xs';
+                            statusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
+                        } else if (statusLower === 'flagged_2') {
+                            statusText.textContent = 'Flagged 2';
+                            statusText.className = 'font-medium text-orange-600 text-xs';
+                            statusDot.className = 'w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse';
+                        } else {
+                            statusText.textContent = 'Active';
+                            statusText.className = 'font-medium text-emerald-600 text-xs';
+                            statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
+                        }
                         
-                        banBtn.className = 'inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-red-50 text-red-700 hover:bg-red-100 border-red-200 border rounded-lg transition-colors';
-                        banBtn.innerHTML = '<span class="material-symbols-outlined text-[15px]">block</span>Ban';
+                        if (toggleBtn) {
+                            toggleBtn.className = 'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-emerald-500 transition-colors duration-200 ease-in-out focus:outline-none';
+                            toggleBtn.setAttribute('aria-checked', 'true');
+                            toggleBtn.title = 'Activated';
+                        }
+                        if (toggleDot) {
+                            toggleDot.className = 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-5';
+                        }
+                        if (flagBtn) {
+                            flagBtn.removeAttribute('disabled');
+                            flagBtn.style.opacity = '1';
+                            flagBtn.style.cursor = 'pointer';
+                            flagBtn.title = 'Flag Account';
+                        }
                     } else {
                         statusText.textContent = 'Banned';
                         statusText.className = 'font-medium text-red-600 text-xs';
                         statusDot.className = 'w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse';
 
-                        banBtn.className = 'inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 border rounded-lg transition-colors';
-                        banBtn.innerHTML = '<span class="material-symbols-outlined text-[15px]">lock_open</span>Activate';
+                        if (toggleBtn) {
+                            toggleBtn.className = 'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-200 transition-colors duration-200 ease-in-out focus:outline-none';
+                            toggleBtn.setAttribute('aria-checked', 'false');
+                            toggleBtn.title = 'Deactivated';
+                        }
+                        if (toggleDot) {
+                            toggleDot.className = 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0';
+                        }
+                        if (flagBtn) {
+                            flagBtn.setAttribute('disabled', 'true');
+                            flagBtn.style.opacity = '0.4';
+                            flagBtn.style.cursor = 'not-allowed';
+                            flagBtn.title = 'Banned accounts cannot be flagged';
+                        }
                     }
                 } else {
                     Swal.fire({
                         title: 'Failed to apply status',
                         text: res.message,
                         icon: 'error',
+                        confirmButtonColor: '#0f172a',
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl' }
+                    });
+                }
+            } catch (err) {
+                Swal.fire({ title: 'Connection Failure', text: 'Could not contact administration server.', icon: 'error', confirmButtonColor: '#0f172a' });
+            }
+        }
+
+        function goToDetail(id) {
+            window.location.href = `/AdminAccount/Detail/${id}`;
+        }
+
+        async function flagAccount(id) {
+            const { value: reason } = await Swal.fire({
+                title: 'Flag Account',
+                input: 'textarea',
+                inputLabel: 'Reason for flagging this account',
+                inputPlaceholder: 'Describe the violation in detail...',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Flag Account',
+                cancelButtonText: 'Cancel',
+                background: '#ffffff',
+                customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' },
+                inputValidator: (value) => {
+                    if (!value || !value.trim()) {
+                        return 'You must specify a reason!';
+                    }
+                }
+            });
+
+            if (!reason) return;
+
+            try {
+                const response = await fetch(`/AdminAccount/Flag/${id}`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest' 
+                    },
+                    body: JSON.stringify({ reason: reason })
+                });
+
+                const res = await response.json();
+                if (res.success) {
+                    const flagContainer = document.getElementById(`flag-container-${id}`);
+                    const currentFlags = res.currentFlags;
+
+                    flagContainer.innerHTML = `
+                        <span class="ml-1 inline-flex items-center gap-1 px-1.5 py-0.5 bg-rose-50 text-rose-700 border border-rose-100 rounded text-[10px] font-semibold" title="Flags from community">
+                            <span class="material-symbols-outlined text-[10px]">flag</span>
+                            <span id="flag-count-${id}">${currentFlags}</span>
+                        </span>
+                    `;
+
+                    // Update visually
+                    const statusText = document.getElementById(`status-text-${id}`);
+                    const statusDot = statusText.previousElementSibling;
+                    const toggleBtn = document.getElementById(`toggle-ban-${id}`);
+                    const toggleDot = document.getElementById(`toggle-dot-${id}`);
+                    const flagBtn = document.getElementById(`flag-btn-${id}`);
+
+                    if (currentFlags === 1) {
+                        statusText.textContent = 'Flagged 1';
+                        statusText.className = 'font-medium text-amber-600 text-xs';
+                        statusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
+                    } else if (currentFlags === 2) {
+                        statusText.textContent = 'Flagged 2';
+                        statusText.className = 'font-medium text-orange-600 text-xs';
+                        statusDot.className = 'w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse';
+                    } else if (currentFlags >= 3) {
+                        statusText.textContent = 'Banned';
+                        statusText.className = 'font-medium text-red-600 text-xs';
+                        statusDot.className = 'w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse';
+
+                        if (toggleBtn) {
+                            toggleBtn.className = 'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-200 transition-colors duration-200 ease-in-out focus:outline-none';
+                            toggleBtn.setAttribute('aria-checked', 'false');
+                            toggleBtn.title = 'Deactivated';
+                        }
+                        if (toggleDot) {
+                            toggleDot.className = 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0';
+                        }
+
+                        if (flagBtn) {
+                            flagBtn.disabled = true;
+                            flagBtn.style.opacity = '0.4';
+                            flagBtn.style.cursor = 'not-allowed';
+                            flagBtn.title = 'Maximum flags reached';
+                        }
+                    }
+
+                    Swal.fire({
+                        title: 'Account Flagged!',
+                        text: `Flag count is now ${currentFlags}/3.`,
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl border border-slate-100' }
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Cannot Flag',
+                        text: res.message,
+                        icon: 'warning',
                         confirmButtonColor: '#0f172a',
                         background: '#ffffff',
                         customClass: { popup: 'rounded-2xl' }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -17,10 +18,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class AdminAccountController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly INotificationService _notificationService;
 
-    public AdminAccountController(AppDbContext context)
+    public AdminAccountController(AppDbContext context, INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -441,4 +444,74 @@ public class AdminAccountController : ControllerBase
             return StatusCode(500, new { status = 500, message = $"Internal server error: {ex.Message}" });
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/admin/accounts/{id}/flag (Tăng flag count)
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("{id}/flag")]
+    public async Task<IActionResult> FlagAccount(int id, [FromBody] FlagAccountRequest request)
+    {
+        try
+        {
+            var account = await _context.Accounts.FindAsync(id);
+            if (account == null)
+            {
+                return NotFound(new { status = 404, message = "Account not found." });
+            }
+
+            var currentFlags = account.AccountFlagCount ?? 0;
+            if (currentFlags >= 3 || account.AccountStatus == "Banned")
+            {
+                return BadRequest(new { status = 400, message = "Account is already banned or has reached the maximum flag limit of 3." });
+            }
+
+            var newFlags = currentFlags + 1;
+            account.AccountFlagCount = newFlags;
+
+            if (newFlags == 1)
+            {
+                account.AccountStatus = "Flagged_1";
+            }
+            else if (newFlags == 2)
+            {
+                account.AccountStatus = "Flagged_2";
+            }
+            else if (newFlags >= 3)
+            {
+                account.AccountStatus = "Banned";
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Send notification
+            string reason = string.IsNullOrWhiteSpace(request?.Reason) ? "No reason specified" : request.Reason;
+            string notiTitle = "Account Flagged Warning";
+            string notiContent = $"Your account has been flagged. Reason: {reason}. Current flags: {newFlags}/3.";
+            if (newFlags >= 3)
+            {
+                notiTitle = "Account Banned Notification";
+                notiContent = $"Your account has been banned due to repeated violations. Reason: {reason}.";
+            }
+
+            try
+            {
+                await _notificationService.SendNotificationAsync(account.AccountId, notiTitle, notiContent, "/profile");
+            }
+            catch (Exception notiEx)
+            {
+                Console.WriteLine($"Error sending notification: {notiEx.Message}");
+            }
+
+            return Ok(new { status = 200, message = "Account flagged successfully.", currentFlags = newFlags, newStatus = account.AccountStatus });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = 500, message = $"Internal server error: {ex.Message}" });
+        }
+    }
+}
+
+public class FlagAccountRequest
+{
+    public string Reason { get; set; } = string.Empty;
 }
