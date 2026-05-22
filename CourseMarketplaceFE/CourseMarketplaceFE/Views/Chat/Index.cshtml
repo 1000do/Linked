@@ -349,15 +349,10 @@
                         <img src="${m.senderAvatar || fallback}" 
                              onerror="this.src='${fallback}'"
                              class="bubble-avatar shadow-sm">
-                        <div class="avatar-frame ${frameClass}"></div>
                     </div>
                     <div class="bubble-container">
                         <div class="sender-name">${isMe ? 'You' : m.senderName}</div>
-                        <div class="bubble shadow-sm">
-                            <div>${m.content}</div>
-                            ${attachmentHtml}
-                            <div class="msg-time">${new Date(m.sentAt || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                        </div>
+                        <div class="bubble shadow-sm"><div class="bubble-text">${m.content}</div>${attachmentHtml}<div class="msg-time">${new Date(m.sentAt || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div></div>
                     </div>
                 </div>
             `;

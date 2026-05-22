@@ -118,6 +118,7 @@
             height: 300px;
             padding: 15px;
             overflow-y: auto;
+            overflow-x: hidden;
             background: #ffffff;
             display: flex;
             flex-direction: column;
@@ -162,6 +163,8 @@
             border-radius: 15px;
             font-size: 13px;
             line-height: 1.4;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
         .mini-msg.them { background: #f1f5f9; align-self: flex-start; border-bottom-left-radius: 2px; }
         .mini-msg.me { background: #059669; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
@@ -177,6 +180,7 @@
             display: flex;
             flex-direction: column;
             max-width: 85%;
+            width: fit-content;
         }
         .mini-msg-container.me { align-self: flex-end; }
         .mini-msg-container.them { align-self: flex-start; }
@@ -286,23 +290,23 @@
     @await Html.PartialAsync("_Footer")
 
 
-    @if (ViewData["Title"]?.ToString() != "Tin nhắn & Hỗ trợ")
+    @if (ViewData["Title"]?.ToString() != "Messages & Support")
     {
         <div id="support-chat-popup" class="support-popup">
             <div class="support-header">
-                <h6 class="mb-0 fw-bold">Hỗ trợ trực tuyến</h6>
+                <h6 class="mb-0 fw-bold">Online Support</h6>
                 <div class="d-flex align-items-center justify-content-center gap-1 text-[10px] opacity-75 mt-1">
                     <span class="w-1.5 h-1.5 rounded-circle bg-emerald-300"></span>
-                    Sẵn sàng hỗ trợ
+                    Online & Ready
                 </div>
             </div>
             <div class="support-content" id="mini-chat-content">
                 <div class="text-center py-4">
-                    <p class="text-xs text-slate-400">Đang tải lịch sử hỗ trợ...</p>
+                    <p class="text-xs text-slate-400">Loading support history...</p>
                 </div>
             </div>
             <div class="support-footer">
-                <input type="text" id="mini-chat-input" class="support-input" placeholder="Nhập tin nhắn..." onkeypress="if(event.key === 'Enter') sendMiniMsg()">
+                <input type="text" id="mini-chat-input" class="support-input" placeholder="Type a message..." onkeypress="if(event.key === 'Enter') sendMiniMsg()">
                 <button class="support-send" onclick="sendMiniMsg()">
                     <i class="material-symbols-outlined text-sm">send</i>
                 </button>
@@ -310,7 +314,7 @@
         </div>
 
         <!-- FLOATING CHAT BUTTON -->
-        <button class="floating-chat-btn" onclick="toggleSupportPopup()" title="Hỗ trợ">
+        <button class="floating-chat-btn" onclick="toggleSupportPopup()" title="Support">
             <i class="material-symbols-outlined" style="font-size: 28px;">support_agent</i>
             <span class="chat-badge" style="display: none;" id="global-chat-badge">1</span>
         </button>
@@ -322,7 +326,7 @@
     @await RenderSectionAsync("Scripts", required: false)
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <script>
-        // 1. Khởi tạo biến toàn cục
+        // 1. Initialize global variables
         const currentToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`.trim();
 
         // --- GLOBAL LOGIC MOVED FROM SITE.JS ---
@@ -406,7 +410,7 @@
         });
         // ----------------------------------------
 
-        // ★ Decode AccountId từ JWT token (tin cậy hơn cookie)
+        // ★ Decode AccountId from JWT token (more reliable than cookie)
         function getAccountIdFromJwt(jwt) {
             try {
                 if (!jwt) return 0;
@@ -428,7 +432,7 @@
         }
 
         function getMiniSenderName(m) {
-            return m.senderName ?? m.SenderName ?? m.fullName ?? m.FullName ?? "Người dùng";
+            return m.senderName ?? m.SenderName ?? m.fullName ?? m.FullName ?? "User";
         }
         
         let miniChatId = null;
@@ -456,7 +460,7 @@
             if (miniChatId) return;
 
             try {
-                // Đảm bảo kết nối SignalR sẵn sàng
+                // Ensure SignalR connection is ready
                 if (!miniChatConn || miniChatConn.state !== signalR.HubConnectionState.Connected) {
                     console.log("[MiniChat] Waiting for connection...");
                     await new Promise(resolve => {
@@ -470,13 +474,13 @@
                     });
                 }
 
-                // Lấy ID nhân viên hỗ trợ
+                // Get support staff ID
                 const staffRes = await fetch("http://localhost:5207/api/chat/support-account", {
                     headers: { 'Authorization': `Bearer ${currentToken}` }
                 });
                 const staff = await staffRes.json();
                 
-                // Tạo/Lấy phòng chat
+                // Create/Get chat room
                 const createRes = await fetch("http://localhost:5207/api/chat/create", {
                     method: 'POST',
                     headers: { 
@@ -488,7 +492,7 @@
                 const chatData = await createRes.json();
                 miniChatId = chatData.chatId;
 
-                // Join vào group SignalR
+                // Join SignalR group
                 if (miniChatConn && miniChatConn.state === signalR.HubConnectionState.Connected) {
                     await miniChatConn.invoke("JoinChat", miniChatId);
                 }
@@ -496,7 +500,7 @@
                 await loadMiniHistory();
             } catch (err) {
                 console.error("Init mini chat error:", err);
-                document.getElementById('mini-chat-content').innerHTML = `<div class="text-center py-4 text-xs text-red-500">Không thể kết nối hỗ trợ.</div>`;
+                document.getElementById('mini-chat-content').innerHTML = `<div class="text-center py-4 text-xs text-red-500">Unable to connect to support.</div>`;
             }
         }
 
@@ -514,7 +518,7 @@
                     const name = getMiniSenderName(m);
                     return `
                         <div class="mini-msg-container ${isMe ? 'me' : 'them'}">
-                            <div class="mini-sender-name">${isMe ? 'Bạn' : name}</div>
+                            <div class="mini-sender-name">${isMe ? 'You' : name}</div>
                             <div class="mini-msg ${isMe ? 'me' : 'them'}">${m.content}</div>
                         </div>`;
                 }).join('');
@@ -548,22 +552,22 @@
             const name = getMiniSenderName(m);
             const html = `
                 <div class="mini-msg-container ${isMe ? 'me' : 'them'}">
-                    <div class="mini-sender-name">${isMe ? 'Bạn' : name}</div>
+                    <div class="mini-sender-name">${isMe ? 'You' : name}</div>
                     <div class="mini-msg ${isMe ? 'me' : 'them'}">${m.content}</div>
                 </div>`;
             container.insertAdjacentHTML('beforeend', html);
             container.scrollTop = container.scrollHeight;
         }
 
-        // 3. Logic Thông báo & SignalR Global
+        // 3. Notifications & Global SignalR logic
         function timeSince(date) {
             const seconds = Math.floor((new Date() - date) / 1000);
-            if (seconds < 60) return "Vừa xong";
+            if (seconds < 60) return "Just now";
             const interval = Math.floor(seconds / 60);
-            if (interval < 60) return interval + " phút trước";
+            if (interval < 60) return interval + " minutes ago";
             const hours = Math.floor(interval / 60);
-            if (hours < 24) return hours + " giờ trước";
-            return date.toLocaleDateString('vi-VN');
+            if (hours < 24) return hours + " hours ago";
+            return date.toLocaleDateString('en-US');
         }
 
         async function loadTopNotifications() {
@@ -583,7 +587,7 @@
 
                     const top3 = notifications.slice(0, 3);
                     if (top3.length === 0) {
-                        container.innerHTML = `<div class="px-4 py-8 text-center text-slate-400 text-sm italic">Không có thông báo mới</div>`;
+                        container.innerHTML = `<div class="px-4 py-8 text-center text-slate-400 text-sm italic">No new notifications</div>`;
                         return;
                     }
                     container.innerHTML = top3.map(n => `

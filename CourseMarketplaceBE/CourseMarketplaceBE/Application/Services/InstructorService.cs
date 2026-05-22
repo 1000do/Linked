@@ -300,6 +300,20 @@ public class InstructorService : IInstructorService
         return $"Stripe account for instructor {instructorId} has been reset. The instructor needs to set up Stripe again.";
     }
 
+    public async Task<string> GetStripeLoginLinkAsync(int userId)
+    {
+        var instructor = await _repo.GetByIdAsync(userId);
+        if (instructor == null)
+            throw new InvalidOperationException("Instructor not found.");
+
+        if (string.IsNullOrEmpty(instructor.StripeAccountId))
+            throw new InvalidOperationException("You do not have an active Stripe account. Please connect to Stripe first.");
+
+        var loginLinkService = new AccountLoginLinkService();
+        var loginLink = await loginLinkService.CreateAsync(instructor.StripeAccountId);
+        return loginLink.Url;
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // 8. SET STRIPE COUNTRY — Giảng viên chọn quốc gia Stripe Connect
     // ═══════════════════════════════════════════════════════════════════════
@@ -320,9 +334,9 @@ public class InstructorService : IInstructorService
         await _repo.SaveChangesAsync();
     }
 
-    public async Task<InstructorPayoutPagedDto> GetPayoutsAsync(int userId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null)
+    public async Task<InstructorPayoutPagedDto> GetPayoutsAsync(int userId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
     {
-        return await _repo.GetPayoutsAsync(userId, page, pageSize, keyword, sortBy, status);
+        return await _repo.GetPayoutsAsync(userId, page, pageSize, keyword, sortBy, status, year, month);
     }
 
     public async Task SyncPayoutsWithStripeAsync(int userId)
@@ -335,7 +349,7 @@ public class InstructorService : IInstructorService
         var payoutService = new PayoutService();
         var stripePayouts = await payoutService.ListAsync(new PayoutListOptions
         {
-            Limit = 20,
+            Limit = 100,
             Expand = new List<string> { "data.destination" }
         }, new RequestOptions
         {

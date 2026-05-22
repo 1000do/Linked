@@ -519,7 +519,7 @@ namespace CourseMarketplaceBE.Application.Services
                     items.Add(new RejectCourseItemDto
                     {
                         Target = "course.description",
-                        Reason = "Nội dung khóa học vi phạm chính sách kiểm duyệt."
+                        Reason = "Course content violates the moderation policy."
                     });
                 }
 
@@ -552,7 +552,7 @@ namespace CourseMarketplaceBE.Application.Services
                     items.Add(new RejectCourseItemDto
                     {
                         Target = "course.description",
-                        Reason = "Nội dung khóa học vi phạm chính sách kiểm duyệt."
+                        Reason = "Course content violates the moderation policy."
                     });
                 }
 
@@ -628,11 +628,11 @@ namespace CourseMarketplaceBE.Application.Services
                 {
                     var label = item.Target switch
                     {
-                        "course.title" => "Tiêu đề",
-                        "course.description" => "Mô tả",
+                        "course.title" => "Title",
+                        "course.description" => "Description",
                         "course.thumbnail" => "Thumbnail",
-                        "course.what_you_will_learn" => "Nội dung học được",
-                        "course.requirements" => "Yêu cầu",
+                        "course.what_you_will_learn" => "What you will learn",
+                        "course.requirements" => "Requirements",
                         _ => item.Target
                     };
                     courseFeedbackParts.Add($"[@{label}] {item.Reason}");
@@ -656,7 +656,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             var detailedReason = courseFeedbackParts.Count > 0
                 ? string.Join("\n", courseFeedbackParts)
-                : "Nội dung bị gắn cờ vi phạm chính sách.";
+                : "Content flagged for policy violations.";
 
             course.ModerationFeedback = $"[VIOLATION FLAG #{currentFlags}] {detailedReason}";
             course.UpdatedAt = DateTime.Now;
@@ -664,25 +664,24 @@ namespace CourseMarketplaceBE.Application.Services
             _courseRepository.Update(course);
             await _courseRepository.SaveChangesAsync();
 
-            if (course.InstructorId.HasValue)
             {
-                string subject = "Cảnh báo vi phạm khóa học";
+                string subject = "Course Violation Warning";
                 string message = "";
-
+ 
                 if (currentFlags == 1)
                 {
-                    subject = "Nhắc nhở vi phạm khóa học (Lần 1)";
-                    message = $"Khóa học '{course.Title}' của bạn đã bị gắn cờ vi phạm lần đầu và tạm ẩn. Chi tiết:\n{detailedReason}\nVui lòng kiểm tra lại nội dung và tuân thủ quy định.";
+                    subject = "Course Violation Reminder (1st Time)";
+                    message = $"Your course '{course.Title}' has been flagged for violation and temporarily hidden. Details:\n{detailedReason}\nPlease review the content and comply with regulations.";
                 }
                 else if (currentFlags == 2)
                 {
-                    subject = "Cảnh báo vi phạm nghiêm trọng (Lần 2)";
-                    message = $"Khóa học '{course.Title}' của bạn tiếp tục vi phạm lần thứ 2. Chi tiết:\n{detailedReason}\nĐây là cảnh báo mạnh mẽ. Nếu tiếp tục vi phạm, khóa học sẽ bị xóa vĩnh viễn.";
+                    subject = "Severe Violation Warning (2nd Time)";
+                    message = $"Your course '{course.Title}' continues to violate policies (2nd time). Details:\n{detailedReason}\nThis is a strong warning. If the violation continues, the course will be permanently deleted.";
                 }
                 else
                 {
-                    subject = "Thông báo ngừng kinh doanh khóa học vĩnh viễn (Lần 3)";
-                    message = $"Khóa học '{course.Title}' của bạn đã vi phạm chính sách lần thứ 3. Chi tiết:\n{detailedReason}\nHệ thống quyết định ngừng kinh doanh khóa học này vĩnh viễn. Bạn sẽ không thể chỉnh sửa nội dung hoặc nhận học viên mới, nhưng học viên cũ vẫn có thể truy cập nội dung đã mua.";
+                    subject = "Permanent Course Discontinuation Notice (3rd Time)";
+                    message = $"Your course '{course.Title}' has violated our policy for the 3rd time. Details:\n{detailedReason}\nThe system has decided to permanently discontinue this course. You will not be able to edit content or enroll new students, but existing students can still access their purchased content.";
 
 
                     course.CourseStatus = CourseStatus.Archived.ToValue();

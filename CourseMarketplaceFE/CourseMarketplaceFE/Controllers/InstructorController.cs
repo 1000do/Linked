@@ -466,6 +466,73 @@ public class InstructorController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AccessStripeDashboard()
+    {
+        try
+        {
+            var response = await _api.PostAsync("instructor/stripe-login-link");
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode && !string.IsNullOrWhiteSpace(json))
+            {
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("url", out var urlEl))
+                {
+                    var url = urlEl.GetString();
+                    if (!string.IsNullOrEmpty(url))
+                        return Redirect(url); // Redirect to Stripe Express Dashboard
+                }
+            }
+
+            TempData["ErrorMessage"] = "Could not access Stripe Dashboard. Please try again.";
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"Error: {ex.Message}";
+        }
+
+        return RedirectToAction("ApplicationStatus");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetStripe()
+    {
+        try
+        {
+            var response = await _api.PostAsync("instructor/reset-stripe");
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["SuccessMessage"] = "Stripe account disconnected successfully! You can now link a new Stripe account.";
+            }
+            else
+            {
+                var errorMsg = "Could not disconnect Stripe account.";
+                if (!string.IsNullOrWhiteSpace(json))
+                {
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(json);
+                        if (doc.RootElement.TryGetProperty("message", out var m))
+                            errorMsg = m.GetString() ?? errorMsg;
+                    }
+                    catch { }
+                }
+                TempData["ErrorMessage"] = errorMsg;
+            }
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"Error: {ex.Message}";
+        }
+
+        return RedirectToAction("ApplicationStatus");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> SyncPayouts()
     {
         try

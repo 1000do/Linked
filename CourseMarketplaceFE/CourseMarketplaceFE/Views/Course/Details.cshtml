@@ -1,4 +1,4 @@
-@model CourseMarketplaceFE.Models.CourseDetailViewModel
+ @model CourseMarketplaceFE.Models.CourseDetailViewModel
 @{
     ViewData["Title"] = Model.Title;
     var userRole = Context.Request.Cookies["UserRole"]?.ToLower();
@@ -358,7 +358,7 @@
                             <button onclick="startChatWithInstructor(@Model.InstructorId)" 
                                     class="flex items-center gap-2 px-5 py-2 rounded-xl border-2 border-[#a435f0]/10 text-[#a435f0] text-sm font-bold hover:bg-[#a435f0] hover:text-white hover:border-[#a435f0] transition-all duration-300 group shadow-sm">
                                 <span class="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">chat_bubble</span>
-                                Nhắn tin cho giảng viên
+                                Message Instructor
                             </button>
                         }
                     </div>
@@ -489,7 +489,7 @@
                 .SelectMany(l => l.LearningMaterials)
                 .FirstOrDefault(m => !string.IsNullOrEmpty(m.MaterialUrl) && (m.MaterialMetadata?.FileType?.ToLower() == "video" || m.MaterialUrl.Contains(".mp4")));
         }
-        @if (firstVideo != null)
+        @if (firstVideo != null && !string.IsNullOrEmpty(firstVideo.MaterialUrl))
         {
             <video id="previewVideo" class="w-full h-full" controls controlsList="nodownload">
                 @{
@@ -653,7 +653,7 @@
             } else {
                 btn.disabled = false;
                 btn.innerHTML = originalHtml;
-                Swal.fire('Lỗi', result.message, 'error');
+                Swal.fire('Error', result.message, 'error');
             }
         } catch (error) {
             btn.disabled = false;
@@ -709,7 +709,7 @@
                     }
                 });
             } else {
-                Swal.fire('Lỗi', result.message, 'error');
+                Swal.fire('Error', result.message, 'error');
             }
         } catch (error) {
             if (error.status === 401) {

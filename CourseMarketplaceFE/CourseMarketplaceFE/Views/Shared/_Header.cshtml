@@ -99,7 +99,7 @@
                     }
                     else if (!userRole.Equals("admin", StringComparison.OrdinalIgnoreCase) && !userRole.Equals("staff", StringComparison.OrdinalIgnoreCase))
                     {
-                        @* 🎓 Nút đăng ký Giảng viên — chỉ hiện cho Learner (role = User) *@
+                        @* 🎓 Become Instructor Button — only show for Learner (role = User) *@
                         <a href="/Instructor/Apply"
                            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-primary to-secondary rounded-full shadow-md shadow-primary/20 hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-300">
                             <span class="material-symbols-outlined text-[16px]" style='font-variation-settings: "FILL" 1;'>school</span>
@@ -110,7 +110,7 @@
 
                     @if (!userRole.Equals("admin", StringComparison.OrdinalIgnoreCase) && !userRole.Equals("staff", StringComparison.OrdinalIgnoreCase))
                     {
-                        @* 🛒 GIỎ HÀNG mini-dropdown *@
+                        @* 🛒 SHOPPING CART mini-dropdown *@
                         <div class="relative" id="cart-dropdown">
                             <button onclick="toggleCart()"
                                     class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative">
@@ -135,7 +135,7 @@
                                     <a href="/Cart"
                                        class="flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-primary to-secondary text-white text-xs font-bold rounded-xl hover:shadow-md transition-all">
                                         <span class="material-symbols-outlined text-sm">shopping_cart_checkout</span>
-                                        Đến Giỏ hàng
+                                        Go to Cart
                                     </a>
                                 </div>
                             </div>
@@ -180,7 +180,7 @@
 
                     <div class="hidden sm:flex flex-col items-end">
                         <span class="text-xs font-bold text-slate-700">Hi, @userName</span>
-                        @* POST logout để revoke refresh token trên BE (bảo mật hơn GET) *@
+                        @* POST logout to revoke refresh token on BE (more secure than GET) *@
                         <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
                             @Html.AntiForgeryToken()
                             <button type="submit" class="text-[10px] text-red-500 hover:underline font-medium bg-transparent border-none p-0 cursor-pointer">Logout</button>
@@ -295,7 +295,7 @@
                     }
                     <div class="flex-1 min-w-0">
                         <p class="text-xs font-semibold text-slate-800 line-clamp-2 leading-snug">${item.title}</p>
-                        <p class="text-xs font-bold text-primary mt-1">${item.price.toLocaleString('vi-VN')} VND</p>
+                        <p class="text-xs font-bold text-primary mt-1">$ ${item.price.toLocaleString('en-US')}</p>
                     </div>
                 </a>`).join('');
         } catch (err) { }
@@ -390,7 +390,7 @@
                             const highlightedTitle = c.title.replace(regex, '<span class="text-[#a435f0] font-extrabold">$1</span>');
                             
                             const priceDisplay = c.price === 0 
-                                ? '<span class="text-emerald-700 font-bold uppercase text-[11px] bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full shrink-0">Miễn phí</span>' 
+                                ? '<span class="text-emerald-700 font-bold uppercase text-[11px] bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full shrink-0">Free</span>' 
                                 : `<span class="text-[#a435f0] font-extrabold text-[11px] bg-[#a435f0]/5 border border-[#a435f0]/10 px-2.5 py-1 rounded-full shrink-0">$${c.price.toFixed(2)}</span>`;
                             
                             return `
@@ -425,7 +425,7 @@
                         `;
                     }
                 } catch (err) {
-                    console.error("Lỗi khi tìm kiếm khóa học:", err);
+                    console.error("Error searching courses:", err);
                 }
             }, 300);
         });

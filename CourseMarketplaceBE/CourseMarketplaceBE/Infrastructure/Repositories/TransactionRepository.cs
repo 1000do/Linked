@@ -35,9 +35,16 @@ public class TransactionRepository : ITransactionRepository
     //   ORDER BY t.transaction_created_at DESC
     //   LIMIT @pageSize OFFSET @skip
     // ═══════════════════════════════════════════════════════════════════════
-    public async Task<(List<TransactionListDto> Items, int TotalCount)> GetTransactionsAsync(int page, int pageSize, string? keyword = null, string? sortBy = "date_desc", string? status = null)
+    public async Task<(List<TransactionListDto> Items, int TotalCount)> GetTransactionsAsync(int page, int pageSize, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
     {
         var baseQuery = _context.Transactions.AsQueryable();
+
+        if (year.HasValue && month.HasValue)
+        {
+            var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endDate = startDate.AddMonths(1);
+            baseQuery = baseQuery.Where(t => t.TransactionCreatedAt >= startDate && t.TransactionCreatedAt < endDate);
+        }
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
@@ -53,6 +60,10 @@ public class TransactionRepository : ITransactionRepository
         {
             var statusLower = status.ToLower();
             baseQuery = baseQuery.Where(t => t.TransactionsStatus != null && t.TransactionsStatus.ToLower() == statusLower);
+        }
+        else
+        {
+            baseQuery = baseQuery.Where(t => t.TransactionsStatus != "pending");
         }
 
         switch (sortBy?.ToLower())
@@ -97,7 +108,11 @@ public class TransactionRepository : ITransactionRepository
                     && t.OrderItem.Course.Instructor != null
                     && t.OrderItem.Course.Instructor.InstructorNavigation != null
                     ? t.OrderItem.Course.Instructor.InstructorNavigation.FullName ?? "N/A"
-                    : "N/A"
+                    : "N/A",
+
+                RefundReason = t.RefundReason,
+                RefundAdminNote = t.RefundAdminNote,
+                RefundRequestedAt = t.RefundRequestedAt
             });
 
         // ★ Đếm tổng trước (COUNT chạy trong DB)
@@ -188,15 +203,26 @@ public class TransactionRepository : ITransactionRepository
                 PlatformProfit   = t.Amount - (t.InstructorPayouts.Any()
                     ? t.InstructorPayouts.First().PayoutAmount
                     : Math.Round(t.Amount * (t.TransferRate / 100m), 2)),
-                IsPaid = t.InstructorPayouts.Any() && t.InstructorPayouts.First().IsPaid
+                IsPaid = t.InstructorPayouts.Any() && t.InstructorPayouts.First().IsPaid,
+
+                RefundReason = t.RefundReason,
+                RefundAdminNote = t.RefundAdminNote,
+                RefundRequestedAt = t.RefundRequestedAt
             })
             .FirstOrDefaultAsync();
     }
 
-    public async Task<(List<TransactionListDto> Items, int TotalCount)> GetInstructorTransactionsAsync(int instructorId, int page, int pageSize, string? keyword = null, string? sortBy = "date_desc", string? status = null)
+    public async Task<(List<TransactionListDto> Items, int TotalCount)> GetInstructorTransactionsAsync(int instructorId, int page, int pageSize, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
     {
         var baseQuery = _context.Transactions
             .Where(t => t.InstructorPayouts.Any(p => p.InstructorId == instructorId));
+
+        if (year.HasValue && month.HasValue)
+        {
+            var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endDate = startDate.AddMonths(1);
+            baseQuery = baseQuery.Where(t => t.TransactionCreatedAt >= startDate && t.TransactionCreatedAt < endDate);
+        }
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
@@ -254,7 +280,11 @@ public class TransactionRepository : ITransactionRepository
                     ? t.OrderItem.Course.Title ?? "N/A"
                     : "N/A",
 
-                InstructorName = "Me"
+                InstructorName = "Me",
+
+                RefundReason = t.RefundReason,
+                RefundAdminNote = t.RefundAdminNote,
+                RefundRequestedAt = t.RefundRequestedAt
             });
 
         var totalCount = await query.CountAsync();
@@ -281,6 +311,10 @@ public class TransactionRepository : ITransactionRepository
         {
             var statusLower = status.ToLower();
             baseQuery = baseQuery.Where(t => t.TransactionsStatus != null && t.TransactionsStatus.ToLower() == statusLower);
+        }
+        else
+        {
+            baseQuery = baseQuery.Where(t => t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending" || t.TransactionsStatus == "refunded");
         }
 
         switch (sortBy?.ToLower())
@@ -310,7 +344,11 @@ public class TransactionRepository : ITransactionRepository
                 Status          = t.TransactionsStatus,
                 BuyerName       = "Me",
                 CourseTitle     = t.OrderItem != null && t.OrderItem.Course != null ? t.OrderItem.Course.Title ?? "N/A" : "N/A",
-                InstructorName  = t.OrderItem != null && t.OrderItem.Course != null && t.OrderItem.Course.Instructor != null && t.OrderItem.Course.Instructor.InstructorNavigation != null ? t.OrderItem.Course.Instructor.InstructorNavigation.FullName ?? "N/A" : "N/A"
+                InstructorName  = t.OrderItem != null && t.OrderItem.Course != null && t.OrderItem.Course.Instructor != null && t.OrderItem.Course.Instructor.InstructorNavigation != null ? t.OrderItem.Course.Instructor.InstructorNavigation.FullName ?? "N/A" : "N/A",
+
+                RefundReason = t.RefundReason,
+                RefundAdminNote = t.RefundAdminNote,
+                RefundRequestedAt = t.RefundRequestedAt
             });
 
         var totalCount = await query.CountAsync();

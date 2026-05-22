@@ -23,16 +23,19 @@ public interface IAdminFinanceRepository
     /// Tổng doanh thu = SUM(amount) WHERE status = 'succeeded'
     /// Thực thi trên PostgreSQL, KHÔNG kéo data về RAM.
     /// </summary>
-    Task<decimal> GetGrossRevenueAsync();
+    Task<decimal> GetGrossRevenueAsync(int? year = null, int? month = null);
 
     /// <summary>Tổng số giao dịch thành công.</summary>
-    Task<int> GetSucceededTransactionCountAsync();
+    Task<int> GetSucceededTransactionCountAsync(int? year = null, int? month = null);
 
     /// <summary>Tổng tiền đã trả giảng viên (is_paid = true).</summary>
-    Task<decimal> GetTotalPaidOutAsync();
+    Task<decimal> GetTotalPaidOutAsync(int? year = null, int? month = null);
 
-    /// <summary>Tổng tiền chờ trả giảng viên (is_paid = false).</summary>
-    Task<decimal> GetPendingEscrowAsync();
+    /// <summary>Tổng tiền chờ trả giảng viên (is_paid = false) và còn trong thời gian hoàn tiền (<= 14 ngày).</summary>
+    Task<decimal> GetPendingEscrowAsync(int? year = null, int? month = null);
+
+    /// <summary>Tổng tiền chờ trả giảng viên (is_paid = false) và đã qua thời gian hoàn tiền (> 14 ngày).</summary>
+    Task<decimal> GetMaturedEscrowAsync(int? year = null, int? month = null);
 
     // ── Payout History ───────────────────────────────────────────────────
 
@@ -41,7 +44,7 @@ public interface IAdminFinanceRepository
     ///   instructor_payouts → transactions → order_items → courses
     ///   instructor_payouts → instructors → users → accounts
     /// </summary>
-    Task<List<PayoutDetailProjection>> GetPayoutDetailsAsync();
+    Task<List<PayoutDetailProjection>> GetPayoutDetailsAsync(int? year = null, int? month = null);
 
     /// <summary>Lấy thông tin payout theo Id.</summary>
     Task<Domain.Entities.InstructorPayout?> GetPayoutByIdAsync(int payoutId);
@@ -72,6 +75,11 @@ public interface IAdminFinanceRepository
     // ── Refund ─────────────────────────────────────────────────────────────
 
     /// <summary>
+    /// Lấy danh sách các giao dịch có yêu cầu hoàn tiền đang chờ duyệt (status = 'refund_pending').
+    /// </summary>
+    Task<List<Domain.Entities.Transaction>> GetPendingRefundRequestsAsync();
+
+    /// <summary>
     /// Lấy Transaction entity đầy đủ kèm InstructorPayouts + OrderItem → Course → Enrollment.
     /// Cần để orchestrate toàn bộ flow refund (reverse transfer, refund, revoke enrollment).
     /// </summary>
@@ -93,6 +101,9 @@ public interface IAdminFinanceRepository
     /// Dùng cho Webhook sync khi Admin refund trực tiếp trên Stripe Dashboard.
     /// </summary>
     Task<Domain.Entities.Transaction?> GetTransactionByPaymentIntentIdAsync(string paymentIntentId);
+
+    /// <summary>Xóa bản ghi chia tiền giảng viên (dùng khi hoàn tiền).</summary>
+    void RemoveInstructorPayout(Domain.Entities.InstructorPayout payout);
 
     /// <summary>Commit changes.</summary>
     Task SaveChangesAsync();

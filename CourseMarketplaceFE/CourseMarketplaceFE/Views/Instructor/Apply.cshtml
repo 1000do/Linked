@@ -1,6 +1,6 @@
 @model CourseMarketplaceFE.Models.InstructorApplyViewModel
 @{
-    ViewData["Title"] = "Đăng ký Giảng viên";
+    ViewData["Title"] = "Register as Instructor";
     bool isVerified = ViewBag.IsEmailVerified ?? false;
 }
 
@@ -12,8 +12,8 @@
             <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-2xl shadow-lg mb-4">
                 <span class="material-symbols-outlined text-white text-3xl">school</span>
             </div>
-            <h1 class="text-3xl font-headline font-extrabold text-slate-800">Trở thành Giảng viên</h1>
-            <p class="text-slate-500 mt-2">Điền thông tin bên dưới để nộp đơn đăng ký. Admin sẽ xét duyệt trong vòng 24h.</p>
+            <h1 class="text-3xl font-headline font-extrabold text-slate-800">Become an Instructor</h1>
+            <p class="text-slate-500 mt-2">Fill out the details below to submit your application. Admins will review it within 24 hours.</p>
         </div>
 
         @* ── EMAIL CHƯA XÁC THỰC → CHẶN ────────────────────── *@
@@ -24,20 +24,20 @@
                     <div class="inline-flex items-center justify-center w-20 h-20 bg-amber-50 rounded-full mb-6">
                         <span class="material-symbols-outlined text-amber-500 text-4xl">mail_lock</span>
                     </div>
-                    <h2 class="text-xl font-bold text-slate-800 mb-3">Email chưa được xác thực</h2>
+                    <h2 class="text-xl font-bold text-slate-800 mb-3">Email Not Verified</h2>
                     <p class="text-slate-500 mb-6 max-w-md mx-auto">
-                        Để đảm bảo tính bảo mật và xác minh danh tính, bạn cần <strong>xác thực email</strong> trước khi nộp đơn đăng ký Giảng viên.
+                        To ensure security and verify your identity, you must <strong>verify your email</strong> before applying to become an Instructor.
                     </p>
                     <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <a href="/Account/SendVerifyOtp"
                            class="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-sm">
                             <span class="material-symbols-outlined text-lg">verified</span>
-                            Xác thực Email ngay
+                            Verify Email Now
                         </a>
                         <a href="/Account/Profile"
                            class="inline-flex items-center gap-2 px-6 py-3.5 bg-slate-100 text-slate-600 font-semibold rounded-xl hover:bg-slate-200 transition-all text-sm">
                             <span class="material-symbols-outlined text-lg">arrow_back</span>
-                            Về trang Profile
+                            Go to Profile
                         </a>
                     </div>
                 </div>
@@ -51,10 +51,10 @@
                 <div class="bg-amber-50 border border-amber-300 rounded-xl p-4 mb-6 flex items-start gap-3">
                     <span class="material-symbols-outlined text-amber-500 text-2xl mt-0.5">warning</span>
                     <div>
-                        <p class="text-sm font-bold text-amber-800 mb-1">Đơn đăng ký trước đã bị từ chối</p>
+                        <p class="text-sm font-bold text-amber-800 mb-1">Previous Application Rejected</p>
                         <p class="text-sm text-amber-700">
-                            Vui lòng kiểm tra lại thông tin bên dưới, chỉnh sửa nếu cần và nhấn <strong>Nộp lại đơn</strong>.
-                            Đơn mới sẽ được xử lý với cùng ID cũ.
+                            Please check the details below, edit if necessary, and click <strong>Resubmit Application</strong>.
+                            Your new application will be processed under the same ID.
                         </p>
                     </div>
                 </div>
@@ -68,12 +68,12 @@
                 <div class="flex items-center justify-center gap-4 mb-8">
                     <div class="flex items-center gap-2">
                         <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">1</div>
-                        <span class="text-xs font-bold text-primary uppercase tracking-wider">Nộp đơn</span>
+                        <span class="text-xs font-bold text-primary uppercase tracking-wider">Apply</span>
                     </div>
                     <div class="w-12 h-px bg-slate-200"></div>
                     <div class="flex items-center gap-2">
                         <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-xs font-bold">2</div>
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Admin duyệt</span>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Review</span>
                     </div>
                     <div class="w-12 h-px bg-slate-200"></div>
                     <div class="flex items-center gap-2">
@@ -89,9 +89,9 @@
                     <div class="mb-5">
                         <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
                             <span class="material-symbols-outlined text-lg text-primary">badge</span>
-                            Chức danh chuyên môn <span class="text-red-500">*</span>
+                            Professional Title <span class="text-red-500">*</span>
                         </label>
-                        <input asp-for="ProfessionalTitle" type="text" placeholder="VD: Senior .NET Developer, Data Scientist..."
+                        <input asp-for="ProfessionalTitle" type="text" placeholder="e.g., Senior .NET Developer, Data Scientist..."
                                class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm" />
                         <span asp-validation-for="ProfessionalTitle" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
@@ -100,9 +100,9 @@
                     <div class="mb-5">
                         <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
                             <span class="material-symbols-outlined text-lg text-primary">category</span>
-                            Lĩnh vực chuyên môn <span class="text-red-500">*</span>
+                            Areas of Expertise <span class="text-red-500">*</span>
                         </label>
-                        <input asp-for="ExpertiseCategories" type="text" placeholder="VD: C#, Cloud Computing, Machine Learning..."
+                        <input asp-for="ExpertiseCategories" type="text" placeholder="e.g., C#, Cloud Computing, Machine Learning..."
                                class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm" />
                         <span asp-validation-for="ExpertiseCategories" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
@@ -144,12 +144,12 @@
                     <div class="mb-5">
                         <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
                             <span class="material-symbols-outlined text-lg text-primary">public</span>
-                            Quốc gia Stripe Connect <span class="text-red-500">*</span>
+                            Stripe Connect Country <span class="text-red-500">*</span>
                         </label>
-                        <p class="text-xs text-slate-500 mb-2">Chọn quốc gia nơi bạn mở tài khoản ngân hàng để nhận tiền từ LinkedLearn.</p>
+                        <p class="text-xs text-slate-500 mb-2">Select the country where your bank account is located to receive payouts from LinkedLearn.</p>
                         <select asp-for="StripeCountry" asp-items="Model.AvailableCountries"
                                 class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm bg-white cursor-pointer">
-                            <option value="">-- Chọn Quốc Gia --</option>
+                            <option value="">-- Select Country --</option>
                         </select>
                         <span asp-validation-for="StripeCountry" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
@@ -158,7 +158,7 @@
                     <div class="mb-8">
                         <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
                             <span class="material-symbols-outlined text-lg text-primary">upload_file</span>
-                            Tải lên CV / Chứng chỉ / CMND <span class="text-red-500">*</span>
+                            Upload CV / Certificates / ID Document <span class="text-red-500">*</span>
                         </label>
 
                         @* Hiển link tài liệu cũ khi resubmit *@
@@ -166,19 +166,19 @@
                         {
                             <div class="flex items-center gap-2 mb-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
                                 <span class="material-symbols-outlined text-slate-500 text-lg">attach_file</span>
-                                <span class="text-xs text-slate-500">Tài liệu hiện tại:</span>
+                                <span class="text-xs text-slate-500">Current Document:</span>
                                 <a href="@Model.ExistingDocumentUrl" target="_blank"
                                    class="text-xs text-primary font-semibold hover:underline truncate max-w-xs">
-                                    Xem tài liệu cũ
+                                    View Existing Document
                                 </a>
-                                <span class="text-xs text-slate-400">(Tải file mới để thay thế, hoặc để trống để giữ nguyên)</span>
+                                <span class="text-xs text-slate-400">(Upload a new file to replace it, or leave empty to keep the existing one)</span>
                             </div>
                         }
 
                         <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-primary/40 transition-colors">
                             <input asp-for="DocumentFile" type="file" accept=".pdf,.jpg,.jpeg,.png"
                                    class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
-                            <p class="text-xs text-slate-400 mt-2">Chấp nhận: PDF, JPG, PNG (tối đa 5MB)</p>
+                            <p class="text-xs text-slate-400 mt-2">Accepted: PDF, JPG, PNG (Max 5MB)</p>
                         </div>
                     </div>
 
@@ -186,7 +186,7 @@
                     <button type="submit"
                             class="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-sm uppercase tracking-wider">
                         <span class="material-symbols-outlined text-lg align-middle mr-1">send</span>
-                        @(Model.IsResubmit ? "Nộp lại đơn" : "Nộp đơn đăng ký")
+                        @(Model.IsResubmit ? "Resubmit Application" : "Submit Application")
                     </button>
                 </form>
             </div>
@@ -200,7 +200,7 @@
     {
         <script>
             Swal.fire({
-                title: 'Lỗi nộp đơn',
+                title: 'Submission Error',
                 text: '@Html.Raw(ViewBag.ApiError)',
                 icon: 'error',
                 confirmButtonColor: '#006a62'

@@ -64,35 +64,84 @@ public class AdminFinanceRepository : IAdminFinanceRepository
     //   PendingEscrow  = SUM(payouts.payout_amount) WHERE is_paid = false
     // ═══════════════════════════════════════════════════════════════════════
 
-    public async Task<decimal> GetGrossRevenueAsync()
+    public async Task<decimal> GetGrossRevenueAsync(int? year = null, int? month = null)
     {
-        // ★ .SumAsync() → SQL: SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE status = 'succeeded'
-        return await _context.Transactions
-            .Where(t => t.TransactionsStatus == "succeeded")
-            .SumAsync(t => t.Amount);
+        var query = _context.Transactions
+            .Where(t => t.TransactionsStatus == "succeeded");
+
+        if (year.HasValue && month.HasValue)
+        {
+            var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endDate = startDate.AddMonths(1);
+            query = query.Where(t => t.TransactionCreatedAt >= startDate && t.TransactionCreatedAt < endDate);
+        }
+
+        return await query.SumAsync(t => t.Amount);
     }
 
-    public async Task<int> GetSucceededTransactionCountAsync()
+    public async Task<int> GetSucceededTransactionCountAsync(int? year = null, int? month = null)
     {
-        return await _context.Transactions
-            .Where(t => t.TransactionsStatus == "succeeded")
-            .CountAsync();
+        var query = _context.Transactions
+            .Where(t => t.TransactionsStatus == "succeeded");
+
+        if (year.HasValue && month.HasValue)
+        {
+            var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endDate = startDate.AddMonths(1);
+            query = query.Where(t => t.TransactionCreatedAt >= startDate && t.TransactionCreatedAt < endDate);
+        }
+
+        return await query.CountAsync();
     }
 
-    public async Task<decimal> GetTotalPaidOutAsync()
+    public async Task<decimal> GetTotalPaidOutAsync(int? year = null, int? month = null)
     {
-        // ★ SQL: SELECT COALESCE(SUM(payout_amount), 0) FROM instructor_payouts WHERE is_paid = true
-        return await _context.InstructorPayouts
-            .Where(p => p.IsPaid == true)
-            .SumAsync(p => p.PayoutAmount);
+        var query = _context.InstructorPayouts
+            .Include(p => p.Transaction)
+            .Where(p => p.IsPaid == true);
+
+        if (year.HasValue && month.HasValue)
+        {
+            var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endDate = startDate.AddMonths(1);
+            query = query.Where(p => p.Transaction != null && p.Transaction.TransactionCreatedAt >= startDate && p.Transaction.TransactionCreatedAt < endDate);
+        }
+
+        return await query.SumAsync(p => p.PayoutAmount);
     }
 
-    public async Task<decimal> GetPendingEscrowAsync()
+    public async Task<decimal> GetPendingEscrowAsync(int? year = null, int? month = null)
     {
-        // ★ SQL: SELECT COALESCE(SUM(payout_amount), 0) FROM instructor_payouts WHERE is_paid = false
-        return await _context.InstructorPayouts
-            .Where(p => p.IsPaid == false)
-            .SumAsync(p => p.PayoutAmount);
+        var refundLimitDate = DateTime.UtcNow.AddDays(-14);
+        var query = _context.InstructorPayouts
+            .Include(p => p.Transaction)
+            .Where(p => p.IsPaid == false && p.Transaction != null && p.Transaction.TransactionCreatedAt >= refundLimitDate);
+
+        if (year.HasValue && month.HasValue)
+        {
+            var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endDate = startDate.AddMonths(1);
+            query = query.Where(p => p.Transaction!.TransactionCreatedAt >= startDate && p.Transaction!.TransactionCreatedAt < endDate);
+        }
+
+        return await query.SumAsync(p => p.PayoutAmount);
+    }
+
+    public async Task<decimal> GetMaturedEscrowAsync(int? year = null, int? month = null)
+    {
+        var refundLimitDate = DateTime.UtcNow.AddDays(-14);
+        var query = _context.InstructorPayouts
+            .Include(p => p.Transaction)
+            .Where(p => p.IsPaid == false && p.Transaction != null && p.Transaction.TransactionCreatedAt < refundLimitDate);
+
+        if (year.HasValue && month.HasValue)
+        {
+            var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endDate = startDate.AddMonths(1);
+            query = query.Where(p => p.Transaction!.TransactionCreatedAt >= startDate && p.Transaction!.TransactionCreatedAt < endDate);
+        }
+
+        return await query.SumAsync(p => p.PayoutAmount);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -103,14 +152,24 @@ public class AdminFinanceRepository : IAdminFinanceRepository
     //   tránh kéo toàn bộ entity graph về RAM.
     // ═══════════════════════════════════════════════════════════════════════
 
-    public async Task<List<PayoutDetailProjection>> GetPayoutDetailsAsync()
+    public async Task<List<PayoutDetailProjection>> GetPayoutDetailsAsync(int? year = null, int? month = null)
     {
-        return await _context.InstructorPayouts
+        var query = _context.InstructorPayouts
             .Include(p => p.Transaction)
                 .ThenInclude(t => t!.OrderItem)
                     .ThenInclude(oi => oi!.Course)
             .Include(p => p.Instructor)
                 .ThenInclude(i => i!.InstructorNavigation)
+            .AsQueryable();
+
+        if (year.HasValue && month.HasValue)
+        {
+            var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
+            var endDate = startDate.AddMonths(1);
+            query = query.Where(p => p.Transaction != null && p.Transaction.TransactionCreatedAt >= startDate && p.Transaction.TransactionCreatedAt < endDate);
+        }
+
+        return await query
             .OrderByDescending(p => p.Transaction!.TransactionCreatedAt)
             .Select(p => new PayoutDetailProjection
             {
@@ -193,6 +252,18 @@ public class AdminFinanceRepository : IAdminFinanceRepository
 
     // ── Refund ──────────────────────────────────────────────────────────────
 
+    public async Task<List<Transaction>> GetPendingRefundRequestsAsync()
+    {
+        return await _context.Transactions
+            .Include(t => t.OrderItem)
+                .ThenInclude(oi => oi!.Course)
+            .Include(t => t.AccountFromNavigation)
+                .ThenInclude(a => a!.User)
+            .Where(t => t.TransactionsStatus == "refund_pending")
+            .OrderByDescending(t => t.RefundRequestedAt)
+            .ToListAsync();
+    }
+
     /// <summary>
     /// Lấy Transaction entity đầy đủ kèm toàn bộ entity graph cần cho refund:
     ///   Transaction → InstructorPayouts → Instructor
@@ -265,6 +336,11 @@ public class AdminFinanceRepository : IAdminFinanceRepository
             .Include(t => t.AccountFromNavigation)
                 .ThenInclude(a => a!.User)
             .FirstOrDefaultAsync(t => t.StripePaymentintentId == paymentIntentId);
+    }
+
+    public void RemoveInstructorPayout(InstructorPayout payout)
+    {
+        _context.InstructorPayouts.Remove(payout);
     }
 
     public async Task SaveChangesAsync() => await _context.SaveChangesAsync();

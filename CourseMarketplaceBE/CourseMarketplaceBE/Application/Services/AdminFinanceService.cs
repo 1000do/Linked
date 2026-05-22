@@ -1,6 +1,8 @@
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Stripe;
 
 namespace CourseMarketplaceBE.Application.Services;
@@ -24,6 +26,7 @@ public class AdminFinanceService : IAdminFinanceService
     private readonly IPaymentGatewayService _paymentGateway;
     private readonly IInstructorRepository _instructorRepo;
     private readonly INotificationService _notiService;
+    private readonly IHubContext<FinanceHub> _hubContext;
     private readonly ILogger<AdminFinanceService> _logger;
 
     // Key trong bảng system_configs
@@ -35,12 +38,14 @@ public class AdminFinanceService : IAdminFinanceService
         IPaymentGatewayService paymentGateway,
         IInstructorRepository instructorRepo,
         INotificationService notiService,
+        IHubContext<FinanceHub> hubContext,
         ILogger<AdminFinanceService> logger)
     {
         _repo = repo;
         _paymentGateway = paymentGateway;
         _instructorRepo = instructorRepo;
         _notiService = notiService;
+        _hubContext = hubContext;
         _logger = logger;
     }
 
@@ -106,12 +111,13 @@ public class AdminFinanceService : IAdminFinanceService
     //   PlatformNetProfit  = GrossRevenue - TotalPaidOut - PendingEscrow
     //                      = Tiền sàn THỰC SỰ giữ được
     // ═══════════════════════════════════════════════════════════════════════
-    public async Task<FinancialSummaryResponse> GetFinancialSummaryAsync()
+    public async Task<FinancialSummaryResponse> GetFinancialSummaryAsync(int? year = null, int? month = null)
     {
-        var grossRevenue = await _repo.GetGrossRevenueAsync();
-        var totalPaidOut = await _repo.GetTotalPaidOutAsync();
-        var pendingEscrow = await _repo.GetPendingEscrowAsync();
-        var totalTransactions = await _repo.GetSucceededTransactionCountAsync();
+        var grossRevenue = await _repo.GetGrossRevenueAsync(year, month);
+        var totalPaidOut = await _repo.GetTotalPaidOutAsync(year, month);
+        var pendingEscrow = await _repo.GetPendingEscrowAsync(year, month);
+        var maturedEscrow = await _repo.GetMaturedEscrowAsync(year, month);
+        var totalTransactions = await _repo.GetSucceededTransactionCountAsync(year, month);
         var currentRate = await GetCurrentTransferRateAsync();
 
         return new FinancialSummaryResponse
@@ -119,8 +125,9 @@ public class AdminFinanceService : IAdminFinanceService
             GrossRevenue = grossRevenue,
             TotalPaidOut = totalPaidOut,
             PendingEscrow = pendingEscrow,
-            // ★ Net Profit = Tổng thu - Tổng đã trả GV - Tổng đang giữ hộ GV
-            PlatformNetProfit = grossRevenue - totalPaidOut - pendingEscrow,
+            MaturedEscrow = maturedEscrow,
+            // ★ Net Profit = Tổng thu - Tổng đã trả GV - Tổng đang giữ hộ GV (bao gồm cả Pending và Matured)
+            PlatformNetProfit = grossRevenue - totalPaidOut - pendingEscrow - maturedEscrow,
             CurrentTransferRate = currentRate,
             TotalTransactions = totalTransactions
         };
@@ -134,9 +141,9 @@ public class AdminFinanceService : IAdminFinanceService
     //
     // PlatformReceived = TotalAmount - InstructorReceived
     // ═══════════════════════════════════════════════════════════════════════
-    public async Task<List<PayoutDetailResponse>> GetInstructorPayoutsAsync()
+    public async Task<List<PayoutDetailResponse>> GetInstructorPayoutsAsync(int? year = null, int? month = null)
     {
-        var projections = await _repo.GetPayoutDetailsAsync();
+        var projections = await _repo.GetPayoutDetailsAsync(year, month);
 
         return projections.Select(p => new PayoutDetailResponse
         {
@@ -169,6 +176,30 @@ public class AdminFinanceService : IAdminFinanceService
         return decimal.TryParse(rateStr, out var rate) ? rate : DefaultTransferRate;
     }
 
+    public async Task<string> GetPayoutDaysConfigAsync()
+    {
+        var days = await _repo.GetConfigValueAsync("PayoutDays");
+        return string.IsNullOrWhiteSpace(days) ? "15" : days;
+    }
+
+    public async Task SetPayoutDaysConfigAsync(string payoutDays)
+    {
+        if (string.IsNullOrWhiteSpace(payoutDays))
+            throw new InvalidOperationException("Payout days configuration cannot be empty.");
+
+        // Validate formatting (comma-separated days of month, e.g., "15" or "5,20")
+        var parts = payoutDays.Split(',');
+        foreach (var p in parts)
+        {
+            if (!int.TryParse(p.Trim(), out var day) || day < 1 || day > 31)
+            {
+                throw new InvalidOperationException("Payout days must be a comma-separated list of integers between 1 and 31 (e.g., '15' or '5, 20').");
+            }
+        }
+
+        await _repo.UpsertConfigAsync("PayoutDays", payoutDays, "Automated payout trigger days of the month (comma-separated, e.g., '15' or '5,20').");
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // MARK PAYOUT AS PAID (Manual payout confirmation)
     // ═══════════════════════════════════════════════════════════════════════
@@ -182,10 +213,25 @@ public class AdminFinanceService : IAdminFinanceService
             throw new InvalidOperationException("This payment has already been marked as Paid.");
 
         payout.IsPaid = true;
+        payout.PayoutStatus = "paid";
         // Có thể update PayoutDate = DateTime.Now nếu muốn ghi nhận ngày trả thực tế
         payout.PayoutDate = DateTime.Now;
 
         await _repo.SaveChangesAsync();
+
+        // 🔥 Broadcast real-time update to Admin and Instructor portals
+        try
+        {
+            await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new { refresh = true });
+            if (payout.InstructorId.HasValue)
+            {
+                await _hubContext.Clients.Group($"InstructorFinance_{payout.InstructorId.Value}").SendAsync("UpdatePayoutStatus", new { refresh = true });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi gửi SignalR trong MarkPayoutAsPaidAsync");
+        }
     }
 
     public async Task<string> PerformStripeTransferAsync(int payoutId)
@@ -232,6 +278,20 @@ public class AdminFinanceService : IAdminFinanceService
             payout.PayoutDate = DateTime.UtcNow;
             await _repo.SaveChangesAsync();
 
+            // 🔥 Broadcast real-time update to Admin and Instructor portals immediately
+            try
+            {
+                await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new { refresh = true });
+                if (payout.InstructorId.HasValue)
+                {
+                    await _hubContext.Clients.Group($"InstructorFinance_{payout.InstructorId.Value}").SendAsync("UpdatePayoutStatus", new { refresh = true });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi gửi SignalR trong PerformStripeTransferAsync");
+            }
+
             return transfer.Id;
         }
         catch (StripeException ex)
@@ -239,6 +299,19 @@ public class AdminFinanceService : IAdminFinanceService
             // ★ Đánh dấu thất bại vào DB để Admin biết
             payout.PayoutStatus = "failed";
             await _repo.SaveChangesAsync();
+
+            // 🔥 Broadcast failure update to Admin and Instructor portals
+            try
+            {
+                await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new { refresh = true });
+                if (payout.InstructorId.HasValue)
+                {
+                    await _hubContext.Clients.Group($"InstructorFinance_{payout.InstructorId.Value}").SendAsync("UpdatePayoutStatus", new { refresh = true });
+                }
+            }
+            catch { }
+
+           
             throw new InvalidOperationException($"Stripe Transfer error: {ex.Message}");
         }
     }
@@ -246,7 +319,21 @@ public class AdminFinanceService : IAdminFinanceService
     public async Task<BulkPayoutResult> BulkPayAllViaStripeAsync()
     {
         var pendingPayouts = await _repo.GetPayoutDetailsAsync();
-        var toProcess = pendingPayouts.Where(p => !p.IsPaid).ToList();
+        
+        // Xác định ngày đầu tiên của tháng hiện tại để thực hiện thanh toán chậm pha (chỉ thanh toán tháng trước trở về trước)
+        var now = DateTime.UtcNow;
+        var firstDayOfCurrentMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        
+        // Thời hạn hoàn tiền tối đa 14 ngày giam quỹ (Holding Period)
+        var refundLimitDate = now.AddDays(-14);
+
+        // Lọc danh sách: Chưa trả && ngày giao dịch thuộc các tháng trước && đã vượt 14 ngày an toàn
+        var toProcess = pendingPayouts
+            .Where(p => !p.IsPaid 
+                     && p.TransactionDate.HasValue 
+                     && p.TransactionDate.Value < firstDayOfCurrentMonth 
+                     && p.TransactionDate.Value < refundLimitDate)
+            .ToList();
         
         var result = new BulkPayoutResult { TotalProcessed = toProcess.Count };
 
@@ -364,6 +451,16 @@ public class AdminFinanceService : IAdminFinanceService
 
         await _repo.AddWithdrawalAsync(withdrawal);
 
+        // 🔥 Broadcast real-time update to Admin portals immediately
+        try
+        {
+            await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new { refresh = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi gửi SignalR trong CreateWithdrawalAsync");
+        }
+
         return new WithdrawResponse
         {
             WithdrawalId = withdrawal.WithdrawalId,
@@ -449,7 +546,7 @@ public class AdminFinanceService : IAdminFinanceService
         if (txn.TransactionsStatus == "refunded")
             throw new InvalidOperationException("This transaction was previously refunded.");
 
-        if (txn.TransactionsStatus != "succeeded")
+        if (txn.TransactionsStatus != "succeeded" && txn.TransactionsStatus != "refund_pending")
             throw new InvalidOperationException(
                 $"Only successful transactions can be refunded. Current status: {txn.TransactionsStatus}.");
 
@@ -511,8 +608,7 @@ public class AdminFinanceService : IAdminFinanceService
 
         if (payout != null)
         {
-            payout.PayoutStatus = "refunded";
-            payout.IsPaid = false;
+            _repo.RemoveInstructorPayout(payout);
         }
 
         // ── 5. REVOKE ENROLLMENT ────────────────────────────────────────
@@ -540,9 +636,229 @@ public class AdminFinanceService : IAdminFinanceService
             "✅ REFUND COMPLETE | TxnId={TxnId} | RefundId={RfId} | ReversalId={RvId} | EnrollRevoked={ER}",
             transactionId, refundId, reversalId, enrollmentRevoked);
 
+        // 🔥 Broadcast real-time update to Admin and Instructor portals immediately
+        try
+        {
+            await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new { refresh = true });
+            if (payout != null && payout.InstructorId.HasValue)
+            {
+                await _hubContext.Clients.Group($"InstructorFinance_{payout.InstructorId.Value}").SendAsync("UpdatePayoutStatus", new { refresh = true });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi gửi SignalR trong RefundTransactionAsync");
+        }
+
         result.StripeRefundId = refundId;
         result.StripeReversalId = reversalId;
         result.EnrollmentRevoked = enrollmentRevoked;
         return result;
+    }
+
+    public async Task SyncAllPayoutsWithStripeAsync()
+    {
+        var instructors = await _instructorRepo.GetInstructorsWithStripeAsync();
+        if (instructors == null || !instructors.Any()) return;
+
+        var payoutService = new PayoutService();
+        var btService = new BalanceTransactionService();
+
+        foreach (var ins in instructors)
+        {
+            if (string.IsNullOrEmpty(ins.StripeAccountId)) continue;
+
+            try
+            {
+                var stripePayouts = await payoutService.ListAsync(new PayoutListOptions
+                {
+                    Limit = 100,
+                    Expand = new List<string> { "data.destination" }
+                }, new RequestOptions
+                {
+                    StripeAccount = ins.StripeAccountId
+                });
+
+                if (!stripePayouts.Any()) continue;
+
+                foreach (var sp in stripePayouts)
+                {
+                    var dbPayouts = await _repo.GetPayoutsByStripePayoutIdAsync(sp.Id);
+
+                    if (!dbPayouts.Any())
+                    {
+                        var balanceTransactions = await btService.ListAsync(new BalanceTransactionListOptions
+                        {
+                            Payout = sp.Id,
+                            Limit = 100
+                        }, new RequestOptions
+                        {
+                            StripeAccount = ins.StripeAccountId
+                        });
+
+                        foreach (var bt in balanceTransactions)
+                        {
+                            if ((bt.Type != "transfer" && bt.Type != "payment") || string.IsNullOrEmpty(bt.SourceId)) continue;
+
+                            var localPayout = await _repo.GetPayoutByTransferIdAsync(bt.SourceId);
+                            if (localPayout != null)
+                            {
+                                localPayout.StripePayoutId = sp.Id;
+                                UpdatePayoutStatusFromStripeLocal(localPayout, sp);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (var dbp in dbPayouts)
+                        {
+                            UpdatePayoutStatusFromStripeLocal(dbp, sp);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Lỗi đồng bộ payout cho Giảng viên {ins.InstructorId} (Stripe ID: {ins.StripeAccountId})");
+            }
+        }
+
+        await _repo.SaveChangesAsync();
+
+        // 🔥 Broadcast real-time update to all Admin and Instructor screens!
+        try
+        {
+            await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new { refresh = true });
+            await _hubContext.Clients.All.SendAsync("UpdatePayoutStatus", new { refresh = true });
+        }
+        catch { }
+    }
+
+    private void UpdatePayoutStatusFromStripeLocal(Domain.Entities.InstructorPayout dbp, Payout sp)
+    {
+        if (sp.Status == "paid")
+        {
+            dbp.PayoutStatus = "paid";
+            dbp.IsPaid = true;
+            dbp.PaidToBankAt = sp.ArrivalDate;
+        }
+        else if (sp.Status == "in_transit" || sp.Status == "pending")
+        {
+            dbp.PayoutStatus = "in_transit";
+        }
+        else if (sp.Status == "failed" || sp.Status == "canceled")
+        {
+            dbp.PayoutStatus = "failed";
+            dbp.IsPaid = false;
+        }
+    }
+
+    public async Task RequestRefundAsync(int transactionId, int studentId, string reason)
+    {
+        var txn = await _repo.GetTransactionWithFullGraphAsync(transactionId);
+        if (txn == null)
+            throw new InvalidOperationException("Transaction not found.");
+
+        if (txn.AccountFrom != studentId)
+            throw new InvalidOperationException("You do not own this transaction.");
+
+        if (txn.TransactionsStatus == "refund_pending")
+            throw new InvalidOperationException("This transaction is currently pending refund approval.");
+
+        if (txn.TransactionsStatus == "refunded")
+            throw new InvalidOperationException("This transaction has already been refunded.");
+
+        if (txn.TransactionsStatus != "succeeded")
+            throw new InvalidOperationException($"Refunds are only allowed for successful transactions. Current status: {txn.TransactionsStatus}");
+
+        // Kiểm tra thời hạn 14 ngày hoàn tiền
+        if (txn.TransactionCreatedAt.HasValue && txn.TransactionCreatedAt.Value < DateTime.UtcNow.AddDays(-14))
+            throw new InvalidOperationException("The transaction has exceeded the 14-day refund period required by platform rules.");
+
+        txn.TransactionsStatus = "refund_pending";
+        txn.RefundReason = reason;
+        txn.RefundRequestedAt = DateTime.UtcNow;
+
+        await _repo.SaveChangesAsync();
+
+        // Gửi thông báo cho Admin & Học viên
+        try
+        {
+            await _notiService.SendNotificationAsync(
+                1, // Admin mặc định hoặc hệ thống
+                "New Refund Request",
+                $"A student has submitted a refund request for transaction #{transactionId}. Reason: {reason}",
+                $"/AdminFinance/Refunds"
+            );
+        }
+        catch { }
+    }
+
+    public async Task<List<Domain.Entities.Transaction>> GetPendingRefundRequestsAsync()
+    {
+        return await _repo.GetPendingRefundRequestsAsync();
+    }
+
+    public async Task ApproveRefundAsync(int transactionId, string adminNote)
+    {
+        var txn = await _repo.GetTransactionWithFullGraphAsync(transactionId);
+        if (txn == null)
+            throw new InvalidOperationException("Transaction not found.");
+
+        if (txn.TransactionsStatus != "refund_pending")
+            throw new InvalidOperationException("Transaction is not in pending refund approval status.");
+
+        // Thực thi refund Stripe & Reverse Transfer & Revoke Enrollment
+        var refundResult = await RefundTransactionAsync(transactionId, txn.RefundReason);
+
+        // Lưu thông tin duyệt của Admin
+        txn.RefundAdminNote = adminNote;
+        await _repo.SaveChangesAsync();
+
+        // Gửi thông báo đến học viên
+        if (txn.AccountFrom.HasValue)
+        {
+            try
+            {
+                await _notiService.SendNotificationAsync(
+                    txn.AccountFrom.Value,
+                    "Refund Request APPROVED",
+                    $"Your refund request for transaction #{transactionId} has been approved by the Admin. Refunded amount: {txn.Amount:N0} {txn.Currency}. Admin Note: {adminNote}",
+                    "/Transaction/History"
+                );
+            }
+            catch { }
+        }
+    }
+
+    public async Task RejectRefundAsync(int transactionId, string adminNote)
+    {
+        var txn = await _repo.GetTransactionWithFullGraphAsync(transactionId);
+        if (txn == null)
+            throw new InvalidOperationException("Transaction not found.");
+
+        if (txn.TransactionsStatus != "refund_pending")
+            throw new InvalidOperationException("Transaction is not in pending refund approval status.");
+
+        // Khôi phục trạng thái thành công ban đầu và lưu ghi chú từ chối
+        txn.TransactionsStatus = "succeeded";
+        txn.RefundAdminNote = adminNote;
+
+        await _repo.SaveChangesAsync();
+
+        // Gửi thông báo đến học viên
+        if (txn.AccountFrom.HasValue)
+        {
+            try
+            {
+                await _notiService.SendNotificationAsync(
+                    txn.AccountFrom.Value,
+                    "Refund Request REJECTED",
+                    $"Your refund request for transaction #{transactionId} has been rejected by the Admin. Admin Note: {adminNote}",
+                    "/Transaction/History"
+                );
+            }
+            catch { }
+        }
     }
 }

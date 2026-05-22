@@ -6,11 +6,55 @@
 }
 
 <!-- Header -->
-<div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
     <div>
-        <h1 class="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">Financial Management</h1>
+        <h1 class="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight flex items-center gap-2">
+            <span class="material-symbols-outlined text-indigo-600 text-3xl">analytics</span>
+            Financial Management
+        </h1>
         <p class="text-slate-500">Monitor revenue splits, current Stripe balance metrics, and process manager bank withdrawals.</p>
     </div>
+    <!-- Month/Year Filter Form -->
+    <form id="periodFilterForm" method="get" action="/AdminFinance" class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200 shadow-sm">
+        <input type="hidden" name="tab" value="@ViewBag.ActiveTab" />
+        <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-slate-400 text-sm pl-1">calendar_month</span>
+            <select name="month" class="bg-transparent border-0 text-slate-700 font-bold text-sm focus:ring-0 focus:outline-none cursor-pointer p-0 pr-6">
+                @for (int m = 1; m <= 12; m++)
+                {
+                    var monthName = System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(m);
+                    if (m == (int)ViewBag.Month)
+                    {
+                        <option value="@m" selected>@monthName</option>
+                    }
+                    else
+                    {
+                        <option value="@m">@monthName</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="w-[1px] h-5 bg-slate-300"></div>
+        <div class="flex items-center">
+            <select name="year" class="bg-transparent border-0 text-slate-700 font-bold text-sm focus:ring-0 focus:outline-none cursor-pointer p-0 pr-6">
+                @for (int y = DateTime.UtcNow.Year - 10; y <= DateTime.UtcNow.Year + 10; y++)
+                {
+                    if (y == (int)ViewBag.Year)
+                    {
+                        <option value="@y" selected>@y</option>
+                    }
+                    else
+                    {
+                        <option value="@y">@y</option>
+                    }
+                }
+            </select>
+        </div>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm">
+            <span class="material-symbols-outlined text-[14px]">filter_alt</span>
+            Filter
+        </button>
+    </form>
 </div>
 
 @if (TempData["FinanceSuccess"] != null || TempData["WithdrawSuccess"] != null)
@@ -33,9 +77,9 @@
 <!-- ========================================== -->
 
 <!-- Thống kê tổng quan Doanh thu -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-        <div class="absolute right-0 top-0 w-24 h-24 bg-primary/5 rounded-bl-[100px] -z-0"></div>
+<div id="stats-overview" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md">
+        <div class="absolute right-0 top-0 w-24 h-24 bg-indigo-500/5 rounded-bl-[100px] -z-0"></div>
         <div class="relative z-10">
             <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Gross Revenue</p>
             <p class="text-3xl font-black text-slate-900">@Model.Dashboard.Summary.GrossRevenue.ToString("C")</p>
@@ -43,7 +87,7 @@
         </div>
     </div>
     
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md">
         <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-500/5 rounded-bl-[100px] -z-0"></div>
         <div class="relative z-10">
             <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Paid to Instructors</p>
@@ -52,16 +96,27 @@
         </div>
     </div>
     
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md">
         <div class="absolute right-0 top-0 w-24 h-24 bg-amber-500/5 rounded-bl-[100px] -z-0"></div>
-        <div class="relative z-10">
-            <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Escrow Pending</p>
-            <p class="text-3xl font-black text-amber-500">@Model.Dashboard.Summary.PendingEscrow.ToString("C")</p>
-            <p class="text-xs text-slate-400 mt-2">Awaiting payout transfer</p>
+        <div class="relative z-10 flex flex-col justify-between h-full">
+            <div>
+                <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Escrow Funds</p>
+                <div class="flex items-baseline gap-1.5">
+                    <span class="text-2xl font-black text-amber-500">@Model.Dashboard.Summary.PendingEscrow.ToString("C")</span>
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">Locked (< 14d)</span>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                    Matured (Ready)
+                </span>
+                <span class="text-base font-black text-emerald-600">@Model.Dashboard.Summary.MaturedEscrow.ToString("C")</span>
+            </div>
         </div>
     </div>
     
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 text-white transition-all duration-300 hover:shadow-md">
         <div class="relative z-10">
             <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Platform Net Profit</p>
             <p class="text-3xl font-black text-white">@Model.Dashboard.Summary.PlatformNetProfit.ToString("C")</p>
@@ -71,7 +126,7 @@
 </div>
 
 <!-- Số dư Stripe -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<div id="stripe-balances" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 rounded-2xl shadow-lg shadow-emerald-500/20 text-white relative overflow-hidden">
         <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full"></div>
         <div class="absolute -right-2 -bottom-8 w-32 h-32 bg-white/5 rounded-full"></div>
@@ -120,55 +175,162 @@
 <!-- ========================================== -->
 <!-- SECTION 2: SETTINGS & FUNDS WITHDRAWAL     -->
 <!-- ========================================== -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
     
     <!-- Cài đặt tỷ lệ chia sẻ -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary">tune</span>
-            Revenue Share Split Rate
-        </h3>
-        <form action="/AdminFinance/SetTransferRate" method="post" class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
+        <div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">tune</span>
+                Revenue Share Split Rate
+            </h3>
+            <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+                Define the percentage of the revenue generated from course sales that is paid out to instructors. The platform keeps the remaining net amount.
+            </p>
+        </div>
+        <form action="/AdminFinance/SetTransferRate" method="post" class="flex flex-col sm:flex-row items-end gap-3 mt-auto w-full">
             @Html.AntiForgeryToken()
             <div class="relative flex-1 w-full">
                 <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Instructor Share (%)</label>
-                <input type="number" name="rate" min="1" max="100" step="0.01" value="@Model.Dashboard.Summary.CurrentTransferRate" 
-                       class="w-full pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-mono font-bold text-slate-900" />
-                <span class="absolute right-4 top-[30px] text-slate-400 font-bold">%</span>
+                <div class="relative">
+                    <input type="number" name="rate" min="1" max="100" step="0.01" value="@Model.Dashboard.Summary.CurrentTransferRate" 
+                           class="w-full pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-mono font-bold text-slate-900" />
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
+                </div>
             </div>
-            <button type="submit" class="w-full sm:w-auto mt-4 sm:mt-5 py-2.5 px-6 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-sm whitespace-nowrap">
+            <button type="submit" class="w-full sm:w-auto py-2.5 px-6 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-sm whitespace-nowrap active:scale-95">
                 Save Rate
             </button>
         </form>
     </div>
 
-    <!-- Form Rút tiền về Ngân hàng -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <span class="material-symbols-outlined text-emerald-600">payment</span>
-            Withdraw Funds to Bank
-        </h3>
-        <form action="/AdminFinance/Withdraw" method="post" class="flex flex-col sm:flex-row items-start sm:items-center gap-4" id="withdraw-form" onsubmit="handleWithdrawSubmit(event)">
+    <!-- Cài đặt Ngày Thanh toán Tự động -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
+        <div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-indigo-600">schedule</span>
+                Auto Payout Scheduler
+            </h3>
+            <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+                Configure day(s) of the month to trigger automatic bulk payouts to instructors. Use a comma for multiple days (e.g., <span class="font-mono bg-slate-100 px-1 py-0.5 rounded text-indigo-700 font-bold">15</span> or <span class="font-mono bg-slate-100 px-1 py-0.5 rounded text-indigo-700 font-bold">5, 20</span>).
+            </p>
+        </div>
+        <form action="/AdminFinance/SetPayoutDays" method="post" class="flex flex-col sm:flex-row items-end gap-3 mt-auto w-full">
             @Html.AntiForgeryToken()
             <div class="relative flex-1 w-full">
-                <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Withdraw Amount ($)</label>
-                <input type="number" name="amount" step="0.01" min="0.50" max="@Model.Withdraw.Balance.Available" value="@Model.Withdraw.Balance.Available"
-                       class="w-full pl-4 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all font-mono font-bold text-slate-900"
-                       id="withdraw-amount" />
+                <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Trigger Day(s)</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg">calendar_today</span>
+                    <input type="text" name="payoutDays" value="@Model.PayoutDays" placeholder="e.g. 15" required
+                           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-mono font-bold text-slate-900" />
+                </div>
             </div>
-            <div class="relative flex-1 w-full">
-                <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Description (Optional)</label>
-                <input type="text" name="description" placeholder="e.g. May profit withdrawal"
-                       class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm" />
-            </div>
-            <button type="submit"
-                    class="w-full sm:w-auto mt-4 sm:mt-5 py-2.5 px-6 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-sm whitespace-nowrap flex items-center justify-center gap-2">
-                <span class="material-symbols-outlined text-sm">send_money</span>
-                Withdraw Now
+            <button type="submit" class="w-full sm:w-auto py-2.5 px-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-sm whitespace-nowrap active:scale-95 flex items-center justify-center gap-1">
+                <span class="material-symbols-outlined text-sm">save</span>
+                Save Config
             </button>
         </form>
     </div>
 
+    <!-- Form Rút tiền về Ngân hàng -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between">
+        <div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-emerald-600">payment</span>
+                Withdraw Funds to Bank
+            </h3>
+            <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+                Manually withdraw the accumulated platform's net profit from your Stripe available balance directly into your connected bank account.
+            </p>
+        </div>
+        @{
+            var isWithdrawDisabled = Model.Withdraw.Balance.Available < 0.50m;
+        }
+        <form action="/AdminFinance/Withdraw" method="post" class="flex flex-col gap-3 mt-auto w-full" id="withdraw-form" onsubmit="handleWithdrawSubmit(event)">
+            @Html.AntiForgeryToken()
+            <div class="flex flex-col gap-3 w-full">
+                <div class="flex gap-3">
+                    <div class="relative flex-1">
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Amount ($)</label>
+                        <input type="number" name="amount" step="0.01" min="0.50" max="@Model.Withdraw.Balance.Available" value="@Model.Withdraw.Balance.Available"
+                               class="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all font-mono font-bold text-slate-900 text-sm @(isWithdrawDisabled ? "opacity-60 cursor-not-allowed" : "")"
+                               id="withdraw-amount" @(isWithdrawDisabled ? "disabled" : "") />
+                    </div>
+                    <div class="relative flex-1">
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Description (Optional)</label>
+                        <input type="text" name="description" placeholder="May withdrawal"
+                               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-xs @(isWithdrawDisabled ? "opacity-60 cursor-not-allowed" : "")"
+                               @(isWithdrawDisabled ? "disabled" : "") />
+                    </div>
+                </div>
+                <button type="submit"
+                        class="w-full py-2 px-6 font-bold rounded-xl shadow-sm transition-all whitespace-nowrap flex items-center justify-center gap-1.5 text-sm @(isWithdrawDisabled ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95")"
+                        @(isWithdrawDisabled ? "disabled" : "")>
+                    <span class="material-symbols-outlined text-sm">send_money</span>
+                    Withdraw Now
+                </button>
+            </div>
+            @if (isWithdrawDisabled)
+            {
+                <p class="text-[10px] text-amber-600 font-bold flex items-center gap-1 mt-1 bg-amber-50 border border-amber-100 p-2 rounded-lg">
+                    <span class="material-symbols-outlined text-[12px]">info</span>
+                    Minimum withdraw is $0.50 (Available: $@Model.Withdraw.Balance.Available.ToString("N2")).
+                </p>
+            }
+        </form>
+    </div>
+
+</div>
+
+<!-- ========================================== -->
+<!-- CHART SECTION: MONTHLY PERFORMANCE         -->
+<!-- ========================================== -->
+<div id="chart-card" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col mb-8 transition-all duration-300 hover:shadow-md">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+            <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <span class="material-symbols-outlined text-indigo-600">monitoring</span>
+                Monthly Financial Performance (<span id="chart-month-name">@System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName((int)ViewBag.Month)</span> @ViewBag.Year)
+            </h3>
+            <p class="text-xs text-slate-500 mt-1">Daily trend of Gross Revenues, Platform Profit, and Instructor Shares.</p>
+        </div>
+        <!-- Legends indicator -->
+        <div class="flex flex-wrap items-center gap-2.5 text-xs font-bold">
+            <button onclick="toggleDataset(0)" id="legend-btn-0" class="inline-flex items-center gap-1.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl border border-indigo-100/50 transition-all active:scale-95">
+                <span class="w-2.5 h-2.5 rounded-full bg-indigo-600" id="legend-dot-0"></span>
+                <span>Gross Revenue</span>
+            </button>
+            <button onclick="toggleDataset(1)" id="legend-btn-1" class="inline-flex items-center gap-1.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-100/50 transition-all active:scale-95">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-600" id="legend-dot-1"></span>
+                <span>Platform Profit</span>
+            </button>
+            <button onclick="toggleDataset(2)" id="legend-btn-2" class="inline-flex items-center gap-1.5 text-amber-600 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-xl border border-amber-100/50 transition-all active:scale-95">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500" id="legend-dot-2"></span>
+                <span>Instructor Share</span>
+            </button>
+        </div>
+    </div>
+    
+    <div class="relative w-full h-[320px]">
+        <canvas id="adminFinancialChart"></canvas>
+    </div>
+
+    <!-- Hidden input storing serialized chart items grouped by day of the selected month -->
+    @{
+        int daysInMonth = DateTime.DaysInMonth((int)ViewBag.Year, (int)ViewBag.Month);
+        var payoutsList = Model.Dashboard.Payouts ?? new List<CourseMarketplaceFE.Controllers.AdminFinanceController.PayoutDetailVM>();
+        var dailyData = Enumerable.Range(1, daysInMonth).Select(day => {
+            var dayPayouts = payoutsList.Where(p => (p.TransactionDate ?? p.PayoutDate).Day == day).ToList();
+            return new {
+                day = day,
+                label = $"{day:D2}/{ViewBag.Month:D2}",
+                gross = dayPayouts.Sum(p => p.TotalAmount),
+                net = dayPayouts.Sum(p => p.PlatformReceived),
+                instructor = dayPayouts.Sum(p => p.InstructorReceived)
+            };
+        }).ToList();
+    }
+    <div id="chart-data-json" class="hidden" data-chart="@System.Text.Json.JsonSerializer.Serialize(dailyData)"></div>
 </div>
 
 <!-- ========================================== -->
@@ -179,32 +341,47 @@
     <!-- Tabs UI -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-12">
         <!-- Card Header with Tabs -->
-        <div class="border-b border-slate-200 bg-slate-50/80 flex flex-col xl:flex-row items-center justify-between px-2 py-2 gap-4">
-            <div class="flex items-center gap-1.5 w-full xl:w-auto p-1 bg-slate-200/50 rounded-xl overflow-x-auto">
-                <button id="tab-btn-tx" onclick="switchTab('tx')" class="whitespace-nowrap flex-1 xl:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 @(ViewBag.ActiveTab == "tx" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700")">
+        <div class="border-b border-slate-200 bg-slate-50/80 flex flex-col xl:flex-row items-center justify-between px-3 py-3 gap-4">
+            <div class="flex items-center gap-1.5 w-full xl:w-auto p-1.5 bg-slate-200/50 rounded-2xl overflow-x-auto">
+                <button id="tab-btn-tx" onclick="switchTab('tx')" class="whitespace-nowrap flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 @(ViewBag.ActiveTab == "tx" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-800")">
                     <span class="material-symbols-outlined text-[18px]">receipt_long</span>
                     Transaction History
                 </button>
-                <button id="tab-btn-po" onclick="switchTab('po')" class="whitespace-nowrap flex-1 xl:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 @(ViewBag.ActiveTab == "po" ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500 hover:text-slate-700")">
+                <button id="tab-btn-po" onclick="switchTab('po')" class="whitespace-nowrap flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 @(ViewBag.ActiveTab == "po" ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500 hover:text-slate-800")">
                     <span class="material-symbols-outlined text-[18px]">payments</span>
                     Instructor Payouts
                 </button>
-                <button id="tab-btn-wd" onclick="switchTab('wd')" class="whitespace-nowrap flex-1 xl:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 @(ViewBag.ActiveTab == "wd" ? "bg-white text-rose-600 shadow-sm" : "text-slate-500 hover:text-slate-700")">
+                <button id="tab-btn-wd" onclick="switchTab('wd')" class="whitespace-nowrap flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 @(ViewBag.ActiveTab == "wd" ? "bg-white text-rose-600 shadow-sm" : "text-slate-500 hover:text-slate-800")">
                     <span class="material-symbols-outlined text-[18px]">history</span>
                     Manager Bank Withdrawals
                 </button>
+                <button id="tab-btn-rf" onclick="switchTab('rf')" class="whitespace-nowrap flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 @(ViewBag.ActiveTab == "rf" ? "bg-white text-orange-600 shadow-sm" : "text-slate-500 hover:text-slate-800")">
+                    <span class="material-symbols-outlined text-[18px]">restart_alt</span>
+                    Refund Requests
+                </button>
             </div>
             
-            <!-- Indicators -->
+            <!-- Indicators & Sync -->
             <div class="flex items-center gap-3 px-4 xl:px-2 w-full xl:w-auto overflow-x-auto">
-                <span id="tab-ind-tx" class="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-indigo-50 border border-indigo-100 text-indigo-700 shadow-sm @(ViewBag.ActiveTab == "tx" ? "" : "hidden")">
-                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span> @Model.Transactions.TotalCount transactions
+                <form action="/AdminFinance/SyncAllPayouts" method="post" id="syncAllForm" class="inline-block mr-2">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" id="syncAllBtn" class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all duration-300 transform active:scale-95">
+                        <span id="syncAllIcon" class="material-symbols-outlined text-[16px]">sync</span>
+                        Sync with Stripe
+                    </button>
+                </form>
+
+                <span id="tab-ind-tx" class="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 border border-indigo-100 text-indigo-700 shadow-sm/5 @(ViewBag.ActiveTab == "tx" ? "" : "hidden")">
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span> @Model.Transactions.TotalCount transactions
                 </span>
-                <span id="tab-ind-po" class="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 border border-emerald-100 text-emerald-700 shadow-sm @(ViewBag.ActiveTab == "po" ? "" : "hidden")">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span> @Model.Dashboard.Payouts.Count payouts
+                <span id="tab-ind-po" class="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-100 text-emerald-700 shadow-sm/5 @(ViewBag.ActiveTab == "po" ? "" : "hidden")">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> @Model.Dashboard.Payouts.Count payouts
                 </span>
-                <span id="tab-ind-wd" class="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-rose-50 border border-rose-100 text-rose-700 shadow-sm @(ViewBag.ActiveTab == "wd" ? "" : "hidden")">
-                    <span class="w-2 h-2 rounded-full bg-rose-500"></span> @Model.Withdraw.History.Count withdrawals
+                <span id="tab-ind-wd" class="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 border border-rose-100 text-rose-700 shadow-sm/5 @(ViewBag.ActiveTab == "wd" ? "" : "hidden")">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> @Model.Withdraw.History.Count withdrawals
+                </span>
+                <span id="tab-ind-rf" class="whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-orange-50 border border-orange-100 text-orange-700 shadow-sm/5 @(ViewBag.ActiveTab == "rf" ? "" : "hidden")">
+                    <span class="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span> @Model.PendingRefunds.Count pending
                 </span>
             </div>
         </div>
@@ -217,6 +394,8 @@
                     <input type="hidden" name="page" value="1" />
                     <input type="hidden" name="pageSize" value="@Model.Transactions.PageSize" />
                     <input type="hidden" name="tab" value="tx" id="filter-tab-input" />
+                    <input type="hidden" name="year" value="@ViewBag.Year" />
+                    <input type="hidden" name="month" value="@ViewBag.Month" />
                     
                     <div class="relative flex-1 w-full">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">search</span>
@@ -228,7 +407,8 @@
                         <select name="status" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none shadow-sm cursor-pointer">
                             <option value="">All Statuses</option>
                             <option value="succeeded" selected="@(ViewBag.Status == "succeeded")">Succeeded</option>
-                            <option value="pending" selected="@(ViewBag.Status == "pending")">Pending</option>
+                            <option value="refund_pending" selected="@(ViewBag.Status == "refund_pending")">Refund Pending</option>
+                            <option value="refunded" selected="@(ViewBag.Status == "refunded")">Refunded</option>
                             <option value="failed" selected="@(ViewBag.Status == "failed")">Failed</option>
                         </select>
                     </div>
@@ -302,6 +482,8 @@
                                                 "succeeded" => ("bg-emerald-50", "text-emerald-700", "bg-emerald-500", "Succeeded"),
                                                 "failed"    => ("bg-red-50",     "text-red-700",     "bg-red-500",     "Failed"),
                                                 "pending"   => ("bg-amber-50",   "text-amber-700",   "bg-amber-400",   "Pending"),
+                                                "refund_pending" => ("bg-orange-50", "text-orange-700", "bg-orange-500", "Refund Pending"),
+                                                "refunded"  => ("bg-rose-50",    "text-rose-700",    "bg-rose-500",    "Refunded"),
                                                 _           => ("bg-slate-100",  "text-slate-600",   "bg-slate-400",   item.Status ?? "—")
                                             };
                                         }
@@ -344,7 +526,7 @@
                     <div class="flex items-center gap-1">
                         @if (Model.Transactions.Page > 1)
                         {
-                            <a href="@Url.Action("Index", new { page = Model.Transactions.Page - 1, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "tx" })"
+                            <a href="@Url.Action("Index", new { page = Model.Transactions.Page - 1, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "tx", year = ViewBag.Year, month = ViewBag.Month, payoutPage = ViewBag.PayoutPage, withdrawPage = ViewBag.WithdrawPage })"
                                class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all">← Prev</a>
                         }
 
@@ -356,14 +538,14 @@
                             }
                             else
                             {
-                                <a href="@Url.Action("Index", new { page = p, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "tx" })"
+                                <a href="@Url.Action("Index", new { page = p, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "tx", year = ViewBag.Year, month = ViewBag.Month, payoutPage = ViewBag.PayoutPage, withdrawPage = ViewBag.WithdrawPage })"
                                    class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all">@p</a>
                             }
                         }
 
                         @if (Model.Transactions.Page < Model.Transactions.TotalPages)
                         {
-                            <a href="@Url.Action("Index", new { page = Model.Transactions.Page + 1, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "tx" })"
+                            <a href="@Url.Action("Index", new { page = Model.Transactions.Page + 1, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "tx", year = ViewBag.Year, month = ViewBag.Month, payoutPage = ViewBag.PayoutPage, withdrawPage = ViewBag.WithdrawPage })"
                                class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-all font-bold">Next →</a>
                         }
                     </div>
@@ -373,75 +555,103 @@
 
         <!-- TAB 2: PAYOUTS (PO) -->
         <div id="tab-content-po" class="flex flex-col animate-fadeIn @(ViewBag.ActiveTab == "po" ? "" : "hidden")">
-            <div class="overflow-y-auto max-h-[600px] flex-1">
-                <table class="w-full text-sm text-left">
-                    <thead class="text-[10px] text-slate-500 bg-slate-50 border-b border-slate-200 uppercase font-bold sticky top-0 z-10 shadow-sm">
-                        <tr>
-                            <th class="px-4 py-3">Tx / Instructor</th>
-                            <th class="px-4 py-3">Payout Share</th>
-                            <th class="px-4 py-3">Stripe Status</th>
-                            <th class="px-4 py-3 text-right">Action</th>
+            <div class="overflow-x-auto max-h-[600px] flex-1">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-[10px] font-bold text-slate-400 tracking-wider bg-slate-50/40 border-b border-slate-100 uppercase sticky top-0 z-10">
+                            <th class="pl-6 pr-4 py-3.5">Tx / Instructor</th>
+                            <th class="px-4 py-3.5">Payout Share</th>
+                            <th class="px-4 py-3.5">Stripe Status</th>
+                            <th class="pl-4 pr-6 py-3.5 text-right">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @if (Model.Dashboard.Payouts.Count == 0)
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                        @if (Model.Payouts.TotalCount == 0)
                         {
                             <tr>
-                                <td colspan="4" class="px-6 py-8 text-center text-slate-500">No payouts recorded.</td>
+                                <td colspan="4" class="px-6 py-16 text-center">
+                                    <div class="flex flex-col items-center justify-center text-slate-400">
+                                        <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">payments</span>
+                                        <p class="text-sm font-bold text-slate-700">No payouts recorded.</p>
+                                    </div>
+                                </td>
                             </tr>
                         }
                         else
                         {
-                            @foreach (var p in Model.Dashboard.Payouts)
+                            @foreach (var p in Model.Payouts.Items)
                             {
-                                <tr class="hover:bg-slate-50 transition-colors group">
-                                    <td class="px-4 py-3">
-                                        <p class="font-bold text-slate-900 text-xs">@p.InstructorName</p>
-                                        <p class="text-[10px] text-slate-500 font-mono mt-0.5">#@p.TransactionId</p>
+                                <tr class="hover:bg-slate-50/50 group/row border-b border-slate-100 transition-all duration-300">
+                                    <td class="pl-6 pr-4 py-4.5 align-middle">
+                                        <div class="flex flex-col">
+                                            <span class="text-sm font-bold text-slate-900 leading-snug group-hover/row:text-emerald-700 transition-colors">@p.InstructorName</span>
+                                            <span class="text-[10px] text-slate-400 font-bold mt-0.5 font-mono">Tx ID: #@p.TransactionId</span>
+                                        </div>
                                     </td>
-                                    <td class="px-4 py-3">
-                                        <p class="font-bold text-slate-900">@p.InstructorReceived.ToString("C")</p>
-                                        <p class="text-[10px] text-slate-500">Split Rate: @p.TransferRate%</p>
+                                    <td class="px-4 py-4.5 align-middle">
+                                        <div class="flex flex-col">
+                                            <span class="text-sm font-black text-slate-900 tracking-tight font-black">@p.InstructorReceived.ToString("C")</span>
+                                            <span class="text-[10px] text-slate-400 font-bold mt-0.5">Split Rate: @p.TransferRate%</span>
+                                        </div>
                                     </td>
-                                    <td class="px-4 py-3">
+                                    <td class="px-4 py-4.5 align-middle">
                                         @{
-                                            var status = p.PayoutStatus ?? (p.IsPaid ? "transferred" : "pending");
+                                            var status = p.PayoutStatus?.ToLower() ?? (p.IsPaid ? "transferred" : "pending");
                                         }
                                         @if (status == "paid")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">Settled to Bank</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                Settled to Bank
+                                            </span>
                                         }
                                         else if (status == "in_transit")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">In Transit</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5 animate-pulse">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                In Transit
+                                            </span>
                                         }
                                         else if (status == "transferred")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-violet-100 text-violet-700">Stripe Payout Succeeded</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-violet-50 text-violet-700 border border-violet-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse"></span>
+                                                Stripe Wallet
+                                            </span>
                                         }
                                         else if (status == "failed")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">Failed</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-red-50 text-red-700 border border-red-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                                Failed
+                                            </span>
                                         }
                                         else
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">Unpaid Escrow</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-50 text-amber-800 border border-amber-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                                Unpaid Escrow
+                                            </span>
                                         }
                                     </td>
-                                    <td class="px-4 py-3 text-right">
+                                    <td class="pl-4 pr-6 py-4.5 text-right align-middle">
                                         @if (!p.IsPaid)
                                         {
-                                            <div class="flex flex-col items-end gap-1">
-                                                <form action="/AdminFinance/PayViaStripe" method="post" onsubmit="handleStripePaySubmit(event)">
-                                                    @Html.AntiForgeryToken()
-                                                    <input type="hidden" name="payoutId" value="@p.PayoutId" />
-                                                    <button type="submit" class="text-[10px] font-bold px-2 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-all shadow-sm">Pay via Stripe</button>
-                                                </form>
-                                            </div>
+                                            <form action="/AdminFinance/PayViaStripe" method="post" onsubmit="handleStripePaySubmit(event)">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="payoutId" value="@p.PayoutId" />
+                                                <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all duration-200 active:scale-[0.97]">
+                                                    <span class="material-symbols-outlined text-[14px]">payments</span>
+                                                    Pay via Stripe
+                                                </button>
+                                            </form>
                                         }
                                         else
                                         {
-                                            <span class="text-slate-300 text-[10px] font-medium cursor-not-allowed">Completed</span>
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 text-slate-400 text-xs font-bold bg-slate-50 border border-slate-200/60 rounded-xl cursor-not-allowed">
+                                                <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                                Completed
+                                            </span>
                                         }
                                     </td>
                                 </tr>
@@ -450,75 +660,259 @@
                     </tbody>
                 </table>
             </div>
+            
+            @if (Model.Payouts.TotalPages > 1)
+            {
+                <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
+                    <p class="text-xs font-semibold text-slate-500">
+                        Showing <span class="font-bold text-slate-800">@((Model.Payouts.Page - 1) * Model.Payouts.PageSize + 1)</span> – <span class="font-bold text-slate-800">@Math.Min(Model.Payouts.Page * Model.Payouts.PageSize, Model.Payouts.TotalCount)</span> of <span class="font-bold text-slate-800">@Model.Payouts.TotalCount</span>
+                    </p>
+                    <div class="flex items-center gap-1.5">
+                        @if (Model.Payouts.Page > 1)
+                        {
+                            <a href="@Url.Action("Index", new { page = Model.Transactions.Page, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "po", year = ViewBag.Year, month = ViewBag.Month, payoutPage = Model.Payouts.Page - 1, withdrawPage = ViewBag.WithdrawPage })"
+                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5">
+                                <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+                            </a>
+                        }
+
+                        @for (int p = Math.Max(1, Model.Payouts.Page - 2); p <= Math.Min(Model.Payouts.TotalPages, Model.Payouts.Page + 2); p++)
+                        {
+                            if (p == Model.Payouts.Page)
+                            {
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-600 text-white font-extrabold text-xs shadow-md shadow-emerald-600/10">@p</span>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("Index", new { page = Model.Transactions.Page, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "po", year = ViewBag.Year, month = ViewBag.Month, payoutPage = p, withdrawPage = ViewBag.WithdrawPage })"
+                                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-600 hover:bg-white hover:text-slate-800 font-bold text-xs transition-all shadow-sm/5 font-bold">@p</a>
+                            }
+                        }
+
+                        @if (Model.Payouts.Page < Model.Payouts.TotalPages)
+                        {
+                            <a href="@Url.Action("Index", new { page = Model.Transactions.Page, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "po", year = ViewBag.Year, month = ViewBag.Month, payoutPage = Model.Payouts.Page + 1, withdrawPage = ViewBag.WithdrawPage })"
+                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5 font-bold">
+                                <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
         </div>
 
         <!-- TAB 3: WITHDRAWALS (WD) -->
         <div id="tab-content-wd" class="flex flex-col animate-fadeIn @(ViewBag.ActiveTab == "wd" ? "" : "hidden")">
-            <div class="overflow-y-auto max-h-[600px] flex-1">
-                <table class="w-full text-sm text-left">
-                    <thead class="text-[10px] text-slate-500 bg-slate-50 border-b border-slate-200 uppercase font-bold sticky top-0 z-10 shadow-sm">
-                        <tr>
-                            <th class="px-4 py-3">Reference ID</th>
-                            <th class="px-4 py-3">Amount</th>
-                            <th class="px-4 py-3">Status</th>
-                            <th class="px-4 py-3">Initiated Date</th>
+            <div class="overflow-x-auto max-h-[600px] flex-1">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-[10px] font-bold text-slate-400 tracking-wider bg-slate-50/40 border-b border-slate-100 uppercase sticky top-0 z-10">
+                            <th class="pl-6 pr-4 py-3.5">Reference ID</th>
+                            <th class="px-4 py-3.5">Amount</th>
+                            <th class="px-4 py-3.5">Status</th>
+                            <th class="pl-4 pr-6 py-3.5">Initiated Date</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @if (Model.Withdraw.History.Count == 0)
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                        @if (Model.Withdrawals.TotalCount == 0)
                         {
                             <tr>
-                                <td colspan="4" class="px-6 py-12 text-center">
-                                    <div class="flex flex-col items-center gap-3">
-                                        <span class="material-symbols-outlined text-4xl text-slate-300">account_balance</span>
-                                        <p class="text-slate-500 font-medium">No bank withdrawals made yet.</p>
+                                <td colspan="4" class="px-6 py-16 text-center">
+                                    <div class="flex flex-col items-center justify-center text-slate-400">
+                                        <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">account_balance</span>
+                                        <p class="text-sm font-bold text-slate-700">No bank withdrawals made yet.</p>
                                     </div>
                                 </td>
                             </tr>
                         }
                         else
                         {
-                            @foreach (var w in Model.Withdraw.History)
+                            @foreach (var w in Model.Withdrawals.Items)
                             {
-                                <tr class="hover:bg-slate-50 transition-colors">
-                                    <td class="px-4 py-3 font-mono text-[10px] text-slate-500">
-                                        #@w.WithdrawalId
-                                        @if (!string.IsNullOrEmpty(w.ManagerName))
-                                        {
-                                            <p class="text-[10px] font-sans font-bold text-slate-700 mt-0.5">@w.ManagerName</p>
-                                        }
+                                <tr class="hover:bg-slate-50/50 group/row border-b border-slate-100 transition-all duration-300">
+                                    <td class="pl-6 pr-4 py-4.5 align-middle">
+                                        <div class="flex flex-col">
+                                            <span class="font-mono text-xs text-slate-500 font-bold">#@w.WithdrawalId</span>
+                                            @if (!string.IsNullOrEmpty(w.ManagerName))
+                                            {
+                                                <span class="text-[10px] text-slate-400 font-semibold mt-0.5">Manager: @w.ManagerName</span>
+                                            }
+                                        </div>
                                     </td>
-                                    <td class="px-4 py-3">
-                                        <p class="font-black text-slate-900 text-sm">$@w.Amount.ToString("N2")</p>
+                                    <td class="px-4 py-4.5 align-middle">
+                                        <span class="text-sm font-black text-rose-700 tracking-tight font-black">$@w.Amount.ToString("N2")</span>
                                     </td>
-                                    <td class="px-4 py-3">
+                                    <td class="px-4 py-4.5 align-middle">
                                         @if (w.Status == "paid")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">Paid</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                Paid
+                                            </span>
                                         }
                                         else if (w.Status == "in_transit")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">In Transit</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5 animate-pulse">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                In Transit
+                                            </span>
                                         }
                                         else if (w.Status == "pending")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">Pending</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-50 text-amber-800 border border-amber-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                                Pending
+                                            </span>
                                         }
                                         else if (w.Status == "failed")
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">Failed</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-red-50 text-red-700 border border-red-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                                Failed
+                                            </span>
                                         }
                                         else
                                         {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">Canceled</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-50 text-slate-600 border border-slate-200/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                                Canceled
+                                            </span>
                                         }
                                     </td>
-                                    <td class="px-4 py-3">
-                                        <p class="text-slate-900 font-medium text-xs">@w.CreatedAt.ToString("dd/MM")</p>
-                                        <p class="text-[10px] text-slate-400">@w.CreatedAt.ToString("HH:mm")</p>
+                                    <td class="pl-4 pr-6 py-4.5 align-middle">
+                                        <div class="flex flex-col">
+                                            <span class="text-slate-900 font-bold text-xs">@w.CreatedAt.ToString("dd/MM/yyyy")</span>
+                                            <span class="text-[10px] text-slate-400 font-semibold mt-0.5">@w.CreatedAt.ToString("HH:mm")</span>
+                                        </div>
                                     </td>
                                 </tr>
                             }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Model.Withdrawals.TotalPages > 1)
+            {
+                <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
+                    <p class="text-xs font-semibold text-slate-500">
+                        Showing <span class="font-bold text-slate-800">@((Model.Withdrawals.Page - 1) * Model.Withdrawals.PageSize + 1)</span> – <span class="font-bold text-slate-800">@Math.Min(Model.Withdrawals.Page * Model.Withdrawals.PageSize, Model.Withdrawals.TotalCount)</span> of <span class="font-bold text-slate-800">@Model.Withdrawals.TotalCount</span>
+                    </p>
+                    <div class="flex items-center gap-1.5">
+                        @if (Model.Withdrawals.Page > 1)
+                        {
+                            <a href="@Url.Action("Index", new { page = Model.Transactions.Page, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "wd", year = ViewBag.Year, month = ViewBag.Month, payoutPage = ViewBag.PayoutPage, withdrawPage = Model.Withdrawals.Page - 1 })"
+                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5">
+                                <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+                            </a>
+                        }
+
+                        @for (int p = Math.Max(1, Model.Withdrawals.Page - 2); p <= Math.Min(Model.Withdrawals.TotalPages, Model.Withdrawals.Page + 2); p++)
+                        {
+                            if (p == Model.Withdrawals.Page)
+                            {
+                                <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-600 text-white font-extrabold text-xs shadow-md shadow-rose-600/10">@p</span>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("Index", new { page = Model.Transactions.Page, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "wd", year = ViewBag.Year, month = ViewBag.Month, payoutPage = ViewBag.PayoutPage, withdrawPage = p })"
+                                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-600 hover:bg-white hover:text-slate-800 font-bold text-xs transition-all shadow-sm/5 font-bold font-bold">@p</a>
+                            }
+                        }
+
+                        @if (Model.Withdrawals.Page < Model.Withdrawals.TotalPages)
+                        {
+                            <a href="@Url.Action("Index", new { page = Model.Transactions.Page, pageSize = Model.Transactions.PageSize, keyword = ViewBag.Keyword, sortBy = ViewBag.SortBy, status = ViewBag.Status, tab = "wd", year = ViewBag.Year, month = ViewBag.Month, payoutPage = ViewBag.PayoutPage, withdrawPage = Model.Withdrawals.Page + 1 })"
+                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5 font-bold">
+                                <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- TAB 4: Yêu cầu hoàn tiền (RF) -->
+        <div id="tab-content-rf" class="flex flex-col animate-fadeIn @(ViewBag.ActiveTab == "rf" ? "" : "hidden")">
+            <div class="px-5 py-4 border-b border-slate-200 bg-white">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-orange-500">pending_actions</span>
+                    Pending Refund Requests
+                </h3>
+                <p class="text-xs text-slate-500 mt-1">Refund requests submitted by students within 14 days of purchase. You can approve (refund via Stripe & revoke course access) or reject the request.</p>
+            </div>
+
+            <div class="overflow-x-auto max-h-[600px] flex-1">
+                <table class="w-full text-left border-collapse">
+                    <thead class="text-[10px] text-slate-500 bg-slate-50 border-b border-slate-200 uppercase font-bold sticky top-0 z-10 shadow-sm">
+                        <tr>
+                            <th class="px-5 py-3 w-16">ID</th>
+                            <th class="px-5 py-3">Course</th>
+                            <th class="px-5 py-3">Student</th>
+                            <th class="px-5 py-3 text-right">Amount</th>
+                            <th class="px-5 py-3">Purchase Date</th>
+                            <th class="px-5 py-3">Request Date</th>
+                            <th class="px-5 py-3">Refund Reason</th>
+                            <th class="px-5 py-3 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                        @if (Model.PendingRefunds != null && Model.PendingRefunds.Any())
+                        {
+                            @foreach (var item in Model.PendingRefunds)
+                            {
+                                <tr class="hover:bg-slate-50/50 transition-colors group">
+                                    <td class="px-5 py-3.5 font-mono text-xs text-slate-400">#@item.TransactionId</td>
+                                    <td class="px-5 py-3.5 max-w-[200px]">
+                                        <span class="font-medium text-slate-800 truncate block font-bold" title="@item.CourseTitle">@item.CourseTitle</span>
+                                    </td>
+                                    <td class="px-5 py-3.5 text-slate-600 font-medium">@item.BuyerName</td>
+                                    <td class="px-5 py-3.5 text-right font-black text-slate-800">
+                                        @((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
+                                    </td>
+                                    <td class="px-5 py-3.5 text-slate-500 text-xs whitespace-nowrap">
+                                        @(item.TransactionCreatedAt.HasValue ? item.TransactionCreatedAt.Value.ToString("dd/MM/yyyy HH:mm") : "—")
+                                    </td>
+                                    <td class="px-5 py-3.5 text-slate-500 text-xs whitespace-nowrap">
+                                        @(item.RefundRequestedAt.HasValue ? item.RefundRequestedAt.Value.ToString("dd/MM/yyyy HH:mm") : "—")
+                                    </td>
+                                    <td class="px-5 py-3.5 max-w-[250px]">
+                                        <span class="text-xs text-slate-600 line-clamp-2 bg-slate-50 p-2 rounded-lg border border-slate-100" title="@item.RefundReason">@item.RefundReason</span>
+                                    </td>
+                                    <td class="px-5 py-3.5 text-center whitespace-nowrap">
+                                        <div class="inline-flex items-center gap-2">
+                                            <a href="@Url.Action("Detail", "Transaction", new { id = item.TransactionId })"
+                                               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 font-bold text-xs rounded-xl border border-slate-100 hover:border-indigo-200 transition-all shadow-sm active:scale-95">
+                                                <span class="material-symbols-outlined text-[16px]">visibility</span>
+                                                Details
+                                            </a>
+                                            <button type="button" 
+                                                    onclick="approveRefund(@item.TransactionId, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.CourseTitle))')"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-700 font-bold text-xs rounded-xl border border-emerald-100 hover:border-emerald-200 transition-all shadow-sm active:scale-95">
+                                                <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                                                Approve
+                                            </button>
+                                            <button type="button" 
+                                                    onclick="rejectRefund(@item.TransactionId, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.CourseTitle))')"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 font-bold text-xs rounded-xl border border-rose-100 hover:border-rose-200 transition-all shadow-sm active:scale-95">
+                                                <span class="material-symbols-outlined text-[16px]">cancel</span>
+                                                Reject
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="px-5 py-14 text-center">
+                                    <div class="flex flex-col items-center justify-center text-slate-400">
+                                        <span class="material-symbols-outlined text-5xl mb-3 text-slate-200">restart_alt</span>
+                                        <p class="text-sm font-medium text-slate-500">No pending refund requests.</p>
+                                    </div>
+                                </td>
+                            </tr>
                         }
                     </tbody>
                 </table>
@@ -530,22 +924,171 @@
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // CHART LOGIC
+        let adminFinancialChartInstance = null;
+        window.drawAdminChart = function(dailyItems) {
+            const canvas = document.getElementById('adminFinancialChart');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            if (adminFinancialChartInstance) {
+                adminFinancialChartInstance.destroy();
+            }
+
+            if (!dailyItems || dailyItems.length === 0) {
+                return;
+            }
+
+            const labels = dailyItems.map(item => item.label || item.day.toString());
+            const grossData = dailyItems.map(item => item.gross);
+            const netData = dailyItems.map(item => item.net);
+            const instructorData = dailyItems.map(item => item.instructor);
+
+            // Gradients
+            const grossGradient = ctx.createLinearGradient(0, 0, 0, 300);
+            grossGradient.addColorStop(0, 'rgba(79, 70, 229, 0.15)');
+            grossGradient.addColorStop(1, 'rgba(79, 70, 229, 0)');
+
+            const netGradient = ctx.createLinearGradient(0, 0, 0, 300);
+            netGradient.addColorStop(0, 'rgba(16, 185, 129, 0.15)');
+            netGradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+            const instructorGradient = ctx.createLinearGradient(0, 0, 0, 300);
+            instructorGradient.addColorStop(0, 'rgba(245, 158, 11, 0.15)');
+            instructorGradient.addColorStop(1, 'rgba(245, 158, 11, 0)');
+
+            adminFinancialChartInstance = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Gross Revenue',
+                            data: grossData,
+                            borderColor: '#4f46e5',
+                            borderWidth: 2.5,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#4f46e5',
+                            pointBorderWidth: 1.5,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            fill: true,
+                            backgroundColor: grossGradient,
+                            tension: 0.35
+                        },
+                        {
+                            label: 'Platform Net Profit',
+                            data: netData,
+                            borderColor: '#10b981',
+                            borderWidth: 2.5,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#10b981',
+                            pointBorderWidth: 1.5,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            fill: true,
+                            backgroundColor: netGradient,
+                            tension: 0.35
+                        },
+                        {
+                            label: 'Instructor Share',
+                            data: instructorData,
+                            borderColor: '#f59e0b',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#f59e0b',
+                            pointBorderWidth: 1.5,
+                            pointRadius: 2.5,
+                            pointHoverRadius: 4.5,
+                            fill: true,
+                            backgroundColor: instructorGradient,
+                            tension: 0.35
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            titleFont: { family: 'Inter', size: 12, weight: 'bold' },
+                            bodyFont: { family: 'Inter', size: 13 },
+                            padding: 10,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': $' + context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2 });
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9', drawBorder: false },
+                            ticks: {
+                                font: { family: 'Inter', size: 10, weight: '500' },
+                                color: '#94a3b8',
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            },
+                            border: { display: false }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { family: 'Inter', size: 10, weight: '500' },
+                                color: '#64748b',
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 15
+                            },
+                            border: { display: false }
+                        }
+                    }
+                }
+            });
+        };
+
+        window.toggleDataset = function(index) {
+            if (!adminFinancialChartInstance) return;
+            const isVisible = adminFinancialChartInstance.isDatasetVisible(index);
+            if (isVisible) {
+                adminFinancialChartInstance.hide(index);
+                document.getElementById('legend-btn-' + index).classList.add('opacity-40', 'line-through');
+            } else {
+                adminFinancialChartInstance.show(index);
+                document.getElementById('legend-btn-' + index).classList.remove('opacity-40', 'line-through');
+            }
+        };
         function switchTab(tabId) {
             document.querySelectorAll('[id^="tab-content-"]').forEach(el => el.classList.add('hidden'));
             document.getElementById('tab-content-' + tabId).classList.remove('hidden');
 
             document.querySelectorAll('[id^="tab-btn-"]').forEach(btn => {
-                btn.classList.remove('bg-white', 'shadow-sm');
-                btn.classList.add('text-slate-500');
-                btn.classList.remove('text-indigo-600', 'text-emerald-600', 'text-rose-600');
+                btn.className = 'whitespace-nowrap flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-800 transition-all duration-300';
             });
             const activeBtn = document.getElementById('tab-btn-' + tabId);
-            activeBtn.classList.add('bg-white', 'shadow-sm');
-            activeBtn.classList.remove('text-slate-500');
-            if(tabId === 'tx') activeBtn.classList.add('text-indigo-600');
-            if(tabId === 'po') activeBtn.classList.add('text-emerald-600');
-            if(tabId === 'wd') activeBtn.classList.add('text-rose-600');
+            if(tabId === 'tx') {
+                activeBtn.className = 'whitespace-nowrap flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-indigo-600 shadow-sm transition-all duration-300';
+            } else if(tabId === 'po') {
+                activeBtn.className = 'whitespace-nowrap flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-emerald-600 shadow-sm transition-all duration-300';
+            } else if(tabId === 'wd') {
+                activeBtn.className = 'whitespace-nowrap flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-rose-600 shadow-sm transition-all duration-300';
+            } else if(tabId === 'rf') {
+                activeBtn.className = 'whitespace-nowrap flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-orange-600 shadow-sm transition-all duration-300';
+            }
 
             document.querySelectorAll('[id^="tab-ind-"]').forEach(ind => ind.classList.add('hidden'));
             document.getElementById('tab-ind-' + tabId).classList.remove('hidden');
@@ -616,6 +1159,311 @@
             if (confirmResult.isConfirmed) {
                 form.submit();
             }
+        }
+
+        // AJAX Dynamic Month/Year Dropdown Loading
+        document.addEventListener('DOMContentLoaded', () => {
+            const filterForm = document.getElementById('periodFilterForm');
+            if (filterForm) {
+                const selects = filterForm.querySelectorAll('select');
+                selects.forEach(select => {
+                    select.addEventListener('change', () => {
+                        ajaxReloadAdmin();
+                    });
+                });
+                filterForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    ajaxReloadAdmin();
+                });
+            }
+
+            // Draw initial chart
+            const chartDataEl = document.getElementById('chart-data-json');
+            if (chartDataEl) {
+                const initialItems = JSON.parse(chartDataEl.getAttribute('data-chart') || '[]');
+                window.drawAdminChart(initialItems);
+            }
+        });
+
+        async function ajaxReloadAdmin() {
+            const form = document.getElementById('periodFilterForm');
+            if (!form) return;
+
+            // Show a premium blurred loading overlay
+            const loader = document.createElement('div');
+            loader.className = 'fixed inset-0 bg-slate-900/10 backdrop-blur-[1px] flex items-center justify-center z-[9999] transition-all duration-300 opacity-0';
+            loader.innerHTML = `
+                <div class="bg-white p-4 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-100 animate-fadeIn">
+                    <div class="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-xs font-bold text-slate-700">Recalculating monthly financials...</span>
+                </div>
+            `;
+            document.body.appendChild(loader);
+            setTimeout(() => loader.classList.remove('opacity-0'), 50);
+
+            try {
+                const formData = new FormData(form);
+                const params = new URLSearchParams(formData);
+
+                // Preserve active tab
+                const activeBtn = document.querySelector('[id^="tab-btn-"].bg-white');
+                const activeTab = activeBtn ? activeBtn.id.replace('tab-btn-', '') : 'tx';
+                params.set('tab', activeTab);
+
+                // Preserve search keywords/filters if present
+                const searchForm = document.querySelector('form[action="/AdminFinance"]:not(#periodFilterForm)');
+                if (searchForm) {
+                    const searchData = new FormData(searchForm);
+                    for (const [key, value] of searchData.entries()) {
+                        if (value && key !== 'year' && key !== 'month' && key !== 'tab') {
+                            params.set(key, value);
+                        }
+                    }
+                }
+
+                const url = `/AdminFinance?${params.toString()}`;
+                const response = await fetch(url);
+                if (response.ok) {
+                    const html = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // 1. Swap Stats Overview Cards using robust ID
+                    const oldStats = document.getElementById('stats-overview');
+                    const newStats = doc.getElementById('stats-overview');
+                    if (oldStats && newStats) oldStats.innerHTML = newStats.innerHTML;
+
+                    // 2. Swap Stripe Balances Cards using robust ID
+                    const oldStripe = document.getElementById('stripe-balances');
+                    const newStripe = doc.getElementById('stripe-balances');
+                    if (oldStripe && newStripe) oldStripe.innerHTML = newStripe.innerHTML;
+
+                    // 3. Swap All Tab Contents to keep them synchronized
+                    ['tx', 'po', 'wd', 'rf'].forEach(t => {
+                        const oldTabContent = document.getElementById('tab-content-' + t);
+                        const newTabContent = doc.getElementById('tab-content-' + t);
+                        if (oldTabContent && newTabContent) oldTabContent.innerHTML = newTabContent.innerHTML;
+                    });
+
+                    // 4. Swap Badge Counters
+                    ['tx', 'po', 'wd', 'rf'].forEach(t => {
+                        const oldInd = document.getElementById('tab-ind-' + t);
+                        const newInd = doc.getElementById('tab-ind-' + t);
+                        if (oldInd && newInd) oldInd.innerHTML = newInd.innerHTML;
+                    });
+
+                    // 5. Update Year/Month inside all hidden forms
+                    const targetYear = params.get('year');
+                    const targetMonth = params.get('month');
+                    document.querySelectorAll('form input[name="year"]').forEach(input => {
+                        input.value = targetYear;
+                    });
+                    document.querySelectorAll('form input[name="month"]').forEach(input => {
+                        input.value = targetMonth;
+                    });
+
+                    // 6. Swap Chart Card Canvas Container & Render
+                    const oldChartCard = document.getElementById('chart-card');
+                    const newChartCard = doc.getElementById('chart-card');
+                    if (oldChartCard && newChartCard) {
+                        const oldCanvasContainer = oldChartCard.querySelector('.relative.w-full.h-\\[320px\\]');
+                        const newCanvasContainer = newChartCard.querySelector('.relative.w-full.h-\\[320px\\]');
+                        if (oldCanvasContainer && newCanvasContainer) {
+                            oldCanvasContainer.innerHTML = newCanvasContainer.innerHTML;
+                        }
+                        
+                        const oldTitle = oldChartCard.querySelector('h3');
+                        const newTitle = newChartCard.querySelector('h3');
+                        if (oldTitle && newTitle) oldTitle.innerHTML = newTitle.innerHTML;
+                        
+                        const newDataEl = newChartCard.querySelector('#chart-data-json');
+                        if (newDataEl) {
+                            const newItems = JSON.parse(newDataEl.getAttribute('data-chart') || '[]');
+                            window.drawAdminChart(newItems);
+                            // Reset legend button states
+                            [0, 1, 2].forEach(index => {
+                                const btn = document.getElementById('legend-btn-' + index);
+                                if (btn) btn.classList.remove('opacity-40', 'line-through');
+                            });
+                        }
+                    }
+
+                    // Push states
+                    history.pushState(null, '', url);
+
+                    // Alert Toast
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'Financial data updated successfully'
+                    });
+                }
+            } catch (err) {
+                console.error("AJAX error: ", err);
+            } finally {
+                loader.classList.add('opacity-0');
+                setTimeout(() => loader.remove(), 300);
+            }
+        }
+
+        document.getElementById('syncAllForm')?.addEventListener('submit', function() {
+            const btn = document.getElementById('syncAllBtn');
+            const icon = document.getElementById('syncAllIcon');
+            if (btn && icon) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                icon.classList.add('animate-spin');
+                btn.innerHTML = `<span id="syncAllIcon" class="material-symbols-outlined text-[16px] animate-spin mr-1">sync</span> Syncing...`;
+            }
+        });
+
+        function approveRefund(transactionId, courseTitle) {
+            Swal.fire({
+                title: 'Approve Refund',
+                html: `<div class="text-left font-sans">
+                        <p class="text-sm text-slate-500 mb-4">Are you sure you want to approve the refund for the course <strong>${courseTitle}</strong>? 
+                        The system will refund the student via Stripe Connect and revoke their learning access to this course.</p>
+                       </div>`,
+                input: 'textarea',
+                inputPlaceholder: 'Enter feedback note for student (optional)...',
+                showCancelButton: true,
+                confirmButtonText: 'Approve & Refund',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#64748b',
+                buttonsStyling: true,
+                customClass: {
+                    popup: 'rounded-3xl border border-slate-100 p-8 shadow-2xl',
+                    title: 'text-xl font-black text-slate-900 tracking-tight',
+                    confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all',
+                    cancelButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
+                },
+                showLoaderOnConfirm: true,
+                preConfirm: (adminNote) => {
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                    const params = new URLSearchParams();
+                    params.append('transactionId', transactionId);
+                    params.append('adminNote', adminNote || '');
+
+                    return fetch('/AdminFinance/ApproveRefundDecision', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': token
+                        },
+                        body: params
+                    })
+                    .then(response => {
+                        return response.json().then(data => {
+                            if (!response.ok || !data.success) {
+                                throw new Error(data.message || response.statusText);
+                            }
+                            return data;
+                        });
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage(`Action failed: ${error.message}`);
+                    });
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: result.value.message,
+                        icon: 'success',
+                        confirmButtonText: 'Close',
+                        confirmButtonColor: '#10b981',
+                        customClass: {
+                            popup: 'rounded-3xl',
+                            title: 'text-xl font-black text-slate-900',
+                            confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm'
+                        }
+                    }).then(() => {
+                        window.location.href = '/AdminFinance?tab=rf';
+                    });
+                }
+            });
+        }
+
+        function rejectRefund(transactionId, courseTitle) {
+            Swal.fire({
+                title: 'Reject Refund',
+                html: `<div class="text-left font-sans">
+                        <p class="text-sm text-slate-500 mb-4">You are rejecting the refund request for the course <strong>${courseTitle}</strong>. 
+                        You must enter a specific reason to respond to the student.</p>
+                       </div>`,
+                input: 'textarea',
+                inputPlaceholder: 'Enter rejection reason here...',
+                showCancelButton: true,
+                confirmButtonText: 'Reject Request',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#64748b',
+                buttonsStyling: true,
+                customClass: {
+                    popup: 'rounded-3xl border border-slate-100 p-8 shadow-2xl',
+                    title: 'text-xl font-black text-slate-900 tracking-tight',
+                    confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all',
+                    cancelButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
+                },
+                inputValidator: (value) => {
+                    if (!value || value.trim() === '') {
+                        return 'You must enter a rejection reason!';
+                    }
+                },
+                showLoaderOnConfirm: true,
+                preConfirm: (adminNote) => {
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                    const params = new URLSearchParams();
+                    params.append('transactionId', transactionId);
+                    params.append('adminNote', adminNote);
+
+                    return fetch('/AdminFinance/RejectRefundDecision', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': token
+                        },
+                        body: params
+                    })
+                    .then(response => {
+                        return response.json().then(data => {
+                            if (!response.ok || !data.success) {
+                                throw new Error(data.message || response.statusText);
+                            }
+                            return data;
+                        });
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage(`Action failed: ${error.message}`);
+                    });
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Rejected!',
+                        text: result.value.message,
+                        icon: 'warning',
+                        confirmButtonText: 'Close',
+                        confirmButtonColor: '#64748b',
+                        customClass: {
+                            popup: 'rounded-3xl',
+                            title: 'text-xl font-black text-slate-900',
+                            confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm'
+                        }
+                    }).then(() => {
+                        window.location.href = '/AdminFinance?tab=rf';
+                    });
+                }
+            });
         }
     </script>
 }

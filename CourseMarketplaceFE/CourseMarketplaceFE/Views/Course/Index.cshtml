@@ -54,7 +54,7 @@
                 Explore Courses
             </h1>
             <p class="text-slate-500 text-sm md:text-base font-light">
-                Tìm kiếm từ hàng ngàn khóa học chất lượng cao để nâng tầm kỹ năng và phát triển sự nghiệp của bạn.
+                Search from thousands of high-quality courses to upgrade your skills and advance your career.
             </p>
         </div>
 
@@ -63,7 +63,7 @@
             <div class="flex items-center gap-2 mb-4">
                 <span class="material-symbols-outlined text-primary text-[20px]">category</span>
                 <h3 class="font-headline font-bold text-base text-slate-800">
-                    Danh mục khóa học
+                    Course Categories
                 </h3>
             </div>
             
@@ -72,7 +72,7 @@
                 <button type="button" onclick="selectCategoryPill('')" data-category-pill=""
                         class="category-pill px-5 py-2.5 rounded-full text-xs md:text-sm font-semibold border transition-all duration-300 flex items-center gap-2 @(string.IsNullOrEmpty(currentCategory) ? "bg-primary border-primary text-white shadow-md shadow-primary/20 scale-105" : "bg-white border-slate-200 text-slate-600 hover:border-primary/30 hover:text-primary hover:bg-slate-50/50")">
                     <span class="material-symbols-outlined text-[18px]" style='font-variation-settings: "FILL" @(string.IsNullOrEmpty(currentCategory) ? "1" : "0")'>apps</span>
-                    Tất cả danh mục
+                    All Categories
                 </button>
 
                 @foreach (var cat in sidebarCategories)
@@ -575,7 +575,7 @@
                     }
                 }
             } catch (err) {
-                console.error("Lỗi khi tải danh sách khóa học:", err);
+                console.error("Error loading course list:", err);
                 coursesContainer.style.opacity = '1';
             } finally {
                 coursesContainer.style.pointerEvents = 'auto';
@@ -808,7 +808,7 @@
                 }
             }
         } catch (error) {
-            console.error("Lỗi khi thay đổi trạng thái yêu thích:", error);
+            console.error("Error toggling wishlist status:", error);
         }
     }
 </script>

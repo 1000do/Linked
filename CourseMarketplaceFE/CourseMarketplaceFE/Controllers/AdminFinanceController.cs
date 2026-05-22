@@ -30,6 +30,7 @@ public class AdminFinanceController : Controller
         public decimal GrossRevenue { get; set; }
         public decimal TotalPaidOut { get; set; }
         public decimal PendingEscrow { get; set; }
+        public decimal MaturedEscrow { get; set; }
         public decimal PlatformNetProfit { get; set; }
         public decimal CurrentTransferRate { get; set; }
         public int TotalTransactions { get; set; }
@@ -93,11 +94,69 @@ public class AdminFinanceController : Controller
         public List<WithdrawalHistoryVM> History { get; set; } = new();
     }
 
+    public class PayoutPagedVM
+    {
+        public List<PayoutDetailVM> Items { get; set; } = new();
+        public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages { get; set; }
+    }
+
+    public class WithdrawalPagedVM
+    {
+        public List<WithdrawalHistoryVM> Items { get; set; } = new();
+        public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages { get; set; }
+    }
+
+    public class RefundRequestVM
+    {
+        public int TransactionId { get; set; }
+        public decimal Amount { get; set; }
+        public string? Currency { get; set; }
+        public string? RefundReason { get; set; }
+        public DateTime? RefundRequestedAt { get; set; }
+        public DateTime? TransactionCreatedAt { get; set; }
+
+        public OrderItemDto? OrderItem { get; set; }
+        public AccountDto? AccountFromNavigation { get; set; }
+
+        public string CourseTitle => OrderItem?.Course?.Title ?? "N/A";
+        public string BuyerName => AccountFromNavigation?.User?.FullName ?? "N/A";
+    }
+
+    public class OrderItemDto
+    {
+        public CourseDto? Course { get; set; }
+    }
+
+    public class CourseDto
+    {
+        public string Title { get; set; } = "";
+    }
+
+    public class AccountDto
+    {
+        public UserDto? User { get; set; }
+    }
+
+    public class UserDto
+    {
+        public string FullName { get; set; } = "";
+    }
+
     public class AdminFinanceUnifiedVM
     {
         public FinanceDashboardVM Dashboard { get; set; } = new();
         public WithdrawPageVM Withdraw { get; set; } = new();
         public CourseMarketplaceFE.Controllers.TransactionController.TransactionPagedVM Transactions { get; set; } = new();
+        public PayoutPagedVM Payouts { get; set; } = new();
+        public WithdrawalPagedVM Withdrawals { get; set; } = new();
+        public List<RefundRequestVM> PendingRefunds { get; set; } = new();
+        public string PayoutDays { get; set; } = "15";
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -105,30 +164,50 @@ public class AdminFinanceController : Controller
     // Dashboard chính — gọi 2 API song song: summary + payouts
     // ═══════════════════════════════════════════════════════════════════════
     [HttpGet]
-    public async Task<IActionResult> Index(int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, string tab = "tx")
+    public async Task<IActionResult> Index(int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, string tab = "tx", int? year = null, int? month = null, int payoutPage = 1, int withdrawPage = 1)
     {
         var vm = new AdminFinanceUnifiedVM();
         vm.Transactions.Page = page;
         vm.Transactions.PageSize = pageSize;
 
+        // Default to current UTC month/year if not provided
+        int selectedYear = year ?? DateTime.UtcNow.Year;
+        int selectedMonth = month ?? DateTime.UtcNow.Month;
+
         ViewBag.Keyword = keyword;
         ViewBag.SortBy = sortBy;
         ViewBag.Status = status;
         ViewBag.ActiveTab = tab;
+        ViewBag.Year = selectedYear;
+        ViewBag.Month = selectedMonth;
+        ViewBag.PayoutPage = payoutPage;
+        ViewBag.WithdrawPage = withdrawPage;
 
-        var txQuery = $"transactions?page={page}&pageSize={pageSize}";
+        var txQuery = $"transactions?page={page}&pageSize={pageSize}&year={selectedYear}&month={selectedMonth}";
         if (!string.IsNullOrEmpty(keyword)) txQuery += $"&keyword={Uri.EscapeDataString(keyword)}";
         if (!string.IsNullOrEmpty(sortBy)) txQuery += $"&sortBy={Uri.EscapeDataString(sortBy)}";
         if (!string.IsNullOrEmpty(status)) txQuery += $"&status={Uri.EscapeDataString(status)}";
 
-        // Gọi song song 5 API để giảm latency
-        var summaryTask = _api.GetAsync("admin/finance/summary");
-        var payoutsTask = _api.GetAsync("admin/finance/payouts");
+        // Gọi song song 7 API để giảm latency
+        var summaryTask = _api.GetAsync($"admin/finance/summary?year={selectedYear}&month={selectedMonth}");
+        var payoutsTask = _api.GetAsync($"admin/finance/payouts?year={selectedYear}&month={selectedMonth}");
         var balanceTask = _api.GetAsync("admin/finance/balance");
-        var historyTask = _api.GetAsync("admin/finance/withdrawals");
+        var historyTask = _api.GetAsync($"admin/finance/withdrawals?year={selectedYear}&month={selectedMonth}");
         var txTask = _api.GetAsync(txQuery);
+        var refundTask = _api.GetAsync("admin/finance/refunds/pending");
+        var payoutDaysTask = _api.GetAsync("admin/finance/payout-days");
 
-        await Task.WhenAll(summaryTask, payoutsTask, balanceTask, historyTask, txTask);
+        await Task.WhenAll(summaryTask, payoutsTask, balanceTask, historyTask, txTask, refundTask, payoutDaysTask);
+
+        // Parse payout days
+        var payoutDaysResp = await payoutDaysTask;
+        if (payoutDaysResp.IsSuccessStatusCode)
+        {
+            var json = await payoutDaysResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<string>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+                vm.PayoutDays = parsed.Data;
+        }
 
         // Parse summary
         var summaryResp = await summaryTask;
@@ -180,6 +259,34 @@ public class AdminFinanceController : Controller
                 vm.Transactions = parsed.Data;
         }
 
+        // Parse pending refunds
+        var refundResp = await refundTask;
+        if (refundResp.IsSuccessStatusCode)
+        {
+            var json = await refundResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<List<RefundRequestVM>>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+                vm.PendingRefunds = parsed.Data;
+        }
+
+        // Slice & Paginate Payouts
+        int payoutPageSize = 10;
+        var allPayouts = vm.Dashboard.Payouts;
+        vm.Payouts.TotalCount = allPayouts.Count;
+        vm.Payouts.Page = payoutPage;
+        vm.Payouts.PageSize = payoutPageSize;
+        vm.Payouts.TotalPages = (int)Math.Ceiling((double)allPayouts.Count / payoutPageSize);
+        vm.Payouts.Items = allPayouts.Skip((payoutPage - 1) * payoutPageSize).Take(payoutPageSize).ToList();
+
+        // Slice & Paginate Withdrawals
+        int withdrawPageSize = 10;
+        var allWithdrawals = vm.Withdraw.History;
+        vm.Withdrawals.TotalCount = allWithdrawals.Count;
+        vm.Withdrawals.Page = withdrawPage;
+        vm.Withdrawals.PageSize = withdrawPageSize;
+        vm.Withdrawals.TotalPages = (int)Math.Ceiling((double)allWithdrawals.Count / withdrawPageSize);
+        vm.Withdrawals.Items = allWithdrawals.Skip((withdrawPage - 1) * withdrawPageSize).Take(withdrawPageSize).ToList();
+
         return View(vm);
     }
 
@@ -196,6 +303,29 @@ public class AdminFinanceController : Controller
         if (response.IsSuccessStatusCode)
         {
             TempData["FinanceSuccess"] = $"✅ Updated: Instructor gets {rate}%, Platform gets {100 - rate}%.";
+        }
+        else
+        {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            TempData["FinanceError"] = $"❌ Error: {errorBody}";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // POST /AdminFinance/SetPayoutDays
+    // Cập nhật ngày thanh toán tự động định kỳ
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetPayoutDays(string payoutDays)
+    {
+        var response = await _api.PostJsonAsync("admin/finance/payout-days", new { PayoutDays = payoutDays });
+
+        if (response.IsSuccessStatusCode)
+        {
+            TempData["FinanceSuccess"] = $"✅ Updated automated payout days to: {payoutDays}.";
         }
         else
         {
@@ -346,5 +476,86 @@ public class AdminFinanceController : Controller
         }
 
         return RedirectToAction("Detail", "Transaction", new { id = transactionId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SyncAllPayouts()
+    {
+        var response = await _api.PostAsync("admin/finance/payouts/sync-all");
+
+        if (response.IsSuccessStatusCode)
+        {
+            TempData["FinanceSuccess"] = "✅ Successfully synced all Stripe Connect payouts with their bank arrival statuses!";
+        }
+        else
+        {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            try
+            {
+                using var doc = JsonDocument.Parse(errorBody);
+                if (doc.RootElement.TryGetProperty("message", out var m))
+                    errorBody = m.GetString();
+            }
+            catch { }
+
+            TempData["FinanceError"] = $"❌ Sync Error: {errorBody}";
+        }
+
+        return RedirectToAction(nameof(Index), new { tab = "po" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApproveRefundDecision(int transactionId, string? adminNote)
+    {
+        var response = await _api.PostJsonAsync($"admin/finance/refunds/{transactionId}/approve", new
+        {
+            AdminNote = adminNote ?? "Approved by Admin."
+        });
+
+        if (response.IsSuccessStatusCode)
+        {
+            return Json(new { success = true, message = "Refund approved successfully via Stripe!" });
+        }
+
+        var errorBody = await response.Content.ReadAsStringAsync();
+        var message = "Error approving refund request.";
+        try
+        {
+            using var doc = JsonDocument.Parse(errorBody);
+            if (doc.RootElement.TryGetProperty("message", out var m))
+                message = m.GetString() ?? message;
+        }
+        catch { }
+
+        return Json(new { success = false, message = message });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RejectRefundDecision(int transactionId, string? adminNote)
+    {
+        var response = await _api.PostJsonAsync($"admin/finance/refunds/{transactionId}/reject", new
+        {
+            AdminNote = adminNote ?? "Rejected by Admin."
+        });
+
+        if (response.IsSuccessStatusCode)
+        {
+            return Json(new { success = true, message = "Refund request successfully rejected." });
+        }
+
+        var errorBody = await response.Content.ReadAsStringAsync();
+        var message = "Error rejecting refund request.";
+        try
+        {
+            using var doc = JsonDocument.Parse(errorBody);
+            if (doc.RootElement.TryGetProperty("message", out var m))
+                message = m.GetString() ?? message;
+        }
+        catch { }
+
+        return Json(new { success = false, message = message });
     }
 }

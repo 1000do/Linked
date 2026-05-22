@@ -6,101 +6,238 @@
     Layout = "_AdminLayout";
 }
 
-<div class="bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col">
+<!-- Stat Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+    <!-- Total Pending Card -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow duration-300">
+        <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm shrink-0">
+            <span class="material-symbols-outlined text-2xl font-bold">how_to_reg</span>
+        </div>
+        <div class="flex flex-col">
+            <span class="text-2xl font-extrabold text-slate-900" id="stat-total-pending">@Model.Count</span>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5">Pending Approvals</span>
+        </div>
+    </div>
+
+    <!-- With LinkedIn Card -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow duration-300">
+        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 shadow-sm shrink-0">
+            <span class="material-symbols-outlined text-2xl font-bold">link</span>
+        </div>
+        <div class="flex flex-col">
+            <span class="text-2xl font-extrabold text-slate-900" id="stat-with-linkedin">@Model.Count(x => !string.IsNullOrEmpty(x.LinkedInUrl) && x.LinkedInUrl != "#")</span>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5">Profiles with LinkedIn</span>
+        </div>
+    </div>
+
+    <!-- With Resume Card -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow duration-300">
+        <div class="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-600 shadow-sm shrink-0">
+            <span class="material-symbols-outlined text-2xl font-bold">description</span>
+        </div>
+        <div class="flex flex-col">
+            <span class="text-2xl font-extrabold text-slate-900" id="stat-with-resume">@Model.Count(x => !string.IsNullOrEmpty(x.DocumentUrl))</span>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5">Submitted Resumes</span>
+        </div>
+    </div>
+</div>
+
+<!-- Main Section -->
+<div class="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col overflow-hidden">
+    <!-- Controls Bar -->
+    <div class="p-5 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row items-center gap-4">
+        <!-- Search Input -->
+        <div class="relative w-full md:w-80 shrink-0">
+            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+            <input type="text" id="search-input" placeholder="Search by name, email, title..." 
+                   class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm" />
+        </div>
+
+        <div class="flex items-center gap-3 w-full md:w-auto md:ml-auto">
+            <!-- Filter Specialization Select -->
+            <div class="relative w-full md:w-52">
+                <select id="filter-expertise" class="w-full appearance-none pl-3.5 pr-10 py-2 border border-slate-200 rounded-xl text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-700 cursor-pointer shadow-sm">
+                    <option value="all">All Specializations</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">arrow_drop_down</span>
+            </div>
+
+            <!-- Sort Select -->
+            <div class="relative w-full md:w-52">
+                <select id="sort-select" class="w-full appearance-none pl-3.5 pr-10 py-2 border border-slate-200 rounded-xl text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-700 cursor-pointer shadow-sm">
+                    <option value="oldest">Default (Oldest First)</option>
+                    <option value="newest">Newest First</option>
+                    <option value="name-asc">Name (A - Z)</option>
+                    <option value="name-desc">Name (Z - A)</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">arrow_drop_down</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Container -->
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
-                <tr class="border-b border-slate-200 bg-slate-50/50">
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Instructor</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Specialization</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">LinkedIn</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Portfolio / Resume</th>
-                    <th class="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                <tr class="border-b border-slate-200 bg-slate-50/20">
+                    <th class="px-6 py-3.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Instructor</th>
+                    <th class="px-6 py-3.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Specialization</th>
+                    <th class="px-6 py-3.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">LinkedIn</th>
+                    <th class="px-6 py-3.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Portfolio / Resume</th>
+                    <th class="px-6 py-3.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                 </tr>
             </thead>
             <tbody id="approval-table-body" class="divide-y divide-slate-100 text-sm">
-                @if (Model != null && Model.Any())
-                {
-                    @foreach (var item in Model)
-                    {
-                        <tr id="row-@item.InstructorId" class="hover:bg-slate-50/50 transition-colors group">
-                            <td class="px-5 py-4 align-top">
-                                <div class="flex items-center gap-3">
-                                    <img src="@(string.IsNullOrEmpty(item.AvatarUrl) ? "/img/default-avatar.png" : item.AvatarUrl)"
-                                         class="w-9 h-9 rounded-full object-cover border border-slate-200" />
-                                    <div class="flex flex-col">
-                                        <span class="font-medium text-slate-900">@item.FullName</span>
-                                        <span class="text-xs text-slate-500">@item.Email</span>
-                                    </div>
-                                </div>
-                            </td>
-
-                            <td class="px-5 py-4 align-top">
-                                <div class="font-medium text-slate-900">@item.ProfessionalTitle</div>
-                                <div class="text-[11px] text-slate-500 uppercase tracking-wider mt-0.5">@item.ExpertiseCategories</div>
-                            </td>
-
-                            <td class="px-5 py-4 align-top text-center">
-                                @if (!string.IsNullOrEmpty(item.LinkedInUrl) && item.LinkedInUrl != "#")
-                                {
-                                    <a href="@item.LinkedInUrl" target="_blank"
-                                       class="inline-flex text-slate-400 hover:text-blue-600 transition-colors" title="View LinkedIn Profile">
-                                        <span class="material-symbols-outlined text-[20px]">link</span>
-                                    </a>
-                                }
-                                else
-                                {
-                                    <span class="text-xs text-slate-400 italic">Empty</span>
-                                }
-                            </td>
-
-                            <td class="px-5 py-4 align-top">
-                                @if (!string.IsNullOrEmpty(item.DocumentUrl))
-                                {
-                                    var fileName = item.DocumentUrl.Split('/').Last();
-                                    <a href="@item.DocumentUrl" target="_blank"
-                                       class="inline-flex items-center gap-2 text-slate-600 hover:text-emerald-600 transition-colors">
-                                        <span class="material-symbols-outlined text-[18px]">description</span>
-                                        <span class="text-xs font-medium truncate max-w-[120px]" title="@fileName">@fileName</span>
-                                    </a>
-                                }
-                                else
-                                {
-                                    <span class="text-xs text-slate-400 italic">None</span>
-                                }
-                            </td>
-
-                            <td class="px-5 py-4 align-top text-right">
-                                <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onclick="processAction(@item.InstructorId, 'Approved')" class="px-3 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-md transition-colors border border-emerald-200">
-                                        Approve
-                                    </button>
-                                    <button onclick="processAction(@item.InstructorId, 'Rejected')" class="px-3 py-1.5 text-xs font-medium bg-white text-slate-600 hover:bg-slate-50 hover:text-red-600 border border-slate-200 rounded-md transition-colors">
-                                        Reject
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                }
-                else
-                {
-                    <tr>
-                        <td colspan="5" class="px-5 py-12 text-center">
-                            <div class="flex flex-col items-center justify-center text-slate-400">
-                                <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">inbox</span>
-                                <p class="text-sm">No pending instructor registrations at the moment.</p>
-                            </div>
-                        </td>
-                    </tr>
-                }
+                <!-- Dynamic render -->
             </tbody>
         </table>
     </div>
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Parse model data directly to JS
+        const originalData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model ?? new List<CourseMarketplaceFE.Models.InstructorApprovalViewModel>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+
+        function renderTable(data) {
+            const tbody = document.getElementById('approval-table-body');
+            if (!tbody) return;
+
+            if (data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-16 text-center">
+                            <div class="flex flex-col items-center justify-center text-slate-400">
+                                <div class="w-16 h-16 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center mb-3 shadow-inner">
+                                    <span class="material-symbols-outlined text-3xl text-slate-300 font-bold">inbox</span>
+                                </div>
+                                <p class="text-sm font-semibold text-slate-500">No matching registration requests found</p>
+                                <p class="text-xs text-slate-400 mt-1">Try adjusting your filters or search query.</p>
+                            </div>
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(item => {
+                const avatar = item.avatarUrl && item.avatarUrl.trim() !== '' ? item.avatarUrl : '/img/default-avatar.png';
+                const linkedInHtml = item.linkedInUrl && item.linkedInUrl !== '#' ? `
+                    <a href="${item.linkedInUrl}" target="_blank"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 hover:scale-105 transition-all duration-300" 
+                       title="View LinkedIn Profile">
+                        <span class="material-symbols-outlined text-[15px]">link</span>
+                        LinkedIn
+                    </a>
+                ` : `<span class="text-xs text-slate-400 italic font-medium px-2.5 py-1 bg-slate-50 rounded-lg border border-slate-100">Not Provided</span>`;
+
+                const documentHtml = item.documentUrl ? `
+                    <a href="${item.documentUrl}" target="_blank"
+                       class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 hover:scale-105 transition-all duration-300"
+                       title="View Document">
+                        <span class="material-symbols-outlined text-[15px]">description</span>
+                        <span class="max-w-[120px] truncate">${item.documentUrl.split('/').pop()}</span>
+                    </a>
+                ` : `<span class="text-xs text-slate-400 italic font-medium px-2.5 py-1 bg-slate-50 rounded-lg border border-slate-100">No Resume</span>`;
+
+                const expertiseHtml = item.expertiseCategories ? 
+                    item.expertiseCategories.split(',').map(cat => `
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-wide mr-1 mb-1 shadow-sm">
+                            ${cat.trim()}
+                        </span>
+                    `).join('') : '';
+
+                return `
+                    <tr id="row-${item.instructorId}" class="hover:bg-slate-50/50 transition-colors group">
+                        <td class="px-6 py-4 align-middle">
+                            <div class="flex items-center gap-3.5">
+                                <div class="relative shrink-0">
+                                    <img src="${avatar}" 
+                                         class="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-sm transition-transform group-hover:scale-105 duration-300" 
+                                         onerror="this.src='/img/default-avatar.png'" />
+                                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full shadow-[0_0_8px_#10b981]"></span>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="font-semibold text-slate-900 leading-tight group-hover:text-emerald-600 transition-colors duration-200">${item.fullName}</span>
+                                    <span class="text-xs text-slate-500 font-medium mt-0.5">${item.email}</span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="px-6 py-4 align-middle">
+                            <div class="font-semibold text-slate-900 leading-tight">${item.professionalTitle || '<span class="text-xs text-slate-400 italic">No Title</span>'}</div>
+                            <div class="flex flex-wrap mt-1.5">${expertiseHtml}</div>
+                        </td>
+
+                        <td class="px-6 py-4 align-middle text-center">
+                            ${linkedInHtml}
+                        </td>
+
+                        <td class="px-6 py-4 align-middle">
+                            ${documentHtml}
+                        </td>
+
+                        <td class="px-6 py-4 align-middle text-right">
+                            <div class="flex items-center justify-end gap-2.5">
+                                <button onclick="processAction(${item.instructorId}, 'Approved')" 
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 hover:border-emerald-600 rounded-lg shadow-sm hover:scale-105 active:scale-95 transition-all duration-300">
+                                    <span class="material-symbols-outlined text-[15px] font-bold">check</span> Approve
+                                </button>
+                                <button onclick="processAction(${item.instructorId}, 'Rejected')" 
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 hover:border-red-600 rounded-lg shadow-sm hover:scale-105 active:scale-95 transition-all duration-300">
+                                    <span class="material-symbols-outlined text-[15px] font-bold">close</span> Reject
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function applyFilters() {
+            const searchVal = document.getElementById('search-input').value.toLowerCase().trim();
+            const expVal = document.getElementById('filter-expertise').value;
+            const sortVal = document.getElementById('sort-select').value;
+
+            let filtered = [...originalData];
+
+            // 1. Search
+            if (searchVal) {
+                filtered = filtered.filter(item => 
+                    item.fullName.toLowerCase().includes(searchVal) ||
+                    item.email.toLowerCase().includes(searchVal) ||
+                    (item.professionalTitle && item.professionalTitle.toLowerCase().includes(searchVal)) ||
+                    (item.expertiseCategories && item.expertiseCategories.toLowerCase().includes(searchVal))
+                );
+            }
+
+            // 2. Filter dynamic categories
+            if (expVal !== 'all') {
+                filtered = filtered.filter(item => {
+                    if (!item.expertiseCategories) return false;
+                    return item.expertiseCategories.split(',').map(c => c.trim()).includes(expVal);
+                });
+            }
+
+            // 3. Sorting
+            if (sortVal === 'oldest') {
+                filtered.sort((a, b) => a.instructorId - b.instructorId); // FIFO (first in first out)
+            } else if (sortVal === 'newest') {
+                filtered.sort((a, b) => b.instructorId - a.instructorId); // LIFO (newest first)
+            } else if (sortVal === 'name-asc') {
+                filtered.sort((a, b) => a.fullName.localeCompare(b.fullName, 'en'));
+            } else if (sortVal === 'name-desc') {
+                filtered.sort((a, b) => b.fullName.localeCompare(a.fullName, 'en'));
+            }
+
+            renderTable(filtered);
+
+            // Update header statistics counts
+            document.getElementById('stat-total-pending').textContent = originalData.length;
+            document.getElementById('stat-with-linkedin').textContent = originalData.filter(x => x.linkedInUrl && x.linkedInUrl !== '#').length;
+            document.getElementById('stat-with-resume').textContent = originalData.filter(x => x.documentUrl).length;
+        }
+
         async function processAction(id, status) {
             const actionText = status === 'Approved' ? 'approved' : 'rejected';
             const actionColor = status === 'Approved' ? '#10b981' : '#ef4444';
@@ -143,22 +280,21 @@
                         }
                     });
 
+                    // Premium slide out animation
                     const row = document.getElementById(`row-${id}`);
-                    row.style.opacity = '0';
-                    setTimeout(() => {
-                        row.remove();
-                        if (document.querySelectorAll('#approval-table-body tr').length === 0) {
-                            document.getElementById('approval-table-body').innerHTML = `
-                                <tr>
-                                    <td colspan="5" class="px-5 py-12 text-center">
-                                        <div class="flex flex-col items-center justify-center text-slate-400">
-                                            <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">inbox</span>
-                                            <p class="text-sm">No pending instructor registrations at the moment.</p>
-                                        </div>
-                                    </td>
-                                </tr>`;
-                        }
-                    }, 200);
+                    if (row) {
+                        row.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                        row.style.opacity = '0';
+                        row.style.transform = 'translateX(20px)';
+                        
+                        setTimeout(() => {
+                            const index = originalData.findIndex(item => item.instructorId === id);
+                            if (index > -1) {
+                                originalData.splice(index, 1);
+                            }
+                            applyFilters();
+                        }, 300);
+                    }
                 } else {
                     Swal.fire({
                         title: 'Execution Error',
@@ -184,5 +320,34 @@
                 });
             }
         }
+
+        // Initialize dynamic filter items and default state
+        document.addEventListener('DOMContentLoaded', () => {
+            const categories = new Set();
+            originalData.forEach(item => {
+                if (item.expertiseCategories) {
+                    item.expertiseCategories.split(',').forEach(cat => {
+                        const trimmed = cat.trim();
+                        if (trimmed) categories.add(trimmed);
+                    });
+                }
+            });
+
+            const filterSelect = document.getElementById('filter-expertise');
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                filterSelect.appendChild(opt);
+            });
+
+            // Bind listeners for dynamic filters
+            document.getElementById('search-input').addEventListener('input', applyFilters);
+            document.getElementById('filter-expertise').addEventListener('change', applyFilters);
+            document.getElementById('sort-select').addEventListener('change', applyFilters);
+
+            // First render
+            applyFilters();
+        });
     </script>
 }

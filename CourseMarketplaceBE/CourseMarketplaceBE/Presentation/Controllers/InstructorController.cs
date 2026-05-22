@@ -257,14 +257,14 @@ public class InstructorController : ControllerBase
     // ─── 9. LẤY LỊCH SỬ THANH TOÁN ───────────────────────────────────
     [HttpGet("payouts")]
     [Authorize]
-    public async Task<IActionResult> GetPayouts(int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null)
+    public async Task<IActionResult> GetPayouts(int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, [FromQuery] int? year = null, [FromQuery] int? month = null)
     {
         var userId = GetUserId();
         if (userId == null) return Unauthorized(new { message = "Invalid login session." });
 
         try
         {
-            var pagedResult = await _instructorService.GetPayoutsAsync(userId.Value, page, pageSize, keyword, sortBy, status);
+            var pagedResult = await _instructorService.GetPayoutsAsync(userId.Value, page, pageSize, keyword, sortBy, status, year, month);
             return Ok(new { status = 200, data = pagedResult });
         }
         catch (Exception ex)
@@ -342,6 +342,80 @@ public class InstructorController : ControllerBase
                 return NotFound(new { status = 404, message = "Instructor profile not found or application not approved yet." });
 
             return Ok(new { status = 200, data = profile });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = 500, message = $"Server error: {ex.Message}" });
+        }
+    }
+
+    // ─── 12. LẤY NGÀY QUYẾT TOÁN TỰ ĐỘNG ──────────────────────────────
+    /// <summary>
+    /// GET /api/instructor/payout-days
+    /// Trả về cấu hình ngày quyết toán tự động của hệ thống (ví dụ: "15").
+    /// </summary>
+    [HttpGet("payout-days")]
+    [Authorize]
+    public async Task<IActionResult> GetPayoutDays([FromServices] IAdminFinanceService financeService)
+    {
+        try
+        {
+            var days = await financeService.GetPayoutDaysConfigAsync();
+            return Ok(new { status = 200, data = days });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = 500, message = ex.Message });
+        }
+    }
+
+    // ─── 13. GIẢNG VIÊN TỰ HỦY LIÊN KẾT STRIPE ─────────────────────────
+    /// <summary>
+    /// POST /api/instructor/reset-stripe
+    /// Cho phép giảng viên tự hủy liên kết Stripe Connect hiện tại để đăng ký lại.
+    /// </summary>
+    [HttpPost("reset-stripe")]
+    [Authorize]
+    public async Task<IActionResult> ResetStripe()
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized(new { message = "Invalid login session." });
+
+        try
+        {
+            var result = await _instructorService.ResetStripeAccountAsync(userId.Value);
+            return Ok(new { status = 200, message = result });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { status = 400, message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = 500, message = $"Server error: {ex.Message}" });
+        }
+    }
+
+    // ─── 14. LẤY ĐƯỜNG DẪN TRUY CẬP STRIPE EXPRESS DASHBOARD ───────────
+    /// <summary>
+    /// POST /api/instructor/stripe-login-link
+    /// Tạo đường dẫn đăng nhập bảo mật (Stripe Login Link) cho giảng viên tự quản lý Express Dashboard.
+    /// </summary>
+    [HttpPost("stripe-login-link")]
+    [Authorize]
+    public async Task<IActionResult> GetStripeLoginLink()
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized(new { message = "Invalid login session." });
+
+        try
+        {
+            var url = await _instructorService.GetStripeLoginLinkAsync(userId.Value);
+            return Ok(new { status = 200, url = url });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { status = 400, message = ex.Message });
         }
         catch (Exception ex)
         {

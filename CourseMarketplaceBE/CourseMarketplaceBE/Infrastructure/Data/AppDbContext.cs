@@ -890,6 +890,12 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("transaction_created_at");
 
+            entity.Property(e => e.RefundReason).HasColumnName("refund_reason");
+            entity.Property(e => e.RefundAdminNote).HasColumnName("refund_admin_note");
+            entity.Property(e => e.RefundRequestedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("refund_requested_at");
+
             entity.HasOne(d => d.OrderItem).WithMany(p => p.Transactions)
                 .HasForeignKey(d => d.OrderItemId)
                 .OnDelete(DeleteBehavior.SetNull)

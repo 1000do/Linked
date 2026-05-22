@@ -38,8 +38,8 @@
 
             <div>
                 <div class="flex justify-between mb-2">
-                    <label class="text-sm font-bold text-slate-700">Mật khẩu</label>
-                    <a class="text-xs text-primary font-medium hover:underline" href="/Account/ForgotPassword">Quên mật khẩu?</a>
+                    <label class="text-sm font-bold text-slate-700">Password</label>
+                    <a class="text-xs text-primary font-medium hover:underline" href="/Account/ForgotPassword">Forgot Password?</a>
                 </div>
                 <div class="relative">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">lock</span>
@@ -52,7 +52,7 @@
             </div>
 
             <button class="w-full py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:opacity-90 transition-all active:scale-[0.98]" type="submit">
-                Đăng nhập
+                Login
             </button>
         </form>
 
@@ -75,7 +75,7 @@
         </div>
 
         <p class="text-center text-sm text-slate-500 mt-8">
-            Chưa có tài khoản? <a href="/Account/Register" class="text-primary font-bold hover:underline">Đăng ký ngay</a>
+            Don't have an account? <a href="/Account/Register" class="text-primary font-bold hover:underline">Sign up now</a>
         </p>
     </div>
 </main>
@@ -107,7 +107,7 @@
         if (res.ok) {
             window.location.href = "/";
         } else {
-            Swal.fire('Lỗi', 'Đăng nhập Google thất bại', 'error');
+            Swal.fire('Error', 'Google login failed', 'error');
         }
     }
 </script>

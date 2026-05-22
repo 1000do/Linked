@@ -47,9 +47,9 @@ public class PayoutScheduleTask : BackgroundService
         var financeService = scope.ServiceProvider.GetRequiredService<IAdminFinanceService>();
         var repo = scope.ServiceProvider.GetRequiredService<IAdminFinanceRepository>();
 
-        // 1. Lấy cấu hình ngày thanh toán (VD: "15,30")
-        var payoutDaysStr = await repo.GetConfigValueAsync("PayoutDays") ?? "";
-        if (string.IsNullOrWhiteSpace(payoutDaysStr)) return;
+        // 1. Lấy cấu hình ngày thanh toán (Mặc định là ngày 15 hàng tháng nếu DB trống)
+        var payoutDaysStr = await repo.GetConfigValueAsync("PayoutDays") ?? "15";
+        if (string.IsNullOrWhiteSpace(payoutDaysStr)) payoutDaysStr = "15";
 
         var today = DateTime.Today.Day;
         var allowedDays = payoutDaysStr.Split(',')
@@ -60,11 +60,22 @@ public class PayoutScheduleTask : BackgroundService
         // 2. Kiểm tra xem hôm nay có phải ngày thanh toán không
         if (allowedDays.Contains(today))
         {
-            // Kiểm tra xem hôm nay đã chạy chưa (tránh chạy nhiều lần trong cùng 1 ngày thanh toán)
-            // Lưu ý: Đây là logic tối giản, thực tế nên lưu LastBulkPayoutDate vào DB.
+            // Kiểm tra xem hôm nay đã chạy chưa để tránh double-run (Worker quét mỗi tiếng)
+            var todayStr = DateTime.Today.ToString("yyyy-MM-dd");
+            var lastPayoutDateStr = await repo.GetConfigValueAsync("LastBulkPayoutDate") ?? "";
+            
+            if (lastPayoutDateStr == todayStr)
+            {
+                _logger.LogInformation("Bulk payout already executed today ({Today}). Skipping to prevent double-run.", todayStr);
+                return;
+            }
+
             _logger.LogInformation("Today is payout day ({Day}). Starting bulk payout...", today);
             
             var result = await financeService.BulkPayAllViaStripeAsync();
+            
+            // Lưu lại ngày chạy hôm nay để đánh dấu hoàn tất
+            await repo.UpsertConfigAsync("LastBulkPayoutDate", todayStr, "The last date when bulk payout was successfully executed.");
             
             _logger.LogInformation("Bulk payout finished. Success: {Success}, Fail: {Fail}", 
                 result.SuccessCount, result.FailCount);

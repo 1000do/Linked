@@ -43,50 +43,37 @@
         h1, h2, h3, h4, h5, h6, .font-display { font-family: 'Manrope', system-ui, sans-serif; }
         
         /* Custom scrollbar for modern feel */
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Dark scrollbar for Sidebar */
+        aside .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); }
+        aside .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.22); }
         
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
         }
 
-        .nav-link-active {
-            background-color: #f1f5f9; /* slate-100 */
-            color: #0f172a !important; /* slate-900 */
-            font-weight: 700;
-        }
-        .nav-link-active .material-symbols-outlined {
-            font-variation-settings: 'FILL' 1;
-            color: #10b981;
-        }
-
-        /* Smooth Nav Item left pill indicator */
+        /* Smooth Nav Item Transition */
         .nav-item {
-            position: relative;
+            border-left: 3px solid transparent;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .nav-item::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 20%;
-            height: 60%;
-            width: 3px;
-            background-color: #10b981;
-            border-radius: 0 4px 4px 0;
-            transform: scaleX(0);
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-            transform-origin: left;
+
+        .nav-link-active {
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.01) 100%);
+            color: #34d399 !important; /* emerald-400 */
+            font-weight: 600;
+            border-left: 3px solid #10b981 !important;
+            box-shadow: inset 1px 0 0 0 rgba(16, 185, 129, 0.15);
         }
-        .nav-item:hover::before {
-            transform: scaleX(1);
-        }
-        .nav-link-active::before {
-            transform: scaleX(1) !important;
-            height: 70% !important;
-            top: 15% !important;
+        
+        .nav-link-active .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1;
+            color: #34d399 !important;
+            transform: scale(1.05);
         }
 
         /* Top Progress Bar Page Transition */
@@ -123,60 +110,66 @@
 <body class="bg-slate-50 text-slate-800 flex h-screen overflow-hidden antialiased selection:bg-primary/20 selection:text-primary">
 
     <!-- SIDEBAR -->
-    <aside class="w-64 border-r border-slate-200 flex flex-col bg-white shrink-0 shadow-sm z-20 relative">
-        <div class="h-16 flex items-center px-6 border-b border-slate-100">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-accent rounded-lg flex items-center justify-center shadow-inner">
+    <aside class="w-64 flex flex-col bg-[#0b0f19] shrink-0 z-20 relative border-r border-slate-800/60 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
+        <div class="h-16 flex items-center px-6 border-b border-slate-800/40 bg-slate-950/20">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.35)] shrink-0">
                     <span class="material-symbols-outlined text-white text-[18px]">@(isStaff ? "support_agent" : "admin_panel_settings")</span>
                 </div>
-                <span class="font-display font-extrabold text-slate-900 text-base tracking-tight">Linked<span class="text-primary">@(isStaff ? "Staff" : "Admin")</span></span>
+                <span class="font-display font-extrabold text-white text-base tracking-tight leading-none">Linked<span class="text-[#34d399]">@(isStaff ? "Staff" : "Admin")</span></span>
             </div>
         </div>
         
-        <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
-            <div class="px-3 mb-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Workspace</div>
+        <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto custom-scrollbar bg-gradient-to-b from-[#0b0f19] to-[#0d1222]">
+            <div class="px-3.5 mb-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none">Workspace</div>
             
-            <a href="/AdminApproval" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
-                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">how_to_reg</span> 
+            <a href="/AdminApproval" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
+                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">how_to_reg</span> 
                 Instructor Approvals
             </a>
-            <a href="/AdminModeration/Courses" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
-                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">school</span> 
+            @if (!isStaff) {
+                <a href="/AdminAccount" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
+                    <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">manage_accounts</span> 
+                    Manage Accounts
+                </a>
+            }
+            <a href="/AdminModeration/Courses" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
+                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">school</span> 
                 Course Moderation
             </a>
-            <a href="/AdminModeration/Reports" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
-                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">report</span> 
+            <a href="/AdminModeration/Reports" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
+                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">report</span> 
                 User Reports
             </a>
-            <a href="/Notification/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group relative">
-                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">notifications</span> 
+            <a href="/Notification/Admin" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group relative">
+                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">notifications</span> 
                 Notifications
-                <span class="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-red-500 hidden" id="admin-noti-badge"></span>
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-red-500 hidden" id="admin-noti-badge"></span>
             </a>
             @if (!isStaff) {
-                <a href="/Coupon/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
-                    <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">local_activity</span> 
+                <a href="/Coupon/Admin" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
+                    <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">local_activity</span> 
                     Coupons & Offers
                 </a>
             }
-            <a href="/Chat/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
-                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">forum</span> 
+            <a href="/Chat/Admin" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
+                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">forum</span> 
                 Monitor Chats
             </a>
-            <a href="/AdminAvatarFrame" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
-                <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">military_tech</span> 
+            <a href="/AdminAvatarFrame" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
+                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">military_tech</span> 
                 Manage Avatar Frames
             </a>
 
             @if (!isStaff) {
-                <div class="px-3 mb-3 mt-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Finance & Transactions</div>
+                <div class="px-3.5 mb-2 mt-6 text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none">Finance & Transactions</div>
                 
-                <a href="/AdminFinance" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
-                    <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">monitoring</span> 
+                <a href="/AdminFinance" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
+                    <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">monitoring</span> 
                     Revenue Dashboard
                 </a>
-                <a href="/Transaction/Admin" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-50 hover:text-slate-900 transition-all group">
-                    <span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-slate-600 transition-colors">receipt_long</span> 
+                <a href="/Transaction/Admin" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
+                    <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">receipt_long</span> 
                     Transaction Logs
                 </a>
             }
@@ -186,22 +179,27 @@
     @{
         var avatarUrl = Context.Request.Cookies["AvatarUrl"];
     }
-    <div class="p-4 border-t border-slate-100 bg-slate-50/50">
-        <div class="flex items-center gap-3 p-2 rounded-xl">
-            @await Html.PartialAsync("_UserAvatar", new { 
-                Url = avatarUrl, 
-                Role = isStaff ? "staff" : "admin", 
-                Name = managerName, 
-                Size = "md",
-                ShowFrame = true,
-                FrameUrl = ""
-            })
+    <div class="p-3 border-t border-slate-800/40 bg-[#0d1222] shrink-0">
+        <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-md backdrop-blur-md hover:border-slate-700/80 transition-all duration-300">
+            <div class="relative shrink-0">
+                @await Html.PartialAsync("_UserAvatar", new { 
+                    Url = avatarUrl, 
+                    Role = isStaff ? "staff" : "admin", 
+                    Name = managerName, 
+                    Size = "md",
+                    ShowFrame = true,
+                    FrameUrl = ""
+                })
+                <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#0d1222] rounded-full shadow-[0_0_8px_#10b981]"></span>
+            </div>
             <div class="flex flex-col flex-1 overflow-hidden">
-                <span class="text-xs font-bold text-slate-700 truncate">Hi, @managerName</span>
-                <form method="post" action="/Account/Logout" class="m-0">
+                <span class="text-xs font-bold text-slate-200 truncate">@managerName</span>
+                <span class="text-[9px] text-slate-500 font-medium truncate uppercase tracking-wider">@(isStaff ? "Support Staff" : "Super Admin")</span>
+                <form method="post" action="/Account/Logout" class="m-0 mt-1">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="text-[10px] text-red-500 hover:underline font-medium bg-transparent border-none p-0 cursor-pointer text-left">
-                        Logout Account
+                    <button type="submit" class="text-[10px] text-red-400 hover:text-red-300 font-semibold flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer text-left transition-colors duration-200">
+                        <span class="material-symbols-outlined text-[12px] font-normal leading-none">logout</span>
+                        Logout
                     </button>
                 </form>
             </div>
@@ -251,6 +249,7 @@
                 // Matching logic for active route
                 if (href === currentPath || 
                    (currentPath.includes('/adminapproval') && href.includes('/adminapproval')) ||
+                   (currentPath.includes('/adminaccount') && href.includes('/adminaccount')) ||
                    (currentPath.includes('/transaction') && href.includes('/transaction/admin'))) {
                     link.classList.add('nav-link-active');
                 }

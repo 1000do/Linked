@@ -29,7 +29,7 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         Task<InstructorDashboardDto?> GetRejectedApplicationDtoAsync(int userId);
         Task<InstructorStats?> GetStatsAsync(int userId);
         Task<int> CountActiveCoursesAsync(int instructorId);
-        Task<InstructorPayoutPagedDto> GetPayoutsAsync(int instructorId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null);
+        Task<InstructorPayoutPagedDto> GetPayoutsAsync(int instructorId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null);
         Task<int> GetTotalApprovedInstructorsCountAsync();
 
         /// <summary>Lấy danh sách tất cả giảng viên đã liên kết tài khoản Stripe.</summary>
