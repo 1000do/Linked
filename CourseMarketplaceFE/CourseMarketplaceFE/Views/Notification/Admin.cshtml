@@ -15,6 +15,57 @@
 }
 
 <div class="bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col h-[calc(100vh-8rem)]">
+    <!-- Controls Bar -->
+    <div class="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row items-center gap-4 shrink-0">
+        <!-- Search Input -->
+        <div class="relative w-full md:w-80 shrink-0">
+            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+            <input type="text" id="search-input" placeholder="Search by recipient, title, content..."
+                   class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm bg-white" />
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto md:ml-auto">
+            <!-- Filter Group Select -->
+            <div class="relative w-full sm:w-48">
+                <select id="filter-group" class="w-full appearance-none pl-3.5 pr-10 py-2 border border-slate-200 rounded-xl text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-slate-700 cursor-pointer shadow-sm">
+                    <option value="all">All Groups</option>
+                    <option value="broadcast">Broadcast (All Users)</option>
+                    <option value="specific">Specific User</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">arrow_drop_down</span>
+            </div>
+
+            <!-- Filter Status Select -->
+            <div class="relative w-full sm:w-40">
+                <select id="filter-status" class="w-full appearance-none pl-3.5 pr-10 py-2 border border-slate-200 rounded-xl text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-slate-700 cursor-pointer shadow-sm">
+                    <option value="all">All Statuses</option>
+                    <option value="unread">Unread</option>
+                    <option value="read">Read</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">arrow_drop_down</span>
+            </div>
+
+            <!-- Sort Select -->
+            <div class="relative w-full sm:w-48">
+                <select id="sort-select" class="w-full appearance-none pl-3.5 pr-10 py-2 border border-slate-200 rounded-xl text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-slate-700 cursor-pointer shadow-sm">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="title-asc">Title (A - Z)</option>
+                    <option value="title-desc">Title (Z - A)</option>
+                    <option value="recipient-asc">Recipient (A - Z)</option>
+                    <option value="recipient-desc">Recipient (Z - A)</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">arrow_drop_down</span>
+            </div>
+
+            <!-- Reset Button -->
+            <button type="button" id="btn-reset" class="w-full sm:w-auto px-4 py-2 border border-slate-200 text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all flex items-center justify-center gap-1.5 shrink-0 shadow-sm">
+                <span class="material-symbols-outlined text-[18px]">filter_alt_off</span>
+                Reset
+            </button>
+        </div>
+    </div>
+
     <div class="flex-1 overflow-auto">
         <table class="w-full text-left border-collapse">
             <thead class="sticky top-0 bg-slate-50/90 backdrop-blur-sm z-10 border-b border-slate-200">
@@ -40,7 +91,7 @@
 <!-- Modal Send Notification -->
 <div id="modal-send" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
-    
+
     <div class="bg-white w-full max-w-lg rounded-xl shadow-xl relative z-10 flex flex-col overflow-hidden border border-slate-200">
         <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
             <h3 class="font-semibold text-slate-900">Compose New Notification</h3>
@@ -95,6 +146,7 @@
         let currentPage = 1;
         const pageSize = 10;
         let allNotifications = [];
+        let filteredNotifications = [];
         let selectedEmails = [];
 
         function formatDateTime(dateString) {
@@ -115,25 +167,85 @@
                 const res = await fetch(`${API_URL}/all`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
                 if (res.ok) {
                     allNotifications = await res.json();
-                    renderTable();
+                    applyFilters();
                 }
             } catch (err) { console.error(err); }
+        }
+
+        function applyFilters() {
+            const searchVal = document.getElementById('search-input').value.toLowerCase().trim();
+            const groupVal = document.getElementById('filter-group').value;
+            const statusVal = document.getElementById('filter-status').value;
+            const sortVal = document.getElementById('sort-select').value;
+
+            filteredNotifications = [...allNotifications];
+
+            // 1. Search
+            if (searchVal) {
+                filteredNotifications = filteredNotifications.filter(n =>
+                    (n.receiverFullName && n.receiverFullName.toLowerCase().includes(searchVal)) ||
+                    (n.receiverEmail && n.receiverEmail.toLowerCase().includes(searchVal)) ||
+                    (n.title && n.title.toLowerCase().includes(searchVal)) ||
+                    (n.content && n.content.toLowerCase().includes(searchVal))
+                );
+            }
+
+            // 2. Filter Group
+            if (groupVal === 'broadcast') {
+                filteredNotifications = filteredNotifications.filter(n => !n.receiverEmail);
+            } else if (groupVal === 'specific') {
+                filteredNotifications = filteredNotifications.filter(n => n.receiverEmail);
+            }
+
+            // 3. Filter Status
+            if (statusVal === 'read') {
+                filteredNotifications = filteredNotifications.filter(n => n.isRead);
+            } else if (statusVal === 'unread') {
+                filteredNotifications = filteredNotifications.filter(n => !n.isRead);
+            }
+
+            // 4. Sorting
+            if (sortVal === 'newest') {
+                filteredNotifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            } else if (sortVal === 'oldest') {
+                filteredNotifications.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            } else if (sortVal === 'title-asc') {
+                filteredNotifications.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'en'));
+            } else if (sortVal === 'title-desc') {
+                filteredNotifications.sort((a, b) => (b.title || '').localeCompare(a.title || '', 'en'));
+            } else if (sortVal === 'recipient-asc') {
+                filteredNotifications.sort((a, b) => {
+                    const nameA = a.receiverFullName || 'System Broadcast';
+                    const nameB = b.receiverFullName || 'System Broadcast';
+                    return nameA.localeCompare(nameB, 'en');
+                });
+            } else if (sortVal === 'recipient-desc') {
+                filteredNotifications.sort((a, b) => {
+                    const nameA = a.receiverFullName || 'System Broadcast';
+                    const nameB = b.receiverFullName || 'System Broadcast';
+                    return nameB.localeCompare(nameA, 'en');
+                });
+            }
+
+            currentPage = 1;
+            renderTable();
         }
 
         function renderTable() {
             const start = (currentPage - 1) * pageSize;
             const end = start + pageSize;
-            const pagedData = allNotifications.slice(start, end);
+            const pagedData = filteredNotifications.slice(start, end);
             const tbody = document.getElementById('admin-table-body');
 
             if (pagedData.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" class="px-5 py-12 text-center">
                     <div class="flex flex-col items-center justify-center text-slate-400">
                         <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">inbox</span>
-                        <p class="text-sm">No notifications found</p>
+                        <p class="text-sm">No notifications found matching your filters</p>
                     </div>
                 </td></tr>`;
                 updatePaginationInfo(0, 0, 0);
+                renderPaginationControls();
                 return;
             }
 
@@ -151,7 +263,7 @@
                         ${formatDateTime(n.createdAt)}
                     </td>
                     <td class="px-5 py-3 align-top text-center">
-                        ${n.isRead 
+                        ${n.isRead
                             ? `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Read</span>`
                             : `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Unread</span>`
                         }
@@ -159,7 +271,7 @@
                 </tr>
             `).join('');
 
-            updatePaginationInfo(start + 1, Math.min(end, allNotifications.length), allNotifications.length);
+            updatePaginationInfo(start + 1, Math.min(end, filteredNotifications.length), filteredNotifications.length);
             renderPaginationControls();
         }
 
@@ -168,10 +280,10 @@
         }
 
         function renderPaginationControls() {
-            const totalPages = Math.ceil(allNotifications.length / pageSize);
+            const totalPages = Math.ceil(filteredNotifications.length / pageSize);
             const container = document.getElementById('pagination-controls');
             let html = `<button type="button" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="p-1 text-slate-500 hover:text-slate-900 disabled:opacity-30 disabled:hover:text-slate-500 transition-colors"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>`;
-            
+
             html += `<span class="text-xs font-medium text-slate-700 px-2">${currentPage} / ${totalPages || 1}</span>`;
 
             html += `<button type="button" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''} class="p-1 text-slate-500 hover:text-slate-900 disabled:opacity-30 disabled:hover:text-slate-500 transition-colors"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>`;
@@ -233,7 +345,7 @@
             renderTags();
             toggleEmailInput();
             document.getElementById('char-count').innerText = "0";
-            
+
             const modal = document.getElementById('modal-send');
             modal.classList.remove('hidden');
             setTimeout(() => emailInput.focus(), 100);
@@ -313,6 +425,20 @@
         connection.on("ReceiveNotification", () => loadHistory());
         connection.start().catch(err => console.error(err));
 
-        document.addEventListener('DOMContentLoaded', loadHistory);
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('search-input').addEventListener('input', applyFilters);
+            document.getElementById('filter-group').addEventListener('change', applyFilters);
+            document.getElementById('filter-status').addEventListener('change', applyFilters);
+            document.getElementById('sort-select').addEventListener('change', applyFilters);
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                document.getElementById('search-input').value = '';
+                document.getElementById('filter-group').value = 'all';
+                document.getElementById('filter-status').value = 'all';
+                document.getElementById('sort-select').value = 'newest';
+                applyFilters();
+            });
+
+            loadHistory();
+        });
     </script>
 }
