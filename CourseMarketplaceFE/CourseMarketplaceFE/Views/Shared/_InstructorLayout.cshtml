@@ -1,5 +1,5 @@
 @{
-    var tokenForLayout = Context.Request.Cookies["AuthToken"] ?? Context.Request.Cookies[".AspNetCore.Identity.Application"];
+    var tokenForLayout = Context.Request.Cookies["AccessToken"] ?? "";
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
 }
