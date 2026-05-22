@@ -200,7 +200,7 @@ async def full_moderation_pipeline(
         )
         
         # If Stage 1 flags, return immediately
-        if stage1_response.ModerationStatus == "FLAGGED":
+        if stage1_response.moderation_status == "FLAGGED":
             logger.warning(f"Course {course_id} FLAGGED in Stage 1")
             return stage1_response
         
@@ -210,11 +210,11 @@ async def full_moderation_pipeline(
         )
         
         # Combine logs from both stages
-        combined_logs = stage1_response.stageLogs + stage2_response.stageLogs
+        combined_logs = stage1_response.stage_logs + stage2_response.stage_logs
         
         # Determine final status and confidence
-        final_status = stage2_response.ModerationStatus
-        if stage1_response.ModerationStatus == "FLAGGED" or stage2_response.ModerationStatus == "FLAGGED":
+        final_status = stage2_response.moderation_status
+        if stage1_response.moderation_status == "FLAGGED" or stage2_response.moderation_status == "FLAGGED":
             final_status = "FLAGGED"
         
         # Final confidence: use flagging step confidence if flagged, else average all steps
@@ -228,13 +228,13 @@ async def full_moderation_pipeline(
             confidences = [log.confidence_score for log in combined_logs if log.result not in ["ERROR", "PENDING_MODEL"]]
             final_confidence = sum(confidences) / len(confidences) if confidences else 1.0
         
-        combined_flagged_content = stage1_response.flaggedFields + stage2_response.flaggedFields
+        combined_flagged_content = stage1_response.flagged_fields + stage2_response.flagged_fields
         
         return CourseModerationResponse(
-            CourseId=course_id,
-            ModerationStatus=final_status,
-            stageLogs=combined_logs,
-            flaggedFields=combined_flagged_content,
+            course_id=course_id,
+            moderation_status=final_status,
+            stage_logs=combined_logs,
+            flagged_fields=combined_flagged_content,
             overall_confidence_score=final_confidence,
             total_latency_ms=stage1_response.total_latency_ms + stage2_response.total_latency_ms,
         )

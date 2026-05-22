@@ -1,14 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Extensions.Logging;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.IRepositories;
+using Microsoft.Extensions.Logging;
 
 namespace CourseMarketplaceBE.Application.Services
 {
@@ -60,24 +60,28 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task SaveCourseHashesAsync(SaveCourseHashesCommand command)
         {
-            var entity = new Domain.Entities.CourseExt {
+            var entity = new Domain.Entities.CourseExt
+            {
                 CourseId = command.CourseId,
-                TitleHash = command.title_hash,
-                DescriptionHash = command.description_hash,
-                WhatYouWillLearnHash = command.what_you_will_learn_hash,
-                RequirementsHash = command.requirements_hash,
-                ThumbnailHash = command.thumbnail_hash
+                TitleHash = command.TitleHash,
+                DescriptionHash = command.DescriptionHash,
+                WhatYouWillLearnHash = command.WhatYouWillLearnHash,
+                RequirementsHash = command.RequirementsHash,
+                ThumbnailHash = command.ThumbnailHash
             };
             var existing = await _courseExtRepository.GetByIdAsync(command.CourseId);
-            if (existing != null) {
+            if (existing != null)
+            {
                 _courseExtRepository.Update(entity);
-            }else {
+            }
+            else
+            {
                 await _courseExtRepository.AddAsync(entity);
             }
             await _courseExtRepository.SaveChangesAsync();
         }
 
-        
+
 
         public async Task<CourseExtDto> GetCourseHashesAsync(int courseId)
         {
@@ -86,11 +90,11 @@ namespace CourseMarketplaceBE.Application.Services
             return new CourseExtDto
             {
                 CourseId = entity.CourseId,
-                title_hash = entity.TitleHash ?? "",
-                description_hash = entity.DescriptionHash ?? "",
-                what_you_will_learn_hash = entity.WhatYouWillLearnHash ?? "",
-                requirements_hash = entity.RequirementsHash ?? "",
-                thumbnail_hash = entity.ThumbnailHash ?? ""
+                TitleHash = entity.TitleHash ?? "",
+                DescriptionHash = entity.DescriptionHash ?? "",
+                WhatYouWillLearnHash = entity.WhatYouWillLearnHash ?? "",
+                RequirementsHash = entity.RequirementsHash ?? "",
+                ThumbnailHash = entity.ThumbnailHash ?? ""
             };
         }
 
@@ -100,11 +104,11 @@ namespace CourseMarketplaceBE.Application.Services
             return entities.Select(entity => new CourseExtDto
             {
                 CourseId = entity.CourseId,
-                title_hash = entity.TitleHash ?? "",
-                description_hash = entity.DescriptionHash ?? "",
-                what_you_will_learn_hash = entity.WhatYouWillLearnHash ?? "",
-                requirements_hash = entity.RequirementsHash ?? "",
-                thumbnail_hash = entity.ThumbnailHash ?? ""
+                TitleHash = entity.TitleHash ?? "",
+                DescriptionHash = entity.DescriptionHash ?? "",
+                WhatYouWillLearnHash = entity.WhatYouWillLearnHash ?? "",
+                RequirementsHash = entity.RequirementsHash ?? "",
+                ThumbnailHash = entity.ThumbnailHash ?? ""
             }).ToList();
         }
     }

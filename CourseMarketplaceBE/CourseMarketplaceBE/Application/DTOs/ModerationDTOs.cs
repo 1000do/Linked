@@ -112,7 +112,7 @@ namespace CourseMarketplaceBE.Application.DTOs
         public List<int> MaterialIds { get; set; } = [];
 
         [JsonPropertyName("similarity_score_threshold")]
-        public float similarityScoreThreshold { get; set; } = 0.8f;
+        public float SimilarityScoreThreshold { get; set; } = 0.8f;
     }
 
     /// <summary>
@@ -124,10 +124,31 @@ namespace CourseMarketplaceBE.Application.DTOs
         public int CourseId { get; set; }
 
         [JsonPropertyName("spam_score_threshold")]
-        public float spamScoreThreshold { get; set; } = 0.7f;
+        public float SpamScoreThreshold { get; set; } = 0.7f;
 
         [JsonPropertyName("toxic_score_threshold")]
-        public float toxicScoreThreshold { get; set; } = 0.7f;
+        public float ToxicScoreThreshold { get; set; } = 0.7f;
+    }
+
+    /// <summary>
+    /// DTO for AI moderation result
+    /// </summary>
+    public class FullPipelineRequest
+    {
+        [JsonPropertyName("course_id")]
+        public int CourseId { get; set; }
+
+        [JsonPropertyName("material_ids")]
+        public List<int> MaterialIds { get; set; } = [];
+
+        [JsonPropertyName("similarity_score_threshold")]
+        public float SimilarityScoreThreshold { get; set; } = 0.8f;
+
+        [JsonPropertyName("spam_score_threshold")]
+        public float SpamScoreThreshold { get; set; } = 0.7f;
+
+        [JsonPropertyName("toxic_score_threshold")]
+        public float ToxicScoreThreshold { get; set; } = 0.7f;
     }
 
     /// <summary>
@@ -136,11 +157,11 @@ namespace CourseMarketplaceBE.Application.DTOs
     public class SaveCourseHashesCommand
     {
         public int CourseId { get; set; }
-        public string? title_hash { get; set; }
-        public string? description_hash { get; set; }
-        public string? what_you_will_learn_hash { get; set; }
-        public string? requirements_hash { get; set; }
-        public string? thumbnail_hash { get; set; }
+        public string? TitleHash { get; set; }
+        public string? DescriptionHash { get; set; }
+        public string? WhatYouWillLearnHash { get; set; }
+        public string? RequirementsHash { get; set; }
+        public string? ThumbnailHash { get; set; }
     }
 
     /// <summary>
@@ -152,18 +173,22 @@ namespace CourseMarketplaceBE.Application.DTOs
         public int InstructorId { get; set; }
     }
 
-    /// <summary>
-    /// DTO for saving course AI usage log
-    /// </summary>
-    public class SaveCourseAiUsageLogCommand
+
+
+    public class CourseModerationResult
     {
-        public int? integration_id { get; set; }
-        public string? interaction_type { get; set; }
-        public string? input_json { get; set; }
-        public string? output_json { get; set; }
-        public float latency_ms { get; set; }
-        public float token_usage { get; set; }
-        public string? error_message { get; set; }
+        [JsonPropertyName("course_id")]
+        public int CourseId { get; set; }
+        [JsonPropertyName("moderation_status")]
+        public string ModerationStatus { get; set; } = Domain.Constants.ModerationStatus.Pending.ToValue(); // APPROVED, FLAGGED, MANUAL_AUDIT, PENDING
+        [JsonPropertyName("flagged_fields")]
+        public List<string> FlaggedFields { get; set; } = [];
+        [JsonPropertyName("overall_confidence_score")]
+        public float OverallConfidenceScore { get; set; } = 0f;
+        [JsonPropertyName("total_latency_ms")]
+        public float TotalLatencyMs { get; set; } = 0f;
+        [JsonPropertyName("stage_logs")]
+        public List<StageLog> StageLogs { get; set; } = [];
     }
 
     /// <summary>
@@ -171,28 +196,54 @@ namespace CourseMarketplaceBE.Application.DTOs
     /// </summary>
     public class StageLog
     {
-        public int stage { get; set; } // 1, 2, 3, etc.
-        public int step { get; set; } // Step within stage
-        public DateTime timestamp { get; set; }
-        public string? result { get; set; } // NO_MATCH, MATCH_FOUND, FLAGGED, APPROVED, etc.
-        public string? reason { get; set; }
-        public List<string> flaggedFields { get; set; } = [];
-        public Dictionary<string, object>? details { get; set; }
-        public float latency_ms { get; set; }
-        public float confidence_score { get; set; } // 0-1
-        public int model_id { get; set; }
+        [JsonPropertyName("stage")]
+        public int Stage { get; set; } // 1, 2, 3, etc.
+        [JsonPropertyName("step")]
+        public int Step { get; set; } // Step within stage
+        [JsonPropertyName("timestamp")]
+        public DateTime Timestamp { get; set; }
+        [JsonPropertyName("result")]
+        public string? Result { get; set; } // NO_MATCH, MATCH_FOUND, FLAGGED, APPROVED, etc.
+        [JsonPropertyName("reason")]
+        public string? Reason { get; set; }
+        [JsonPropertyName("flagged_fields")]
+        public List<string> FlaggedFields { get; set; } = [];
+        [JsonPropertyName("details")]
+        public Dictionary<string, object>? Details { get; set; }
+        [JsonPropertyName("latency_ms")]
+        public float LatencyMs { get; set; }
+        [JsonPropertyName("confidence_score")]
+        public float ConfidenceScore { get; set; } // 0-1
+        [JsonPropertyName("model_id")]
+        public int ModelId { get; set; }
     }
+
+    /// <summary>
+    /// DTO for saving course AI usage log
+    /// </summary>
+    public class SaveCourseAiUsageLogCommand
+    {
+        public int? IntegrationId { get; set; }
+        public string? InteractionType { get; set; }
+        public string? InputJson { get; set; }
+        public string? OutputJson { get; set; }
+        public float LatencyMs { get; set; }
+        public float TokenUsage { get; set; }
+        public string? ErrorMessage { get; set; }
+    }
+
+
 
     public class AiModelResponse
     {
-        public int model_id { get; set; }
-        public string model_name { get; set; } = null!;
-        public string? model_type { get; set; }
-        public string? model_provider { get; set; }
-        public string? model_version { get; set; }
-        public string? model_status { get; set; }
-        public string? description { get; set; }
-        public string? model_path { get; set; }
+        public int ModelId { get; set; }
+        public string ModelName { get; set; } = null!;
+        public string? ModelType { get; set; }
+        public string? ModelProvider { get; set; }
+        public string? ModelVersion { get; set; }
+        public string? ModelStatus { get; set; }
+        public string? Description { get; set; }
+        public string? ModelPath { get; set; }
     }
 
     public class LogCourseAiModerationCommand
@@ -200,11 +251,11 @@ namespace CourseMarketplaceBE.Application.DTOs
         public SemanticDuplicationRequest SemanticDuplicationRequest { get; set; } = null!;
         public CourseHarmfulRequest CourseHarmfulRequest { get; set; } = null!;
         public CourseModerationResult CourseModerationResult { get; set; } = null!;
-        public string InteractionType { get; set; } = "moderation";
+        public string InteractionType { get; set; } = AIInteractionType.Moderation.ToValue();
         public string? ErrorMessage { get; set; }
     }
 
-    
+
     public class CourseAiUsageLogInput
     {
         [JsonPropertyName("course_id")]
@@ -212,14 +263,15 @@ namespace CourseMarketplaceBE.Application.DTOs
         [JsonPropertyName("material_ids")]
         public List<int> MaterialIds { get; set; } = [];
         [JsonPropertyName("similarity_score_threshold")]
-        public float SimilarityScoreThreshold { get; set; } 
+        public float SimilarityScoreThreshold { get; set; }
         [JsonPropertyName("spam_score_threshold")]
-        public float SpamScoreThreshold { get; set; } 
+        public float SpamScoreThreshold { get; set; }
         [JsonPropertyName("toxic_score_threshold")]
-        public float ToxicScoreThreshold { get; set; } 
+        public float ToxicScoreThreshold { get; set; }
     }
 
-    public class CourseAiUsageLogOutput{
+    public class CourseAiUsageLogOutput
+    {
         [JsonPropertyName("stage")]
         public int Stage { get; set; }
         [JsonPropertyName("step")]
@@ -233,33 +285,13 @@ namespace CourseMarketplaceBE.Application.DTOs
         [JsonPropertyName("flagged_fields")]
         public List<string>? FlaggedFields { get; set; } = [];
         [JsonPropertyName("details")]
-        public Dictionary<string,object>? Details { get; set; } = [];
+        public Dictionary<string, object>? Details { get; set; } = [];
         [JsonPropertyName("confidence_score")]
-        public float ConfidenceScore { get; set; } 
-        
+        public float ConfidenceScore { get; set; }
+
     }
 
-    /// <summary>
-    /// DTO for AI moderation result
-    /// </summary>
-    public class FullPipelineRequest
-    {
-        public int course_id { get; set; }
-        public List<int> material_ids { get; set; } = [];
-        public float similarity_score_threshold { get; set; }
-        public float spam_score_threshold { get; set; }
-        public float toxic_score_threshold { get; set; }
-    }
 
-    public class CourseModerationResult
-    {
-        public int CourseId { get; set; }
-        public string ModerationStatus { get; set; } = null!; // APPROVED, FLAGGED, MANUAL_AUDIT, PENDING
-        public List<string> flaggedFields { get; set; } = [];
-        public float overall_confidence_score { get; set; } // 0-1
-        public float total_latency_ms { get; set; }
-        public List<StageLog> stageLogs { get; set; } = [];
-    }
 
     /// <summary>
     /// DTO for course hashes (used internally)
@@ -267,11 +299,11 @@ namespace CourseMarketplaceBE.Application.DTOs
     public class CourseExtDto
     {
         public int CourseId { get; set; } = 0;
-        public string title_hash { get; set; } = string.Empty;
-        public string description_hash { get; set; } = string.Empty;
-        public string what_you_will_learn_hash { get; set; } = string.Empty;
-        public string requirements_hash { get; set; } = string.Empty;
-        public string thumbnail_hash { get; set; } = string.Empty;
+        public string TitleHash { get; set; } = string.Empty;
+        public string DescriptionHash { get; set; } = string.Empty;
+        public string WhatYouWillLearnHash { get; set; } = string.Empty;
+        public string RequirementsHash { get; set; } = string.Empty;
+        public string ThumbnailHash { get; set; } = string.Empty;
     }
 
     public class CourseAIIntegrationResult
