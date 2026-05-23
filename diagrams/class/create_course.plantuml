@@ -1,0 +1,265 @@
+@startuml CreateCourse_ClassDiagram
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class InstructorCourseController #FFE6E6 {
+    - _api: ApiClient
+    
+    + Create(): IActionResult
+    + Create(model: CreateCourseViewModel): IActionResult
+    - GetCategoriesAsync(): Task<List<CategoryViewModel>>
+    - LoadStripeStatusAsync(): Task<void>
+    - LoadTransferRateAsync(): Task<void>
+}
+
+class CreateCourseViewModel #E6CCFF {
+    + Title: string <<required>>
+    + CategoryId: int <<required>>
+    + Description: string?
+    + Price: decimal <<required>>
+    + CourseThumbnailUrl: string?
+    + WhatYouWillLearn: string <<required>>
+    + Requirements: string <<required>>
+    + CouponId: int?
+    + AvailableCategories: List<CategoryViewModel>
+}
+
+class CategoryViewModel #E6CCFF {
+    + CategoryId: int
+    + CategoriesName: string
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class CourseController #FFE6E6 {
+    - _courseService: ICourseService
+    - _moderationService: IModerationService
+    
+    + CreateCourse(request: CourseCreateRequest): Task<IActionResult>
+    - GetInstructorId(): int
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class CourseCreateRequest #E6CCFF {
+    + CategoryId: int
+    + Title: string
+    + Description: string?
+    + Price: decimal
+    + CourseThumbnailUrl: string?
+    + WhatYouWillLearn: string?
+    + Requirements: string?
+    + ThumbnailFile: IFormFile?
+}
+
+class CourseResponse #E6CCFF {
+    + CourseId: int
+    + InstructorId: int?
+    + CategoryId: int?
+    + Title: string
+    + Description: string?
+    + Price: decimal
+    + CourseThumbnailUrl: string?
+    + CourseStatus: string
+    + CreatedAt: DateTime?
+    + UpdatedAt: DateTime?
+    + WhatYouWillLearn: string?
+    + Requirements: string?
+    + InstructorName: string?
+    + TotalStudents: int
+    + RatingAverage: decimal
+    + CategoryName: string?
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Course #CCFFE6 {
+    + CourseId: int <<PK>>
+    + InstructorId: int? <<FK>>
+    + CategoryId: int? <<FK>>
+    + CouponId: int? <<FK>>
+    + Title: string
+    + Description: string?
+    + Price: decimal
+    + CourseThumbnailUrl: string?
+    + CreatedAt: DateTime?
+    + UpdatedAt: DateTime?
+    + CourseStatus: string
+    + CourseFlagCount: int?
+    + WhatYouWillLearn: string?
+    + Requirements: string?
+    + ModerationFeedback: string?
+    + LastApprovedAt: DateTime?
+    + IsRemoved: bool
+}
+
+class Category #CCFFE6 {
+    + CategoryId: int <<PK>>
+    + CategoriesName: string
+}
+
+class Instructor #CCFFE6 {
+    + InstructorId: int <<PK>>
+    + ApprovalStatus: string
+    + StripeAccountId: string?
+    + StripeOnboardingStatus: string?
+    + Courses: ICollection<Course>
+}
+
+
+class Coupon #CCFFE6 {
+    + CouponId: int <<PK>>
+    + CouponCode: string
+    + CouponType: string
+    + DiscountValue: decimal
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface ICourseService #FFE6CC {
+    {abstract} + CreateCourseAsync(request: CourseCreateRequest, instructorId: int): Task<CourseResponse>
+    {abstract} + UpdateCourseAsync(courseId: int, request: CourseUpdateRequest, instructorId: int): Task<CourseResponse>
+    {abstract} + UpdateCourseStatusAsync(courseId: int, status: string, instructorId: int): Task<void>
+    {abstract} + GetCourseWithDetailsAsync(courseId: int, instructorId: int): Task<CourseDetailResponse?>
+}
+
+interface IInstructorRepository #FFE6CC {
+    {abstract} + GetByIdAsync(instructorId: int): Task<Instructor?>
+}
+
+interface ICourseRepository #FFE6CC {
+    {abstract} + AddAsync(course: Course): Task<void>
+    {abstract} + SaveChangesAsync(): Task<void>
+    {abstract} + GetByIdAsync(courseId: int): Task<Course?>
+    {abstract} + GetInstructorCoursesAsync(instructorId: int): Task<IEnumerable<Course>>
+    {abstract} + GetCourseStatsAsync(courseIds: IEnumerable<int>): Task<IEnumerable<CourseStats>>
+    {abstract} + Update(course: Course): void
+    {abstract} + GetCategoriesAsync(): Task<IEnumerable<Category>>
+}
+
+interface IFileUploadService #FFE6CC {
+    {abstract} + UploadImageAsync(file: IFormFile): Task<string?>
+    {abstract} + DeleteFileAsync(fileUrl: string): Task<bool>
+}
+
+interface IContentHashService #FFE6CC {
+    {abstract} + ComputeCourseHashAsync(content: string): Task<string>
+    {abstract} + SaveCourseHashesAsync(command: SaveCourseHashesCommand): Task<void>
+}
+
+interface IRedisService #FFE6CC {
+    {abstract} + SetCacheAsync<T>(key: string, value: T, ttl: int): Task<void>
+    {abstract} + RemoveCacheAsync(key: string): Task<void>
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CourseService #CCE5FF {
+    - _courseRepository: ICourseRepository
+    - _instructorRepository: IInstructorRepository
+    - _uploadService: IFileUploadService
+    - _materialRepository: IMaterialRepository
+    - _contentHashService: IContentHashService
+    - _redisService: IRedisService
+    
+    + CreateCourseAsync(request: CourseCreateRequest, instructorId: int): Task<CourseResponse>
+    + UpdateCourseAsync(courseId: int, request: CourseUpdateRequest, instructorId: int): Task<CourseResponse>
+    + UpdateCourseStatusAsync(courseId: int, status: string, instructorId: int): Task<void>
+    + GetCourseWithDetailsAsync(courseId: int, instructorId: int): Task<CourseDetailResponse?>
+    - UpdateCourseHashesAsync(course: Course): Task<void>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CourseRepository #FFFFCC {
+    - _context: ApplicationDbContext
+    
+    + AddAsync(course: Course): Task<void>
+    + SaveChangesAsync(): Task<void>
+    + GetByIdAsync(courseId: int): Task<Course?>
+    + GetInstructorCoursesAsync(instructorId: int): Task<IEnumerable<Course>>
+    + Update(course: Course): void
+    + GetCategoriesAsync(): Task<IEnumerable<Category>>
+    + GetCourseStatsAsync(courseIds: IEnumerable<int>): Task<IEnumerable<CourseStats>>
+}
+' ==================== BACKEND - DbContext ====================
+class ApplicationDbContext #E6F3FF {
+    + Courses: DbSet<Course>
+    + Categories: DbSet<Category>
+    + Instructors: DbSet<Instructor>
+    + Coupons: DbSet<Coupon>
+    + Lessons: DbSet<Lesson>
+    + CartItems: DbSet<CartItem>
+    + Enrollments: DbSet<Enrollment>
+    + Transactions: DbSet<Transaction>
+    + Users: DbSet<User>
+    + CourseReviews: DbSet<CourseReview>
+    + LessonReviews: DbSet<LessonReview>
+    + OrderInfo: DbSet<OrderInfo>
+    + OrderItems: DbSet<OrderItem>
+    + InstructorPayouts: DbSet<InstructorPayout>
+    + LearningMaterials: DbSet<LearningMaterial>
+    + Notifications: DbSet<Notification>
+    + WishlistItems: DbSet<WishlistItem>
+    + SystemConfigs: DbSet<SystemConfig>
+    + AiModels: DbSet<AiModel>
+    + CourseAiIntegrations: DbSet<CourseAiIntegration>
+    + Chats: DbSet<Chat>
+    + Messages: DbSet<Message>
+    + UserReports: DbSet<UserReport>
+    + Managers: DbSet<Manager>
+    + CourseExt: DbSet<CourseExt>
+    + MaterialEmbeddings: DbSet<MaterialEmbedding>
+    + AuditLogs: DbSet<AuditLog>
+    + CourseStats: DbSet<CourseStats>
+    + InstructorStats: DbSet<InstructorStats>
+    ---
+    # OnConfiguring(builder: DbContextOptionsBuilder): void
+    # OnModelCreating(builder: ModelBuilder): void
+}
+
+
+
+' ==================== RELATIONSHIPS ====================
+' === NEUTRAL ASSOCIATION (headless solid arrow) ===
+Course "0..*" -- "1" Coupon
+
+' === COMPOSITION (filled diamond) ===
+Instructor "1" *-- "0..*" Course 
+
+' === AGGREGATION (hollow diamond) ===
+CreateCourseViewModel "1" o-- "0..*" CategoryViewModel
+Category "1" o-- "0..*" Course
+CourseController  -- ICourseService
+CourseService  --  ICourseRepository
+CourseService  --  IInstructorRepository
+CourseService  --  IFileUploadService 
+CourseService  --  IContentHashService
+CourseService  --  IRedisService
+CourseRepository --  ApplicationDbContext
+
+' === INTERFACE REALIZATION ===
+CourseService ..|> ICourseService : implements
+CourseRepository ..|> ICourseRepository : implements
+
+' === DEPENDENCY (dashed arrows) ===
+InstructorCourseController ..> CourseController : calls
+CourseRepository ..> Course : creates
+CourseController ..> CourseCreateRequest : uses
+InstructorCourseController ..> CreateCourseViewModel : uses
+CourseService ..> CourseCreateRequest : uses
+CourseService ..> CourseResponse : creates
+
+@enduml
