@@ -1,0 +1,60 @@
+
+
+participant: 
+	all participant except actors are rectangle (including DB)
+	only need implementations, ignore interfaces
+	if an participant would require its instance object, put ":" before its name
+	otherwise, just write its name
+
+combined fragment:
+	before opt and alt, need to draw a self call with message = purpose of the fragment:
+	
+		
+	alt can be extended to more than 2 blocks (for switch case or if, elif, ..., else)
+
+	loop need condition to continue the loop 
+
+arrow style:
+	arrow style for call,request,redirect: ->
+	arrow style for return,response,throw exception,display message to actor: -->>
+	
+activation bar:
+	use ++ to activate the lifeline
+	use -- deactivate the lifeline
+	the lifeline of a participant should be activated on the first time its got called, requested or redirected
+	the lifeline should be deactivated upon a return statement, an exception throw, a message display to actor
+	subsequent calls, requests, redirects to a deactivated lifeline would re-activate it
+	for self-call activation:
+		if it's a trigger for opt, alt, instantly deactivate it:
+			fe_ctrl->fe_ctrl++: Validate ModelState
+			fe_ctrl--
+			group opt [Invalid ModelState]
+				fe_ctrl-->>view: Return status code 400 
+				view-->>act:Display error message
+			end
+		
+		if it's not the main execution, instantly deactivate it too:
+			sv -> sv++: Call CheckInstructorRights()
+			sv--
+		
+		if it's the main execution that would require we dive into its details (usually a method call):
+			keep it activated until the return statement of the method
+		
+	
+	
+	
+logic:
+	validate form input in client view 
+	validate ModelState in frontend controller whenever there is a view model argument in the method signature and the use case requires user input
+	focus on the main execution flow, if a method would call other methods in the same class or layer, simply draw a self-call 
+	For use case that result in Database changes (insert, update, delelte):
+		- assume that the important SaveChangesAsync calls to repositories would return numberOfRowsAffected to the service that call it, this enables the "numberOfRowsAffected > 0 ???" branching
+		- report your assumptions as well
+	
+	
+
+
+
+
+
+	

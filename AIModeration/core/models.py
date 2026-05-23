@@ -26,7 +26,7 @@ class StageLog(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     result: str = Field(..., description="Result: NO_MATCH, MATCH_FOUND, FLAGGED, APPROVED, etc.")
     reason: str = Field(..., description="Explanation of result")
-    flaggedFields: List[str] = Field(default_factory=list, validation_alias="flagged_content", serialization_alias="flaggedFields")
+    flagged_fields: List[str] = Field(default_factory=list, validation_alias="flagged_content", serialization_alias="flagged_fields")
     details: Dict[str, Any] = Field(default_factory=dict)
     latency_ms: float = Field(0.0)
     confidence_score: float = Field(..., ge=0.0, le=1.0, description="Confidence in this decision")
@@ -45,12 +45,12 @@ class SemanticDuplicationRequest(BaseModel):
     similarity_score_threshold: float
 
 
-class DuplicationCheckResult(BaseModel):
-    """Result of a single duplication check."""
-    is_duplicate: bool
-    matched_ids: List[int] = Field(default_factory=list)
-    similarity_scores: Optional[List[float]] = Field(None)
-    stageLogs: List[StageLog] = Field(default_factory=list)
+# class DuplicationCheckResult(BaseModel):
+#     """Result of a single duplication check."""
+#     is_duplicate: bool
+#     matched_ids: List[int] = Field(default_factory=list)
+#     similarity_scores: Optional[List[float]] = Field(None)
+#     stageLogs: List[StageLog] = Field(default_factory=list)
 
 
 # ============================================================================
@@ -64,11 +64,11 @@ class CourseHarmfulRequest(BaseModel):
     toxic_score_threshold: float
 
 
-class ToxicityCheckResult(BaseModel):
-    """Result of toxicity check."""
-    is_flagged: bool
-    flaggedFields: List[str] = Field(default_factory=list)
-    stageLogs: List[StageLog] = Field(default_factory=list)
+# class ToxicityCheckResult(BaseModel):
+#     """Result of toxicity check."""
+#     is_flagged: bool
+#     flaggedFields: List[str] = Field(default_factory=list)
+#     stageLogs: List[StageLog] = Field(default_factory=list)
 
 
 # ============================================================================
@@ -96,15 +96,18 @@ class EmbeddingGenerationResponse(BaseModel):
 
 class CourseModerationResponse(BaseModel):
     """Unified response from moderation pipeline."""
-    CourseId: int
-    ModerationStatus: str
-    flaggedFields: List[str] = Field(default_factory=list)
+    course_id: int
+    moderation_status: str
+    flagged_fields: List[str] = Field(default_factory=list)
     overall_confidence_score: float
     total_latency_ms: float
-    stageLogs: List[StageLog] = Field(default_factory=list)
+    stage_logs: List[StageLog] = Field(default_factory=list)
 
     class Config:
         populate_by_name = True
+        
+
+
 
 
 class FullModerationPipelineRequest(BaseModel):

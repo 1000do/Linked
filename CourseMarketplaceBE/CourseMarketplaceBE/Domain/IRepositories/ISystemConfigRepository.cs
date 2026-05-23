@@ -9,7 +9,6 @@ namespace CourseMarketplaceBE.Domain.IRepositories
     public interface ISystemConfigRepository
     {
         Task<string?> GetValueAsync(string key);
-        Task<Dictionary<string, object>?> GetConfigByKeyAsync(string key);
         Task<List<Dictionary<string, object>>> GetAllConfigAsync();
         Task SetConfigByKeyAsync(string key, Dictionary<string, object> value);
     }

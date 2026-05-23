@@ -28,28 +28,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
             return config?.ConfigValue;
         }
 
-        public async Task<Dictionary<string, object>?> GetConfigByKeyAsync(string key)
-        {
-            var config = await _context.SystemConfigs
-                .AsNoTracking()
-                .FirstOrDefaultAsync(sc => sc.ConfigKey == key);
-
-            if (config == null) return null;
-
-            try
-            {
-                // Assuming ConfigValue is stored as JSON string
-                if (string.IsNullOrEmpty(config.ConfigValue))
-                    return new Dictionary<string, object>();
-
-                // Try to parse as JSON if available
-                return System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(config.ConfigValue);
-            }
-            catch
-            {
-                return new Dictionary<string, object> { { "value", config.ConfigValue } };
-            }
-        }
+        
 
         public async Task<List<Dictionary<string, object>>> GetAllConfigAsync()
         {
@@ -85,21 +64,21 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
             var config = await _context.SystemConfigs
                 .FirstOrDefaultAsync(sc => sc.ConfigKey == key);
 
-            var jsonValue = System.Text.Json.JsonSerializer.Serialize(value);
+            var jsonString = System.Text.Json.JsonSerializer.Serialize(value);
 
             if (config == null)
             {
                 config = new Domain.Entities.SystemConfig
                 {
                     ConfigKey = key,
-                    ConfigValue = jsonValue,
+                    ConfigValue = jsonString,
                     Description = $"System configuration for {key}"
                 };
                 await _context.SystemConfigs.AddAsync(config);
             }
             else
             {
-                config.ConfigValue = jsonValue;
+                config.ConfigValue = jsonString;
                 _context.SystemConfigs.Update(config);
             }
 
