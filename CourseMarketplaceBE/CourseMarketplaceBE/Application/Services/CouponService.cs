@@ -218,6 +218,9 @@ public class CouponService : ICouponService
         if (course.Instructor == null || course.Instructor.InstructorId != instructorUserId)
             throw new UnauthorizedAccessException("You are not the owner of this course.");
 
+        if (course.Price == 0)
+            throw new InvalidOperationException("Coupons cannot be applied to free courses.");
+
         // 2. Kiểm tra coupon tồn tại
         var coupon = await _repo.GetByIdGlobalAsync(couponId);
         if (coupon == null)

@@ -260,6 +260,11 @@
                                     </label>
                                 </div>
 
+                                <div id="coupon-free-warning" class="hidden text-xs text-amber-600 font-semibold px-1 mt-1 flex items-center gap-1.5 bg-amber-50 border border-amber-200/50 rounded-xl p-3 animate-in fade-in slide-in-from-top-1 duration-300">
+                                    <span class="material-symbols-outlined text-amber-600 text-[16px]">warning</span>
+                                    <span>Vouchers/Coupons cannot be applied to free courses.</span>
+                                </div>
+
                                 <!-- Coupon Action Area -->
                                 <div id="voucher-action-container" class="@(ViewBag.CouponCode != null ? "" : "hidden") space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                                     <!-- Select Button if not selected -->
@@ -313,6 +318,55 @@
                             const couponToggle = document.getElementById('coupon-toggle');
                             const voucherActionContainer = document.getElementById('voucher-action-container');
                             const currentCouponCode = '@ViewBag.CouponCode';
+
+                            window.syncCouponStateWithPrice = async function(price) {
+                                const val = parseFloat(price) || 0;
+                                const toggle = document.getElementById('coupon-toggle');
+                                const container = document.getElementById('voucher-action-container');
+                                const warning = document.getElementById('coupon-free-warning');
+                                const labelParent = toggle ? toggle.closest('.flex.items-center.justify-between.p-4') : null;
+
+                                if (val === 0) {
+                                    if (toggle) {
+                                        if (toggle.checked) {
+                                            toggle.checked = false;
+                                            // Silently remove the applied coupon
+                                            try {
+                                                const res = await fetch(`/Coupon/PlatformRemove?courseId=@courseId`, { method: 'DELETE' });
+                                                const result = await res.json();
+                                                if (result.success) {
+                                                    // Reset active coupon variables
+                                                    const displayCode = document.getElementById('display-coupon-code');
+                                                    if (displayCode) displayCode.textContent = '';
+                                                    const noSelectedState = document.getElementById('no-voucher-selected-state');
+                                                    if (noSelectedState) noSelectedState.classList.remove('hidden');
+                                                    const selectedState = document.getElementById('voucher-selected-state');
+                                                    if (selectedState) selectedState.classList.add('hidden');
+                                                }
+                                            } catch (e) {
+                                                console.error("Error removing platform coupon dynamically:", e);
+                                            }
+                                        }
+                                        toggle.disabled = true;
+                                        if (labelParent) {
+                                            labelParent.classList.add('opacity-60', 'pointer-events-none');
+                                        }
+                                    }
+                                    if (container) container.classList.add('hidden');
+                                    if (warning) warning.classList.remove('hidden');
+                                } else {
+                                    if (toggle) {
+                                        toggle.disabled = false;
+                                        if (labelParent) {
+                                            labelParent.classList.remove('opacity-60', 'pointer-events-none');
+                                        }
+                                    }
+                                    if (warning) warning.classList.add('hidden');
+                                    if (toggle && toggle.checked) {
+                                        if (container) container.classList.remove('hidden');
+                                    }
+                                }
+                            };
 
                             window.openCouponModal = function() {
                                 const modal = document.getElementById('coupon-modal');
@@ -457,6 +511,7 @@
 
                             // Load platform coupons on initialize
                             loadPlatformCoupons();
+                            syncCouponStateWithPrice(@(ViewBag.Price ?? 0));
                         </script>
 
 
@@ -2211,6 +2266,9 @@
             if (!input.value) {
                 input.value = "0.00";
                 updatePayout(0);
+                if (typeof window.syncCouponStateWithPrice === 'function') {
+                    window.syncCouponStateWithPrice(0);
+                }
                 return;
             }
             // Parse float and format to 2 decimal places
@@ -2218,6 +2276,9 @@
             if (isNaN(val) || val < 0) val = 0;
             input.value = val.toFixed(2);
             updatePayout(val);
+            if (typeof window.syncCouponStateWithPrice === 'function') {
+                window.syncCouponStateWithPrice(val);
+            }
         };
 
         const transferRateMultiplier = @((((decimal)(ViewBag.TransferRate ?? 70.0m)) / 100m).ToString(System.Globalization.CultureInfo.InvariantCulture));
@@ -2235,6 +2296,12 @@
             if (input) {
                 input.value = parseFloat(price).toFixed(2);
                 updatePayout(price);
+                if (typeof window.syncCouponStateWithPrice === 'function') {
+                    window.syncCouponStateWithPrice(price);
+                }
+                // Dispatch input event so that debounced auto-save triggers!
+                input.dispatchEvent(new Event('input'));
+                
                 // Optional: visual feedback that price changed
                 input.classList.add('ring-2', 'ring-primary', 'bg-primary/5');
                 setTimeout(() => {

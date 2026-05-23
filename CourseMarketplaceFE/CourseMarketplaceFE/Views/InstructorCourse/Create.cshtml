@@ -243,6 +243,11 @@
                 </label>
             </div>
 
+            <div id="coupon-free-warning" class="hidden text-xs text-amber-600 font-semibold px-1 mt-1 flex items-center gap-1.5 bg-amber-50 border border-amber-200/50 rounded-xl p-3 mb-4 animate-in fade-in slide-in-from-top-1 duration-300">
+                <span class="material-symbols-outlined text-amber-600 text-[16px]">warning</span>
+                <span>Vouchers/Coupons cannot be applied to free courses.</span>
+            </div>
+
             <input type="hidden" asp-for="CouponId" id="CouponIdInput" />
             
             <!-- Coupon Action Area (hidden by default) -->
@@ -535,12 +540,57 @@
             }
         }
 
+        window.syncCouponStateWithPrice = function(price) {
+            const val = parseFloat(price) || 0;
+            const toggle = document.getElementById('coupon-toggle');
+            const container = document.getElementById('voucher-action-container');
+            const warning = document.getElementById('coupon-free-warning');
+            const couponInput = document.getElementById('CouponIdInput');
+            const labelParent = toggle ? toggle.closest('.flex.items-center.justify-between.p-4') : null;
+
+            if (val === 0) {
+                if (toggle) {
+                    if (toggle.checked) {
+                        toggle.checked = false;
+                        // In Course Creation, simply clear local selected state inputs without calling backend delete
+                        if (couponInput) couponInput.value = '';
+                        const displayCode = document.getElementById('display-coupon-code');
+                        if (displayCode) displayCode.textContent = '';
+                        const noSelectedState = document.getElementById('no-voucher-selected-state');
+                        if (noSelectedState) noSelectedState.classList.remove('hidden');
+                        const selectedState = document.getElementById('voucher-selected-state');
+                        if (selectedState) selectedState.classList.add('hidden');
+                    }
+                    toggle.disabled = true;
+                    if (labelParent) {
+                        labelParent.classList.add('opacity-60', 'pointer-events-none');
+                    }
+                }
+                if (container) container.classList.add('hidden');
+                if (warning) warning.classList.remove('hidden');
+            } else {
+                if (toggle) {
+                    toggle.disabled = false;
+                    if (labelParent) {
+                        labelParent.classList.remove('opacity-60', 'pointer-events-none');
+                    }
+                }
+                if (warning) warning.classList.add('hidden');
+                if (toggle && toggle.checked) {
+                    if (container) container.classList.remove('hidden');
+                }
+            }
+        };
+
         window.formatPrice = function(input) {
             if (!input || !input.value) { if(input) input.value = "0.00"; return; }
             let val = parseFloat(input.value);
             if (isNaN(val) || val < 0) val = 0;
             input.value = val.toFixed(2);
             updatePayout(val);
+            if (typeof window.syncCouponStateWithPrice === 'function') {
+                window.syncCouponStateWithPrice(val);
+            }
         };
 
         window.setPrice = function(price) {
@@ -550,13 +600,26 @@
                 setTimeout(() => priceInput.classList.remove('ring-2', 'ring-primary', 'bg-primary/5'), 500);
                 updatePayout(priceInput.value);
                 updateProgressBar();
+                if (typeof window.syncCouponStateWithPrice === 'function') {
+                    window.syncCouponStateWithPrice(priceInput.value);
+                }
             }
         };
 
         if(priceInput) {
-            priceInput.addEventListener('input', e => updatePayout(e.target.value));
+            priceInput.addEventListener('input', e => {
+                updatePayout(e.target.value);
+                if (typeof window.syncCouponStateWithPrice === 'function') {
+                    window.syncCouponStateWithPrice(e.target.value);
+                }
+            });
             // Format on init if there's a value
             if (priceInput.value) formatPrice(priceInput);
+        } else {
+            // If Stripe is not active, Price input is hidden or set to 0. Init with 0.
+            if (typeof window.syncCouponStateWithPrice === 'function') {
+                window.syncCouponStateWithPrice(0);
+            }
         }
         updateProgressBar();
 
