@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Net.Http;
+using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
-using CourseMarketplaceBE.Domain.Constants;
 using Microsoft.Extensions.Logging;
 
 namespace CourseMarketplaceBE.Application.Services;
@@ -27,11 +27,11 @@ public class CourseService : ICourseService
     private readonly HttpClient _httpClient;
 
     public CourseService(
-        ICourseRepository courseRepository, 
-        IInstructorRepository instructorRepository, 
-        IFileUploadService uploadService, 
-        IMaterialRepository materialRepository, 
-        ILessonRepository lessonRepository, 
+        ICourseRepository courseRepository,
+        IInstructorRepository instructorRepository,
+        IFileUploadService uploadService,
+        IMaterialRepository materialRepository,
+        ILessonRepository lessonRepository,
         IRedisService redisService,
         IContentHashService contentHashService,
         ICourseAiIntegrationRepository aiIntegrationRepository,
@@ -267,8 +267,8 @@ public class CourseService : ICourseService
             if (course == null) return null;
 
             var courseStats = await _courseRepository.GetCourseStatsAsync(courseId);
-            var instructorStats = course.InstructorId.HasValue 
-                ? await _instructorRepository.GetStatsAsync(course.InstructorId.Value) 
+            var instructorStats = course.InstructorId.HasValue
+                ? await _instructorRepository.GetStatsAsync(course.InstructorId.Value)
                 : null;
 
             response = new CourseDetailResponse
@@ -294,7 +294,7 @@ public class CourseService : ICourseService
                 InstructorBio = course.Instructor?.InstructorNavigation?.Bio,
                 InstructorProfessionalTitle = course.Instructor?.ProfessionalTitle,
                 InstructorCoursesCount = course.Instructor?.Courses?.Count ?? 0,
-                InstructorReviewCount = 0, 
+                InstructorReviewCount = 0,
                 InstructorStudentsCount = instructorStats?.TotalStudentsCount ?? 0,
                 TotalStudents = courseStats?.TotalStudents ?? 0,
                 TotalReviews = courseStats?.TotalReviews ?? 0,
@@ -373,16 +373,16 @@ public class CourseService : ICourseService
         }
 
 
-        // ★ Kiểm tra trùng lặp tiêu đề (Case-insensitive)
-        var titleLower = request.Title.Trim().ToLower();
-        var existingCourse = await _courseRepository.GetAllPublishedCoursesAsync(); // Hoặc dùng một phương thức chuyên biệt
-        // Thực tế nên dùng một phương thức CheckTitleExists trong Repository để tối ưu hơn.
-        // Tôi sẽ tạm thời kiểm tra thông qua GetInstructorCoursesAsync để tránh load quá nhiều dữ liệu nếu chưa có hàm chuyên biệt.
-        var allCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
-        if (allCourses.Any(c => c.Title.Trim().ToLower() == titleLower && !c.IsRemoved))
-        {
-            throw new BadRequestException("You already have a course with this title. Please choose a different title.");
-        }
+        // // ★ Kiểm tra trùng lặp tiêu đề (Case-insensitive)
+        // var titleLower = request.Title.Trim().ToLower();
+        // var existingCourse = await _courseRepository.GetAllPublishedCoursesAsync(); // Hoặc dùng một phương thức chuyên biệt
+        // // Thực tế nên dùng một phương thức CheckTitleExists trong Repository để tối ưu hơn.
+        // // Tôi sẽ tạm thời kiểm tra thông qua GetInstructorCoursesAsync để tránh load quá nhiều dữ liệu nếu chưa có hàm chuyên biệt.
+        // var allCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
+        // if (allCourses.Any(c => c.Title.Trim().ToLower() == titleLower && !c.IsRemoved))
+        // {
+        //     throw new BadRequestException("You already have a course with this title. Please choose a different title.");
+        // }
 
         // ★ Nếu chưa hoàn tất Stripe → ép giá = 0 (chỉ tạo khóa free)
         var coursePrice = isStripeActive ? request.Price : 0m;
@@ -460,16 +460,16 @@ public class CourseService : ICourseService
         if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot modify course while it is pending review.");
 
-        // ★ Kiểm tra trùng lặp tiêu đề khi cập nhật (nếu tiêu đề thay đổi)
-        if (!string.Equals(course.Title, request.Title, StringComparison.OrdinalIgnoreCase))
-        {
-            var titleLower = request.Title.Trim().ToLower();
-            var instructorCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
-            if (instructorCourses.Any(c => c.Title.Trim().ToLower() == titleLower && c.CourseId != courseId && !c.IsRemoved))
-            {
-                throw new BadRequestException("You already have another course with this title.");
-            }
-        }
+        // // ★ Kiểm tra trùng lặp tiêu đề khi cập nhật (nếu tiêu đề thay đổi)
+        // if (!string.Equals(course.Title, request.Title, StringComparison.OrdinalIgnoreCase))
+        // {
+        //     var titleLower = request.Title.Trim().ToLower();
+        //     var instructorCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
+        //     if (instructorCourses.Any(c => c.Title.Trim().ToLower() == titleLower && c.CourseId != courseId && !c.IsRemoved))
+        //     {
+        //         throw new BadRequestException("You already have another course with this title.");
+        //     }
+        // }
 
         string? thumbnailUrl = request.CourseThumbnailUrl ?? course.CourseThumbnailUrl;
 
@@ -550,11 +550,11 @@ public class CourseService : ICourseService
         var command = new SaveCourseHashesCommand
         {
             CourseId = course.CourseId,
-            title_hash = await _contentHashService.ComputeCourseHashAsync(course.Title),
-            description_hash = await _contentHashService.ComputeCourseHashAsync(course.Description ?? ""),
-            what_you_will_learn_hash = await _contentHashService.ComputeCourseHashAsync(course.WhatYouWillLearn ?? ""),
-            requirements_hash = await _contentHashService.ComputeCourseHashAsync(course.Requirements ?? ""),
-            thumbnail_hash = thumbHash
+            TitleHash = await _contentHashService.ComputeCourseHashAsync(course.Title),
+            DescriptionHash = await _contentHashService.ComputeCourseHashAsync(course.Description ?? ""),
+            WhatYouWillLearnHash = await _contentHashService.ComputeCourseHashAsync(course.WhatYouWillLearn ?? ""),
+            RequirementsHash = await _contentHashService.ComputeCourseHashAsync(course.Requirements ?? ""),
+            ThumbnailHash = thumbHash
         };
 
         await _contentHashService.SaveCourseHashesAsync(command);
@@ -621,7 +621,7 @@ public class CourseService : ICourseService
             {
                 throw new BadRequestException($"The total video duration of the course is currently {Math.Round(totalMinutes, 1)} minutes. Instructors who have not linked a Stripe account are only allowed a maximum of 30 minutes.");
             }
-            
+
             bool isFreeCourse = course.Price == 0;
             if (isFreeCourse && totalMinutes > 60)
             {
@@ -631,7 +631,7 @@ public class CourseService : ICourseService
             // Clear moderation feedback when resubmitting
 
             course.ModerationFeedback = null;
-            
+
             var materials = await _materialRepository.GetByCourseIdAsync(courseId);
             if (materials != null)
             {
@@ -732,8 +732,12 @@ public class CourseService : ICourseService
             CourseId = command.CourseId,
             ModelId = command.ModelId,
             IsEnabled = command.IsEnabled,
-            ConfigJson = command.ConfigJson 
-            ?? new Dictionary<string, float> { { "similarity", 0.8f }, { "spam", 0.7f }, { "toxic", 0.7f } },
+            ConfigJson = command.ConfigJson
+            ?? new Dictionary<string, float> {
+                { AiModelConst.Similarity, AiModelConst.DefaultSimilarityScoreThreshold },
+                { AiModelConst.Spam, AiModelConst.DefaultSpamScoreThreshold },
+                { AiModelConst.Toxic, AiModelConst.DefaultToxicScoreThreshold }
+             },
             Role = command.Role
         };
     }

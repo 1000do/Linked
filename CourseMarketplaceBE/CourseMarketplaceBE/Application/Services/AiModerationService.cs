@@ -36,7 +36,7 @@ namespace CourseMarketplaceBE.Application.Services
 
 
         private const int MaxRetries = 3;
-        private const string BaseUrl = "http://ai-moderation:8000";
+        private const string BaseUrl = UrlConst.AIModerationBaseURL;
 
 
         public AiModerationService(
@@ -99,9 +99,9 @@ namespace CourseMarketplaceBE.Application.Services
             };
 
 
-            var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/moderation/full-pipeline", request);
+            var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/{UrlConst.FullPipelineURL}", request);
             response.EnsureSuccessStatusCode();
-            return await response.Content.ReadFromJsonAsync<CourseModerationResult>() ?? new CourseModerationResult();
+            return await response.Content.ReadFromJsonAsync<CourseModerationResult>() ?? new CourseModerationResult { CourseId = semanticReq.CourseId, ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
         }
 
 
@@ -114,11 +114,9 @@ namespace CourseMarketplaceBE.Application.Services
                 return new Dictionary<string, float>
                 {
 
-                    { "similarity", Domain.Constants.SystemConfigKeys.DefaultSimilarityScoreThreshold },
-
-                    { "spam", Domain.Constants.SystemConfigKeys.DefaultSpamScoreThreshold },
-
-                    { "toxic", Domain.Constants.SystemConfigKeys.DefaultToxicScoreThreshold }
+                    { AiModelConst.Similarity, AiModelConst.DefaultSimilarityScoreThreshold },
+                    { AiModelConst.Spam, AiModelConst.DefaultSpamScoreThreshold },
+                    { AiModelConst.Toxic, AiModelConst.DefaultToxicScoreThreshold }
 
                 };
             }
@@ -146,13 +144,13 @@ namespace CourseMarketplaceBE.Application.Services
             var dbModels = await _aiModelRepository.GetModelsByTypeAsync(modelType);
             var result = dbModels.Select(m => new AiModelResponse
             {
-                model_id = m.ModelId,
-                model_name = m.ModelName,
-                model_type = m.ModelType,
-                model_provider = m.ModelProvider,
-                model_version = m.ModelVersion,
-                model_status = m.ModelStatus,
-                description = m.Description
+                ModelId = m.ModelId,
+                ModelName = m.ModelName,
+                ModelType = m.ModelType,
+                ModelProvider = m.ModelProvider,
+                ModelVersion = m.ModelVersion,
+                ModelStatus = m.ModelStatus,
+                Description = m.Description
             }).ToList();
 
             await _redisService.SetCacheAsync(cacheKey, result, CacheTtl.Medium.GetTtl());
@@ -163,13 +161,13 @@ namespace CourseMarketplaceBE.Application.Services
         {
             var log = new CourseAiUsageLog
             {
-                IntegrationId = command.integration_id,
-                InteractionType = command.interaction_type,
-                InputJson = command.input_json,
-                OutputJson = command.output_json,
-                LatencyMs = command.latency_ms,
-                TokenUsage = command.token_usage,
-                ErrorMessage = command.error_message,
+                IntegrationId = command.IntegrationId,
+                InteractionType = command.InteractionType,
+                InputJson = command.InputJson,
+                OutputJson = command.OutputJson,
+                LatencyMs = command.LatencyMs,
+                TokenUsage = command.TokenUsage,
+                ErrorMessage = command.ErrorMessage,
                 LogCreatedAt = DateTime.UtcNow
             };
 
@@ -181,7 +179,7 @@ namespace CourseMarketplaceBE.Application.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"{BaseUrl}/health");
+                var response = await _httpClient.GetAsync($"{BaseUrl}/{UrlConst.HealthCheckURL}");
                 return response.IsSuccessStatusCode;
             }
             catch

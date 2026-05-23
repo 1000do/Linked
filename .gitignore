@@ -18,11 +18,17 @@ secrets.json
 .env
 *.env
 **/.env.*
+.env.example
 
 # Node / Frontend
 node_modules/
+
+# Misc
 private/
+
+# python
 ai_models/
-.env.example
+**/*.pyc
+**/__pycache__
 
 

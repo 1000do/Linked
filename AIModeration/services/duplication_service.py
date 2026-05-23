@@ -293,10 +293,10 @@ class DuplicationService(BaseService):
                     )
                     
                     return CourseModerationResponse(
-                        CourseId=course_id,
-                        ModerationStatus=ModerationStatus.FLAGGED.value,
-                        stageLogs=all_stage_logs,
-                        flaggedFields=[f"duplicate_of_course_{cid}" for cid in matched_courses],
+                        course_id=course_id,
+                        moderation_status=ModerationStatus.FLAGGED.value,
+                        stage_logs=all_stage_logs,
+                        flagged_fields=[f"duplicate_of_course_{cid}" for cid in matched_courses],
                         overall_confidence_score=step1_logs[0]["confidence_score"] if step1_logs else 0.95,
                         total_latency_ms=total_latency,
                     )
@@ -335,10 +335,10 @@ class DuplicationService(BaseService):
                     confidence = max(similarity_scores) if similarity_scores else 0.85
                     
                     return CourseModerationResponse(
-                        CourseId=course_id,
-                        ModerationStatus=ModerationStatus.FLAGGED.value,
-                        stageLogs=all_stage_logs,
-                        flaggedFields=[f"duplicate_of_material_{mid}" for mid in matched_materials],
+                        course_id=course_id,
+                        moderation_status=ModerationStatus.FLAGGED.value,
+                        stage_logs=all_stage_logs,
+                        flagged_fields=[f"duplicate_of_material_{mid}" for mid in matched_materials],
                         overall_confidence_score=confidence,
                         total_latency_ms=total_latency,
                     )
@@ -365,10 +365,10 @@ class DuplicationService(BaseService):
             avg_confidence = sum(confidences) / len(confidences) if confidences else 1.0
             
             return CourseModerationResponse(
-                CourseId=course_id,
-                ModerationStatus=ModerationStatus.APPROVED.value,
-                stageLogs=all_stage_logs,
-                flaggedFields=[],
+                course_id=course_id,
+                moderation_status=ModerationStatus.APPROVED.value,
+                stage_logs=all_stage_logs,
+                flagged_fields=[],
                 overall_confidence_score=avg_confidence,
                 total_latency_ms=total_latency,
             )
@@ -378,10 +378,10 @@ class DuplicationService(BaseService):
             total_latency = (time.time() - stage_start) * 1000
             
             return CourseModerationResponse(
-                CourseId=course_id,
-                ModerationStatus=ModerationStatus.MANUAL_AUDIT.value,
-                stageLogs=all_stage_logs,
-                flaggedFields=[],
+                course_id=course_id,
+                moderation_status=ModerationStatus.MANUAL_AUDIT.value,
+                stage_logs=all_stage_logs,
+                flagged_fields=[],
                 overall_confidence_score=0.0,
                 total_latency_ms=total_latency,
             )

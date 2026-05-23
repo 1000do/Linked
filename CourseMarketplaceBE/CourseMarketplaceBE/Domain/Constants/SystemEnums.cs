@@ -24,7 +24,7 @@ namespace CourseMarketplaceBE.Domain.Constants
                 CacheKeys.AiModelType => $"ai_models:type:{param1}",
                 CacheKeys.MaterialEmbedding => $"material_embedding:{param1}",
                 CacheKeys.MaterialEmbeddingInitialized => "material_embedding:initialized",
-                _ => throw new ArgumentOutOfRangeException(nameof(key), key, null)
+                _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Invalid redis cache key")
             };
         }
     }
@@ -33,6 +33,8 @@ namespace CourseMarketplaceBE.Domain.Constants
     {
         Short,  // 1 hour
         Medium, // 3 hours
+        Long, // 12 hours
+        VeryLong, // 24 hours
     }
 
     public static class CacheTtlExtensions
@@ -43,6 +45,8 @@ namespace CourseMarketplaceBE.Domain.Constants
             {
                 CacheTtl.Short => TimeSpan.FromHours(1),
                 CacheTtl.Medium => TimeSpan.FromHours(3),
+                CacheTtl.Long => TimeSpan.FromHours(12),
+                CacheTtl.VeryLong => TimeSpan.FromHours(24),
                 _ => TimeSpan.FromHours(1)
             };
         }
@@ -70,7 +74,7 @@ namespace CourseMarketplaceBE.Domain.Constants
                 CourseStatus.Rejected => "rejected",
                 CourseStatus.Flagged => "flagged",
                 CourseStatus.Archived => "archived",
-                _ => throw new ArgumentOutOfRangeException(nameof(status), status, null)
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid course status")
             };
         }
     }
@@ -95,7 +99,7 @@ namespace CourseMarketplaceBE.Domain.Constants
                 ModerationStatus.Flagged => "FLAGGED",
                 ModerationStatus.ManualAudit => "MANUAL_AUDIT",
                 ModerationStatus.Pending => "PENDING",
-                _ => throw new ArgumentOutOfRangeException(nameof(status), status, null)
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid moderation status")
             };
         }
     }
@@ -120,7 +124,22 @@ namespace CourseMarketplaceBE.Domain.Constants
                 StageLogResult.Flagged => "FLAGGED",
                 StageLogResult.Approved => "APPROVED",
                 StageLogResult.ManualAudit => "MANUAL_AUDIT",
-                _ => throw new ArgumentOutOfRangeException(nameof(result), result, null)
+                _ => throw new ArgumentOutOfRangeException(nameof(result), result, "Invalid AI moderation stage result")
+            };
+        }
+    }
+
+    public enum AIInteractionType{
+        Moderation,
+        Generation
+    }
+
+    public static class AIInteractionTypeExtensions{
+        public static string ToValue(this AIInteractionType interactionType){
+            return interactionType switch{
+                AIInteractionType.Moderation => "moderation",
+                AIInteractionType.Generation => "generation",
+                _ => throw new ArgumentOutOfRangeException(nameof(interactionType),interactionType, "Invalid AI interaction type")
             };
         }
     }

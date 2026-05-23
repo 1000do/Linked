@@ -201,7 +201,7 @@ namespace CourseMarketplaceBE.Application.Services
                 {
                     subject = "Permanent Course Discontinuation Notice (3rd Time)";
                     message = $"Your course '{course.Title}' has violated policies for the 3rd time. The platform has decided to permanently discontinue this course. You will not be able to edit the content or accept new students, but existing students can still access their purchased content.";
-                    
+
                     course.CourseStatus = "archived";
                     _courseRepository.Update(course);
                     await _courseRepository.SaveChangesAsync();
@@ -380,11 +380,11 @@ namespace CourseMarketplaceBE.Application.Services
             foreach (var ext in command.ExistingCourseExts)
             {
                 if (ext.CourseId == command.CourseExt.CourseId) continue;
-                if (ext.title_hash == command.CourseExt.title_hash) res.DupFields.Add("title");
-                if (ext.description_hash == command.CourseExt.description_hash) res.DupFields.Add("description");
-                if (ext.what_you_will_learn_hash == command.CourseExt.what_you_will_learn_hash) res.DupFields.Add("what_you_will_learn");
-                if (ext.requirements_hash == command.CourseExt.requirements_hash) res.DupFields.Add("requirements");
-                if (ext.thumbnail_hash == command.CourseExt.thumbnail_hash && !string.IsNullOrEmpty(ext.thumbnail_hash)) res.DupFields.Add("thumbnail");
+                if (ext.TitleHash == command.CourseExt.TitleHash) res.DupFields.Add("title");
+                if (ext.DescriptionHash == command.CourseExt.DescriptionHash) res.DupFields.Add("description");
+                if (ext.WhatYouWillLearnHash == command.CourseExt.WhatYouWillLearnHash) res.DupFields.Add("what_you_will_learn");
+                if (ext.RequirementsHash == command.CourseExt.RequirementsHash) res.DupFields.Add("requirements");
+                if (ext.ThumbnailHash == command.CourseExt.ThumbnailHash && !string.IsNullOrEmpty(ext.ThumbnailHash)) res.DupFields.Add("thumbnail");
             }
             if (res.DupFields.Any()) { res.IsDup = true; res.DupFields = res.DupFields.Distinct().ToList(); }
             return res;
@@ -427,7 +427,7 @@ namespace CourseMarketplaceBE.Application.Services
             var thresholds = await _aiModerationService.GetScoreThresholdConfigAsync(SystemConfigKeys.ModerationThreshold);
             var classifiers = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.Classifier);
             var generators = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.Generator);
-            var modelIds = classifiers.Concat(generators).Select(m => m.model_id).ToList();
+            var modelIds = classifiers.Concat(generators).Select(m => m.ModelId).ToList();
 
 
 
@@ -501,24 +501,25 @@ namespace CourseMarketplaceBE.Application.Services
                     await _lessonService.SaveMaterialEmbeddingsAsync(matId, cachedEmbedding);
                 }
             }
-
+            //APPROVED
             if (result.ModerationStatus == ModerationStatus.Approved.ToValue())
             {
                 await ApproveCourseAsync(courseId, "AI moderation passed.");
             }
+            //REJECTED
             else if (result.ModerationStatus == ModerationStatus.Rejected.ToValue())
             {
                 var items = new List<RejectCourseItemDto>();
-                foreach (var log in result.stageLogs)
+                foreach (var log in result.StageLogs)
                 {
-                    if (log.result == StageLogResult.Flagged.ToValue() || log.result == StageLogResult.MatchFound.ToValue())
+                    if (log.Result == StageLogResult.Flagged.ToValue() || log.Result == StageLogResult.MatchFound.ToValue())
                     {
-                        foreach (var field in log.flaggedFields)
+                        foreach (var field in log.FlaggedFields)
                         {
                             items.Add(new RejectCourseItemDto
                             {
                                 Target = field,
-                                Reason = log.reason ?? "AI moderation flag"
+                                Reason = log.Reason ?? "AI moderation flag"
                             });
                         }
                     }
@@ -539,19 +540,21 @@ namespace CourseMarketplaceBE.Application.Services
                     Items = items
                 });
             }
+
+            //FLAGGED
             else if (result.ModerationStatus == ModerationStatus.Flagged.ToValue())
             {
                 var items = new List<RejectCourseItemDto>();
-                foreach (var log in result.stageLogs)
+                foreach (var log in result.StageLogs)
                 {
-                    if (log.result == StageLogResult.Flagged.ToValue() || log.result == StageLogResult.MatchFound.ToValue())
+                    if (log.Result == StageLogResult.Flagged.ToValue() || log.Result == StageLogResult.MatchFound.ToValue())
                     {
-                        foreach (var field in log.flaggedFields)
+                        foreach (var field in log.FlaggedFields)
                         {
                             items.Add(new RejectCourseItemDto
                             {
                                 Target = field,
-                                Reason = log.reason ?? "AI moderation flag"
+                                Reason = log.Reason ?? "AI moderation flag"
                             });
                         }
                     }
@@ -572,10 +575,12 @@ namespace CourseMarketplaceBE.Application.Services
                     Items = items
                 });
             }
+
+            //MANUAL_AUDIT
             else if (result.ModerationStatus == ModerationStatus.ManualAudit.ToValue())
             {
                 await _courseService.UpdateCourseStatusAndFeedbackAsync(courseId, CourseStatus.Pending.ToValue(), "AI suggested manual audit.");
-                await NotifyAdminAsync("Manual Audit Required", $"Course {courseId} requires manual review by AI.", $"/Admin/Moderation/Courses?id={courseId}");
+                await NotifyAdminAsync("Manual Audit Required", $"Course {courseId} requires manual review by AI.", UrlConst.AdminCourseModerationURL);
             }
         }
 
@@ -715,13 +720,13 @@ namespace CourseMarketplaceBE.Application.Services
         {
             _logger.LogInformation("Logging course AI moderation for course {CourseId}", command.CourseModerationResult.CourseId);
             var result = command.CourseModerationResult;
-            foreach (var stage in result.stageLogs)
+            foreach (var stage in result.StageLogs)
             {
-                _logger.LogInformation("Logging course AI moderation for course {CourseId} and stage {Stage}", command.CourseModerationResult.CourseId, stage.stage);
-                var integration = await _aiIntegrationRepository.GetByModelAndCourseAsync(stage.model_id, result.CourseId);
+                _logger.LogInformation("Logging course AI moderation for course {CourseId} and stage {Stage}", command.CourseModerationResult.CourseId, stage.Stage);
+                var integration = await _aiIntegrationRepository.GetByModelAndCourseAsync(stage.ModelId, result.CourseId);
                 if (integration == null)
                 {
-                    _logger.LogWarning("Integration not found for course {CourseId} and model {ModelId}", result.CourseId, stage.model_id);
+                    _logger.LogWarning("Integration not found for course {CourseId} and model {ModelId}", result.CourseId, stage.ModelId);
                     continue;
                 }
 
@@ -733,33 +738,33 @@ namespace CourseMarketplaceBE.Application.Services
                 {
                     CourseId = result.CourseId,
                     MaterialIds = semRq.MaterialIds,
-                    SimilarityScoreThreshold = semRq.similarityScoreThreshold,
-                    SpamScoreThreshold = harmRq.spamScoreThreshold,
-                    ToxicScoreThreshold = harmRq.toxicScoreThreshold
+                    SimilarityScoreThreshold = semRq.SimilarityScoreThreshold,
+                    SpamScoreThreshold = harmRq.SpamScoreThreshold,
+                    ToxicScoreThreshold = harmRq.ToxicScoreThreshold
                 });
                 _logger.LogInformation("Input JSON for course AI moderation for course {CourseId} and integration {IntegrationId}: {InputJson}", command.CourseModerationResult.CourseId, integration.Id, inputJson);
                 var outputJson = JsonSerializer.Serialize(new CourseAiUsageLogOutput
                 {
-                    Stage = stage.stage,
-                    Step = stage.step,
-                    Timestamp = stage.timestamp,
-                    Result = stage.result,
-                    Reason = stage.reason,
-                    FlaggedFields = stage.flaggedFields,
-                    Details = stage.details,
-                    ConfidenceScore = stage.confidence_score
+                    Stage = stage.Stage,
+                    Step = stage.Step,
+                    Timestamp = stage.Timestamp,
+                    Result = stage.Result,
+                    Reason = stage.Reason,
+                    FlaggedFields = stage.FlaggedFields,
+                    Details = stage.Details,
+                    ConfidenceScore = stage.ConfidenceScore
 
                 });
                 _logger.LogInformation("Output JSON for course AI moderation for course {CourseId} and integration {IntegrationId}: {OutputJson}", command.CourseModerationResult.CourseId, integration.Id, outputJson);
                 await _aiModerationService.SaveCourseAiUsageLog(new SaveCourseAiUsageLogCommand
                 {
-                    integration_id = integration.Id,
-                    interaction_type = command.InteractionType,
-                    input_json = inputJson,
-                    output_json = outputJson,
-                    latency_ms = stage.latency_ms,
-                    token_usage = 0,
-                    error_message = command.ErrorMessage
+                    IntegrationId = integration.Id,
+                    InteractionType = command.InteractionType,
+                    InputJson = inputJson,
+                    OutputJson = outputJson,
+                    LatencyMs = stage.LatencyMs,
+                    TokenUsage = 0,
+                    ErrorMessage = command.ErrorMessage
                 });
                 _logger.LogInformation("Saved Log for course AI moderation for course {CourseId} and integration {IntegrationId}", command.CourseModerationResult.CourseId, integration.Id);
             }
@@ -772,7 +777,7 @@ namespace CourseMarketplaceBE.Application.Services
                 var isHealthy = await _aiModerationService.HealthCheckAsync();
                 if (!isHealthy)
                 {
-                    await NotifyAdminAsync("AI Service Unhealthy", $"Course {request.CourseId} requires manual review due to AI service being unhealthy.", "/AdminModeration/Courses");
+                    await NotifyAdminAsync("AI Service Unhealthy", $"Course {request.CourseId} requires manual review due to AI service being unhealthy.", UrlConst.AdminCourseModerationURL);
                     return new CourseModerationResult { CourseId = request.CourseId, ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
                 }
 
@@ -786,14 +791,21 @@ namespace CourseMarketplaceBE.Application.Services
                 {
                     CourseId = request.CourseId,
                     MaterialIds = materialIds,
-                    similarityScoreThreshold = thresholds.GetValueOrDefault("similarity", 0.8f)
+                    SimilarityScoreThreshold = thresholds.GetValueOrDefault(AiModelConst.Similarity,
+                                                                            AiModelConst.DefaultSimilarityScoreThreshold)
                 };
 
                 var harmfulReq = new CourseHarmfulRequest
                 {
                     CourseId = request.CourseId,
-                    spamScoreThreshold = thresholds.GetValueOrDefault("spam", 0.7f),
-                    toxicScoreThreshold = thresholds.GetValueOrDefault("toxic", 0.7f)
+                    SpamScoreThreshold = thresholds.GetValueOrDefault(
+                                                                    AiModelConst.Spam,
+                                                                    AiModelConst.DefaultSpamScoreThreshold
+                                                                     ),
+                    ToxicScoreThreshold = thresholds.GetValueOrDefault(
+                                                                    AiModelConst.Toxic,
+                                                                    AiModelConst.DefaultToxicScoreThreshold
+                                                                     )
                 };
 
                 var result = await _aiModerationService.ModerateCourseFullPipelineAsync(semanticReq, harmfulReq);
@@ -801,7 +813,7 @@ namespace CourseMarketplaceBE.Application.Services
 
                 if (result.ModerationStatus == ModerationStatus.ManualAudit.ToValue())
                 {
-                    await NotifyAdminAsync("Manual Audit Required", $"Course {request.CourseId} flagged for manual review by AI.", "/AdminModeration/Courses");
+                    await NotifyAdminAsync("Manual Audit Required", $"Course {request.CourseId} flagged for manual review by AI.", UrlConst.AdminCourseModerationURL);
                 }
                 else
                 {
@@ -813,7 +825,7 @@ namespace CourseMarketplaceBE.Application.Services
                     SemanticDuplicationRequest = semanticReq,
                     CourseHarmfulRequest = harmfulReq,
                     CourseModerationResult = result,
-                    InteractionType = "moderation",
+                    InteractionType = AIInteractionType.Moderation.ToValue(),
                     ErrorMessage = null
                 });
                 return result;
@@ -821,7 +833,7 @@ namespace CourseMarketplaceBE.Application.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during AI moderation for course {CourseId}", request.CourseId);
-                await NotifyAdminAsync("Moderation Process Exception", $"Exception during AI moderation for course {request.CourseId}: {ex.Message}", "/AdminModeration/Courses");
+                await NotifyAdminAsync("Moderation Process Exception", $"Exception during AI moderation for course {request.CourseId}: {ex.Message}", UrlConst.AdminCourseModerationURL);
                 throw;
             }
         }
@@ -853,10 +865,10 @@ namespace CourseMarketplaceBE.Application.Services
                     {
                         CourseId = request.CourseId,
                         ModerationStatus = ModerationStatus.Rejected.ToValue(),
-                        flaggedFields = dupResult.DupFields,
-                        overall_confidence_score = 1.0f,
-                        total_latency_ms = 0,
-                        stageLogs = []
+                        FlaggedFields = dupResult.DupFields,
+                        OverallConfidenceScore = 1.0f,
+                        TotalLatencyMs = 0,
+                        StageLogs = []
                     };
                 }
 
