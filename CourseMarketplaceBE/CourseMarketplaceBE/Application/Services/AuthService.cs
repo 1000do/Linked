@@ -36,6 +36,9 @@ public class AuthService : IAuthService
         if (a == null || !BCrypt.Net.BCrypt.Verify(r.Password, a.PasswordHash))
             return null;
 
+        if (a.AccountLockoutEnd.HasValue && a.AccountLockoutEnd.Value > DateTime.Now)
+            throw new UnauthorizedAccessException($"Your account has been suspended until {a.AccountLockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to community standards violations.");
+
         await _userRepo.UpdateLastLoginAsync(a.AccountId);
 
         // ── Detect role ───────────────────────────────────────────────────────
@@ -197,7 +200,10 @@ public class AuthService : IAuthService
             account = await _userRepo.GetAccountByEmailAsync(email);
         }
 
-        await _userRepo.UpdateLastLoginAsync(account!.AccountId);
+        if (account!.AccountLockoutEnd.HasValue && account.AccountLockoutEnd.Value > DateTime.Now)
+            throw new UnauthorizedAccessException($"Your account has been suspended until {account.AccountLockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to community standards violations.");
+
+        await _userRepo.UpdateLastLoginAsync(account.AccountId);
 
         // ── Detect role ───────────────────────────────────────────────────────
         var role = await _userRepo.GetRoleByAccountIdAsync(account.AccountId);

@@ -1,20 +1,30 @@
-@model List<CourseMarketplaceFE.Models.UserReportModerationViewModel>
+@model CourseMarketplaceFE.Models.ReportStatsViewModel
 @{
     Layout = "_AdminLayout";
-    ViewData["Title"] = "Report Management";
-    ViewData["PageHeader"] = "Report Management";
+    ViewData["Title"] = "Report Center";
+    ViewData["PageHeader"] = "Report Center";
+    var userRole = (Context.Request.Cookies["UserRole"] ?? "admin").ToLower();
 }
 
 <div class="space-y-6">
-    <!-- Stats Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <!-- Top Stats Overview (Small Cards) -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-4">
         <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
             <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center">
-                <span class="material-symbols-outlined text-red-600">report_problem</span>
+                <span class="material-symbols-outlined text-red-600">flag</span>
             </div>
             <div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">New Reports</p>
-                <h3 id="pending-count" class="text-2xl font-display font-extrabold text-slate-900">@Model.Count(@r => r.Status == "pending")</h3>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Pending Course</p>
+                <h3 id="stat-pending-courses" class="text-2xl font-display font-extrabold text-slate-900">@Model.TotalPendingCourseReports</h3>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-amber-600">comment</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Pending Reviews</p>
+                <h3 id="stat-pending-reviews" class="text-2xl font-display font-extrabold text-slate-900">@(Model.TotalPendingCourseReviewReports + Model.TotalPendingLessonReviewReports)</h3>
             </div>
         </div>
         <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
@@ -22,204 +32,1048 @@
                 <span class="material-symbols-outlined text-emerald-600">check_circle</span>
             </div>
             <div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Resolved Reports</p>
-                <h3 id="resolved-count" class="text-2xl font-display font-extrabold text-slate-900">@Model.Count(@r => r.Status != "pending")</h3>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Resolved Today</p>
+                <h3 id="stat-resolved-today" class="text-2xl font-display font-extrabold text-slate-900">@Model.TotalResolvedToday</h3>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-slate-500">cancel</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Rejected Today</p>
+                <h3 id="stat-rejected-today" class="text-2xl font-display font-extrabold text-slate-900">@Model.TotalRejectedToday</h3>
             </div>
         </div>
     </div>
 
-    <!-- Table Container -->
-    <div id="reports-table-container" class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto custom-scrollbar">
-            <table class="w-full border-collapse">
-                <thead>
-                    <tr class="bg-slate-50/50 border-b border-slate-100">
-                        <th class="px-8 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Reporter</th>
-                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Reason & Details</th>
-                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Timestamp</th>
-                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                        <th class="px-8 py-5 text-right text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-50">
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="5" class="px-8 py-20 text-center">
-                                <div class="flex flex-col items-center">
-                                    <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                                        <span class="material-symbols-outlined text-slate-300 text-4xl">thumb_up</span>
-                                    </div>
-                                    <h4 class="text-slate-900 font-display font-bold">Zero Reports!</h4>
-                                    <p class="text-slate-400 text-sm">Everything is clear. No active abuse reports to moderate.</p>
-                                </div>
-                            </td>
+    <!-- Main Navigation Tabs -->
+    <div class="flex border-b border-slate-200 gap-4 mb-6">
+        <button onclick="switchTab('course-reports')" id="tab-btn-course-reports" class="tab-btn px-6 py-3 font-display font-extrabold text-sm border-b-2 transition-all flex items-center gap-2 border-primary text-primary" data-tab="course-reports">
+            <span class="material-symbols-outlined text-[18px]">menu_book</span>
+            Course Reports
+        </button>
+        <button onclick="switchTab('review-reports')" id="tab-btn-review-reports" class="tab-btn px-6 py-3 font-display font-extrabold text-sm border-b-2 transition-all flex items-center gap-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="review-reports">
+            <span class="material-symbols-outlined text-[18px]">forum</span>
+            Review Reports
+        </button>
+        <button onclick="switchTab('user-reports')" id="tab-btn-user-reports" class="tab-btn px-6 py-3 font-display font-extrabold text-sm border-b-2 transition-all flex items-center gap-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="user-reports">
+            <span class="material-symbols-outlined text-[18px]">person</span>
+            User Reports
+        </button>
+        <button onclick="switchTab('stats')" id="tab-btn-stats" class="tab-btn px-6 py-3 font-display font-extrabold text-sm border-b-2 transition-all flex items-center gap-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="stats">
+            <span class="material-symbols-outlined text-[18px]">analytics</span>
+            Detailed Stats
+        </button>
+    </div>
+
+    <!-- Panel 1: Course Reports -->
+    <div id="panel-course-reports" class="tab-panel space-y-4">
+        <!-- Filters & Tools -->
+        <div class="flex justify-between items-center bg-white px-6 py-4 rounded-2xl border border-slate-100 shadow-sm">
+            <h4 class="font-display font-bold text-slate-950">Manage Course Reports</h4>
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-bold text-slate-400 uppercase">Filter Status:</label>
+                <select id="course-status-filter" onchange="loadCourseReports()" class="rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold py-1.5 pr-8 pl-3">
+                    <option value="pending" selected>Pending</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="escalated">Escalated</option>
+                    <option value="under_review">Under Review</option>
+                    <option value="all">All Statuses</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50/50 border-b border-slate-100">
+                            <th class="px-8 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Reporter</th>
+                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Reported Course</th>
+                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Reason & Description</th>
+                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Submitted At</th>
+                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                            <th class="px-8 py-5 text-right text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
                         </tr>
-                    }
-                    @foreach (var item in Model)
-                    {
-                        <tr class="group hover:bg-slate-50/80 transition-colors @(item.Status == "pending" ? "bg-amber-50/30" : "")">
-                            <td class="px-8 py-6">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
-                                        @item.ReporterName[..1].ToUpper()
-                                    </div>
-                                    <span class="font-bold text-slate-900">@item.ReporterName</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-6">
-                                <div class="space-y-1">
-                                    <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[10px] font-black uppercase tracking-wider">@item.Reason</span>
-                                    <p class="text-sm text-slate-600 line-clamp-1 max-w-[300px]">@item.Description</p>
-                                </div>
-                            </td>
-                            <td class="px-6 py-6">
-                                <p class="text-sm text-slate-500 font-medium">@item.CreatedAt?.ToString("dd/MM/yyyy")</p>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase">@item.CreatedAt?.ToString("HH:mm")</p>
-                            </td>
-                            <td class="px-6 py-6">
-                                @if (item.Status == "pending")
-                                {
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[11px] font-bold uppercase tracking-wider">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                                        Pending
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-bold uppercase tracking-wider">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        @item.Status
-                                    </span>
-                                }
-                            </td>
-                            <td class="px-8 py-6 text-right">
-                                <div class="flex items-center justify-end gap-2">
-                                    @if (item.ChatId.HasValue)
-                                    {
-                                        <a href="/Chat/MockChat?actor=Admin" class="flex items-center justify-center w-9 h-9 bg-white text-slate-400 hover:text-primary hover:bg-primary/5 border border-slate-100 rounded-xl transition-all" title="View Chat">
-                                            <span class="material-symbols-outlined text-[20px]">forum</span>
-                                        </a>
-                                    }
-                                    @if (item.Status == "pending")
-                                    {
-                                        <button onclick="resolveReport(@item.ReportId)" class="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-900/20 active:scale-95">
-                                            <span class="material-symbols-outlined text-[18px]">verified_user</span> Moderate
-                                        </button>
-                                    }
-                                </div>
-                            </td>
+                    </thead>
+                    <tbody id="course-reports-tbody" class="divide-y divide-slate-50">
+                        <!-- Rendered via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel 2: Review Reports -->
+    <div id="panel-review-reports" class="tab-panel hidden space-y-4">
+        <!-- Filters & Subtabs -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white px-6 py-4 rounded-2xl border border-slate-100 shadow-sm">
+            <!-- Sub tabs -->
+            <div class="flex gap-2 bg-slate-100 p-1 rounded-xl">
+                <button onclick="switchReviewSubTab('course')" id="subtab-btn-course" class="sub-tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm" data-subtab="course">
+                    Course Reviews
+                </button>
+                <button onclick="switchReviewSubTab('lesson')" id="subtab-btn-lesson" class="sub-tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-700" data-subtab="lesson">
+                    Lesson Reviews
+                </button>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-bold text-slate-400 uppercase">Filter Status:</label>
+                <select id="review-status-filter" onchange="loadReviewReports()" class="rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold py-1.5 pr-8 pl-3">
+                    <option value="pending" selected>Pending</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="escalated">Escalated</option>
+                    <option value="under_review">Under Review</option>
+                    <option value="all">All Statuses</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50/50 border-b border-slate-100">
+                            <th class="px-8 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Reporter</th>
+                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Review Comment</th>
+                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Reason & Description</th>
+                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Submitted At</th>
+                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                            <th class="px-8 py-5 text-right text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody id="review-reports-tbody" class="divide-y divide-slate-50">
+                        <!-- Rendered via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel 3: User Reports -->
+    <div id="panel-user-reports" class="tab-panel hidden space-y-4">
+        <!-- Title & Info -->
+        <div class="flex justify-between items-center bg-white px-6 py-4 rounded-2xl border border-slate-100 shadow-sm">
+            <h4 class="font-display font-bold text-slate-950">Manage Chat & User Reports</h4>
+        </div>
+
+        <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50/50 border-b border-slate-100">
+                            <th class="px-8 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Reporter</th>
+                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Reported Chat/User</th>
+                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Reason & Description</th>
+                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Submitted At</th>
+                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                            <th class="px-8 py-5 text-right text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-reports-tbody" class="divide-y divide-slate-50">
+                        <!-- Rendered via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel 3: Stats Details -->
+    <div id="panel-stats" class="tab-panel hidden bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-6">
+        <h4 class="font-display font-extrabold text-lg text-slate-900">Detailed Report Statistics</h4>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100">
+                <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Pending Items</h5>
+                <div class="space-y-2 mt-4 text-sm font-semibold">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Course Reports:</span>
+                        <span id="detailed-pending-courses" class="text-slate-900 font-extrabold">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Course Review Reports:</span>
+                        <span id="detailed-pending-creviews" class="text-slate-900 font-extrabold">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Lesson Review Reports:</span>
+                        <span id="detailed-pending-lreviews" class="text-slate-900 font-extrabold">0</span>
+                    </div>
+                    <div class="border-t border-slate-200 my-2 pt-2 flex justify-between text-primary font-bold">
+                        <span>Total Pending:</span>
+                        <span id="detailed-pending-total">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100">
+                <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Platform Moderation Health</h5>
+                <p class="text-xs text-slate-400 mt-1">Status of today's resolved/rejected actions.</p>
+                <div class="space-y-2 mt-4 text-sm font-semibold">
+                    <div class="flex justify-between text-emerald-600">
+                        <span>Resolved Today:</span>
+                        <span id="detailed-resolved-today">0</span>
+                    </div>
+                    <div class="flex justify-between text-slate-500">
+                        <span>Rejected Today:</span>
+                        <span id="detailed-rejected-today">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+                <div>
+                    <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Status Policy</h5>
+                    <p class="text-xs text-slate-400">Reports marked as "resolved" and removed will soft-delete content. Under escalation, senior admins are notified. Only Administrators are allowed to permanently delete courses.</p>
+                </div>
+                <div class="mt-4 pt-4 border-t border-slate-150 flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+                    <span class="text-xs font-bold text-slate-500 uppercase">Role Level: @userRole.ToUpper()</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
 <script>
-    async function resolveReport(id) {
+    let activeTab = 'course-reports';
+    let activeReviewSubTab = 'course'; // course | lesson
+    const currentRole = '@userRole';
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadCourseReports();
+        loadReviewReports();
+        loadUserReports();
+        refreshStats();
+    });
+
+    function switchTab(tab) {
+        activeTab = tab;
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            if (btn.getAttribute('data-tab') === tab) {
+                btn.classList.add('border-primary', 'text-primary');
+                btn.classList.remove('border-transparent', 'text-slate-500');
+            } else {
+                btn.classList.remove('border-primary', 'text-primary');
+                btn.classList.add('border-transparent', 'text-slate-500');
+            }
+        });
+
+        document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+        document.getElementById(`panel-${tab}`).classList.remove('hidden');
+
+        if (tab === 'course-reports') {
+            loadCourseReports();
+        } else if (tab === 'review-reports') {
+            loadReviewReports();
+        } else if (tab === 'user-reports') {
+            loadUserReports();
+        } else if (tab === 'stats') {
+            refreshStats();
+        }
+    }
+
+    function switchReviewSubTab(subtab) {
+        activeReviewSubTab = subtab;
+        document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+            if (btn.getAttribute('data-subtab') === subtab) {
+                btn.classList.add('bg-white', 'text-slate-800', 'shadow-sm');
+                btn.classList.remove('text-slate-500');
+            } else {
+                btn.classList.remove('bg-white', 'text-slate-800', 'shadow-sm');
+                btn.classList.add('text-slate-500');
+            }
+        });
+        loadReviewReports();
+    }
+
+    // ── Get Stats ──
+    async function refreshStats() {
+        try {
+            const res = await fetch('/AdminModeration/GetReportStats');
+            if (res.ok) {
+                const apiRes = await res.json();
+                if (apiRes.success && apiRes.data) {
+                    const stats = apiRes.data;
+                    document.getElementById('stat-pending-courses').innerText = stats.totalPendingCourseReports;
+                    document.getElementById('stat-pending-reviews').innerText = stats.totalPendingCourseReviewReports + stats.totalPendingLessonReviewReports;
+                    document.getElementById('stat-resolved-today').innerText = stats.totalResolvedToday;
+                    document.getElementById('stat-rejected-today').innerText = stats.totalRejectedToday;
+
+                    // Detail stats panel
+                    document.getElementById('detailed-pending-courses').innerText = stats.totalPendingCourseReports;
+                    document.getElementById('detailed-pending-creviews').innerText = stats.totalPendingCourseReviewReports;
+                    document.getElementById('detailed-pending-lreviews').innerText = stats.totalPendingLessonReviewReports;
+                    document.getElementById('detailed-pending-total').innerText = stats.totalPending;
+                    document.getElementById('detailed-resolved-today').innerText = stats.totalResolvedToday;
+                    document.getElementById('detailed-rejected-today').innerText = stats.totalRejectedToday;
+                }
+            }
+        } catch (err) {
+            console.error("Failed to load stats", err);
+        }
+    }
+
+    // ── Load Course Reports ──
+    async function loadCourseReports() {
+        const tbody = document.getElementById('course-reports-tbody');
+        const filter = document.getElementById('course-status-filter').value;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-400 font-semibold">Loading course reports...</td></tr>`;
+
+        try {
+            const res = await fetch(`/AdminModeration/GetCourseReports?status=${filter}`);
+            if (res.ok) {
+                const apiRes = await res.json();
+                if (apiRes.success && apiRes.data) {
+                    renderCourseReports(apiRes.data);
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">Failed to parse reports.</td></tr>`;
+                }
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">HTTP Error loading reports.</td></tr>`;
+            }
+        } catch (err) {
+            console.error(err);
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">An unexpected error occurred. Please try again later.</td></tr>`;
+        }
+    }
+
+    function renderCourseReports(reports) {
+        const tbody = document.getElementById('course-reports-tbody');
+        tbody.innerHTML = '';
+
+        if (reports.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-8 py-20 text-center">
+                        <div class="flex flex-col items-center">
+                            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                <span class="material-symbols-outlined text-slate-300 text-3xl">thumb_up</span>
+                            </div>
+                            <h4 class="text-slate-900 font-display font-bold">No Course Reports Found</h4>
+                            <p class="text-slate-400 text-sm">Everything looks clean!</p>
+                        </div>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        reports.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.className = `group hover:bg-slate-50/80 transition-colors ${r.status === 'pending' ? 'bg-amber-50/20' : ''}`;
+            
+            // Format date
+            const dateObj = new Date(r.createdAt);
+            const dateStr = dateObj.toLocaleDateString('en-GB');
+            const timeStr = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+            // Status Badges
+            let statusBadge = '';
+            if (r.status === 'pending') {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[11px] font-bold uppercase tracking-wider animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Pending</span>`;
+            } else if (r.status === 'resolved') {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-bold uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Resolved</span>`;
+            } else if (r.status === 'rejected') {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-500 rounded-full text-[11px] font-bold uppercase tracking-wider">Rejected</span>`;
+            } else if (r.status === 'escalated') {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[11px] font-bold uppercase tracking-wider">Escalated</span>`;
+            } else {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[11px] font-bold uppercase tracking-wider">${r.status}</span>`;
+            }
+
+            // Actions
+            let actionBtn = '';
+            if (r.status === 'pending' || r.status === 'under_review' || r.status === 'escalated') {
+                if (r.status === 'escalated' && currentRole === 'staff') {
+                    actionBtn = `<button disabled class="flex items-center gap-1 px-4 py-2 bg-slate-300 text-slate-500 rounded-xl text-xs font-bold transition-all cursor-not-allowed opacity-60">
+                        <span class="material-symbols-outlined text-[16px]">lock</span> Escalated
+                    </button>`;
+                } else {
+                    actionBtn = `<button onclick="moderateCourseReport(${r.reportId}, '${escapeJsString(r.courseTitle)}', ${r.courseId})" class="flex items-center gap-1 px-4 py-2 bg-primary hover:bg-secondary text-white rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95">
+                        <span class="material-symbols-outlined text-[16px]">verified_user</span> Moderate
+                    </button>`;
+                }
+            } else {
+                actionBtn = `<button onclick="showResolutionDetails('${escapeJsString(r.resolverEmail || "N/A")}', '${escapeJsString(r.resolutionNote || "No notes provided.")}', '${r.resolvedAt}')" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl">Info</button>`;
+            }
+
+            tr.innerHTML = `
+                <td class="px-8 py-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
+                            ${(r.reporterName || "U").charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <span class="font-bold text-slate-900 block">${escapeHtml(r.reporterName)}</span>
+                            <span class="text-[10px] text-slate-400 block">${escapeHtml(r.reporterEmail)}</span>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-6">
+                    <div class="space-y-1">
+                        <span class="font-bold text-slate-900 text-sm hover:underline cursor-pointer block">${escapeHtml(r.courseTitle)}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[11px] text-slate-400 font-semibold">Instructor: ${escapeHtml(r.instructorName)}</span>
+                            <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-red-50 text-red-600 rounded text-[9px] font-black"><span class="material-symbols-outlined text-[10px]">flag</span>${r.courseFlagCount} flags</span>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-6 max-w-[280px]">
+                    <div class="space-y-1">
+                        <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[9px] font-black uppercase tracking-wider">${escapeHtml(r.reason)}</span>
+                        <p class="text-xs text-slate-500 line-clamp-2">${escapeHtml(r.description || 'No description provided')}</p>
+                    </div>
+                </td>
+                <td class="px-6 py-6 text-xs text-slate-500 font-semibold">
+                    <p class="text-slate-700">${dateStr}</p>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">${timeStr}</p>
+                </td>
+                <td class="px-6 py-6">
+                    ${statusBadge}
+                </td>
+                <td class="px-8 py-6 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                        ${actionBtn}
+                    </div>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ── Load Review Reports ──
+    async function loadReviewReports() {
+        const tbody = document.getElementById('review-reports-tbody');
+        const filter = document.getElementById('review-status-filter').value;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-400 font-semibold">Loading review reports...</td></tr>`;
+
+        try {
+            const apiEndpoint = activeReviewSubTab === 'course' 
+                ? `/AdminModeration/GetCourseReviewReports?status=${filter}`
+                : `/AdminModeration/GetLessonReviewReports?status=${filter}`;
+
+            const res = await fetch(apiEndpoint);
+            if (res.ok) {
+                const apiRes = await res.json();
+                if (apiRes.success && apiRes.data) {
+                    renderReviewReports(apiRes.data);
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">Failed to parse reports.</td></tr>`;
+                }
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">HTTP Error loading reports.</td></tr>`;
+            }
+        } catch (err) {
+            console.error(err);
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">An unexpected error occurred. Please try again later.</td></tr>`;
+        }
+    }
+
+    function renderReviewReports(reports) {
+        const tbody = document.getElementById('review-reports-tbody');
+        tbody.innerHTML = '';
+
+        if (reports.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-8 py-20 text-center">
+                        <div class="flex flex-col items-center">
+                            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                <span class="material-symbols-outlined text-slate-300 text-3xl">thumb_up</span>
+                            </div>
+                            <h4 class="text-slate-900 font-display font-bold">No Review Reports Found</h4>
+                            <p class="text-slate-400 text-sm">Everything looks clean!</p>
+                        </div>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        reports.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.className = `group hover:bg-slate-50/80 transition-colors ${r.status === 'pending' ? 'bg-amber-50/20' : ''}`;
+            
+            // Format date
+            const dateObj = new Date(r.createdAt);
+            const dateStr = dateObj.toLocaleDateString('en-GB');
+            const timeStr = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+            // Status Badges
+            let statusBadge = '';
+            if (r.status === 'pending') {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[11px] font-bold uppercase tracking-wider animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Pending</span>`;
+            } else if (r.status === 'resolved') {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-bold uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Resolved</span>`;
+            } else if (r.status === 'rejected') {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-500 rounded-full text-[11px] font-bold uppercase tracking-wider">Rejected</span>`;
+            } else if (r.status === 'escalated') {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[11px] font-bold uppercase tracking-wider">Escalated</span>`;
+            } else {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[11px] font-bold uppercase tracking-wider">${r.status}</span>`;
+            }
+
+            // Actions
+            let actionBtn = '';
+            if (r.status === 'pending' || r.status === 'under_review' || r.status === 'escalated') {
+                if (r.status === 'escalated' && currentRole === 'staff') {
+                    actionBtn = `<button disabled class="flex items-center gap-1 px-4 py-2 bg-slate-300 text-slate-500 rounded-xl text-xs font-bold transition-all cursor-not-allowed opacity-60">
+                        <span class="material-symbols-outlined text-[16px]">lock</span> Escalated
+                    </button>`;
+                } else {
+                    actionBtn = `<button onclick="moderateReviewReport(${r.reportId}, '${escapeJsString(r.reviewComment || "Review")}', '${r.reviewType}')" class="flex items-center gap-1 px-4 py-2 bg-primary hover:bg-secondary text-white rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95">
+                        <span class="material-symbols-outlined text-[16px]">verified_user</span> Moderate
+                    </button>`;
+                }
+            } else {
+                actionBtn = `<button onclick="showResolutionDetails('${escapeJsString(r.resolverEmail || "N/A")}', '${escapeJsString(r.resolutionNote || "No notes provided.")}', '${r.resolvedAt}')" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl">Info</button>`;
+            }
+
+            tr.innerHTML = `
+                <td class="px-8 py-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
+                            ${(r.reporterName || "U").charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <span class="font-bold text-slate-900 block">${escapeHtml(r.reporterName)}</span>
+                            <span class="text-[10px] text-slate-400 block">${escapeHtml(r.reporterEmail)}</span>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-6 max-w-[280px]">
+                    <div class="space-y-1">
+                        <p class="text-xs text-slate-900 italic font-semibold line-clamp-2">"${escapeHtml(r.reviewComment || 'No comments')}"</p>
+                        <div class="flex items-center gap-1 text-slate-400 text-[10px]">
+                            <span>Author: ${escapeHtml(r.reviewAuthorName)}</span>
+                            ${r.reviewRating ? `<span>• Rating: ${r.reviewRating}⭐</span>` : ''}
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-6 max-w-[220px]">
+                    <div class="space-y-1">
+                        <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[9px] font-black uppercase tracking-wider">${escapeHtml(r.reason)}</span>
+                        <p class="text-[11px] text-slate-500 line-clamp-1">${escapeHtml(r.description || 'No description')}</p>
+                    </div>
+                </td>
+                <td class="px-6 py-6 text-xs text-slate-500 font-semibold">
+                    <p class="text-slate-700">${dateStr}</p>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">${timeStr}</p>
+                </td>
+                <td class="px-6 py-6">
+                    ${statusBadge}
+                </td>
+                <td class="px-8 py-6 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                        ${actionBtn}
+                    </div>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ── Moderate Course Report modal ──
+    async function moderateCourseReport(reportId, courseTitle, courseId) {
+        // Build SweetAlert modal content dynamically
+        let hardDeleteBtn = '';
+        if (currentRole === 'admin') {
+            hardDeleteBtn = `
+            <div class="border-t border-red-100 pt-4 mt-4">
+                <p class="text-[10px] text-red-500 font-bold uppercase tracking-wider mb-2">Danger Area (Admin Only)</p>
+                <button type="button" onclick="hardDeleteCourseAction(${courseId}, ${reportId})" class="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-black transition-all border border-red-200">
+                    Remove
+                </button>
+            </div>`;
+        }
+
         const { value: formValues } = await Swal.fire({
-            title: 'Moderate Report',
+            title: 'Moderate Course Report',
             html:
-                '<div class="text-left space-y-4 px-1">' +
-                '<div>' +
-                '<label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Resolution Action</label>' +
-                '<select id="swal-status" class="w-full rounded-xl border-slate-200 focus:ring-emerald-500 text-sm">' +
-                '<option value="resolved">Accept Report (Valid / Abuse Found)</option>' +
-                '<option value="rejected">Dismiss Report (Invalid / No Action)</option>' +
-                '</select>' +
-                '</div>' +
-                '<div>' +
-                '<label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Moderator Note</label>' +
-                '<textarea id="swal-note" class="w-full rounded-xl border-slate-200 focus:ring-emerald-500 text-sm h-24" placeholder="Write resolution reason or mitigation actions..."></textarea>' +
-                '</div>' +
-                '</div>',
+                `<div class="text-left space-y-4 px-1 text-slate-700">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs font-bold mb-4">
+                        <span class="text-slate-400 block uppercase tracking-wider text-[10px]">Reported Content</span>
+                        <span class="text-slate-800">${escapeHtml(courseTitle)} (Course ID: ${courseId})</span>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Resolution Status</label>
+                        <select id="swal-status" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-bold">
+                            <option value="resolved">Accept Report (Valid / Policy Violation)</option>
+                            <option value="rejected">Dismiss Report (Invalid / Discard)</option>
+                            <option value="under_review">Under Review</option>
+                            <option value="escalated">Escalate to Senior Admin</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2 py-1">
+                        <input type="checkbox" id="swal-remove-content" class="rounded text-primary focus:ring-primary border-slate-200 w-4.5 h-4.5" />
+                        <label for="swal-remove-content" class="text-xs font-bold text-slate-700 cursor-pointer">Remove content (Soft-delete course)</label>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Moderator Note</label>
+                        <textarea id="swal-note" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold h-20" placeholder="Write internal moderation notes..."></textarea>
+                    </div>
+                    ${hardDeleteBtn}
+                </div>`,
             focusConfirm: false,
             showCancelButton: true,
-            confirmButtonText: 'Submit Action',
+            confirmButtonText: 'Submit Decision',
             confirmButtonColor: '#10b981',
             cancelButtonText: 'Close',
             customClass: {
                 popup: 'rounded-[32px] p-8',
-                title: 'font-display font-extrabold text-slate-900 mb-6',
-                confirmButton: 'rounded-xl font-bold px-8 py-3',
-                cancelButton: 'rounded-xl font-bold px-8 py-3'
+                title: 'font-display font-extrabold text-slate-900 mb-4',
+                confirmButton: 'rounded-xl font-bold px-8 py-3 text-xs',
+                cancelButton: 'rounded-xl font-bold px-8 py-3 text-xs bg-slate-100 text-slate-700'
             },
             preConfirm: () => {
                 return {
                     status: document.getElementById('swal-status').value,
-                    note: document.getElementById('swal-note').value
+                    removeContent: document.getElementById('swal-remove-content').checked,
+                    resolutionNote: document.getElementById('swal-note').value
                 }
             }
         });
 
         if (formValues) {
             Swal.showLoading();
-            const response = await fetch('/AdminModeration/ResolveReport', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `reportId=${id}&status=${formValues.status}&note=${encodeURIComponent(formValues.note)}`
-            });
+            try {
+                const response = await fetch(`/AdminModeration/ResolveCourseReport?reportId=${reportId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formValues)
+                });
 
-            const result = await response.json();
-            if (result.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Report Resolved',
-                    text: 'The report ticket status has been successfully updated.',
-                    confirmButtonColor: '#10b981',
-                    customClass: { popup: 'rounded-3xl' }
-                }).then(async () => {
-                    await refreshReportsDOM();
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Moderation Failure',
-                    text: 'An internal server error occurred while updating the ticket.',
-                    confirmButtonColor: '#ef4444'
-                });
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Report Moderated',
+                            text: 'The course report has been successfully resolved.',
+                            confirmButtonColor: '#10b981',
+                            customClass: { popup: 'rounded-3xl' }
+                        });
+                        loadCourseReports();
+                        refreshStats();
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed to Moderate',
+                            text: result.message || 'The server rejected this action.',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Moderation Error', text: 'HTTP communication failed.', confirmButtonColor: '#ef4444' });
+                }
+            } catch (err) {
+                console.error(err);
+                Swal.fire({ icon: 'error', title: 'Network Error', text: 'An unexpected connection error occurred.', confirmButtonColor: '#ef4444' });
             }
         }
     }
 
-    async function refreshReportsDOM() {
-        const tableContainer = document.getElementById('reports-table-container');
-        if (tableContainer) {
-            tableContainer.style.opacity = '0.5';
-            tableContainer.style.transition = 'opacity 0.2s ease';
+    // ── Moderate Review Report modal ──
+    async function moderateReviewReport(reportId, reviewComment, reviewType) {
+        const { value: formValues } = await Swal.fire({
+            title: 'Moderate Review Report',
+            html:
+                `<div class="text-left space-y-4 px-1 text-slate-700">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs font-bold mb-4">
+                        <span class="text-slate-400 block uppercase tracking-wider text-[10px]">Reported Review</span>
+                        <span class="text-slate-800 italic">"${escapeHtml(reviewComment)}"</span>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Resolution Status</label>
+                        <select id="swal-status" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-bold">
+                            <option value="resolved">Accept Report (Valid / Policy Violation)</option>
+                            <option value="rejected">Dismiss Report (Invalid / Discard)</option>
+                            <option value="under_review">Under Review</option>
+                            <option value="escalated">Escalate to Senior Admin</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2 py-1">
+                        <input type="checkbox" id="swal-remove-content" class="rounded text-primary focus:ring-primary border-slate-200 w-4.5 h-4.5" />
+                        <label for="swal-remove-content" class="text-xs font-bold text-slate-700 cursor-pointer">Remove content (Soft-delete review)</label>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Moderator Note</label>
+                        <textarea id="swal-note" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold h-20" placeholder="Write internal moderation notes..."></textarea>
+                    </div>
+                </div>`,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Submit Decision',
+            confirmButtonColor: '#10b981',
+            cancelButtonText: 'Close',
+            customClass: {
+                popup: 'rounded-[32px] p-8',
+                title: 'font-display font-extrabold text-slate-900 mb-4',
+                confirmButton: 'rounded-xl font-bold px-8 py-3 text-xs',
+                cancelButton: 'rounded-xl font-bold px-8 py-3 text-xs bg-slate-100 text-slate-700'
+            },
+            preConfirm: () => {
+                return {
+                    status: document.getElementById('swal-status').value,
+                    removeContent: document.getElementById('swal-remove-content').checked,
+                    resolutionNote: document.getElementById('swal-note').value
+                }
+            }
+        });
+
+        if (formValues) {
+            Swal.showLoading();
+            try {
+                const actionController = reviewType === 'lesson_review' 
+                    ? 'ResolveLessonReviewReport' 
+                    : 'ResolveCourseReviewReport';
+
+                const response = await fetch(`/AdminModeration/${actionController}?reportId=${reportId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formValues)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Report Moderated',
+                            text: 'The review report has been successfully resolved.',
+                            confirmButtonColor: '#10b981',
+                            customClass: { popup: 'rounded-3xl' }
+                        });
+                        loadReviewReports();
+                        refreshStats();
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed to Moderate',
+                            text: result.message || 'The server rejected this action.',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Moderation Error', text: 'HTTP communication failed.', confirmButtonColor: '#ef4444' });
+                }
+            } catch (err) {
+                console.error(err);
+                Swal.fire({ icon: 'error', title: 'Network Error', text: 'An unexpected connection error occurred.', confirmButtonColor: '#ef4444' });
+            }
         }
+    }
+
+    // ── Remove Course Action (Admin only) ──
+    async function hardDeleteCourseAction(courseId, reportId) {
+        // Close parent Swal first
+        Swal.close();
+
+        const confirmVal = await Swal.fire({
+            title: 'Are you absolutely sure?',
+            text: "This action will remove the course from the platform and archive it.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Remove',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#ef4444',
+            customClass: {
+                popup: 'rounded-[32px] p-8',
+                title: 'font-display font-extrabold text-slate-900 mb-2',
+                confirmButton: 'rounded-xl font-bold px-6 py-3 text-xs',
+                cancelButton: 'rounded-xl font-bold px-6 py-3 text-xs bg-slate-100 text-slate-700'
+            }
+        });
+
+        if (confirmVal.isConfirmed) {
+            Swal.showLoading();
+            try {
+                const response = await fetch(`/AdminModeration/RemoveCourse?courseId=${courseId}`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Permanently Deleted',
+                            text: 'The course has been completely expunged from the database.',
+                            confirmButtonColor: '#10b981',
+                            customClass: { popup: 'rounded-3xl' }
+                        });
+                        loadCourseReports();
+                        refreshStats();
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Deletion Failed',
+                            text: result.message || 'Only administrators can perform this command.',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'Server error processing hard-delete.', confirmButtonColor: '#ef4444' });
+                }
+            } catch (err) {
+                console.error(err);
+                Swal.fire({ icon: 'error', title: 'Network Error', text: 'Network failure while dispatching command.', confirmButtonColor: '#ef4444' });
+            }
+        }
+    }
+
+    // ── Show Resolved info modal ──
+    function showResolutionDetails(resolverEmail, note, resolvedAt) {
+        const dStr = resolvedAt ? new Date(resolvedAt).toLocaleString('en-GB') : 'N/A';
+        Swal.fire({
+            title: 'Report Resolution Details',
+            html: `
+            <div class="text-left space-y-4 px-1 text-slate-700 text-xs font-semibold">
+                <div>
+                    <span class="text-slate-400 block uppercase tracking-wider text-[10px]">Moderator</span>
+                    <span class="text-slate-800 font-bold">${escapeHtml(resolverEmail)}</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 block uppercase tracking-wider text-[10px]">Moderated At</span>
+                    <span class="text-slate-800 font-bold">${dStr}</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 block uppercase tracking-wider text-[10px]">Resolution Note</span>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-slate-800 leading-relaxed max-h-32 overflow-y-auto whitespace-pre-wrap">${escapeHtml(note)}</div>
+                </div>
+            </div>
+            `,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#10b981',
+            customClass: {
+                popup: 'rounded-[32px] p-8',
+                title: 'font-display font-extrabold text-slate-900 mb-4',
+                confirmButton: 'rounded-xl font-bold px-8 py-3 text-xs'
+            }
+        });
+    }
+
+    // ── Load User Reports ──
+    async function loadUserReports() {
+        const tbody = document.getElementById('user-reports-tbody');
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-400 font-semibold">Loading user reports...</td></tr>`;
+
         try {
-            const resp = await fetch('/AdminModeration/Reports');
-            const htmlText = await resp.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlText, 'text/html');
-            
-            const newTable = doc.getElementById('reports-table-container');
-            if (newTable && tableContainer) {
-                tableContainer.innerHTML = newTable.innerHTML;
-            }
-            
-            const newPending = doc.getElementById('pending-count');
-            const currentPending = document.getElementById('pending-count');
-            if (newPending && currentPending) {
-                currentPending.innerText = newPending.innerText;
-            }
-            
-            const newResolved = doc.getElementById('resolved-count');
-            const currentResolved = document.getElementById('resolved-count');
-            if (newResolved && currentResolved) {
-                currentResolved.innerText = newResolved.innerText;
+            const res = await fetch(`/AdminModeration/GetUserReports`);
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    renderUserReports(data);
+                } else if (data.success && data.data) {
+                    renderUserReports(data.data);
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">Failed to parse user reports.</td></tr>`;
+                }
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">HTTP Error loading user reports.</td></tr>`;
             }
         } catch (err) {
-            console.error("Error refreshing reports DOM:", err);
-        } finally {
-            if (tableContainer) {
-                tableContainer.style.opacity = '1';
+            console.error(err);
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">An unexpected error occurred.</td></tr>`;
+        }
+    }
+
+    function renderUserReports(reports) {
+        const tbody = document.getElementById('user-reports-tbody');
+        tbody.innerHTML = '';
+
+        if (reports.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-8 py-20 text-center">
+                        <div class="flex flex-col items-center">
+                            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                <span class="material-symbols-outlined text-slate-300 text-3xl">thumb_up</span>
+                            </div>
+                            <h4 class="text-slate-900 font-display font-bold">No User Reports Found</h4>
+                            <p class="text-slate-400 text-sm">Everything looks clean!</p>
+                        </div>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        reports.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.className = `group hover:bg-slate-50/80 transition-colors ${r.status === 'pending' ? 'bg-amber-50/20' : ''}`;
+            
+            // Format date
+            const dateObj = new Date(r.createdAt);
+            const dateStr = dateObj.toLocaleDateString('en-GB');
+            const timeStr = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+            // Status Badges
+            let statusBadge = '';
+            if (r.status === 'pending') {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[11px] font-bold uppercase tracking-wider animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Pending</span>`;
+            } else if (r.status === 'resolved') {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-bold uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Resolved</span>`;
+            } else if (r.status === 'rejected') {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-500 rounded-full text-[11px] font-bold uppercase tracking-wider">Rejected</span>`;
+            } else if (r.status === 'escalated') {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[11px] font-bold uppercase tracking-wider">Escalated</span>`;
+            } else {
+                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[11px] font-bold uppercase tracking-wider">${r.status}</span>`;
+            }
+
+            // Actions
+            let actionBtn = '';
+            if (r.status === 'pending' || r.status === 'under_review' || r.status === 'escalated') {
+                if (r.status === 'escalated' && currentRole === 'staff') {
+                    actionBtn = `<button disabled class="flex items-center gap-1 px-4 py-2 bg-slate-300 text-slate-500 rounded-xl text-xs font-bold transition-all cursor-not-allowed opacity-60">
+                        <span class="material-symbols-outlined text-[16px]">lock</span> Escalated
+                    </button>`;
+                } else {
+                    actionBtn = `<button onclick="moderateUserReport(${r.reportId}, '${escapeJsString(r.reporterName)}', '${escapeJsString(r.reason)}')" class="flex items-center gap-1 px-4 py-2 bg-primary hover:bg-secondary text-white rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95">
+                        <span class="material-symbols-outlined text-[16px]">verified_user</span> Moderate
+                    </button>`;
+                }
+            } else {
+                actionBtn = `<button onclick="showResolutionDetails('${escapeJsString(r.resolverEmail || "N/A")}', '${escapeJsString(r.resolutionNote || "No notes provided.")}', '${r.resolvedAt}')" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl">Info</button>`;
+            }
+
+            tr.innerHTML = `
+                <td class="px-8 py-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
+                            ${(r.reporterName || "U").charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <span class="font-bold text-slate-900 block">${escapeHtml(r.reporterName)}</span>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-6">
+                    <span class="font-bold text-slate-900 text-sm block">Chat Session (ID: ${r.chatId || "N/A"})</span>
+                    <a href="/AdminModeration/ChatDetails?chatId=${r.chatId}" class="text-xs text-primary font-bold hover:underline">View Chat Logs</a>
+                </td>
+                <td class="px-6 py-6 max-w-[280px]">
+                    <div class="space-y-1">
+                        <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[9px] font-black uppercase tracking-wider">${escapeHtml(r.reason)}</span>
+                        <p class="text-xs text-slate-500 line-clamp-2">${escapeHtml(r.description || 'No description provided')}</p>
+                    </div>
+                </td>
+                <td class="px-6 py-6 text-xs text-slate-500 font-semibold">
+                    <p class="text-slate-700">${dateStr}</p>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">${timeStr}</p>
+                </td>
+                <td class="px-6 py-6">
+                    ${statusBadge}
+                </td>
+                <td class="px-8 py-6 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                        ${actionBtn}
+                    </div>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ── Moderate User Report modal ──
+    async function moderateUserReport(reportId, reporterName, reason) {
+        const { value: formValues } = await Swal.fire({
+            title: 'Moderate User/Chat Report',
+            html:
+                `<div class="text-left space-y-4 px-1 text-slate-700">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs font-bold mb-4">
+                        <span class="text-slate-400 block uppercase tracking-wider text-[10px]">Reporter</span>
+                        <span class="text-slate-800">${escapeHtml(reporterName)}</span>
+                        <span class="text-slate-400 block uppercase tracking-wider text-[10px] mt-2">Reason</span>
+                        <span class="text-slate-800 text-red-600 uppercase text-[10px] tracking-wider">${escapeHtml(reason)}</span>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Resolution Status</label>
+                        <select id="swal-status" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-bold">
+                            <option value="resolved">Accept Report (Resolved / Policy Violation)</option>
+                            <option value="rejected">Dismiss Report (Rejected / Discard)</option>
+                            <option value="under_review">Under Review</option>
+                            <option value="escalated">Escalate to Senior Admin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Resolution Note</label>
+                        <textarea id="swal-note" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold h-20" placeholder="Write internal resolution notes..."></textarea>
+                    </div>
+                </div>`,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Submit Decision',
+            confirmButtonColor: '#10b981',
+            cancelButtonText: 'Close',
+            customClass: {
+                popup: 'rounded-[32px] p-8',
+                title: 'font-display font-extrabold text-slate-900 mb-4',
+                confirmButton: 'rounded-xl font-bold px-8 py-3 text-xs',
+                cancelButton: 'rounded-xl font-bold px-8 py-3 text-xs bg-slate-100 text-slate-700'
+            },
+            preConfirm: () => {
+                return {
+                    status: document.getElementById('swal-status').value,
+                    resolutionNote: document.getElementById('swal-note').value
+                }
+            }
+        });
+
+        if (formValues) {
+            Swal.showLoading();
+            try {
+                const response = await fetch(`/AdminModeration/ResolveUserReport?reportId=${reportId}&status=${formValues.status}&resolutionNote=${encodeURIComponent(formValues.resolutionNote)}`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Report Moderated',
+                            text: 'The user report has been successfully resolved.',
+                            confirmButtonColor: '#10b981',
+                            customClass: { popup: 'rounded-3xl' }
+                        });
+                        loadUserReports();
+                        refreshStats();
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed to Moderate',
+                            text: result.message || 'The server rejected this action.',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Moderation Error', text: 'HTTP communication failed.', confirmButtonColor: '#ef4444' });
+                }
+            } catch (err) {
+                console.error(err);
+                Swal.fire({ icon: 'error', title: 'Network Error', text: 'An unexpected connection error occurred.', confirmButtonColor: '#ef4444' });
             }
         }
+    }
+
+    // ── Helper escaping ──
+    function escapeJsString(str) {
+        if (!str) return '';
+        return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
     }
 </script>
 }

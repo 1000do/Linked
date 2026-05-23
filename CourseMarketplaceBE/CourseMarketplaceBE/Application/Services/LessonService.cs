@@ -48,11 +48,17 @@ public class LessonService : ILessonService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to add a lesson to this course.");
 
+        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        if (instructor != null && instructor.LockoutInstructorUntil.HasValue && instructor.LockoutInstructorUntil.Value > DateTime.Now)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {instructor.LockoutInstructorUntil.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot create lessons.");
+        }
+
         if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot add lessons while the course is pending review.");
 
         // ★ Limit: Max 5 lessons for unlinked Stripe
-        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        instructor = await _instructorRepository.GetByIdAsync(instructorId);
         var isStripeActive = instructor != null
             && !string.IsNullOrEmpty(instructor.StripeAccountId)
             && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
@@ -133,11 +139,17 @@ public class LessonService : ILessonService
         if (lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to add material to this lesson.");
 
+        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        if (instructor != null && instructor.LockoutInstructorUntil.HasValue && instructor.LockoutInstructorUntil.Value > DateTime.Now)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {instructor.LockoutInstructorUntil.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot add materials.");
+        }
+
         if ("pending".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot add materials while the course is pending review.");
 
         // ★ Limit: Max 1 resource for unlinked Stripe
-        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        instructor = await _instructorRepository.GetByIdAsync(instructorId);
         var isStripeActive = instructor != null
             && !string.IsNullOrEmpty(instructor.StripeAccountId)
             && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
@@ -288,6 +300,12 @@ public class LessonService : ILessonService
         if (lesson == null || lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to remove this material.");
 
+        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        if (instructor != null && instructor.LockoutInstructorUntil.HasValue && instructor.LockoutInstructorUntil.Value > DateTime.Now)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {instructor.LockoutInstructorUntil.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot remove materials.");
+        }
+
         if ("pending".Equals(lesson.Course?.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot update material while the course is pending review.");
 
@@ -333,6 +351,12 @@ public class LessonService : ILessonService
 
         if (lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to delete this lesson.");
+
+        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        if (instructor != null && instructor.LockoutInstructorUntil.HasValue && instructor.LockoutInstructorUntil.Value > DateTime.Now)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {instructor.LockoutInstructorUntil.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot delete lessons.");
+        }
 
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot delete lessons while the course is pending review.");
@@ -405,6 +429,12 @@ public class LessonService : ILessonService
              throw new UnauthorizedAccessException("You do not have permission to permanently delete this material.");
         }
 
+        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        if (instructor != null && instructor.LockoutInstructorUntil.HasValue && instructor.LockoutInstructorUntil.Value > DateTime.Now)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {instructor.LockoutInstructorUntil.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot permanently delete materials.");
+        }
+
         // Get course status to prevent deletion if pending
         var courseStatus = material.Lesson?.Course?.CourseStatus;
         if (courseStatus != null && courseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
@@ -438,6 +468,12 @@ public class LessonService : ILessonService
         var lesson = await _lessonRepository.GetByIdAsync(material.LessonId ?? 0);
         if (lesson == null || lesson.Course == null || lesson.Course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to restore this material.");
+
+        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        if (instructor != null && instructor.LockoutInstructorUntil.HasValue && instructor.LockoutInstructorUntil.Value > DateTime.Now)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {instructor.LockoutInstructorUntil.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot restore materials.");
+        }
 
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot restore materials while the course is pending review.");

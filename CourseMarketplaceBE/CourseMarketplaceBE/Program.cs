@@ -216,6 +216,11 @@ public class Program
         builder.Services.AddScoped<IContentHashService, ContentHashService>();
         builder.Services.AddScoped<IAvatarFrameRepository, AvatarFrameRepository>();
         builder.Services.AddScoped<IAvatarFrameService, AvatarFrameService>();
+
+        // 📋 Report (User, Instructor, Staff, Admin)
+        builder.Services.AddScoped<IReportRepository, ReportRepository>();
+        builder.Services.AddScoped<IReportService, ReportService>();
+
         
         // 🔥 Background Tasks
         builder.Services.AddHostedService<PayoutScheduleTask>();
@@ -366,6 +371,10 @@ public class Program
                             ALTER TABLE transactions ADD COLUMN IF NOT EXISTS refund_reason TEXT;
                             ALTER TABLE transactions ADD COLUMN IF NOT EXISTS refund_admin_note TEXT;
                             ALTER TABLE transactions ADD COLUMN IF NOT EXISTS refund_requested_at TIMESTAMP WITHOUT TIME ZONE;
+                            
+                            ALTER TABLE accounts ADD COLUMN IF NOT EXISTS comment_lockout_end TIMESTAMP WITHOUT TIME ZONE;
+                            ALTER TABLE accounts ADD COLUMN IF NOT EXISTS account_lockout_end TIMESTAMP WITHOUT TIME ZONE;
+                            ALTER TABLE instructors ADD COLUMN IF NOT EXISTS lockout_instructor_until TIMESTAMP WITHOUT TIME ZONE;
                         ";
                         cmd.ExecuteNonQuery();
                     }

@@ -354,6 +354,11 @@ public class CourseService : ICourseService
             throw new BadRequestException("You must be an approved instructor to create a course.");
         }
 
+        if (instructor.LockoutInstructorUntil.HasValue && instructor.LockoutInstructorUntil.Value > DateTime.Now)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {instructor.LockoutInstructorUntil.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot create new courses.");
+        }
+
         // ★ Limit: Max 2 courses for unlinked Stripe
         var isStripeActive = !string.IsNullOrEmpty(instructor.StripeAccountId)
             && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
@@ -440,6 +445,12 @@ public class CourseService : ICourseService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to modify this course.");
 
+        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        if (instructor != null && instructor.LockoutInstructorUntil.HasValue && instructor.LockoutInstructorUntil.Value > DateTime.Now)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {instructor.LockoutInstructorUntil.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update courses.");
+        }
+
         // ★ Block updates if course is archived by moderation (3+ flags)
         if (string.Equals(course.CourseStatus, "archived", StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
         {
@@ -476,7 +487,7 @@ public class CourseService : ICourseService
         course.Description = request.Description;
 
         // ★ Nếu chưa hoàn tất Stripe → ép giá = 0
-        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        instructor = await _instructorRepository.GetByIdAsync(instructorId);
         var isStripeActive = instructor != null
             && !string.IsNullOrEmpty(instructor.StripeAccountId)
             && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
@@ -558,6 +569,12 @@ public class CourseService : ICourseService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to modify this course.");
 
+        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        if (instructor != null && instructor.LockoutInstructorUntil.HasValue && instructor.LockoutInstructorUntil.Value > DateTime.Now)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {instructor.LockoutInstructorUntil.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot change course status.");
+        }
+
         // ★ Block status changes if course is archived by moderation (3+ flags)
         if (string.Equals(course.CourseStatus, "archived", StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
         {
@@ -583,7 +600,7 @@ public class CourseService : ICourseService
         if (status.Equals("pending", StringComparison.OrdinalIgnoreCase))
         {
             // ★ Limit: Total Video Duration
-            var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+            instructor = await _instructorRepository.GetByIdAsync(instructorId);
             var isStripeActive = instructor != null
                 && !string.IsNullOrEmpty(instructor.StripeAccountId)
                 && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
@@ -655,6 +672,12 @@ public class CourseService : ICourseService
 
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to delete this course.");
+
+        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        if (instructor != null && instructor.LockoutInstructorUntil.HasValue && instructor.LockoutInstructorUntil.Value > DateTime.Now)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {instructor.LockoutInstructorUntil.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot delete courses.");
+        }
 
         if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot delete course while it is pending review.");

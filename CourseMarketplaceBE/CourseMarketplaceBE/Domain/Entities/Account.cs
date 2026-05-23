@@ -17,6 +17,10 @@ public partial class Account
 
     public int? AccountFlagCount { get; set; }
 
+    public DateTime? CommentLockoutEnd { get; set; }
+
+    public DateTime? AccountLockoutEnd { get; set; }
+
     public string? AuthProvider { get; set; }
 
     public string? AvatarUrl { get; set; }

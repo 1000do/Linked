@@ -84,18 +84,154 @@ namespace CourseMarketplaceFE.Controllers
             return Json(new { success = false });
         }
 
+        // ── Danh sách báo cáo chính thức (FE) ───────────────────────────────
         public async Task<IActionResult> Reports()
+        {
+            var stats = new ReportStatsViewModel();
+            var response = await _apiClient.GetAsync("/api/admin/moderation/reports/stats");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    using var doc = JsonDocument.Parse(content);
+                    if (doc.RootElement.TryGetProperty("data", out var dataEl))
+                    {
+                        stats = JsonSerializer.Deserialize<ReportStatsViewModel>(dataEl.ToString(), _jsonOptions) ?? new ReportStatsViewModel();
+                    }
+                }
+                catch { }
+            }
+            return View(stats);
+        }
+
+        // API AJAX lấy thống kê report
+        [HttpGet]
+        public async Task<IActionResult> GetReportStats()
+        {
+            var response = await _apiClient.GetAsync("/api/admin/moderation/reports/stats");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return Content(content, "application/json");
+            }
+            return Json(new { success = false });
+        }
+
+        // API AJAX lấy báo cáo khóa học
+        [HttpGet]
+        public async Task<IActionResult> GetCourseReports(string? status)
+        {
+            var url = "/api/admin/moderation/reports/courses";
+            if (!string.IsNullOrEmpty(status) && status != "all")
+            {
+                url += $"?status={status}";
+            }
+            var response = await _apiClient.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return Content(content, "application/json");
+            }
+            return Json(new { success = false });
+        }
+
+        // API AJAX lấy báo cáo đánh giá khóa học
+        [HttpGet]
+        public async Task<IActionResult> GetCourseReviewReports(string? status)
+        {
+            var url = "/api/admin/moderation/reports/course-reviews";
+            if (!string.IsNullOrEmpty(status) && status != "all")
+            {
+                url += $"?status={status}";
+            }
+            var response = await _apiClient.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return Content(content, "application/json");
+            }
+            return Json(new { success = false });
+        }
+
+        // API AJAX lấy báo cáo đánh giá bài học
+        [HttpGet]
+        public async Task<IActionResult> GetLessonReviewReports(string? status)
+        {
+            var url = "/api/admin/moderation/reports/lesson-reviews";
+            if (!string.IsNullOrEmpty(status) && status != "all")
+            {
+                url += $"?status={status}";
+            }
+            var response = await _apiClient.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return Content(content, "application/json");
+            }
+            return Json(new { success = false });
+        }
+
+        // Resolve course report
+        [HttpPost]
+        public async Task<IActionResult> ResolveCourseReport(int reportId, [FromBody] ResolveReportViewModel model)
+        {
+            var response = await _apiClient.PatchJsonAsync($"/api/admin/moderation/reports/courses/{reportId}", model);
+            var content = await response.Content.ReadAsStringAsync();
+            return Content(content, "application/json");
+        }
+
+        // Resolve course review report
+        [HttpPost]
+        public async Task<IActionResult> ResolveCourseReviewReport(int reportId, [FromBody] ResolveReportViewModel model)
+        {
+            var response = await _apiClient.PatchJsonAsync($"/api/admin/moderation/reports/course-reviews/{reportId}", model);
+            var content = await response.Content.ReadAsStringAsync();
+            return Content(content, "application/json");
+        }
+
+        // Resolve lesson review report
+        [HttpPost]
+        public async Task<IActionResult> ResolveLessonReviewReport(int reportId, [FromBody] ResolveReportViewModel model)
+        {
+            var response = await _apiClient.PatchJsonAsync($"/api/admin/moderation/reports/lesson-reviews/{reportId}", model);
+            var content = await response.Content.ReadAsStringAsync();
+            return Content(content, "application/json");
+        }
+
+        // Admin only: remove course
+        [HttpPost]
+        public async Task<IActionResult> RemoveCourse(int courseId)
+        {
+            var response = await _apiClient.DeleteAsync($"/api/admin/moderation/courses/{courseId}/remove");
+            var content = await response.Content.ReadAsStringAsync();
+            return Content(content, "application/json");
+        }
+
+        // AJAX: Lấy báo cáo chat / user
+        [HttpGet]
+        public async Task<IActionResult> GetUserReports()
         {
             var response = await _apiClient.GetAsync("/api/admin/moderation/reports");
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                var reports = JsonSerializer.Deserialize<List<UserReportModerationViewModel>>(content, _jsonOptions);
-                return View(reports);
+                return Content(content, "application/json");
             }
-            return View(new List<UserReportModerationViewModel>());
+            return Json(new { success = false });
         }
 
+        // AJAX: Xử lý báo cáo chat / user
+        [HttpPost]
+        public async Task<IActionResult> ResolveUserReport(int reportId, string status, string? resolutionNote)
+        {
+            var payload = new { reportId, status, resolutionNote };
+            var response = await _apiClient.PostJsonAsync("/api/admin/moderation/reports/resolve", payload);
+            var content = await response.Content.ReadAsStringAsync();
+            return Content(content, "application/json");
+        }
+
+        // Legacy action (giữ lại phòng trường hợp code cũ gọi)
         [HttpPost]
         public async Task<IActionResult> ResolveReport(int reportId, string status, string note)
         {

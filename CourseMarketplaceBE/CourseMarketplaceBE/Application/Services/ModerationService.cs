@@ -348,15 +348,25 @@ namespace CourseMarketplaceBE.Application.Services
             }).ToList();
         }
 
-        public async Task<bool> ResolveReportAsync(ResolveReportDto dto)
+        public async Task<bool> ResolveReportAsync(ResolveReportDto dto, int resolverId)
         {
             var report = await _chatRepository.GetReportByIdAsync(dto.ReportId);
             if (report == null) return false;
 
+            // Chặn Staff giải quyết báo cáo đã bị escalated
+            if (report.UserReportsStatus == "escalated")
+            {
+                var resolverRole = await _userRepository.GetRoleByAccountIdAsync(resolverId);
+                if (resolverRole != "admin")
+                {
+                    throw new UnauthorizedAccessException("Chỉ có Quản trị viên (Admin) mới có quyền xử lý báo cáo đã chuyển tiếp.");
+                }
+            }
+
             report.UserReportsStatus = dto.Status;
             report.ResolutionNote = dto.ResolutionNote;
+            report.ResolverId = resolverId;
             report.ResolvedAt = DateTime.Now;
-
 
             await _chatRepository.SaveChangesAsync();
             return true;

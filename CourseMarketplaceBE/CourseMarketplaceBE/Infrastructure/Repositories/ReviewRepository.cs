@@ -83,12 +83,16 @@ public class ReviewRepository : IReviewRepository
 
     public async Task<CourseReview?> GetCourseReviewByIdAsync(int reviewId)
     {
-        return await _context.CourseReviews.FindAsync(reviewId);
+        return await _context.CourseReviews
+            .Include(r => r.Enrollment)
+            .FirstOrDefaultAsync(r => r.CourseReviewId == reviewId);
     }
 
     public async Task<LessonReview?> GetLessonReviewByIdAsync(int reviewId)
     {
-        return await _context.LessonReviews.FindAsync(reviewId);
+        return await _context.LessonReviews
+            .Include(r => r.Enrollment)
+            .FirstOrDefaultAsync(r => r.LessonReviewId == reviewId);
     }
 
     public async Task SaveChangesAsync()

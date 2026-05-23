@@ -171,6 +171,22 @@
                 </div>
                 <span class="text-sm @(isChat ? "font-bold" : "font-semibold")">Messages</span>
             </a>
+
+            @{
+                bool isReports = currentController == "Instructor" && currentAction == "Reports";
+            }
+            <a href="/Instructor/Reports"
+               class="flex items-center gap-3 px-4 py-3 @(isReports ? "bg-primary/10 text-primary" : "text-slate-600 hover:bg-slate-50") rounded-xl transition-colors relative @disabledClass">
+                @if (isReports)
+                {
+                    <span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></span>
+                }
+                <div class="relative">
+                    <span class="material-symbols-outlined text-[20px]">flag</span>
+                    <span id="sidebar-reports-badge" class="hidden absolute -top-1 -right-1.5 min-w-[14px] h-3.5 bg-red-500 rounded-full text-[8px] text-white flex items-center justify-center font-bold px-0.5 border border-white"></span>
+                </div>
+                <span class="text-sm @(isReports ? "font-bold" : "font-semibold")">Reports</span>
+            </a>
             
             <div class="h-px bg-slate-200 my-4 mx-2"></div>
 
@@ -333,6 +349,21 @@
                     if (headerNotiBadge) {
                         if (data.notificationCount > 0) headerNotiBadge.classList.remove('hidden');
                         else headerNotiBadge.classList.add('hidden');
+                    }
+                }
+
+                // Cập nhật Sidebar Reports Pending Badge
+                const reportsResponse = await fetch("/Instructor/Reports/GetPendingCount");
+                if (reportsResponse.ok) {
+                    const reportsData = await reportsResponse.json();
+                    const sidebarReportsBadge = document.getElementById('sidebar-reports-badge');
+                    if (sidebarReportsBadge) {
+                        if (reportsData.count > 0) {
+                            sidebarReportsBadge.innerText = reportsData.count;
+                            sidebarReportsBadge.classList.remove('hidden');
+                        } else {
+                            sidebarReportsBadge.classList.add('hidden');
+                        }
                     }
                 }
             } catch (err) { console.error("Summary error:", err); }

@@ -15,7 +15,7 @@ namespace CourseMarketplaceBE.Application.IServices
         Task<bool> FlagCourseDetailedAsync(RejectCourseDetailedRequest request);
         // Khiếu nại
         Task<List<UserReportModerationDto>> GetAllReportsAsync();
-        Task<bool> ResolveReportAsync(ResolveReportDto dto);
+        Task<bool> ResolveReportAsync(ResolveReportDto dto, int resolverId);
 
         Task<ExactDuplicationResult> GetExactDuplicationResult(ExactDuplicationCommand command);
         Task<ExactDuplicationResult> CheckExactDuplication(int courseId);
