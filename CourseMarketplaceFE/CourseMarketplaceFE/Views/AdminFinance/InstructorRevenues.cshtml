@@ -1,0 +1,329 @@
+@model CourseMarketplaceFE.Controllers.AdminFinanceController.InstructorCourseRevenuesPageVM
+@{
+    ViewData["Title"] = "Instructor Revenues";
+    Layout = "_AdminLayout";
+}
+
+<!-- Premium Header -->
+<div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-md">
+    <div>
+        <h1 class="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-emerald-600 text-3xl">payments</span>
+            Instructor Course Revenues
+        </h1>
+        <p class="text-slate-500 text-sm">Monitor sales metrics, evaluate monthly/yearly revenues, and identify top performing best-selling courses.</p>
+    </div>
+    
+    <!-- Month/Year Filter Form -->
+    <form id="periodFilterForm" method="get" action="/AdminFinance/InstructorRevenues" class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200 shadow-sm shrink-0">
+        <input type="hidden" name="sortBy" value="@ViewBag.SortBy" />
+        <input type="hidden" name="keyword" value="@ViewBag.Keyword" />
+        <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-slate-400 text-sm pl-1">calendar_month</span>
+            <select name="month" class="bg-transparent border-0 text-slate-700 font-bold text-xs focus:ring-0 focus:outline-none cursor-pointer p-0 pr-6">
+                @for (int m = 1; m <= 12; m++)
+                {
+                    var monthName = System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(m);
+                    if (m == (int)ViewBag.Month)
+                    {
+                        <option value="@m" selected>@monthName</option>
+                    }
+                    else
+                    {
+                        <option value="@m">@monthName</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="w-[1px] h-5 bg-slate-300"></div>
+        <div class="flex items-center">
+            <select name="year" class="bg-transparent border-0 text-slate-700 font-bold text-xs focus:ring-0 focus:outline-none cursor-pointer p-0 pr-6">
+                @for (int y = DateTime.UtcNow.Year - 5; y <= DateTime.UtcNow.Year + 5; y++)
+                {
+                    if (y == (int)ViewBag.Year)
+                    {
+                        <option value="@y" selected>@y</option>
+                    }
+                    else
+                    {
+                        <option value="@y">@y</option>
+                    }
+                }
+            </select>
+        </div>
+        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95">
+            <span class="material-symbols-outlined text-[14px]">filter_alt</span>
+            Filter
+        </button>
+    </form>
+</div>
+
+<!-- Premium KPI Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Card 1: Total Active Courses -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group">
+        <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-500/5 rounded-bl-[100px] -z-0 transition-transform duration-500 group-hover:scale-110"></div>
+        <div class="relative z-10 flex items-center gap-4">
+            <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm shrink-0">
+                <span class="material-symbols-outlined text-2xl">school</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Active Courses</p>
+                <p class="text-2xl font-black text-slate-900">@Model.TotalActiveCourses</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Card 2: Best Selling Course -->
+    <div class="bg-gradient-to-br from-amber-500 to-orange-600 p-6 rounded-2xl shadow-lg shadow-orange-500/10 text-white relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 group">
+        <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full transition-transform duration-500 group-hover:scale-115"></div>
+        <div class="relative z-10 flex items-center gap-4">
+            <div class="w-12 h-12 bg-white/15 rounded-xl flex items-center justify-center text-white shadow-inner shrink-0">
+                <span class="material-symbols-outlined text-2xl animate-pulse">local_fire_department</span>
+            </div>
+            <div class="overflow-hidden">
+                <p class="text-xs font-bold text-amber-100 uppercase tracking-wider mb-0.5">Best Seller (@Model.TopSellingCourseSales sold)</p>
+                <p class="text-base font-extrabold text-white truncate w-full" title="@Model.TopSellingCourseTitle">@Model.TopSellingCourseTitle</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Card 3: Highest Earning Course -->
+    <div class="bg-gradient-to-br from-indigo-600 to-violet-700 p-6 rounded-2xl shadow-lg shadow-indigo-500/10 text-white relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 group">
+        <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full transition-transform duration-500 group-hover:scale-115"></div>
+        <div class="relative z-10 flex items-center gap-4">
+            <div class="w-12 h-12 bg-white/15 rounded-xl flex items-center justify-center text-white shadow-inner shrink-0">
+                <span class="material-symbols-outlined text-2xl">star_rate</span>
+            </div>
+            <div class="overflow-hidden">
+                <p class="text-xs font-bold text-indigo-100 uppercase tracking-wider mb-0.5">Highest Earning (@Model.HighestEarningCourseRevenue.ToString("C"))</p>
+                <p class="text-base font-extrabold text-white truncate w-full" title="@Model.HighestEarningCourseTitle">@Model.HighestEarningCourseTitle</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Sort Table Bar -->
+<div class="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col overflow-hidden mb-12">
+    <!-- Filter bar -->
+    <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/50">
+        <form id="revenueFilterForm" method="get" action="/AdminFinance/InstructorRevenues" class="flex flex-col md:flex-row items-center gap-3 w-full">
+            <input type="hidden" name="year" value="@ViewBag.Year" />
+            <input type="hidden" name="month" value="@ViewBag.Month" />
+            
+            <div class="relative flex-1 w-full">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[18px]">search</span>
+                <input type="text" name="keyword" value="@ViewBag.Keyword" placeholder="Search course title or instructor name..." 
+                       class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all shadow-sm" />
+            </div>
+            
+            <div class="w-full md:w-56 relative">
+                <select name="sortBy" class="w-full pl-3 pr-8 py-2 appearance-none bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none shadow-sm cursor-pointer font-bold text-slate-700">
+                    <option value="sales_desc" selected="@(ViewBag.SortBy == "sales_desc")">Best-Selling (Sales: High-Low)</option>
+                    <option value="sales_asc" selected="@(ViewBag.SortBy == "sales_asc")">Best-Selling (Sales: Low-High)</option>
+                    <option value="lifetime_desc" selected="@(ViewBag.SortBy == "lifetime_desc")">Lifetime Revenue: High-Low</option>
+                    <option value="lifetime_asc" selected="@(ViewBag.SortBy == "lifetime_asc")">Lifetime Revenue: Low-High</option>
+                    <option value="monthly_desc" selected="@(ViewBag.SortBy == "monthly_desc")">Monthly Revenue: High-Low</option>
+                    <option value="monthly_asc" selected="@(ViewBag.SortBy == "monthly_asc")">Monthly Revenue: Low-High</option>
+                    <option value="yearly_desc" selected="@(ViewBag.SortBy == "yearly_desc")">Yearly Revenue: High-Low</option>
+                    <option value="yearly_asc" selected="@(ViewBag.SortBy == "yearly_asc")">Yearly Revenue: Low-High</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">arrow_drop_down</span>
+            </div>
+
+            <button type="submit" class="w-full md:w-auto px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition-all shadow-sm active:scale-95 whitespace-nowrap">
+                Apply Filters
+            </button>
+            
+            @if (!string.IsNullOrEmpty(ViewBag.Keyword as string) || (ViewBag.SortBy as string) != "sales_desc")
+            {
+                <a href="/AdminFinance/InstructorRevenues?year=@ViewBag.Year&month=@ViewBag.Month" 
+                   class="w-full md:w-auto px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm rounded-xl transition-all whitespace-nowrap text-center">
+                    Reset
+                </a>
+            }
+        </form>
+    </div>
+
+    <!-- Table Container -->
+    <div id="revenue-table-container" class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="text-[10px] font-bold text-slate-400 tracking-wider bg-slate-50 border-b border-slate-200 uppercase font-black">
+                    <th class="pl-6 pr-4 py-4 w-20">ID</th>
+                    <th class="px-4 py-4">Course Details</th>
+                    <th class="px-4 py-4">Instructor</th>
+                    <th class="px-4 py-4 text-center">Sales Quantity</th>
+                    <th class="px-4 py-4 text-right">Monthly Revenue</th>
+                    <th class="px-4 py-4 text-right">Yearly Revenue</th>
+                    <th class="pl-4 pr-6 py-4 text-right">Lifetime Revenue</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm">
+                @if (Model.Revenues != null && Model.Revenues.Any())
+                {
+                    // Find the threshold or top performers for Best Seller
+                    var maxSales = Model.Revenues.Max(r => r.SalesCount);
+
+                    @foreach (var item in Model.Revenues)
+                    {
+                        var isBestSeller = item.SalesCount >= 10 || (maxSales > 0 && item.SalesCount == maxSales);
+                        
+                        <tr class="hover:bg-slate-50/50 transition-colors group/row">
+                            <td class="pl-6 pr-4 py-4.5 font-mono text-xs text-slate-400 font-bold">#@item.CourseId</td>
+                            <td class="px-4 py-4.5 max-w-[280px]">
+                                <div class="flex flex-col">
+                                    <span class="font-extrabold text-slate-900 group-hover/row:text-emerald-600 transition-colors duration-200 truncate leading-snug" title="@item.CourseTitle">
+                                        @item.CourseTitle
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-4.5 align-middle text-slate-600 font-bold">@item.InstructorName</td>
+                            <td class="px-4 py-4.5 align-middle text-center">
+                                <div class="inline-flex flex-col items-center gap-1.5">
+                                    <span class="font-black text-slate-900 text-base font-mono">@item.SalesCount</span>
+                                    @if (isBestSeller)
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-sm border border-amber-300/30 transition-transform duration-300 hover:scale-105 active:scale-95 cursor-default select-none animate-pulse">
+                                            <span class="material-symbols-outlined text-[10px] fill-current">star</span>
+                                            Best Seller
+                                        </span>
+                                    }
+                                </div>
+                            </td>
+                            <td class="px-4 py-4.5 align-middle text-right font-bold text-slate-800 font-mono">
+                                @item.MonthlyRevenue.ToString("C")
+                            </td>
+                            <td class="px-4 py-4.5 align-middle text-right font-bold text-slate-800 font-mono">
+                                @item.YearlyRevenue.ToString("C")
+                            </td>
+                            <td class="pl-4 pr-6 py-4.5 align-middle text-right font-black text-emerald-600 text-base font-mono">
+                                @item.LifetimeRevenue.ToString("C")
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="px-6 py-20 text-center">
+                            <div class="flex flex-col items-center justify-center text-slate-400">
+                                <span class="material-symbols-outlined text-6xl mb-4 text-slate-200">payments</span>
+                                <p class="text-base font-bold text-slate-600">No course revenues match your selection.</p>
+                                <p class="text-xs text-slate-400 mt-1">Change dates or search keywords to refresh list.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const filterForm = document.getElementById('periodFilterForm');
+            if (filterForm) {
+                const selects = filterForm.querySelectorAll('select');
+                selects.forEach(select => {
+                    select.addEventListener('change', () => {
+                        ajaxReloadRevenues();
+                    });
+                });
+                filterForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    ajaxReloadRevenues();
+                });
+            }
+
+            const searchForm = document.getElementById('revenueFilterForm');
+            if (searchForm) {
+                const sortBySelect = searchForm.querySelector('select[name="sortBy"]');
+                sortBySelect.addEventListener('change', () => {
+                    ajaxReloadRevenues();
+                });
+                searchForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    ajaxReloadRevenues();
+                });
+                
+                // Add debounce input search
+                let debounceTimer;
+                const searchInput = searchForm.querySelector('input[name="keyword"]');
+                searchInput.addEventListener('input', () => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        ajaxReloadRevenues();
+                    }, 350);
+                });
+            }
+        });
+
+        async function ajaxReloadRevenues() {
+            // Get references
+            const periodForm = document.getElementById('periodFilterForm');
+            const searchForm = document.getElementById('revenueFilterForm');
+            if (!periodForm || !searchForm) return;
+
+            // Premium blur loader
+            const loader = document.createElement('div');
+            loader.className = 'fixed inset-0 bg-slate-900/10 backdrop-blur-[1px] flex items-center justify-center z-[9999] transition-all duration-300 opacity-0';
+            loader.innerHTML = `
+                <div class="bg-white p-4 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-100 animate-fadeIn">
+                    <div class="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-xs font-bold text-slate-700">Recalculating instructor revenues...</span>
+                </div>
+            `;
+            document.body.appendChild(loader);
+            setTimeout(() => loader.classList.remove('opacity-0'), 50);
+
+            try {
+                // Combine form parameters
+                const params = new URLSearchParams();
+                
+                const periodData = new FormData(periodForm);
+                for (const [key, value] of periodData.entries()) {
+                    if (value) params.set(key, value);
+                }
+
+                const searchData = new FormData(searchForm);
+                for (const [key, value] of searchData.entries()) {
+                    if (value) params.set(key, value);
+                }
+
+                const url = `/AdminFinance/InstructorRevenues?${params.toString()}`;
+                const response = await fetch(url);
+                if (response.ok) {
+                    const html = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // 1. Swap table container
+                    const oldTable = document.getElementById('revenue-table-container');
+                    const newTable = doc.getElementById('revenue-table-container');
+                    if (oldTable && newTable) oldTable.innerHTML = newTable.innerHTML;
+
+                    // 2. Update parent form hidden values
+                    const targetYear = params.get('year');
+                    const targetMonth = params.get('month');
+                    const targetKeyword = params.get('keyword');
+                    const targetSortBy = params.get('sortBy');
+
+                    searchForm.querySelector('input[name="year"]').value = targetYear || '';
+                    searchForm.querySelector('input[name="month"]').value = targetMonth || '';
+                    periodForm.querySelector('input[name="keyword"]').value = targetKeyword || '';
+                    periodForm.querySelector('input[name="sortBy"]').value = targetSortBy || 'sales_desc';
+
+                    // 3. Push state
+                    history.pushState(null, '', url);
+                }
+            } catch (err) {
+                console.error("AJAX error:", err);
+            } finally {
+                loader.classList.add('opacity-0');
+                setTimeout(() => loader.remove(), 300);
+            }
+        }
+    </script>
+}

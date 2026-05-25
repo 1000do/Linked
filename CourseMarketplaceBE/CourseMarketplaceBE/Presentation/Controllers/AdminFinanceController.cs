@@ -374,6 +374,23 @@ public class AdminFinanceController : ControllerBase
             return StatusCode(500, ApiResponse<string>.ErrorResponse($"System error: {ex.Message}"));
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET /api/admin/finance/instructor-courses-revenue
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpGet("instructor-courses-revenue")]
+    public async Task<IActionResult> GetInstructorCourseRevenues([FromQuery] int year, [FromQuery] int month)
+    {
+        try
+        {
+            var revenues = await _financeService.GetInstructorCourseRevenuesAsync(year, month);
+            return Ok(ApiResponse<List<InstructorCourseRevenueResponse>>.SuccessResponse(revenues, "Instructor course revenues list."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
+        }
+    }
 }
 
 public class RefundDecisionRequest

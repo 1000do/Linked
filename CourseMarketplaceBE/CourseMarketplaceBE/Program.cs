@@ -363,9 +363,15 @@ public class Program
                     using (var cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"
-                            ALTER TABLE transactions ADD COLUMN IF NOT EXISTS refund_reason TEXT;
-                            ALTER TABLE transactions ADD COLUMN IF NOT EXISTS refund_admin_note TEXT;
-                            ALTER TABLE transactions ADD COLUMN IF NOT EXISTS refund_requested_at TIMESTAMP WITHOUT TIME ZONE;
+                            CREATE TABLE IF NOT EXISTS transaction_exts (
+                                transaction_id INT PRIMARY KEY REFERENCES transactions(transaction_id) ON DELETE CASCADE,
+                                refund_reason TEXT,
+                                refund_admin_note TEXT,
+                                refund_requested_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                            );
+                            ALTER TABLE transactions DROP COLUMN IF EXISTS refund_reason;
+                            ALTER TABLE transactions DROP COLUMN IF EXISTS refund_admin_note;
+                            ALTER TABLE transactions DROP COLUMN IF EXISTS refund_requested_at;
                         ";
                         cmd.ExecuteNonQuery();
                     }

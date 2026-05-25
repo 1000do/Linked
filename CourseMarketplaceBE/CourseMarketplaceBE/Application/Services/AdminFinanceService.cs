@@ -605,6 +605,20 @@ public class AdminFinanceService : IAdminFinanceService
 
         // ── 4. UPDATE DB STATUS ─────────────────────────────────────────
         txn.TransactionsStatus = "refunded";
+        if (txn.TransactionExt == null)
+        {
+            txn.TransactionExt = new Domain.Entities.TransactionExt
+            {
+                TransactionId = txn.TransactionId,
+                RefundReason = reason,
+                RefundRequestedAt = DateTime.UtcNow
+            };
+        }
+        else
+        {
+            if (reason != null) txn.TransactionExt.RefundReason = reason;
+            if (txn.TransactionExt.RefundRequestedAt == null) txn.TransactionExt.RefundRequestedAt = DateTime.UtcNow;
+        }
 
         if (payout != null)
         {
@@ -776,8 +790,20 @@ public class AdminFinanceService : IAdminFinanceService
             throw new InvalidOperationException("The transaction has exceeded the 14-day refund period required by platform rules.");
 
         txn.TransactionsStatus = "refund_pending";
-        txn.RefundReason = reason;
-        txn.RefundRequestedAt = DateTime.UtcNow;
+        if (txn.TransactionExt == null)
+        {
+            txn.TransactionExt = new Domain.Entities.TransactionExt
+            {
+                TransactionId = txn.TransactionId,
+                RefundReason = reason,
+                RefundRequestedAt = DateTime.UtcNow
+            };
+        }
+        else
+        {
+            txn.TransactionExt.RefundReason = reason;
+            txn.TransactionExt.RefundRequestedAt = DateTime.UtcNow;
+        }
 
         await _repo.SaveChangesAsync();
 
@@ -809,10 +835,22 @@ public class AdminFinanceService : IAdminFinanceService
             throw new InvalidOperationException("Transaction is not in pending refund approval status.");
 
         // Thực thi refund Stripe & Reverse Transfer & Revoke Enrollment
-        var refundResult = await RefundTransactionAsync(transactionId, txn.RefundReason);
+        var refundResult = await RefundTransactionAsync(transactionId, txn.TransactionExt?.RefundReason);
 
         // Lưu thông tin duyệt của Admin
-        txn.RefundAdminNote = adminNote;
+        if (txn.TransactionExt == null)
+        {
+            txn.TransactionExt = new Domain.Entities.TransactionExt
+            {
+                TransactionId = txn.TransactionId,
+                RefundAdminNote = adminNote,
+                RefundRequestedAt = DateTime.UtcNow
+            };
+        }
+        else
+        {
+            txn.TransactionExt.RefundAdminNote = adminNote;
+        }
         await _repo.SaveChangesAsync();
 
         // Gửi thông báo đến học viên
@@ -842,7 +880,19 @@ public class AdminFinanceService : IAdminFinanceService
 
         // Khôi phục trạng thái thành công ban đầu và lưu ghi chú từ chối
         txn.TransactionsStatus = "succeeded";
-        txn.RefundAdminNote = adminNote;
+        if (txn.TransactionExt == null)
+        {
+            txn.TransactionExt = new Domain.Entities.TransactionExt
+            {
+                TransactionId = txn.TransactionId,
+                RefundAdminNote = adminNote,
+                RefundRequestedAt = DateTime.UtcNow
+            };
+        }
+        else
+        {
+            txn.TransactionExt.RefundAdminNote = adminNote;
+        }
 
         await _repo.SaveChangesAsync();
 
@@ -860,5 +910,21 @@ public class AdminFinanceService : IAdminFinanceService
             }
             catch { }
         }
+    }
+
+    public async Task<List<InstructorCourseRevenueResponse>> GetInstructorCourseRevenuesAsync(int year, int month)
+    {
+        var projections = await _repo.GetInstructorCourseRevenuesAsync(year, month);
+        return projections.Select(p => new InstructorCourseRevenueResponse
+        {
+            CourseId = p.CourseId,
+            CourseTitle = p.CourseTitle,
+            InstructorId = p.InstructorId,
+            InstructorName = p.InstructorName,
+            SalesCount = p.SalesCount,
+            MonthlyRevenue = p.MonthlyRevenue,
+            YearlyRevenue = p.YearlyRevenue,
+            LifetimeRevenue = p.LifetimeRevenue
+        }).ToList();
     }
 }
