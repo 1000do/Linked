@@ -58,7 +58,8 @@ public class InstructorService : IInstructorService
             existing.StripeCountry       = request.StripeCountry.ToUpper();
             existing.ApprovalStatus      = "Pending";
 
-            await _repo.SaveChangesAsync();
+            int rows1 = await _repo.SaveChangesAsync();
+            if (rows1 <= 0) throw new InvalidOperationException("Failed to save changes");
             return "Your application has been resubmitted. Please wait for admin approval.";
         }
 
@@ -86,7 +87,8 @@ public class InstructorService : IInstructorService
         };
 
         await _repo.AddAsync(instructor);
-        await _repo.SaveChangesAsync();
+        int rows2 = await _repo.SaveChangesAsync();
+        if (rows2 <= 0) throw new InvalidOperationException("Failed to save changes");
 
         return "Your application has been submitted. Please wait for admin approval.";
     }
@@ -104,7 +106,8 @@ public class InstructorService : IInstructorService
             throw new InvalidOperationException("Invalid status. Only 'Approved' or 'Rejected' are allowed.");
 
         instructor.ApprovalStatus = status;
-        await _repo.SaveChangesAsync();
+        int rows3 = await _repo.SaveChangesAsync();
+        if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
 
         return true;
     }
@@ -176,7 +179,8 @@ public class InstructorService : IInstructorService
         // Lưu stripe_account_id vào DB
         instructor.StripeAccountId         = stripeAccount.Id;
         instructor.StripeOnboardingStatus  = "Pending";
-        await _repo.SaveChangesAsync();
+        int rows4 = await _repo.SaveChangesAsync();
+        if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
 
         // Tạo Onboarding URL
         var linkService = new AccountLinkService();
@@ -218,7 +222,8 @@ public class InstructorService : IInstructorService
             instructor.PayoutsEnabled         = true;
             instructor.ChargesEnabled         = true;
             instructor.StripeOnboardingStatus = "Active";
-            await _repo.SaveChangesAsync();
+            int rows5 = await _repo.SaveChangesAsync();
+            if (rows5 <= 0) throw new InvalidOperationException("Failed to save changes");
             return "Active";
         }
 
@@ -226,7 +231,8 @@ public class InstructorService : IInstructorService
         instructor.PayoutsEnabled         = stripeAccount.PayoutsEnabled;
         instructor.ChargesEnabled         = stripeAccount.ChargesEnabled;
         instructor.StripeOnboardingStatus = "Pending";
-        await _repo.SaveChangesAsync();
+        int rows6 = await _repo.SaveChangesAsync();
+        if (rows6 <= 0) throw new InvalidOperationException("Failed to save changes");
 
         return "Pending";
     }
@@ -295,7 +301,8 @@ public class InstructorService : IInstructorService
         instructor.StripeOnboardingStatus = null;
         instructor.PayoutsEnabled = false;
         instructor.ChargesEnabled = false;
-        await _repo.SaveChangesAsync();
+        int rows7 = await _repo.SaveChangesAsync();
+        if (rows7 <= 0) throw new InvalidOperationException("Failed to save changes");
 
         return $"Stripe account for instructor {instructorId} has been reset. The instructor needs to set up Stripe again.";
     }
@@ -331,7 +338,8 @@ public class InstructorService : IInstructorService
             throw new InvalidOperationException("Cannot change country once a Stripe account exists. Please reset Stripe first.");
 
         instructor.StripeCountry = countryCode.ToUpper();
-        await _repo.SaveChangesAsync();
+        int rows8 = await _repo.SaveChangesAsync();
+        if (rows8 <= 0) throw new InvalidOperationException("Failed to save changes");
     }
 
     public async Task<InstructorPayoutPagedDto> GetPayoutsAsync(int userId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
@@ -402,7 +410,8 @@ public class InstructorService : IInstructorService
             }
         }
 
-        await _repo.SaveChangesAsync();
+        int rows9 = await _repo.SaveChangesAsync();
+        if (rows9 <= 0) throw new InvalidOperationException("Failed to save changes");
     }
 
     private void UpdatePayoutStatusFromStripe(InstructorPayout dbp, Payout sp)

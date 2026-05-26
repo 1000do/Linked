@@ -217,7 +217,9 @@ public class AdminFinanceService : IAdminFinanceService
         // Có thể update PayoutDate = DateTime.Now nếu muốn ghi nhận ngày trả thực tế
         payout.PayoutDate = DateTime.Now;
 
-        await _repo.SaveChangesAsync();
+        int numberOfRowsAffected = await _repo.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
 
         // 🔥 Broadcast real-time update to Admin and Instructor portals
         try
@@ -276,7 +278,9 @@ public class AdminFinanceService : IAdminFinanceService
             // Vì tài khoản Connected Account chỉ nhìn thấy mã py_xxx trong lịch sử số dư của họ.
             payout.StripeTransferId = transfer.DestinationPaymentId; 
             payout.PayoutDate = DateTime.UtcNow;
-            await _repo.SaveChangesAsync();
+            int numberOfRowsAffected = await _repo.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
 
             // 🔥 Broadcast real-time update to Admin and Instructor portals immediately
             try
@@ -298,7 +302,9 @@ public class AdminFinanceService : IAdminFinanceService
         {
             // ★ Đánh dấu thất bại vào DB để Admin biết
             payout.PayoutStatus = "failed";
-            await _repo.SaveChangesAsync();
+            int numberOfRowsAffected = await _repo.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
 
             // 🔥 Broadcast failure update to Admin and Instructor portals
             try
@@ -504,7 +510,9 @@ public class AdminFinanceService : IAdminFinanceService
 
         if (hasChanges)
         {
-            await _repo.SaveChangesAsync();
+            int numberOfRowsAffected = await _repo.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
         }
 
         return withdrawals.Select(w => new WithdrawalHistoryItem
@@ -630,7 +638,9 @@ public class AdminFinanceService : IAdminFinanceService
         }
 
         // ── 6. COMMIT ───────────────────────────────────────────────────
-        await _repo.SaveChangesAsync();
+        int numberOfRowsAffected = await _repo.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
 
         _logger.LogInformation(
             "✅ REFUND COMPLETE | TxnId={TxnId} | RefundId={RfId} | ReversalId={RvId} | EnrollRevoked={ER}",
@@ -723,7 +733,9 @@ public class AdminFinanceService : IAdminFinanceService
             }
         }
 
-        await _repo.SaveChangesAsync();
+        int numberOfRowsAffected = await _repo.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
 
         // 🔥 Broadcast real-time update to all Admin and Instructor screens!
         try
@@ -779,7 +791,9 @@ public class AdminFinanceService : IAdminFinanceService
         txn.RefundReason = reason;
         txn.RefundRequestedAt = DateTime.UtcNow;
 
-        await _repo.SaveChangesAsync();
+        int numberOfRowsAffected = await _repo.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
 
         // Gửi thông báo cho Admin & Học viên
         try
@@ -813,7 +827,9 @@ public class AdminFinanceService : IAdminFinanceService
 
         // Lưu thông tin duyệt của Admin
         txn.RefundAdminNote = adminNote;
-        await _repo.SaveChangesAsync();
+        int numberOfRowsAffected = await _repo.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
 
         // Gửi thông báo đến học viên
         if (txn.AccountFrom.HasValue)
@@ -844,7 +860,9 @@ public class AdminFinanceService : IAdminFinanceService
         txn.TransactionsStatus = "succeeded";
         txn.RefundAdminNote = adminNote;
 
-        await _repo.SaveChangesAsync();
+        int numberOfRowsAffected = await _repo.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
 
         // Gửi thông báo đến học viên
         if (txn.AccountFrom.HasValue)

@@ -52,7 +52,8 @@ public class EnrollmentService : IEnrollmentService
                 LastAccessedAt = DateTime.Now
             };
             await _repo.AddEnrollmentAsync(enrollment);
-            await _repo.SaveChangesAsync();
+            int rows1 = await _repo.SaveChangesAsync();
+            if (rows1 <= 0) throw new InvalidOperationException("Failed to save changes");
 
             var progress = new EnrollmentProgress
             {
@@ -61,7 +62,8 @@ public class EnrollmentService : IEnrollmentService
                 LastModifiedAt = DateTime.Now
             };
             await _repo.AddEnrollmentProgressAsync(progress);
-            await _repo.SaveChangesAsync();
+            int rows2 = await _repo.SaveChangesAsync();
+            if (rows2 <= 0) throw new InvalidOperationException("Failed to save changes");
 
             await transaction.CommitAsync();
         }
@@ -136,7 +138,8 @@ public class EnrollmentService : IEnrollmentService
             await _repo.AddMaterialCompletionAsync(completion);
 
             // Lưu thay đổi ngay để các hàm đếm phía sau chính xác
-            await _repo.SaveChangesAsync();
+            int rows3 = await _repo.SaveChangesAsync();
+            if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
 
             // 2. Cập nhật số lượng bài đã học trong bảng Progress
             if (enrollment.Progress == null)
@@ -168,7 +171,8 @@ public class EnrollmentService : IEnrollmentService
                 enrollment.CompletedDate = DateOnly.FromDateTime(DateTime.UtcNow);
             }
 
-            await _repo.SaveChangesAsync();
+            int rows4 = await _repo.SaveChangesAsync();
+            if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
         }
     }
 

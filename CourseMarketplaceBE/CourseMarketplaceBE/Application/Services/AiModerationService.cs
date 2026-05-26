@@ -172,7 +172,9 @@ namespace CourseMarketplaceBE.Application.Services
             };
 
             await _usageLogRepository.AddAsync(log);
-            await _usageLogRepository.SaveChangesAsync();
+            int numberOfRowsAffected = await _usageLogRepository.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
         }
 
         public async Task<bool> HealthCheckAsync()

@@ -106,7 +106,9 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             _courseRepository.Update(course);
-            await _courseRepository.SaveChangesAsync();
+            int numberOfRowsAffected = await _courseRepository.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
 
             if (course.InstructorId.HasValue)
             {
@@ -149,7 +151,9 @@ namespace CourseMarketplaceBE.Application.Services
             course.UpdatedAt = DateTime.Now;
 
             _courseRepository.Update(course);
-            await _courseRepository.SaveChangesAsync();
+            int numberOfRowsAffected = await _courseRepository.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
 
             if (course.InstructorId.HasValue)
             {
@@ -180,7 +184,9 @@ namespace CourseMarketplaceBE.Application.Services
             course.UpdatedAt = DateTime.Now;
 
             _courseRepository.Update(course);
-            await _courseRepository.SaveChangesAsync();
+            int numberOfRowsAffected = await _courseRepository.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
 
             if (course.InstructorId.HasValue)
             {
@@ -204,7 +210,9 @@ namespace CourseMarketplaceBE.Application.Services
 
                     course.CourseStatus = "archived";
                     _courseRepository.Update(course);
-                    await _courseRepository.SaveChangesAsync();
+                    int numberOfRowsAffected2 = await _courseRepository.SaveChangesAsync();
+                    if (numberOfRowsAffected2 <= 0)
+                        throw new InvalidOperationException("Failed to save changes");
                 }
 
                 await _notificationService.SendNotificationAsync(
@@ -315,7 +323,9 @@ namespace CourseMarketplaceBE.Application.Services
             course.UpdatedAt = DateTime.Now;
 
             _courseRepository.Update(course);
-            await _courseRepository.SaveChangesAsync();
+            int numberOfRowsAffected = await _courseRepository.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
 
             if (course.InstructorId.HasValue)
             {
@@ -358,7 +368,9 @@ namespace CourseMarketplaceBE.Application.Services
             report.ResolvedAt = DateTime.Now;
 
 
-            await _chatRepository.SaveChangesAsync();
+            int numberOfRowsAffected = await _chatRepository.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
             return true;
         }
 
@@ -667,7 +679,9 @@ namespace CourseMarketplaceBE.Application.Services
             course.UpdatedAt = DateTime.Now;
 
             _courseRepository.Update(course);
-            await _courseRepository.SaveChangesAsync();
+            int numberOfRowsAffected = await _courseRepository.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
 
             {
                 string subject = "Course Violation Warning";
@@ -691,7 +705,9 @@ namespace CourseMarketplaceBE.Application.Services
 
                     course.CourseStatus = CourseStatus.Archived.ToValue();
                     _courseRepository.Update(course);
-                    await _courseRepository.SaveChangesAsync();
+                    int numberOfRowsAffected2 = await _courseRepository.SaveChangesAsync();
+                    if (numberOfRowsAffected2 <= 0)
+                        throw new InvalidOperationException("Failed to save changes");
                 }
 
                 await _notificationService.SendNotificationAsync(

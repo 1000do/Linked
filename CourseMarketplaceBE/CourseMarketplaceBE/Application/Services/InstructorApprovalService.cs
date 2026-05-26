@@ -39,7 +39,9 @@ namespace CourseMarketplaceBE.Application.Services
 
             instructor.ApprovalStatus = dto.Status;
             _repo.Update(instructor);
-            await _repo.SaveChangesAsync();
+            int numberOfRowsAffected = await _repo.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
 
             // Gửi thông báo cho người dùng (Sử dụng NotificationService bạn đã làm)
             string message = dto.Status == "Approved"

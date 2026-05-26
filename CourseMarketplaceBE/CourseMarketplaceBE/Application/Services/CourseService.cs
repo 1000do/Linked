@@ -409,7 +409,9 @@ public class CourseService : ICourseService
         };
 
         await _courseRepository.AddAsync(course);
-        await _courseRepository.SaveChangesAsync();
+        int numberOfRowsAffected = await _courseRepository.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
 
         // 2. Compute & store hashes for deduplication
         await UpdateCourseHashesAsync(course);
@@ -496,7 +498,9 @@ public class CourseService : ICourseService
         }
 
         _courseRepository.Update(course);
-        await _courseRepository.SaveChangesAsync();
+        int numberOfRowsAffected = await _courseRepository.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
 
         // Update Hashes
         await UpdateCourseHashesAsync(course);
@@ -641,7 +645,9 @@ public class CourseService : ICourseService
             }
         }
         _courseRepository.Update(course);
-        await _courseRepository.SaveChangesAsync();
+        int numberOfRowsAffected = await _courseRepository.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
 
         // Invalidate Cache
         await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
@@ -675,7 +681,9 @@ public class CourseService : ICourseService
             _lessonRepository.Update(lesson);
         }
         _courseRepository.Update(course);
-        await _courseRepository.SaveChangesAsync();
+        int numberOfRowsAffected = await _courseRepository.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
 
         // Invalidate Cache
         await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
@@ -703,7 +711,9 @@ public class CourseService : ICourseService
         };
 
         await _aiIntegrationRepository.AddAsync(integration);
-        await _aiIntegrationRepository.SaveChangesAsync();
+        int numberOfRowsAffected = await _aiIntegrationRepository.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
         return new CourseAIIntegrationResult
         {
             CourseId = command.CourseId,
@@ -744,7 +754,9 @@ public class CourseService : ICourseService
             course.ModerationFeedback = feedback;
             course.UpdatedAt = DateTime.UtcNow;
             _courseRepository.Update(course);
-            await _courseRepository.SaveChangesAsync();
+            int numberOfRowsAffected = await _courseRepository.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
 
             // Invalidate Cache
             await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));

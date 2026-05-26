@@ -17,7 +17,7 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         /// <summary>
         /// Save changes to the database.
         /// </summary>
-        Task SaveChangesAsync();
+        Task<int> SaveChangesAsync();
 
         /// <summary>
         /// Get log by ID.

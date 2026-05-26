@@ -24,5 +24,5 @@ public interface IChatRepository
     Task<List<int>> GetParticipantIdsAsync(int chatId);
     Task<List<UserReport>> GetAllReportsAsync();
     Task<UserReport?> GetReportByIdAsync(int reportId);
-    Task SaveChangesAsync();
+    Task<int> SaveChangesAsync();
 }

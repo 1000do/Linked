@@ -19,7 +19,7 @@ public interface ICouponRepository
     Task<Coupon?> GetByCodeAsync(string couponCode);
     Task AddAsync(Coupon coupon);
     void Update(Coupon coupon);
-    Task SaveChangesAsync();
+    Task<int> SaveChangesAsync();
 
     // ── Instructor: Browse & Attach ───────────────────────────────────────
     /// <summary>

@@ -343,5 +343,5 @@ public class AdminFinanceRepository : IAdminFinanceRepository
         _context.InstructorPayouts.Remove(payout);
     }
 
-    public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
+    public async Task<int> SaveChangesAsync() => await _context.SaveChangesAsync();
 }

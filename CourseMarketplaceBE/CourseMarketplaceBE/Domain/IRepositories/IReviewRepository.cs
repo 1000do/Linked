@@ -17,5 +17,5 @@ public interface IReviewRepository
     void UpdateLessonReview(LessonReview review);
     Task<CourseReview?> GetCourseReviewByIdAsync(int reviewId);
     Task<LessonReview?> GetLessonReviewByIdAsync(int reviewId);
-    Task SaveChangesAsync();
+    Task<int> SaveChangesAsync();
 }
