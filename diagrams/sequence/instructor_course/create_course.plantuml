@@ -30,11 +30,10 @@ mainframe Create Course
 actor Instructor as act
 
 participant "CourseCreationForm" as view
-participant "CourseEditForm" as r_view
+
 participant "InstructorCourseController" as fe_ctrl
 participant "CourseController" as be_ctrl
-' participant ":CreateCourseViewModel" as v_model
-' participant ":CourseCreateRequest" as req
+
 
 participant ":CourseService" as sv
 participant ":CourseResponse" as res
@@ -43,7 +42,7 @@ participant ":Course" as ett
 participant ":CourseRepository" as repo
 participant ":AppDbContext" as ctx
 
-participant Database as db
+Database Database as db
 
 act++
 act->view++:Access course creation form
@@ -81,7 +80,7 @@ ctx->db++: Save changes to Database
 db-->>ctx--: Return numberOfRowsAffected
 ctx-->>repo--: Return numberOfRowsAffected
 repo -->> sv--: Return numberOfRowsAffected
-sv->sv++:Check numberOfRowsAffected > 0
+sv->sv++:Check numberOfRowsAffected
 sv--
 alt numberOfRowsAffected > 0
     sv -> sv++: Call UpdateCourseHashesAsync()
@@ -90,9 +89,8 @@ alt numberOfRowsAffected > 0
     res -->> sv--: Return CourseResponse object
     sv -->>  be_ctrl: Return CourseResponse object
     be_ctrl -->> fe_ctrl:Return statusCode 201
-    fe_ctrl -> r_view++: Redirect to Course Edit Form
-    
-    r_view -->> act--: Display course creation success message
+    fe_ctrl -->> view: Return statusCode 201
+    view -->> act: Display course creation success message
 else numberOfRowsAffected = 0
     sv-->>be_ctrl--:throw InvalidOperationException
     be_ctrl -->> fe_ctrl--:Return statusCode 400
