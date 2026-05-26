@@ -234,21 +234,21 @@ class ApplicationDbContext #E6F3FF {
 
 ' ==================== RELATIONSHIPS ====================
 ' === NEUTRAL ASSOCIATION (headless solid arrow) ===
-Course "0..*" -- "1" Coupon
+Course  --  Coupon
 
 ' === COMPOSITION (filled diamond) ===
-Instructor "1" *-- "0..*" Course 
+Instructor  *-- Course 
 
 ' === AGGREGATION (hollow diamond) ===
-CreateCourseViewModel "1" o-- "0..*" CategoryViewModel
-Category "1" o-- "0..*" Course
-CourseController  -- ICourseService
-CourseService  --  ICourseRepository
-CourseService  --  IInstructorRepository
-CourseService  --  IFileUploadService 
-CourseService  --  IContentHashService
-CourseService  --  IRedisService
-CourseRepository --  ApplicationDbContext
+CreateCourseViewModel  o--  CategoryViewModel
+Category o--  Course
+CourseController  --> ICourseService
+CourseService  -->  ICourseRepository
+CourseService  -->  IInstructorRepository
+CourseService  -->  IFileUploadService 
+CourseService  -->  IContentHashService
+CourseService  -->  IRedisService
+CourseRepository -->  ApplicationDbContext
 
 ' === INTERFACE REALIZATION ===
 CourseService ..|> ICourseService : implements
