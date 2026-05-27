@@ -375,7 +375,8 @@ public class CourseRepository : ICourseRepository
                 CreatedAt = c.CreatedAt,
                 CourseStatus = c.CourseStatus,
                 CourseThumbnailUrl = c.CourseThumbnailUrl,
-                FlagCount = c.CourseFlagCount ?? 0
+                FlagCount = c.CourseFlagCount ?? 0,
+                IsRemoved = c.IsRemoved
             };
 
             // Calculate Urgency

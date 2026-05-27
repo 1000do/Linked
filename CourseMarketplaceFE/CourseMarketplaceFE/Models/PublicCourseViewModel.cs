@@ -29,6 +29,7 @@ namespace CourseMarketplaceFE.Models
         public bool IsOwner { get; set; }
         public int TotalReviews { get; set; }
         public DateTime? LastApprovedAt { get; set; }
+        public string? CourseStatus { get; set; }
     }
 
     public class CourseDetailViewModel : PublicCourseViewModel

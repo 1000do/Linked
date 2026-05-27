@@ -68,6 +68,44 @@ public class LessonController : ControllerBase
         }
     }
 
+    [HttpPatch("{lessonId}/title")]
+    public async Task<IActionResult> UpdateLessonTitle(int lessonId, [FromBody] LessonUpdateTitleRequest request)
+    {
+        try
+        {
+            var instructorId = GetInstructorId();
+            var result = await _lessonService.UpdateLessonTitleAsync(lessonId, request, instructorId);
+            return Ok(ApiResponse<object>.SuccessResponse(result, "Lesson title updated successfully."));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
+    [HttpPatch("materials/{materialId}")]
+    public async Task<IActionResult> UpdateMaterialDetails(int materialId, [FromBody] MaterialUpdateRequest request)
+    {
+        try
+        {
+            var instructorId = GetInstructorId();
+            var result = await _lessonService.UpdateMaterialDetailsAsync(materialId, request, instructorId);
+            return Ok(ApiResponse<object>.SuccessResponse(result, "Material details updated successfully."));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
     [HttpPatch("materials/{materialId}/remove")]
     public async Task<IActionResult> RemoveMaterial(int materialId)
     {

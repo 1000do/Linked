@@ -270,9 +270,22 @@ public class CourseCommandService : ICourseCommandService
                 && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
 
             var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
-            int totalDurationSeconds = 0;
-            foreach (var lesson in lessons.Where(l => !l.IsRemoved))
+            var activeLessons = lessons.Where(l => !l.IsRemoved).ToList();
+            
+            if (!activeLessons.Any())
             {
+                throw new BadRequestException("Cannot submit course for review. The course must have at least one lesson.");
+            }
+
+            int totalDurationSeconds = 0;
+            foreach (var lesson in activeLessons)
+            {
+                bool hasVideo = lesson.LearningMaterials.Any(m => m.LearningStatus != "removed" && (m.MaterialMetadata?.FileType == "video" || m.MaterialMetadata == null));
+                if (!hasVideo)
+                {
+                    throw new BadRequestException($"Cannot submit course for review. Every lesson must contain at least one video. Lesson '{lesson.Title}' is missing a video.");
+                }
+
                 foreach (var material in lesson.LearningMaterials.Where(m => m.LearningStatus != "removed" && (m.MaterialMetadata?.FileType == "video" || m.MaterialMetadata == null)))
                 {
                     totalDurationSeconds += material.MaterialMetadata?.Duration ?? 0;

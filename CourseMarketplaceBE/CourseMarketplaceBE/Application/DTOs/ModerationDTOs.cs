@@ -23,6 +23,7 @@ namespace CourseMarketplaceBE.Application.DTOs
 
         // NEW: Flagging tracking
         public int FlagCount { get; set; }
+        public bool IsRemoved { get; set; }
     }
 
     public class ModerationFilterDto : Common.PagedRequestDto

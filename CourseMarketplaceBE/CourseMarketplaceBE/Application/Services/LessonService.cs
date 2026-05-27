@@ -133,6 +133,63 @@ public class LessonService : ILessonService
         };
     }
 
+    public async Task<LessonResponse> UpdateLessonTitleAsync(int lessonId, LessonUpdateTitleRequest request, int instructorId)
+    {
+        var lesson = await _lessonRepository.GetByIdAsync(lessonId);
+        if (lesson == null)
+            throw new Exception("Lesson not found.");
+
+        if (lesson.Course == null || lesson.Course.InstructorId != instructorId)
+            throw new UnauthorizedAccessException("You do not have permission to update this lesson.");
+
+        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
+        if (activeLockout != null)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update lessons.");
+        }
+
+        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cannot update lesson title while the course is pending review.");
+
+        // Duplicate Title Check
+        var allLessons = await _lessonRepository.GetByCourseIdAsync(lesson.CourseId ?? 0);
+        if (allLessons.Any(l => !l.IsRemoved && l.LessonId != lessonId && l.Title.Trim().Equals(request.Title.Trim(), StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new BadRequestException("Lesson title already exists in this course. Please choose a different title.");
+        }
+
+        lesson.Title = request.Title;
+        lesson.UpdatedAt = DateTime.UtcNow;
+        _lessonRepository.Update(lesson);
+        
+        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
+        {
+            lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
+            lesson.Course.ModerationFeedback = null;
+            _courseRepository.Update(lesson.Course);
+        }
+
+        await _lessonRepository.SaveChangesAsync();
+
+        if (lesson.CourseId.HasValue)
+        {
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
+        }
+
+        return new LessonResponse
+        {
+            LessonId = lesson.LessonId,
+            CourseId = lesson.CourseId,
+            Title = lesson.Title,
+            Description = lesson.Description,
+            ThumbnailUrl = lesson.ThumbnailUrl,
+            CreatedAt = lesson.CreatedAt,
+            UpdatedAt = lesson.UpdatedAt,
+            LessonStatus = lesson.LessonStatus,
+            CourseStatus = lesson.Course.CourseStatus
+        };
+    }
+
     public async Task<MaterialResponse> AddMaterialToLessonAsync(int lessonId, MaterialCreateRequest request, int instructorId)
     {
         var lesson = await _lessonRepository.GetByIdAsync(lessonId);
@@ -274,6 +331,59 @@ public class LessonService : ILessonService
         }
 
         // Invalidate Course Cache
+        if (lesson.CourseId.HasValue)
+        {
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
+        }
+
+        return new MaterialResponse
+        {
+            MaterialId = material.MaterialId,
+            LessonId = material.LessonId,
+            Title = material.Title,
+            Description = material.Description,
+            MaterialUrl = material.MaterialUrl,
+            MaterialMetadata = material.MaterialMetadata,
+            CreatedAt = material.CreatedAt,
+            UpdatedAt = material.UpdatedAt,
+            CourseStatus = lesson.Course?.CourseStatus
+        };
+    }
+
+    public async Task<MaterialResponse> UpdateMaterialDetailsAsync(int materialId, MaterialUpdateRequest request, int instructorId)
+    {
+        var material = await _materialRepository.GetByIdAsync(materialId);
+        if (material == null)
+            throw new Exception("Material not found.");
+
+        var lesson = await _lessonRepository.GetByIdAsync(material.LessonId ?? 0);
+        if (lesson == null || lesson.Course == null || lesson.Course.InstructorId != instructorId)
+            throw new UnauthorizedAccessException("You do not have permission to update this material.");
+
+        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
+        if (activeLockout != null)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update materials.");
+        }
+
+        if ("pending".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cannot update materials while the course is pending review.");
+
+        material.Title = request.Title;
+        material.Description = request.Description;
+        material.UpdatedAt = DateTime.UtcNow;
+
+        _materialRepository.Update(material);
+
+        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
+        {
+            lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
+            lesson.Course.ModerationFeedback = null;
+            _courseRepository.Update(lesson.Course);
+        }
+
+        await _materialRepository.SaveChangesAsync();
+
         if (lesson.CourseId.HasValue)
         {
             await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));

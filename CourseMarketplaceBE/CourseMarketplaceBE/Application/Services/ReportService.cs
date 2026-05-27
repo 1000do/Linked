@@ -330,7 +330,7 @@ public class ReportService : IReportService
                 if (request.RemoveContent)
                 {
                     course.IsRemoved = true;
-                    course.CourseStatus = "archived";
+                    course.CourseStatus = "removed";
                 }
             }
         }

@@ -16,6 +16,7 @@ namespace CourseMarketplaceFE.Models
         public string UrgencyLevel { get; set; } = "Normal";
         public string UrgencyColor { get; set; } = "slate";
         public int FlagCount { get; set; }
+        public bool IsRemoved { get; set; }
     }
 
     public class UserReportModerationViewModel

@@ -70,6 +70,7 @@
                     <option value="Pending">Pending Review</option>
                     <option value="Published">Published</option>
                     <option value="Rejected">Rejected</option>
+                    <option value="Removed">Removed</option>
                     <option value="Archived">Hidden</option>
                 </select>
                 <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
@@ -195,7 +196,8 @@
             Students = c.Students,
             Rating = c.Rating,
             Status = c.Status,
-            UpdatedAt = c.UpdatedAt
+            UpdatedAt = c.UpdatedAt,
+            IsRemoved = c.IsRemoved
         })));
 
         const ITEMS_PER_PAGE = 6;
@@ -220,7 +222,9 @@
                 
                 let statusBadge = '';
                 const status = course.Status.toLowerCase();
-                if (status === 'published') {
+                if (course.IsRemoved) {
+                    statusBadge = `<span class="px-3 py-1 bg-red-100 text-red-700 border border-red-300 rounded-full text-xs font-bold">Removed</span>`;
+                } else if (status === 'published') {
                     statusBadge = `<span class="px-3 py-1 bg-primary-container/20 text-primary border border-primary-container rounded-full text-xs font-bold">Published</span>`;
                 } else if (status === 'pending') {
                     statusBadge = `<span class="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-full text-xs font-bold">Pending Review</span>`;
@@ -320,7 +324,9 @@
                 
                 let statusBadge = '';
                 const status = course.Status.toLowerCase();
-                if (status === 'published') {
+                if (course.IsRemoved) {
+                    statusBadge = `<span class="px-2 py-1 bg-red-100 text-red-700 rounded text-[10px] font-bold">Removed</span>`;
+                } else if (status === 'published') {
                     statusBadge = `<span class="px-2 py-1 bg-white/90 text-primary rounded text-[10px] font-bold">Published</span>`;
                 } else if (status === 'pending') {
                     statusBadge = `<span class="px-2 py-1 bg-white/90 text-amber-600 rounded text-[10px] font-bold">Pending Review</span>`;
@@ -339,7 +345,8 @@
                 }
 
                 const isHidden = status === 'archived' || status === 'hidden';
-                const cardClass = isHidden ? "bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0" : "bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block";
+                let cardClass = isHidden ? "bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0" : "bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block";
+                if (course.IsRemoved) cardClass += " opacity-50 grayscale hover:opacity-75";
 
                 return `<a href="/InstructorCourse/Editor/${course.Id}" class="${cardClass}">
                     <div class="w-full h-40 bg-slate-200 relative overflow-hidden">
@@ -370,7 +377,14 @@
 
             filteredCourses = allCourses.filter(c => {
                 const matchSearch = !searchTerm || c.Title.toLowerCase().includes(searchTerm);
-                const matchStatus = status === 'All' || c.Status.toLowerCase() === status.toLowerCase();
+                let matchStatus = false;
+                if (status === 'All') {
+                    matchStatus = !c.IsRemoved;
+                } else if (status === 'Removed') {
+                    matchStatus = c.IsRemoved;
+                } else {
+                    matchStatus = !c.IsRemoved && c.Status.toLowerCase() === status.toLowerCase();
+                }
                 return matchSearch && matchStatus;
             });
 

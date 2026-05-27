@@ -144,6 +144,7 @@ namespace CourseMarketplaceFE.Controllers
                                     Rating = item.TryGetProperty("ratingAverage", out var r) ? (double)r.GetDecimal() : 0,
                                     Status = item.GetProperty("courseStatus").GetString() ?? "Draft",
                                     ThumbnailUrl = item.TryGetProperty("courseThumbnailUrl", out var t) ? t.GetString() ?? "" : "",
+                                    IsRemoved = item.TryGetProperty("isRemoved", out var ir) && ir.ValueKind != JsonValueKind.Null && ir.GetBoolean(),
                                     UpdatedAt = item.TryGetProperty("updatedAt", out var u) && u.ValueKind != JsonValueKind.Null
                                         ? u.GetDateTime() : DateTime.Now
                                 });
@@ -708,6 +709,44 @@ namespace CourseMarketplaceFE.Controllers
                     return Json(new { success = true });
                 var error = await resp.Content.ReadAsStringAsync();
                 return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateLessonTitle(int lessonId, [FromBody] object requestBody)
+        {
+            try
+            {
+                var resp = await _api.PatchJsonAsync($"lessons/{lessonId}/title", requestBody);
+                var respContent = await resp.Content.ReadAsStringAsync();
+                
+                if (resp.IsSuccessStatusCode)
+                    return Json(new { success = true, data = respContent });
+                
+                return Json(new { success = false, message = respContent });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateMaterialDetails(int materialId, [FromBody] object requestBody)
+        {
+            try
+            {
+                var resp = await _api.PatchJsonAsync($"lessons/materials/{materialId}", requestBody);
+                var respContent = await resp.Content.ReadAsStringAsync();
+                
+                if (resp.IsSuccessStatusCode)
+                    return Json(new { success = true, data = respContent });
+                
+                return Json(new { success = false, message = respContent });
             }
             catch (Exception ex)
             {
