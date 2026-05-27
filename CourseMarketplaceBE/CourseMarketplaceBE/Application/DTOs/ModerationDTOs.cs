@@ -25,7 +25,7 @@ namespace CourseMarketplaceBE.Application.DTOs
         public int FlagCount { get; set; }
     }
 
-    public class ModerationFilterDto
+    public class ModerationFilterDto : Common.PagedRequestDto
     {
         public string? Search { get; set; }
         public string? Category { get; set; }
@@ -341,5 +341,10 @@ namespace CourseMarketplaceBE.Application.DTOs
         public Dictionary<string, float> ConfigJson { get; set; } = new();
         public string? Role { get; set; }
     }
-}
 
+    public class CourseModerationStatsDto
+    {
+        public int PendingCount { get; set; }
+        public int ResolvedTodayCount { get; set; }
+    }
+}

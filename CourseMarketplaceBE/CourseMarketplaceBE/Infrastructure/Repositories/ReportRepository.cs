@@ -26,14 +26,23 @@ public class ReportRepository : IReportRepository
             .Include(r => r.Resolver)
             .FirstOrDefaultAsync(r => r.CourseReportId == reportId);
 
-    public async Task<List<CourseReport>> GetAllCourseReportsAsync(string? status = null)
-        => await _context.CourseReports
+    public async Task<(List<CourseReport> Items, int TotalCount)> GetAllCourseReportsAsync(string? status = null, int page = 1, int pageSize = 10)
+    {
+        var query = _context.CourseReports
             .Include(r => r.Reporter)
             .Include(r => r.Course)
             .Include(r => r.Resolver)
-            .Where(r => status == null || r.CourseReportsStatus == status)
+            .Where(r => status == null || r.CourseReportsStatus == status);
+            
+        var totalCount = await query.CountAsync();
+        var items = await query
             .OrderByDescending(r => r.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+            
+        return (items, totalCount);
+    }
 
     public async Task<List<CourseReport>> GetCourseReportsByReporterAsync(int reporterId)
         => await _context.CourseReports
@@ -70,14 +79,28 @@ public class ReportRepository : IReportRepository
             .Include(r => r.Resolver)
             .FirstOrDefaultAsync(r => r.CourseReviewReportId == reportId);
 
-    public async Task<List<CourseReviewReport>> GetAllCourseReviewReportsAsync(string? status = null)
-        => await _context.CourseReviewReports
+    public async Task<(List<CourseReviewReport> Items, int TotalCount)> GetAllCourseReviewReportsAsync(string? status = null, int page = 1, int pageSize = 10)
+    {
+        var query = _context.CourseReviewReports
             .Include(r => r.Reporter)
-            .Include(r => r.CourseReview)
+            .Include(r => r.CourseReview!)
+                .ThenInclude(cr => cr.Enrollment)
+                    .ThenInclude(e => e.User)
+            .Include(r => r.CourseReview!)
+                .ThenInclude(cr => cr.Enrollment)
+                    .ThenInclude(e => e.Course)
             .Include(r => r.Resolver)
-            .Where(r => status == null || r.UserReportsStatus == status)
+            .Where(r => status == null || r.UserReportsStatus == status);
+            
+        var totalCount = await query.CountAsync();
+        var items = await query
             .OrderByDescending(r => r.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+            
+        return (items, totalCount);
+    }
 
     public async Task<List<CourseReviewReport>> GetCourseReviewReportsByReporterAsync(int reporterId)
         => await _context.CourseReviewReports
@@ -107,14 +130,28 @@ public class ReportRepository : IReportRepository
             .Include(r => r.Resolver)
             .FirstOrDefaultAsync(r => r.LessonReviewReportId == reportId);
 
-    public async Task<List<LessonReviewReport>> GetAllLessonReviewReportsAsync(string? status = null)
-        => await _context.LessonReviewReports
+    public async Task<(List<LessonReviewReport> Items, int TotalCount)> GetAllLessonReviewReportsAsync(string? status = null, int page = 1, int pageSize = 10)
+    {
+        var query = _context.LessonReviewReports
             .Include(r => r.Reporter)
-            .Include(r => r.LessonReview)
+            .Include(r => r.LessonReview!)
+                .ThenInclude(lr => lr.Enrollment)
+                    .ThenInclude(e => e.User)
+            .Include(r => r.LessonReview!)
+                .ThenInclude(lr => lr.Lesson!)
+                    .ThenInclude(l => l.Course)
             .Include(r => r.Resolver)
-            .Where(r => status == null || r.UserReportsStatus == status)
+            .Where(r => status == null || r.UserReportsStatus == status);
+            
+        var totalCount = await query.CountAsync();
+        var items = await query
             .OrderByDescending(r => r.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+            
+        return (items, totalCount);
+    }
 
     public async Task<List<LessonReviewReport>> GetLessonReviewReportsByReporterAsync(int reporterId)
         => await _context.LessonReviewReports

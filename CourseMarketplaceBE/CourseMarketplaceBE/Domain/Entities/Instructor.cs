@@ -23,9 +23,6 @@ public partial class Instructor
     /// <summary>Pending | Approved | Rejected</summary>
     public string? ApprovalStatus { get; set; }
 
-    // ── Khóa quyền Instructor do vi phạm (Cờ 3) ──────────────────────
-    public DateTime? LockoutInstructorUntil { get; set; }
-
     // ── Stripe Connect Onboarding ────────────────────────────────────
     public string? StripeAccountId { get; set; }
     public string? StripeOnboardingStatus { get; set; }

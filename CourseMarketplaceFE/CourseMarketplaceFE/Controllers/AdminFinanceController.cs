@@ -94,24 +94,6 @@ public class AdminFinanceController : Controller
         public List<WithdrawalHistoryVM> History { get; set; } = new();
     }
 
-    public class PayoutPagedVM
-    {
-        public List<PayoutDetailVM> Items { get; set; } = new();
-        public int TotalCount { get; set; }
-        public int Page { get; set; }
-        public int PageSize { get; set; }
-        public int TotalPages { get; set; }
-    }
-
-    public class WithdrawalPagedVM
-    {
-        public List<WithdrawalHistoryVM> Items { get; set; } = new();
-        public int TotalCount { get; set; }
-        public int Page { get; set; }
-        public int PageSize { get; set; }
-        public int TotalPages { get; set; }
-    }
-
     public class RefundRequestVM
     {
         public int TransactionId { get; set; }
@@ -153,9 +135,9 @@ public class AdminFinanceController : Controller
         public FinanceDashboardVM Dashboard { get; set; } = new();
         public WithdrawPageVM Withdraw { get; set; } = new();
         public CourseMarketplaceFE.Controllers.TransactionController.TransactionPagedVM Transactions { get; set; } = new();
-        public PayoutPagedVM Payouts { get; set; } = new();
-        public WithdrawalPagedVM Withdrawals { get; set; } = new();
-        public List<RefundRequestVM> PendingRefunds { get; set; } = new();
+        public CourseMarketplaceFE.Models.PagedResult<PayoutDetailVM> Payouts { get; set; } = new();
+        public CourseMarketplaceFE.Models.PagedResult<WithdrawalHistoryVM> Withdrawals { get; set; } = new();
+        public CourseMarketplaceFE.Models.PagedResult<RefundRequestVM> PendingRefunds { get; set; } = new();
         public string PayoutDays { get; set; } = "15";
     }
 
@@ -189,12 +171,15 @@ public class AdminFinanceController : Controller
         if (!string.IsNullOrEmpty(status)) txQuery += $"&status={Uri.EscapeDataString(status)}";
 
         // Gọi song song 7 API để giảm latency
+        int payoutPageSize = 10;
+        int withdrawPageSize = 10;
+        
         var summaryTask = _api.GetAsync($"admin/finance/summary?year={selectedYear}&month={selectedMonth}");
-        var payoutsTask = _api.GetAsync($"admin/finance/payouts?year={selectedYear}&month={selectedMonth}");
+        var payoutsTask = _api.GetAsync($"admin/finance/payouts?year={selectedYear}&month={selectedMonth}&page={payoutPage}&pageSize={payoutPageSize}");
         var balanceTask = _api.GetAsync("admin/finance/balance");
-        var historyTask = _api.GetAsync($"admin/finance/withdrawals?year={selectedYear}&month={selectedMonth}");
+        var historyTask = _api.GetAsync($"admin/finance/withdrawals?year={selectedYear}&month={selectedMonth}&page={withdrawPage}&pageSize={withdrawPageSize}");
         var txTask = _api.GetAsync(txQuery);
-        var refundTask = _api.GetAsync("admin/finance/refunds/pending");
+        var refundTask = _api.GetAsync($"admin/finance/refunds/pending?page={page}&pageSize={pageSize}");
         var payoutDaysTask = _api.GetAsync("admin/finance/payout-days");
 
         await Task.WhenAll(summaryTask, payoutsTask, balanceTask, historyTask, txTask, refundTask, payoutDaysTask);
@@ -224,9 +209,11 @@ public class AdminFinanceController : Controller
         if (payoutsResp.IsSuccessStatusCode)
         {
             var json = await payoutsResp.Content.ReadAsStringAsync();
-            var parsed = JsonSerializer.Deserialize<ApiResp<List<PayoutDetailVM>>>(json, _jsonOpts);
+            var parsed = JsonSerializer.Deserialize<ApiResp<CourseMarketplaceFE.Models.PagedResult<PayoutDetailVM>>>(json, _jsonOpts);
             if (parsed?.Data != null)
-                vm.Dashboard.Payouts = parsed.Data;
+            {
+                vm.Payouts = parsed.Data;
+            }
         }
 
         // Parse balance
@@ -244,9 +231,11 @@ public class AdminFinanceController : Controller
         if (historyResp.IsSuccessStatusCode)
         {
             var json = await historyResp.Content.ReadAsStringAsync();
-            var parsed = JsonSerializer.Deserialize<ApiResp<List<WithdrawalHistoryVM>>>(json, _jsonOpts);
+            var parsed = JsonSerializer.Deserialize<ApiResp<CourseMarketplaceFE.Models.PagedResult<WithdrawalHistoryVM>>>(json, _jsonOpts);
             if (parsed?.Data != null)
-                vm.Withdraw.History = parsed.Data;
+            {
+                vm.Withdrawals = parsed.Data;
+            }
         }
 
         // Parse transactions
@@ -264,28 +253,10 @@ public class AdminFinanceController : Controller
         if (refundResp.IsSuccessStatusCode)
         {
             var json = await refundResp.Content.ReadAsStringAsync();
-            var parsed = JsonSerializer.Deserialize<ApiResp<List<RefundRequestVM>>>(json, _jsonOpts);
+            var parsed = JsonSerializer.Deserialize<ApiResp<CourseMarketplaceFE.Models.PagedResult<RefundRequestVM>>>(json, _jsonOpts);
             if (parsed?.Data != null)
                 vm.PendingRefunds = parsed.Data;
         }
-
-        // Slice & Paginate Payouts
-        int payoutPageSize = 10;
-        var allPayouts = vm.Dashboard.Payouts;
-        vm.Payouts.TotalCount = allPayouts.Count;
-        vm.Payouts.Page = payoutPage;
-        vm.Payouts.PageSize = payoutPageSize;
-        vm.Payouts.TotalPages = (int)Math.Ceiling((double)allPayouts.Count / payoutPageSize);
-        vm.Payouts.Items = allPayouts.Skip((payoutPage - 1) * payoutPageSize).Take(payoutPageSize).ToList();
-
-        // Slice & Paginate Withdrawals
-        int withdrawPageSize = 10;
-        var allWithdrawals = vm.Withdraw.History;
-        vm.Withdrawals.TotalCount = allWithdrawals.Count;
-        vm.Withdrawals.Page = withdrawPage;
-        vm.Withdrawals.PageSize = withdrawPageSize;
-        vm.Withdrawals.TotalPages = (int)Math.Ceiling((double)allWithdrawals.Count / withdrawPageSize);
-        vm.Withdrawals.Items = allWithdrawals.Skip((withdrawPage - 1) * withdrawPageSize).Take(withdrawPageSize).ToList();
 
         return View(vm);
     }

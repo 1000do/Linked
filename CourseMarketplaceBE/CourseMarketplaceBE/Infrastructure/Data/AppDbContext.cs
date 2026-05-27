@@ -17,6 +17,7 @@ public partial class AppDbContext : DbContext
     // ─── DbSets ───────────────────────────────────────────────────────────────
 
     public virtual DbSet<Account> Accounts { get; set; }
+    public virtual DbSet<Lockout> Lockouts { get; set; }
     public virtual DbSet<CourseAiUsageLog> CourseAiUsageLogs { get; set; }
 
     public virtual DbSet<CourseReviewModerationLog> CourseReviewModerationLogs { get; set; }
@@ -94,8 +95,6 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.PhoneNumber).HasMaxLength(50).HasColumnName("phone_number");
             entity.Property(e => e.AccountStatus).HasMaxLength(50).HasColumnName("account_status");
             entity.Property(e => e.AccountFlagCount).HasDefaultValue(0).HasColumnName("account_flag_count");
-            entity.Property(e => e.CommentLockoutEnd).HasColumnType("timestamp without time zone").HasColumnName("comment_lockout_end");
-            entity.Property(e => e.AccountLockoutEnd).HasColumnType("timestamp without time zone").HasColumnName("account_lockout_end");
             entity.Property(e => e.AuthProvider).HasMaxLength(50).HasColumnName("auth_provider");
             entity.Property(e => e.AvatarUrl).HasColumnName("avatar_url");
             entity.Property(e => e.RefreshToken).HasColumnName("refresh_token");
@@ -354,6 +353,9 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("joined_at");
+            entity.Property(e => e.ClearedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("cleared_at");
 
             entity.HasOne(d => d.Account).WithMany(p => p.ChatParticipants)
                 .HasForeignKey(d => d.AccountId)
@@ -573,7 +575,6 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.FacebookUrl).HasColumnName("facebook_url");
             entity.Property(e => e.DocumentUrl).HasColumnName("document_url");
             entity.Property(e => e.ApprovalStatus).HasMaxLength(50).HasDefaultValue("Pending").HasColumnName("approval_status");
-            entity.Property(e => e.LockoutInstructorUntil).HasColumnType("timestamp without time zone").HasColumnName("lockout_instructor_until");
 
             // Stripe
             entity.Property(e => e.StripeAccountId).HasMaxLength(255).HasColumnName("stripe_account_id");
@@ -620,6 +621,26 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.InstructorId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("instructor_payouts_instructor_id_fkey");
+        });
+
+        // ── lockouts ────────────────────────────────────────────────────────
+        modelBuilder.Entity<Lockout>(entity =>
+        {
+            entity.HasKey(e => e.LockoutId).HasName("lockouts_pkey");
+            entity.ToTable("lockouts");
+
+            entity.Property(e => e.LockoutId).HasColumnName("lockout_id");
+            entity.Property(e => e.AccountId).HasColumnName("account_id");
+            entity.Property(e => e.LockoutType).HasMaxLength(50).HasColumnName("lockout_type");
+            entity.Property(e => e.LockoutLevel).HasMaxLength(50).HasColumnName("lockout_level");
+            entity.Property(e => e.LockoutStart).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("lockout_start");
+            entity.Property(e => e.LockoutEnd).HasColumnName("lockout_end");
+
+            entity.HasOne(d => d.Account)
+                .WithMany(p => p.Lockouts)
+                .HasForeignKey(d => d.AccountId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("lockouts_account_id_fkey");
         });
 
         // ── learning_materials ────────────────────────────────────────────────

@@ -89,6 +89,18 @@ public class ChatRepository : IChatRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task<ChatParticipant?> GetParticipantAsync(int chatId, int accountId)
+    {
+        return await _context.ChatParticipants
+            .FirstOrDefaultAsync(p => p.ChatId == chatId && p.AccountId == accountId);
+    }
+
+    public async Task UpdateParticipantAsync(ChatParticipant participant)
+    {
+        _context.Entry(participant).State = EntityState.Modified;
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<ChatParticipant?> FindPrivateChatAsync(int accountId1, int accountId2, string? contextType, int? contextId)
     {
         return await _context.ChatParticipants
@@ -166,12 +178,18 @@ public class ChatRepository : IChatRepository
             .ToListAsync();
     }
 
-    public async Task<List<UserReport>> GetAllReportsAsync()
+    public async Task<(List<UserReport> Items, int TotalCount)> GetAllReportsAsync(int page = 1, int pageSize = 10)
     {
-        return await _context.UserReports
+        var query = _context.UserReports.AsQueryable();
+        var totalCount = await query.CountAsync();
+        var items = await query
             .Include(r => r.Reporter)
             .OrderByDescending(r => r.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+            
+        return (items, totalCount);
     }
 
     public async Task<UserReport?> GetReportByIdAsync(int reportId)

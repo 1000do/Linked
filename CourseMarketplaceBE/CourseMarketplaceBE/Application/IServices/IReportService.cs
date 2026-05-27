@@ -32,9 +32,9 @@ public interface IReportService
 
     // ── Staff / Admin: Xem tất cả reports ──────────────────────────────────
 
-    Task<IEnumerable<CourseReportDetailResponse>> GetAllCourseReportsAsync(string? status = null);
-    Task<IEnumerable<ReviewReportDetailResponse>> GetAllCourseReviewReportsAsync(string? status = null);
-    Task<IEnumerable<ReviewReportDetailResponse>> GetAllLessonReviewReportsAsync(string? status = null);
+    Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseReportDetailResponse>> GetAllCourseReportsAsync(string? status = null, int page = 1, int pageSize = 10);
+    Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<ReviewReportDetailResponse>> GetAllCourseReviewReportsAsync(string? status = null, int page = 1, int pageSize = 10);
+    Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<ReviewReportDetailResponse>> GetAllLessonReviewReportsAsync(string? status = null, int page = 1, int pageSize = 10);
     Task<ReportStatsResponse> GetReportStatsAsync();
 
     // ── Staff / Admin: Xử lý report ────────────────────────────────────────

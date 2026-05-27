@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
@@ -18,6 +19,8 @@ public class ReportService : IReportService
     private readonly INotificationService _notificationService;
     private readonly IUserRepository _userRepo;
     private readonly IInstructorRepository _instructorRepo;
+    private readonly IMapper _mapper;
+    private readonly ILockoutRepository _lockoutRepo;
 
     public ReportService(
         IReportRepository reportRepo,
@@ -26,7 +29,9 @@ public class ReportService : IReportService
         IReviewRepository reviewRepo,
         INotificationService notificationService,
         IUserRepository userRepo,
-        IInstructorRepository instructorRepo)
+        IInstructorRepository instructorRepo,
+        IMapper mapper,
+        ILockoutRepository lockoutRepo)
     {
         _reportRepo = reportRepo;
         _checkoutRepo = checkoutRepo;
@@ -35,6 +40,8 @@ public class ReportService : IReportService
         _notificationService = notificationService;
         _userRepo = userRepo;
         _instructorRepo = instructorRepo;
+        _mapper = mapper;
+        _lockoutRepo = lockoutRepo;
     }
 
     // ── User / Instructor: Tạo report khóa học ─────────────────────────────
@@ -43,6 +50,10 @@ public class ReportService : IReportService
     {
         var course = await _courseRepo.GetByIdAsync(request.CourseId)
             ?? throw new InvalidOperationException("Course not found.");
+
+        if (course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase) || 
+            course.CourseStatus.Equals("under_review", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("This course is currently under review and cannot be reported.");
 
         // Cannot report your own course
         if (course.InstructorId == reporterId)
@@ -139,18 +150,7 @@ public class ReportService : IReportService
     public async Task<IEnumerable<MyCourseReportResponse>> GetMyCourseReportsAsync(int reporterId)
     {
         var reports = await _reportRepo.GetCourseReportsByReporterAsync(reporterId);
-        return reports.Select(r => new MyCourseReportResponse
-        {
-            ReportId = r.CourseReportId,
-            CourseId = r.CourseId,
-            CourseTitle = r.Course?.Title,
-            Reason = r.Reason,
-            Description = r.Description,
-            Status = r.CourseReportsStatus,
-            ResolutionNote = r.ResolutionNote,
-            CreatedAt = r.CreatedAt,
-            ResolvedAt = r.ResolvedAt
-        });
+        return _mapper.Map<IEnumerable<MyCourseReportResponse>>(reports);
     }
 
     public async Task<IEnumerable<MyReviewReportResponse>> GetMyReviewReportsAsync(int reporterId)
@@ -158,33 +158,9 @@ public class ReportService : IReportService
         var courseReviewReports = await _reportRepo.GetCourseReviewReportsByReporterAsync(reporterId);
         var lessonReviewReports = await _reportRepo.GetLessonReviewReportsByReporterAsync(reporterId);
 
-        var courseResults = courseReviewReports.Select(r => new MyReviewReportResponse
-        {
-            ReportId = r.CourseReviewReportId,
-            ReviewType = "course_review",
-            ReviewId = r.CourseReviewId,
-            ReviewComment = r.CourseReview?.Comment,
-            Reason = r.Reason,
-            Description = r.Description,
-            Status = r.UserReportsStatus,
-            ResolutionNote = r.ResolutionNote,
-            CreatedAt = r.CreatedAt,
-            ResolvedAt = r.ResolvedAt
-        });
+        var courseResults = _mapper.Map<IEnumerable<MyReviewReportResponse>>(courseReviewReports);
 
-        var lessonResults = lessonReviewReports.Select(r => new MyReviewReportResponse
-        {
-            ReportId = r.LessonReviewReportId,
-            ReviewType = "lesson_review",
-            ReviewId = r.LessonReviewId,
-            ReviewComment = r.LessonReview?.Comment,
-            Reason = r.Reason,
-            Description = r.Description,
-            Status = r.UserReportsStatus,
-            ResolutionNote = r.ResolutionNote,
-            CreatedAt = r.CreatedAt,
-            ResolvedAt = r.ResolvedAt
-        });
+        var lessonResults = _mapper.Map<IEnumerable<MyReviewReportResponse>>(lessonReviewReports);
 
         return courseResults.Concat(lessonResults).OrderByDescending(r => r.CreatedAt);
     }
@@ -199,74 +175,43 @@ public class ReportService : IReportService
             throw new UnauthorizedAccessException("You do not have permission to view reports for this course.");
 
         var reports = await _reportRepo.GetCourseReportsByCourseAsync(courseId);
-        return reports.Select(r => MapToCourseReportDetail(r));
+        return _mapper.Map<IEnumerable<CourseReportDetailResponse>>(reports);
     }
 
     // ── Staff / Admin: Xem tất cả reports ──────────────────────────────────
 
-    public async Task<IEnumerable<CourseReportDetailResponse>> GetAllCourseReportsAsync(string? status = null)
+    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseReportDetailResponse>> GetAllCourseReportsAsync(string? status = null, int page = 1, int pageSize = 10)
     {
-        var reports = await _reportRepo.GetAllCourseReportsAsync(status);
-        return reports.Select(r => MapToCourseReportDetail(r));
+        var (reports, totalCount) = await _reportRepo.GetAllCourseReportsAsync(status, page, pageSize);
+        var items = _mapper.Map<IEnumerable<CourseReportDetailResponse>>(reports).ToList();
+        return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseReportDetailResponse>(items, totalCount, page, pageSize);
     }
 
-    public async Task<IEnumerable<ReviewReportDetailResponse>> GetAllCourseReviewReportsAsync(string? status = null)
+    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<ReviewReportDetailResponse>> GetAllCourseReviewReportsAsync(string? status = null, int page = 1, int pageSize = 10)
     {
-        var reports = await _reportRepo.GetAllCourseReviewReportsAsync(status);
-        return reports.Select(r => new ReviewReportDetailResponse
-        {
-            ReportId = r.CourseReviewReportId,
-            ReviewType = "course_review",
-            ReporterId = r.ReporterId,
-            ReporterEmail = r.Reporter?.Email,
-            ReporterName = null,
-            ReviewId = r.CourseReviewId,
-            ReviewComment = r.CourseReview?.Comment,
-            ReviewRating = r.CourseReview?.Rating,
-            Reason = r.Reason,
-            Description = r.Description,
-            Status = r.UserReportsStatus,
-            ResolutionNote = r.ResolutionNote,
-            ResolverEmail = r.Resolver?.Email,
-            CreatedAt = r.CreatedAt,
-            ResolvedAt = r.ResolvedAt
-        });
+        var (reports, totalCount) = await _reportRepo.GetAllCourseReviewReportsAsync(status, page, pageSize);
+        var items = _mapper.Map<IEnumerable<ReviewReportDetailResponse>>(reports).ToList();
+        return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<ReviewReportDetailResponse>(items, totalCount, page, pageSize);
     }
 
-    public async Task<IEnumerable<ReviewReportDetailResponse>> GetAllLessonReviewReportsAsync(string? status = null)
+    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<ReviewReportDetailResponse>> GetAllLessonReviewReportsAsync(string? status = null, int page = 1, int pageSize = 10)
     {
-        var reports = await _reportRepo.GetAllLessonReviewReportsAsync(status);
-        return reports.Select(r => new ReviewReportDetailResponse
-        {
-            ReportId = r.LessonReviewReportId,
-            ReviewType = "lesson_review",
-            ReporterId = r.ReporterId,
-            ReporterEmail = r.Reporter?.Email,
-            ReporterName = null,
-            ReviewId = r.LessonReviewId,
-            ReviewComment = r.LessonReview?.Comment,
-            ReviewRating = r.LessonReview?.Rating,
-            Reason = r.Reason,
-            Description = r.Description,
-            Status = r.UserReportsStatus,
-            ResolutionNote = r.ResolutionNote,
-            ResolverEmail = r.Resolver?.Email,
-            CreatedAt = r.CreatedAt,
-            ResolvedAt = r.ResolvedAt
-        });
+        var (reports, totalCount) = await _reportRepo.GetAllLessonReviewReportsAsync(status, page, pageSize);
+        var items = _mapper.Map<IEnumerable<ReviewReportDetailResponse>>(reports).ToList();
+        return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<ReviewReportDetailResponse>(items, totalCount, page, pageSize);
     }
 
     public async Task<ReportStatsResponse> GetReportStatsAsync()
     {
-        var pendingCourse = await _reportRepo.GetAllCourseReportsAsync("pending");
-        var pendingCourseReview = await _reportRepo.GetAllCourseReviewReportsAsync("pending");
-        var pendingLessonReview = await _reportRepo.GetAllLessonReviewReportsAsync("pending");
+        var (pendingCourse, _) = await _reportRepo.GetAllCourseReportsAsync("pending", 1, 100000);
+        var (pendingCourseReview, _) = await _reportRepo.GetAllCourseReviewReportsAsync("pending", 1, 100000);
+        var (pendingLessonReview, _) = await _reportRepo.GetAllLessonReviewReportsAsync("pending", 1, 100000);
 
         var today = DateTime.Today;
 
-        var allCourse = await _reportRepo.GetAllCourseReportsAsync();
-        var allCourseReview = await _reportRepo.GetAllCourseReviewReportsAsync();
-        var allLessonReview = await _reportRepo.GetAllLessonReviewReportsAsync();
+        var (allCourse, _) = await _reportRepo.GetAllCourseReportsAsync(null, 1, 100000);
+        var (allCourseReview, _) = await _reportRepo.GetAllCourseReviewReportsAsync(null, 1, 100000);
+        var (allLessonReview, _) = await _reportRepo.GetAllLessonReviewReportsAsync(null, 1, 100000);
 
         int resolvedToday = allCourse.Count(r => r.ResolvedAt?.Date == today && r.CourseReportsStatus == "resolved")
                           + allCourseReview.Count(r => r.ResolvedAt?.Date == today && r.UserReportsStatus == "resolved")
@@ -357,12 +302,17 @@ public class ReportService : IReportService
                     if (course.InstructorId.HasValue)
                     {
                         var instructor = await _instructorRepo.GetByIdAsync(course.InstructorId.Value);
-                        if (instructor != null)
-                        {
-                            instructor.LockoutInstructorUntil = DateTime.Now.AddDays(30);
-                            _instructorRepo.Update(instructor);
-                            await NotifyStudentsAboutInstructorSuspensionAsync(course.InstructorId.Value);
-                        }
+                          if (instructor != null)
+                          {
+                              await _lockoutRepo.AddAsync(new Lockout
+                              {
+                                  AccountId = instructor.InstructorId,
+                                  LockoutType = "instructor",
+                                  LockoutLevel = "severe",
+                                  LockoutEnd = DateTime.Now.AddDays(30)
+                              });
+                              await NotifyStudentsAboutInstructorSuspensionAsync(course.InstructorId.Value);
+                          }
                         
                         // Reset course flags sau khi đã khóa instructor (thi hành xong án)
                         course.CourseFlagCount = 0;
@@ -443,11 +393,7 @@ public class ReportService : IReportService
                 review.UpdatedAt = DateTime.Now;
                 _reviewRepo.UpdateCourseReview(review);
                 
-                // Strike mechanism cho review vi phạm
-                if (review.Enrollment != null && review.Enrollment.UserId != 0)
-                {
-                    await ProcessReviewStrikeAsync((int)review.Enrollment.UserId, request.ResolutionNote ?? "Review violation");
-                }
+                await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote);
             }
         }
 
@@ -495,11 +441,7 @@ public class ReportService : IReportService
                 review.UpdatedAt = DateTime.Now;
                 _reviewRepo.UpdateLessonReview(review);
 
-                // Strike mechanism cho review vi phạm
-                if (review.Enrollment != null && review.Enrollment.UserId != 0)
-                {
-                    await ProcessReviewStrikeAsync((int)review.Enrollment.UserId, request.ResolutionNote ?? "Review violation");
-                }
+                await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote);
             }
         }
 
@@ -576,12 +518,24 @@ public class ReportService : IReportService
         }
         else if (account.AccountFlagCount == 2)
         {
-            account.CommentLockoutEnd = DateTime.Now.AddDays(7);
+            await _lockoutRepo.AddAsync(new Lockout
+            {
+                AccountId = userId,
+                LockoutType = "review",
+                LockoutLevel = "moderate",
+                LockoutEnd = DateTime.Now.AddDays(7)
+            });
             await _notificationService.SendNotificationAsync(userId, "Commenting Restricted (2nd Violation)", "Due to repeated violations, you are restricted from posting comments or reviews for 7 days.", null!);
         }
         else if (account.AccountFlagCount >= 3)
         {
-            account.AccountLockoutEnd = DateTime.Now.AddDays(30);
+            await _lockoutRepo.AddAsync(new Lockout
+            {
+                AccountId = userId,
+                LockoutType = "account",
+                LockoutLevel = "severe",
+                LockoutEnd = DateTime.Now.AddDays(30)
+            });
             account.AccountStatus = "Banned";
             await _notificationService.SendNotificationAsync(userId, "Account Suspended (3rd Violation)", "Your account has been suspended for 30 days due to repeated and severe community standards violations.", null!);
 
@@ -594,22 +548,12 @@ public class ReportService : IReportService
         await _userRepo.UpdateAccountAsync(account);
     }
 
-    private CourseReportDetailResponse MapToCourseReportDetail(CourseReport r)
-        => new CourseReportDetailResponse
+    private async Task HandleReviewRemovalPenaltyAsync(Enrollment? enrollment, string? resolutionNote)
+    {
+        if (enrollment != null && enrollment.UserId != 0)
         {
-            ReportId = r.CourseReportId,
-            ReporterId = r.ReporterId,
-            ReporterEmail = r.Reporter?.Email,
-            CourseId = r.CourseId,
-            CourseTitle = r.Course?.Title,
-            CourseFlagCount = r.Course?.CourseFlagCount ?? 0,
-            Reason = r.Reason,
-            Description = r.Description,
-            Status = r.CourseReportsStatus,
-            ResolutionNote = r.ResolutionNote,
-            ResolverEmail = r.Resolver?.Email,
-            CreatedAt = r.CreatedAt,
-            ResolvedAt = r.ResolvedAt,
-            AccessGrantedUntil = r.AccessGrantedUntil
-        };
+            await ProcessReviewStrikeAsync((int)enrollment.UserId, resolutionNote ?? "Review violation");
+        }
+    }
+
 }

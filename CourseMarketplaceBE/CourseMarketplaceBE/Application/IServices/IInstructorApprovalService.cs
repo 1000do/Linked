@@ -1,13 +1,11 @@
-﻿using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs;
+using System.Threading.Tasks;
 
 namespace CourseMarketplaceBE.Application.IServices
 {
     public interface IInstructorApprovalService
     {
-        // Lấy danh sách giảng viên đang chờ duyệt
-        Task<IEnumerable<InstructorApprovalDto>> GetPendingListAsync();
-
-        // Xử lý Duyệt hoặc Từ chối
+        Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<InstructorApprovalDto>> GetPendingListAsync(int page = 1, int pageSize = 10);
         Task<bool> ApproveOrRejectAsync(UpdateApprovalStatusDto dto);
     }
 }

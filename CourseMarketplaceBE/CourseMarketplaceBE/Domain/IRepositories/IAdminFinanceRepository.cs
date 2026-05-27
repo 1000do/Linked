@@ -44,7 +44,7 @@ public interface IAdminFinanceRepository
     ///   instructor_payouts → transactions → order_items → courses
     ///   instructor_payouts → instructors → users → accounts
     /// </summary>
-    Task<List<PayoutDetailProjection>> GetPayoutDetailsAsync(int? year = null, int? month = null);
+    Task<(List<PayoutDetailProjection> Items, int TotalCount)> GetPayoutDetailsAsync(int? year = null, int? month = null, int page = 1, int pageSize = 10);
 
     /// <summary>Lấy thông tin payout theo Id.</summary>
     Task<Domain.Entities.InstructorPayout?> GetPayoutByIdAsync(int payoutId);
@@ -70,14 +70,14 @@ public interface IAdminFinanceRepository
     Task AddWithdrawalAsync(Domain.Entities.PlatformWithdrawal withdrawal);
 
     /// <summary>Lấy danh sách rút tiền Sàn (mới nhất trước).</summary>
-    Task<List<Domain.Entities.PlatformWithdrawal>> GetWithdrawalsAsync();
+    Task<(List<Domain.Entities.PlatformWithdrawal> Items, int TotalCount)> GetWithdrawalsAsync(int? year = null, int? month = null, int page = 1, int pageSize = 10);
 
     // ── Refund ─────────────────────────────────────────────────────────────
 
     /// <summary>
     /// Lấy danh sách các giao dịch có yêu cầu hoàn tiền đang chờ duyệt (status = 'refund_pending').
     /// </summary>
-    Task<List<Domain.Entities.Transaction>> GetPendingRefundRequestsAsync();
+    Task<(List<Domain.Entities.Transaction> Items, int TotalCount)> GetPendingRefundRequestsAsync(int page = 1, int pageSize = 10);
 
     /// <summary>
     /// Lấy Transaction entity đầy đủ kèm InstructorPayouts + OrderItem → Course → Enrollment.

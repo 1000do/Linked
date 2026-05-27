@@ -132,6 +132,12 @@ public class ReviewReportDetailResponse
     public string? ReviewAuthorEmail { get; set; }
     public string? ReviewAuthorName { get; set; }
 
+    // Target content info
+    public int? CourseId { get; set; }
+    public string? CourseTitle { get; set; }
+    public int? LessonId { get; set; }
+    public string? LessonTitle { get; set; }
+
     // Report details
     public string? Reason { get; set; }
     public string? Description { get; set; }

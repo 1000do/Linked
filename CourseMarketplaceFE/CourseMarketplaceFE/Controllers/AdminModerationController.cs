@@ -17,12 +17,14 @@ namespace CourseMarketplaceFE.Controllers
             _apiClient = apiClient;
         }
 
-        public async Task<IActionResult> Courses(string? search, string? category, string? status, string? sortBy)
+        public async Task<IActionResult> Courses(string? search, string? category, string? status, string? sortBy, int page = 1, int pageSize = 10)
         {
             ViewBag.Search = search;
             ViewBag.Category = category;
             ViewBag.Status = status ?? "all";
             ViewBag.SortBy = sortBy ?? "oldest";
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
 
             // Fetch categories
             var catRes = await _apiClient.GetAsync("/api/public/categories");
@@ -33,15 +35,31 @@ namespace CourseMarketplaceFE.Controllers
                 ViewBag.Categories = json.RootElement.GetProperty("data").ToString();
             }
 
-            var url = $"/api/admin/moderation/courses/pending?search={search}&category={category}&status={status}&sortBy={sortBy}";
+            var url = $"/api/admin/moderation/courses/pending?search={search}&category={category}&status={status}&sortBy={sortBy}&page={page}&pageSize={pageSize}";
             var response = await _apiClient.GetAsync(url);
+            
+            var statsUrl = "/api/admin/moderation/courses/stats";
+            var statsRes = await _apiClient.GetAsync(statsUrl);
+            if (statsRes.IsSuccessStatusCode)
+            {
+                var statsContent = await statsRes.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(statsContent);
+                var data = json.RootElement.GetProperty("data");
+                ViewBag.PendingCount = data.GetProperty("pendingCount").GetInt32();
+                ViewBag.ResolvedTodayCount = data.GetProperty("resolvedTodayCount").GetInt32();
+            }
+            else 
+            {
+                ViewBag.PendingCount = 0;
+                ViewBag.ResolvedTodayCount = 0;
+            }
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                var courses = JsonSerializer.Deserialize<List<CourseModerationViewModel>>(content, _jsonOptions);
-                return View(courses);
+                var pagedResult = JsonSerializer.Deserialize<PagedResult<CourseModerationViewModel>>(content, _jsonOptions);
+                return View(pagedResult ?? new PagedResult<CourseModerationViewModel>());
             }
-            return View(new List<CourseModerationViewModel>());
+            return View(new PagedResult<CourseModerationViewModel>());
         }
 
         [HttpPost]

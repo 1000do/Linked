@@ -1,4 +1,4 @@
-﻿namespace CourseMarketplaceBE.Application.DTOs
+namespace CourseMarketplaceBE.Application.DTOs
 {
     public class NotificationAdminResponseDto
     {
@@ -8,7 +8,7 @@
         public bool? IsRead { get; set; }
         public DateTime? CreatedAt { get; set; }
 
-        // Hai trường quan trọng manager cần quan sát
+        // Hai tru?ng quan tr?ng manager c?n quan s�t
         public string? ReceiverEmail { get; set; }
         public string? ReceiverFullName { get; set; }
     }

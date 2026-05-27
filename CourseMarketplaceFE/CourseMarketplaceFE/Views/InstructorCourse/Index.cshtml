@@ -70,6 +70,7 @@
                     <option value="Pending">Pending Review</option>
                     <option value="Published">Published</option>
                     <option value="Rejected">Rejected</option>
+                    <option value="Archived">Hidden</option>
                 </select>
                 <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
             </div>
@@ -258,8 +259,10 @@
                 }
 
                 const titleSafe = course.Title.replace(/'/g, "\\'");
+                const isHidden = status === 'archived' || status === 'hidden';
+                const rowClass = isHidden ? "hover:bg-slate-50/50 transition-colors group opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0" : "hover:bg-slate-50/50 transition-colors group";
 
-                return `<tr class="hover:bg-slate-50/50 transition-colors group">
+                return `<tr class="${rowClass}">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-4">
                             <div class="w-24 h-16 bg-slate-200 rounded-lg overflow-hidden flex-shrink-0 relative">
@@ -286,8 +289,8 @@
                     </td>
                     <td class="px-6 py-4 text-right">
                         <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <a href="/InstructorCourse/Editor/${course.Id}" title="Edit course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
-                                <span class="material-symbols-outlined text-[18px]">edit</span>
+                            <a href="/InstructorCourse/Editor/${course.Id}" title="${isHidden ? 'View course' : 'Edit course'}" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">${isHidden ? 'visibility' : 'edit'}</span>
                             </a>
                             ${hideBtn}
                             <button title="Delete course" onclick="confirmDelete(${course.Id}, '${titleSafe}', ${course.Students})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
@@ -335,7 +338,10 @@
                     </span>`;
                 }
 
-                return `<a href="/InstructorCourse/Editor/${course.Id}" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block">
+                const isHidden = status === 'archived' || status === 'hidden';
+                const cardClass = isHidden ? "bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0" : "bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block";
+
+                return `<a href="/InstructorCourse/Editor/${course.Id}" class="${cardClass}">
                     <div class="w-full h-40 bg-slate-200 relative overflow-hidden">
                         ${course.ThumbnailUrl
                             ? `<img src="${course.ThumbnailUrl}" alt="${course.Title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />`

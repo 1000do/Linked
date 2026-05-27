@@ -912,17 +912,23 @@
             const catId = document.getElementById('course-category-input').value;
             const thumb = document.getElementById('course-thumbnail-input').value;
             
-            const desc = window.courseDescQuill.root.innerHTML;
-            const learn = window.courseLearnQuill.root.innerHTML;
-            const req = window.courseReqQuill.root.innerHTML;
-
-            const autoSaveEl = document.getElementById('landing-autosave-status');
-            const autoSaveText = autoSaveEl?.querySelector('span:last-child') || { textContent: '' };
-
-            // Validation (silently return on invalid fields for auto-save flow)
+            const desc = window.courseDescQuill ? window.courseDescQuill.root.innerHTML : '';
+            
+            // Validate basic required fields before checking changes
             if (!title || title.trim() === '') return;
             if (!desc || desc.trim() === '' || desc === '<p><br></p>') return;
             if (catId == "0") return;
+
+            // Stop if there are no actual changes
+            if (typeof hasLandingChanges === 'function' && !hasLandingChanges()) {
+                return;
+            }
+
+            const learn = window.courseLearnQuill ? window.courseLearnQuill.root.innerHTML : '';
+            const req = window.courseReqQuill ? window.courseReqQuill.root.innerHTML : '';
+
+            const autoSaveEl = document.getElementById('landing-autosave-status');
+            const autoSaveText = autoSaveEl?.querySelector('span:last-child') || { textContent: '' };
             
             if (autoSaveEl) {
                 autoSaveEl.classList.remove('hidden');
@@ -2067,17 +2073,27 @@
             }
             
             const proceedWithSubmit = () => {
-                // 3. Check if all lessons have content
-                const emptyLessons = lessonsData.filter(l => {
+                // 3. Check if all lessons have a video
+                const lessonsWithoutVideo = lessonsData.filter(l => {
                     const materials = l.learningMaterials || l.LearningMaterials || [];
-                    return materials.length === 0;
+                    if (materials.length === 0) return true;
+                    
+                    return !materials.some(m => {
+                        let metadata = m.materialMetadata || m.MaterialMetadata;
+                        if (typeof m.metadata === 'string') {
+                            try { metadata = JSON.parse(m.metadata); } catch(e) {}
+                        }
+                        const fileType = metadata?.file_type || metadata?.FileType || (m.materialType === 1 || m.MaterialType === 1 ? 'video' : 'document');
+                        const status = (m.learningStatus || m.LearningStatus || '').toLowerCase();
+                        return fileType.toLowerCase() === 'video' && status !== 'removed';
+                    });
                 });
                 
-                if (emptyLessons.length > 0) {
+                if (lessonsWithoutVideo.length > 0) {
                     switchMainTab('curriculum');
                     Swal.fire({
-                        title: 'Lesson has no content',
-                        text: `You have ${emptyLessons.length} lesson(s) without video or files. Please add content before submitting for review.`,
+                        title: 'Missing Video Content',
+                        text: `You have ${lessonsWithoutVideo.length} lesson(s) without any video material. Every lesson must contain at least one video before submitting for review.`,
                         icon: 'warning',
                         confirmButtonColor: '#006a62'
                     });
@@ -2356,6 +2372,7 @@
                      onclick.includes('closeLessonModal') ||
                      onclick.includes('closeVideoModal') ||
                      onclick.includes('closeResourceModal') ||
+                     text === 'logout' ||
                      el.classList.contains('text-slate-400')) { // Like back button or close icons
                      return;
                  }

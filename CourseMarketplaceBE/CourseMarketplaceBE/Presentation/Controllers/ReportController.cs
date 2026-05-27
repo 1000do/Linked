@@ -51,7 +51,7 @@ public class ReportController : ControllerBase
         {
             bool isInstructor = IsInstructor();
             await _reportService.CreateCourseReportAsync(userId.Value, request, isInstructor);
-            return Ok(ApiResponse<string>.SuccessResponse("Báo cáo của bạn đã được ghi nhận và sẽ được xem xét trong thời gian sớm nhất."));
+            return Ok(ApiResponse<string>.SuccessResponse("Your report has been submitted and will be reviewed shortly."));
         }
         catch (InvalidOperationException ex)
         {
@@ -75,7 +75,7 @@ public class ReportController : ControllerBase
         try
         {
             await _reportService.CreateCourseReviewReportAsync(userId.Value, request);
-            return Ok(ApiResponse<string>.SuccessResponse("Báo cáo đánh giá của bạn đã được ghi nhận."));
+            return Ok(ApiResponse<string>.SuccessResponse("Your course review report has been submitted."));
         }
         catch (InvalidOperationException ex)
         {
@@ -99,7 +99,7 @@ public class ReportController : ControllerBase
         try
         {
             await _reportService.CreateLessonReviewReportAsync(userId.Value, request);
-            return Ok(ApiResponse<string>.SuccessResponse("Báo cáo đánh giá bài học của bạn đã được ghi nhận."));
+            return Ok(ApiResponse<string>.SuccessResponse("Your lesson review report has been submitted."));
         }
         catch (InvalidOperationException ex)
         {

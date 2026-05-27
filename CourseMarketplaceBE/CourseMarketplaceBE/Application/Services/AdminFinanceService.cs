@@ -141,11 +141,11 @@ public class AdminFinanceService : IAdminFinanceService
     //
     // PlatformReceived = TotalAmount - InstructorReceived
     // ═══════════════════════════════════════════════════════════════════════
-    public async Task<List<PayoutDetailResponse>> GetInstructorPayoutsAsync(int? year = null, int? month = null)
+    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<PayoutDetailResponse>> GetInstructorPayoutsAsync(int? year = null, int? month = null, int page = 1, int pageSize = 10)
     {
-        var projections = await _repo.GetPayoutDetailsAsync(year, month);
+        var (projections, totalCount) = await _repo.GetPayoutDetailsAsync(year, month, page, pageSize);
 
-        return projections.Select(p => new PayoutDetailResponse
+        var items = projections.Select(p => new PayoutDetailResponse
         {
             PayoutId = p.PayoutId,
             TransactionId = p.TransactionId,
@@ -165,6 +165,8 @@ public class AdminFinanceService : IAdminFinanceService
             StripePayoutId = p.StripePayoutId,
             PaidToBankAt = p.PaidToBankAt
         }).ToList();
+
+        return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<PayoutDetailResponse>(items, totalCount, page, pageSize);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -230,7 +232,7 @@ public class AdminFinanceService : IAdminFinanceService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Lỗi gửi SignalR trong MarkPayoutAsPaidAsync");
+            _logger.LogError(ex, "Error sending SignalR in MarkPayoutAsPaidAsync");
         }
     }
 
@@ -289,7 +291,7 @@ public class AdminFinanceService : IAdminFinanceService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi gửi SignalR trong PerformStripeTransferAsync");
+                _logger.LogError(ex, "Error sending SignalR in PerformStripeTransferAsync");
             }
 
             return transfer.Id;
@@ -318,7 +320,7 @@ public class AdminFinanceService : IAdminFinanceService
 
     public async Task<BulkPayoutResult> BulkPayAllViaStripeAsync()
     {
-        var pendingPayouts = await _repo.GetPayoutDetailsAsync();
+        var (pendingPayouts, _) = await _repo.GetPayoutDetailsAsync(null, null, 1, 10000);
         
         // Xác định ngày đầu tiên của tháng hiện tại để thực hiện thanh toán chậm pha (chỉ thanh toán tháng trước trở về trước)
         var now = DateTime.UtcNow;
@@ -458,7 +460,7 @@ public class AdminFinanceService : IAdminFinanceService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Lỗi gửi SignalR trong CreateWithdrawalAsync");
+            _logger.LogError(ex, "Error sending SignalR in CreateWithdrawalAsync");
         }
 
         return new WithdrawResponse
@@ -471,9 +473,9 @@ public class AdminFinanceService : IAdminFinanceService
         };
     }
 
-    public async Task<List<WithdrawalHistoryItem>> GetWithdrawalHistoryAsync()
+    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<WithdrawalHistoryItem>> GetWithdrawalHistoryAsync(int? year = null, int? month = null, int page = 1, int pageSize = 10)
     {
-        var withdrawals = await _repo.GetWithdrawalsAsync();
+        var (withdrawals, totalCount) = await _repo.GetWithdrawalsAsync(year, month, page, pageSize);
 
         bool hasChanges = false;
         var payoutService = new PayoutService();
@@ -507,7 +509,7 @@ public class AdminFinanceService : IAdminFinanceService
             await _repo.SaveChangesAsync();
         }
 
-        return withdrawals.Select(w => new WithdrawalHistoryItem
+        var items = withdrawals.Select(w => new WithdrawalHistoryItem
         {
             WithdrawalId = w.WithdrawalId,
             ManagerName = w.Manager?.DisplayName ?? "Admin",
@@ -519,6 +521,8 @@ public class AdminFinanceService : IAdminFinanceService
             CreatedAt = w.CreatedAt,
             ArrivedAt = w.ArrivedAt
         }).ToList();
+
+        return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<WithdrawalHistoryItem>(items, totalCount, page, pageSize);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -647,7 +651,7 @@ public class AdminFinanceService : IAdminFinanceService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Lỗi gửi SignalR trong RefundTransactionAsync");
+            _logger.LogError(ex, "Error sending SignalR in RefundTransactionAsync");
         }
 
         result.StripeRefundId = refundId;
@@ -719,7 +723,7 @@ public class AdminFinanceService : IAdminFinanceService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Lỗi đồng bộ payout cho Giảng viên {ins.InstructorId} (Stripe ID: {ins.StripeAccountId})");
+                _logger.LogError(ex, $"Error syncing payout for Instructor {ins.InstructorId} (Stripe ID: {ins.StripeAccountId})");
             }
         }
 
@@ -794,9 +798,10 @@ public class AdminFinanceService : IAdminFinanceService
         catch { }
     }
 
-    public async Task<List<Domain.Entities.Transaction>> GetPendingRefundRequestsAsync()
+    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<Domain.Entities.Transaction>> GetPendingRefundRequestsAsync(int page = 1, int pageSize = 10)
     {
-        return await _repo.GetPendingRefundRequestsAsync();
+        var (items, totalCount) = await _repo.GetPendingRefundRequestsAsync(page, pageSize);
+        return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<Domain.Entities.Transaction>(items, totalCount, page, pageSize);
     }
 
     public async Task ApproveRefundAsync(int transactionId, string adminNote)

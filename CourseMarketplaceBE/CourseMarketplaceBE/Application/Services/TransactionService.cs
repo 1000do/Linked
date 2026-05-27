@@ -23,7 +23,7 @@ public class TransactionService : ITransactionService
     // ═══════════════════════════════════════════════════════════════════════
     // UC-115: DANH SÁCH GIAO DỊCH
     // ═══════════════════════════════════════════════════════════════════════
-    public async Task<TransactionPagedResult> GetTransactionsAsync(int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
+    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>> GetTransactionsAsync(int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
     {
         // ★ Guard: tránh invalid pagination
         if (page < 1) page = 1;
@@ -32,7 +32,7 @@ public class TransactionService : ITransactionService
 
         var (items, totalCount) = await _repo.GetTransactionsAsync(page, pageSize, keyword, sortBy, status, year, month);
 
-        return new TransactionPagedResult
+        return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>
         {
             Items      = items,
             TotalCount = totalCount,
@@ -52,7 +52,7 @@ public class TransactionService : ITransactionService
         return await _repo.GetTransactionDetailAsync(transactionId);
     }
 
-    public async Task<TransactionPagedResult> GetInstructorTransactionsAsync(int instructorId, int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
+    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>> GetInstructorTransactionsAsync(int instructorId, int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
@@ -60,7 +60,7 @@ public class TransactionService : ITransactionService
 
         var (items, totalCount) = await _repo.GetInstructorTransactionsAsync(instructorId, page, pageSize, keyword, sortBy, status, year, month);
 
-        return new TransactionPagedResult
+        return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>
         {
             Items      = items,
             TotalCount = totalCount,
@@ -69,7 +69,7 @@ public class TransactionService : ITransactionService
         };
     }
 
-    public async Task<TransactionPagedResult> GetUserTransactionsAsync(int userId, int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null)
+    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>> GetUserTransactionsAsync(int userId, int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null)
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
@@ -78,7 +78,7 @@ public class TransactionService : ITransactionService
         // ★ Học viên chỉ xem đơn thành công (không hiện đơn ảo do checkout thất bại)
         var (items, totalCount) = await _repo.GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status);
 
-        return new TransactionPagedResult
+        return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>
         {
             Items      = items,
             TotalCount = totalCount,

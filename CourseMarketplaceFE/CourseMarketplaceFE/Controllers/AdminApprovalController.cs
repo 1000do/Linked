@@ -13,20 +13,23 @@ namespace CourseMarketplaceFE.Controllers
         public AdminApprovalController(ApiClient apiClient) => _apiClient = apiClient;
 
         // Trang danh sách chờ duyệt
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 10)
         {
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+
             // Gọi GetAsync (không có <T>)
-            var response = await _apiClient.GetAsync("/api/AdminApproval/pending-instructors");
+            var response = await _apiClient.GetAsync($"/api/AdminApproval/pending-instructors?page={page}&pageSize={pageSize}");
 
             if (response.IsSuccessStatusCode)
             {
                 // Đọc string và tự giải mã JSON
                 var content = await response.Content.ReadAsStringAsync();
-                var data = JsonSerializer.Deserialize<List<InstructorApprovalViewModel>>(content, _jsonOptions);
-                return View(data ?? new List<InstructorApprovalViewModel>());
+                var data = JsonSerializer.Deserialize<PagedResult<InstructorApprovalViewModel>>(content, _jsonOptions);
+                return View(data ?? new PagedResult<InstructorApprovalViewModel>());
             }
 
-            return View(new List<InstructorApprovalViewModel>());
+            return View(new PagedResult<InstructorApprovalViewModel>());
         }
 
         // Action xử lý duyệt/từ chối

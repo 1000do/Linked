@@ -17,9 +17,8 @@ public partial class Account
 
     public int? AccountFlagCount { get; set; }
 
-    public DateTime? CommentLockoutEnd { get; set; }
-
-    public DateTime? AccountLockoutEnd { get; set; }
+    public DateTime? AccountLastLoginAt { get; set; }
+    public ICollection<Lockout> Lockouts { get; set; } = new List<Lockout>();
 
     public string? AuthProvider { get; set; }
 
@@ -35,8 +34,6 @@ public partial class Account
     public DateTime? AccountCreatedAt { get; set; }
 
     public DateTime? AccountUpdatedAt { get; set; }
-
-    public DateTime? AccountLastLoginAt { get; set; }
 
     public virtual Manager? Manager { get; set; }
   

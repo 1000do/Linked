@@ -870,15 +870,19 @@
         }
     }
 
-    async function loadReviews() {
+    let currentReviewPage = 1;
+    const REVIEW_PAGE_SIZE = 5;
+
+    async function loadReviews(page = 1) {
+        currentReviewPage = page;
         const list = document.getElementById('reviews-list');
         const filter = document.getElementById('review-star-filter').value;
         try {
-            const res = await fetch('/Course/GetReviews/@Model.CourseId');
+            const res = await fetch(`/Course/GetReviews/@Model.CourseId?page=${page}&pageSize=${REVIEW_PAGE_SIZE}`);
             const result = await res.json();
             
-            if (result.success && result.data && result.data.length > 0) {
-                let data = result.data;
+            if (result.success && result.data && result.data.items && result.data.items.length > 0) {
+                let data = result.data.items;
                 if (filter) {
                     data = data.filter(r => Math.round(r.rating) == parseInt(filter));
                 }
@@ -930,6 +934,18 @@
                         </div>
                     </div>
                 `).join('');
+
+                const totalPages = Math.ceil(result.data.totalCount / REVIEW_PAGE_SIZE);
+                if (totalPages > 1) {
+                    list.innerHTML += `
+                        <div class="flex justify-center items-center gap-2 mt-6 pb-4">
+                            <button onclick="loadReviews(${page - 1})" class="px-3 py-1 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" ${page === 1 ? 'disabled' : ''}>Prev</button>
+                            <span class="text-sm font-semibold text-slate-600">Page ${page} of ${totalPages}</span>
+                            <button onclick="loadReviews(${page + 1})" class="px-3 py-1 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" ${page === totalPages ? 'disabled' : ''}>Next</button>
+                        </div>
+                    `;
+                }
+
             } else {
                 list.innerHTML = '<p class="text-slate-400 italic text-center py-10">No reviews yet for this course.</p>';
             }
@@ -954,25 +970,39 @@
             return;
         }
 
+        let reportCount = 1;
+        const getReportItemHtml = (index) => `
+            <div class="report-item relative border border-slate-200 rounded-2xl p-4 mb-4 bg-slate-50" data-index="${index}">
+                ${index > 1 ? `<button type="button" class="absolute top-2 right-2 text-slate-400 hover:text-red-500" onclick="this.closest('.report-item').remove()">
+                    <span class="material-symbols-outlined text-[18px]">close</span>
+                </button>` : ''}
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Reason</label>
+                    <select class="report-reason w-full rounded-xl border-slate-200 focus:ring-[#a435f0] text-sm font-semibold mb-4">
+                        <option value="Misleading content">Misleading content / False claims</option>
+                        <option value="Copyright violation">Copyright violation / Plagiarism</option>
+                        <option value="Spam">Spam / Low quality content</option>
+                        <option value="Adult content">Adult content / Inappropriate content</option>
+                        <option value="Other">Other violation</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description (Required, min 20 chars)</label>
+                    <textarea class="report-desc w-full rounded-xl border-slate-200 focus:ring-[#a435f0] text-sm h-24" placeholder="Describe the issue in detail..."></textarea>
+                </div>
+            </div>
+        `;
+
         const { value: formValues } = await Swal.fire({
             title: 'Report this course',
-            html:
-                '<div class="text-left space-y-4 px-1">' +
-                '<div>' +
-                '<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Reason</label>' +
-                '<select id="swal-report-reason" class="w-full rounded-xl border-slate-200 focus:ring-[#a435f0] text-sm font-semibold">' +
-                '<option value="Misleading content">Misleading content / False claims</option>' +
-                '<option value="Copyright violation">Copyright violation / Plagiarism</option>' +
-                '<option value="Spam">Spam / Low quality content</option>' +
-                '<option value="Adult content">Adult content / Inappropriate content</option>' +
-                '<option value="Other">Other violation</option>' +
-                '</select>' +
-                '</div>' +
-                '<div>' +
-                '<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description (optional)</label>' +
-                '<textarea id="swal-report-desc" class="w-full rounded-xl border-slate-200 focus:ring-[#a435f0] text-sm h-24" placeholder="Describe the issue in detail..."></textarea>' +
-                '</div>' +
-                '</div>',
+            html: `
+                <div class="text-left px-1 max-h-[60vh] overflow-y-auto" id="report-items-container">
+                    ${getReportItemHtml(1)}
+                </div>
+                <button type="button" id="add-report-btn" class="w-full py-2 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 font-bold hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 mt-2">
+                    <span class="material-symbols-outlined text-[18px]">add</span> Add another reason
+                </button>
+            `,
             focusConfirm: false,
             showCancelButton: true,
             confirmButtonText: 'Submit Report',
@@ -984,43 +1014,58 @@
                 confirmButton: 'rounded-xl font-bold px-8 py-3 text-xs',
                 cancelButton: 'rounded-xl font-bold px-8 py-3 text-xs bg-slate-100 text-slate-700'
             },
+            didOpen: () => {
+                document.getElementById('add-report-btn').addEventListener('click', () => {
+                    reportCount++;
+                    document.getElementById('report-items-container').insertAdjacentHTML('beforeend', getReportItemHtml(reportCount));
+                });
+            },
             preConfirm: () => {
-                return {
-                    reason: document.getElementById('swal-report-reason').value,
-                    description: document.getElementById('swal-report-desc').value
+                const items = document.querySelectorAll('.report-item');
+                const reports = [];
+                for (let i = 0; i < items.length; i++) {
+                    const reason = items[i].querySelector('.report-reason').value;
+                    const desc = items[i].querySelector('.report-desc').value.trim();
+                    if (desc.length < 20) {
+                        Swal.showValidationMessage(`Please provide a description of at least 20 characters for Reason ${i + 1}.`);
+                        return false;
+                    }
+                    reports.push({ reason, description: desc });
                 }
+                return reports;
             }
         });
 
-        if (formValues) {
+        if (formValues && formValues.length > 0) {
             Swal.showLoading();
             try {
-                const response = await fetch('/Report/ReportCourse', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ courseId, reason: formValues.reason, description: formValues.description })
-                });
-                const result = await response.json();
-                if (result.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Report Submitted',
-                        text: result.message || 'Your report has been submitted and will be reviewed by our moderation team.',
-                        confirmButtonColor: '#10b981',
-                        customClass: { popup: 'rounded-3xl' }
+                let lastResult = null;
+                for (let i = 0; i < formValues.length; i++) {
+                    const response = await fetch('/Report/ReportCourse', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ courseId, reason: formValues[i].reason, description: formValues[i].description })
                     });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Submission Failed',
-                        text: result.message || 'Could not submit report at this time.',
-                        confirmButtonColor: '#ef4444',
-                        customClass: { popup: 'rounded-3xl' }
-                    });
+                    lastResult = await response.json();
+                    if (!response.ok || !lastResult.success) {
+                        throw new Error(lastResult.message || 'Failed to submit report');
+                    }
                 }
-            } catch (err) {
-                console.error(err);
-                Swal.fire({ icon: 'error', title: 'Network Error', text: 'An unexpected connection error occurred.', confirmButtonColor: '#ef4444' });
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Report Submitted',
+                    text: 'Your report has been submitted and will be reviewed by our moderation team.',
+                    confirmButtonColor: '#10b981',
+                    customClass: { popup: 'rounded-3xl' }
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Submission Failed',
+                    text: error.message || 'Could not submit report at this time.',
+                    confirmButtonColor: '#ef4444',
+                    customClass: { popup: 'rounded-3xl' }
+                });
             }
         }
     }
@@ -1117,7 +1162,7 @@
                 confirmButtonText: 'Log In',
                 showCancelButton: true
             }).then((result) => {
-                if (result.isConfirmed) window.location.href = '/Auth/Login';
+                if (result.isConfirmed) window.location.href = '/Account/Login';
             });
             return;
         }

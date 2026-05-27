@@ -1,4 +1,4 @@
-﻿using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Application.IServices;
 using System.Net;
 using System.Net.Mail;
 
@@ -22,7 +22,7 @@ namespace CourseMarketplaceBE.Application.Services
             var email = _config["EmailSettings:Email"];
             var password = _config["EmailSettings:Password"];
 
-            //  CHECK NULL RÕ RÀNG (đỡ debug mù)
+            //  CHECK NULL R� R�NG (d? debug m�)
             if (string.IsNullOrWhiteSpace(host) ||
                 string.IsNullOrWhiteSpace(portStr) ||
                 string.IsNullOrWhiteSpace(enableSslStr) ||

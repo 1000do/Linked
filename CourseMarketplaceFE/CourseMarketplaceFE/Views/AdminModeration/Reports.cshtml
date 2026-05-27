@@ -57,10 +57,7 @@
             <span class="material-symbols-outlined text-[18px]">forum</span>
             Review Reports
         </button>
-        <button onclick="switchTab('user-reports')" id="tab-btn-user-reports" class="tab-btn px-6 py-3 font-display font-extrabold text-sm border-b-2 transition-all flex items-center gap-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="user-reports">
-            <span class="material-symbols-outlined text-[18px]">person</span>
-            User Reports
-        </button>
+
         <button onclick="switchTab('stats')" id="tab-btn-stats" class="tab-btn px-6 py-3 font-display font-extrabold text-sm border-b-2 transition-all flex items-center gap-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="stats">
             <span class="material-symbols-outlined text-[18px]">analytics</span>
             Detailed Stats
@@ -123,12 +120,12 @@
             <div class="flex items-center gap-2">
                 <label class="text-xs font-bold text-slate-400 uppercase">Filter Status:</label>
                 <select id="review-status-filter" onchange="loadReviewReports()" class="rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold py-1.5 pr-8 pl-3">
+                    <option value="all">All Statuses</option>
                     <option value="pending" selected>Pending</option>
                     <option value="resolved">Resolved</option>
                     <option value="rejected">Rejected</option>
                     <option value="escalated">Escalated</option>
                     <option value="under_review">Under Review</option>
-                    <option value="all">All Statuses</option>
                 </select>
             </div>
         </div>
@@ -154,33 +151,6 @@
         </div>
     </div>
 
-    <!-- Panel 3: User Reports -->
-    <div id="panel-user-reports" class="tab-panel hidden space-y-4">
-        <!-- Title & Info -->
-        <div class="flex justify-between items-center bg-white px-6 py-4 rounded-2xl border border-slate-100 shadow-sm">
-            <h4 class="font-display font-bold text-slate-950">Manage Chat & User Reports</h4>
-        </div>
-
-        <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto custom-scrollbar">
-                <table class="w-full border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50/50 border-b border-slate-100">
-                            <th class="px-8 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Reporter</th>
-                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Reported Chat/User</th>
-                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Reason & Description</th>
-                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Submitted At</th>
-                            <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                            <th class="px-8 py-5 text-right text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="user-reports-tbody" class="divide-y divide-slate-50">
-                        <!-- Rendered via JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 
     <!-- Panel 3: Stats Details -->
     <div id="panel-stats" class="tab-panel hidden bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-6">
@@ -247,7 +217,6 @@
     document.addEventListener("DOMContentLoaded", () => {
         loadCourseReports();
         loadReviewReports();
-        loadUserReports();
         refreshStats();
     });
 
@@ -270,8 +239,6 @@
             loadCourseReports();
         } else if (tab === 'review-reports') {
             loadReviewReports();
-        } else if (tab === 'user-reports') {
-            loadUserReports();
         } else if (tab === 'stats') {
             refreshStats();
         }
@@ -329,7 +296,8 @@
             if (res.ok) {
                 const apiRes = await res.json();
                 if (apiRes.success && apiRes.data) {
-                    renderCourseReports(apiRes.data);
+                    const reportsArray = Array.isArray(apiRes.data) ? apiRes.data : (apiRes.data.items || []);
+                    renderCourseReports(reportsArray);
                 } else {
                     tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">Failed to parse reports.</td></tr>`;
                 }
@@ -461,7 +429,8 @@
             if (res.ok) {
                 const apiRes = await res.json();
                 if (apiRes.success && apiRes.data) {
-                    renderReviewReports(apiRes.data);
+                    const reportsArray = Array.isArray(apiRes.data) ? apiRes.data : (apiRes.data.items || []);
+                    renderReviewReports(reportsArray);
                 } else {
                     tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">Failed to parse reports.</td></tr>`;
                 }
@@ -548,9 +517,13 @@
                 <td class="px-6 py-6 max-w-[280px]">
                     <div class="space-y-1">
                         <p class="text-xs text-slate-900 italic font-semibold line-clamp-2">"${escapeHtml(r.reviewComment || 'No comments')}"</p>
-                        <div class="flex items-center gap-1 text-slate-400 text-[10px]">
-                            <span>Author: ${escapeHtml(r.reviewAuthorName)}</span>
-                            ${r.reviewRating ? `<span>• Rating: ${r.reviewRating}⭐</span>` : ''}
+                        <div class="flex flex-col gap-0.5 text-slate-400 text-[10px]">
+                            <div class="flex items-center gap-1">
+                                <span>Author: <span class="font-bold text-slate-700">${escapeHtml(r.reviewAuthorName || 'Unknown User')}</span></span>
+                                ${r.reviewRating ? `<span>• Rating: <span class="font-bold text-amber-500">${r.reviewRating}⭐</span></span>` : ''}
+                            </div>
+                            ${r.courseTitle ? `<div class="mt-1"><span>Course: <a href="/Course/Detail/${r.courseId}" target="_blank" class="font-bold text-primary hover:underline">${escapeHtml(r.courseTitle)}</a></span></div>` : ''}
+                            ${r.lessonTitle ? `<div><span>Lesson: <span class="font-bold text-slate-600">${escapeHtml(r.lessonTitle)}</span></span></div>` : ''}
                         </div>
                     </div>
                 </td>
@@ -581,16 +554,7 @@
     // ── Moderate Course Report modal ──
     async function moderateCourseReport(reportId, courseTitle, courseId) {
         // Build SweetAlert modal content dynamically
-        let hardDeleteBtn = '';
-        if (currentRole === 'admin') {
-            hardDeleteBtn = `
-            <div class="border-t border-red-100 pt-4 mt-4">
-                <p class="text-[10px] text-red-500 font-bold uppercase tracking-wider mb-2">Danger Area (Admin Only)</p>
-                <button type="button" onclick="hardDeleteCourseAction(${courseId}, ${reportId})" class="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-black transition-all border border-red-200">
-                    Remove
-                </button>
-            </div>`;
-        }
+
 
         const { value: formValues } = await Swal.fire({
             title: 'Moderate Course Report',
@@ -617,7 +581,7 @@
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Moderator Note</label>
                         <textarea id="swal-note" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold h-20" placeholder="Write internal moderation notes..."></textarea>
                     </div>
-                    ${hardDeleteBtn}
+                    </div>
                 </div>`,
             focusConfirm: false,
             showCancelButton: true,
@@ -629,6 +593,26 @@
                 title: 'font-display font-extrabold text-slate-900 mb-4',
                 confirmButton: 'rounded-xl font-bold px-8 py-3 text-xs',
                 cancelButton: 'rounded-xl font-bold px-8 py-3 text-xs bg-slate-100 text-slate-700'
+            },
+            didOpen: () => {
+                const statusSelect = document.getElementById('swal-status');
+                const removeCheck = document.getElementById('swal-remove-content');
+                statusSelect.addEventListener('change', (e) => {
+                    if (e.target.value === 'rejected') {
+                        removeCheck.checked = false;
+                        removeCheck.disabled = true;
+                    } else {
+                        removeCheck.disabled = false;
+                    }
+                });
+                removeCheck.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        e.target.checked = false;
+                        if (confirm("Are you sure you want to soft-delete this content? This action will hide it from the marketplace.")) {
+                            e.target.checked = true;
+                        }
+                    }
+                });
             },
             preConfirm: () => {
                 return {
@@ -716,6 +700,26 @@
                 title: 'font-display font-extrabold text-slate-900 mb-4',
                 confirmButton: 'rounded-xl font-bold px-8 py-3 text-xs',
                 cancelButton: 'rounded-xl font-bold px-8 py-3 text-xs bg-slate-100 text-slate-700'
+            },
+            didOpen: () => {
+                const statusSelect = document.getElementById('swal-status');
+                const removeCheck = document.getElementById('swal-remove-content');
+                statusSelect.addEventListener('change', (e) => {
+                    if (e.target.value === 'rejected') {
+                        removeCheck.checked = false;
+                        removeCheck.disabled = true;
+                    } else {
+                        removeCheck.disabled = false;
+                    }
+                });
+                removeCheck.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        e.target.checked = false;
+                        if (confirm("Are you sure you want to soft-delete this content?")) {
+                            e.target.checked = true;
+                        }
+                    }
+                });
             },
             preConfirm: () => {
                 return {
@@ -858,210 +862,7 @@
         });
     }
 
-    // ── Load User Reports ──
-    async function loadUserReports() {
-        const tbody = document.getElementById('user-reports-tbody');
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-400 font-semibold">Loading user reports...</td></tr>`;
 
-        try {
-            const res = await fetch(`/AdminModeration/GetUserReports`);
-            if (res.ok) {
-                const data = await res.json();
-                if (Array.isArray(data)) {
-                    renderUserReports(data);
-                } else if (data.success && data.data) {
-                    renderUserReports(data.data);
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">Failed to parse user reports.</td></tr>`;
-                }
-            } else {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">HTTP Error loading user reports.</td></tr>`;
-            }
-        } catch (err) {
-            console.error(err);
-            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">An unexpected error occurred.</td></tr>`;
-        }
-    }
-
-    function renderUserReports(reports) {
-        const tbody = document.getElementById('user-reports-tbody');
-        tbody.innerHTML = '';
-
-        if (reports.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="px-8 py-20 text-center">
-                        <div class="flex flex-col items-center">
-                            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                                <span class="material-symbols-outlined text-slate-300 text-3xl">thumb_up</span>
-                            </div>
-                            <h4 class="text-slate-900 font-display font-bold">No User Reports Found</h4>
-                            <p class="text-slate-400 text-sm">Everything looks clean!</p>
-                        </div>
-                    </td>
-                </tr>`;
-            return;
-        }
-
-        reports.forEach(r => {
-            const tr = document.createElement('tr');
-            tr.className = `group hover:bg-slate-50/80 transition-colors ${r.status === 'pending' ? 'bg-amber-50/20' : ''}`;
-            
-            // Format date
-            const dateObj = new Date(r.createdAt);
-            const dateStr = dateObj.toLocaleDateString('en-GB');
-            const timeStr = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-
-            // Status Badges
-            let statusBadge = '';
-            if (r.status === 'pending') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[11px] font-bold uppercase tracking-wider animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Pending</span>`;
-            } else if (r.status === 'resolved') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-bold uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Resolved</span>`;
-            } else if (r.status === 'rejected') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-500 rounded-full text-[11px] font-bold uppercase tracking-wider">Rejected</span>`;
-            } else if (r.status === 'escalated') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[11px] font-bold uppercase tracking-wider">Escalated</span>`;
-            } else {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[11px] font-bold uppercase tracking-wider">${r.status}</span>`;
-            }
-
-            // Actions
-            let actionBtn = '';
-            if (r.status === 'pending' || r.status === 'under_review' || r.status === 'escalated') {
-                if (r.status === 'escalated' && currentRole === 'staff') {
-                    actionBtn = `<button disabled class="flex items-center gap-1 px-4 py-2 bg-slate-300 text-slate-500 rounded-xl text-xs font-bold transition-all cursor-not-allowed opacity-60">
-                        <span class="material-symbols-outlined text-[16px]">lock</span> Escalated
-                    </button>`;
-                } else {
-                    actionBtn = `<button onclick="moderateUserReport(${r.reportId}, '${escapeJsString(r.reporterName)}', '${escapeJsString(r.reason)}')" class="flex items-center gap-1 px-4 py-2 bg-primary hover:bg-secondary text-white rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95">
-                        <span class="material-symbols-outlined text-[16px]">verified_user</span> Moderate
-                    </button>`;
-                }
-            } else {
-                actionBtn = `<button onclick="showResolutionDetails('${escapeJsString(r.resolverEmail || "N/A")}', '${escapeJsString(r.resolutionNote || "No notes provided.")}', '${r.resolvedAt}')" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl">Info</button>`;
-            }
-
-            tr.innerHTML = `
-                <td class="px-8 py-6">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
-                            ${(r.reporterName || "U").charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <span class="font-bold text-slate-900 block">${escapeHtml(r.reporterName)}</span>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-6 py-6">
-                    <span class="font-bold text-slate-900 text-sm block">Chat Session (ID: ${r.chatId || "N/A"})</span>
-                    <a href="/AdminModeration/ChatDetails?chatId=${r.chatId}" class="text-xs text-primary font-bold hover:underline">View Chat Logs</a>
-                </td>
-                <td class="px-6 py-6 max-w-[280px]">
-                    <div class="space-y-1">
-                        <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[9px] font-black uppercase tracking-wider">${escapeHtml(r.reason)}</span>
-                        <p class="text-xs text-slate-500 line-clamp-2">${escapeHtml(r.description || 'No description provided')}</p>
-                    </div>
-                </td>
-                <td class="px-6 py-6 text-xs text-slate-500 font-semibold">
-                    <p class="text-slate-700">${dateStr}</p>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">${timeStr}</p>
-                </td>
-                <td class="px-6 py-6">
-                    ${statusBadge}
-                </td>
-                <td class="px-8 py-6 text-right">
-                    <div class="flex items-center justify-end gap-2">
-                        ${actionBtn}
-                    </div>
-                </td>
-            `;
-
-            tbody.appendChild(tr);
-        });
-    }
-
-    // ── Moderate User Report modal ──
-    async function moderateUserReport(reportId, reporterName, reason) {
-        const { value: formValues } = await Swal.fire({
-            title: 'Moderate User/Chat Report',
-            html:
-                `<div class="text-left space-y-4 px-1 text-slate-700">
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs font-bold mb-4">
-                        <span class="text-slate-400 block uppercase tracking-wider text-[10px]">Reporter</span>
-                        <span class="text-slate-800">${escapeHtml(reporterName)}</span>
-                        <span class="text-slate-400 block uppercase tracking-wider text-[10px] mt-2">Reason</span>
-                        <span class="text-slate-800 text-red-600 uppercase text-[10px] tracking-wider">${escapeHtml(reason)}</span>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Resolution Status</label>
-                        <select id="swal-status" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-bold">
-                            <option value="resolved">Accept Report (Resolved / Policy Violation)</option>
-                            <option value="rejected">Dismiss Report (Rejected / Discard)</option>
-                            <option value="under_review">Under Review</option>
-                            <option value="escalated">Escalate to Senior Admin</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Resolution Note</label>
-                        <textarea id="swal-note" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold h-20" placeholder="Write internal resolution notes..."></textarea>
-                    </div>
-                </div>`,
-            focusConfirm: false,
-            showCancelButton: true,
-            confirmButtonText: 'Submit Decision',
-            confirmButtonColor: '#10b981',
-            cancelButtonText: 'Close',
-            customClass: {
-                popup: 'rounded-[32px] p-8',
-                title: 'font-display font-extrabold text-slate-900 mb-4',
-                confirmButton: 'rounded-xl font-bold px-8 py-3 text-xs',
-                cancelButton: 'rounded-xl font-bold px-8 py-3 text-xs bg-slate-100 text-slate-700'
-            },
-            preConfirm: () => {
-                return {
-                    status: document.getElementById('swal-status').value,
-                    resolutionNote: document.getElementById('swal-note').value
-                }
-            }
-        });
-
-        if (formValues) {
-            Swal.showLoading();
-            try {
-                const response = await fetch(`/AdminModeration/ResolveUserReport?reportId=${reportId}&status=${formValues.status}&resolutionNote=${encodeURIComponent(formValues.resolutionNote)}`, {
-                    method: 'POST'
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Report Moderated',
-                            text: 'The user report has been successfully resolved.',
-                            confirmButtonColor: '#10b981',
-                            customClass: { popup: 'rounded-3xl' }
-                        });
-                        loadUserReports();
-                        refreshStats();
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Failed to Moderate',
-                            text: result.message || 'The server rejected this action.',
-                            confirmButtonColor: '#ef4444'
-                        });
-                    }
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Moderation Error', text: 'HTTP communication failed.', confirmButtonColor: '#ef4444' });
-                }
-            } catch (err) {
-                console.error(err);
-                Swal.fire({ icon: 'error', title: 'Network Error', text: 'An unexpected connection error occurred.', confirmButtonColor: '#ef4444' });
-            }
-        }
-    }
 
     // ── Helper escaping ──
     function escapeJsString(str) {

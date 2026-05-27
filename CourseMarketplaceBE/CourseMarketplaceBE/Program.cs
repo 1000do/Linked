@@ -136,13 +136,15 @@ public class Program
 
         // 🔥 5. DI
         builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<ILockoutRepository, LockoutRepository>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<ICourseRepository, CourseRepository>();
         builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
         builder.Services.AddScoped<ILessonRepository, LessonRepository>();
         builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
         builder.Services.AddScoped<IAvatarFrameRepository, AvatarFrameRepository>();
-        builder.Services.AddScoped<ICourseService, CourseService>();
+        builder.Services.AddScoped<ICourseQueryService, CourseQueryService>();
+        builder.Services.AddScoped<ICourseCommandService, CourseCommandService>();
         builder.Services.AddScoped<ILessonService, LessonService>();
         builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
         builder.Services.AddScoped<IReviewService, CourseMarketplaceBE.Application.Services.ReviewService>();
@@ -164,6 +166,8 @@ public class Program
 
         builder.Services.AddScoped<ICouponRepository, CouponRepository>();
         builder.Services.AddScoped<ICouponService, CourseMarketplaceBE.Application.Services.CouponService>();
+
+        builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
         // Register file upload implementation conditionally.
         // If Cloudinary config is present, use CloudinaryUploadService; otherwise use a no-op fallback.
@@ -205,7 +209,9 @@ public class Program
         builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
         builder.Services.AddScoped<ITransactionService, TransactionService>();
         builder.Services.AddScoped<IChatService, ChatService>();
-        builder.Services.AddScoped<IModerationService, ModerationService>();
+        builder.Services.AddScoped<ICourseModerationService, CourseModerationService>();
+        builder.Services.AddScoped<ICourseAiModerationService, CourseAiModerationService>();
+        builder.Services.AddScoped<IUserReportModerationService, UserReportModerationService>();
         builder.Services.AddScoped<IAiModelRepository, AiModelRepository>();
         builder.Services.AddScoped<ICourseAiIntegrationRepository, CourseAiIntegrationRepository>();
         builder.Services.AddScoped<IAiModerationService, AiModerationService>();
@@ -371,10 +377,6 @@ public class Program
                             ALTER TABLE transactions ADD COLUMN IF NOT EXISTS refund_reason TEXT;
                             ALTER TABLE transactions ADD COLUMN IF NOT EXISTS refund_admin_note TEXT;
                             ALTER TABLE transactions ADD COLUMN IF NOT EXISTS refund_requested_at TIMESTAMP WITHOUT TIME ZONE;
-                            
-                            ALTER TABLE accounts ADD COLUMN IF NOT EXISTS comment_lockout_end TIMESTAMP WITHOUT TIME ZONE;
-                            ALTER TABLE accounts ADD COLUMN IF NOT EXISTS account_lockout_end TIMESTAMP WITHOUT TIME ZONE;
-                            ALTER TABLE instructors ADD COLUMN IF NOT EXISTS lockout_instructor_until TIMESTAMP WITHOUT TIME ZONE;
                         ";
                         cmd.ExecuteNonQuery();
                     }

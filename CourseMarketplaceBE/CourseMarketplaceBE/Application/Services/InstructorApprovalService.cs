@@ -15,10 +15,10 @@ namespace CourseMarketplaceBE.Application.Services
             _notiService = notiService;
         }
 
-        public async Task<IEnumerable<InstructorApprovalDto>> GetPendingListAsync()
+        public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<InstructorApprovalDto>> GetPendingListAsync(int page = 1, int pageSize = 10)
         {
-            var list = await _repo.GetPendingInstructorsAsync();
-            return list.Select(i => new InstructorApprovalDto
+            var (instructors, totalCount) = await _repo.GetPendingInstructorsAsync(page, pageSize);
+            var items = instructors.Select(i => new InstructorApprovalDto
             {
                 InstructorId = i.InstructorId,
                 FullName = i.InstructorNavigation?.FullName ?? "N/A",
@@ -29,7 +29,9 @@ namespace CourseMarketplaceBE.Application.Services
                 LinkedInUrl = i.LinkedinUrl,
                 ApprovalStatus = i.ApprovalStatus,
                 ExpertiseCategories = i.ExpertiseCategories
-            });
+            }).ToList();
+            
+            return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<InstructorApprovalDto>(items, totalCount, page, pageSize);
         }
 
         public async Task<bool> ApproveOrRejectAsync(UpdateApprovalStatusDto dto)
