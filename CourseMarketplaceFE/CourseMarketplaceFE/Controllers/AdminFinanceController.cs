@@ -148,6 +148,18 @@ public class AdminFinanceController : Controller
         public string FullName { get; set; } = "";
     }
 
+    public class InstructorCourseRevenueResponse
+    {
+        public int CourseId { get; set; }
+        public string CourseTitle { get; set; } = string.Empty;
+        public int InstructorId { get; set; }
+        public string InstructorName { get; set; } = string.Empty;
+        public int SalesCount { get; set; }
+        public decimal MonthlyRevenue { get; set; }
+        public decimal YearlyRevenue { get; set; }
+        public decimal LifetimeRevenue { get; set; }
+    }
+
     public class AdminFinanceUnifiedVM
     {
         public FinanceDashboardVM Dashboard { get; set; } = new();
@@ -157,6 +169,8 @@ public class AdminFinanceController : Controller
         public WithdrawalPagedVM Withdrawals { get; set; } = new();
         public List<RefundRequestVM> PendingRefunds { get; set; } = new();
         public string PayoutDays { get; set; } = "15";
+        public List<InstructorCourseRevenueResponse> CourseRevenues { get; set; } = new();
+        public Dictionary<int, FinancialSummaryVM> YearlySummaries { get; set; } = new();
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -307,6 +321,13 @@ public class AdminFinanceController : Controller
         else
         {
             var errorBody = await response.Content.ReadAsStringAsync();
+            try
+            {
+                using var doc = JsonDocument.Parse(errorBody);
+                if (doc.RootElement.TryGetProperty("message", out var m))
+                    errorBody = m.GetString() ?? errorBody;
+            }
+            catch { }
             TempData["FinanceError"] = $"❌ Error: {errorBody}";
         }
 
@@ -330,6 +351,13 @@ public class AdminFinanceController : Controller
         else
         {
             var errorBody = await response.Content.ReadAsStringAsync();
+            try
+            {
+                using var doc = JsonDocument.Parse(errorBody);
+                if (doc.RootElement.TryGetProperty("message", out var m))
+                    errorBody = m.GetString() ?? errorBody;
+            }
+            catch { }
             TempData["FinanceError"] = $"❌ Error: {errorBody}";
         }
 
@@ -557,5 +585,153 @@ public class AdminFinanceController : Controller
         catch { }
 
         return Json(new { success = false, message = message });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET /AdminFinance/InstructorRevenues
+    // Dedicated page for Instructor Course Revenues with KPIs, search, period filter, sorting
+    // ═══════════════════════════════════════════════════════════════════════
+    public class InstructorCourseRevenuesPageVM
+    {
+        public List<InstructorCourseRevenueResponse> Revenues { get; set; } = new();
+        public int TotalActiveCourses { get; set; }
+        public string TopSellingCourseTitle { get; set; } = "N/A";
+        public int TopSellingCourseSales { get; set; }
+        public string HighestEarningCourseTitle { get; set; } = "N/A";
+        public decimal HighestEarningCourseRevenue { get; set; }
+
+        public Dictionary<int, decimal[]> YearlyMonthlyRevenue { get; set; } = new();
+        public decimal TotalGrossRevenue { get; set; }
+        public int TotalCoursesSold { get; set; }
+        public decimal PlatformNetProfit { get; set; }
+        public int TotalNewLearners { get; set; }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> InstructorRevenues(int? year = null, int? month = null, string? keyword = null, string? sortBy = "sales_desc")
+    {
+        int selectedYear = year ?? DateTime.UtcNow.Year;
+        int selectedMonth = month ?? DateTime.UtcNow.Month;
+
+        ViewBag.Year = selectedYear;
+        ViewBag.Month = selectedMonth;
+        ViewBag.Keyword = keyword;
+        ViewBag.SortBy = sortBy;
+
+        var vm = new InstructorCourseRevenuesPageVM();
+
+        var revTask = _api.GetAsync($"admin/finance/instructor-courses-revenue?year={selectedYear}&month={selectedMonth}");
+        var summaryTask = _api.GetAsync($"admin/finance/summary?year={selectedYear}&month={selectedMonth}");
+        var txTask = _api.GetAsync($"transactions?page=1&pageSize=1000&year={selectedYear}&month={selectedMonth}");
+        var payoutsTask = _api.GetAsync("admin/finance/payouts");
+
+        await Task.WhenAll(revTask, summaryTask, txTask, payoutsTask);
+
+        var revResp = await revTask;
+        if (revResp.IsSuccessStatusCode)
+        {
+            var json = await revResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<List<InstructorCourseRevenueResponse>>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+            {
+                var allRevenues = parsed.Data;
+
+                // 1. Calculate KPIs before filtering
+                vm.TotalActiveCourses = allRevenues.Count;
+                if (allRevenues.Any())
+                {
+                    var topSelling = allRevenues.OrderByDescending(r => r.SalesCount).First();
+                    vm.TopSellingCourseTitle = topSelling.CourseTitle;
+                    vm.TopSellingCourseSales = topSelling.SalesCount;
+
+                    var highestEarning = allRevenues.OrderByDescending(r => r.LifetimeRevenue).First();
+                    vm.HighestEarningCourseTitle = highestEarning.CourseTitle;
+                    vm.HighestEarningCourseRevenue = highestEarning.LifetimeRevenue;
+                }
+
+                // 2. Perform search/filter
+                if (!string.IsNullOrEmpty(keyword))
+                {
+                    keyword = keyword.ToLower();
+                    allRevenues = allRevenues.Where(r => 
+                        r.CourseTitle.ToLower().Contains(keyword) || 
+                        r.InstructorName.ToLower().Contains(keyword)
+                    ).ToList();
+                }
+
+                // 3. Perform sorting
+                allRevenues = sortBy switch
+                {
+                    "sales_desc" => allRevenues.OrderByDescending(r => r.SalesCount).ToList(),
+                    "sales_asc" => allRevenues.OrderBy(r => r.SalesCount).ToList(),
+                    "lifetime_desc" => allRevenues.OrderByDescending(r => r.LifetimeRevenue).ToList(),
+                    "lifetime_asc" => allRevenues.OrderBy(r => r.LifetimeRevenue).ToList(),
+                    "monthly_desc" => allRevenues.OrderByDescending(r => r.MonthlyRevenue).ToList(),
+                    "monthly_asc" => allRevenues.OrderBy(r => r.MonthlyRevenue).ToList(),
+                    "yearly_desc" => allRevenues.OrderByDescending(r => r.YearlyRevenue).ToList(),
+                    "yearly_asc" => allRevenues.OrderBy(r => r.YearlyRevenue).ToList(),
+                    _ => allRevenues.OrderByDescending(r => r.SalesCount).ToList()
+                };
+
+                vm.Revenues = allRevenues;
+            }
+        }
+        else if (revResp.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        var summaryResp = await summaryTask;
+        if (summaryResp.IsSuccessStatusCode)
+        {
+            var json = await summaryResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<FinancialSummaryVM>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+            {
+                vm.TotalGrossRevenue = parsed.Data.GrossRevenue;
+                vm.TotalCoursesSold = parsed.Data.TotalTransactions;
+                vm.PlatformNetProfit = parsed.Data.PlatformNetProfit;
+            }
+        }
+
+        var txResp = await txTask;
+        if (txResp.IsSuccessStatusCode)
+        {
+            var json = await txResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<CourseMarketplaceFE.Controllers.TransactionController.TransactionPagedVM>>(json, _jsonOpts);
+            if (parsed?.Data?.Items != null)
+            {
+                vm.TotalNewLearners = parsed.Data.Items.Select(x => x.BuyerName).Distinct().Count();
+            }
+        }
+
+        var payoutsResp = await payoutsTask;
+        if (payoutsResp.IsSuccessStatusCode)
+        {
+            var json = await payoutsResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<List<PayoutDetailVM>>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+            {
+                var allPayouts = parsed.Data;
+                var yearlyMonthlyData = new Dictionary<int, decimal[]>();
+                int[] targetYears = { selectedYear, selectedYear - 1, selectedYear - 2 };
+
+                foreach (var y in targetYears)
+                {
+                    var monthlyArray = new decimal[12];
+                    var yearPayouts = allPayouts.Where(p => p.TransactionDate.HasValue && p.TransactionDate.Value.Year == y && p.PayoutStatus != "refunded").ToList();
+                    
+                    for (int m = 1; m <= 12; m++)
+                    {
+                        monthlyArray[m - 1] = yearPayouts.Where(p => p.TransactionDate.Value.Month == m).Sum(p => p.TotalAmount);
+                    }
+                    
+                    yearlyMonthlyData[y] = monthlyArray;
+                }
+                vm.YearlyMonthlyRevenue = yearlyMonthlyData;
+            }
+        }
+
+        return View(vm);
     }
 }

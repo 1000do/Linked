@@ -110,4 +110,9 @@ public interface IAdminFinanceService
     /// <param name="reason">Lý do hoàn tiền (requested_by_customer, duplicate, fraudulent).</param>
     /// <returns>Stripe Refund ID (re_xxx).</returns>
     Task<RefundResultResponse> RefundTransactionAsync(int transactionId, string? reason = null);
+
+    /// <summary>
+    /// Lấy doanh thu khóa học của giảng viên chi tiết theo tháng, năm và trọn đời.
+    /// </summary>
+    Task<List<InstructorCourseRevenueResponse>> GetInstructorCourseRevenuesAsync(int year, int month);
 }

@@ -52,10 +52,10 @@ public class CartController : Controller
         {
             HttpContext.Response.Cookies.Append(CouponCookieName, cookieValue, new CookieOptions
             {
-                Expires  = DateTimeOffset.UtcNow.AddHours(1),
+                Expires = DateTimeOffset.UtcNow.AddHours(1),
                 HttpOnly = false,
                 SameSite = SameSiteMode.Lax,
-                Path     = "/"
+                Path = "/"
             });
         }
     }
@@ -99,11 +99,11 @@ public class CartController : Controller
                         ? JsonSerializer.Deserialize<List<CartItemViewModel>>(itemsEl.GetRawText(), opts) ?? new()
                         : new();
 
-                    model.SubTotal          = dataEl.TryGetProperty("subTotal",          out var st)  ? st.GetDecimal()  : 0m;
-                    model.DiscountAmount    = dataEl.TryGetProperty("discountAmount",     out var da)  ? da.GetDecimal()  : 0m;
-                    model.Total             = dataEl.TryGetProperty("total",              out var tot) ? tot.GetDecimal() : 0m;
-                    model.AppliedCouponCode = dataEl.TryGetProperty("appliedCouponCode",  out var ac)  ? ac.GetString()  : null;
-                    model.CouponMessage     = dataEl.TryGetProperty("couponMessage",      out var cm)  ? cm.GetString()  : null;
+                    model.SubTotal = dataEl.TryGetProperty("subTotal", out var st) ? st.GetDecimal() : 0m;
+                    model.DiscountAmount = dataEl.TryGetProperty("discountAmount", out var da) ? da.GetDecimal() : 0m;
+                    model.Total = dataEl.TryGetProperty("total", out var tot) ? tot.GetDecimal() : 0m;
+                    model.AppliedCouponCode = dataEl.TryGetProperty("appliedCouponCode", out var ac) ? ac.GetString() : null;
+                    model.CouponMessage = dataEl.TryGetProperty("couponMessage", out var cm) ? cm.GetString() : null;
 
                     // Parse danh sách voucher khả dụng (Voucher Wallet)
                     model.AvailableCoupons = dataEl.TryGetProperty("availableCoupons", out var avEl)
@@ -255,7 +255,7 @@ public class CartController : Controller
 
         // Tạo base URL của FE (dựa vào Request context)
         var baseUrl = $"{Request.Scheme}://{Request.Host}";
-        
+
         // Gọi BE API checkout/process
         var response = await _api.PostJsonAsync("checkout/process", new
         {
@@ -312,7 +312,7 @@ public class CartController : Controller
             return Json(new { success = false, message = "Please login before purchasing." });
 
         var baseUrl = $"{Request.Scheme}://{Request.Host}";
-        
+
         var response = await _api.PostJsonAsync("checkout/direct", new
         {
             courseId = id,
@@ -374,17 +374,17 @@ public class CartController : Controller
         try
         {
             Console.WriteLine($"[FE-CHECKOUT] Calling BE: GET checkout/success?session_id={sessionId}");
-            
+
             // Gọi BE API success endpoint
             var response = await _api.GetAsync($"checkout/success?session_id={Uri.EscapeDataString(sessionId)}");
-            
+
             Console.WriteLine($"[FE-CHECKOUT] BE responded: {(int)response.StatusCode} {response.StatusCode}");
 
             if (response.IsSuccessStatusCode)
             {
-                Console.WriteLine("[FE-CHECKOUT] ✅ SUCCESS — redirecting to /Course");
-                TempData["CartSuccess"] = "🎉 Payment successful! Happy learning!";
-                return Redirect("/Course");
+                Console.WriteLine("[FE-CHECKOUT] ✅ SUCCESS — redirecting to /Course/MyCourses");
+                TempData["CartSuccess"] = "🎉 Payment successful! Happy learning! Start learning your new courses below.";
+                return Redirect("/Course/MyCourses");
             }
 
             // ★ Log chi tiết lỗi từ BE

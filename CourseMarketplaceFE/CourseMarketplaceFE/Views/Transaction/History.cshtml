@@ -5,110 +5,111 @@
     Layout = "_Layout";
 }
 
-<div class="min-h-screen bg-[#f8fafc] pb-20">
-    @* Header Section *@
-    <div class="bg-white border-b border-slate-200 sticky top-0 z-30 backdrop-blur-md bg-white/80">
-        <div class="max-w-7xl mx-auto px-6 lg:px-12 py-6">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h1 class="text-3xl font-black text-slate-900 tracking-tight">Purchase History</h1>
-                    <p class="text-slate-500 font-medium mt-1">Track the courses you have purchased and their payment statuses.</p>
-                </div>
-                
-                <div class="flex items-center gap-3">
-                    <div class="bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100 flex items-center gap-3">
-                        <span class="material-symbols-outlined text-indigo-600">receipt_long</span>
-                        <div>
-                            <p class="text-[10px] font-black uppercase tracking-wider text-indigo-400 leading-none mb-1">Total Purchases</p>
-                            <p class="text-lg font-black text-indigo-900 leading-none">@Model.TotalCount</p>
+<div class="min-h-screen bg-[#f8fafc] relative overflow-hidden pb-16">
+    @* Decorative background elements *@
+    <div class="absolute top-0 left-0 w-full h-64 bg-gradient-to-br from-primary/5 to-transparent -z-10"></div>
+    <div class="absolute top-40 -right-20 w-80 h-80 bg-primary/5 rounded-full blur-3xl -z-10"></div>
+    
+    <div class="max-w-7xl mx-auto px-6 lg:px-12 py-12 relative">
+        <div class="flex flex-col lg:flex-row gap-10">
+            @* Sidebar *@
+            @await Html.PartialAsync("_AccountSidebar", "History")
+
+            @* Main Content *@
+            <div class="flex-grow space-y-8">
+                <!-- Header Section -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+                    <div>
+                        <h1 class="text-4xl font-black text-slate-900 tracking-tight mb-2">Purchase History</h1>
+                        <p class="text-slate-500 font-medium">Track your course purchases, payments, and refund statuses.</p>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <div class="bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100 flex items-center gap-3">
+                            <span class="material-symbols-outlined text-indigo-600">receipt_long</span>
+                            <div>
+                                <p class="text-[10px] font-black uppercase tracking-wider text-indigo-400 leading-none mb-1">Total Purchases</p>
+                                <p class="text-lg font-black text-indigo-900 leading-none">@Model.TotalCount</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="max-w-7xl mx-auto px-6 lg:px-12 py-10">
-        <div class="flex flex-col lg:flex-row gap-10">
-            @* Sidebar Filter *@
-            <aside class="w-full lg:w-72 flex-shrink-0">
-                <div class="bg-white rounded-[2rem] p-6 shadow-xl shadow-slate-200/50 border border-slate-100 sticky top-32">
-                    <form method="get" action="/Transaction/History" class="space-y-6">
+                <!-- ── Search, Sort, Filter Bar ───────────────────── -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                    <form method="get" action="/Transaction/History" class="flex flex-col md:flex-row items-center gap-4">
                         <input type="hidden" name="page" value="1" />
                         <input type="hidden" name="pageSize" value="@Model.PageSize" />
 
-                        <div>
-                            <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Search</label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[20px]">search</span>
-                                <input type="text" name="keyword" value="@ViewBag.Keyword" placeholder="Search by course title..." 
-                                       class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all font-medium" />
+                        <div class="relative w-full md:w-1/3">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                            <input type="text" name="keyword" value="@ViewBag.Keyword" placeholder="Search by course title..." 
+                                   class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-slate-800 placeholder:text-slate-400 bg-slate-50 focus:bg-white" />
+                        </div>
+                        
+                        <div class="flex flex-wrap items-center gap-4 w-full md:w-auto md:ml-auto">
+                            <div class="relative w-full sm:w-auto">
+                                <select name="status" class="w-full sm:w-auto appearance-none border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-slate-700 cursor-pointer">
+                                    <option value="">All Statuses</option>
+                                    <option value="succeeded" selected="@(ViewBag.Status == "succeeded")">Success</option>
+                                    <option value="refund_pending" selected="@(ViewBag.Status == "refund_pending")">Refund Pending</option>
+                                    <option value="refunded" selected="@(ViewBag.Status == "refunded")">Refunded</option>
+                                    <option value="failed" selected="@(ViewBag.Status == "failed")">Failed</option>
+                                </select>
+                                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
                             </div>
+
+                            <div class="relative w-full sm:w-auto">
+                                <select name="sortBy" class="w-full sm:w-auto appearance-none border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-slate-700 cursor-pointer">
+                                    <option value="date_desc" selected="@(ViewBag.SortBy == "date_desc")">Newest</option>
+                                    <option value="date_asc" selected="@(ViewBag.SortBy == "date_asc")">Oldest</option>
+                                    <option value="amount_desc" selected="@(ViewBag.SortBy == "amount_desc")">Price: High to Low</option>
+                                    <option value="amount_asc" selected="@(ViewBag.SortBy == "amount_asc")">Price: Low to High</option>
+                                </select>
+                                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
+                            </div>
+
+                            <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-primary transition-all duration-300">
+                                Apply
+                            </button>
+
+                            @if (!string.IsNullOrEmpty(ViewBag.Keyword) || !string.IsNullOrEmpty(ViewBag.Status) || ViewBag.SortBy != "date_desc")
+                            {
+                                <a href="/Transaction/History" class="w-full sm:w-auto px-4 py-2.5 text-sm font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 text-center rounded-xl transition-all">
+                                    Reset
+                                </a>
+                            }
                         </div>
-
-                        <div>
-                            <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Status</label>
-                            <select name="status" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all font-medium appearance-none cursor-pointer">
-                                <option value="">All Statuses</option>
-                                <option value="succeeded" selected="@(ViewBag.Status == "succeeded")">Success</option>
-                                <option value="refund_pending" selected="@(ViewBag.Status == "refund_pending")">Refund Pending</option>
-                                <option value="refunded" selected="@(ViewBag.Status == "refunded")">Refunded</option>
-                                <option value="failed" selected="@(ViewBag.Status == "failed")">Failed</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3 block">Sort By</label>
-                            <select name="sortBy" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all font-medium appearance-none cursor-pointer">
-                                <option value="date_desc" selected="@(ViewBag.SortBy == "date_desc")">Newest</option>
-                                <option value="date_asc" selected="@(ViewBag.SortBy == "date_asc")">Oldest</option>
-                                <option value="amount_desc" selected="@(ViewBag.SortBy == "amount_desc")">Price: High to Low</option>
-                                <option value="amount_asc" selected="@(ViewBag.SortBy == "amount_asc")">Price: Low to High</option>
-                            </select>
-                        </div>
-
-                        <button type="submit" class="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-indigo-600 transition-all shadow-lg shadow-slate-900/10 active:scale-95">
-                            Apply Filters
-                        </button>
-
-                        @if (!string.IsNullOrEmpty(ViewBag.Keyword) || !string.IsNullOrEmpty(ViewBag.Status) || ViewBag.SortBy != "date_desc")
-                        {
-                            <a href="/Transaction/History" class="block w-full py-4 bg-slate-100 text-slate-600 text-center font-bold rounded-2xl hover:bg-slate-200 transition-all">
-                                Reset Filters
-                            </a>
-                        }
                     </form>
                 </div>
 
-                @* 14-Day Guarantee & Stripe Billing Help Desk *@
-                <div class="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-[2rem] p-6 text-white shadow-xl shadow-indigo-950/20 border border-indigo-950/30 mt-6 space-y-5">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-400/20">
+                @* 14-Day Guarantee & Stripe Billing Help Desk (Horizontal banner) *@
+                <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 text-white shadow-xl shadow-slate-200/50 border border-slate-700/50 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-400/20 flex-shrink-0">
                             <span class="material-symbols-outlined text-indigo-300">verified_user</span>
                         </div>
                         <div>
-                            <h4 class="font-black text-sm tracking-tight">14-Day Escrow Policy</h4>
-                            <p class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">Stripe Secure Hold</p>
+                            <h4 class="font-black text-sm tracking-tight flex items-center gap-2">
+                                14-Day Escrow Policy
+                                <span class="bg-indigo-500/20 text-indigo-300 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-indigo-400/20">Stripe Secure Hold</span>
+                            </h4>
+                            <p class="text-xs text-indigo-200/80 leading-relaxed font-medium mt-1">
+                                All payments are held securely in escrow for 14 days under our buyer protection policy. 
+                                Instructors are credited only after the refund window expires.
+                            </p>
                         </div>
                     </div>
-                    <p class="text-xs text-indigo-200/80 leading-relaxed font-medium">
-                        All payments are held securely in escrow for <strong>14 days</strong> under our buyer protection policy. 
-                        Instructors are credited only after the refund window expires.
-                    </p>
-                    <div class="h-[1px] bg-indigo-800/50"></div>
-                    <div class="space-y-3">
-                        <h5 class="text-[10px] font-black uppercase tracking-wider text-indigo-400">Payment Issue?</h5>
+                    <div class="flex-shrink-0 w-full md:w-auto">
                         <button type="button" onclick="showHelpDeskModal()" 
-                                class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/40 transition-all active:scale-95 flex items-center justify-center gap-2">
+                                class="w-full md:w-auto px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/40 transition-all active:scale-95 flex items-center justify-center gap-2">
                             <span class="material-symbols-outlined text-[16px]">contact_support</span>
                             Stripe Billing Help Desk
                         </button>
                     </div>
                 </div>
-            </aside>
 
-            @* Main List *@
-            <div class="flex-grow space-y-4">
+                @* Main List *@
+                <div class="space-y-4">
                 @if (Model.Items != null && Model.Items.Any())
                 {
                     @foreach (var item in Model.Items)
@@ -131,7 +132,14 @@
 
                             <div class="flex flex-col items-center md:items-end gap-3 flex-shrink-0">
                                 <div class="text-xl font-black text-slate-900">
-                                    @((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
+                                    @if (item.Status == "refunded")
+                                    {
+                                        <span class="text-rose-600 font-bold">- @((item.Currency ?? "USD").ToUpper()) @Math.Abs(item.Amount).ToString("N2")</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")</span>
+                                    }
                                 </div>
                                 
                                 @{
@@ -222,6 +230,7 @@
                         </a>
                     </div>
                 }
+            </div>
             </div>
         </div>
     </div>

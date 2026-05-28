@@ -188,6 +188,8 @@ namespace CourseMarketplaceFE.Controllers
         {
             if (!ModelState.IsValid)
             {
+                await LoadStripeStatusAsync();
+                await LoadTransferRateAsync();
                 model.AvailableCategories = await GetCategoriesAsync();
                 return View(model);
             }
@@ -239,6 +241,8 @@ namespace CourseMarketplaceFE.Controllers
                 ViewBag.ApiError = "Failed to create course: " + ex.Message;
             }
 
+            await LoadStripeStatusAsync();
+            await LoadTransferRateAsync();
             model.AvailableCategories = await GetCategoriesAsync();
             return View(model);
         }

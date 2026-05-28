@@ -464,7 +464,8 @@
                 });
                 
                 if (response.ok) {
-                    await refreshCartDOM();
+                    const htmlText = await response.text();
+                    await refreshCartDOM(htmlText);
                 } else {
                     console.error("Cart AJAX failed.");
                 }
@@ -479,7 +480,7 @@
         }
     });
 
-    async function refreshCartDOM() {
+    async function refreshCartDOM(htmlText = null) {
         const mainContainer = document.getElementById('cart-main-container');
         const toastsContainer = document.getElementById('cart-toasts-container');
         const modalContainer = document.getElementById('voucher-modal');
@@ -490,10 +491,9 @@
         }
         
         try {
-            const resp = await fetch('/Cart');
-            const htmlText = await resp.text();
+            const text = htmlText || await (await fetch('/Cart')).text();
             const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlText, 'text/html');
+            const doc = parser.parseFromString(text, 'text/html');
             
             const newMain = doc.getElementById('cart-main-container');
             if (newMain && mainContainer) {
@@ -503,6 +503,28 @@
             const newToasts = doc.getElementById('cart-toasts-container');
             if (newToasts && toastsContainer) {
                 toastsContainer.innerHTML = newToasts.innerHTML;
+
+                // Show dynamic Swal toast when fetched via AJAX
+                const successText = newToasts.querySelector('.bg-emerald-50 .text-emerald-700')?.textContent?.trim();
+                const errorText = newToasts.querySelector('.bg-red-50 .text-red-700')?.textContent?.trim();
+                
+                if (successText) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: successText,
+                        confirmButtonColor: '#006a62',
+                        customClass: { popup: 'rounded-2xl shadow-xl' }
+                    });
+                } else if (errorText) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Notification',
+                        text: errorText,
+                        confirmButtonColor: '#ef4444',
+                        customClass: { popup: 'rounded-2xl shadow-xl' }
+                    });
+                }
             }
             
             const newModal = doc.getElementById('voucher-modal');

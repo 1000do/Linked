@@ -173,7 +173,14 @@
                                         </div>
                                     </td>
                                     <td class="px-8 py-8 text-right font-black text-slate-900 text-xl">
-                                        @((Model.Currency ?? "VND").ToUpper()) @Model.GrossAmount.ToString("N2")
+                                        @if (Model.Status == "refunded")
+                                        {
+                                            <span class="text-rose-600 font-bold">- @((Model.Currency ?? "VND").ToUpper()) @Math.Abs(Model.GrossAmount).ToString("N2")</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@((Model.Currency ?? "VND").ToUpper()) @Model.GrossAmount.ToString("N2")</span>
+                                        }
                                     </td>
                                 </tr>
                             </tbody>
@@ -215,7 +222,16 @@
                                         @((Model.Currency ?? "VND").ToUpper()) @Model.OriginalPrice.ToString("N2")
                                     </div>
                                 }
-                                <span class="text-3xl font-black text-primary">@((Model.Currency ?? "VND").ToUpper()) @Model.GrossAmount.ToString("N2")</span>
+                                <span class="text-3xl font-black @(Model.Status == "refunded" ? "text-rose-600" : "text-primary")">
+                                    @if (Model.Status == "refunded")
+                                    {
+                                        <span>- @((Model.Currency ?? "VND").ToUpper()) @Math.Abs(Model.GrossAmount).ToString("N2")</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@((Model.Currency ?? "VND").ToUpper()) @Model.GrossAmount.ToString("N2")</span>
+                                    }
+                                </span>
                             </div>
                         </div>
                     </div>
