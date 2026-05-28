@@ -103,11 +103,7 @@
                 }
 
                 <div class="max-w-4xl mx-auto space-y-12">
-                    <div class="flex items-center justify-between mb-8">
-                        <div>
-                            <h2 class="text-3xl font-headline font-extrabold text-slate-900">Course Curriculum</h2>
-                            <p class="text-slate-500 mt-1">Design your learning path. Drag and drop to reorder.</p>
-                        </div>
+                    <div class="flex items-center justify-end mb-8">
                         <div class="flex flex-col items-end gap-2">
                             <div id="video-duration-counter" class="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 flex items-center gap-2 border border-slate-200">
                                 <span class="material-symbols-outlined text-[16px]">schedule</span>
@@ -702,10 +698,13 @@
                             </div>
                             
                             <!-- Add New Resource Form -->
-                            <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
-                                <h4 class="font-bold text-slate-900 mb-4">Add New Resource</h4>
+                            <div class="bg-slate-50 p-6 rounded-xl border border-slate-200" id="resource-form-container">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 id="resource-form-title" class="font-bold text-slate-900">Add New Resource</h4>
+                                    <button id="cancel-edit-resource-btn" class="hidden text-xs text-slate-500 hover:text-slate-700 underline font-semibold" onclick="resetResourceForm()">Cancel Edit</button>
+                                </div>
                                 
-                                <div class="mb-4">
+                                <div class="mb-4" id="resource-file-upload-section">
                                     <label class="text-sm font-bold text-slate-700 block mb-2">Resource File</label>
                                     <div class="flex items-center gap-4">
                                         <input type="hidden" id="ResourceUrl" name="ResourceUrl" />
@@ -723,12 +722,17 @@
                                     <input type="text" id="resource-title-input" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-primary focus:border-primary" placeholder="e.g. Presentation Slides" />
                                 </div>
                                 
-                                <div>
+                                <div class="mb-4">
                                     <label class="text-sm font-bold text-slate-700 block mb-2">Resource Description</label>
                                     <div class="bg-white rounded-xl">
                                         <div id="resource-editor"></div>
                                     </div>
                                 </div>
+
+                                <button id="update-resource-btn" class="hidden w-full mt-2 px-4 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors shadow-sm flex justify-center" onclick="submitResourceEdit()">
+                                    Save Changes
+                                </button>
+                                <input type="hidden" id="editing-resource-id" value="" />
                             </div>
                         </div>
                         <div class="space-y-6">
@@ -1315,9 +1319,15 @@
                 
                 const iconName = hasRejected ? 'cancel' : 'play_circle';
                 const iconColor = hasRejected ? 'red-500' : (isSelected ? 'primary' : 'slate-400');
+                const lDesc = lesson.description || lesson.Description || 'Video Lesson';
+
                 const statusLabel = hasRejected 
                     ? '<span class="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">error</span> Rejected</span>'
-                    : '<p class="text-[10px] text-slate-500 mt-1">Video Lesson</p>';
+                    : `
+                    <div class="flex items-center gap-1 group mt-0.5" onclick="event.stopPropagation()">
+                        <input type="text" class="text-[10px] text-slate-500 bg-transparent border-none p-0 m-0 h-auto focus:ring-0 focus:outline-none hover:bg-slate-100 rounded w-full cursor-text truncate" value="${lDesc}" placeholder="Add description..." onblur="updateLessonInline(${lId}, 'description', this)" onkeydown="if(event.key==='Enter') this.blur();" />
+                        <span class="material-symbols-outlined text-[12px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shrink-0">edit</span>
+                    </div>`;
                 
                 const removeBtnHtml = isPending ? '' : `
                     <button onclick="removeLesson(event, ${lId})" class="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50 self-center" title="Remove Lesson">
@@ -1329,8 +1339,12 @@
                     <div class="lesson-item p-3 bg-white border rounded-lg flex items-start gap-3 cursor-pointer transition-colors ${activeClasses}" 
                          data-lesson-id="${lId}" data-num="${num}" data-title="${lTitle}" onclick="selectLesson(this)">
                         <span class="material-symbols-outlined text-${iconColor} text-[20px] mt-0.5" ${isSelected && !hasRejected ? "style='font-variation-settings: \"FILL\" 1;'" : ""}>${iconName}</span>
-                        <div class="flex-1">
-                            <p class="font-bold text-slate-900 text-sm">${num}. ${lTitle}</p>
+                        <div class="flex-1 overflow-hidden mr-2">
+                            <div class="flex items-center gap-1 group" onclick="event.stopPropagation()">
+                                <span class="font-bold text-slate-900 text-sm shrink-0">${num}.</span>
+                                <input type="text" class="font-bold text-slate-900 text-sm bg-transparent border-none p-0 m-0 h-auto focus:ring-0 focus:outline-none hover:bg-slate-100 rounded w-full cursor-text truncate lesson-title-input" value="${lTitle}" onblur="updateLessonInline(${lId}, 'title', this)" onkeydown="if(event.key==='Enter') this.blur();" />
+                                <span class="material-symbols-outlined text-[14px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shrink-0">edit</span>
+                            </div>
                             ${statusLabel}
                         </div>
                         ${removeBtnHtml}
@@ -1539,7 +1553,7 @@
                                     </div>` : '';
                                 
                                 resourcesList.innerHTML += `
-                                    <div class="p-3 ${bgColor} border ${borderColor} rounded-lg shadow-sm" data-material-id="${mId}">
+                                    <div class="p-3 ${bgColor} border ${borderColor} rounded-lg shadow-sm cursor-pointer hover:bg-slate-50 transition-colors" data-material-id="${mId}" onclick="loadResourceForEdit(${mId}, event)">
                                         <div class="flex items-center justify-between">
                                             <div class="flex items-center gap-3">
                                                 <div class="w-10 h-10 ${iconBg} rounded flex items-center justify-center">
@@ -1594,7 +1608,7 @@
                 return;
             }
             
-            fetch('/InstructorCourse/UpdateLessonTitle', {
+            fetch(`/InstructorCourse/UpdateLessonTitle?lessonId=${lessonId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ lessonId: lessonId, title: newTitle.trim() })
@@ -1606,8 +1620,8 @@
                     if (data && data.data) {
                         const updatedTitle = data.data.title;
                         lessonIdEl.dataset.title = updatedTitle;
-                        const titleEl = lessonIdEl.querySelector('.lesson-title');
-                        if (titleEl) titleEl.textContent = updatedTitle;
+                        const titleEl = lessonIdEl.querySelector('.lesson-title-input');
+                        if (titleEl) titleEl.value = updatedTitle;
                         document.getElementById('editing-lesson-title').value = updatedTitle;
                         
                         // Update lessonsData array
@@ -1624,6 +1638,58 @@
             })
             .catch(err => {
                 document.getElementById('editing-lesson-title').value = currentTitle;
+                Swal.fire('Error', 'An error occurred', 'error');
+            });
+        };
+
+        window.updateLessonInline = function(lId, field, el) {
+            const lesson = lessonsData.find(x => (x.lessonId || x.LessonId) == lId);
+            if (!lesson) return;
+            
+            const currentVal = field === 'title' ? (lesson.title || lesson.Title) : (lesson.description || lesson.Description || 'Video Lesson');
+            const newVal = el.value.trim();
+            if (newVal === currentVal) return;
+            if (field === 'title' && !newVal) {
+                el.value = currentVal; // revert
+                return;
+            }
+
+            const url = field === 'title' 
+                ? `/InstructorCourse/UpdateLessonTitle?lessonId=${lId}`
+                : `/InstructorCourse/UpdateLessonDescription?lessonId=${lId}`;
+
+            const payload = {};
+            payload[field] = newVal;
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(json => {
+                if(json.success) {
+                    if (field === 'title') {
+                        lesson.title = newVal;
+                        lesson.Title = newVal; 
+                        
+                        // Update active editor if this is the currently selected lesson
+                        const lessonIdEl = document.querySelector('.lesson-item.border-primary');
+                        if (lessonIdEl && lessonIdEl.dataset.lessonId == lId) {
+                            document.getElementById('editing-lesson-title').value = newVal;
+                            lessonIdEl.dataset.title = newVal;
+                        }
+                    } else {
+                        lesson.description = newVal;
+                        lesson.Description = newVal;
+                    }
+                } else {
+                    el.value = currentVal; // revert
+                    Swal.fire('Error', json.message || 'Failed to update lesson', 'error');
+                }
+            })
+            .catch(err => {
+                el.value = currentVal;
                 Swal.fire('Error', 'An error occurred', 'error');
             });
         };
@@ -1729,6 +1795,119 @@
             .catch(err => {
                 el.value = field === 'title' ? currentTitle : currentDesc;
                 Swal.fire('Error', 'An error occurred', 'error');
+            });
+        };
+
+        window.loadResourceForEdit = function(mId, event) {
+            // Ignore if clicked on input, button, or link inside the card
+            if (event && event.target && (event.target.closest('button') || event.target.closest('a') || event.target.closest('input'))) {
+                return;
+            }
+
+            const lessonIdEl = document.querySelector('.lesson-item.border-primary');
+            if (!lessonIdEl) return;
+            const lessonId = lessonIdEl.dataset.lessonId;
+            const l = lessonsData.find(x => (x.lessonId || x.LessonId) == lessonId);
+            if (!l) return;
+            
+            const materials = l.learningMaterials || l.LearningMaterials || l.learning_materials || [];
+            const mat = materials.find(m => (m.materialId || m.MaterialId) == mId);
+            if (!mat) return;
+
+            // Highlight the selected card
+            document.querySelectorAll('#resources-list > div').forEach(el => el.classList.remove('ring-2', 'ring-primary'));
+            const card = document.querySelector(`[data-material-id="${mId}"]`);
+            if (card) card.classList.add('ring-2', 'ring-primary');
+
+            document.getElementById('resource-form-title').textContent = 'Edit Resource';
+            document.getElementById('cancel-edit-resource-btn').classList.remove('hidden');
+            document.getElementById('resource-file-upload-section').classList.add('hidden');
+            document.getElementById('update-resource-btn').classList.remove('hidden');
+            
+            document.getElementById('editing-resource-id').value = mId;
+            document.getElementById('resource-title-input').value = mat.title || mat.Title || "";
+            if (window.resourceQuill) {
+                window.resourceQuill.root.innerHTML = mat.description || mat.Description || "";
+            }
+            
+            // Scroll to form
+            document.getElementById('resource-form-container').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        };
+
+        window.resetResourceForm = function() {
+            document.querySelectorAll('#resources-list > div').forEach(el => el.classList.remove('ring-2', 'ring-primary'));
+            
+            document.getElementById('resource-form-title').textContent = 'Add New Resource';
+            document.getElementById('cancel-edit-resource-btn').classList.add('hidden');
+            document.getElementById('resource-file-upload-section').classList.remove('hidden');
+            document.getElementById('update-resource-btn').classList.add('hidden');
+            
+            document.getElementById('editing-resource-id').value = "";
+            document.getElementById('resource-title-input').value = "";
+            if (window.resourceQuill) {
+                window.resourceQuill.root.innerHTML = "";
+            }
+        };
+
+        window.submitResourceEdit = function() {
+            const mId = document.getElementById('editing-resource-id').value;
+            if (!mId) return;
+            
+            const newTitle = document.getElementById('resource-title-input').value.trim();
+            const newDesc = window.resourceQuill.root.innerHTML;
+            
+            const btn = document.getElementById('update-resource-btn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Saving...';
+            btn.disabled = true;
+
+            fetch(`/InstructorCourse/UpdateMaterialDetails?materialId=${mId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: newTitle, description: newDesc })
+            })
+            .then(res => res.json())
+            .then(json => {
+                if(json.success) {
+                    const data = JSON.parse(json.data);
+                    if (data && data.data) {
+                        const lessonIdEl = document.querySelector('.lesson-item.border-primary');
+                        const lessonId = lessonIdEl.dataset.lessonId;
+                        const l = lessonsData.find(x => (x.lessonId || x.LessonId) == lessonId);
+                        const materials = l.learningMaterials || l.LearningMaterials || l.learning_materials || [];
+                        const mat = materials.find(m => (m.materialId || m.MaterialId) == mId);
+                        
+                        if (mat) {
+                            if (mat.title !== undefined) mat.title = data.data.title;
+                            else mat.Title = data.data.title;
+                            
+                            if (mat.description !== undefined) mat.description = data.data.description;
+                            else mat.Description = data.data.description;
+                        }
+                        
+                        const card = document.querySelector(`[data-material-id="${mId}"]`);
+                        if (card) {
+                            const inputs = card.querySelectorAll('input[type="text"]');
+                            if (inputs.length >= 2) {
+                                inputs[0].value = data.data.title;
+                                const cleanedDesc = data.data.description ? data.data.description.replace(/<[^>]*>?/gm, '') : "";
+                                inputs[1].value = cleanedDesc;
+                            }
+                        }
+                        
+                        Swal.fire({ icon: 'success', title: 'Updated!', text: 'Resource details updated successfully.', timer: 1500, showConfirmButton: false });
+                        resetResourceForm();
+                    }
+                } else {
+                    Swal.fire('Error', json.message || 'Failed to update resource', 'error');
+                }
+            })
+            .catch(err => {
+                Swal.fire('Error', 'An error occurred', 'error');
+            })
+            .finally(() => {
+                btn.textContent = originalText;
+                btn.disabled = false;
             });
         };
 
@@ -2171,7 +2350,7 @@
                 </div>` : '';
             
             const html = `
-                <div class="p-3 ${bgColor} border ${borderColor} rounded-lg shadow-sm" data-material-id="${mId}">
+                <div class="p-3 ${bgColor} border ${borderColor} rounded-lg shadow-sm cursor-pointer hover:bg-slate-50 transition-colors" data-material-id="${mId}" onclick="loadResourceForEdit(${mId}, event)">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 ${iconBg} rounded flex items-center justify-center">

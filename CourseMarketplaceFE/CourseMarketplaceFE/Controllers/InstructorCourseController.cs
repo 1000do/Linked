@@ -736,6 +736,25 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> UpdateLessonDescription(int lessonId, [FromBody] object requestBody)
+        {
+            try
+            {
+                var resp = await _api.PatchJsonAsync($"lessons/{lessonId}/description", requestBody);
+                var respContent = await resp.Content.ReadAsStringAsync();
+                
+                if (resp.IsSuccessStatusCode)
+                    return Json(new { success = true, data = respContent });
+                
+                return Json(new { success = false, message = respContent });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
         public async Task<IActionResult> UpdateMaterialDetails(int materialId, [FromBody] object requestBody)
         {
             try
