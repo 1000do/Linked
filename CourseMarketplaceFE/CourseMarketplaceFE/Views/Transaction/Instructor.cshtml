@@ -5,8 +5,11 @@
     Layout = "_InstructorLayout";
     
     // Tính toán thống kê từ Payouts
-    var totalRevenue = Model.Payouts.Items.Sum(x => x.Amount);
-    var stripeWallet = Model.Payouts.Items.Where(x => x.PayoutStatus?.ToLower() == "transferred").Sum(x => x.Amount);
+    var grossRevenue = Model.Payouts.Items.Sum(x => Math.Abs(x.Amount));
+    var refundedRevenue = Model.Payouts.Items.Where(x => x.PayoutStatus?.ToLower() == "refunded").Sum(x => Math.Abs(x.Amount));
+    var netRevenue = grossRevenue - refundedRevenue; // grossRevenue - refundedRevenue
+    
+    var stripeWallet = Model.Payouts.Items.Where(x => x.PayoutStatus?.ToLower() == "transferred" || (x.PayoutStatus?.ToLower() == "refunded" && x.IsPaid)).Sum(x => x.Amount);
     var pendingPayout = Model.Payouts.Items.Where(x => x.PayoutStatus?.ToLower() == "pending" || x.PayoutStatus?.ToLower() == "in_transit").Sum(x => x.Amount);
     var paidPayout = Model.Payouts.Items.Where(x => x.PayoutStatus?.ToLower() == "paid").Sum(x => x.Amount);
     
@@ -139,63 +142,133 @@
     <!-- PHẦN 1: TỔNG QUAN DOANH THU                -->
     <!-- ========================================== -->
     
-    <!-- 4 Thẻ Thống Kê -->
-    <div id="stats-overview" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Tổng Doanh Thu (Từ các Payout) -->
-        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between group hover:border-primary transition-colors">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Revenue</h3>
-                <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                    <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-primary transition-colors">account_balance_wallet</span>
-                </div>
+    <!-- Thống kê Tài chính đối soát chi tiết (gồm 2 nhóm riêng biệt giao diện đẹp) -->
+    <div class="space-y-8 mb-8 animate-fadeIn">
+        <!-- Nhóm 1: Thống kê Doanh thu (Revenue Statistics) -->
+        <div>
+            <div class="flex items-center gap-2 mb-4">
+                <span class="material-symbols-outlined text-emerald-600 text-xl font-bold">analytics</span>
+                <h2 class="text-xs font-black text-slate-800 uppercase tracking-wider">Revenue Statistics</h2>
             </div>
-            <div>
-                <p class="text-2xl font-headline font-black text-slate-900">@totalRevenue.ToString("C")</p>
-                <p class="text-[11px] font-medium text-slate-400 mt-1">Audited & Verified</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 1. Gross Revenue -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500 hover:shadow-md transition-all duration-300">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xs font-black text-slate-500 uppercase tracking-wider">Gross Revenue</h3>
+                        <div class="w-9 h-9 rounded-2xl bg-emerald-50 flex items-center justify-center border border-emerald-100/50 group-hover:bg-emerald-500/10 transition-colors duration-300">
+                            <span class="material-symbols-outlined text-[20px] text-emerald-500 font-bold group-hover:scale-110 transition-transform">add_chart</span>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-headline font-black text-slate-900 group-hover:text-emerald-600 transition-colors">@grossRevenue.ToString("C")</p>
+                        <p class="text-[10px] font-bold text-slate-400 mt-1.5 uppercase tracking-wide">Total Sales Revenue</p>
+                    </div>
+                </div>
+
+                <!-- 2. Tổng tiền đã hoàn trả -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between group hover:border-rose-500 hover:shadow-md transition-all duration-300">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xs font-black text-slate-500 uppercase tracking-wider">Total Refunded</h3>
+                        <div class="w-9 h-9 rounded-2xl bg-rose-50 flex items-center justify-center border border-rose-100/50 group-hover:bg-rose-500/10 transition-colors duration-300">
+                            <span class="material-symbols-outlined text-[20px] text-rose-500 font-bold group-hover:scale-110 transition-transform">currency_exchange</span>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-headline font-black text-rose-600">
+                            @if (refundedRevenue > 0)
+                            {
+                                <span>- @refundedRevenue.ToString("C")</span>
+                            }
+                            else
+                            {
+                                <span>@refundedRevenue.ToString("C")</span>
+                            }
+                        </p>
+                        <p class="text-[10px] font-bold text-slate-400 mt-1.5 uppercase tracking-wide">Deductions & Returns</p>
+                    </div>
+                </div>
+
+                <!-- 3. Doanh thu thực tế còn lại -->
+                <div class="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden flex flex-col justify-between hover:scale-[1.01] hover:shadow-indigo-500/20 transition-all duration-300">
+                    <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                    <div class="flex items-center justify-between mb-4 relative z-10">
+                        <h3 class="text-xs font-black text-indigo-100 uppercase tracking-wider">Net Earnings</h3>
+                        <div class="w-9 h-9 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm">
+                            <span class="material-symbols-outlined text-[20px] text-white font-bold">account_balance_wallet</span>
+                        </div>
+                    </div>
+                    <div class="relative z-10">
+                        <p class="text-2xl font-headline font-black text-white">@netRevenue.ToString("C")</p>
+                        <p class="text-[10px] font-bold text-indigo-200 mt-1.5 uppercase tracking-wide">Actual Revenue after Payout</p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Trong ví Stripe -->
-        <div class="bg-gradient-to-br from-violet-500 to-violet-600 rounded-2xl p-6 text-white shadow-md relative overflow-hidden flex flex-col justify-between">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
-            <div class="flex items-center justify-between mb-4 relative z-10">
-                <h3 class="text-xs font-bold text-white/90 uppercase tracking-wider">Stripe Wallet</h3>
-                <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                    <span class="material-symbols-outlined text-[18px] text-white">account_balance</span>
+        <!-- Nhóm 2: Trạng thái Thanh toán & Số dư (Payout Details & Balances) -->
+        <div>
+            <div class="flex items-center gap-2 mb-4">
+                <span class="material-symbols-outlined text-indigo-600 text-xl font-bold">account_balance_wallet</span>
+                <h2 class="text-xs font-black text-slate-800 uppercase tracking-wider">Payout Details & Balances</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 5. Chờ thanh toán / Đang chuyển (Pending Payouts) - BÊN TRÁI -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between group hover:border-amber-500 hover:shadow-md transition-all duration-300">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xs font-black text-slate-500 uppercase tracking-wider">Pending transfer</h3>
+                        <div class="w-9 h-9 rounded-2xl bg-amber-50 flex items-center justify-center border border-amber-100/50 group-hover:bg-amber-500/10 transition-colors duration-300">
+                            <span class="material-symbols-outlined text-[20px] text-amber-500 font-bold group-hover:scale-110 transition-transform">hourglass_empty</span>
+                        </div>
+                    </div>
+                    <div>
+                        @if (pendingPayout < 0)
+                        {
+                            <p class="text-2xl font-headline font-black text-rose-600">@pendingPayout.ToString("C")</p>
+                        }
+                        else
+                        {
+                            <p class="text-2xl font-headline font-black text-slate-900 group-hover:text-amber-600 transition-colors">@pendingPayout.ToString("C")</p>
+                        }
+                        <p class="text-[10px] font-bold text-slate-400 mt-1.5 uppercase tracking-wide">Escrow Hold / In Transit</p>
+                    </div>
                 </div>
-            </div>
-            <div class="relative z-10">
-                <p class="text-2xl font-headline font-black text-white">@stripeWallet.ToString("C")</p>
-                <p class="text-[11px] font-medium text-violet-100 mt-1">Ready for Bank Transfer</p>
-            </div>
-        </div>
 
-        <!-- Chờ thanh toán / Đang chuyển -->
-        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between group hover:border-amber-500 transition-colors">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pending Payouts</h3>
-                <div class="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
-                    <span class="material-symbols-outlined text-[18px] text-amber-500">hourglass_empty</span>
+                <!-- 4. Trong ví Stripe (Stripe Wallet) - Ở GIỮA -->
+                <div class="bg-gradient-to-br from-violet-500 to-violet-600 rounded-3xl p-6 text-white shadow-md relative overflow-hidden flex flex-col justify-between hover:scale-[1.01] hover:shadow-violet-500/20 transition-all duration-300">
+                    <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                    <div class="flex items-center justify-between mb-4 relative z-10">
+                        <h3 class="text-xs font-black text-white/95 uppercase tracking-wider">Stripe Wallet</h3>
+                        <div class="w-9 h-9 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm">
+                            <span class="material-symbols-outlined text-[20px] text-white">account_balance</span>
+                        </div>
+                    </div>
+                    <div class="relative z-10">
+                        @if (stripeWallet < 0)
+                        {
+                            <p class="text-2xl font-headline font-black text-rose-200">@stripeWallet.ToString("C")</p>
+                        }
+                        else
+                        {
+                            <p class="text-2xl font-headline font-black text-white">@stripeWallet.ToString("C")</p>
+                        }
+                        <p class="text-[10px] font-bold text-violet-100 mt-1.5 uppercase tracking-wide">Ready for Bank Transfer</p>
+                    </div>
                 </div>
-            </div>
-            <div>
-                <p class="text-2xl font-headline font-black text-slate-900">@pendingPayout.ToString("C")</p>
-                <p class="text-[11px] font-medium text-slate-400 mt-1">Held by platform or in transit</p>
-            </div>
-        </div>
 
-        <!-- Đã rút thành công -->
-        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white shadow-md relative overflow-hidden flex flex-col justify-between">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
-            <div class="flex items-center justify-between mb-4 relative z-10">
-                <h3 class="text-xs font-bold text-white/90 uppercase tracking-wider">Withdrawn (Paid)</h3>
-                <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                    <span class="material-symbols-outlined text-[18px] text-white">payments</span>
+                <!-- 6. Đã rút thành công (Withdrawn) - BÊN PHẢI -->
+                <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 text-white shadow-md relative overflow-hidden flex flex-col justify-between hover:scale-[1.01] hover:shadow-emerald-500/20 transition-all duration-300">
+                    <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                    <div class="flex items-center justify-between mb-4 relative z-10">
+                        <h3 class="text-xs font-black text-white/95 uppercase tracking-wider">Withdrawn</h3>
+                        <div class="w-9 h-9 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm">
+                            <span class="material-symbols-outlined text-[20px] text-white">payments</span>
+                        </div>
+                    </div>
+                    <div class="relative z-10">
+                        <p class="text-2xl font-headline font-black text-white">@paidPayout.ToString("C")</p>
+                        <p class="text-[10px] font-bold text-emerald-100 mt-1.5 uppercase tracking-wide">Transferred to Bank Account</p>
+                    </div>
                 </div>
-            </div>
-            <div class="relative z-10">
-                <p class="text-2xl font-headline font-black text-white">@paidPayout.ToString("C")</p>
-                <p class="text-[11px] font-medium text-emerald-100 mt-1">Transferred to your bank account</p>
             </div>
         </div>
     </div>
@@ -213,7 +286,7 @@
         </div>
         <!-- Hidden input storing serialized chart items for AJAX updates -->
         <div id="chart-data-json" class="hidden" data-chart="@System.Text.Json.JsonSerializer.Serialize(
-            Model.Transactions.Items?.OrderBy(x => x.Date).Select(x => new {
+            Model.Transactions.Items?.Where(x => x.Status != "refunded" && x.Amount > 0).OrderBy(x => x.Date).Select(x => new {
                 date = x.Date?.ToString("dd/MM"),
                 amount = x.Amount,
                 currency = x.PayoutCurrency ?? x.Currency
@@ -399,7 +472,7 @@
                                             @if (item.Status == "refunded")
                                             {
                                                 <span class="text-sm font-black text-rose-600 tracking-tight font-black">
-                                                    - @((item.PayoutCurrency ?? item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
+                                                    - @((item.PayoutCurrency ?? item.Currency ?? "USD").ToUpper()) @Math.Abs(item.Amount).ToString("N2")
                                                 </span>
                                             }
                                             else
@@ -584,8 +657,16 @@
                                     </td>
                                     <td class="px-4 py-4.5 text-right align-middle whitespace-nowrap">
                                         <div class="flex flex-col items-end">
-                                            <span class="text-sm font-black text-emerald-700 tracking-tight font-black">@item.Amount.ToString("C")</span>
-                                            <span class="text-[9px] text-slate-400 font-bold mt-0.5 uppercase tracking-wider">Credited</span>
+                                            @if (item.PayoutStatus?.ToLower() == "refunded")
+                                            {
+                                                <span class="text-sm font-black text-rose-600 tracking-tight font-black">- @Math.Abs(item.Amount).ToString("C")</span>
+                                                <span class="text-[9px] text-slate-400 font-bold mt-0.5 uppercase tracking-wider">Deducted</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-sm font-black text-emerald-700 tracking-tight font-black">@item.Amount.ToString("C")</span>
+                                                <span class="text-[9px] text-slate-400 font-bold mt-0.5 uppercase tracking-wider">Credited</span>
+                                            }
                                         </div>
                                     </td>
                                     <td class="pl-4 pr-6 py-4.5 align-middle">
@@ -624,6 +705,13 @@
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-red-50 text-red-700 border border-red-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
                                                 <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
                                                 Failed
+                                            </span>
+                                        }
+                                        else if (status == "refunded")
+                                        {
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-rose-50 text-rose-700 border border-rose-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                                                Refunded
                                             </span>
                                         }
                                         else
@@ -766,10 +854,10 @@
                         <div>
                             <label class="text-[10px] font-bold text-slate-300 uppercase tracking-wider block mb-1.5">Inquiry Category</label>
                             <select id="inquiryCategory" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 cursor-pointer font-medium">
-                                <option value="balance">Balance Discrepancy (Lệch số dư)</option>
-                                <option value="stripe">Stripe Connect Sync Issues (Lỗi đồng bộ Stripe)</option>
-                                <option value="refund">Refund Dispute (Thắc mắc hoàn tiền)</option>
-                                <option value="other">General Billing Inquiry (Yêu cầu tài chính khác)</option>
+                                <option value="balance">Balance Discrepancy</option>
+                                <option value="stripe">Stripe Connect Sync Issues</option>
+                                <option value="refund">Refund Dispute</option>
+                                <option value="other">General Billing Inquiry</option>
                             </select>
                         </div>
                         <div>
@@ -839,7 +927,10 @@
                 profitChartInstance.destroy();
             }
 
-            if (!items || items.length === 0) {
+            // Filter out refunded or negative transactions to prevent negative values in the revenue chart
+            const filteredItems = (items || []).filter(x => x && x.amount > 0);
+
+            if (filteredItems.length === 0) {
                 profitChartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
@@ -867,7 +958,7 @@
                 return;
             }
 
-            const aggregated = items.reduce((acc, curr) => {
+            const aggregated = filteredItems.reduce((acc, curr) => {
                 const dateStr = curr.date || "Unknown";
                 acc[dateStr] = (acc[dateStr] || 0) + curr.amount;
                 return acc;
@@ -885,7 +976,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: `Revenue (${items.length > 0 && items[0] && items[0].currency ? items[0].currency.toUpperCase() : 'USD'})`,
+                        label: `Revenue (${filteredItems.length > 0 && filteredItems[0] && filteredItems[0].currency ? filteredItems[0].currency.toUpperCase() : 'USD'})`,
                         data: dataValues,
                         borderColor: '#006a62',
                         borderWidth: 3,
@@ -917,7 +1008,7 @@
                             displayColors: false,
                             callbacks: {
                                 label: function(context) {
-                                    const curr = items.length > 0 && items[0] && items[0].currency ? items[0].currency.toUpperCase() : 'USD';
+                                    const curr = filteredItems.length > 0 && filteredItems[0] && filteredItems[0].currency ? filteredItems[0].currency.toUpperCase() : 'USD';
                                     return curr + ' ' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2});
                                 }
                             }
@@ -926,12 +1017,13 @@
                     scales: {
                         y: {
                             beginAtZero: true,
+                            min: 0,
                             grid: { color: '#f1f5f9', drawBorder: false },
                             ticks: {
                                 font: { family: 'Inter', size: 11, weight: '600' },
                                 color: '#94a3b8',
                                 callback: function(value) {
-                                    const curr = items.length > 0 && items[0] && items[0].currency ? items[0].currency.toUpperCase() : 'USD';
+                                    const curr = filteredItems.length > 0 && filteredItems[0] && filteredItems[0].currency ? filteredItems[0].currency.toUpperCase() : 'USD';
                                     return curr + ' ' + value;
                                 }
                             },
@@ -957,7 +1049,7 @@
             }
 
             const initialItems = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-                Model.Transactions.Items?.OrderBy(x => x.Date).Select(x => new {
+                Model.Transactions.Items?.Where(x => x.Status != "refunded" && x.Amount > 0).OrderBy(x => x.Date).Select(x => new {
                     date = x.Date?.ToString("dd/MM"),
                     amount = x.Amount,
                     currency = x.PayoutCurrency ?? x.Currency

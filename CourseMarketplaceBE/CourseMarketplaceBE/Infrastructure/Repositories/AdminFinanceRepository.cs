@@ -67,13 +67,22 @@ public class AdminFinanceRepository : IAdminFinanceRepository
     public async Task<decimal> GetGrossRevenueAsync(int? year = null, int? month = null)
     {
         var query = _context.Transactions
-            .Where(t => t.TransactionsStatus == "succeeded");
+            .Where(t => t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending");
 
-        if (year.HasValue && month.HasValue)
+        if (year.HasValue)
         {
-            var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
-            var endDate = startDate.AddMonths(1);
-            query = query.Where(t => t.TransactionCreatedAt >= startDate && t.TransactionCreatedAt < endDate);
+            if (month.HasValue)
+            {
+                var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
+                var endDate = startDate.AddMonths(1);
+                query = query.Where(t => t.TransactionCreatedAt >= startDate && t.TransactionCreatedAt < endDate);
+            }
+            else
+            {
+                var startDate = new DateTime(year.Value, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                var endDate = startDate.AddYears(1);
+                query = query.Where(t => t.TransactionCreatedAt >= startDate && t.TransactionCreatedAt < endDate);
+            }
         }
 
         return await query.SumAsync(t => t.Amount);
@@ -82,13 +91,22 @@ public class AdminFinanceRepository : IAdminFinanceRepository
     public async Task<int> GetSucceededTransactionCountAsync(int? year = null, int? month = null)
     {
         var query = _context.Transactions
-            .Where(t => t.TransactionsStatus == "succeeded");
+            .Where(t => t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending");
 
-        if (year.HasValue && month.HasValue)
+        if (year.HasValue)
         {
-            var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
-            var endDate = startDate.AddMonths(1);
-            query = query.Where(t => t.TransactionCreatedAt >= startDate && t.TransactionCreatedAt < endDate);
+            if (month.HasValue)
+            {
+                var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
+                var endDate = startDate.AddMonths(1);
+                query = query.Where(t => t.TransactionCreatedAt >= startDate && t.TransactionCreatedAt < endDate);
+            }
+            else
+            {
+                var startDate = new DateTime(year.Value, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                var endDate = startDate.AddYears(1);
+                query = query.Where(t => t.TransactionCreatedAt >= startDate && t.TransactionCreatedAt < endDate);
+            }
         }
 
         return await query.CountAsync();
@@ -98,13 +116,22 @@ public class AdminFinanceRepository : IAdminFinanceRepository
     {
         var query = _context.InstructorPayouts
             .Include(p => p.Transaction)
-            .Where(p => p.IsPaid == true);
+            .Where(p => p.IsPaid == true && p.PayoutStatus != "refunded" && (p.Transaction == null || p.Transaction.TransactionsStatus != "refunded"));
 
-        if (year.HasValue && month.HasValue)
+        if (year.HasValue)
         {
-            var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
-            var endDate = startDate.AddMonths(1);
-            query = query.Where(p => p.Transaction != null && p.Transaction.TransactionCreatedAt >= startDate && p.Transaction.TransactionCreatedAt < endDate);
+            if (month.HasValue)
+            {
+                var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
+                var endDate = startDate.AddMonths(1);
+                query = query.Where(p => p.Transaction != null && p.Transaction.TransactionCreatedAt >= startDate && p.Transaction.TransactionCreatedAt < endDate);
+            }
+            else
+            {
+                var startDate = new DateTime(year.Value, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                var endDate = startDate.AddYears(1);
+                query = query.Where(p => p.Transaction != null && p.Transaction.TransactionCreatedAt >= startDate && p.Transaction.TransactionCreatedAt < endDate);
+            }
         }
 
         return await query.SumAsync(p => p.PayoutAmount);
@@ -115,13 +142,22 @@ public class AdminFinanceRepository : IAdminFinanceRepository
         var refundLimitDate = DateTime.UtcNow.AddDays(-14);
         var query = _context.InstructorPayouts
             .Include(p => p.Transaction)
-            .Where(p => p.IsPaid == false && p.Transaction != null && p.Transaction.TransactionCreatedAt >= refundLimitDate);
+            .Where(p => p.IsPaid == false && p.PayoutStatus != "refunded" && p.Transaction != null && p.Transaction.TransactionsStatus != "refunded" && p.Transaction.TransactionCreatedAt >= refundLimitDate);
 
-        if (year.HasValue && month.HasValue)
+        if (year.HasValue)
         {
-            var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
-            var endDate = startDate.AddMonths(1);
-            query = query.Where(p => p.Transaction!.TransactionCreatedAt >= startDate && p.Transaction!.TransactionCreatedAt < endDate);
+            if (month.HasValue)
+            {
+                var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
+                var endDate = startDate.AddMonths(1);
+                query = query.Where(p => p.Transaction!.TransactionCreatedAt >= startDate && p.Transaction!.TransactionCreatedAt < endDate);
+            }
+            else
+            {
+                var startDate = new DateTime(year.Value, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                var endDate = startDate.AddYears(1);
+                query = query.Where(p => p.Transaction!.TransactionCreatedAt >= startDate && p.Transaction!.TransactionCreatedAt < endDate);
+            }
         }
 
         return await query.SumAsync(p => p.PayoutAmount);
@@ -132,13 +168,22 @@ public class AdminFinanceRepository : IAdminFinanceRepository
         var refundLimitDate = DateTime.UtcNow.AddDays(-14);
         var query = _context.InstructorPayouts
             .Include(p => p.Transaction)
-            .Where(p => p.IsPaid == false && p.Transaction != null && p.Transaction.TransactionCreatedAt < refundLimitDate);
+            .Where(p => p.IsPaid == false && p.PayoutStatus != "refunded" && p.Transaction != null && p.Transaction.TransactionsStatus != "refunded" && p.Transaction.TransactionCreatedAt < refundLimitDate);
 
-        if (year.HasValue && month.HasValue)
+        if (year.HasValue)
         {
-            var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
-            var endDate = startDate.AddMonths(1);
-            query = query.Where(p => p.Transaction!.TransactionCreatedAt >= startDate && p.Transaction!.TransactionCreatedAt < endDate);
+            if (month.HasValue)
+            {
+                var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
+                var endDate = startDate.AddMonths(1);
+                query = query.Where(p => p.Transaction!.TransactionCreatedAt >= startDate && p.Transaction!.TransactionCreatedAt < endDate);
+            }
+            else
+            {
+                var startDate = new DateTime(year.Value, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                var endDate = startDate.AddYears(1);
+                query = query.Where(p => p.Transaction!.TransactionCreatedAt >= startDate && p.Transaction!.TransactionCreatedAt < endDate);
+            }
         }
 
         return await query.SumAsync(p => p.PayoutAmount);
@@ -279,12 +324,13 @@ public class AdminFinanceRepository : IAdminFinanceRepository
                 .ThenInclude(oi => oi!.Course)
             .Include(t => t.AccountFromNavigation)
                 .ThenInclude(a => a!.User)
+            .Include(t => t.TransactionExt)
             .Where(t => t.TransactionsStatus == "refund_pending");
 
         var totalCount = await query.CountAsync();
 
         var items = await query
-            .OrderByDescending(t => t.RefundRequestedAt)
+            .OrderByDescending(t => t.TransactionExt != null ? t.TransactionExt.RefundRequestedAt : (DateTime?)null)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -308,6 +354,7 @@ public class AdminFinanceRepository : IAdminFinanceRepository
                     .ThenInclude(c => c!.Instructor)
             .Include(t => t.AccountFromNavigation)
                 .ThenInclude(a => a!.User)
+            .Include(t => t.TransactionExt)
             .FirstOrDefaultAsync(t => t.TransactionId == transactionId);
     }
 
@@ -364,6 +411,52 @@ public class AdminFinanceRepository : IAdminFinanceRepository
             .Include(t => t.AccountFromNavigation)
                 .ThenInclude(a => a!.User)
             .FirstOrDefaultAsync(t => t.StripePaymentintentId == paymentIntentId);
+    }
+
+    public async Task<List<InstructorCourseRevenueProjection>> GetInstructorCourseRevenuesAsync(int year, int month)
+    {
+        var monthStart = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var monthEnd = monthStart.AddMonths(1);
+
+        var yearStart = new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var yearEnd = yearStart.AddYears(1);
+
+        return await _context.Courses
+            .Include(c => c.Instructor)
+                .ThenInclude(i => i!.InstructorNavigation)
+            .Where(c => !c.IsRemoved)
+            .Select(c => new InstructorCourseRevenueProjection
+            {
+                CourseId = c.CourseId,
+                CourseTitle = c.Title,
+                InstructorId = c.InstructorId ?? 0,
+                InstructorName = c.Instructor != null && c.Instructor.InstructorNavigation != null
+                    ? c.Instructor.InstructorNavigation.FullName ?? "N/A"
+                    : "N/A",
+
+                SalesCount = _context.Transactions
+                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
+                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending"))
+                    .Count(),
+
+                MonthlyRevenue = _context.Transactions
+                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
+                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
+                                && t.TransactionCreatedAt >= monthStart && t.TransactionCreatedAt < monthEnd)
+                    .Sum(t => (decimal?)t.Amount) ?? 0,
+
+                YearlyRevenue = _context.Transactions
+                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
+                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
+                                && t.TransactionCreatedAt >= yearStart && t.TransactionCreatedAt < yearEnd)
+                    .Sum(t => (decimal?)t.Amount) ?? 0,
+
+                LifetimeRevenue = _context.Transactions
+                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
+                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending"))
+                    .Sum(t => (decimal?)t.Amount) ?? 0
+            })
+            .ToListAsync();
     }
 
     public void RemoveInstructorPayout(InstructorPayout payout)

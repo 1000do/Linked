@@ -211,6 +211,8 @@ namespace CourseMarketplaceFE.Controllers
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     return Json(new { success = false, message = "Please complete all required fields." });
                     
+                await LoadStripeStatusAsync();
+                await LoadTransferRateAsync();
                 model.AvailableCategories = await GetCategoriesAsync();
                 return View(model);
             }
@@ -272,6 +274,8 @@ namespace CourseMarketplaceFE.Controllers
                 ViewBag.ApiError = "Failed to create course: " + ex.Message;
             }
 
+            await LoadStripeStatusAsync();
+            await LoadTransferRateAsync();
             model.AvailableCategories = await GetCategoriesAsync();
             return View(model);
         }

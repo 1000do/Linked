@@ -102,11 +102,25 @@ public interface IAdminFinanceRepository
     /// </summary>
     Task<Domain.Entities.Transaction?> GetTransactionByPaymentIntentIdAsync(string paymentIntentId);
 
+    Task<List<InstructorCourseRevenueProjection>> GetInstructorCourseRevenuesAsync(int year, int month);
+
     /// <summary>Xóa bản ghi chia tiền giảng viên (dùng khi hoàn tiền).</summary>
     void RemoveInstructorPayout(Domain.Entities.InstructorPayout payout);
 
     /// <summary>Commit changes.</summary>
     Task SaveChangesAsync();
+}
+
+public class InstructorCourseRevenueProjection
+{
+    public int CourseId { get; set; }
+    public string CourseTitle { get; set; } = string.Empty;
+    public int InstructorId { get; set; }
+    public string InstructorName { get; set; } = string.Empty;
+    public int SalesCount { get; set; }
+    public decimal MonthlyRevenue { get; set; }
+    public decimal YearlyRevenue { get; set; }
+    public decimal LifetimeRevenue { get; set; }
 }
 
 /// <summary>

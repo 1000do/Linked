@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS messages CASCADE;
 DROP TABLE IF EXISTS chats CASCADE;
 DROP TABLE IF EXISTS lockouts CASCADE;
+DROP TABLE IF EXISTS transaction_exts CASCADE;
 DROP TABLE IF EXISTS transactions CASCADE;
 DROP TABLE IF EXISTS order_items CASCADE;
 DROP TABLE IF EXISTS order_info CASCADE;
@@ -347,10 +348,14 @@ CREATE TABLE transactions (
     currency VARCHAR(10) DEFAULT 'VND',
     transactions_status VARCHAR(50), -- VD: 'succeeded', 'failed', 'refunded'
     transaction_type VARCHAR(50), -- VD: 'payment', 'refund'
-    transaction_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    transaction_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE transaction_exts (
+    transaction_id INT PRIMARY KEY REFERENCES transactions(transaction_id) ON DELETE CASCADE,
     refund_reason TEXT,
     refund_admin_note TEXT,
-    refund_requested_at TIMESTAMP
+    refund_requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Bảng lưu dữ liệu những giao dịch chuyển tiền từ hệ thống vô tài khoản ngân hàng của instructor

@@ -57,117 +57,201 @@
     </form>
 </div>
 
-@if (TempData["FinanceSuccess"] != null || TempData["WithdrawSuccess"] != null)
-{
-    <div class="mb-6 p-4 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl font-medium flex items-center gap-2">
-        <span class="material-symbols-outlined">check_circle</span>
-        @(TempData["FinanceSuccess"] ?? TempData["WithdrawSuccess"])
-    </div>
-}
-@if (TempData["FinanceError"] != null || TempData["WithdrawError"] != null)
-{
-    <div class="mb-6 p-4 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl font-medium flex items-center gap-2">
-        <span class="material-symbols-outlined">error</span>
-        @(TempData["FinanceError"] ?? TempData["WithdrawError"])
-    </div>
-}
+
 
 <!-- ========================================== -->
 <!-- SECTION 1: REVENUE OVERVIEW & BALANCES     -->
 <!-- ========================================== -->
 
-<!-- Thống kê tổng quan Doanh thu -->
-<div id="stats-overview" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md">
-        <div class="absolute right-0 top-0 w-24 h-24 bg-indigo-500/5 rounded-bl-[100px] -z-0"></div>
-        <div class="relative z-10">
-            <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Gross Revenue</p>
-            <p class="text-3xl font-black text-slate-900">@Model.Dashboard.Summary.GrossRevenue.ToString("C")</p>
-            <p class="text-xs text-slate-400 mt-2">Across @Model.Dashboard.Summary.TotalTransactions transactions</p>
+@{
+    var overviewPayoutsList = Model.Dashboard.Payouts ?? new List<CourseMarketplaceFE.Controllers.AdminFinanceController.PayoutDetailVM>();
+    var grossEarnings = overviewPayoutsList.Sum(x => {
+        var absAmount = Math.Abs(x.TotalAmount);
+        var stripeFee = Math.Round(absAmount * 0.029m + 0.30m, 2);
+        stripeFee = Math.Min(stripeFee, absAmount);
+        return absAmount - stripeFee;
+    });
+    var totalRefunded = overviewPayoutsList.Where(x => x.PayoutStatus?.ToLower() == "refunded").Sum(x => {
+        var absAmount = Math.Abs(x.TotalAmount);
+        var stripeFee = Math.Round(absAmount * 0.029m + 0.30m, 2);
+        stripeFee = Math.Min(stripeFee, absAmount);
+        return absAmount - stripeFee;
+    });
+    var netEarnings = grossEarnings - totalRefunded;
+}
+<!-- Thống kê tổng quan Doanh thu (3 nhóm riêng biệt cho người dùng dễ coi) -->
+<div class="space-y-8 mb-8">
+    <!-- Nhóm 1: Doanh thu Khóa học (Course Revenue) -->
+    <div>
+        <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined text-emerald-600 text-xl font-bold">analytics</span>
+            <h2 class="text-xs font-black text-slate-800 uppercase tracking-wider">Course Revenue</h2>
         </div>
-    </div>
-    
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md">
-        <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-500/5 rounded-bl-[100px] -z-0"></div>
-        <div class="relative z-10">
-            <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Paid to Instructors</p>
-            <p class="text-3xl font-black text-emerald-600">@Model.Dashboard.Summary.TotalPaidOut.ToString("C")</p>
-            <p class="text-xs text-slate-400 mt-2">Transferred directly to instructors</p>
-        </div>
-    </div>
-    
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md">
-        <div class="absolute right-0 top-0 w-24 h-24 bg-amber-500/5 rounded-bl-[100px] -z-0"></div>
-        <div class="relative z-10 flex flex-col justify-between h-full">
-            <div>
-                <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Escrow Funds</p>
-                <div class="flex items-baseline gap-1.5">
-                    <span class="text-2xl font-black text-amber-500">@Model.Dashboard.Summary.PendingEscrow.ToString("C")</span>
-                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">Locked (< 14d)</span>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Card 1: Gross Earnings (Doanh thu gốc) -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md">
+                <div class="absolute right-0 top-0 w-20 h-20 bg-emerald-500/5 rounded-bl-[80px] -z-0"></div>
+                <div class="relative z-10 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">GROSS REVENUE</p>
+                        <p class="text-3xl font-black text-slate-900 font-mono">@grossEarnings.ToString("C")</p>
+                        <p class="text-[10px] font-semibold text-slate-400 mt-2">TOTAL SALES REVENUE</p>
+                    </div>
+                    <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm self-start">
+                        <span class="material-symbols-outlined text-[20px] font-bold">payments</span>
+                    </div>
                 </div>
             </div>
-            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
-                    Matured (Ready)
-                </span>
-                <span class="text-base font-black text-emerald-600">@Model.Dashboard.Summary.MaturedEscrow.ToString("C")</span>
+
+            <!-- Card 2: Total Refunded (Đã hoàn tiền) -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md">
+                <div class="absolute right-0 top-0 w-20 h-20 bg-rose-500/5 rounded-bl-[80px] -z-0"></div>
+                <div class="relative z-10 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">TOTAL REFUNDED</p>
+                        <p class="text-3xl font-black text-rose-600 font-mono">@totalRefunded.ToString("C")</p>
+                        <p class="text-[10px] font-semibold text-slate-400 mt-2">DEDUCTIONS & RETURNS</p>
+                    </div>
+                    <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600 shadow-sm self-start">
+                        <span class="material-symbols-outlined text-[20px] font-bold">keyboard_double_arrow_left</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Net Earnings (Thực nhận còn lại) -->
+            <div class="p-6 rounded-2xl shadow-sm relative overflow-hidden bg-gradient-to-br from-indigo-600 to-indigo-700 text-white transition-all duration-300 hover:shadow-md group">
+                <div class="absolute right-0 top-0 w-20 h-20 bg-white/10 rounded-bl-[80px] -z-0"></div>
+                <div class="relative z-10 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-black text-indigo-200 uppercase tracking-wider mb-2">NET EARNINGS</p>
+                        <p class="text-3xl font-black text-white font-mono">@netEarnings.ToString("C")</p>
+                        <p class="text-[10px] font-semibold text-indigo-100 mt-2">ACTUAL REVENUE AFTER REFUND</p>
+                    </div>
+                    <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white shadow-sm self-start">
+                        <span class="material-symbols-outlined text-[20px] font-bold">savings</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 text-white transition-all duration-300 hover:shadow-md">
-        <div class="relative z-10">
-            <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Platform Net Profit</p>
-            <p class="text-3xl font-black text-white">@Model.Dashboard.Summary.PlatformNetProfit.ToString("C")</p>
-            <p class="text-xs text-slate-400 mt-2">Net platform cut after splits</p>
+
+    <!-- Nhóm 2: Phân bổ Doanh thu (Revenue Splits & Distributions) -->
+    <div>
+        <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined text-indigo-600 text-xl font-bold">account_balance_wallet</span>
+            <h2 class="text-xs font-black text-slate-800 uppercase tracking-wider">Revenue Splits & Distributions</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Card 4: Paid to Instructors -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md">
+                <div class="absolute right-0 top-0 w-20 h-20 bg-indigo-500/5 rounded-bl-[80px] -z-0"></div>
+                <div class="relative z-10 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">PAID TO INSTRUCTORS</p>
+                        <p class="text-3xl font-black text-slate-900 font-mono">@Model.Dashboard.Summary.TotalPaidOut.ToString("C")</p>
+                        <p class="text-[10px] font-semibold text-slate-400 mt-2">TRANSFERRED TO INSTRUCTORS</p>
+                    </div>
+                    <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 shadow-sm self-start">
+                        <span class="material-symbols-outlined text-[20px] font-bold">account_balance_wallet</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 5: Escrow Funds -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-md">
+                <div class="absolute right-0 top-0 w-20 h-20 bg-amber-500/5 rounded-bl-[80px] -z-0"></div>
+                <div class="relative z-10 flex flex-col justify-between h-full">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">ESCROW FUNDS</p>
+                            <div class="flex items-baseline gap-1.5">
+                                <span class="text-3xl font-black text-amber-500 font-mono">@Model.Dashboard.Summary.PendingEscrow.ToString("C")</span>
+                                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">Locked (&lt; 14d)</span>
+                            </div>
+                        </div>
+                        <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600 shadow-sm self-start">
+                            <span class="material-symbols-outlined text-[20px] font-bold">hourglass_empty</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold">
+                        <span class="text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                            Matured (Ready)
+                        </span>
+                        <span class="font-black text-emerald-600 font-mono">@Model.Dashboard.Summary.MaturedEscrow.ToString("C")</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 6: Platform Net Profit -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 text-white transition-all duration-300 hover:shadow-md">
+                <div class="relative z-10 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">PLATFORM NET PROFIT</p>
+                        <p class="text-3xl font-black text-white font-mono">@Model.Dashboard.Summary.PlatformNetProfit.ToString("C")</p>
+                        <p class="text-[10px] font-semibold text-slate-400 mt-2">NET PLATFORM CUT AFTER SPLITS</p>
+                    </div>
+                    <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white shadow-sm self-start">
+                        <span class="material-symbols-outlined text-[20px] font-bold">insights</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Số dư Stripe -->
-<div id="stripe-balances" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 rounded-2xl shadow-lg shadow-emerald-500/20 text-white relative overflow-hidden">
-        <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full"></div>
-        <div class="absolute -right-2 -bottom-8 w-32 h-32 bg-white/5 rounded-full"></div>
-        <div class="relative z-10">
-            <p class="text-sm font-bold text-emerald-100 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-lg">account_balance_wallet</span>
-                Stripe Balance: Available Now
-            </p>
-            <p class="text-4xl font-black">$@Model.Withdraw.Balance.Available.ToString("N2")</p>
-            <p class="text-xs text-emerald-200 mt-2">Available Balance</p>
+    <!-- Nhóm 3: Số dư tài khoản Stripe (Stripe Gateway Balances) -->
+    <div>
+        <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined text-slate-900 text-xl font-bold">insights</span>
+            <h2 class="text-xs font-black text-slate-800 uppercase tracking-wider">Stripe Gateway Balances</h2>
         </div>
-    </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Card 7: Stripe Balance: Available Now -->
+            <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 rounded-2xl shadow-lg shadow-emerald-500/20 text-white relative overflow-hidden">
+                <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full"></div>
+                <div class="absolute -right-2 -bottom-8 w-32 h-32 bg-white/5 rounded-full"></div>
+                <div class="relative z-10">
+                    <p class="text-sm font-bold text-emerald-100 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-lg">account_balance_wallet</span>
+                        Stripe Balance: Available Now
+                    </p>
+                    <p class="text-4xl font-black">$@Model.Withdraw.Balance.Available.ToString("N2")</p>
+                    <p class="text-xs text-emerald-200 mt-2">Available Balance</p>
+                </div>
+            </div>
 
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-        <div class="absolute right-0 top-0 w-24 h-24 bg-amber-500/5 rounded-bl-[100px]"></div>
-        <div class="relative z-10">
-            <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-lg text-amber-500">schedule</span>
-                Stripe Balance: In Transit
-            </p>
-            <p class="text-3xl font-black text-slate-900">$@Model.Withdraw.Balance.Incoming.ToString("N2")</p>
-            <p class="text-xs text-slate-400 mt-2">Incoming (Pending)</p>
-        </div>
-    </div>
+            <!-- Card 8: Stripe Balance: In Transit -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-24 h-24 bg-amber-500/5 rounded-bl-[100px]"></div>
+                <div class="relative z-10">
+                    <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-lg text-amber-500">schedule</span>
+                        Stripe Balance: In Transit
+                    </p>
+                    <p class="text-3xl font-black text-slate-900">$@Model.Withdraw.Balance.Incoming.ToString("N2")</p>
+                    <p class="text-xs text-slate-400 mt-2">Incoming (Pending)</p>
+                </div>
+            </div>
 
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-        <div class="absolute right-0 top-0 w-24 h-24 bg-primary/5 rounded-bl-[100px]"></div>
-        <div class="relative z-10">
-            <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-lg text-primary">savings</span>
-                Total Stripe Assets
-            </p>
-            <p class="text-3xl font-black text-slate-900">$@Model.Withdraw.Balance.Total.ToString("N2")</p>
-            <p class="text-xs text-slate-400 mt-2">
-                Payout Schedule:
-                <span class="font-bold text-primary capitalize">@Model.Withdraw.Balance.PayoutScheduleInterval</span>
-                @if (!string.IsNullOrEmpty(Model.Withdraw.Balance.PayoutScheduleAnchor))
-                {
-                    <span>(@Model.Withdraw.Balance.PayoutScheduleAnchor)</span>
-                }
-            </p>
+            <!-- Card 9: Total Stripe Assets -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-24 h-24 bg-primary/5 rounded-bl-[100px]"></div>
+                <div class="relative z-10">
+                    <p class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-lg text-primary">savings</span>
+                        Total Stripe Assets
+                    </p>
+                    <p class="text-3xl font-black text-slate-900">$@Model.Withdraw.Balance.Total.ToString("N2")</p>
+                    <p class="text-xs text-slate-400 mt-2">
+                        Payout Schedule:
+                        <span class="font-bold text-primary capitalize">@Model.Withdraw.Balance.PayoutScheduleInterval</span>
+                        @if (!string.IsNullOrEmpty(Model.Withdraw.Balance.PayoutScheduleAnchor))
+                        {
+                            <span>(@Model.Withdraw.Balance.PayoutScheduleAnchor)</span>
+                        }
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -185,15 +269,15 @@
                 Revenue Share Split Rate
             </h3>
             <p class="text-xs text-slate-500 mb-4 leading-relaxed">
-                Define the percentage of the revenue generated from course sales that is paid out to instructors. The platform keeps the remaining net amount.
+                Define the percentage of the revenue generated from course sales that is paid out to instructors. The platform keeps the remaining net amount. Allowed range: 30% - 95%.
             </p>
         </div>
-        <form action="/AdminFinance/SetTransferRate" method="post" class="flex flex-col sm:flex-row items-end gap-3 mt-auto w-full">
+        <form id="set-rate-form" onsubmit="handleSetRateSubmit(event)" action="/AdminFinance/SetTransferRate" method="post" class="flex flex-col sm:flex-row items-end gap-3 mt-auto w-full">
             @Html.AntiForgeryToken()
             <div class="relative flex-1 w-full">
                 <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Instructor Share (%)</label>
                 <div class="relative">
-                    <input type="number" name="rate" min="1" max="100" step="0.01" value="@Model.Dashboard.Summary.CurrentTransferRate" 
+                    <input type="number" name="rate" min="30" max="95" step="0.01" value="@Model.Dashboard.Summary.CurrentTransferRate" 
                            class="w-full pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-mono font-bold text-slate-900" />
                     <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
                 </div>
@@ -212,16 +296,16 @@
                 Auto Payout Scheduler
             </h3>
             <p class="text-xs text-slate-500 mb-4 leading-relaxed">
-                Configure day(s) of the month to trigger automatic bulk payouts to instructors. Use a comma for multiple days (e.g., <span class="font-mono bg-slate-100 px-1 py-0.5 rounded text-indigo-700 font-bold">15</span> or <span class="font-mono bg-slate-100 px-1 py-0.5 rounded text-indigo-700 font-bold">5, 20</span>).
+                Configure day(s) of the month to trigger automatic bulk payouts to instructors. Use a comma for multiple days (e.g., <span class="font-mono bg-slate-100 px-1 py-0.5 rounded text-indigo-700 font-bold">15</span> or <span class="font-mono bg-slate-100 px-1 py-0.5 rounded text-indigo-700 font-bold">15, 20</span>). Must be between 15 and 20.
             </p>
         </div>
-        <form action="/AdminFinance/SetPayoutDays" method="post" class="flex flex-col sm:flex-row items-end gap-3 mt-auto w-full">
+        <form id="set-payout-days-form" onsubmit="handleSetPayoutDaysSubmit(event)" action="/AdminFinance/SetPayoutDays" method="post" class="flex flex-col sm:flex-row items-end gap-3 mt-auto w-full">
             @Html.AntiForgeryToken()
             <div class="relative flex-1 w-full">
                 <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Trigger Day(s)</label>
                 <div class="relative">
                     <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg">calendar_today</span>
-                    <input type="text" name="payoutDays" value="@Model.PayoutDays" placeholder="e.g. 15" required
+                    <input type="text" name="payoutDays" value="@Model.PayoutDays" placeholder="e.g. 15, 18" required
                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all font-mono font-bold text-slate-900" />
                 </div>
             </div>
@@ -318,7 +402,9 @@
     <!-- Hidden input storing serialized chart items grouped by day of the selected month -->
     @{
         int daysInMonth = DateTime.DaysInMonth((int)ViewBag.Year, (int)ViewBag.Month);
-        var payoutsList = Model.Dashboard.Payouts ?? new List<CourseMarketplaceFE.Controllers.AdminFinanceController.PayoutDetailVM>();
+        var payoutsList = (Model.Dashboard.Payouts ?? new List<CourseMarketplaceFE.Controllers.AdminFinanceController.PayoutDetailVM>())
+            .Where(p => p.PayoutStatus != "refunded")
+            .ToList();
         var dailyData = Enumerable.Range(1, daysInMonth).Select(day => {
             var dayPayouts = payoutsList.Where(p => (p.TransactionDate ?? p.PayoutDate).Day == day).ToList();
             return new {
@@ -472,7 +558,14 @@
                                     <td class="px-5 py-3.5 text-slate-600">@item.BuyerName</td>
                                     <td class="px-5 py-3.5 text-slate-600">@item.InstructorName</td>
                                     <td class="px-5 py-3.5 text-right font-semibold text-slate-800">
-                                        @((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
+                                        @if (item.Status == "refunded")
+                                        {
+                                            <span class="text-rose-600 font-bold">- @((item.Currency ?? "USD").ToUpper()) @Math.Abs(item.Amount).ToString("N2")</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")</span>
+                                        }
                                     </td>
                                     <td class="px-5 py-3.5 text-slate-500 text-xs whitespace-nowrap">
                                         @(item.Date.HasValue ? item.Date.Value.ToString("dd/MM/yyyy HH:mm") : "—")
@@ -592,14 +685,22 @@
                                     </td>
                                     <td class="px-4 py-4.5 align-middle">
                                         <div class="flex flex-col">
-                                            <span class="text-sm font-black text-slate-900 tracking-tight font-black">@p.InstructorReceived.ToString("C")</span>
-                                            <span class="text-[10px] text-slate-400 font-bold mt-0.5">Split Rate: @p.TransferRate%</span>
+                                            @{
+                                                var status = p.PayoutStatus?.ToLower() ?? (p.IsPaid ? "transferred" : "pending");
+                                            }
+                                            @if (status == "refunded")
+                                            {
+                                                <span class="text-sm font-black text-rose-600 tracking-tight font-black">- @Math.Abs(p.InstructorReceived).ToString("C")</span>
+                                                <span class="text-[10px] text-slate-400 font-bold mt-0.5">Refunded Split: @p.TransferRate%</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-sm font-black text-slate-900 tracking-tight font-black">@p.InstructorReceived.ToString("C")</span>
+                                                <span class="text-[10px] text-slate-400 font-bold mt-0.5">Split Rate: @p.TransferRate%</span>
+                                            }
                                         </div>
                                     </td>
                                     <td class="px-4 py-4.5 align-middle">
-                                        @{
-                                            var status = p.PayoutStatus?.ToLower() ?? (p.IsPaid ? "transferred" : "pending");
-                                        }
                                         @if (status == "paid")
                                         {
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
@@ -628,6 +729,13 @@
                                                 Failed
                                             </span>
                                         }
+                                        else if (status == "refunded")
+                                        {
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-rose-50 text-rose-700 border border-rose-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                                                Refunded
+                                            </span>
+                                        }
                                         else
                                         {
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-50 text-amber-800 border border-amber-100/50 text-[10px] font-extrabold uppercase tracking-wide shadow-sm/5">
@@ -637,7 +745,14 @@
                                         }
                                     </td>
                                     <td class="pl-4 pr-6 py-4.5 text-right align-middle">
-                                        @if (!p.IsPaid)
+                                        @if (status == "refunded")
+                                        {
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 text-rose-500 text-xs font-bold bg-rose-50 border border-rose-100/50 rounded-xl cursor-not-allowed">
+                                                <span class="material-symbols-outlined text-[14px]">currency_exchange</span>
+                                                Refunded
+                                            </span>
+                                        }
+                                        else if (!p.IsPaid)
                                         {
                                             <form action="/AdminFinance/PayViaStripe" method="post" onsubmit="handleStripePaySubmit(event)">
                                                 @Html.AntiForgeryToken()
@@ -1114,10 +1229,136 @@
             })
             .catch(err => console.error("❌ SignalR Error: ", err));
 
+        async function handleSetRateSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const rateInput = form.querySelector('input[name="rate"]');
+            const rate = parseFloat(rateInput.value);
+
+            if (isNaN(rate) || rate < 30 || rate > 95) {
+                await Swal.fire({
+                    title: 'Invalid Split Rate',
+                    html: `<div class="text-slate-600 text-sm font-medium">The revenue share split rate must be <b>between 30% and 95%</b> (inclusive).</div><br/><span class="text-xs text-slate-400">Currently entered: <b>${rateInput.value}%</b></span>`,
+                    icon: 'error',
+                    confirmButtonColor: '#0f172a',
+                    confirmButtonText: 'Understood',
+                    customClass: {
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl',
+                        confirmButton: 'px-6 py-2.5 font-bold rounded-xl text-sm'
+                    }
+                });
+                return;
+            }
+
+            const confirmResult = await Swal.fire({
+                title: 'Confirm Rate Change',
+                html: `<div class="text-slate-600 text-sm font-medium">Are you sure you want to set the Instructor revenue share split rate to <b class="text-indigo-600">${rate}%</b>?</div><br/><span class="text-xs text-slate-400">Platform share will be <b>${(100 - rate).toFixed(2)}%</b>. This will affect all future transactions.</span>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#0f172a',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Save Rate',
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    popup: 'rounded-2xl border border-slate-100 shadow-xl',
+                    confirmButton: 'px-6 py-2.5 font-bold rounded-xl text-sm',
+                    cancelButton: 'px-6 py-2.5 font-bold rounded-xl text-sm'
+                }
+            });
+
+            if (confirmResult.isConfirmed) {
+                form.submit();
+            }
+        }
+
+        async function handleSetPayoutDaysSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const daysInput = form.querySelector('input[name="payoutDays"]');
+            const payoutDays = daysInput.value.trim();
+
+            if (!payoutDays) {
+                await Swal.fire({
+                    title: 'Empty Configuration',
+                    text: 'Payout days configuration cannot be empty.',
+                    icon: 'error',
+                    confirmButtonColor: '#6366f1',
+                    confirmButtonText: 'Understood',
+                    customClass: {
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl',
+                        confirmButton: 'px-6 py-2.5 font-bold rounded-xl text-sm'
+                    }
+                });
+                return;
+            }
+
+            const parts = payoutDays.split(',');
+            let invalidDays = [];
+            for (const p of parts) {
+                const trimmed = p.trim();
+                const day = parseInt(trimmed);
+                if (isNaN(day) || day < 15 || day > 20) {
+                    invalidDays.push(trimmed);
+                }
+            }
+
+            if (invalidDays.length > 0) {
+                await Swal.fire({
+                    title: 'Invalid Payout Days',
+                    html: `<div class="text-slate-600 text-sm font-medium">Payout days must be strictly <b>between 15 and 20</b> (inclusive).</div><br/>The following days are invalid: <b class="text-rose-600">${invalidDays.join(', ')}</b>.<br/><br/><span class="text-xs text-slate-400">Allowed range is 15 to 20 (e.g., '15' or '17, 20').</span>`,
+                    icon: 'error',
+                    confirmButtonColor: '#6366f1',
+                    confirmButtonText: 'Understood',
+                    customClass: {
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl',
+                        confirmButton: 'px-6 py-2.5 font-bold rounded-xl text-sm'
+                    }
+                });
+                return;
+            }
+
+            const confirmResult = await Swal.fire({
+                title: 'Confirm Payout Schedule',
+                html: `<div class="text-slate-600 text-sm font-medium">Are you sure you want to set the automatic payout trigger days to: <b class="text-indigo-600">${payoutDays}</b>?</div><br/><span class="text-xs text-slate-400">Instructors' escrow payouts will be triggered on these days.</span>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#6366f1',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Save Schedule',
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    popup: 'rounded-2xl border border-slate-100 shadow-xl',
+                    confirmButton: 'px-6 py-2.5 font-bold rounded-xl text-sm',
+                    cancelButton: 'px-6 py-2.5 font-bold rounded-xl text-sm'
+                }
+            });
+
+            if (confirmResult.isConfirmed) {
+                form.submit();
+            }
+        }
+
         async function handleWithdrawSubmit(event) {
             event.preventDefault();
             const form = event.target;
-            const amount = document.getElementById('withdraw-amount').value;
+            const amountInput = document.getElementById('withdraw-amount');
+            const amount = amountInput.value;
+            const amountVal = parseFloat(amount);
+
+            if (isNaN(amountVal) || amountVal < 0.50) {
+                await Swal.fire({
+                    title: 'Invalid Withdrawal Amount',
+                    html: `<div class="text-slate-600 text-sm font-medium">The minimum withdrawal amount is <b>$0.50</b>. Available balance must cover the amount.</div><br/><span class="text-xs text-slate-400">Currently entered: <b>$${amount}</b></span>`,
+                    icon: 'error',
+                    confirmButtonColor: '#10b981',
+                    confirmButtonText: 'Understood',
+                    customClass: {
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl',
+                        confirmButton: 'px-6 py-2.5 font-bold rounded-xl text-sm'
+                    }
+                });
+                return;
+            }
 
             const confirmResult = await Swal.fire({
                 title: 'Confirm Withdrawal',
@@ -1130,7 +1371,9 @@
                 cancelButtonText: 'Cancel',
                 background: '#ffffff',
                 customClass: {
-                    popup: 'rounded-2xl border border-slate-100 shadow-xl'
+                    popup: 'rounded-2xl border border-slate-100 shadow-xl',
+                    confirmButton: 'px-6 py-2.5 font-bold rounded-xl text-sm',
+                    cancelButton: 'px-6 py-2.5 font-bold rounded-xl text-sm'
                 }
             });
 
@@ -1154,7 +1397,9 @@
                 cancelButtonText: 'Cancel',
                 background: '#ffffff',
                 customClass: {
-                    popup: 'rounded-2xl border border-slate-100 shadow-xl'
+                    popup: 'rounded-2xl border border-slate-100 shadow-xl',
+                    confirmButton: 'px-6 py-2.5 font-bold rounded-xl text-sm',
+                    cancelButton: 'px-6 py-2.5 font-bold rounded-xl text-sm'
                 }
             });
 
@@ -1184,6 +1429,40 @@
             if (chartDataEl) {
                 const initialItems = JSON.parse(chartDataEl.getAttribute('data-chart') || '[]');
                 window.drawAdminChart(initialItems);
+            }
+
+            // SweetAlert2 Alerts for TempData Success/Error
+            @if (TempData["FinanceSuccess"] != null || TempData["WithdrawSuccess"] != null)
+            {
+                <text>
+                Swal.fire({
+                    title: 'Action Successful!',
+                    text: '@Html.Raw(TempData["FinanceSuccess"] ?? TempData["WithdrawSuccess"])',
+                    icon: 'success',
+                    confirmButtonColor: '#10b981',
+                    confirmButtonText: 'Done',
+                    customClass: {
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl',
+                        confirmButton: 'px-6 py-2.5 font-bold rounded-xl text-sm'
+                    }
+                });
+                </text>
+            }
+            @if (TempData["FinanceError"] != null || TempData["WithdrawError"] != null)
+            {
+                <text>
+                Swal.fire({
+                    title: 'Action Failed',
+                    html: `<div class="text-sm text-slate-600 font-medium">@Html.Raw(TempData["FinanceError"] ?? TempData["WithdrawError"])</div>`,
+                    icon: 'error',
+                    confirmButtonColor: '#ef4444',
+                    confirmButtonText: 'Try Again',
+                    customClass: {
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl',
+                        confirmButton: 'px-6 py-2.5 font-bold rounded-xl text-sm'
+                    }
+                });
+                </text>
             }
         });
 

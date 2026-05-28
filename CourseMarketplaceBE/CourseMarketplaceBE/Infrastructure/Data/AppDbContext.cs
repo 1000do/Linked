@@ -48,6 +48,7 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<LessonReview> LessonReviews { get; set; }
     public virtual DbSet<SystemConfig> SystemConfigs { get; set; }
     public virtual DbSet<Transaction> Transactions { get; set; }
+    public virtual DbSet<TransactionExt> TransactionExts { get; set; }
     public virtual DbSet<User> Users { get; set; }
     public virtual DbSet<UserReport> UserReports { get; set; }
     public virtual DbSet<WishlistItem> WishlistItems { get; set; }
@@ -919,11 +920,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("transaction_created_at");
 
-            entity.Property(e => e.RefundReason).HasColumnName("refund_reason");
-            entity.Property(e => e.RefundAdminNote).HasColumnName("refund_admin_note");
-            entity.Property(e => e.RefundRequestedAt)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("refund_requested_at");
+
 
             entity.HasOne(d => d.OrderItem).WithMany(p => p.Transactions)
                 .HasForeignKey(d => d.OrderItemId)
@@ -939,6 +936,26 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.AccountTo)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("transactions_account_to_fkey");
+        });
+
+        // ── transaction_exts ──────────────────────────────────────────────────
+        modelBuilder.Entity<TransactionExt>(entity =>
+        {
+            entity.HasKey(e => e.TransactionId).HasName("transaction_exts_pkey");
+            entity.ToTable("transaction_exts");
+
+            entity.Property(e => e.TransactionId).ValueGeneratedNever().HasColumnName("transaction_id");
+            entity.Property(e => e.RefundReason).HasColumnName("refund_reason");
+            entity.Property(e => e.RefundAdminNote).HasColumnName("refund_admin_note");
+            entity.Property(e => e.RefundRequestedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("refund_requested_at");
+
+            entity.HasOne(d => d.Transaction).WithOne(p => p.TransactionExt)
+                .HasForeignKey<TransactionExt>(d => d.TransactionId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("transaction_exts_transaction_id_fkey");
         });
 
         // ── users ─────────────────────────────────────────────────────────────

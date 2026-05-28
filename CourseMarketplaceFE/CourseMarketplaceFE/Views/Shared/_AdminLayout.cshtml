@@ -164,9 +164,9 @@
                     <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">monitoring</span> 
                     Revenue Dashboard
                 </a>
-                <a href="/Transaction/Admin" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
-                    <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">receipt_long</span> 
-                    Transaction Logs
+                <a href="/AdminFinance/InstructorRevenues" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
+                    <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">payments</span> 
+                    Instructor Revenues
                 </a>
             }
             
@@ -245,7 +245,7 @@
                 if (href === currentPath || 
                    (currentPath.includes('/adminapproval') && href.includes('/adminapproval')) ||
                    (currentPath.includes('/adminaccount') && href.includes('/adminaccount')) ||
-                   (currentPath.includes('/transaction') && href.includes('/transaction/admin'))) {
+                   (currentPath.includes('/instructorrevenues') && href.includes('/instructorrevenues'))) {
                     link.classList.add('nav-link-active');
                 }
             });
