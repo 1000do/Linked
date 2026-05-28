@@ -59,9 +59,9 @@ public class AdminFinanceService : IAdminFinanceService
     // ═══════════════════════════════════════════════════════════════════════
     public async Task SetTransferRateAsync(decimal rate)
     {
-        if (rate < 1 || rate > 100)
+        if (rate < 30 || rate > 95)
             throw new InvalidOperationException(
-                "The revenue share rate must be between 1% and 100%.");
+                "The revenue share rate must be between 30% and 95%.");
 
         await _repo.UpsertConfigAsync(
             TransferRateKey,
@@ -120,14 +120,27 @@ public class AdminFinanceService : IAdminFinanceService
         var totalTransactions = await _repo.GetSucceededTransactionCountAsync(year, month);
         var currentRate = await GetCurrentTransferRateAsync();
 
+        // Tính tổng phí Stripe của các giao dịch thành công trong kỳ (2.9% + $0.30)
+        var payouts = await _repo.GetPayoutDetailsAsync(year, month);
+        decimal totalStripeFees = 0m;
+        foreach (var p in payouts)
+        {
+            if (p.PayoutStatus?.ToLower() != "refunded")
+            {
+                var fee = Math.Round(p.TotalAmount * 0.029m + 0.30m, 2);
+                totalStripeFees += Math.Min(fee, p.TotalAmount);
+            }
+        }
+
         return new FinancialSummaryResponse
         {
-            GrossRevenue = grossRevenue,
+            // ★ Doanh thu gốc thực nhận sau khi trừ phí Stripe của các giao dịch thành công
+            GrossRevenue = grossRevenue - totalStripeFees,
             TotalPaidOut = totalPaidOut,
             PendingEscrow = pendingEscrow,
             MaturedEscrow = maturedEscrow,
-            // ★ Net Profit = Tổng thu - Tổng đã trả GV - Tổng đang giữ hộ GV (bao gồm cả Pending và Matured)
-            PlatformNetProfit = grossRevenue - totalPaidOut - pendingEscrow - maturedEscrow,
+            // ★ Net Profit thực tế sàn nhận = Tổng thu net - Tổng đã trả GV - Tổng đang giữ hộ GV
+            PlatformNetProfit = (grossRevenue - totalStripeFees) - totalPaidOut - pendingEscrow - maturedEscrow,
             CurrentTransferRate = currentRate,
             TotalTransactions = totalTransactions
         };
@@ -145,25 +158,30 @@ public class AdminFinanceService : IAdminFinanceService
     {
         var projections = await _repo.GetPayoutDetailsAsync(year, month);
 
-        return projections.Select(p => new PayoutDetailResponse
-        {
-            PayoutId = p.PayoutId,
-            TransactionId = p.TransactionId,
-            InstructorName = p.InstructorName,
-            InstructorEmail = p.InstructorEmail,
-            CourseTitle = p.CourseTitle,
-            TotalAmount = p.TotalAmount,
-            InstructorReceived = p.InstructorReceived,
-            // ★ Sàn nhận = Tổng tiền khách trả - Giảng viên nhận
-            PlatformReceived = p.TotalAmount - p.InstructorReceived,
-            TransferRate = p.TransferRate,
-            IsPaid = p.IsPaid,
-            TransactionDate = p.TransactionDate,
-            PayoutDate = p.PayoutDate,
-            PayoutStatus = p.PayoutStatus ?? "pending",
-            StripeTransferId = p.StripeTransferId,
-            StripePayoutId = p.StripePayoutId,
-            PaidToBankAt = p.PaidToBankAt
+        return projections.Select(p => {
+            var stripeFee = Math.Round(p.TotalAmount * 0.029m + 0.30m, 2);
+            stripeFee = Math.Min(stripeFee, p.TotalAmount);
+
+            return new PayoutDetailResponse
+            {
+                PayoutId = p.PayoutId,
+                TransactionId = p.TransactionId,
+                InstructorName = p.InstructorName,
+                InstructorEmail = p.InstructorEmail,
+                CourseTitle = p.CourseTitle,
+                TotalAmount = p.TotalAmount,
+                InstructorReceived = p.InstructorReceived,
+                // ★ Thực nhận của sàn = Tổng tiền thanh toán - Phí Stripe - Phần giảng viên nhận
+                PlatformReceived = p.TotalAmount - stripeFee - p.InstructorReceived,
+                TransferRate = p.TransferRate,
+                IsPaid = p.IsPaid,
+                TransactionDate = p.TransactionDate,
+                PayoutDate = p.PayoutDate,
+                PayoutStatus = p.PayoutStatus ?? "pending",
+                StripeTransferId = p.StripeTransferId,
+                StripePayoutId = p.StripePayoutId,
+                PaidToBankAt = p.PaidToBankAt
+            };
         }).ToList();
     }
 
@@ -191,9 +209,9 @@ public class AdminFinanceService : IAdminFinanceService
         var parts = payoutDays.Split(',');
         foreach (var p in parts)
         {
-            if (!int.TryParse(p.Trim(), out var day) || day < 1 || day > 31)
+            if (!int.TryParse(p.Trim(), out var day) || day < 15 || day > 20)
             {
-                throw new InvalidOperationException("Payout days must be a comma-separated list of integers between 1 and 31 (e.g., '15' or '5, 20').");
+                throw new InvalidOperationException("Payout days must be a comma-separated list of integers between 15 and 20 (e.g., '15' or '17, 20').");
             }
         }
 
@@ -408,8 +426,8 @@ public class AdminFinanceService : IAdminFinanceService
             ? request.Amount.Value
             : balanceResp.Available;
 
-        if (amountToWithdraw <= 0)
-            throw new InvalidOperationException("The withdrawal amount must be greater than 0.");
+        if (amountToWithdraw < 0.50m)
+            throw new InvalidOperationException("The withdrawal amount must be at least $0.50.");
 
         if (amountToWithdraw > balanceResp.Available)
             throw new InvalidOperationException(
@@ -605,6 +623,8 @@ public class AdminFinanceService : IAdminFinanceService
 
         // ── 4. UPDATE DB STATUS ─────────────────────────────────────────
         txn.TransactionsStatus = "refunded";
+        txn.Amount = -Math.Abs(txn.Amount);
+
         if (txn.TransactionExt == null)
         {
             txn.TransactionExt = new Domain.Entities.TransactionExt
@@ -622,7 +642,8 @@ public class AdminFinanceService : IAdminFinanceService
 
         if (payout != null)
         {
-            _repo.RemoveInstructorPayout(payout);
+            payout.PayoutStatus = "refunded";
+            payout.PayoutAmount = -Math.Abs(payout.PayoutAmount);
         }
 
         // ── 5. REVOKE ENROLLMENT ────────────────────────────────────────

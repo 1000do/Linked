@@ -67,7 +67,7 @@ public class AdminFinanceRepository : IAdminFinanceRepository
     public async Task<decimal> GetGrossRevenueAsync(int? year = null, int? month = null)
     {
         var query = _context.Transactions
-            .Where(t => t.TransactionsStatus == "succeeded");
+            .Where(t => t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending");
 
         if (year.HasValue)
         {
@@ -91,7 +91,7 @@ public class AdminFinanceRepository : IAdminFinanceRepository
     public async Task<int> GetSucceededTransactionCountAsync(int? year = null, int? month = null)
     {
         var query = _context.Transactions
-            .Where(t => t.TransactionsStatus == "succeeded");
+            .Where(t => t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending");
 
         if (year.HasValue)
         {
@@ -116,7 +116,7 @@ public class AdminFinanceRepository : IAdminFinanceRepository
     {
         var query = _context.InstructorPayouts
             .Include(p => p.Transaction)
-            .Where(p => p.IsPaid == true);
+            .Where(p => p.IsPaid == true && p.PayoutStatus != "refunded" && (p.Transaction == null || p.Transaction.TransactionsStatus != "refunded"));
 
         if (year.HasValue)
         {
@@ -142,7 +142,7 @@ public class AdminFinanceRepository : IAdminFinanceRepository
         var refundLimitDate = DateTime.UtcNow.AddDays(-14);
         var query = _context.InstructorPayouts
             .Include(p => p.Transaction)
-            .Where(p => p.IsPaid == false && p.Transaction != null && p.Transaction.TransactionCreatedAt >= refundLimitDate);
+            .Where(p => p.IsPaid == false && p.PayoutStatus != "refunded" && p.Transaction != null && p.Transaction.TransactionsStatus != "refunded" && p.Transaction.TransactionCreatedAt >= refundLimitDate);
 
         if (year.HasValue)
         {
@@ -168,7 +168,7 @@ public class AdminFinanceRepository : IAdminFinanceRepository
         var refundLimitDate = DateTime.UtcNow.AddDays(-14);
         var query = _context.InstructorPayouts
             .Include(p => p.Transaction)
-            .Where(p => p.IsPaid == false && p.Transaction != null && p.Transaction.TransactionCreatedAt < refundLimitDate);
+            .Where(p => p.IsPaid == false && p.PayoutStatus != "refunded" && p.Transaction != null && p.Transaction.TransactionsStatus != "refunded" && p.Transaction.TransactionCreatedAt < refundLimitDate);
 
         if (year.HasValue)
         {
@@ -408,24 +408,24 @@ public class AdminFinanceRepository : IAdminFinanceRepository
 
                 SalesCount = _context.Transactions
                     .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
-                                && t.TransactionsStatus == "succeeded")
+                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending"))
                     .Count(),
 
                 MonthlyRevenue = _context.Transactions
                     .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
-                                && t.TransactionsStatus == "succeeded"
+                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
                                 && t.TransactionCreatedAt >= monthStart && t.TransactionCreatedAt < monthEnd)
                     .Sum(t => (decimal?)t.Amount) ?? 0,
 
                 YearlyRevenue = _context.Transactions
                     .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
-                                && t.TransactionsStatus == "succeeded"
+                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
                                 && t.TransactionCreatedAt >= yearStart && t.TransactionCreatedAt < yearEnd)
                     .Sum(t => (decimal?)t.Amount) ?? 0,
 
                 LifetimeRevenue = _context.Transactions
                     .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
-                                && t.TransactionsStatus == "succeeded")
+                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending"))
                     .Sum(t => (decimal?)t.Amount) ?? 0
             })
             .ToListAsync();

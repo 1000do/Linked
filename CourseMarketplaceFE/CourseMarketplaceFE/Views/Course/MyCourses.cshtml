@@ -141,3 +141,46 @@
         }
     </style>
 }
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            @if (TempData["CartSuccess"] != null)
+            {
+                <text>
+                Swal.fire({
+                    icon: 'success',
+                    title: '🎉 Purchase Successful!',
+                    text: '@Html.Raw(TempData["CartSuccess"].ToString().Replace("'", "\\'"))',
+                    confirmButtonColor: '#006a62',
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'rounded-[2rem] border border-slate-100 p-8 shadow-2xl',
+                        title: 'text-xl font-black text-slate-900 tracking-tight',
+                        confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all bg-primary hover:bg-emerald-700'
+                    }
+                });
+                </text>
+            }
+
+            @if (TempData["CartError"] != null)
+            {
+                <text>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Purchase Notification',
+                    text: '@Html.Raw(TempData["CartError"].ToString().Replace("'", "\\'"))',
+                    confirmButtonColor: '#ef4444',
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'rounded-[2rem] border border-slate-100 p-8 shadow-2xl',
+                        title: 'text-xl font-black text-slate-900 tracking-tight',
+                        confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all bg-red-600 hover:bg-red-700'
+                    }
+                });
+                </text>
+            }
+        });
+    </script>
+}

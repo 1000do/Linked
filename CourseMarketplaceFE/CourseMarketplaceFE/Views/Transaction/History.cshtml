@@ -132,7 +132,14 @@
 
                             <div class="flex flex-col items-center md:items-end gap-3 flex-shrink-0">
                                 <div class="text-xl font-black text-slate-900">
-                                    @((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
+                                    @if (item.Status == "refunded")
+                                    {
+                                        <span class="text-rose-600 font-bold">- @((item.Currency ?? "USD").ToUpper()) @Math.Abs(item.Amount).ToString("N2")</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")</span>
+                                    }
                                 </div>
                                 
                                 @{
