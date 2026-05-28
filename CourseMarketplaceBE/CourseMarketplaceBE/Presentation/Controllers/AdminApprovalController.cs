@@ -15,10 +15,10 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         public AdminApprovalController(IInstructorApprovalService service) => _service = service;
 
         [HttpGet("pending-instructors")]
-        public async Task<IActionResult> GetPending()
+        public async Task<IActionResult> GetPending([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var list = await _service.GetPendingListAsync();
-            Console.WriteLine($"[ADMIN-APPROVAL] Found {list.Count()} pending instructor applications.");
+            var list = await _service.GetPendingListAsync(page, pageSize);
+            Console.WriteLine($"[ADMIN-APPROVAL] Found {list.TotalCount} pending instructor applications.");
             return Ok(list);
         }
 

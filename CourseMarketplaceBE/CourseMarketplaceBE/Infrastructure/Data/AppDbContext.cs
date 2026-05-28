@@ -17,6 +17,7 @@ public partial class AppDbContext : DbContext
     // ─── DbSets ───────────────────────────────────────────────────────────────
 
     public virtual DbSet<Account> Accounts { get; set; }
+    public virtual DbSet<Lockout> Lockouts { get; set; }
     public virtual DbSet<CourseAiUsageLog> CourseAiUsageLogs { get; set; }
 
     public virtual DbSet<CourseReviewModerationLog> CourseReviewModerationLogs { get; set; }
@@ -61,6 +62,11 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<AvatarFrame> AvatarFrames { get; set; }
     public virtual DbSet<UserAvatarFrame> UserAvatarFrames { get; set; }
     public virtual DbSet<PlatformWithdrawal> PlatformWithdrawals { get; set; }
+
+    // ─── Report Tables ────────────────────────────────────────────────────────
+    public virtual DbSet<CourseReport> CourseReports { get; set; }
+    public virtual DbSet<CourseReviewReport> CourseReviewReports { get; set; }
+    public virtual DbSet<LessonReviewReport> LessonReviewReports { get; set; }
 
     // ─── OnConfiguring ────────────────────────────────────────────────────────
 
@@ -348,6 +354,9 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("joined_at");
+            entity.Property(e => e.ClearedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("cleared_at");
 
             entity.HasOne(d => d.Account).WithMany(p => p.ChatParticipants)
                 .HasForeignKey(d => d.AccountId)
@@ -613,6 +622,26 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.InstructorId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("instructor_payouts_instructor_id_fkey");
+        });
+
+        // ── lockouts ────────────────────────────────────────────────────────
+        modelBuilder.Entity<Lockout>(entity =>
+        {
+            entity.HasKey(e => e.LockoutId).HasName("lockouts_pkey");
+            entity.ToTable("lockouts");
+
+            entity.Property(e => e.LockoutId).HasColumnName("lockout_id");
+            entity.Property(e => e.AccountId).HasColumnName("account_id");
+            entity.Property(e => e.LockoutType).HasMaxLength(50).HasColumnName("lockout_type");
+            entity.Property(e => e.LockoutLevel).HasMaxLength(50).HasColumnName("lockout_level");
+            entity.Property(e => e.LockoutStart).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("lockout_start");
+            entity.Property(e => e.LockoutEnd).HasColumnName("lockout_end");
+
+            entity.HasOne(d => d.Account)
+                .WithMany(p => p.Lockouts)
+                .HasForeignKey(d => d.AccountId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("lockouts_account_id_fkey");
         });
 
         // ── learning_materials ────────────────────────────────────────────────
@@ -1207,6 +1236,129 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.FrameId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("user_avatar_frames_frame_id_fkey");
+        });
+
+        // ── course_reports ────────────────────────────────────────────────────
+        modelBuilder.Entity<CourseReport>(entity =>
+        {
+            entity.HasKey(e => e.CourseReportId).HasName("course_reports_pkey");
+            entity.ToTable("course_reports");
+
+            entity.Property(e => e.CourseReportId).HasColumnName("course_report_id");
+            entity.Property(e => e.ReporterId).HasColumnName("reporter_id");
+            entity.Property(e => e.CourseId).HasColumnName("course_id");
+            entity.Property(e => e.ResolverId).HasColumnName("resolver_id");
+            entity.Property(e => e.Reason).HasMaxLength(255).HasColumnName("reason");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.CourseReportsStatus).HasMaxLength(50).HasColumnName("course_reports_status");
+            entity.Property(e => e.ResolutionNote).HasColumnName("resolution_note");
+            entity.Property(e => e.ResolvedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("resolved_at");
+            entity.Property(e => e.AccessGrantedUntil)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("access_granted_until");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Reporter).WithMany()
+                .HasForeignKey(d => d.ReporterId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("course_reports_reporter_id_fkey");
+
+            entity.HasOne(d => d.Resolver).WithMany()
+                .HasForeignKey(d => d.ResolverId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("course_reports_resolver_id_fkey");
+
+            entity.HasOne(d => d.Course).WithMany()
+                .HasForeignKey(d => d.CourseId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("course_reports_course_id_fkey");
+        });
+
+        // ── course_review_reports ─────────────────────────────────────────────
+        modelBuilder.Entity<CourseReviewReport>(entity =>
+        {
+            entity.HasKey(e => e.CourseReviewReportId).HasName("course_review_reports_pkey");
+            entity.ToTable("course_review_reports");
+
+            entity.Property(e => e.CourseReviewReportId).HasColumnName("course_review_report_id");
+            entity.Property(e => e.ReporterId).HasColumnName("reporter_id");
+            entity.Property(e => e.CourseReviewId).HasColumnName("course_review_id");
+            entity.Property(e => e.ResolverId).HasColumnName("resolver_id");
+            entity.Property(e => e.Reason).HasMaxLength(255).HasColumnName("reason");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.UserReportsStatus).HasMaxLength(50).HasColumnName("user_reports_status");
+            entity.Property(e => e.ResolutionNote).HasColumnName("resolution_note");
+            entity.Property(e => e.ResolvedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("resolved_at");
+            entity.Property(e => e.AccessGrantedUntil)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("access_granted_until");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Reporter).WithMany()
+                .HasForeignKey(d => d.ReporterId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("course_review_reports_reporter_id_fkey");
+
+            entity.HasOne(d => d.Resolver).WithMany()
+                .HasForeignKey(d => d.ResolverId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("course_review_reports_resolver_id_fkey");
+
+            entity.HasOne(d => d.CourseReview).WithMany()
+                .HasForeignKey(d => d.CourseReviewId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("course_review_reports_course_review_id_fkey");
+        });
+
+        // ── lesson_review_reports ─────────────────────────────────────────────
+        modelBuilder.Entity<LessonReviewReport>(entity =>
+        {
+            entity.HasKey(e => e.LessonReviewReportId).HasName("lesson_review_reports_pkey");
+            entity.ToTable("lesson_review_reports");
+
+            entity.Property(e => e.LessonReviewReportId).HasColumnName("lesson_review_report_id");
+            entity.Property(e => e.ReporterId).HasColumnName("reporter_id");
+            entity.Property(e => e.LessonReviewId).HasColumnName("lesson_review_id");
+            entity.Property(e => e.ResolverId).HasColumnName("resolver_id");
+            entity.Property(e => e.Reason).HasMaxLength(255).HasColumnName("reason");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.UserReportsStatus).HasMaxLength(50).HasColumnName("user_reports_status");
+            entity.Property(e => e.ResolutionNote).HasColumnName("resolution_note");
+            entity.Property(e => e.ResolvedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("resolved_at");
+            entity.Property(e => e.AccessGrantedUntil)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("access_granted_until");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Reporter).WithMany()
+                .HasForeignKey(d => d.ReporterId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("lesson_review_reports_reporter_id_fkey");
+
+            entity.HasOne(d => d.Resolver).WithMany()
+                .HasForeignKey(d => d.ResolverId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("lesson_review_reports_resolver_id_fkey");
+
+            entity.HasOne(d => d.LessonReview).WithMany()
+                .HasForeignKey(d => d.LessonReviewId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("lesson_review_reports_lesson_review_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);

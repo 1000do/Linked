@@ -112,11 +112,4 @@ public class TransactionDetailDto
 /// <summary>
 /// Response wrapper phân trang cho danh sách giao dịch (UC-115).
 /// </summary>
-public class TransactionPagedResult
-{
-    public List<TransactionListDto> Items { get; set; } = new();
-    public int TotalCount { get; set; }
-    public int Page { get; set; }
-    public int PageSize { get; set; }
-    public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
-}
+

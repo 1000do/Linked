@@ -1,4 +1,4 @@
-﻿namespace CourseMarketplaceBE.Domain.Entities;
+namespace CourseMarketplaceBE.Domain.Entities;
 
 public partial class Notification
 {

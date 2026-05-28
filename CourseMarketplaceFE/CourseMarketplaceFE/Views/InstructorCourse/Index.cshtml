@@ -70,6 +70,8 @@
                     <option value="Pending">Pending Review</option>
                     <option value="Published">Published</option>
                     <option value="Rejected">Rejected</option>
+                    <option value="Removed">Removed</option>
+                    <option value="Archived">Hidden</option>
                 </select>
                 <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
             </div>
@@ -194,7 +196,8 @@
             Students = c.Students,
             Rating = c.Rating,
             Status = c.Status,
-            UpdatedAt = c.UpdatedAt
+            UpdatedAt = c.UpdatedAt,
+            IsRemoved = c.IsRemoved
         })));
 
         const ITEMS_PER_PAGE = 6;
@@ -219,7 +222,9 @@
                 
                 let statusBadge = '';
                 const status = course.Status.toLowerCase();
-                if (status === 'published') {
+                if (course.IsRemoved) {
+                    statusBadge = `<span class="px-3 py-1 bg-red-100 text-red-700 border border-red-300 rounded-full text-xs font-bold">Removed</span>`;
+                } else if (status === 'published') {
                     statusBadge = `<span class="px-3 py-1 bg-primary-container/20 text-primary border border-primary-container rounded-full text-xs font-bold">Published</span>`;
                 } else if (status === 'pending') {
                     statusBadge = `<span class="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-full text-xs font-bold">Pending Review</span>`;
@@ -258,8 +263,10 @@
                 }
 
                 const titleSafe = course.Title.replace(/'/g, "\\'");
+                const isHidden = status === 'archived' || status === 'hidden';
+                const rowClass = isHidden ? "hover:bg-slate-50/50 transition-colors group opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0" : "hover:bg-slate-50/50 transition-colors group";
 
-                return `<tr class="hover:bg-slate-50/50 transition-colors group">
+                return `<tr class="${rowClass}">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-4">
                             <div class="w-24 h-16 bg-slate-200 rounded-lg overflow-hidden flex-shrink-0 relative">
@@ -286,8 +293,8 @@
                     </td>
                     <td class="px-6 py-4 text-right">
                         <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <a href="/InstructorCourse/Editor/${course.Id}" title="Edit course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
-                                <span class="material-symbols-outlined text-[18px]">edit</span>
+                            <a href="/InstructorCourse/Editor/${course.Id}" title="${isHidden ? 'View course' : 'Edit course'}" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">${isHidden ? 'visibility' : 'edit'}</span>
                             </a>
                             ${hideBtn}
                             <button title="Delete course" onclick="confirmDelete(${course.Id}, '${titleSafe}', ${course.Students})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
@@ -317,7 +324,9 @@
                 
                 let statusBadge = '';
                 const status = course.Status.toLowerCase();
-                if (status === 'published') {
+                if (course.IsRemoved) {
+                    statusBadge = `<span class="px-2 py-1 bg-red-100 text-red-700 rounded text-[10px] font-bold">Removed</span>`;
+                } else if (status === 'published') {
                     statusBadge = `<span class="px-2 py-1 bg-white/90 text-primary rounded text-[10px] font-bold">Published</span>`;
                 } else if (status === 'pending') {
                     statusBadge = `<span class="px-2 py-1 bg-white/90 text-amber-600 rounded text-[10px] font-bold">Pending Review</span>`;
@@ -335,7 +344,11 @@
                     </span>`;
                 }
 
-                return `<a href="/InstructorCourse/Editor/${course.Id}" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block">
+                const isHidden = status === 'archived' || status === 'hidden';
+                let cardClass = isHidden ? "bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0" : "bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block";
+                if (course.IsRemoved) cardClass += " opacity-50 grayscale hover:opacity-75";
+
+                return `<a href="/InstructorCourse/Editor/${course.Id}" class="${cardClass}">
                     <div class="w-full h-40 bg-slate-200 relative overflow-hidden">
                         ${course.ThumbnailUrl
                             ? `<img src="${course.ThumbnailUrl}" alt="${course.Title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />`
@@ -364,7 +377,14 @@
 
             filteredCourses = allCourses.filter(c => {
                 const matchSearch = !searchTerm || c.Title.toLowerCase().includes(searchTerm);
-                const matchStatus = status === 'All' || c.Status.toLowerCase() === status.toLowerCase();
+                let matchStatus = false;
+                if (status === 'All') {
+                    matchStatus = !c.IsRemoved;
+                } else if (status === 'Removed') {
+                    matchStatus = c.IsRemoved;
+                } else {
+                    matchStatus = !c.IsRemoved && c.Status.toLowerCase() === status.toLowerCase();
+                }
                 return matchSearch && matchStatus;
             });
 

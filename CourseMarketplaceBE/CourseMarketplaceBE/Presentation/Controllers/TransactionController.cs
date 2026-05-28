@@ -49,7 +49,7 @@ public class TransactionController : ControllerBase
         try
         {
             var result = await _transactionService.GetTransactionsAsync(page, pageSize, keyword, sortBy, status, year, month);
-            return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Transaction list."));
+            return Ok(ApiResponse<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>>.SuccessResponse(result, "Transaction list."));
         }
         catch (Exception ex)
         {
@@ -107,7 +107,7 @@ public class TransactionController : ControllerBase
                 return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
 
             var result = await _transactionService.GetInstructorTransactionsAsync(userId, page, pageSize, keyword, sortBy, status, year, month);
-            return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Instructor transaction list."));
+            return Ok(ApiResponse<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>>.SuccessResponse(result, "Instructor transaction list."));
         }
         catch (Exception ex)
         {
@@ -134,7 +134,7 @@ public class TransactionController : ControllerBase
                 return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
 
             var result = await _transactionService.GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status);
-            return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Your transaction list."));
+            return Ok(ApiResponse<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>>.SuccessResponse(result, "Your transaction list."));
         }
         catch (Exception ex)
         {

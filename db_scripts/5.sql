@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS user_reports CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS messages CASCADE;
 DROP TABLE IF EXISTS chats CASCADE;
+DROP TABLE IF EXISTS lockouts CASCADE;
 DROP TABLE IF EXISTS transaction_exts CASCADE;
 DROP TABLE IF EXISTS transactions CASCADE;
 DROP TABLE IF EXISTS order_items CASCADE;
@@ -87,6 +88,17 @@ CREATE TABLE accounts (
     account_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     account_last_login_at TIMESTAMP
 );
+
+CREATE TABLE lockouts (
+    lockout_id SERIAL PRIMARY KEY,
+    account_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
+    lockout_type VARCHAR(50), -- account, review, instructor
+    lockout_level VARCHAR(50), -- moderate, severe
+    lockout_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    lockout_end TIMESTAMP
+);
+
+CREATE INDEX IX_lockouts_account_id ON lockouts(account_id);
 
 CREATE TABLE users (
     user_id INT PRIMARY KEY REFERENCES accounts(account_id) ON DELETE CASCADE,
@@ -403,6 +415,7 @@ CREATE TABLE chat_participants (
     unread_count INT DEFAULT 0,
     last_read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    cleared_at TIMESTAMP,
     PRIMARY KEY (chat_id, account_id)
 );
 

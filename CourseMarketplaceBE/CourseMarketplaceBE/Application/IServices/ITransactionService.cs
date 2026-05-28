@@ -14,7 +14,7 @@ public interface ITransactionService
     /// </summary>
     /// <param name="page">Trang hiện tại (bắt đầu từ 1)</param>
     /// <param name="pageSize">Số item mỗi trang (mặc định 20)</param>
-    Task<TransactionPagedResult> GetTransactionsAsync(int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null);
+    Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>> GetTransactionsAsync(int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null);
 
     /// <summary>
     /// UC-114: Lấy chi tiết biên lai 1 giao dịch theo ID.
@@ -25,10 +25,10 @@ public interface ITransactionService
     /// <summary>
     /// Lấy danh sách giao dịch của một giảng viên cụ thể.
     /// </summary>
-    Task<TransactionPagedResult> GetInstructorTransactionsAsync(int instructorId, int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null);
+    Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>> GetInstructorTransactionsAsync(int instructorId, int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null);
 
     /// <summary>
     /// Lấy danh sách giao dịch của một người dùng cụ thể.
     /// </summary>
-    Task<TransactionPagedResult> GetUserTransactionsAsync(int userId, int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null);
+    Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>> GetUserTransactionsAsync(int userId, int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null);
 }

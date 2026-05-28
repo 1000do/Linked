@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 
@@ -15,18 +17,28 @@ public class ReviewService : IReviewService
     private readonly ICheckoutRepository _checkoutRepo;
     private readonly ICourseRepository _courseRepo;
     private readonly INotificationService _notificationService;
+    private readonly IReportService _reportService;
+    private readonly IUserRepository _userRepo;
+    private readonly ILockoutRepository _lockoutRepo;
 
     public ReviewService(
         IReviewRepository reviewRepo, 
         ICheckoutRepository checkoutRepo, 
         ICourseRepository courseRepo,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IReportService reportService,
+        IUserRepository userRepo,
+        ILockoutRepository lockoutRepo)
     {
         _reviewRepo = reviewRepo;
         _checkoutRepo = checkoutRepo;
         _courseRepo = courseRepo;
         _notificationService = notificationService;
+        _reportService = reportService;
+        _userRepo = userRepo;
+        _lockoutRepo = lockoutRepo;
     }
+
 
     // ── Helper: Kiểm tra user có phải instructor sở hữu khóa học ───────
 
@@ -76,41 +88,42 @@ public class ReviewService : IReviewService
 
     // ── Lấy danh sách reviews ──────────────────────────────────────────
 
-    public async Task<IEnumerable<ReviewResponse>> GetCourseReviewsAsync(int courseId)
+    public async Task<PagedResult<ReviewResponse>> GetCourseReviewsAsync(int courseId, int page = 1, int pageSize = 10)
     {
         // Lấy instructor_id của khóa học
         var course = await _courseRepo.GetByIdAsync(courseId);
         var instructorId = course?.InstructorId;
 
-        var reviews = await _reviewRepo.GetCourseReviewsWithDetailsAsync(courseId);
+        var (courseReviews, totalCount) = await _reviewRepo.GetCourseReviewsWithDetailsAsync(courseId, page, pageSize);
 
-        return reviews.Select(r => new ReviewResponse
+        var responses = new List<ReviewResponse>();
+        foreach (var r in courseReviews)
         {
-            ReviewId = r.CourseReviewId,
-            UserFullName = r.Enrollment!.User!.FullName ?? "Anonymous",
-            UserAvatarUrl = r.Enrollment!.User!.UserNavigation.AvatarUrl,
-            Rating = r.Rating ?? 0,
-            Comment = r.Comment ?? "",
-            CreatedAt = r.CreatedAt ?? DateTime.Now,
-            LessonTitle = null,
-            LessonId = null,
-            IsInstructor = r.Enrollment.UserId == instructorId
-        });
+            var isInstructor = instructorId.HasValue && r.Enrollment?.UserId == instructorId.Value;
+            responses.Add(new ReviewResponse
+            {
+                ReviewId = r.CourseReviewId,
+                UserFullName = r.Enrollment?.User?.FullName ?? "Anonymous",
+                UserAvatarUrl = r.Enrollment?.User?.UserNavigation?.AvatarUrl,
+                Rating = r.Rating ?? 0,
+                Comment = r.Comment ?? "",
+                CreatedAt = r.CreatedAt ?? DateTime.Now,
+                LessonTitle = null,
+                LessonId = null,
+                IsInstructor = isInstructor
+            });
+        }
+        
+        return new PagedResult<ReviewResponse>(responses, totalCount, page, pageSize);
     }
 
-    public async Task<IEnumerable<ReviewResponse>> GetLessonReviewsAsync(int lessonId)
+    public async Task<PagedResult<ReviewResponse>> GetLessonReviewsAsync(int lessonId, int page = 1, int pageSize = 10)
     {
-        // Lấy course để lấy instructor_id (cần dùng Repository tương ứng)
-        // Hiện tại giả định Lesson có Include Course hoặc dùng CourseRepo
-        // Để nhanh, ta fetch Lesson trước.
-        // Giả sử ILessonRepository tồn tại, nhưng ở đây ta dùng _context trong code cũ.
-        // Tôi sẽ dùng _courseRepo nếu có cách lấy từ lessonId, hoặc dùng _reviewRepo trả về Lesson entity.
-        
-        var reviews = await _reviewRepo.GetLessonReviewsWithDetailsAsync(lessonId);
-        var firstReview = reviews.FirstOrDefault();
+        var (lessonReviews, totalCount) = await _reviewRepo.GetLessonReviewsWithDetailsAsync(lessonId, page, pageSize);
+        var firstReview = lessonReviews.FirstOrDefault();
         var instructorId = firstReview?.Lesson?.Course?.InstructorId;
 
-        return reviews.Select(r => new ReviewResponse
+        var responses = lessonReviews.Select(r => new ReviewResponse
         {
             ReviewId = r.LessonReviewId,
             UserFullName = r.Enrollment!.User!.FullName ?? "Anonymous",
@@ -120,8 +133,10 @@ public class ReviewService : IReviewService
             CreatedAt = r.CreatedAt ?? DateTime.Now,
             LessonTitle = r.Lesson != null ? r.Lesson.Title : null,
             LessonId = r.LessonId,
-            IsInstructor = r.Enrollment!.UserId == instructorId
-        });
+            IsInstructor = instructorId.HasValue && r.Enrollment!.UserId == instructorId.Value
+        }).ToList();
+
+        return new PagedResult<ReviewResponse>(responses, totalCount, page, pageSize);
     }
 
     // ── Thống kê phân bổ sao ───────────────────────────────────────────
@@ -210,6 +225,12 @@ public class ReviewService : IReviewService
 
     public async Task SubmitReviewAsync(int userId, ReviewRequest request, bool requireCompletion)
     {
+        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(userId, "review");
+        if (activeLockout != null)
+        {
+            throw new BadRequestException($"Your account has been restricted from posting comments and reviews until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to repeated community standards violations.");
+        }
+
         bool isOwner = await IsOwnerAsync(userId, request.CourseId);
 
         Enrollment enrollment;
@@ -320,26 +341,26 @@ public class ReviewService : IReviewService
 
     public async Task ReportReviewAsync(int userId, int reviewId, string type, string reason)
     {
+        // Delegate sang IReportService để tạo report record đúng chuẩn
+        // Giữ backward compatibility với ReviewController cũ
         if (type.ToLower() == "course")
         {
-            var review = await _reviewRepo.GetCourseReviewByIdAsync(reviewId);
-            if (review != null)
+            var request = new CourseMarketplaceBE.Application.DTOs.CreateCourseReviewReportRequest
             {
-                review.CourseReviewStatus = "flagged";
-                review.UpdatedAt = DateTime.Now;
-                _reviewRepo.UpdateCourseReview(review);
-            }
+                CourseReviewId = reviewId,
+                Reason = string.IsNullOrWhiteSpace(reason) ? "Violates community standards" : reason
+            };
+            await _reportService.CreateCourseReviewReportAsync(userId, request);
         }
         else
         {
-            var review = await _reviewRepo.GetLessonReviewByIdAsync(reviewId);
-            if (review != null)
+            var request = new CourseMarketplaceBE.Application.DTOs.CreateLessonReviewReportRequest
             {
-                review.LessonReviewStatus = "flagged";
-                review.UpdatedAt = DateTime.Now;
-                _reviewRepo.UpdateLessonReview(review);
-            }
+                LessonReviewId = reviewId,
+                Reason = string.IsNullOrWhiteSpace(reason) ? "Violates community standards" : reason
+            };
+            await _reportService.CreateLessonReviewReportAsync(userId, request);
         }
-        await _reviewRepo.SaveChangesAsync();
     }
 }
+

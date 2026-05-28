@@ -27,7 +27,22 @@ namespace CourseMarketplaceFE.Controllers
                 var content = await response.Content.ReadAsStringAsync();
                 var json = JsonDocument.Parse(content);
                 var data = json.RootElement.GetProperty("data");
-                var coursesJson = data.GetProperty("courses").ToString();
+                  
+                // Handle both old format (courses) and new format (items from PagedResult)
+                string coursesJson;
+                if (data.TryGetProperty("items", out var itemsProp))
+                {
+                    coursesJson = itemsProp.ToString();
+                }
+                else if (data.TryGetProperty("courses", out var coursesProp))
+                {
+                    coursesJson = coursesProp.ToString();
+                }
+                else 
+                {
+                    coursesJson = data.ToString();
+                }
+                  
                 var allCourses = JsonSerializer.Deserialize<List<PublicCourseViewModel>>(coursesJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<PublicCourseViewModel>();
 
                 // Check wishlist status

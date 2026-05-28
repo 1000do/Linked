@@ -1,4 +1,4 @@
-﻿namespace CourseMarketplaceBE.Application.DTOs
+namespace CourseMarketplaceBE.Application.DTOs
 {
     public class ResetPasswordRequest
     {

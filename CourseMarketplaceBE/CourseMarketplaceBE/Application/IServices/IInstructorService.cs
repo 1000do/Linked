@@ -65,7 +65,7 @@ public interface IInstructorService
     /// <summary>
     /// Lấy danh sách lịch sử thanh toán của giảng viên (có phân trang, tìm kiếm, lọc).
     /// </summary>
-    Task<InstructorPayoutPagedDto> GetPayoutsAsync(int userId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null);
+    Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.InstructorPayoutDto>> GetPayoutsAsync(int userId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null);
 
     /// <summary>
     /// Chủ động gọi Stripe để đồng bộ trạng thái Payouts (giải pháp cho việc lỡ mất Webhook).

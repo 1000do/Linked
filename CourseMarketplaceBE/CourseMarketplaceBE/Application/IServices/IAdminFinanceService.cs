@@ -24,7 +24,7 @@ public interface IAdminFinanceService
     /// Lấy danh sách chi tiết chia tiền giảng viên.
     /// JOIN: instructor_payouts → transactions → courses → users.
     /// </summary>
-    Task<List<PayoutDetailResponse>> GetInstructorPayoutsAsync(int? year = null, int? month = null);
+    Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<PayoutDetailResponse>> GetInstructorPayoutsAsync(int? year = null, int? month = null, int page = 1, int pageSize = 10);
 
     /// <summary>
     /// Đánh dấu một khoản nợ giảng viên là đã thanh toán thủ công.
@@ -69,7 +69,7 @@ public interface IAdminFinanceService
     /// <summary>
     /// Lấy danh sách các yêu cầu hoàn tiền đang chờ duyệt.
     /// </summary>
-    Task<List<Domain.Entities.Transaction>> GetPendingRefundRequestsAsync();
+    Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<Domain.Entities.Transaction>> GetPendingRefundRequestsAsync(int page = 1, int pageSize = 10);
 
     /// <summary>
     /// Admin duyệt chấp nhận yêu cầu hoàn tiền (gọi Stripe refund thực tế).
@@ -92,7 +92,7 @@ public interface IAdminFinanceService
     Task<WithdrawResponse> CreateWithdrawalAsync(WithdrawRequest request, int managerId);
 
     /// <summary>Lấy danh sách lịch sử rút tiền.</summary>
-    Task<List<WithdrawalHistoryItem>> GetWithdrawalHistoryAsync();
+    Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<WithdrawalHistoryItem>> GetWithdrawalHistoryAsync(int? year = null, int? month = null, int page = 1, int pageSize = 10);
 
     // ═══════════════════════════════════════════════════════════════════════
     // REFUND (Hoàn tiền cho khách hàng)

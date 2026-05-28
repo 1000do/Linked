@@ -1,0 +1,255 @@
+@using CourseMarketplaceFE.Models
+@{
+    ViewData["Title"] = "My Reports";
+    var courseReports = (List<MyCourseReportViewModel>)ViewBag.CourseReports;
+    var reviewReports = (List<MyReviewReportViewModel>)ViewBag.ReviewReports;
+}
+
+<div class="max-w-7xl mx-auto px-6 lg:px-12 py-10">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar Navigation (đồng bộ với Profile) -->
+        <aside class="w-full lg:w-72 flex-shrink-0">
+            <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 sticky top-24">
+                <nav class="flex flex-col gap-2">
+                    <a href="/Account/Profile" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all">
+                        <span class="material-symbols-outlined">person</span>
+                        <span>Profile</span>
+                    </a>
+                    <a href="/Account/EditProfile" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all">
+                        <span class="material-symbols-outlined">edit_square</span>
+                        <span>Edit Profile</span>
+                    </a>
+                    <a href="/Transaction/History" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all">
+                        <span class="material-symbols-outlined">receipt_long</span>
+                        <span>Purchase History</span>
+                    </a>
+                    <a href="/Account/MyReports" class="flex items-center gap-4 px-4 py-3 rounded-2xl bg-primary-container/30 text-primary font-bold transition-all">
+                        <span class="material-symbols-outlined" style='font-variation-settings: "FILL" 1;'>flag</span>
+                        <span>My Reports</span>
+                    </a>
+                    <a href="/Account/ChangePassword" class="flex items-center gap-4 px-4 py-3 rounded-2xl text-slate-500 hover:bg-slate-50 transition-all mt-2 border-t border-slate-100 pt-4">
+                        <span class="material-symbols-outlined">lock</span>
+                        <span>Change Password</span>
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-grow space-y-8">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-800">My Reports</h1>
+                <p class="text-slate-400 text-sm mt-1">Track your submitted reports and their resolution statuses.</p>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div class="flex border-b border-slate-200 gap-4 mb-6">
+                <button onclick="switchTab('courses')" id="tab-courses" class="tab-btn px-6 py-3 font-display font-extrabold text-sm border-b-2 border-primary text-primary transition-all">
+                    Course Reports (@courseReports.Count)
+                </button>
+                <button onclick="switchTab('reviews')" id="tab-reviews" class="tab-btn px-6 py-3 font-display font-extrabold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-all">
+                    Review Reports (@reviewReports.Count)
+                </button>
+            </div>
+
+            <!-- Tab 1: Course Reports -->
+            <div id="content-courses" class="tab-content space-y-4">
+                @if (courseReports.Count == 0)
+                {
+                    <div class="bg-white rounded-[2rem] p-12 text-center border border-slate-100 shadow-sm">
+                        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="material-symbols-outlined text-slate-300 text-3xl">done_all</span>
+                        </div>
+                        <h3 class="text-slate-800 font-bold">No Course Reports</h3>
+                        <p class="text-slate-400 text-sm mt-1">You haven't submitted any reports for courses.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse text-left">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-100">
+                                        <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Reported Course</th>
+                                        <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Reason & details</th>
+                                        <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Submitted</th>
+                                        <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Resolution note</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-sm">
+                                    @foreach (var r in courseReports)
+                                    {
+                                        <tr class="hover:bg-slate-50/50 transition-all">
+                                            <td class="px-6 py-5 font-bold text-slate-800">
+                                                <a href="/Course/Detail?id=@r.CourseId" class="hover:text-primary transition-all">
+                                                    @r.CourseTitle
+                                                </a>
+                                            </td>
+                                            <td class="px-6 py-5">
+                                                <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[10px] font-bold uppercase tracking-wider">
+                                                    @r.Reason
+                                                </span>
+                                                @if (!string.IsNullOrEmpty(r.Description))
+                                                {
+                                                    <p class="text-slate-500 text-xs mt-1 line-clamp-1">@r.Description</p>
+                                                }
+                                            </td>
+                                            <td class="px-6 py-5 text-slate-400 text-xs">
+                                                @r.CreatedAt?.ToString("dd MMM yyyy")
+                                                <span class="block text-[10px]">@r.CreatedAt?.ToString("HH:mm")</span>
+                                            </td>
+                                            <td class="px-6 py-5">
+                                                @if (r.Status?.ToLower() == "pending")
+                                                {
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-600 animate-pulse">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending
+                                                    </span>
+                                                }
+                                                else if (r.Status?.ToLower() == "resolved")
+                                                {
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Resolved
+                                                    </span>
+                                                }
+                                                else if (r.Status?.ToLower() == "rejected")
+                                                {
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500">
+                                                        Rejected
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600">
+                                                        @r.Status
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td class="px-6 py-5 text-slate-600 italic text-xs max-w-[200px]">
+                                                @(string.IsNullOrEmpty(r.ResolutionNote) ? "No response note yet." : r.ResolutionNote)
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Tab 2: Review Reports -->
+            <div id="content-reviews" class="tab-content hidden space-y-4">
+                @if (reviewReports.Count == 0)
+                {
+                    <div class="bg-white rounded-[2rem] p-12 text-center border border-slate-100 shadow-sm">
+                        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="material-symbols-outlined text-slate-300 text-3xl">done_all</span>
+                        </div>
+                        <h3 class="text-slate-800 font-bold">No Review Reports</h3>
+                        <p class="text-slate-400 text-sm mt-1">You haven't submitted any reports for reviews.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse text-left">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-100">
+                                        <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Reported Review</th>
+                                        <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Reason & details</th>
+                                        <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Submitted</th>
+                                        <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Resolution note</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-sm">
+                                    @foreach (var r in reviewReports)
+                                    {
+                                        <tr class="hover:bg-slate-50/50 transition-all">
+                                            <td class="px-6 py-5 font-medium text-slate-700 italic max-w-[250px]">
+                                                <div class="space-y-1">
+                                                    <span class="text-[9px] font-black uppercase px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded block w-fit">
+                                                        @(r.ReviewType == "course_review" ? "Course Review" : "Lesson Review")
+                                                    </span>
+                                                    <p class="line-clamp-2">"@r.ReviewComment"</p>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-5">
+                                                <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[10px] font-bold uppercase tracking-wider">
+                                                    @r.Reason
+                                                </span>
+                                                @if (!string.IsNullOrEmpty(r.Description))
+                                                {
+                                                    <p class="text-slate-500 text-xs mt-1 line-clamp-1">@r.Description</p>
+                                                }
+                                            </td>
+                                            <td class="px-6 py-5 text-slate-400 text-xs">
+                                                @r.CreatedAt?.ToString("dd MMM yyyy")
+                                                <span class="block text-[10px]">@r.CreatedAt?.ToString("HH:mm")</span>
+                                            </td>
+                                            <td class="px-6 py-5">
+                                                @if (r.Status?.ToLower() == "pending")
+                                                {
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-600 animate-pulse">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending
+                                                    </span>
+                                                }
+                                                else if (r.Status?.ToLower() == "resolved")
+                                                {
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Resolved
+                                                    </span>
+                                                }
+                                                else if (r.Status?.ToLower() == "rejected")
+                                                {
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500">
+                                                        Rejected
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600">
+                                                        @r.Status
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td class="px-6 py-5 text-slate-600 italic text-xs max-w-[200px]">
+                                                @(string.IsNullOrEmpty(r.ResolutionNote) ? "No response note yet." : r.ResolutionNote)
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function switchTab(tabId) {
+        // Toggle tab button active state
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('border-primary', 'text-primary');
+            btn.classList.add('border-transparent', 'text-slate-500');
+        });
+        
+        const selectedBtn = document.getElementById(`tab-${tabId}`);
+        selectedBtn.classList.add('border-primary', 'text-primary');
+        selectedBtn.classList.remove('border-transparent', 'text-slate-500');
+
+        // Toggle content visibility
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        
+        document.getElementById(`content-${tabId}`).classList.remove('hidden');
+    }
+</script>
+}

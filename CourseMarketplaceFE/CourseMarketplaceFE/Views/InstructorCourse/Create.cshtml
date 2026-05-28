@@ -17,13 +17,15 @@
         <div id="step-1" class="h-1 flex-1 bg-primary rounded-full transition-colors duration-300"></div>
         <div id="step-2" class="h-1 flex-1 bg-slate-200 rounded-full transition-colors duration-300"></div>
         <div id="step-3" class="h-1 flex-1 bg-slate-200 rounded-full transition-colors duration-300"></div>
+        <div id="step-4" class="h-1 flex-1 bg-slate-200 rounded-full transition-colors duration-300"></div>
     </div>
 
     <form method="post" asp-action="Create" id="createCourseForm">
         <input type="hidden" asp-for="CourseThumbnailUrl" id="CourseThumbnailUrl" />
         
         <!-- Section 1: Core Identity -->
-        <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
+        <div id="step-content-1" class="form-step animate-in fade-in slide-in-from-right-4 duration-500">
+            <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
             <div class="flex items-center gap-3 mb-6">
                 <div class="w-8 h-8 rounded-full bg-primary-container text-primary flex items-center justify-center font-bold text-sm">1</div>
                 <h2 class="text-xl font-headline font-bold text-slate-900">Core Identity</h2>
@@ -54,10 +56,12 @@
                 </div>
                 <span asp-validation-for="CategoryId" class="text-red-500 text-xs mt-1 block"></span>
             </div>
+            </div>
         </div>
 
         <!-- Section 2: Course Thumbnail -->
-        <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
+        <div id="step-content-3" class="form-step hidden animate-in fade-in slide-in-from-right-4 duration-500">
+            <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
             <div class="flex items-center gap-3 mb-6">
                 <div class="w-8 h-8 rounded-full bg-primary-container text-primary flex items-center justify-center font-bold text-sm">2</div>
                 <h2 class="text-xl font-headline font-bold text-slate-900">Course Thumbnail</h2>
@@ -81,10 +85,12 @@
                     <p class="text-sm font-bold text-primary">Uploading to Cloudinary...</p>
                 </div>
             </div>
+            </div>
         </div>
 
         <!-- Section 3: Description & Curriculum -->
-        <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
+        <div id="step-content-2" class="form-step hidden animate-in fade-in slide-in-from-right-4 duration-500">
+            <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
             <div class="flex items-center gap-3 mb-6">
                 <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-sm">3</div>
                 <h2 class="text-xl font-headline font-bold text-slate-900">Description & Curriculum</h2>
@@ -100,7 +106,7 @@
         <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
             <div class="flex items-center gap-3 mb-6">
                 <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">3.1</div>
-                <h2 class="text-xl font-headline font-bold text-slate-900">"What you will learn"<span class="text-red-500">*</span></h2>
+                <h2 class="text-xl font-headline font-bold text-slate-900">What you will learn ?</h2>
             </div>
             <label asp-for="WhatYouWillLearn" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">What will students achieve? <span class="text-red-500">*</span></label>
             <div class="bg-white rounded-xl">
@@ -114,7 +120,7 @@
         <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
             <div class="flex items-center gap-3 mb-6">
                 <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">3.2</div>
-                <h2 class="text-xl font-headline font-bold text-slate-900">Requirements <span class="text-red-500">*</span></h2>
+                <h2 class="text-xl font-headline font-bold text-slate-900">Requirements </h2>
             </div>
             <label asp-for="Requirements" class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">What do students need before starting? <span class="text-red-500">*</span></label>
             <div class="bg-white rounded-xl">
@@ -122,10 +128,12 @@
                 <input type="hidden" asp-for="Requirements" id="ReqInput" />
             </div>
             <span asp-validation-for="Requirements" class="text-red-500 text-xs mt-1 block"></span>
+            </div>
         </div>
 
         <!-- Section 4: Access & Pricing -->
-        <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
+        <div id="step-content-4" class="form-step hidden animate-in fade-in slide-in-from-right-4 duration-500">
+            <div class="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm mb-6">
             <div class="flex items-center gap-3 mb-6">
                 <div class="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm">4</div>
                 <h2 class="text-xl font-headline font-bold text-slate-900">Access & Pricing</h2>
@@ -288,6 +296,7 @@
                     </button>
                 </div>
             </div>
+            </div>
         </div>
 
 
@@ -297,10 +306,18 @@
 @section Scripts {
     <!-- Floating Action Bar (Moved here to escape layout transform stacking context) -->
     <div class="fixed bottom-0 left-0 md:left-64 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 p-4 z-[90] shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.1)] transition-all duration-300">
-        <div class="max-w-4xl mx-auto flex items-center justify-end">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center">
+                <button type="button" id="prevBtn" onclick="prevStep()" class="hidden px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-all active:scale-95 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">arrow_back</span> Previous
+                </button>
+            </div>
             <div class="flex items-center gap-4">
                 <a href="/InstructorCourse" class="px-6 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-all active:scale-95">Cancel</a>
-                <button type="submit" form="createCourseForm" class="px-8 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-secondary transition-all shadow-lg shadow-primary/20 active:scale-95">Create Course</button>
+                <button type="button" id="nextBtn" onclick="nextStep()" class="px-8 py-2.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2">
+                    Next <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                </button>
+                <button type="submit" id="submitBtn" form="createCourseForm" class="hidden px-8 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-secondary transition-all shadow-lg shadow-primary/20 active:scale-95">Create Course</button>
             </div>
         </div>
     </div>
@@ -426,60 +443,164 @@
         const valSummary = document.querySelector('[data-valmsg-summary]') || document.querySelector('.text-red-500.bg-red-50');
         if (valSummary && valSummary.querySelector('li')) valSummary.style.display = 'block';
 
-        // Sync Quill + submit with validation
-        document.getElementById('createCourseForm').addEventListener('submit', function(e) {
-            const html = quill.root.innerHTML;
-            const learnHtml = learnQuill.root.innerHTML;
-            const reqHtml = reqQuill.root.innerHTML;
+        let currentStep = 1;
+        const totalSteps = 4;
 
-            const title = document.getElementById('Title').value;
-            const catId = document.getElementById('CategoryId').value;
-            const thumb = document.getElementById('CourseThumbnailUrl').value;
-            
-            const desc = (html === '<p><br></p>') ? '' : html;
-            const learnText = (learnHtml === '<p><br></p>') ? '' : learnHtml;
-            const reqText = (reqHtml === '<p><br></p>') ? '' : reqHtml;
-            
-            descriptionInput.value = desc;
-            learnInput.value = learnText;
-            reqInput.value = reqText;
+        function showStep(step) {
+            document.querySelectorAll('.form-step').forEach(el => el.classList.add('hidden'));
+            const currentEl = document.getElementById(`step-content-${step}`);
+            if(currentEl) currentEl.classList.remove('hidden');
 
-            // CLIENT-SIDE VALIDATION
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (step === 1) prevBtn.classList.add('hidden');
+            else prevBtn.classList.remove('hidden');
+
+            if (step === totalSteps) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+            
+            updateProgressBarUI(step);
+        }
+
+        function validateStep(step) {
             let errors = [];
-            if (!title || title.trim() === '') errors.push("Course Title");
-            if (!catId || catId === '0') errors.push("Category");
-            if (!thumb || thumb === '') errors.push("Thumbnail");
-            if (!desc || desc.trim() === '') errors.push("Course Description");
-            if (!learnText || learnText.trim() === '') errors.push("What you will learn");
-            if (!reqText || reqText.trim() === '') errors.push("Requirements");
-
+            if (step === 1) {
+                const title = document.getElementById('Title').value;
+                const catId = document.getElementById('CategoryId').value;
+                if (!title || title.trim() === '') errors.push("Course Title");
+                if (!catId || catId === '0') errors.push("Category");
+            } else if (step === 2) {
+                const desc = quill.root.innerHTML;
+                const learnText = learnQuill.root.innerHTML;
+                const reqText = reqQuill.root.innerHTML;
+                if (!desc || desc === '<p><br></p>') errors.push("Course Description");
+                if (!learnText || learnText === '<p><br></p>') errors.push("What you will learn");
+                if (!reqText || reqText === '<p><br></p>') errors.push("Requirements");
+            } else if (step === 3) {
+                const thumb = document.getElementById('CourseThumbnailUrl').value;
+                if (!thumb || thumb === '') errors.push("Course Thumbnail");
+            }
+            
             if (errors.length > 0) {
-                e.preventDefault(); // Stop form submission
                 Swal.fire({
                     title: 'Incomplete Information',
                     html: `<div class="text-left">Please complete the following fields:<ul class="list-disc ml-6 mt-2 text-red-600 font-semibold">${errors.map(err => `<li>${err}</li>`).join('')}</ul></div>`,
                     icon: 'warning',
                     confirmButtonColor: '#006a62'
                 });
+                return false;
             }
+            return true;
+        }
+
+        window.nextStep = function() {
+            if (validateStep(currentStep)) {
+                currentStep++;
+                showStep(currentStep);
+            }
+        };
+
+        window.prevStep = function() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        };
+
+        // Sync Quill on submit and handle via AJAX
+        document.getElementById('createCourseForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // Stop normal form submission
+
+            const html = quill.root.innerHTML;
+            const learnHtml = learnQuill.root.innerHTML;
+            const reqHtml = reqQuill.root.innerHTML;
+
+            descriptionInput.value = (html === '<p><br></p>') ? '' : html;
+            learnInput.value = (learnHtml === '<p><br></p>') ? '' : learnHtml;
+            reqInput.value = (reqHtml === '<p><br></p>') ? '' : reqHtml;
+
+            if (!validateStep(4)) {
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block align-middle mr-2"></div> Creating...';
+            submitBtn.disabled = true;
+
+            fetch(this.action, {
+                method: 'POST',
+                body: new FormData(this),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Course Created!',
+                        text: `Course "${data.title}" has been created successfully.`,
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonColor: '#006a62',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: '<span class="material-symbols-outlined align-middle mr-1 text-[18px]">edit</span> Edit Now',
+                        cancelButtonText: 'Back to List',
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = `/InstructorCourse/Editor/${data.courseId}`;
+                        } else {
+                            window.location.href = '/InstructorCourse';
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Creation Failed',
+                        text: data.message || 'Unknown error occurred.',
+                        icon: 'error',
+                        confirmButtonColor: '#006a62'
+                    });
+                }
+            })
+            .catch(err => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                Swal.fire({
+                    title: 'System Error',
+                    text: 'A network error occurred while creating the course.',
+                    icon: 'error',
+                    confirmButtonColor: '#006a62'
+                });
+            });
         });
 
-        // Progress bar
-        function updateProgressBar() {
-            const title = document.getElementById('Title').value.trim();
-            const catId = document.getElementById('CategoryId').value;
-            const thumb = document.getElementById('CourseThumbnailUrl').value;
-            const desc = quill.getText().trim();
-            const price = document.getElementById('Price').value;
-            const s1 = title.length > 0 && catId !== '0';
-            const s2 = thumb.length > 0;
-            document.getElementById('step-2').className = 'h-1 flex-1 rounded-full transition-colors duration-300 ' + (s1 ? 'bg-primary' : 'bg-slate-200');
-            document.getElementById('step-3').className = 'h-1 flex-1 rounded-full transition-colors duration-300 ' + (s1 && s2 ? 'bg-primary' : 'bg-slate-200');
+        function updateProgressBarUI(currentStep) {
+            for (let i = 1; i <= 4; i++) {
+                const stepEl = document.getElementById(`step-${i}`);
+                if (stepEl) {
+                    if (i <= currentStep) {
+                        stepEl.className = 'h-1 flex-1 bg-primary rounded-full transition-colors duration-300';
+                    } else {
+                        stepEl.className = 'h-1 flex-1 bg-slate-200 rounded-full transition-colors duration-300';
+                    }
+                }
+            }
         }
-        ['Title','CategoryId','Price'].forEach(id => { const el = document.getElementById(id); if(el) { el.addEventListener('input', updateProgressBar); el.addEventListener('change', updateProgressBar); } });
-        quill.on('text-change', updateProgressBar);
-        learnQuill.on('text-change', updateProgressBar);
-        reqQuill.on('text-change', updateProgressBar);
+        
+        // Initialize first step UI
+        updateProgressBarUI(1);
 
         // Cloudinary Upload
         const CLOUD_NAME = 'df8i0azc5';
@@ -519,12 +640,12 @@
             .then(data => {
                 progressEl.classList.add('hidden'); urlInput.value = data.secure_url;
                 thumbnailPreview.src = data.secure_url; previewContainer.classList.remove('hidden');
-                updateProgressBar();
+                // updateProgressBar();
             })
             .catch(() => {
                 progressEl.classList.add('hidden');
                 const reader = new FileReader();
-                reader.onload = e => { thumbnailPreview.src = e.target.result; previewContainer.classList.remove('hidden'); urlInput.value = e.target.result; updateProgressBar(); };
+                reader.onload = e => { thumbnailPreview.src = e.target.result; previewContainer.classList.remove('hidden'); urlInput.value = e.target.result; };
                 reader.readAsDataURL(file);
             });
         }
@@ -599,7 +720,7 @@
                 priceInput.classList.add('ring-2', 'ring-primary', 'bg-primary/5');
                 setTimeout(() => priceInput.classList.remove('ring-2', 'ring-primary', 'bg-primary/5'), 500);
                 updatePayout(priceInput.value);
-                updateProgressBar();
+                // updateProgressBar();
                 if (typeof window.syncCouponStateWithPrice === 'function') {
                     window.syncCouponStateWithPrice(priceInput.value);
                 }
@@ -621,7 +742,7 @@
                 window.syncCouponStateWithPrice(0);
             }
         }
-        updateProgressBar();
+        // updateProgressBar();
 
         // ─── LOAD AND SELECT PLATFORM COUPONS ───
         const couponToggle = document.getElementById('coupon-toggle');

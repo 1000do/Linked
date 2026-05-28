@@ -197,7 +197,7 @@ public class AdminFinanceRepository : IAdminFinanceRepository
     //   tránh kéo toàn bộ entity graph về RAM.
     // ═══════════════════════════════════════════════════════════════════════
 
-    public async Task<List<PayoutDetailProjection>> GetPayoutDetailsAsync(int? year = null, int? month = null)
+    public async Task<(List<PayoutDetailProjection> Items, int TotalCount)> GetPayoutDetailsAsync(int? year = null, int? month = null, int page = 1, int pageSize = 10)
     {
         var query = _context.InstructorPayouts
             .Include(p => p.Transaction)
@@ -214,8 +214,12 @@ public class AdminFinanceRepository : IAdminFinanceRepository
             query = query.Where(p => p.Transaction != null && p.Transaction.TransactionCreatedAt >= startDate && p.Transaction.TransactionCreatedAt < endDate);
         }
 
-        return await query
+        var totalCount = await query.CountAsync();
+
+        var items = await query
             .OrderByDescending(p => p.Transaction!.TransactionCreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(p => new PayoutDetailProjection
             {
                 PayoutId = p.PayoutId,
@@ -239,6 +243,8 @@ public class AdminFinanceRepository : IAdminFinanceRepository
                 PaidToBankAt = p.PaidToBankAt
             })
             .ToListAsync();
+
+        return (items, totalCount);
     }
 
     public async Task<InstructorPayout?> GetPayoutByIdAsync(int payoutId)
@@ -287,27 +293,49 @@ public class AdminFinanceRepository : IAdminFinanceRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<List<PlatformWithdrawal>> GetWithdrawalsAsync()
+    public async Task<(List<PlatformWithdrawal> Items, int TotalCount)> GetWithdrawalsAsync(int? year = null, int? month = null, int page = 1, int pageSize = 10)
     {
-        return await _context.PlatformWithdrawals
+        var query = _context.PlatformWithdrawals
             .Include(w => w.Manager)
+            .AsQueryable();
+
+        if (year.HasValue && month.HasValue)
+        {
+            query = query.Where(w => w.CreatedAt.Year == year.Value && w.CreatedAt.Month == month.Value);
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
             .OrderByDescending(w => w.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        return (items, totalCount);
     }
 
     // ── Refund ──────────────────────────────────────────────────────────────
 
-    public async Task<List<Transaction>> GetPendingRefundRequestsAsync()
+    public async Task<(List<Transaction> Items, int TotalCount)> GetPendingRefundRequestsAsync(int page = 1, int pageSize = 10)
     {
-        return await _context.Transactions
+        var query = _context.Transactions
             .Include(t => t.OrderItem)
                 .ThenInclude(oi => oi!.Course)
             .Include(t => t.AccountFromNavigation)
                 .ThenInclude(a => a!.User)
             .Include(t => t.TransactionExt)
-            .Where(t => t.TransactionsStatus == "refund_pending")
+            .Where(t => t.TransactionsStatus == "refund_pending");
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
             .OrderByDescending(t => t.TransactionExt != null ? t.TransactionExt.RefundRequestedAt : (DateTime?)null)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        return (items, totalCount);
     }
 
     /// <summary>
