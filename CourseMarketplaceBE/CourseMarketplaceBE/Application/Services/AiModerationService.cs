@@ -132,17 +132,17 @@ namespace CourseMarketplaceBE.Application.Services
             return models.Select(m => m.ModelId).ToList();
         }
 
-        public async Task<List<AiModelResponse>> GetModelsByTypeAsync(string modelType)
+        public async Task<List<AiModelDto>> GetModelsByTypeAsync(string modelType)
         {
             string cacheKey = CacheKeys.AiModelType.GetKey(modelType);
-            var cached = await _redisService.GetCacheAsync<List<AiModelResponse>>(cacheKey);
+            var cached = await _redisService.GetCacheAsync<List<AiModelDto>>(cacheKey);
             if (cached != null)
             {
                 return cached;
             }
 
             var dbModels = await _aiModelRepository.GetModelsByTypeAsync(modelType);
-            var result = dbModels.Select(m => new AiModelResponse
+            var result = dbModels.Select(m => new AiModelDto
             {
                 ModelId = m.ModelId,
                 ModelName = m.ModelName,

@@ -42,8 +42,10 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
         public async Task AddRangeAsync(IEnumerable<Notification> notifications) =>
             await _context.Notifications.AddRangeAsync(notifications);
 
-        public async Task SaveChangesAsync() =>
-            await _context.SaveChangesAsync();
+        public async Task<int> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync();
+        }
 
         public async Task<bool> MarkAsReadAsync(int notificationId, int userId)
         {

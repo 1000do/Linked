@@ -1,5 +1,6 @@
-using CourseMarketplaceBE.Application.DTOs;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using CourseMarketplaceBE.Application.DTOs;
 
 namespace CourseMarketplaceBE.Application.IServices
 {
@@ -52,11 +53,7 @@ namespace CourseMarketplaceBE.Application.IServices
         /// <returns>32-character hex MD5 hash</returns>
         Task<string> ComputeFileHashAsync(byte[] fileBytes);
 
-        /// <summary>
-        /// Save course hashes to database.
-        /// </summary>
-        /// <param name="command">Command containing hashes to save</param>
-        Task SaveCourseHashesAsync(SaveCourseHashesCommand command);
+        
 
         /// <summary>
         /// Get course hashes from database.
@@ -69,6 +66,6 @@ namespace CourseMarketplaceBE.Application.IServices
         /// Get all course hashes from database.
         /// </summary>
         /// <returns>List of CourseExtDto</returns>
-        Task<System.Collections.Generic.List<CourseExtDto>> GetAllCourseHashesAsync();
+        Task<List<CourseExtDto>> GetAllCourseHashesAsync();
     }
 }

@@ -34,4 +34,5 @@ public interface ICourseService
     Task<CourseAIIntegrationResult> IntegrateAItoCourseAsync(CourseAIIntegrationCommand command);
     Task<CourseAiIntegrationResponse> GetByModelAndCourseAsync(int modelId, int courseId);
     Task UpdateCourseStatusAndFeedbackAsync(int courseId, string status, string? feedback);
+    
 }

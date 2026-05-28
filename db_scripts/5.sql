@@ -87,12 +87,23 @@ CREATE TABLE accounts (
     account_last_login_at TIMESTAMP
 );
 
+CREATE TABLE lockouts (
+	lockout_id SERIAL PRIMARY KEY,
+    account_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
+	lockout_type VARCHAR(50), -- account, review, instructor (lockout cái gì)
+	lockout_level VARCHAR(50), -- moderate, severe (mức vừa, mức nặng)
+    lockout_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- thời điểm bắt đầu lockout
+    lockout_end TIMESTAMP -- thời điểm kết thúc lockout
+);
+
 CREATE TABLE users (
     user_id INT PRIMARY KEY REFERENCES accounts(account_id) ON DELETE CASCADE,
     full_name VARCHAR(255) NOT NULL,
     bio TEXT,
     date_of_birth DATE
 );
+
+
 
 CREATE TABLE managers (
     manager_id INT PRIMARY KEY REFERENCES accounts(account_id) ON DELETE CASCADE,
@@ -135,6 +146,8 @@ CREATE TABLE instructors (
     approval_status VARCHAR(50) DEFAULT 'Pending',
     stripe_country VARCHAR(2)
 );
+
+
 
 -- ==============================================================================
 -- 2. NHÓM QUẢN LÝ KHÓA HỌC (Course Management)
@@ -323,6 +336,8 @@ CREATE TABLE order_items (
     discount_amount NUMERIC(10, 2) DEFAULT 0 -- Số tiền giảm = original_price - purchase_price
 );
 
+
+
 CREATE TABLE transactions (
     transaction_id SERIAL PRIMARY KEY,
     order_item_id INT REFERENCES order_items(id) ON DELETE SET NULL, -- Mỗi transaction tương ứng with 1 item trong order thay vì cả order
@@ -335,10 +350,14 @@ CREATE TABLE transactions (
     currency VARCHAR(10) DEFAULT 'VND',
     transactions_status VARCHAR(50), -- VD: 'succeeded', 'failed', 'refunded'
     transaction_type VARCHAR(50), -- VD: 'payment', 'refund'
-    transaction_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    refund_reason TEXT,
+    transaction_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+);
+
+CREATE TABLE transaction_exts (
+	transaction_id INT PRIMARY KEY REFERENCES transactions(transaction_id) ON DELETE CASCADE,
+	refund_reason TEXT,
     refund_admin_note TEXT,
-    refund_requested_at TIMESTAMP
+	refund_requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Bảng lưu dữ liệu những giao dịch chuyển tiền từ hệ thống vô tài khoản ngân hàng của instructor
@@ -510,7 +529,8 @@ CREATE TABLE ai_models (
     description TEXT,
     model_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     model_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	model_path VARCHAR(255)
+	model_path VARCHAR(255),
+	process_type VARCHAR(255)
 );
 
 CREATE TABLE courses_ai_integrations (
@@ -789,10 +809,25 @@ END $$;
 
 
 	INSERT INTO 
-	ai_models (model_name,model_type,model_provider,model_version, model_path, model_status,description)
+	ai_models (model_name,model_type,model_provider,model_version, model_path, model_status,description, process_type)
 	VALUES
-	('spam_text_classifier','moderator','local','1','/app/models/spam_1/','active','a spam text classifier that was fine-tuned from distilbert multilingual cased'),
-	('toxic_text_classifier','moderator','local','3','/app/models/toxic_3/','active','a toxic text classifier that was fine-tuned from distilbert multilingual cased'),
-	('clip','generator','openai','1','openai/clip-vit-base-patch32','active','a multimodal model that was used to generate embeddings'),
-	('distilbert','generator','hugging_face','1','distilbert-base-multilingual-cased','active','a language model that was used to generate embeddings')
+	('harmful_text_classifier','classifier','local','1','/app/models/spam_1/,/app/models/toxic_3/','active','an ensemble of spam and toxic text classifier that was fine-tuned from distilbert multilingual cased','text'),
+	('clip','embedding_generator','openai','1','openai/clip-vit-base-patch32','active','a multimodal model that was used to generate embeddings','media'),
+	('distilbert','embedding_generator','hugging_face','1','distilbert-base-multilingual-cased','active','a language model that was used to generate embeddings','text')
 	
+	INSERT INTO
+    system_configs(config_key,config_value,description)
+    VALUES
+    ('course_harmful_text_classifier','/app/models/spam_1/,/app/models/toxic_3/','system config of course_harmful_text_classifier')
+    ('course_text_embedding_generator', 'distilbert-base-multilingual-cased','system config of course_text_embedding_generator')
+    ('course_media_embedding_generator','openai/clip-vit-base-patch32','system config of course_media_embedding_generator')
+    ('review_harmful_text_classifier','/app/models/spam_1/,/app/models/toxic_3/','system config of review_harmful_text_classifier')
+
+    CREATE TABLE system_configs (
+    config_id SERIAL PRIMARY KEY,
+    manager_id INT REFERENCES managers(manager_id) ON DELETE SET NULL,
+    config_key VARCHAR(255) UNIQUE NOT NULL,
+    config_value TEXT,
+    description TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

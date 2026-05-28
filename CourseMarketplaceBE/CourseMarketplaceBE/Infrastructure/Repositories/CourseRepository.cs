@@ -267,6 +267,7 @@ public class CourseRepository : ICourseRepository
     public async Task AddAsync(Course course)
     {
         await _context.Courses.AddAsync(course);
+        
     }
 
     public void Update(Course course)
@@ -382,8 +383,8 @@ public class CourseRepository : ICourseRepository
         return await _context.Courses.AnyAsync(c => c.CourseId == courseId && c.InstructorId == userId);
     }
 
-    public async Task SaveChangesAsync()
+    public async Task<int> SaveChangesAsync()
     {
-        await _context.SaveChangesAsync();
+        return await _context.SaveChangesAsync();
     }
 }

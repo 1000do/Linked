@@ -16,6 +16,7 @@ namespace CourseMarketplaceBE.Application.Services;
 public class CourseService : ICourseService
 {
     private readonly ICourseRepository _courseRepository;
+    private readonly ICourseExtRepository _courseExtRepository;
     private readonly IInstructorRepository _instructorRepository;
     private readonly IFileUploadService _uploadService;
     private readonly IMaterialRepository _materialRepository;
@@ -28,6 +29,7 @@ public class CourseService : ICourseService
 
     public CourseService(
         ICourseRepository courseRepository,
+        ICourseExtRepository courseExtRepository,
         IInstructorRepository instructorRepository,
         IFileUploadService uploadService,
         IMaterialRepository materialRepository,
@@ -39,6 +41,7 @@ public class CourseService : ICourseService
         HttpClient httpClient)
     {
         _courseRepository = courseRepository;
+        _courseExtRepository = courseExtRepository;
         _instructorRepository = instructorRepository;
         _uploadService = uploadService;
         _materialRepository = materialRepository;
@@ -346,7 +349,9 @@ public class CourseService : ICourseService
     }
 
 
-    public async Task<CourseResponse> CreateCourseAsync(CourseCreateRequest request, int instructorId)
+
+
+    private async Task<(int, bool)> CheckInstructorRights(int instructorId)
     {
         var instructor = await _instructorRepository.GetByIdAsync(instructorId);
         if (instructor == null || !string.Equals(instructor.ApprovalStatus, "Approved", StringComparison.OrdinalIgnoreCase))
@@ -366,6 +371,32 @@ public class CourseService : ICourseService
                 throw new BadRequestException("Instructors who have not linked a Stripe account are only allowed to create up to 2 courses.");
             }
         }
+        return (instructor.InstructorId, isStripeActive);
+
+
+    }
+
+    public async Task<CourseResponse> CreateCourseAsync(CourseCreateRequest request, int instructorId)
+    {
+        if (request == null) throw new BadRequestException("Missing required data for course creation.");
+
+        (int validInstructorId, bool isStripeActive) = await CheckInstructorRights(instructorId);
+
+
+
+
+        // // ★ Limit: Max 2 courses for unlinked Stripe
+        // var isStripeActive = !string.IsNullOrEmpty(instructor.StripeAccountId)
+        //     && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+
+        // if (!isStripeActive)
+        // {
+        //     var instructorCourses = await _courseRepository.GetInstructorCoursesAsync(instructorId);
+        //     if (instructorCourses.Count(c => !c.IsRemoved) >= 2)
+        //     {
+        //         throw new BadRequestException("Instructors who have not linked a Stripe account are only allowed to create up to 2 courses.");
+        //     }
+        // }
 
 
         // // ★ Kiểm tra trùng lặp tiêu đề (Case-insensitive)
@@ -380,10 +411,9 @@ public class CourseService : ICourseService
         // }
 
         // ★ Nếu chưa hoàn tất Stripe → ép giá = 0 (chỉ tạo khóa free)
-        var coursePrice = isStripeActive ? request.Price : 0m;
+        var coursePrice = isStripeActive == true ? request.Price : 0m;
 
         string? thumbnailUrl = request.CourseThumbnailUrl;
-
         if (request.ThumbnailFile != null)
         {
             var uploadedUrl = await _uploadService.UploadImageAsync(request.ThumbnailFile);
@@ -395,7 +425,7 @@ public class CourseService : ICourseService
 
         var course = new Course
         {
-            InstructorId = instructorId,
+            InstructorId = validInstructorId,
             CategoryId = request.CategoryId,
             Title = request.Title,
             Description = request.Description,
@@ -403,15 +433,19 @@ public class CourseService : ICourseService
             CourseThumbnailUrl = thumbnailUrl,
             WhatYouWillLearn = request.WhatYouWillLearn,
             Requirements = request.Requirements,
-            CourseStatus = "draft", // Default status
+            CourseStatus = CourseStatus.Draft.ToValue(), // Default status
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
-        await _courseRepository.AddAsync(course);
-        await _courseRepository.SaveChangesAsync();
 
-        // 2. Compute & store hashes for deduplication
+        await _courseRepository.AddAsync(course);
+        int numberOfRowsAffected = await _courseRepository.SaveChangesAsync();
+        if (numberOfRowsAffected == 0)
+        {
+            throw new InvalidOperationException("Failed to create this course");
+        }
+
         await UpdateCourseHashesAsync(course);
 
         return new CourseResponse
@@ -429,6 +463,9 @@ public class CourseService : ICourseService
             WhatYouWillLearn = course.WhatYouWillLearn,
             Requirements = course.Requirements
         };
+
+
+
     }
 
     public async Task<CourseResponse> UpdateCourseAsync(int courseId, CourseUpdateRequest request, int instructorId)
@@ -546,7 +583,32 @@ public class CourseService : ICourseService
             ThumbnailHash = thumbHash
         };
 
-        await _contentHashService.SaveCourseHashesAsync(command);
+        int numRows = await SaveCourseHashesAsync(command);
+        if (numRows == 0) throw new InvalidOperationException("Failed to update course fingerprint");
+
+    }
+
+    private async Task<int> SaveCourseHashesAsync(SaveCourseHashesCommand command)
+    {
+        var entity = new Domain.Entities.CourseExt
+        {
+            CourseId = command.CourseId,
+            TitleHash = command.TitleHash,
+            DescriptionHash = command.DescriptionHash,
+            WhatYouWillLearnHash = command.WhatYouWillLearnHash,
+            RequirementsHash = command.RequirementsHash,
+            ThumbnailHash = command.ThumbnailHash
+        };
+        var existing = await _courseExtRepository.GetByIdAsync(command.CourseId);
+        if (existing != null)
+        {
+            _courseExtRepository.Update(entity);
+        }
+        else
+        {
+            await _courseExtRepository.AddAsync(entity);
+        }
+        return await _courseExtRepository.SaveChangesAsync();
     }
 
     public async Task UpdateCourseStatusAsync(int courseId, string status, int instructorId)

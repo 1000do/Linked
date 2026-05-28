@@ -40,18 +40,25 @@ namespace CourseMarketplaceBE.Application.Services
             };
 
             await _repo.AddAsync(noti);
-            await _repo.SaveChangesAsync();
+            int numberOfRowsAffected = await _repo.SaveChangesAsync();
+            if (numberOfRowsAffected > 0)
+            {
 
-            await _hubContext.Clients.User(receiverId.ToString())
-                .SendAsync("ReceiveNotification", new
-                {
-                    notificationId = noti.NotificationId,
-                    title = noti.Title,
-                    content = noti.Content,
-                    createdAt = noti.CreatedAt,
-                    isRead = false,
-                    receiverId = noti.ReceiverId
-                });
+                await _hubContext.Clients.User(receiverId.ToString())
+                    .SendAsync("ReceiveNotification", new
+                    {
+                        notificationId = noti.NotificationId,
+                        title = noti.Title,
+                        content = noti.Content,
+                        createdAt = noti.CreatedAt,
+                        isRead = false,
+                        receiverId = noti.ReceiverId
+                    });
+            }
+            else
+            {
+                throw new InvalidOperationException("Falied to send notification!");
+            }
         }
 
         public async Task<bool> DeleteNotificationAsync(int notiId, int userId)
@@ -60,12 +67,20 @@ namespace CourseMarketplaceBE.Application.Services
             if (noti == null || noti.ReceiverId != userId) return false;
 
             _repo.Delete(noti);
-            await _repo.SaveChangesAsync();
+            int n = await _repo.SaveChangesAsync();
 
-            // Bổ sung dòng này: Báo cho Admin biết để xóa dòng đó khỏi bảng lịch sử
-            await _hubContext.Clients.All.SendAsync("ReceiveNotification");
+            if (n > 0)
+            {
 
-            return true;
+                // Bổ sung dòng này: Báo cho Admin biết để xóa dòng đó khỏi bảng lịch sử
+                await _hubContext.Clients.All.SendAsync("ReceiveNotification");
+
+                return true;
+            }
+            else
+            {
+                throw new InvalidOperationException("Failed to delete notification");
+            }
         }
 
         public async Task<bool> MarkAsReadAsync(int notificationId, int userId)
@@ -139,23 +154,31 @@ namespace CourseMarketplaceBE.Application.Services
             }).ToList();
 
             await _repo.AddRangeAsync(notifications);
-            await _repo.SaveChangesAsync();
+            int n = await _repo.SaveChangesAsync();
 
-            // Trong SendAdvancedAsync và SendNotificationAsync
-            foreach (var uid in targetUserIds)
+            if (n > 0)
             {
-                await _hubContext.Clients.User(uid.ToString()).SendAsync("ReceiveNotification", new
-                {
-                    notificationId = 0, // Hoặc ID thật nếu bạn lưu từng cái
-                    title = dto.Title,
-                    content = dto.Content,
-                    createdAt = now,
-                    isRead = false,
-                    receiverId = uid
-                });
-            }
 
-            return targetUserIds.Count;
+
+                // Trong SendAdvancedAsync và SendNotificationAsync
+                foreach (var uid in targetUserIds)
+                {
+                    await _hubContext.Clients.User(uid.ToString()).SendAsync("ReceiveNotification", new
+                    {
+                        notificationId = 0, // Hoặc ID thật nếu bạn lưu từng cái
+                        title = dto.Title,
+                        content = dto.Content,
+                        createdAt = now,
+                        isRead = false,
+                        receiverId = uid
+                    });
+                }
+
+                return targetUserIds.Count;
+            }
+            else{
+                throw new InvalidOperationException("Failed to send notification.");
+            }
         }
     }
 }

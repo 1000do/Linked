@@ -14,7 +14,7 @@ namespace CourseMarketplaceBE.Application.IServices
         Task<CourseModerationResult> ModerateCourseFullPipelineAsync(SemanticDuplicationRequest semanticReq, CourseHarmfulRequest harmfulReq);
         Task<Dictionary<string, float>> GetScoreThresholdConfigAsync(string key);
         Task<List<int>> GetModelIdsByType(string type);
-        Task<List<AiModelResponse>> GetModelsByTypeAsync(string modelType);
+        Task<List<AiModelDto>> GetModelsByTypeAsync(string modelType);
         Task SaveCourseAiUsageLog(SaveCourseAiUsageLogCommand command);
         Task<bool> HealthCheckAsync();
     }

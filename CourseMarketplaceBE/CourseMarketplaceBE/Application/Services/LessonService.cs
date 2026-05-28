@@ -146,7 +146,7 @@ public class LessonService : ILessonService
         if (!isStripeActive && (fileType == "document" || fileType == "file" || fileType == "raw"))
         {
             var existingMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
-            if (existingMaterials.Count(m => m.LearningStatus != "removed" && (m.MaterialMetadata?.FileType == "document" || m.MaterialMetadata?.FileType == "file" || m.MaterialMetadata?.FileType == "raw")) >= 1)
+            if (existingMaterials.Count(m => m.LearningStatus != "removed" && (m.MaterialMetadata?.FileType == "document" || m.MaterialMetadata?.FileType == "file" || m.MaterialMetadata?.FileType == "raw")) >= 2)
             {
                 throw new BadRequestException("Instructors who have not linked a Stripe account are only allowed to attach up to 1 document per lesson.");
             }
@@ -519,14 +519,24 @@ public class LessonService : ILessonService
 
     public async Task SaveMaterialEmbeddingsAsync(int materialId, List<float> embedding)
     {
+        
         var entity = new MaterialEmbedding
         {
             MaterialId = materialId,
             Embedding = System.Text.Json.JsonSerializer.Serialize(embedding),
-            CreatedAt = DateTime.UtcNow
+            
         };
+        var existing = _materialEmbeddingRepository.GetByMaterialIdAsync(materialId);
+        if(existing == null){
+            entity.CreatedAt = DateTime.UtcNow;
+            await _materialEmbeddingRepository.AddAsync(entity);
 
-        await _materialEmbeddingRepository.AddAsync(entity);
+        }
+        else{
+            _materialEmbeddingRepository.Update(entity);
+        }
+
+
         await _materialEmbeddingRepository.SaveChangesAsync();
 
         // Invalidate redis cache for material_embedding

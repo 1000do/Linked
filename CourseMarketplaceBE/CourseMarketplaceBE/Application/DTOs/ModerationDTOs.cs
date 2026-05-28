@@ -113,6 +113,9 @@ namespace CourseMarketplaceBE.Application.DTOs
 
         [JsonPropertyName("similarity_score_threshold")]
         public float SimilarityScoreThreshold { get; set; } = 0.8f;
+
+        [JsonPropertyName("models")]
+        public List<AiModelDto> Models { get; set; } = [];
     }
 
     /// <summary>
@@ -128,6 +131,9 @@ namespace CourseMarketplaceBE.Application.DTOs
 
         [JsonPropertyName("toxic_score_threshold")]
         public float ToxicScoreThreshold { get; set; } = 0.7f;
+
+        [JsonPropertyName("models")]
+        public List<AiModelDto> Models { get; set; } = [];
     }
 
     /// <summary>
@@ -234,7 +240,7 @@ namespace CourseMarketplaceBE.Application.DTOs
 
 
 
-    public class AiModelResponse
+    public class AiModelDto
     {
         public int ModelId { get; set; }
         public string ModelName { get; set; } = null!;
@@ -244,6 +250,14 @@ namespace CourseMarketplaceBE.Application.DTOs
         public string? ModelStatus { get; set; }
         public string? Description { get; set; }
         public string? ModelPath { get; set; }
+        public string? ProcessType { get; set; }
+    }
+
+    public class MaterialEmbeddingResponse
+    {
+        public int EmbeddingId { get; set; }
+        public int? MaterialId { get; set; }
+        public string? Embedding { get; set; }
     }
 
     public class LogCourseAiModerationCommand

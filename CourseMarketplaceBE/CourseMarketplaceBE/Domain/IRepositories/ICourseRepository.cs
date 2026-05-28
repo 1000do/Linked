@@ -38,5 +38,5 @@ public interface ICourseRepository
     Task<decimal> GetAveragePlatformRatingAsync();
     Task<List<CourseModerationDto>> GetPendingCoursesModerationAsync(ModerationFilterDto filter);
     Task<bool> IsOwnerAsync(int userId, int courseId);
-    Task SaveChangesAsync();
+    Task<int> SaveChangesAsync();
 }
