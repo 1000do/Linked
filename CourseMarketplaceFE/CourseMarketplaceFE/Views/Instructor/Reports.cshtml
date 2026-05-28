@@ -1,0 +1,152 @@
+@model List<CourseMarketplaceFE.Models.CourseReportDetailViewModel>
+@{
+    Layout = "_InstructorLayout";
+    ViewData["Title"] = "Course Reports";
+}
+
+<div class="p-6 bg-slate-50 min-h-screen space-y-6">
+    <!-- Page Header -->
+    <div>
+        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 font-display">
+            <span class="material-symbols-outlined text-primary">flag</span>
+            Course Reports
+        </h2>
+        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">Review feedback and policy flags from learners across all your courses</p>
+    </div>
+
+    <!-- Summary Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-red-600">report_problem</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Pending Reports</p>
+                <h3 class="text-2xl font-display font-extrabold text-slate-900">@Model.Count(r => r.Status?.ToLower() == "pending")</h3>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Resolved Reports</p>
+                <h3 class="text-2xl font-display font-extrabold text-slate-900">@Model.Count(r => r.Status?.ToLower() == "resolved")</h3>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-500">
+                <span class="material-symbols-outlined">flag_circle</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Reports Received</p>
+                <h3 class="text-2xl font-display font-extrabold text-slate-900">@Model.Count</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Table Card -->
+    <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+        @if (Model.Count == 0)
+        {
+            <div class="py-20 text-center">
+                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-slate-300 text-3xl">check_circle</span>
+                </div>
+                <h3 class="text-slate-800 font-bold">No Reports Received</h3>
+                <p class="text-slate-400 text-sm mt-1">Your courses are clean. No policy violations or user abuse reports have been filed.</p>
+            </div>
+        }
+        else
+        {
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full border-collapse text-left">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-100">
+                            <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Reported Course</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Reporter</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Reason & details</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Submitted</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Resolution note</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                        @foreach (var r in Model)
+                        {
+                            <tr class="hover:bg-slate-50/50 transition-all">
+                                <td class="px-6 py-5 font-bold text-slate-800 max-w-[220px] truncate">
+                                    <a href="/Course/Detail?id=@r.CourseId" class="hover:text-primary transition-all block">
+                                        @r.CourseTitle
+                                    </a>
+                                    <span class="text-[10px] text-slate-400 font-medium">Course ID: @r.CourseId</span>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
+                                            @((r.ReporterName ?? "U").Substring(0, 1).ToUpper())
+                                        </div>
+                                        <div>
+                                            <span class="font-bold text-slate-700 block">@(r.ReporterName ?? "Learner")</span>
+                                            <span class="text-[10px] text-slate-400 block">@r.ReporterEmail</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5 max-w-[280px]">
+                                    <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[10px] font-bold uppercase tracking-wider">
+                                        @r.Reason
+                                    </span>
+                                    @if (!string.IsNullOrEmpty(r.Description))
+                                    {
+                                        <p class="text-slate-500 text-xs mt-1 leading-relaxed break-words">@r.Description</p>
+                                    }
+                                </td>
+                                <td class="px-6 py-5 text-slate-400 text-xs font-semibold">
+                                    @r.CreatedAt?.ToString("dd MMM yyyy")
+                                    <span class="block text-[10px]">@r.CreatedAt?.ToString("HH:mm")</span>
+                                </td>
+                                <td class="px-6 py-5">
+                                    @if (r.Status?.ToLower() == "pending")
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-600 animate-pulse">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending
+                                        </span>
+                                    }
+                                    else if (r.Status?.ToLower() == "resolved")
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Resolved
+                                        </span>
+                                    }
+                                    else if (r.Status?.ToLower() == "rejected")
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500">
+                                            Rejected
+                                        </span>
+                                    }
+                                    else if (r.Status?.ToLower() == "escalated")
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-600">
+                                            Escalated
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600">
+                                            @r.Status
+                                        </span>
+                                    }
+                                </td>
+                                <td class="px-6 py-5 text-slate-600 italic text-xs max-w-[200px]">
+                                    @(string.IsNullOrEmpty(r.ResolutionNote) ? "No response note yet." : r.ResolutionNote)
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

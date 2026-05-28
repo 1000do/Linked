@@ -293,7 +293,28 @@ public class CourseRepository : ICourseRepository
             .AverageAsync();
     }
 
-    public async Task<List<CourseModerationDto>> GetPendingCoursesModerationAsync(ModerationFilterDto filter)
+    public async Task<CourseModerationStatsDto> GetCourseModerationStatsAsync()
+    {
+        var today = DateTime.Today;
+
+        var pendingCount = await _context.Courses
+            .Where(c => c.CourseStatus == "pending" && !c.IsRemoved)
+            .CountAsync();
+
+        var resolvedTodayCount = await _context.Courses
+            .Where(c => (c.CourseStatus == "published" || c.CourseStatus == "rejected")
+                     && c.UpdatedAt >= today
+                     && !c.IsRemoved)
+            .CountAsync();
+
+        return new CourseModerationStatsDto
+        {
+            PendingCount = pendingCount,
+            ResolvedTodayCount = resolvedTodayCount
+        };
+    }
+
+    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseModerationDto>> GetPendingCoursesModerationAsync(ModerationFilterDto filter)
     {
         var query = _context.Courses
             .Include(c => c.Instructor).ThenInclude(i => i.InstructorNavigation)
@@ -335,10 +356,15 @@ public class CourseRepository : ICourseRepository
             query = query.OrderBy(c => c.CreatedAt);
         }
 
-        var courses = await query.ToListAsync();
+        var totalCount = await query.CountAsync();
+
+        var courses = await query
+            .Skip((filter.Page - 1) * filter.PageSize)
+            .Take(filter.PageSize)
+            .ToListAsync();
         var now = DateTime.Now;
 
-        return courses.Select(c => {
+        var items = courses.Select(c => {
             var dto = new CourseModerationDto
             {
                 CourseId = c.CourseId,
@@ -349,7 +375,8 @@ public class CourseRepository : ICourseRepository
                 CreatedAt = c.CreatedAt,
                 CourseStatus = c.CourseStatus,
                 CourseThumbnailUrl = c.CourseThumbnailUrl,
-                FlagCount = c.CourseFlagCount ?? 0
+                FlagCount = c.CourseFlagCount ?? 0,
+                IsRemoved = c.IsRemoved
             };
 
             // Calculate Urgency
@@ -375,6 +402,8 @@ public class CourseRepository : ICourseRepository
 
             return dto;
         }).ToList();
+
+        return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseModerationDto>(items, totalCount, filter.Page, filter.PageSize);
     }
 
     public async Task<bool> IsOwnerAsync(int userId, int courseId)

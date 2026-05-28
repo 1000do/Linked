@@ -15,6 +15,8 @@ public class ChatListDto
     public string? ContextType { get; set; }
     public int? ContextId { get; set; }
     public int UnreadCount { get; set; }
+    public bool IsOnline { get; set; }
+    public int? PartnerId { get; set; }
 }
 
 public class MessageDto

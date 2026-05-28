@@ -36,7 +36,8 @@ public interface ICourseRepository
     void Delete(Course course);
     Task<int> GetTotalPublishedCoursesCountAsync();
     Task<decimal> GetAveragePlatformRatingAsync();
-    Task<List<CourseModerationDto>> GetPendingCoursesModerationAsync(ModerationFilterDto filter);
+    Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseModerationDto>> GetPendingCoursesModerationAsync(ModerationFilterDto filter);
+    Task<CourseModerationStatsDto> GetCourseModerationStatsAsync();
     Task<bool> IsOwnerAsync(int userId, int courseId);
     Task<int> SaveChangesAsync();
 }

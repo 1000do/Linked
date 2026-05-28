@@ -95,33 +95,9 @@ public class TransactionController : Controller
     // UC-115: Danh sách giao dịch
     // ═══════════════════════════════════════════════════════════════════════
     [HttpGet]
-    public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null)
+    public IActionResult Index()
     {
-        var vm = new TransactionPagedVM { Page = page, PageSize = pageSize };
-
-        ViewBag.Keyword = keyword;
-        ViewBag.SortBy = sortBy;
-        ViewBag.Status = status;
-
-        var query = $"transactions?page={page}&pageSize={pageSize}";
-        if (!string.IsNullOrEmpty(keyword)) query += $"&keyword={Uri.EscapeDataString(keyword)}";
-        if (!string.IsNullOrEmpty(sortBy)) query += $"&sortBy={Uri.EscapeDataString(sortBy)}";
-        if (!string.IsNullOrEmpty(status)) query += $"&status={Uri.EscapeDataString(status)}";
-
-        var resp = await _api.GetAsync(query);
-        if (resp.IsSuccessStatusCode)
-        {
-            var json = await resp.Content.ReadAsStringAsync();
-            var parsed = JsonSerializer.Deserialize<ApiResp<TransactionPagedVM>>(json, _jsonOpts);
-            if (parsed?.Data != null)
-                vm = parsed.Data;
-        }
-        else if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-        {
-            return RedirectToAction("Login", "Account");
-        }
-
-        return View(vm);
+        return Redirect("/AdminFinance");
     }
 
     // ═══════════════════════════════════════════════════════════════════════

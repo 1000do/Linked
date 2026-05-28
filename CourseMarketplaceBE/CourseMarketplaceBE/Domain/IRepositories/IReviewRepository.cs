@@ -6,8 +6,8 @@ namespace CourseMarketplaceBE.Domain.IRepositories;
 
 public interface IReviewRepository
 {
-    Task<List<CourseReview>> GetCourseReviewsWithDetailsAsync(int courseId);
-    Task<List<LessonReview>> GetLessonReviewsWithDetailsAsync(int lessonId);
+    Task<(List<CourseReview> Items, int TotalCount)> GetCourseReviewsWithDetailsAsync(int courseId, int page, int pageSize);
+    Task<(List<LessonReview> Items, int TotalCount)> GetLessonReviewsWithDetailsAsync(int lessonId, int page, int pageSize);
     Task<List<float>> GetCourseReviewRatingsAsync(int courseId);
     Task<CourseReview?> GetCourseReviewByEnrollmentAsync(int enrollmentId);
     Task<LessonReview?> GetLessonReviewByEnrollmentAsync(int enrollmentId, int lessonId);

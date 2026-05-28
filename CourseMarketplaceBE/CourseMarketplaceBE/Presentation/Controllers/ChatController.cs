@@ -28,7 +28,14 @@ public class ChatController : ControllerBase
         // Giả sử lấy Admin/Staff đầu tiên làm hỗ trợ
         // Trong thực tế nên lấy manager có role 'staff'
         var staffId = await _userRepository.GetStaffAccountIdAsync();
-        return Ok(new { AccountId = staffId });
+        if (staffId == null) return NotFound(new { message = "No support staff available." });
+        
+        var staff = await _userRepository.GetAccountByIdAsync(staffId.Value);
+        return Ok(new { 
+            AccountId = staffId,
+            FullName = staff?.User?.FullName ?? "Support Team",
+            AvatarUrl = staff?.AvatarUrl ?? ""
+        });
     }
 
     [HttpGet("list")]
@@ -70,6 +77,13 @@ public class ChatController : ControllerBase
             return Unauthorized(new { message = "User not logged in." });
 
         var accountId = int.Parse(accountIdString);
+
+        if (dto.TargetAccountId <= 0)
+            return BadRequest(new { message = "Invalid target account." });
+            
+        if (accountId == dto.TargetAccountId)
+            return BadRequest(new { message = "Cannot create chat with yourself." });
+
         try
         {
             var chatId = await _chatService.GetOrCreateChatAsync(accountId, dto);
@@ -100,6 +114,22 @@ public class ChatController : ControllerBase
             return Forbid();
 
         var success = await _chatService.GrantAdminAccessAsync(chatId, 24);
+        return success ? Ok() : BadRequest();
+    }
+
+    [HttpDelete("{chatId}/clear")]
+    public async Task<IActionResult> ClearChatHistory(int chatId)
+    {
+        var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        var success = await _chatService.ClearChatHistoryAsync(chatId, accountId);
+        return success ? Ok() : BadRequest("Chat not found or access denied.");
+    }
+
+    [HttpPost("{chatId}/read")]
+    public async Task<IActionResult> MarkAsRead(int chatId)
+    {
+        var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        var success = await _chatService.MarkChatAsReadAsync(chatId, accountId);
         return success ? Ok() : BadRequest();
     }
 }

@@ -28,19 +28,19 @@ public class ReviewController : ControllerBase
     /// <summary>Lấy danh sách reviews của khóa học (public)</summary>
     [HttpGet("course/{courseId}")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetCourseReviews(int courseId)
+    public async Task<IActionResult> GetCourseReviews(int courseId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var reviews = await _reviewService.GetCourseReviewsAsync(courseId);
-        return Ok(ApiResponse<object>.SuccessResponse(reviews, "Retrieved course reviews successfully."));
+        var result = await _reviewService.GetCourseReviewsAsync(courseId, page, pageSize);
+        return Ok(ApiResponse<object>.SuccessResponse(result, "Retrieved course reviews successfully."));
     }
 
     /// <summary>Lấy danh sách reviews của lesson (public)</summary>
     [HttpGet("lesson/{lessonId}")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetLessonReviews(int lessonId)
+    public async Task<IActionResult> GetLessonReviews(int lessonId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var reviews = await _reviewService.GetLessonReviewsAsync(lessonId);
-        return Ok(ApiResponse<object>.SuccessResponse(reviews, "Retrieved lesson reviews successfully."));
+        var result = await _reviewService.GetLessonReviewsAsync(lessonId, page, pageSize);
+        return Ok(ApiResponse<object>.SuccessResponse(result, "Retrieved lesson reviews successfully."));
     }
 
     /// <summary>Thống kê phân bổ sao (public)</summary>

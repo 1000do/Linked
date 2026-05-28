@@ -312,6 +312,8 @@
                 if (count > 0) {
                     badge.textContent = count > 9 ? '9+' : count;
                     badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
                 }
             }
         } catch { }
@@ -452,5 +454,6 @@
 
     document.addEventListener('cartUpdated', () => {
         initCartBadge();
+        loadCartPreview();
     });
 </script>

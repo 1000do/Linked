@@ -1,4 +1,4 @@
-﻿namespace CourseMarketplaceBE.Application.DTOs
+namespace CourseMarketplaceBE.Application.DTOs
 {
     public class NotificationSendDto
     {
@@ -8,8 +8,8 @@
     }
     public class NotificationAdvancedDto
     {
-        public string TargetType { get; set; } = "SINGLE"; // "ALL" hoặc "SINGLE"
-        public List<string>? Emails { get; set; } // Dùng Email thay vì Username
+        public string TargetType { get; set; } = "SINGLE"; // "ALL" ho?c "SINGLE"
+        public List<string>? Emails { get; set; } // D�ng Email thay v� Username
         public string Title { get; set; } = null!;
         public string Content { get; set; } = null!;
     }

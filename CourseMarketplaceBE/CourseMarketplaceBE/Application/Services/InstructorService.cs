@@ -342,7 +342,7 @@ public class InstructorService : IInstructorService
         if (rows8 <= 0) throw new InvalidOperationException("Failed to save changes");
     }
 
-    public async Task<InstructorPayoutPagedDto> GetPayoutsAsync(int userId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
+    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.InstructorPayoutDto>> GetPayoutsAsync(int userId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
     {
         return await _repo.GetPayoutsAsync(userId, page, pageSize, keyword, sortBy, status, year, month);
     }

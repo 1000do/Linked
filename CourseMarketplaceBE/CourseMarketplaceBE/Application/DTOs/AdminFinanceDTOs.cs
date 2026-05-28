@@ -213,3 +213,15 @@ public class RefundResultResponse
     public string TransactionStatus { get; set; } = "refunded";
 }
 
+public class InstructorCourseRevenueResponse
+{
+    public int CourseId { get; set; }
+    public string CourseTitle { get; set; } = string.Empty;
+    public int InstructorId { get; set; }
+    public string InstructorName { get; set; } = string.Empty;
+    public int SalesCount { get; set; }
+    public decimal MonthlyRevenue { get; set; }
+    public decimal YearlyRevenue { get; set; }
+    public decimal LifetimeRevenue { get; set; }
+}
+

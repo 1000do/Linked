@@ -1,0 +1,109 @@
+@model string
+@{
+    var userRole = (Context.Request.Cookies["UserRole"] ?? "learner").ToLower();
+}
+
+<aside class="w-full lg:w-80 flex-shrink-0">
+    <div class="bg-white/70 backdrop-blur-xl rounded-[2.5rem] p-6 shadow-xl shadow-slate-200/50 border border-white sticky top-24">
+        <div class="mb-8 px-4 flex items-center justify-between">
+            <div>
+                <h2 class="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Settings</h2>
+                <p class="text-lg font-bold text-slate-800">My Account</p>
+            </div>
+            @if (!string.IsNullOrEmpty(userRole))
+            {
+                <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-primary/10 text-primary">
+                    @userRole
+                </span>
+            }
+        </div>
+        <nav class="flex flex-col gap-2">
+            <!-- 1. Profile -->
+            <a href="/Account/Profile" 
+               class="@(Model == "Profile" 
+                   ? "flex items-center gap-4 px-5 py-4 rounded-2xl bg-white shadow-lg shadow-primary/10 text-primary font-bold transition-all border border-primary/5" 
+                   : "group flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-500 hover:bg-white hover:shadow-md transition-all duration-300")">
+                <span class="material-symbols-outlined @(Model == "Profile" ? "text-primary" : "text-slate-400 group-hover:text-primary transition-colors")" 
+                      style='font-variation-settings: "FILL" @(Model == "Profile" ? "1" : "0");'>
+                    person
+                </span>
+                <span class="@(Model == "Profile" ? "" : "font-semibold")">Profile</span>
+            </a>
+
+            <!-- 2. Edit Profile -->
+            <a href="/Account/EditProfile" 
+               class="@(Model == "EditProfile" 
+                   ? "flex items-center gap-4 px-5 py-4 rounded-2xl bg-white shadow-lg shadow-primary/10 text-primary font-bold transition-all border border-primary/5" 
+                   : "group flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-500 hover:bg-white hover:shadow-md transition-all duration-300")">
+                <span class="material-symbols-outlined @(Model == "EditProfile" ? "text-primary" : "text-slate-400 group-hover:text-primary transition-colors")" 
+                      style='font-variation-settings: "FILL" @(Model == "EditProfile" ? "1" : "0");'>
+                    edit_square
+                </span>
+                <span class="@(Model == "EditProfile" ? "" : "font-semibold")">Edit Profile</span>
+            </a>
+
+            <!-- 3. My Enrolled Courses -->
+            <a href="/Course/MyCourses" 
+               class="@(Model == "MyCourses" 
+                   ? "flex items-center gap-4 px-5 py-4 rounded-2xl bg-white shadow-lg shadow-primary/10 text-primary font-bold transition-all border border-primary/5" 
+                   : "group flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-500 hover:bg-white hover:shadow-md transition-all duration-300")">
+                <span class="material-symbols-outlined @(Model == "MyCourses" ? "text-primary" : "text-slate-400 group-hover:text-primary transition-colors")" 
+                      style='font-variation-settings: "FILL" @(Model == "MyCourses" ? "1" : "0");'>
+                    school
+                </span>
+                <span class="@(Model == "MyCourses" ? "" : "font-semibold")">My Courses</span>
+            </a>
+
+            <!-- 4. Wishlist -->
+            <a href="/Wishlist" 
+               class="@(Model == "Wishlist" 
+                   ? "flex items-center gap-4 px-5 py-4 rounded-2xl bg-white shadow-lg shadow-primary/10 text-primary font-bold transition-all border border-primary/5" 
+                   : "group flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-500 hover:bg-white hover:shadow-md transition-all duration-300")">
+                <span class="material-symbols-outlined @(Model == "Wishlist" ? "text-primary" : "text-slate-400 group-hover:text-primary transition-colors")" 
+                      style='font-variation-settings: "FILL" @(Model == "Wishlist" ? "1" : "0");'>
+                    favorite
+                </span>
+                <span class="@(Model == "Wishlist" ? "" : "font-semibold")">Wishlist</span>
+            </a>
+
+            <!-- 5. Purchase History -->
+            <a href="/Transaction/History" 
+               class="@(Model == "History" 
+                   ? "flex items-center gap-4 px-5 py-4 rounded-2xl bg-white shadow-lg shadow-primary/10 text-primary font-bold transition-all border border-primary/5" 
+                   : "group flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-500 hover:bg-white hover:shadow-md transition-all duration-300")">
+                <span class="material-symbols-outlined @(Model == "History" ? "text-primary" : "text-slate-400 group-hover:text-primary transition-colors")" 
+                      style='font-variation-settings: "FILL" @(Model == "History" ? "1" : "0");'>
+                    receipt_long
+                </span>
+                <span class="@(Model == "History" ? "" : "font-semibold")">Purchase History</span>
+            </a>
+
+            <!-- Separator -->
+            <div class="h-px bg-slate-100 my-2 mx-4"></div>
+
+            <!-- 6. Change Password -->
+            <a href="/Account/ChangePassword" 
+               class="@(Model == "ChangePassword" 
+                   ? "flex items-center gap-4 px-5 py-4 rounded-2xl bg-white shadow-lg shadow-primary/10 text-primary font-bold transition-all border border-primary/5" 
+                   : "group flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-500 hover:bg-white hover:shadow-md transition-all duration-300")">
+                <span class="material-symbols-outlined @(Model == "ChangePassword" ? "text-primary" : "text-slate-400 group-hover:text-primary transition-colors")" 
+                      style='font-variation-settings: "FILL" @(Model == "ChangePassword" ? "1" : "0");'>
+                    lock
+                </span>
+                <span class="@(Model == "ChangePassword" ? "" : "font-semibold")">Change Password</span>
+            </a>
+        </nav>
+
+        <!-- Profile Status Widget -->
+        <div class="mt-10 p-5 bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl text-white">
+            <p class="text-xs font-bold opacity-60 mb-2 uppercase tracking-wider">Profile Status</p>
+            <div class="flex items-center gap-2 mb-4">
+                <div class="h-2 flex-1 bg-white/10 rounded-full overflow-hidden">
+                    <div class="h-full bg-primary w-[85%] rounded-full shadow-[0_0_10px_rgba(0,106,98,0.5)]"></div>
+                </div>
+                <span class="text-xs font-bold">85%</span>
+            </div>
+            <p class="text-[10px] opacity-50 leading-relaxed italic">Complete your profile to receive more relevant course recommendations!</p>
+        </div>
+    </div>
+</aside>

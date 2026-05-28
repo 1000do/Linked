@@ -431,8 +431,13 @@ public class CheckoutService : ICheckoutService
                         await _repo.AddEnrollmentProgressAsync(progress);
                     }
 
-                    // Tạo Payout record
-                    var payoutAmount = Math.Round(purchasePrice * (currentTransferRate / 100m), 2);
+                    // Tính toán phí Stripe (2.9% + $0.30) và lấy doanh thu thuần của khoá học
+                    var stripeFee = Math.Round(purchasePrice * 0.029m + 0.30m, 2);
+                    stripeFee = Math.Min(stripeFee, purchasePrice); // Tránh âm tiền nếu khoá học quá rẻ
+                    var netPrice = purchasePrice - stripeFee;
+
+                    // Tạo Payout record (chia tiền sau khi trừ phí Stripe)
+                    var payoutAmount = Math.Round(netPrice * (currentTransferRate / 100m), 2);
                     var payout = new InstructorPayout
                     {
                         TransactionId = transaction.TransactionId,

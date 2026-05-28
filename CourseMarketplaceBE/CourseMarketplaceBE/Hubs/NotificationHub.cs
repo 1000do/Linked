@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace CourseMarketplaceBE.Hubs
@@ -6,6 +6,6 @@ namespace CourseMarketplaceBE.Hubs
     [Authorize]
     public class NotificationHub : Hub
     {
-        // Hub này để trống cũng được, nó dùng để định danh kết nối
+        // Hub n�y d? tr?ng cung du?c, n� d�ng d? d?nh danh k?t n?i
     }
 }

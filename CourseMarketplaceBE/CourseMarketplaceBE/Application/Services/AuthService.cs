@@ -14,15 +14,17 @@ namespace CourseMarketplaceBE.Application.IServices;
 public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepo;
+    private readonly ILockoutRepository _lockoutRepo;
     private readonly JwtSettings _jwtSettings;
     private readonly IOtpService _otpService;
     private readonly IEmailService _emailService;
     private readonly IConfiguration _config;
 
-    public AuthService(IUserRepository userRepo, JwtSettings jwtSettings, IOtpService otpService,
+    public AuthService(IUserRepository userRepo, ILockoutRepository lockoutRepo, JwtSettings jwtSettings, IOtpService otpService,
     IEmailService emailService, IConfiguration config)
     {
         _userRepo = userRepo;
+        _lockoutRepo = lockoutRepo;
         _jwtSettings = jwtSettings;
         _otpService = otpService;
         _emailService = emailService;
@@ -35,6 +37,10 @@ public class AuthService : IAuthService
 
         if (a == null || !BCrypt.Net.BCrypt.Verify(r.Password, a.PasswordHash))
             return null;
+
+        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(a.AccountId, "account");
+        if (activeLockout != null)
+            throw new UnauthorizedAccessException($"Your account has been suspended until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to community standards violations.");
 
         await _userRepo.UpdateLastLoginAsync(a.AccountId);
 
@@ -197,7 +203,11 @@ public class AuthService : IAuthService
             account = await _userRepo.GetAccountByEmailAsync(email);
         }
 
-        await _userRepo.UpdateLastLoginAsync(account!.AccountId);
+        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(account!.AccountId, "account");
+        if (activeLockout != null)
+            throw new UnauthorizedAccessException($"Your account has been suspended until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to community standards violations.");
+
+        await _userRepo.UpdateLastLoginAsync(account.AccountId);
 
         // ── Detect role ───────────────────────────────────────────────────────
         var role = await _userRepo.GetRoleByAccountIdAsync(account.AccountId);
