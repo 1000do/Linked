@@ -200,6 +200,6 @@ public class CheckoutRepository : ICheckoutRepository
     public async Task<IDbContextTransaction> BeginTransactionAsync()
         => await _context.Database.BeginTransactionAsync();
 
-    public async Task SaveChangesAsync()
+    public async Task<int> SaveChangesAsync()
         => await _context.SaveChangesAsync();
 }

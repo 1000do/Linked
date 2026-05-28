@@ -71,5 +71,5 @@ public interface ICheckoutRepository
     // ── Unit of Work ─────────────────────────────────────────────────────────
     /// <summary>Bắt đầu DB transaction (EF Core IDbContextTransaction).</summary>
     Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTransactionAsync();
-    Task SaveChangesAsync();
+    Task<int> SaveChangesAsync();
 }

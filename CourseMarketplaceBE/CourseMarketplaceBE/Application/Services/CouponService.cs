@@ -126,7 +126,9 @@ public class CouponService : ICouponService
         };
 
         await _repo.AddAsync(coupon);
-        await _repo.SaveChangesAsync();
+        int numberOfRowsAffected = await _repo.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -165,7 +167,9 @@ public class CouponService : ICouponService
             coupon.IsActive = req.IsActive;
 
         _repo.Update(coupon);
-        await _repo.SaveChangesAsync();
+        int numberOfRowsAffected = await _repo.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -188,7 +192,9 @@ public class CouponService : ICouponService
         coupon.EndDate = DateTime.Now.AddDays(-1); // Hết hạn ngay lập tức
 
         _repo.Update(coupon);
-        await _repo.SaveChangesAsync();
+        int numberOfRowsAffected = await _repo.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -243,7 +249,9 @@ public class CouponService : ICouponService
         // 4. Gắn coupon vào course
         course.CouponId = couponId;
         _repo.UpdateCourse(course);
-        await _repo.SaveChangesAsync();
+        int numberOfRowsAffected = await _repo.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
 
         // 5. Invalidate Cache
         await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
@@ -264,7 +272,9 @@ public class CouponService : ICouponService
 
         course.CouponId = null;
         _repo.UpdateCourse(course);
-        await _repo.SaveChangesAsync();
+        int numberOfRowsAffected = await _repo.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
 
         // Invalidate Cache
         await _redisService.RemoveCacheAsync($"course:detail:{courseId}");

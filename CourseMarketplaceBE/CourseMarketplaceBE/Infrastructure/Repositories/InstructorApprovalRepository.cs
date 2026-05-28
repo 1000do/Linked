@@ -244,7 +244,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
 
         // ── Persistence ───────────────────────────────────────────────────────
 
-        public async Task SaveChangesAsync()
+        public async Task<int> SaveChangesAsync()
             => await _context.SaveChangesAsync();
     }
 }

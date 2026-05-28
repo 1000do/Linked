@@ -114,7 +114,8 @@ public class LessonService : ILessonService
             _courseRepository.Update(course);
         }
 
-        await _lessonRepository.SaveChangesAsync();
+        int rows1 = await _lessonRepository.SaveChangesAsync();
+        if (rows1 <= 0) throw new InvalidOperationException("Failed to save changes");
 
         // Invalidate Course Cache
         await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(request.CourseId));
@@ -320,14 +321,16 @@ public class LessonService : ILessonService
             await _materialRepository.AddAsync(material);
         }
 
-        await _materialRepository.SaveChangesAsync();
+        int rows2 = await _materialRepository.SaveChangesAsync();
+        if (rows2 <= 0) throw new InvalidOperationException("Failed to save changes");
         
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
             lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
-            await _courseRepository.SaveChangesAsync();
+            int rows3 = await _courseRepository.SaveChangesAsync();
+            if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
         }
 
         // Invalidate Course Cache
@@ -439,14 +442,16 @@ public class LessonService : ILessonService
         material.LearningStatus = "removed";
         material.UpdatedAt = DateTime.UtcNow;
         _materialRepository.Update(material);
-        await _materialRepository.SaveChangesAsync();
+        int rows4 = await _materialRepository.SaveChangesAsync();
+        if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
 
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
             lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
-            await _courseRepository.SaveChangesAsync();
+            int rows5 = await _courseRepository.SaveChangesAsync();
+            if (rows5 <= 0) throw new InvalidOperationException("Failed to save changes");
         }
 
         // Invalidate Course Cache
@@ -497,14 +502,16 @@ public class LessonService : ILessonService
         lesson.IsRemoved = true;
         lesson.UpdatedAt = DateTime.UtcNow;
         _lessonRepository.Update(lesson);
-        await _lessonRepository.SaveChangesAsync();
+        int rows6 = await _lessonRepository.SaveChangesAsync();
+        if (rows6 <= 0) throw new InvalidOperationException("Failed to save changes");
 
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
             lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
-            await _courseRepository.SaveChangesAsync();
+            int rows7 = await _courseRepository.SaveChangesAsync();
+            if (rows7 <= 0) throw new InvalidOperationException("Failed to save changes");
         }
 
         // Invalidate Course Cache
@@ -564,7 +571,8 @@ public class LessonService : ILessonService
         // 2. Delete from DB
         int? courseId = material.Lesson?.CourseId;
         _materialRepository.Delete(material);
-        await _materialRepository.SaveChangesAsync();
+        int rows8 = await _materialRepository.SaveChangesAsync();
+        if (rows8 <= 0) throw new InvalidOperationException("Failed to save changes");
 
         // Invalidate Course Cache
         if (courseId.HasValue)
@@ -652,7 +660,8 @@ public class LessonService : ILessonService
         material.LearningStatus = "active";
         material.UpdatedAt = DateTime.UtcNow;
         _materialRepository.Update(material);
-        await _materialRepository.SaveChangesAsync();
+        int rows9 = await _materialRepository.SaveChangesAsync();
+        if (rows9 <= 0) throw new InvalidOperationException("Failed to save changes");
 
         // Invalidate Course Cache
         if (lesson.CourseId.HasValue)
@@ -676,7 +685,8 @@ public class LessonService : ILessonService
         };
 
         await _materialEmbeddingRepository.AddAsync(entity);
-        await _materialEmbeddingRepository.SaveChangesAsync();
+        int rows10 = await _materialEmbeddingRepository.SaveChangesAsync();
+        if (rows10 <= 0) throw new InvalidOperationException("Failed to save changes");
 
         // Invalidate redis cache for material_embedding
         await _redisService.RemoveCacheAsync(CacheKeys.MaterialEmbedding.GetKey(materialId));

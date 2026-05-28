@@ -36,6 +36,6 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         Task<List<Instructor>> GetInstructorsWithStripeAsync();
 
         // ── Persistence ────────────────────────────────────────────────────────
-        Task SaveChangesAsync();
+        Task<int> SaveChangesAsync();
     }
 }

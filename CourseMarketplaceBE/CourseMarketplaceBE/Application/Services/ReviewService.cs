@@ -68,7 +68,9 @@ public class ReviewService : IReviewService
                 LastAccessedAt = DateTime.Now
             };
             await _checkoutRepo.AddEnrollmentAsync(enrollment);
-            await _checkoutRepo.SaveChangesAsync();
+            int numberOfRowsAffected = await _checkoutRepo.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
 
             // Tạo progress record
             var progress = new EnrollmentProgress
@@ -78,7 +80,9 @@ public class ReviewService : IReviewService
                 LastModifiedAt = DateTime.Now
             };
             await _checkoutRepo.AddEnrollmentProgressAsync(progress);
-            await _checkoutRepo.SaveChangesAsync();
+            int numberOfRowsAffected2 = await _checkoutRepo.SaveChangesAsync();
+            if (numberOfRowsAffected2 <= 0)
+                throw new InvalidOperationException("Failed to save changes");
             
             enrollment.Progress = progress;
         }
@@ -321,7 +325,9 @@ public class ReviewService : IReviewService
             }
         }
 
-        await _reviewRepo.SaveChangesAsync();
+        int numberOfRowsAffected = await _reviewRepo.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
 
         // ── Thông báo cho instructor (nếu không phải instructor tự đánh giá) ──
         if (!isOwner)

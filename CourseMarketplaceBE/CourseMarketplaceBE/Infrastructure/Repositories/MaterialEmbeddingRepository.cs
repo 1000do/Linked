@@ -36,9 +36,9 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
             _context.MaterialEmbeddings.Remove(embedding);
         }
 
-        public async Task SaveChangesAsync()
+        public async Task<int> SaveChangesAsync()
         {
-            await _context.SaveChangesAsync();
+            return await _context.SaveChangesAsync();
         }
 
         public async Task<MaterialEmbedding?> GetByIdAsync(int embeddingId)

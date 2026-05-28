@@ -71,6 +71,6 @@ public class CartRepository : ICartRepository
 
     // ── Persistence ────────────────────────────────────────────────────────────
 
-    public async Task SaveChangesAsync()
+    public async Task<int> SaveChangesAsync()
         => await _context.SaveChangesAsync();
 }

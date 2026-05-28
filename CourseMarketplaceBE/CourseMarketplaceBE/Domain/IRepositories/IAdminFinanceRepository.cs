@@ -108,7 +108,7 @@ public interface IAdminFinanceRepository
     void RemoveInstructorPayout(Domain.Entities.InstructorPayout payout);
 
     /// <summary>Commit changes.</summary>
-    Task SaveChangesAsync();
+    Task<int> SaveChangesAsync();
 }
 
 public class InstructorCourseRevenueProjection

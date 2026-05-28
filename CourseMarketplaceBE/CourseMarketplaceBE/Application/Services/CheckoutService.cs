@@ -337,7 +337,8 @@ public class CheckoutService : ICheckoutService
                     PaymentMethod = checkoutType == "direct" ? "stripe_direct" : "stripe"
                 };
                 await _repo.AddOrderAsync(order);
-                await _repo.SaveChangesAsync();
+                int rows1 = await _repo.SaveChangesAsync();
+                if (rows1 <= 0) throw new InvalidOperationException("Failed to save changes");
 
                 foreach (var courseId in courseIds)
                 {
@@ -376,7 +377,8 @@ public class CheckoutService : ICheckoutService
                         DiscountAmount = Math.Round(originalPrice - purchasePrice, 2)
                     };
                     await _repo.AddOrderItemAsync(orderItem);
-                    await _repo.SaveChangesAsync();
+                    int rows2 = await _repo.SaveChangesAsync();
+                    if (rows2 <= 0) throw new InvalidOperationException("Failed to save changes");
 
                     // Increment coupon usage
                     if (isDiscounted && coupon != null)
@@ -400,7 +402,8 @@ public class CheckoutService : ICheckoutService
                         TransactionCreatedAt = DateTime.Now
                     };
                     await _repo.AddTransactionAsync(transaction);
-                    await _repo.SaveChangesAsync();
+                    int rows3 = await _repo.SaveChangesAsync();
+                    if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
 
                     // Cấp Enrollment & Progress
                     if (!await _repo.IsEnrolledAsync(userId, courseId))
@@ -416,7 +419,8 @@ public class CheckoutService : ICheckoutService
                             LastAccessedAt = DateTime.Now
                         };
                         await _repo.AddEnrollmentAsync(enrollment);
-                        await _repo.SaveChangesAsync();
+                        int rows4 = await _repo.SaveChangesAsync();
+                        if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
 
                         var progress = new EnrollmentProgress
                         {
@@ -468,7 +472,8 @@ public class CheckoutService : ICheckoutService
                     await _repo.ClearCartAsync(userId);
                 }
 
-                await _repo.SaveChangesAsync();
+                int rows5 = await _repo.SaveChangesAsync();
+                if (rows5 <= 0) throw new InvalidOperationException("Failed to save changes");
 
                 Console.WriteLine("[CHECKOUT-DEBUG] 🏁 Committing Transaction...");
                 await dbTransaction.CommitAsync();
@@ -520,7 +525,8 @@ public class CheckoutService : ICheckoutService
                     }
                     await _repo.DeleteOrderAsync(order);
                 }
-                await _repo.SaveChangesAsync();
+                int rows6 = await _repo.SaveChangesAsync();
+                if (rows6 <= 0) throw new InvalidOperationException("Failed to save changes");
                 _logger.LogInformation("[CHECKOUT] Abandoned pending orders cleaned up successfully for user {UserId}.", userId);
             }
         }

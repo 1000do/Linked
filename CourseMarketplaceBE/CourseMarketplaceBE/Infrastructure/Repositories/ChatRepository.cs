@@ -197,8 +197,8 @@ public class ChatRepository : IChatRepository
         return await _context.UserReports.FindAsync(reportId);
     }
 
-    public async Task SaveChangesAsync()
+    public async Task<int> SaveChangesAsync()
     {
-        await _context.SaveChangesAsync();
+        return await _context.SaveChangesAsync();
     }
 }

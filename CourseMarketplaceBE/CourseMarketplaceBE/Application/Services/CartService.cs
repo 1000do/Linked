@@ -48,7 +48,9 @@ public class CartService : ICartService
         };
 
         await _repo.AddCartItemAsync(cartItem);
-        await _repo.SaveChangesAsync();
+        int numberOfRowsAffected = await _repo.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -61,7 +63,9 @@ public class CartService : ICartService
             throw new InvalidOperationException("Course not found in the cart.");
 
         _repo.RemoveCartItem(item);
-        await _repo.SaveChangesAsync();
+        int numberOfRowsAffected = await _repo.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
     }
 
     // ═══════════════════════════════════════════════════════════════════════

@@ -36,9 +36,9 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
             _context.CourseExts.Remove(courseExt);
         }
 
-        public async Task SaveChangesAsync()
+        public async Task<int> SaveChangesAsync()
         {
-            await _context.SaveChangesAsync();
+            return await _context.SaveChangesAsync();
         }
 
         public async Task<CourseExt?> GetByIdAsync(int courseId)

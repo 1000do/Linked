@@ -78,7 +78,9 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 await _courseExtRepository.AddAsync(entity);
             }
-            await _courseExtRepository.SaveChangesAsync();
+            int numberOfRowsAffected = await _courseExtRepository.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
         }
 
 

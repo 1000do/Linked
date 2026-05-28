@@ -26,5 +26,5 @@ public interface ICartRepository
     Task<List<Coupon>> GetActiveAvailableCouponsAsync(DateTime now);
 
     // ── Persistence ────────────────────────────────────────────────────────────
-    Task SaveChangesAsync();
+    Task<int> SaveChangesAsync();
 }

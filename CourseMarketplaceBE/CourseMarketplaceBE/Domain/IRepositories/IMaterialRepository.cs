@@ -12,5 +12,5 @@ public interface IMaterialRepository
     void Delete(LearningMaterial material);
     Task<List<LearningMaterial>> GetByCourseIdAsync(int courseId);
     Task<List<LearningMaterial>> GetTrashMaterialsAsync(int instructorId);
-    Task SaveChangesAsync();
+    Task<int> SaveChangesAsync();
 }
