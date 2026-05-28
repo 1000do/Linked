@@ -119,11 +119,11 @@ public class AdminFinanceService : IAdminFinanceService
         var maturedEscrow = await _repo.GetMaturedEscrowAsync(year, month);
         var totalTransactions = await _repo.GetSucceededTransactionCountAsync(year, month);
         var currentRate = await GetCurrentTransferRateAsync();
-
+        
         // Tính tổng phí Stripe của các giao dịch thành công trong kỳ (2.9% + $0.30)
-        var payouts = await _repo.GetPayoutDetailsAsync(year, month);
+        (var items, int count) = await _repo.GetPayoutDetailsAsync(year, month, 1, int.MaxValue);
         decimal totalStripeFees = 0m;
-        foreach (var p in payouts)
+        foreach (var p in items)
         {
             if (p.PayoutStatus?.ToLower() != "refunded")
             {
@@ -158,7 +158,7 @@ public class AdminFinanceService : IAdminFinanceService
     {
         var (projections, totalCount) = await _repo.GetPayoutDetailsAsync(year, month, page, pageSize);
 
-        return projections.Select(p => {
+        var items = projections.Select(p => {
             var stripeFee = Math.Round(p.TotalAmount * 0.029m + 0.30m, 2);
             stripeFee = Math.Min(stripeFee, p.TotalAmount);
 
