@@ -18,6 +18,8 @@ class CacheRepository:
     COURSE_PREFIX = "course:detail:"
     EMBEDDING_PREFIX = "material_embedding:"
     LOG_PREFIX = "mod:log:"
+    AI_MODEL_PREFIX = "ai_models:"
+    EMBEDDINGS_INITIALIZED = "material_embedding:initialized"
     
     # TTL settings (in seconds)
     CACHE_TTL = 86400  # 24 hours
@@ -206,81 +208,52 @@ class CacheRepository:
             return False
     
     # ========================================================================
-    # SIMILARITY SEARCH
+    # GET ALL EXISTING EMBEDDINGS & AI MODELS
     # ========================================================================
     
-    def find_similar_embeddings(
-        self,
-        query_embedding: List[float],
-        threshold: float = 0.85,
-        limit: int = 10,
-        exclude_material_id: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
+    def get_existing_embeddings(self, key_prefix: str = "material_embedding:") -> Dict[str, str]:
         """
-        Find cached embeddings similar to query (cosine similarity > threshold).
-        Note: This is a simplified implementation. For production, consider using
-        Redis with vector module or separate vector DB.
-        
-        Args:
-            query_embedding: Query embedding vector
-            threshold: Similarity threshold (0-1)
-            limit: Max results
-            exclude_material_id: Material to exclude from results
-            
-        Returns:
-            List of {material_id, similarity_score}
+        Query Redis cache for all matches by scanning the key_prefix until cursor == 0.
+        Excludes the key 'material_embedding:initialized'.
+        Returns a dictionary of key-value pairs.
         """
         if not self._ensure_connected():
-            logger.warning("Cannot search embeddings: Redis unavailable")
-            return []
+            logger.warning("Cannot scan embeddings: Redis unavailable")
+            return {}
+            
+        cursor = 0
+        matches = {}
         
-        # Get all embedding keys
-        pattern = f"{self.EMBEDDING_PREFIX}*"
-        keys = self.redis_client.keys(pattern)
-        
-        results = []
-        query_array = np.array(query_embedding)
-        
-        for key in keys:
-            try:
-                embedding_data = self.redis_client.get(key)
-                embedding = json.loads(embedding_data)
-                embedding_array = np.array(embedding)
-                
-                # Compute cosine similarity
-                similarity = self._cosine_similarity(query_array, embedding_array)
-                
-                # Extract material_id from key
-                material_id = int(key.replace(self.EMBEDDING_PREFIX, ""))
-                
-                if exclude_material_id and material_id == exclude_material_id:
+        while True:
+            cursor, keys = self.redis_client.scan(cursor=cursor, match=f"{key_prefix}*", count=100)
+            for k in keys:
+                if k == self.EMBEDDINGS_INITIALIZED:
                     continue
+                try:
+                    val = self.redis_client.get(k)
+                    if val is not None:
+                        matches[k] = val
+                except Exception as e:
+                    logger.warning(f"Error fetching embedding for key {k}: {e}")
+            if cursor == 0:
+                break
                 
-                if similarity >= threshold:
-                    results.append({
-                        "material_id": material_id,
-                        "similarity_score": float(similarity)
-                    })
-                    
-            except Exception as e:
-                logger.warning(f"Error processing embedding {key}: {e}")
-                continue
-        
-        # Sort by similarity descending and limit
-        results.sort(key=lambda x: x["similarity_score"], reverse=True)
-        return results[:limit]
-    
-    @staticmethod
-    def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
-        """Compute cosine similarity between two vectors."""
-        dot_product = np.dot(a, b)
-        norm_a = np.linalg.norm(a)
-        norm_b = np.linalg.norm(b)
-        
-        if norm_a == 0 or norm_b == 0:
-            return 0.0
-        
-        return dot_product / (norm_a * norm_b)
+        return matches
+
+    def get_ai_models(self, key_suffix: str) -> Optional[str]:
+        """
+        Query Redis cache with cache_key formatted from prefix and key_suffix.
+        """
+        if not self._ensure_connected():
+            logger.warning("Cannot fetch AI models: Redis unavailable")
+            return None
+            
+        cache_key = f"{self.AI_MODEL_PREFIX}{key_suffix}"
+        try:
+            return self.redis_client.get(cache_key)
+        except Exception as e:
+            logger.error(f"Error fetching AI models for key {cache_key}: {e}")
+            return None
     
     # ========================================================================
     # LOGGING

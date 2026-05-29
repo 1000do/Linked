@@ -21,7 +21,7 @@ namespace CourseMarketplaceBE.Application.IServices
         Task<ExactDuplicationResult> CheckExactDuplication(int courseId);
         Task NotifyAdminAsync(string title, string content, string? linkAction);
         Task PrepareMaterialEmbeddingsAsync();
-        Task<AssignAIModeratorsToCourseResult> AssignAIModeratorsToCourseAsync(int courseId);
+        Task<AssignAIModeratorsToCourseResult> AssignAIModeratorsToCourseAsync(int courseId, List<AiModelDto> models);
         Task<PrepareForCourseAIModerationResult> PrepareForCourseAIModeration(int courseId);
         Task ResolveCourseAIModerationResult(CourseModerationResult result);
         Task LogCourseAiModeration(LogCourseAiModerationCommand command);

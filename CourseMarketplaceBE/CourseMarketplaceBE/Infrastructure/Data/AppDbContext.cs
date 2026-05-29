@@ -231,6 +231,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("model_updated_at");
             entity.Property(e => e.ModelPath).HasColumnName("model_path");
+            entity.Property(e => e.ProcessType).HasMaxLength(255).HasColumnName("process_type");
         });
 
         // ── courses_ai_integrations ─────────────────────────────────────────────

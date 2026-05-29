@@ -512,9 +512,15 @@ public class LessonService : ILessonService
         }
     }
 
-    public async Task<List<MaterialEmbedding>> GetAllMaterialEmbeddingsAsync()
+    public async Task<List<MaterialEmbeddingResponse>> GetAllMaterialEmbeddingsAsync()
     {
-        return await _materialEmbeddingRepository.GetAllAsync();
+        var list = await _materialEmbeddingRepository.GetAllAsync();
+        return list.Select(e => new MaterialEmbeddingResponse
+        {
+            EmbeddingId = e.EmbeddingId,
+            MaterialId = e.MaterialId,
+            Embedding = e.Embedding
+        }).ToList();
     }
 
     public async Task SaveMaterialEmbeddingsAsync(int materialId, List<float> embedding)

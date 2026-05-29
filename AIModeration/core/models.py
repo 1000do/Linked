@@ -37,38 +37,48 @@ class StageLog(BaseModel):
 # STAGE 1: DUPLICATION REQUESTS/RESPONSES
 # ============================================================================
 
+class AiModelDto(BaseModel):
+    """DTO for AI model metadata."""
+    model_id: int = Field(..., alias="modelId")
+    model_name: str = Field(..., alias="modelName")
+    model_type: Optional[str] = Field(None, alias="modelType")
+    model_provider: Optional[str] = Field(None, alias="modelProvider")
+    model_version: Optional[str] = Field(None, alias="modelVersion")
+    model_status: Optional[str] = Field(None, alias="modelStatus")
+    description: Optional[str] = None
+    model_created_at: Optional[datetime] = Field(None, alias="modelCreatedAt")
+    model_updated_at: Optional[datetime] = Field(None, alias="modelUpdatedAt")
+    model_path: Optional[str] = Field(None, alias="modelPath")
+    process_type: Optional[str] = Field(None, alias="processType")
+
+    class Config:
+        populate_by_name = True
+
 
 class SemanticDuplicationRequest(BaseModel):
     """Request for Stage 1: Semantic Duplication checking."""
-    course_id: int
-    material_ids: List[int]
-    similarity_score_threshold: float
+    course_id: int = Field(..., alias="courseId")
+    material_ids: List[int] = Field(..., alias="materialIds")
+    similarity_score_threshold: float = Field(..., alias="similarityScoreThreshold")
+    models: List[AiModelDto] = Field(default_factory=list, alias="models")
 
-
-# class DuplicationCheckResult(BaseModel):
-#     """Result of a single duplication check."""
-#     is_duplicate: bool
-#     matched_ids: List[int] = Field(default_factory=list)
-#     similarity_scores: Optional[List[float]] = Field(None)
-#     stageLogs: List[StageLog] = Field(default_factory=list)
+    class Config:
+        populate_by_name = True
 
 
 # ============================================================================
 # STAGE 2: TOXICITY REQUESTS/RESPONSES
 # ============================================================================
 
-class CourseHarmfulRequest(BaseModel):
+class HarmfulCourseRequest(BaseModel):
     """Request for Stage 2: Toxicity & Spam checking."""
-    course_id: int
-    spam_score_threshold: float
-    toxic_score_threshold: float
+    course_id: int = Field(..., alias="courseId")
+    spam_score_threshold: float = Field(..., alias="spamScoreThreshold")
+    toxic_score_threshold: float = Field(..., alias="toxicScoreThreshold")
+    models: List[AiModelDto] = Field(default_factory=list, alias="models")
 
-
-# class ToxicityCheckResult(BaseModel):
-#     """Result of toxicity check."""
-#     is_flagged: bool
-#     flaggedFields: List[str] = Field(default_factory=list)
-#     stageLogs: List[StageLog] = Field(default_factory=list)
+    class Config:
+        populate_by_name = True
 
 
 # ============================================================================
@@ -91,30 +101,109 @@ class EmbeddingGenerationResponse(BaseModel):
 
 
 # ============================================================================
+# NEW COMPREHENSIVE DTOs MATCHING C# MODELS
+# ============================================================================
+
+class MaterialEmbeddingResponse(BaseModel):
+    """DTO representing MaterialEmbeddingResponse from C#."""
+    embedding_id: int = Field(..., alias="embeddingId")
+    material_id: Optional[int] = Field(None, alias="materialId")
+    embedding: Optional[List[float]] = Field(None, alias="embedding")
+
+    class Config:
+        populate_by_name = True
+
+
+class EmbeddingGenerationCommand(BaseModel):
+    """Embedding generation command for FastAPI internally."""
+    material_id: int
+    content: bytes
+    model_id: int
+    material_type: str
+
+
+class EmbeddingGenerationResult(BaseModel):
+    """Embedding generation result for FastAPI internally."""
+    material_id: int
+    model_id: int
+    embedding: List[float]
+
+
+class MaterialMetadataDto(BaseModel):
+    """Mirrors CourseMarketplaceBE.Domain.Entities.MaterialMetadata."""
+    metadata_id: int = Field(..., alias="metadataId")
+    material_id: int = Field(..., alias="materialId")
+    file_name: Optional[str] = Field(None, alias="fileName")
+    file_size: Optional[int] = Field(None, alias="fileSize")
+    file_extension: Optional[str] = Field(None, alias="fileExtension")
+    duration_seconds: Optional[int] = Field(None, alias="durationSeconds")
+    word_count: Optional[int] = Field(None, alias="wordCount")
+    page_count: Optional[int] = Field(None, alias="pageCount")
+
+    class Config:
+        populate_by_name = True
+
+
+class MaterialDto(BaseModel):
+    """Mirrors CourseMarketplaceBE.Application.DTOs.MaterialResponse."""
+    material_id: int = Field(..., alias="materialId")
+    lesson_id: int = Field(..., alias="lessonId")
+    material_title: str = Field(..., alias="materialTitle")
+    material_type: str = Field(..., alias="materialType")
+    material_url: str = Field(..., alias="materialUrl")
+    material_description: Optional[str] = Field(None, alias="materialDescription")
+    material_metadata: Optional[MaterialMetadataDto] = Field(None, alias="materialMetadata")
+
+    class Config:
+        populate_by_name = True
+
+
+class LessonDto(BaseModel):
+    """Mirrors CourseMarketplaceBE.Application.DTOs.LessonResponse."""
+    lesson_id: int = Field(..., alias="lessonId")
+    course_id: int = Field(..., alias="courseId")
+    title: str = Field(..., alias="title")
+    materials: List[MaterialDto] = Field(default_factory=list, alias="materials")
+
+    class Config:
+        populate_by_name = True
+
+
+class CourseDetailDto(BaseModel):
+    """Mirrors CourseMarketplaceBE.Application.DTOs.CourseDetailResponse."""
+    course_id: int = Field(..., alias="courseId")
+    title: str = Field(..., alias="title")
+    description: Optional[str] = Field(None, alias="description")
+    what_you_will_learn: Optional[str] = Field(None, alias="whatYouWillLearn")
+    requirements: Optional[str] = Field(None, alias="requirements")
+    thumbnail_url: Optional[str] = Field(None, alias="thumbnailUrl")
+    lessons: List[LessonDto] = Field(default_factory=list, alias="lessons")
+
+    class Config:
+        populate_by_name = True
+
+
+# ============================================================================
 # UNIFIED MODERATION RESPONSE
 # ============================================================================
 
 class CourseModerationResponse(BaseModel):
     """Unified response from moderation pipeline."""
-    course_id: int
-    moderation_status: str
-    flagged_fields: List[str] = Field(default_factory=list)
-    overall_confidence_score: float
-    total_latency_ms: float
-    stage_logs: List[StageLog] = Field(default_factory=list)
+    course_id: int = Field(..., alias="courseId")
+    moderation_status: str = Field(..., alias="moderationStatus")
+    flagged_fields: List[str] = Field(default_factory=list, alias="flaggedFields")
+    overall_confidence_score: float = Field(..., alias="overallConfidenceScore")
+    total_latency_ms: float = Field(..., alias="totalLatencyMs")
+    stage_logs: List[StageLog] = Field(default_factory=list, alias="stageLogs")
 
     class Config:
         populate_by_name = True
-        
-
-
 
 
 class FullModerationPipelineRequest(BaseModel):
     """Unified request for full AI moderation pipeline."""
     semantic: SemanticDuplicationRequest
-    harmful: CourseHarmfulRequest
-
+    harmful: HarmfulCourseRequest
 
 
 # ============================================================================

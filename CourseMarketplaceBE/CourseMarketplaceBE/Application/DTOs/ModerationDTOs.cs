@@ -343,8 +343,11 @@ namespace CourseMarketplaceBE.Application.DTOs
     {
         public int CourseId { get; set; }
         public List<int> MaterialIds { get; set; } = [];
-        public List<int> ModelIds { get; set; } = [];
+        
         public Dictionary<string, float> Thresholds { get; set; } = new();
+        public List<AiModelDto> SemanticDeDuplicationModels { get; set; } = [];
+        public List<AiModelDto> CourseHarmfulDetectionModels { get; set; } = [];
+        
     }
 
     public class CourseAiIntegrationResponse

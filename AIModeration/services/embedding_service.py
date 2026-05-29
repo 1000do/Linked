@@ -11,6 +11,7 @@ import cv2
 
 from config.settings import Settings, get_settings
 from core.exceptions import EmbeddingException
+from core.models import EmbeddingGenerationCommand, EmbeddingGenerationResult
 from services.base_service import BaseService
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,23 @@ class EmbeddingService(BaseService):
         
         if not EmbeddingService._models_loaded:
             self._load_models()
+
+    def get_file_type_for_embedding(self, file_extension: str) -> str:
+        """Map file extension to allowed types in embed_generic."""
+        if not file_extension:
+            return "text"
+        ext = file_extension.lower().replace(".", "").strip()
+        if ext in ["txt", "text"]:
+            return "text"
+        elif ext in ["pdf"]:
+            return "pdf"
+        elif ext in ["docx", "doc", "odt", "rtf"]:
+            return "word"
+        elif ext in ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp"]:
+            return "image"
+        elif ext in ["mp4", "avi", "mov", "mkv", "webm"]:
+            return "video"
+        return "text"
     
     @classmethod
     def _load_models(cls):
@@ -209,47 +227,35 @@ class EmbeddingService(BaseService):
         except Exception as e:
             logger.error(f"Video embedding failed: {e}")
             raise EmbeddingException("video", str(e))
-    
-    async def embed_pdf_text(self, pdf_text: str) -> List[float]:
+
+    async def embed_generic(self, command: EmbeddingGenerationCommand) -> EmbeddingGenerationResult:
         """
-        Generate embedding for PDF text.
-        
-        Args:
-            pdf_text: Extracted text from PDF
-            
-        Returns:
-            768-dim embedding vector
+        Generate embedding for generic content type based on EmbeddingGenerationCommand.
         """
-        return await self.embed_text(pdf_text)
-    
-    async def embed_generic(self, content: bytes, material_type: str) -> List[float]:
-        """
-        Generate embedding for generic content type.
-        
-        Args:
-            content: Content bytes
-            material_type: Type of material (text, image, video, pdf, word)
-            
-        Returns:
-            768-dim embedding vector
-        """
-        material_type = material_type.lower().strip()
+        content = command.content
+        material_type = command.material_type.lower().strip()
         
         if material_type in ["text", "pdf", "word"]:
             # Decode text
             try:
                 text = content.decode("utf-8")
-                return await self.embed_text(text)
+                emb = await self.embed_text(text)
             except UnicodeDecodeError:
                 # If decode fails, treat as binary embedding
                 text_repr = f"Binary content {len(content)} bytes"
-                return await self.embed_text(text_repr)
+                emb = await self.embed_text(text_repr)
         
         elif material_type in ["image", "jpg", "png", "jpeg"]:
-            return await self.embed_image(content)
+            emb = await self.embed_image(content)
         
         elif material_type in ["video", "mp4", "avi", "mov"]:
-            return await self.embed_video_frame(content)
+            emb = await self.embed_video_frame(content)
         
         else:
             raise EmbeddingException(material_type, f"Unsupported material type: {material_type}")
+            
+        return EmbeddingGenerationResult(
+            material_id=command.material_id,
+            model_id=command.model_id,
+            embedding=emb
+        )

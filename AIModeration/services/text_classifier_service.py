@@ -1,10 +1,11 @@
 """Service for text toxicity and spam classification using pre-trained models."""
 
 import logging
-import sys,os
+import sys
+import os
 import time
 import torch
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, List, Any
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch.nn.functional as F
 import numpy as np
@@ -49,7 +50,6 @@ class TextClassifierService(BaseService):
             
             # Load spam model
             spam_path = os.path.abspath(settings.SPAM_MODEL_PATH)
-            
             logger.info(f"Loading spam model from {spam_path}...")
             
             cls._spam_tokenizer = AutoTokenizer.from_pretrained(spam_path, local_files_only=True)
@@ -77,186 +77,216 @@ class TextClassifierService(BaseService):
                 "text_classifier",
                 f"Model loading failed: {e}"
             )
-    
-    async def classify_text(self, text: str, timeout_ms: int = None) -> Tuple[str, float, Dict[str, Any]]:
-        """
-        Classify text for toxicity and spam.
+
+    def robust_sliding_window(self, text: str, window_size: int = 128, stride: int = 64) -> List[Dict[str, Any]]:
+        spam_model = self._spam_model
+        toxic_model = self._toxic_model
+        spam_model.eval()
+        toxic_model.eval()
+        tokenizer = self._spam_tokenizer
         
-        Uses ensemble of spam and toxicity models with aggregation logic:
-        - High confidence threats → FLAGGED
-        - Low confidence threat → MANUAL_AUDIT
-        - Low confidence safe (confused) → MANUAL_AUDIT
-        - All safe & confident → APPROVED
+        tokens = tokenizer.encode(text, add_special_tokens=False)
+        length = len(tokens)
         
-        Args:
-            text: Text to classify
-            timeout_ms: Timeout in milliseconds (optional)
+        # If text is short, just do a normal pass (Minus 2 special tokens for safety)
+        if length <= window_size - 2:
+            return [self.check_course_description(text)]
+
+        chunk_results = []
+
+        for i in range(0, length, stride):
+            chunk = tokens[i : i + window_size]
+            encoded_chunk = tokenizer(
+                tokenizer.convert_ids_to_tokens(chunk),
+                is_split_into_words=True,
+                truncation=True,
+                padding='max_length',
+                max_length=window_size,
+                add_special_tokens=True,
+                return_tensors="pt"
+            ).to(self.device)
             
-        Returns:
-            (classification_result, confidence_score, details_dict)
-            - classification_result: "APPROVED", "FLAGGED", or "MANUAL_AUDIT"
-            - confidence_score: float 0-1
-            - details_dict: {spam_score, toxic_score, spam_label, toxic_label, etc.}
+            with torch.no_grad():
+                spam_outputs = spam_model(**encoded_chunk)
+                toxic_outputs = toxic_model(**encoded_chunk)
+                
+                spam_probs = F.softmax(spam_outputs.logits, dim=-1)
+                toxic_probs = F.softmax(toxic_outputs.logits, dim=-1)
+            
+            spam_conf, spam_pred = torch.max(spam_probs, dim=1)
+            toxic_conf, toxic_pred = torch.max(toxic_probs, dim=1)
+            
+            chunk_results.append({
+                "text": tokenizer.decode(chunk),
+                "spam_score": spam_conf.item(),
+                "spam_label": spam_model.config.id2label[spam_pred.item()],
+                "toxic_score": toxic_conf.item(),
+                "toxic_label": toxic_model.config.id2label[toxic_pred.item()],
+            })
+            
+            if i + window_size >= length:
+                break
+
+        return chunk_results
+
+    def check_course_description(self, text: str) -> Dict[str, Any]:
+        spam_model = self._spam_model
+        toxic_model = self._toxic_model
+        tokenizer = self._spam_tokenizer
+        spam_model.eval()
+        toxic_model.eval()
+        
+        inputs = tokenizer(
+            text,
+            return_tensors="pt",
+            truncation=True,
+            padding='max_length',
+            max_length=128
+        ).to(self.device)
+        
+        with torch.no_grad():
+            spam_outputs = spam_model(**inputs)
+            toxic_outputs = toxic_model(**inputs)
+            spam_probs = F.softmax(spam_outputs.logits, dim=-1)
+            toxic_probs = F.softmax(toxic_outputs.logits, dim=-1)
+        
+        spam_conf_score, spam_prediction = torch.max(spam_probs, dim=1)
+        spam_conf_score = spam_conf_score.item()
+        spam_prediction = spam_prediction.item()    
+        
+        toxic_conf_score, toxic_prediction = torch.max(toxic_probs, dim=1)
+        toxic_conf_score = toxic_conf_score.item()
+        toxic_prediction = toxic_prediction.item()
+        
+        spam_label = spam_model.config.id2label[spam_prediction]
+        toxic_label = toxic_model.config.id2label[toxic_prediction]
+        
+        res = {
+            "text": text, 
+            "spam_score": spam_conf_score,
+            "spam_label": spam_label,
+            "toxic_score": toxic_conf_score,
+            "toxic_label": toxic_label
+        }
+        return res
+
+    def aggregation_logic(self, chunk_results: List[Dict[str, Any]], spam_threshold: float = 0.85, toxic_threshold: float = 0.85) -> Dict[str, Any]:
+        # 1. Identify High-Confidence Threats (The most dangerous)
+        high_conf_threats = [
+            r 
+            for r in chunk_results
+            if (r["spam_label"] != "SAFE" and r['spam_score'] >= spam_threshold)
+            or (r["toxic_label"] != 'SAFE' and r['toxic_score'] >= toxic_threshold)
+        ]
+        
+        if high_conf_threats:
+            worst_spam = max(high_conf_threats, key=lambda x: x["spam_score"])
+            worst_toxic = max(high_conf_threats, key=lambda x: x["toxic_score"])
+            
+            if worst_spam['spam_score'] > worst_toxic['toxic_score']:
+                text = worst_spam['text']
+                score = worst_spam['spam_score']
+                raw_label = worst_spam['spam_label']   
+            else: 
+                text = worst_toxic['text']
+                score = worst_toxic['toxic_score']
+                raw_label = worst_toxic['toxic_label']
+                
+            return {
+                'text': text,
+                'action': 'FLAGGED',
+                'score': score,
+                'raw_label': raw_label
+            }
+
+        # 2. Identify Low-Confidence Threats (Model is suspicious)
+        low_conf_threats = [
+            r 
+            for r in chunk_results
+            if (r["spam_label"] != "SAFE" and r['spam_score'] < spam_threshold)
+            or (r["toxic_label"] != 'SAFE' and r['toxic_score'] < toxic_threshold)
+        ]
+        
+        if low_conf_threats:
+            most_suspicious_spam = max(low_conf_threats, key=lambda x: x["spam_score"])
+            most_suspicious_toxic = max(low_conf_threats, key=lambda x: x["toxic_score"])
+            
+            if most_suspicious_spam['spam_score'] > most_suspicious_toxic['toxic_score']:
+                text = most_suspicious_spam['text']
+                score = most_suspicious_spam['spam_score']
+                raw_label = most_suspicious_spam['spam_label']
+            else:
+                text = most_suspicious_toxic['text']
+                score = most_suspicious_toxic['toxic_score']
+                raw_label = most_suspicious_toxic['toxic_label']
+            
+            return {
+                "text": text,
+                "action": "MANUAL_AUDIT", 
+                "reason": "Probable Threat (Low Confidence)", 
+                "score": score, 
+                "raw_label": raw_label
+            }
+
+        # 3. Identify Low-Confidence Safes (Model is confused)
+        low_conf_safes = [
+            r 
+            for r in chunk_results
+            if (r["spam_label"] == "SAFE" and r['spam_score'] < spam_threshold)
+            or (r["toxic_label"] == 'SAFE' and r['toxic_score'] < toxic_threshold)
+        ]
+        if low_conf_safes:
+            most_confused_spam = min(low_conf_safes, key=lambda x: x["spam_score"])
+            most_confused_toxic = min(low_conf_safes, key=lambda x: x["toxic_score"])
+            
+            if most_confused_spam['spam_score'] < most_confused_toxic['toxic_score']:
+                text = most_confused_spam['text']
+                score = most_confused_spam['spam_score']
+                raw_label = most_confused_spam['spam_label']
+            else:
+                text = most_confused_toxic['text']
+                score = most_confused_toxic['toxic_score']
+                raw_label = most_confused_toxic['toxic_label']
+                
+            return {
+                "text": text,
+                "action": "MANUAL_AUDIT", 
+                "reason": "Ambiguous Content (Low Confidence Safe)", 
+                "score": score, 
+                "raw_label": raw_label
+            }
+
+        # 4. APPROVED (Safest average)
+        avg_score = sum(r["spam_score"] + r['toxic_score'] for r in chunk_results) / (2 * len(chunk_results))
+        return {"action": "APPROVED", "score": avg_score, "raw_label": "SAFE"}
+
+    def classify_text(self, text: str, spam_threshold: float = 0.85, toxic_threshold: float = 0.85, window_size: int = 128, stride: int = 64) -> Tuple[str, float, Dict[str, Any]]:
+        """
+        Classify text for toxicity and spam using sliding windows.
         """
         if not text or not text.strip():
-            raise ValueError("Empty text provided")
-        
-        timeout_seconds = (timeout_ms / 1000) if timeout_ms else self.settings.INFERENCE_TIMEOUT
-        
+            return "APPROVED", 1.0, {"action": "APPROVED", "score": 1.0, "raw_label": "SAFE"}
+
+        start_time = time.time()
         try:
-            with self.time_operation("classify_text", text_length=len(text)):
-                start_time = time.time()
-                
-                # Handle very long texts with sliding window
-                if len(text) > 512:
-                    text = self._sliding_window_aggregate(text)
-                
-                # Tokenize
-                spam_inputs = self._spam_tokenizer(
-                    text,
-                    return_tensors="pt",
-                    truncation=True,
-                    max_length=128,
-                    padding="max_length",
-                )
-                spam_inputs = {k: v.to(self.device) for k, v in spam_inputs.items()}
-                
-                toxic_inputs = self._toxic_tokenizer(
-                    text,
-                    return_tensors="pt",
-                    truncation=True,
-                    max_length=128,
-                    padding="max_length",
-                )
-                toxic_inputs = {k: v.to(self.device) for k, v in toxic_inputs.items()}
-                
-                # Get predictions (parallel inference)
-                with torch.no_grad():
-                    spam_outputs = self._spam_model(**spam_inputs)
-                    toxic_outputs = self._toxic_model(**toxic_inputs)
-                
-                # Convert to probabilities
-                spam_probs = F.softmax(spam_outputs.logits, dim=-1).cpu().numpy()[0]
-                toxic_probs = F.softmax(toxic_outputs.logits, dim=-1).cpu().numpy()[0]
-                
-                # Get predictions
-                spam_pred = np.argmax(spam_probs)
-                toxic_pred = np.argmax(toxic_probs)
-                
-                spam_label = self._spam_model.config.id2label.get(int(spam_pred), "UNKNOWN")
-                toxic_label = self._toxic_model.config.id2label.get(int(toxic_pred), "UNKNOWN")
-                
-                spam_conf = float(spam_probs[spam_pred])
-                toxic_conf = float(toxic_probs[toxic_pred])
-                
-                # Aggregate results
-                result, conf = self._aggregate_predictions(
-                    spam_label=spam_label,
-                    spam_conf=spam_conf,
-                    toxic_label=toxic_label,
-                    toxic_conf=toxic_conf,
-                )
-                
-                elapsed_ms = (time.time() - start_time) * 1000
-                
-                if elapsed_ms > timeout_seconds * 1000:
-                    raise TimeoutException("text_classification", int(timeout_seconds * 1000))
-                
-                details = {
-                    "spam_label": spam_label,
-                    "spam_confidence": spam_conf,
-                    "toxic_label": toxic_label,
-                    "toxic_confidence": toxic_conf,
-                    "aggregated_result": result,
-                    "final_confidence": conf,
-                    "latency_ms": elapsed_ms,
-                }
-                
-                self.logger.debug(f"Classification result: {result} (conf: {conf:.2f})")
-                
-                return result, conf, details
-        
-        except TimeoutException:
-            raise
+            chunk_results = self.robust_sliding_window(text, window_size=window_size, stride=stride)
+            agg = self.aggregation_logic(chunk_results, spam_threshold=spam_threshold, toxic_threshold=toxic_threshold)
+            
+            elapsed_ms = (time.time() - start_time) * 1000
+            
+            # Map aggregated action to return tuple format
+            action = agg.get("action", "APPROVED")
+            score = agg.get("score", 1.0)
+            
+            details = {
+                "text": agg.get("text", text[:60] + "..."),
+                "score": score,
+                "raw_label": agg.get("raw_label", "SAFE"),
+                "latency_ms": elapsed_ms,
+                "reason": agg.get("reason", "Inference complete")
+            }
+            return action, score, details
+
         except Exception as e:
-            logger.error(f"Text classification failed: {e}")
+            logger.error(f"Text classification robust pipeline failed: {e}")
             raise ModelInferenceException("text_classifier", str(e))
-    
-    def _sliding_window_aggregate(self, text: str, window_size: int = 128, stride: int = 64) -> str:
-        """
-        For very long texts, use sliding window approach.
-        Extract key sentences and aggregate.
-        
-        Args:
-            text: Long text
-            window_size: Characters per window
-            stride: Characters to stride
-            
-        Returns:
-            Aggregated representative text
-        """
-        # Simple approach: take first and last segments
-        if len(text) <= window_size:
-            return text
-        
-        first_window = text[:window_size]
-        last_window = text[-window_size:]
-        
-        # Return concatenation (with limit to avoid overflow)
-        combined = f"{first_window} ... {last_window}"
-        return combined[:512]  # Keep within token limit
-    
-    def _aggregate_predictions(
-        self,
-        spam_label: str,
-        spam_conf: float,
-        toxic_label: str,
-        toxic_conf: float,
-        high_conf_threshold: float = 0.9,
-        low_conf_threshold: float = 0.5,
-    ) -> Tuple[str, float]:
-        """
-        Aggregate spam and toxicity predictions.
-        
-        4-tier decision system:
-        1. High-confidence threats → FLAGGED
-        2. Low-confidence threats → MANUAL_AUDIT
-        3. Low-confidence safes (confused) → MANUAL_AUDIT
-        4. High-confidence safes → APPROVED
-        
-        Args:
-            spam_label: Spam classification label
-            spam_conf: Spam confidence
-            toxic_label: Toxicity classification label
-            toxic_conf: Toxicity confidence
-            high_conf_threshold: High confidence threshold (default 0.9)
-            low_conf_threshold: Low confidence threshold (default 0.5)
-            
-        Returns:
-            (aggregated_result, confidence)
-        """
-        # Determine if spam/toxic (check labels)
-        is_spam_threat = "positive" in spam_label.lower() or "toxic" in spam_label.lower() or "spam" in spam_label.lower()
-        is_toxic_threat = "positive" in toxic_label.lower() or "toxic" in toxic_label.lower()
-        
-        # Tier 1: High-confidence threats
-        if (is_spam_threat and spam_conf >= high_conf_threshold) or \
-           (is_toxic_threat and toxic_conf >= high_conf_threshold):
-            combined_conf = max(spam_conf, toxic_conf)
-            return "FLAGGED", combined_conf
-        
-        # Tier 2: Low-confidence threats
-        if (is_spam_threat and spam_conf >= low_conf_threshold) or \
-           (is_toxic_threat and toxic_conf >= low_conf_threshold):
-            combined_conf = max(spam_conf, toxic_conf)
-            return "MANUAL_AUDIT", combined_conf
-        
-        # Tier 3: Low-confidence safes (model confused)
-        if (not is_spam_threat and spam_conf < low_conf_threshold) or \
-           (not is_toxic_threat and toxic_conf < low_conf_threshold):
-            combined_conf = min(spam_conf, toxic_conf)
-            return "MANUAL_AUDIT", combined_conf
-        
-        # Tier 4: High-confidence safes
-        combined_conf = min(spam_conf, toxic_conf)
-        return "APPROVED", combined_conf

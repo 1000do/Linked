@@ -150,7 +150,9 @@ namespace CourseMarketplaceBE.Application.Services
                 ModelProvider = m.ModelProvider,
                 ModelVersion = m.ModelVersion,
                 ModelStatus = m.ModelStatus,
-                Description = m.Description
+                Description = m.Description,
+                ModelPath = m.ModelPath,
+                ProcessType = m.ProcessType
             }).ToList();
 
             await _redisService.SetCacheAsync(cacheKey, result, CacheTtl.Medium.GetTtl());

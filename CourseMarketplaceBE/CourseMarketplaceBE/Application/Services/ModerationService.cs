@@ -9,6 +9,7 @@ using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CourseMarketplaceBE.Application.Services
 {
@@ -28,6 +29,8 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly IUserRepository _userRepository;
         private readonly ICourseService _courseService;
         private readonly ILessonService _lessonService;
+        private readonly IAiModelRepository _aiModelRepository;
+        private readonly ISystemConfigRepository _systemConfigRepository;
         private readonly ILogger<ModerationService> _logger;
 
 
@@ -48,6 +51,8 @@ namespace CourseMarketplaceBE.Application.Services
             IUserRepository userRepository,
             ILessonService lessonService,
             ICourseService courseService,
+            IAiModelRepository aiModelRepository,
+            ISystemConfigRepository systemConfigRepository,
             ILogger<ModerationService> logger)
         {
             _courseRepository = courseRepository;
@@ -64,6 +69,8 @@ namespace CourseMarketplaceBE.Application.Services
             _userRepository = userRepository;
             _lessonService = lessonService;
             _courseService = courseService;
+            _aiModelRepository = aiModelRepository;
+            _systemConfigRepository = systemConfigRepository;
             _logger = logger;
         }
 
@@ -401,8 +408,8 @@ namespace CourseMarketplaceBE.Application.Services
             var allEmbeddings = await _lessonService.GetAllMaterialEmbeddingsAsync();
             foreach (var e in allEmbeddings)
             {
-                string cacheKey = CacheKeys.MaterialEmbedding.GetKey(e.EmbeddingId);
-                var cached = await _redisService.GetCacheAsync<MaterialEmbedding>(cacheKey);
+                string cacheKey = CacheKeys.MaterialEmbedding.GetKey(e.MaterialId.GetValueOrDefault());
+                var cached = await _redisService.GetCacheAsync<MaterialEmbeddingResponse>(cacheKey);
                 if (cached == null)
                 {
                     await _redisService.SetCacheAsync(cacheKey, e, CacheTtl.Medium.GetTtl());
@@ -412,30 +419,28 @@ namespace CourseMarketplaceBE.Application.Services
             await _redisService.SetCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey(), true, CacheTtl.Medium.GetTtl());
         }
 
-        public async Task<AssignAIModeratorsToCourseResult> AssignAIModeratorsToCourseAsync(int courseId)
+        public async Task<AssignAIModeratorsToCourseResult> AssignAIModeratorsToCourseAsync(int courseId, List<AiModelDto> models)
         {
             var thresholds = await _aiModerationService.GetScoreThresholdConfigAsync(SystemConfigKeys.ModerationThreshold);
-            var classifiers = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.Classifier);
-            var generators = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.Generator);
-            var modelIds = classifiers.Concat(generators).Select(m => m.ModelId).ToList();
+            var modelIds = models.Select(m => m.ModelId).ToList();
 
-
-
-            foreach (var mid in modelIds)
+            foreach (var model in models)
             {
-                var existing = await _courseService.GetByModelAndCourseAsync(mid, courseId);
+                var existing = await _courseService.GetByModelAndCourseAsync(model.ModelId, courseId);
                 if (existing == null)
                 {
+                    var role = $"{model.ModelType}_{model.ProcessType}".ToLower();
                     await _courseService.IntegrateAItoCourseAsync(new CourseAIIntegrationCommand
                     {
                         CourseId = courseId,
-                        ModelId = mid,
-                        Role = AiModelConst.Moderator,
+                        ModelId = model.ModelId,
+                        Role = role,
                         IsEnabled = true,
                         ConfigJson = thresholds
                     });
                 }
             }
+
             return new AssignAIModeratorsToCourseResult
             {
                 CourseId = courseId,
@@ -448,20 +453,99 @@ namespace CourseMarketplaceBE.Application.Services
         {
             try
             {
-                var assignmentResult = await AssignAIModeratorsToCourseAsync(courseId);
+                // Query system configs for configured model paths
+                var classifierPath = await _systemConfigRepository.GetValueAsync(SystemConfigKeys.CourseHarmfulTextClassifier);
+                var textGeneratorPath = await _systemConfigRepository.GetValueAsync(SystemConfigKeys.CourseTextEmbeddingGenerator);
+                var mediaGeneratorPath = await _systemConfigRepository.GetValueAsync(SystemConfigKeys.CourseMediaEmbeddingGenerator);
+
+                
+                var classifiers = new List<AiModelDto>();
+                var emb_generators = new List<AiModelDto>();
+
+                if (!string.IsNullOrEmpty(classifierPath))
+                {
+                    var model = await _aiModelRepository.GetByModelPathAsync(classifierPath);
+                    if (model != null) classifiers.Add(model);
+                }
+                if (!string.IsNullOrEmpty(textGeneratorPath))
+                {
+                    var model = await _aiModelRepository.GetByModelPathAsync(textGeneratorPath);
+                    if (model != null) emb_generators.Add(model);
+                }
+                if (!string.IsNullOrEmpty(mediaGeneratorPath))
+                {
+                    var model = await _aiModelRepository.GetByModelPathAsync(mediaGeneratorPath);
+                    if (model != null) emb_generators.Add(model);
+                }
+
+                // If models are not configured in system configs, fetch active ones by type as fallback
+                if (classifiers.Count == 0) classifiers = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.Classifier);
+                if (emb_generators.Count == 0) emb_generators = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.EmbeddingGenerator);
+                
+                var models = classifiers.Concat(emb_generators).ToList();
+
+                // Get existing course integrations
+                var integrations = await _aiIntegrationRepository.GetByCourseIdAsync(courseId);
+                var thresholds = await _aiModerationService.GetScoreThresholdConfigAsync(SystemConfigKeys.ModerationThreshold);
+                
+                if (integrations == null || !integrations.Any())
+                {
+                    
+                    await AssignAIModeratorsToCourseAsync(courseId, models);
+                }
+                else
+                {
+                    int updateCount = 0;
+                    foreach (var integration in integrations)
+                    {
+                        bool isUpdated = false;
+                        var role = integration.Role?.ToLower() ?? "";
+                        var integratedModelId = integration.ModelId;
+
+                        foreach (var model in models)
+                        {
+                            var modelType = model.ModelType?.ToLower() ?? "";
+                            var processType = model.ProcessType?.ToLower() ?? "";
+
+                            if (role.Contains(processType) && role.Contains(modelType))
+                            {
+                                if (model.ModelId != integratedModelId)
+                                {
+                                    updateCount++;
+                                    isUpdated = true;
+                                    integration.ModelId = model.ModelId;
+                                    integration.AssignedAt = DateTime.UtcNow;
+                                }
+                                break;
+                            }
+                        }
+
+                        if (isUpdated)
+                        {
+                            _aiIntegrationRepository.Update(integration);
+                        }
+                    }
+
+                    if (updateCount > 0)
+                    {
+                        await _aiIntegrationRepository.SaveChangesAsync();
+                    }
+                }
+
                 var course = await _courseService.GetCourseWithDetailsAsync(courseId, 0); // Cache course
                 var materialIds = course?.Lessons?
                     .SelectMany(lesson => lesson.LearningMaterials?.Select(material => material.MaterialId) ?? [])
                     .ToList() ?? [];
 
-
                 await PrepareMaterialEmbeddingsAsync();
+
                 return new PrepareForCourseAIModerationResult
                 {
                     CourseId = courseId,
                     MaterialIds = materialIds,
-                    ModelIds = assignmentResult.ModelIds,
-                    Thresholds = assignmentResult.Thresholds
+                    Thresholds = thresholds,
+                    SemanticDeDuplicationModels = emb_generators,
+                    CourseHarmfulDetectionModels = classifiers,
                 };
             }
             catch (Exception ex)
@@ -775,6 +859,8 @@ namespace CourseMarketplaceBE.Application.Services
 
                 var thresholds = prep.Thresholds;
                 var materialIds = prep.MaterialIds;
+                var semDupModels = prep.SemanticDeDuplicationModels;
+                var courseHarmModels = prep.CourseHarmfulDetectionModels;
 
 
                 var semanticReq = new SemanticDuplicationRequest
@@ -782,7 +868,8 @@ namespace CourseMarketplaceBE.Application.Services
                     CourseId = request.CourseId,
                     MaterialIds = materialIds,
                     SimilarityScoreThreshold = thresholds.GetValueOrDefault(AiModelConst.Similarity,
-                                                                            AiModelConst.DefaultSimilarityScoreThreshold)
+                                                                            AiModelConst.DefaultSimilarityScoreThreshold),
+                    Models = semDupModels                                                                             
                 };
 
                 var harmfulReq = new CourseHarmfulRequest
@@ -795,7 +882,8 @@ namespace CourseMarketplaceBE.Application.Services
                     ToxicScoreThreshold = thresholds.GetValueOrDefault(
                                                                     AiModelConst.Toxic,
                                                                     AiModelConst.DefaultToxicScoreThreshold
-                                                                     )
+                                                                     ),
+                    Models = courseHarmModels
                 };
 
                 var result = await _aiModerationService.ModerateCourseFullPipelineAsync(semanticReq, harmfulReq);
