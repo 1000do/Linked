@@ -12,6 +12,7 @@ namespace CourseMarketplaceFE.Models
         public decimal PlatformNetProfit { get; set; }
         public decimal CurrentTransferRate { get; set; }
         public int TotalTransactions { get; set; }
+        public decimal TotalRefunded { get; set; }
     }
 
     public class PayoutDetailVM

@@ -55,19 +55,20 @@ public class AdminFinanceController : Controller
         if (!string.IsNullOrEmpty(sortBy)) txQuery += $"&sortBy={Uri.EscapeDataString(sortBy)}";
         if (!string.IsNullOrEmpty(status)) txQuery += $"&status={Uri.EscapeDataString(status)}";
 
-        // Gọi song song 7 API để giảm latency
+        // Gọi song song 8 API để giảm latency
         int payoutPageSize = 10;
         int withdrawPageSize = 10;
         
         var summaryTask = _api.GetAsync($"admin/finance/summary?year={selectedYear}&month={selectedMonth}");
         var payoutsTask = _api.GetAsync($"admin/finance/payouts?year={selectedYear}&month={selectedMonth}&page={payoutPage}&pageSize={payoutPageSize}");
+        var allPayoutsTask = _api.GetAsync($"admin/finance/payouts?year={selectedYear}&month={selectedMonth}&page=1&pageSize=100000");
         var balanceTask = _api.GetAsync("admin/finance/balance");
         var historyTask = _api.GetAsync($"admin/finance/withdrawals?year={selectedYear}&month={selectedMonth}&page={withdrawPage}&pageSize={withdrawPageSize}");
         var txTask = _api.GetAsync(txQuery);
         var refundTask = _api.GetAsync($"admin/finance/refunds/pending?page={page}&pageSize={pageSize}");
         var payoutDaysTask = _api.GetAsync("admin/finance/payout-days");
 
-        await Task.WhenAll(summaryTask, payoutsTask, balanceTask, historyTask, txTask, refundTask, payoutDaysTask);
+        await Task.WhenAll(summaryTask, payoutsTask, allPayoutsTask, balanceTask, historyTask, txTask, refundTask, payoutDaysTask);
 
         // Parse payout days
         var payoutDaysResp = await payoutDaysTask;
@@ -87,9 +88,10 @@ public class AdminFinanceController : Controller
             var parsed = JsonSerializer.Deserialize<ApiResp<FinancialSummaryVM>>(json, _jsonOpts);
             if (parsed?.Data != null)
                 vm.Dashboard.Summary = parsed.Data;
+                
         }
 
-        // Parse payouts
+        // Parse payouts (phân trang — cho bảng UI)
         var payoutsResp = await payoutsTask;
         if (payoutsResp.IsSuccessStatusCode)
         {
@@ -98,6 +100,18 @@ public class AdminFinanceController : Controller
             if (parsed?.Data != null)
             {
                 vm.Payouts = parsed.Data;
+            }
+        }
+
+        // Parse ALL payouts (không phân trang — cho tính toán overview & chart)
+        var allPayoutsResp = await allPayoutsTask;
+        if (allPayoutsResp.IsSuccessStatusCode)
+        {
+            var json = await allPayoutsResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<CourseMarketplaceFE.Models.PagedResult<PayoutDetailVM>>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+            {
+                vm.Dashboard.Payouts = parsed.Data.Items;
             }
         }
 

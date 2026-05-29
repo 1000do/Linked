@@ -30,7 +30,8 @@ public class AdminFinanceRepository : IAdminFinanceRepository
     public async Task<decimal> GetGrossRevenueAsync(int? year = null, int? month = null)
     {
         var query = _context.Transactions
-            .Where(t => t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending");
+            .Where(t => t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending" || t.TransactionsStatus == "refunded");
+
 
         if (year.HasValue)
         {
@@ -48,7 +49,33 @@ public class AdminFinanceRepository : IAdminFinanceRepository
             }
         }
 
-        return await query.SumAsync(t => t.Amount);
+        var sum = await query.SumAsync(t => (decimal?)Math.Abs(t.Amount)) ?? 0;
+        return sum;
+    }
+
+    public async Task<decimal> GetTotalRefundedAsync(int? year = null, int? month = null)
+    {
+        var query = _context.Transactions
+            .Where(t => t.TransactionsStatus == "refunded");
+
+        if (year.HasValue)
+        {
+            if (month.HasValue)
+            {
+                var startDate = new DateTime(year.Value, month.Value, 1, 0, 0, 0, DateTimeKind.Utc);
+                var endDate = startDate.AddMonths(1);
+                query = query.Where(t => t.TransactionCreatedAt >= startDate && t.TransactionCreatedAt < endDate);
+            }
+            else
+            {
+                var startDate = new DateTime(year.Value, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                var endDate = startDate.AddYears(1);
+                query = query.Where(t => t.TransactionCreatedAt >= startDate && t.TransactionCreatedAt < endDate);
+            }
+        }
+
+        var sum = await query.SumAsync(t => (decimal?)t.Amount) ?? 0;
+        return Math.Abs(sum);
     }
 
     public async Task<int> GetSucceededTransactionCountAsync(int? year = null, int? month = null)

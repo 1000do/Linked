@@ -14,6 +14,11 @@ public interface IAdminFinanceRepository
     /// </summary>
     Task<decimal> GetGrossRevenueAsync(int? year = null, int? month = null);
 
+    /// <summary>
+    /// Tổng số tiền đã hoàn trả cho học viên (status = 'refunded')
+    /// </summary>
+    Task<decimal> GetTotalRefundedAsync(int? year = null, int? month = null);
+
     /// <summary>Tổng số giao dịch thành công.</summary>
     Task<int> GetSucceededTransactionCountAsync(int? year = null, int? month = null);
 

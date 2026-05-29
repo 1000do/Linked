@@ -1,13 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace CourseMarketplaceBE.Application.Services
 {
@@ -87,7 +87,8 @@ namespace CourseMarketplaceBE.Application.Services
             try
             {
                 var instructors = await _instructorRepo.GetInstructorsWithStripeAsync();
-                
+
+
                 if (instructors.Any())
                 {
                     var title = "📢 Revenue Share Policy Update";
@@ -97,9 +98,10 @@ namespace CourseMarketplaceBE.Application.Services
                     {
                         // ReceiverId ở đây tương ứng với User ID (trong DB này InstructorId = UserId)
                         await _notiService.SendNotificationAsync(
-                            ins.InstructorId, 
-                            title, 
-                            content, 
+                            ins.InstructorId,
+                            title,
+                            content,
+
                             "/Instructor/Payouts" // Link đến trang thu nhập để họ kiểm tra
                         );
                     }
@@ -131,17 +133,26 @@ namespace CourseMarketplaceBE.Application.Services
             var pendingEscrow = await _repo.GetPendingEscrowAsync(year, month);
             var maturedEscrow = await _repo.GetMaturedEscrowAsync(year, month);
             var totalTransactions = await _repo.GetSucceededTransactionCountAsync(year, month);
+            var totalRefunded = await _repo.GetTotalRefundedAsync(year, month);
             var currentRate = await GetCurrentTransferRateAsync();
-            
+
             // Tính tổng phí Stripe của các giao dịch thành công trong kỳ (2.9% + $0.30)
+
             (var items, int count) = await _repo.GetPayoutDetailsAsync(year, month, 1, int.MaxValue);
             decimal totalStripeFees = 0m;
+            decimal platformNetProfit = 0m;
             foreach (var p in items)
             {
                 if (p.PayoutStatus?.ToLower() != "refunded")
                 {
-                    var fee = Math.Round(p.TotalAmount * 0.029m + 0.30m, 2);
-                    totalStripeFees += Math.Min(fee, p.TotalAmount);
+                    var absAmount = Math.Abs(p.TotalAmount);
+                    var fee = Math.Round(absAmount * 0.029m + 0.30m, 2);
+                    fee = Math.Min(fee, absAmount);
+                    totalStripeFees += fee;
+
+                    var netCourseRevenue = absAmount - fee;
+                    var instructorShare = Math.Abs(p.InstructorReceived);
+                    platformNetProfit += (netCourseRevenue - instructorShare);
                 }
             }
 
@@ -153,9 +164,10 @@ namespace CourseMarketplaceBE.Application.Services
                 PendingEscrow = pendingEscrow,
                 MaturedEscrow = maturedEscrow,
                 // ★ Net Profit thực tế sàn nhận = Tổng thu net - Tổng đã trả GV - Tổng đang giữ hộ GV
-                PlatformNetProfit = (grossRevenue - totalStripeFees) - totalPaidOut - pendingEscrow - maturedEscrow,
+                PlatformNetProfit = platformNetProfit,
                 CurrentTransferRate = currentRate,
-                TotalTransactions = totalTransactions
+                TotalTransactions = totalTransactions,
+                TotalRefunded = totalRefunded
             };
         }
 
@@ -171,9 +183,23 @@ namespace CourseMarketplaceBE.Application.Services
         {
             var (projections, totalCount) = await _repo.GetPayoutDetailsAsync(year, month, page, pageSize);
 
-            var items = projections.Select(p => {
-                var stripeFee = Math.Round(p.TotalAmount * 0.029m + 0.30m, 2);
-                stripeFee = Math.Min(stripeFee, p.TotalAmount);
+            var items = projections.Select(p =>
+            {
+                var absAmount = Math.Abs(p.TotalAmount);
+                var stripeFee = Math.Round(absAmount * 0.029m + 0.30m, 2);
+                stripeFee = Math.Min(stripeFee, absAmount);
+
+                decimal platformReceived;
+                if (p.PayoutStatus?.ToLower() == "refunded")
+                {
+                    var absInstructorReceived = Math.Abs(p.InstructorReceived);
+                    var absPlatformCut = absAmount - stripeFee - absInstructorReceived;
+                    platformReceived = -absPlatformCut;
+                }
+                else
+                {
+                    platformReceived = absAmount - stripeFee - p.InstructorReceived;
+                }
 
                 return new PayoutDetailResponse
                 {
@@ -184,8 +210,8 @@ namespace CourseMarketplaceBE.Application.Services
                     CourseTitle = p.CourseTitle,
                     TotalAmount = p.TotalAmount,
                     InstructorReceived = p.InstructorReceived,
-                    // ★ Thực nhận của sàn = Tổng tiền thanh toán - Phí Stripe - Phần giảng viên nhận
-                    PlatformReceived = p.TotalAmount - stripeFee - p.InstructorReceived,
+                    // ★ Thực nhận của sàn = Tổng tiền thanh toán - Phí Stripe - Phần giảng viên nhận (hoặc âm nếu bị hoàn tiền)
+                    PlatformReceived = platformReceived,
                     TransferRate = p.TransferRate,
                     IsPaid = p.IsPaid,
                     TransactionDate = p.TransactionDate,
@@ -301,7 +327,8 @@ namespace CourseMarketplaceBE.Application.Services
                 payout.IsPaid = true;
                 payout.PayoutStatus = "transferred";
                 // ★ QUAN TRỌNG: Lưu DestinationPaymentId (py_xxx) thay vì TransferId (tr_xxx)
-                payout.StripeTransferId = transferResult.DestinationPaymentId; 
+                payout.StripeTransferId = transferResult.DestinationPaymentId;
+
                 payout.PayoutDate = DateTime.UtcNow;
 
                 int numberOfRowsAffected = await _repo.SaveChangesAsync();
@@ -342,7 +369,8 @@ namespace CourseMarketplaceBE.Application.Services
                     }
                 }
                 catch { }
-               
+
+
                 throw new InvalidOperationException($"Stripe Transfer error: {ex.Message}");
             }
         }
@@ -350,22 +378,28 @@ namespace CourseMarketplaceBE.Application.Services
         public async Task<BulkPayoutResult> BulkPayAllViaStripeAsync()
         {
             var (pendingPayouts, _) = await _repo.GetPayoutDetailsAsync(null, null, 1, 10000);
-            
+
             // Xác định ngày đầu tiên của tháng hiện tại để thực hiện thanh toán chậm pha (chỉ thanh toán tháng trước trở về trước)
+
             var now = DateTime.UtcNow;
             var firstDayOfCurrentMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-            
+
             // Thời hạn hoàn tiền tối đa 14 ngày giam quỹ (Holding Period)
+
             var refundLimitDate = now.AddDays(-14);
 
             // Lọc danh sách: Chưa trả && ngày giao dịch thuộc các tháng trước && đã vượt 14 ngày an toàn
             var toProcess = pendingPayouts
-                .Where(p => !p.IsPaid 
-                         && p.TransactionDate.HasValue 
-                         && p.TransactionDate.Value < firstDayOfCurrentMonth 
+                .Where(p => !p.IsPaid
+
+                         && p.TransactionDate.HasValue
+
+                         && p.TransactionDate.Value < firstDayOfCurrentMonth
+
                          && p.TransactionDate.Value < refundLimitDate)
                 .ToList();
-            
+
+
             var result = new BulkPayoutResult { TotalProcessed = toProcess.Count };
 
             foreach (var p in toProcess)
@@ -443,7 +477,8 @@ namespace CourseMarketplaceBE.Application.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            int rows =  await _repo.AddWithdrawalAsync(withdrawal); 
+            int rows = await _repo.AddWithdrawalAsync(withdrawal);
+
             if (rows <= 0) throw new InvalidOperationException("Failed to save platform withdrawal");
 
             // 🔥 Broadcast real-time update to Admin portals immediately
@@ -844,7 +879,8 @@ namespace CourseMarketplaceBE.Application.Services
                 txn.TransactionExt.RefundAdminNote = adminNote;
             }
             await _repo.SaveChangesAsync();
-            
+
+
             int numberOfRowsAffected = await _repo.SaveChangesAsync();
             if (numberOfRowsAffected <= 0)
                 throw new InvalidOperationException("Failed to save changes");

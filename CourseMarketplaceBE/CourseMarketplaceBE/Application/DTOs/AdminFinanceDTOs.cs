@@ -36,6 +36,9 @@ public class FinancialSummaryResponse
 
     /// <summary>Tổng số giao dịch thành công</summary>
     public int TotalTransactions { get; set; }
+
+    /// <summary>Tổng số tiền đã hoàn trả cho học viên</summary>
+    public decimal TotalRefunded { get; set; }
 }
 
 /// <summary>
