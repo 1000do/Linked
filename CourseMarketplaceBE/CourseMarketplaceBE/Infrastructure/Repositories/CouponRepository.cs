@@ -108,16 +108,26 @@ public class CouponRepository : ICouponRepository
             .FirstOrDefaultAsync(c => c.CouponId == couponId);
     }
 
-    public async Task<Course?> GetCourseWithInstructorAsync(int courseId)
+    public async Task<Coupon?> GetValidCouponAsync(string couponCode, DateTime now)
     {
-        return await _context.Courses
-            .Include(c => c.Instructor)
-            .Include(c => c.Coupon)
-            .FirstOrDefaultAsync(c => c.CourseId == courseId);
+        return await _context.Coupons.FirstOrDefaultAsync(cp =>
+            cp.CouponCode.ToLower() == couponCode.Trim().ToLower() &&
+            cp.IsActive == true &&
+            (cp.StartDate == null || cp.StartDate <= now) &&
+            (cp.EndDate == null || cp.EndDate >= now) &&
+            (cp.UsageLimit == null || (cp.UsedCount ?? 0) < cp.UsageLimit));
     }
 
-    public void UpdateCourse(Course course)
+    public async Task<List<Coupon>> GetActiveAvailableCouponsAsync(DateTime now)
     {
-        _context.Courses.Update(course);
+        return await _context.Coupons
+            .Include(cp => cp.Courses)
+            .Where(cp =>
+                cp.IsActive == true &&
+                (cp.StartDate == null || cp.StartDate <= now) &&
+                (cp.EndDate == null || cp.EndDate >= now) &&
+                (cp.UsageLimit == null || (cp.UsedCount ?? 0) < cp.UsageLimit))
+            .OrderBy(cp => cp.MinOrderValue)
+            .ToListAsync();
     }
 }

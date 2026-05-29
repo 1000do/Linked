@@ -1,5 +1,6 @@
 using System.Text.Json;
 using CourseMarketplaceFE.Helpers;
+using CourseMarketplaceFE.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceFE.Controllers;
@@ -23,137 +24,7 @@ public class AdminFinanceController : Controller
         public string? Message { get; set; }
     }
 
-    // ─── DTOs (mirror BE DTOs) ───────────────────────────────────────────
 
-    public class FinancialSummaryVM
-    {
-        public decimal GrossRevenue { get; set; }
-        public decimal TotalPaidOut { get; set; }
-        public decimal PendingEscrow { get; set; }
-        public decimal MaturedEscrow { get; set; }
-        public decimal PlatformNetProfit { get; set; }
-        public decimal CurrentTransferRate { get; set; }
-        public int TotalTransactions { get; set; }
-    }
-
-    public class PayoutDetailVM
-    {
-        public int PayoutId { get; set; }
-        public int TransactionId { get; set; }
-        public string InstructorName { get; set; } = "";
-        public string InstructorEmail { get; set; } = "";
-        public string CourseTitle { get; set; } = "";
-        public decimal TotalAmount { get; set; }
-        public decimal InstructorReceived { get; set; }
-        public decimal PlatformReceived { get; set; }
-        public decimal TransferRate { get; set; }
-        public bool IsPaid { get; set; }
-        public DateTime? TransactionDate { get; set; }
-        public DateTime PayoutDate { get; set; }
-
-        // ★ Webhook tracking fields
-        /// <summary>pending | transferred | in_transit | paid | failed</summary>
-        public string? PayoutStatus { get; set; }
-        public string? StripeTransferId { get; set; }
-        public string? StripePayoutId { get; set; }
-        public DateTime? PaidToBankAt { get; set; }
-    }
-
-    public class FinanceDashboardVM
-    {
-        public FinancialSummaryVM Summary { get; set; } = new();
-        public List<PayoutDetailVM> Payouts { get; set; } = new();
-    }
-
-    public class PlatformBalanceVM
-    {
-        public decimal Available { get; set; }
-        public decimal Incoming { get; set; }
-        public decimal Total { get; set; }
-        public string Currency { get; set; } = "usd";
-        public string PayoutScheduleInterval { get; set; } = "manual";
-        public string? PayoutScheduleAnchor { get; set; }
-    }
-
-    public class WithdrawalHistoryVM
-    {
-        public int WithdrawalId { get; set; }
-        public string? ManagerName { get; set; }
-        public decimal Amount { get; set; }
-        public string Currency { get; set; } = "usd";
-        public string? StripePayoutId { get; set; }
-        public string Status { get; set; } = "pending";
-        public string? Description { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime? ArrivedAt { get; set; }
-    }
-
-    public class WithdrawPageVM
-    {
-        public PlatformBalanceVM Balance { get; set; } = new();
-        public List<WithdrawalHistoryVM> History { get; set; } = new();
-    }
-
-    public class RefundRequestVM
-    {
-        public int TransactionId { get; set; }
-        public decimal Amount { get; set; }
-        public string? Currency { get; set; }
-        public string? RefundReason { get; set; }
-        public DateTime? RefundRequestedAt { get; set; }
-        public DateTime? TransactionCreatedAt { get; set; }
-
-        public OrderItemDto? OrderItem { get; set; }
-        public AccountDto? AccountFromNavigation { get; set; }
-
-        public string CourseTitle => OrderItem?.Course?.Title ?? "N/A";
-        public string BuyerName => AccountFromNavigation?.User?.FullName ?? "N/A";
-    }
-
-    public class OrderItemDto
-    {
-        public CourseDto? Course { get; set; }
-    }
-
-    public class CourseDto
-    {
-        public string Title { get; set; } = "";
-    }
-
-    public class AccountDto
-    {
-        public UserDto? User { get; set; }
-    }
-
-    public class UserDto
-    {
-        public string FullName { get; set; } = "";
-    }
-
-    public class InstructorCourseRevenueResponse
-    {
-        public int CourseId { get; set; }
-        public string CourseTitle { get; set; } = string.Empty;
-        public int InstructorId { get; set; }
-        public string InstructorName { get; set; } = string.Empty;
-        public int SalesCount { get; set; }
-        public decimal MonthlyRevenue { get; set; }
-        public decimal YearlyRevenue { get; set; }
-        public decimal LifetimeRevenue { get; set; }
-    }
-
-    public class AdminFinanceUnifiedVM
-    {
-        public FinanceDashboardVM Dashboard { get; set; } = new();
-        public WithdrawPageVM Withdraw { get; set; } = new();
-        public CourseMarketplaceFE.Controllers.TransactionController.TransactionPagedVM Transactions { get; set; } = new();
-        public CourseMarketplaceFE.Models.PagedResult<PayoutDetailVM> Payouts { get; set; } = new();
-        public CourseMarketplaceFE.Models.PagedResult<WithdrawalHistoryVM> Withdrawals { get; set; } = new();
-        public CourseMarketplaceFE.Models.PagedResult<RefundRequestVM> PendingRefunds { get; set; } = new();
-        public string PayoutDays { get; set; } = "15";
-        public List<InstructorCourseRevenueResponse> CourseRevenues { get; set; } = new();
-        public Dictionary<int, FinancialSummaryVM> YearlySummaries { get; set; } = new();
-    }
 
     // ═══════════════════════════════════════════════════════════════════════
     // GET /AdminFinance
@@ -184,19 +55,20 @@ public class AdminFinanceController : Controller
         if (!string.IsNullOrEmpty(sortBy)) txQuery += $"&sortBy={Uri.EscapeDataString(sortBy)}";
         if (!string.IsNullOrEmpty(status)) txQuery += $"&status={Uri.EscapeDataString(status)}";
 
-        // Gọi song song 7 API để giảm latency
+        // Gọi song song 8 API để giảm latency
         int payoutPageSize = 10;
         int withdrawPageSize = 10;
         
         var summaryTask = _api.GetAsync($"admin/finance/summary?year={selectedYear}&month={selectedMonth}");
         var payoutsTask = _api.GetAsync($"admin/finance/payouts?year={selectedYear}&month={selectedMonth}&page={payoutPage}&pageSize={payoutPageSize}");
+        var allPayoutsTask = _api.GetAsync($"admin/finance/payouts?year={selectedYear}&month={selectedMonth}&page=1&pageSize=100000");
         var balanceTask = _api.GetAsync("admin/finance/balance");
         var historyTask = _api.GetAsync($"admin/finance/withdrawals?year={selectedYear}&month={selectedMonth}&page={withdrawPage}&pageSize={withdrawPageSize}");
         var txTask = _api.GetAsync(txQuery);
         var refundTask = _api.GetAsync($"admin/finance/refunds/pending?page={page}&pageSize={pageSize}");
         var payoutDaysTask = _api.GetAsync("admin/finance/payout-days");
 
-        await Task.WhenAll(summaryTask, payoutsTask, balanceTask, historyTask, txTask, refundTask, payoutDaysTask);
+        await Task.WhenAll(summaryTask, payoutsTask, allPayoutsTask, balanceTask, historyTask, txTask, refundTask, payoutDaysTask);
 
         // Parse payout days
         var payoutDaysResp = await payoutDaysTask;
@@ -216,9 +88,10 @@ public class AdminFinanceController : Controller
             var parsed = JsonSerializer.Deserialize<ApiResp<FinancialSummaryVM>>(json, _jsonOpts);
             if (parsed?.Data != null)
                 vm.Dashboard.Summary = parsed.Data;
+                
         }
 
-        // Parse payouts
+        // Parse payouts (phân trang — cho bảng UI)
         var payoutsResp = await payoutsTask;
         if (payoutsResp.IsSuccessStatusCode)
         {
@@ -227,6 +100,18 @@ public class AdminFinanceController : Controller
             if (parsed?.Data != null)
             {
                 vm.Payouts = parsed.Data;
+            }
+        }
+
+        // Parse ALL payouts (không phân trang — cho tính toán overview & chart)
+        var allPayoutsResp = await allPayoutsTask;
+        if (allPayoutsResp.IsSuccessStatusCode)
+        {
+            var json = await allPayoutsResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<CourseMarketplaceFE.Models.PagedResult<PayoutDetailVM>>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+            {
+                vm.Dashboard.Payouts = parsed.Data.Items;
             }
         }
 
@@ -257,7 +142,7 @@ public class AdminFinanceController : Controller
         if (txResp.IsSuccessStatusCode)
         {
             var json = await txResp.Content.ReadAsStringAsync();
-            var parsed = JsonSerializer.Deserialize<ApiResp<CourseMarketplaceFE.Controllers.TransactionController.TransactionPagedVM>>(json, _jsonOpts);
+            var parsed = JsonSerializer.Deserialize<ApiResp<TransactionPagedVM>>(json, _jsonOpts);
             if (parsed?.Data != null)
                 vm.Transactions = parsed.Data;
         }
@@ -558,26 +443,9 @@ public class AdminFinanceController : Controller
         return Json(new { success = false, message = message });
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
     // GET /AdminFinance/InstructorRevenues
     // Dedicated page for Instructor Course Revenues with KPIs, search, period filter, sorting
     // ═══════════════════════════════════════════════════════════════════════
-    public class InstructorCourseRevenuesPageVM
-    {
-        public List<InstructorCourseRevenueResponse> Revenues { get; set; } = new();
-        public int TotalActiveCourses { get; set; }
-        public string TopSellingCourseTitle { get; set; } = "N/A";
-        public int TopSellingCourseSales { get; set; }
-        public string HighestEarningCourseTitle { get; set; } = "N/A";
-        public decimal HighestEarningCourseRevenue { get; set; }
-
-        public Dictionary<int, decimal[]> YearlyMonthlyRevenue { get; set; } = new();
-        public decimal TotalGrossRevenue { get; set; }
-        public int TotalCoursesSold { get; set; }
-        public decimal PlatformNetProfit { get; set; }
-        public int TotalNewLearners { get; set; }
-    }
-
     [HttpGet]
     public async Task<IActionResult> InstructorRevenues(int? year = null, int? month = null, string? keyword = null, string? sortBy = "sales_desc")
     {
@@ -669,7 +537,7 @@ public class AdminFinanceController : Controller
         if (txResp.IsSuccessStatusCode)
         {
             var json = await txResp.Content.ReadAsStringAsync();
-            var parsed = JsonSerializer.Deserialize<ApiResp<CourseMarketplaceFE.Controllers.TransactionController.TransactionPagedVM>>(json, _jsonOpts);
+            var parsed = JsonSerializer.Deserialize<ApiResp<TransactionPagedVM>>(json, _jsonOpts);
             if (parsed?.Data?.Items != null)
             {
                 vm.TotalNewLearners = parsed.Data.Items.Select(x => x.BuyerName).Distinct().Count();

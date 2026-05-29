@@ -171,8 +171,3 @@ public class TransactionController : ControllerBase
         }
     }
 }
-
-public class StudentRefundRequest
-{
-    public string Reason { get; set; } = string.Empty;
-}

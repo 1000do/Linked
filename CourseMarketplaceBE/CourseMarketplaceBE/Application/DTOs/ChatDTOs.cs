@@ -70,3 +70,10 @@ public class SubmitReportDto
     public string Reason { get; set; } = null!;
     public string Description { get; set; } = null!;
 }
+
+public class SupportAccountDto
+{
+    public int AccountId { get; set; }
+    public string FullName { get; set; } = null!;
+    public string AvatarUrl { get; set; } = null!;
+}

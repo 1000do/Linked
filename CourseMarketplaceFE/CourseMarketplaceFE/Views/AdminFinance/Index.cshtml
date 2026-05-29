@@ -1,5 +1,5 @@
 @using CourseMarketplaceFE.Controllers
-@model CourseMarketplaceFE.Controllers.AdminFinanceController.AdminFinanceUnifiedVM
+@model CourseMarketplaceFE.Models.AdminFinanceUnifiedVM
 @{
     ViewData["Title"] = "Financial & Payout Management";
     Layout = "_AdminLayout";
@@ -64,7 +64,8 @@
 <!-- ========================================== -->
 
 @{
-    var overviewPayoutsList = Model.Dashboard.Payouts ?? new List<CourseMarketplaceFE.Controllers.AdminFinanceController.PayoutDetailVM>();
+    var overviewPayoutsList = Model.Dashboard.Payouts ?? new List<CourseMarketplaceFE.Models.PayoutDetailVM>();
+    
     var grossEarnings = overviewPayoutsList.Sum(x => {
         var absAmount = Math.Abs(x.TotalAmount);
         var stripeFee = Math.Round(absAmount * 0.029m + 0.30m, 2);
@@ -78,6 +79,14 @@
         return absAmount - stripeFee;
     });
     var netEarnings = grossEarnings - totalRefunded;
+    var platformNetProfit = overviewPayoutsList.Where(x => x.PayoutStatus?.ToLower() != "refunded").Sum(x => {
+        var absAmount = Math.Abs(x.TotalAmount);
+        var stripeFee = Math.Round(absAmount * 0.029m + 0.30m, 2);
+        stripeFee = Math.Min(stripeFee, absAmount);
+        var netCourseRevenue = absAmount - stripeFee;
+        var instructorShare = Math.Abs(x.InstructorReceived);
+        return netCourseRevenue - instructorShare;
+    });
 }
 <!-- Thống kê tổng quan Doanh thu (3 nhóm riêng biệt cho người dùng dễ coi) -->
 <div class="space-y-8 mb-8">
@@ -188,7 +197,7 @@
                 <div class="relative z-10 flex items-center justify-between">
                     <div>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">PLATFORM NET PROFIT</p>
-                        <p class="text-3xl font-black text-white font-mono">@Model.Dashboard.Summary.PlatformNetProfit.ToString("C")</p>
+                        <p class="text-3xl font-black text-white font-mono">@platformNetProfit.ToString("C")</p>
                         <p class="text-[10px] font-semibold text-slate-400 mt-2">NET PLATFORM CUT AFTER SPLITS</p>
                     </div>
                     <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white shadow-sm self-start">
@@ -402,7 +411,7 @@
     <!-- Hidden input storing serialized chart items grouped by day of the selected month -->
     @{
         int daysInMonth = DateTime.DaysInMonth((int)ViewBag.Year, (int)ViewBag.Month);
-        var payoutsList = (Model.Dashboard.Payouts ?? new List<CourseMarketplaceFE.Controllers.AdminFinanceController.PayoutDetailVM>())
+        var payoutsList = (Model.Dashboard.Payouts ?? new List<CourseMarketplaceFE.Models.PayoutDetailVM>())
             .Where(p => p.PayoutStatus != "refunded")
             .ToList();
         var dailyData = Enumerable.Range(1, daysInMonth).Select(day => {

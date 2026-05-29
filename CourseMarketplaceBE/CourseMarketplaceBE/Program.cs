@@ -11,7 +11,7 @@ using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using CourseMarketplaceBE.Application.BackgroundTasks;
+using CourseMarketplaceBE.Infrastructure.BackgroundServices;
 using Microsoft.IdentityModel.Tokens;
 using CourseMarketplaceBE.Application.Interfaces;
 using Microsoft.OpenApi.Models;
@@ -167,8 +167,8 @@ public class Program
         builder.Services.AddScoped<ICouponRepository, CouponRepository>();
         builder.Services.AddScoped<ICouponService, CourseMarketplaceBE.Application.Services.CouponService>();
 
-        builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
+        // builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+        builder.Services.AddAutoMapper(cfg => {}, typeof(Program).Assembly);
         // Register file upload implementation conditionally.
         // If Cloudinary config is present, use CloudinaryUploadService; otherwise use a no-op fallback.
         var cloudName = configuration["CloudinarySettings:CloudName"];
@@ -198,12 +198,15 @@ public class Program
         // 💳 Checkout & Payment (UC-19)
         builder.Services.AddScoped<ICheckoutRepository, CheckoutRepository>();
         builder.Services.AddScoped<ICheckoutService, CourseMarketplaceBE.Application.Services.CheckoutService>();
+        builder.Services.AddScoped<IStripeConnectService, StripeConnectService>();
         builder.Services.AddScoped<IPaymentGatewayService, StripePaymentService>();
         // OCP: Đổi sang VNPay chỉ cần tạo VNPayPaymentService và đổi dòng trên.
 
         // 💰 Admin Finance (UC-112, UC-120)
         builder.Services.AddScoped<IAdminFinanceRepository, AdminFinanceRepository>();
         builder.Services.AddScoped<IAdminFinanceService, AdminFinanceService>();
+        builder.Services.AddScoped<IAdminAccountService, AdminAccountService>();
+        builder.Services.AddScoped<IStripeWebhookService, StripeWebhookService>();
 
         // 📊 Transactions (UC-114, UC-115)
         builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();

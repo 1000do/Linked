@@ -15,9 +15,6 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         Task<List<Notification>> GetAllAsync();
         Task<bool> MarkAsReadAsync(int notificationId, int userId);
         Task<int> GetUnreadCountAsync(int userId);
-        Task<List<string>> SearchEmailsByQueryAsync(string query, int take = 5);
-        Task<List<int>> GetAllUserIdsAsync();
-        Task<int?> GetUserIdByEmailAsync(string email);
         Task AutoCleanupAdminNotificationsAsync();
     }
 }

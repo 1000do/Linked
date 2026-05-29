@@ -17,14 +17,6 @@ public interface ICartRepository
     Task<CartItem?> GetCartItemAsync(int userId, int courseId);
     void RemoveCartItem(CartItem item);
 
-    // ── Course / Enrollment (kiểm tra điều kiện) ─────────────────────────────
-    Task<Course?> GetPublishedCourseAsync(int courseId);
-    Task<bool> IsEnrolledAsync(int userId, int courseId);
-
-    // ── Coupon ────────────────────────────────────────────────────────────────
-    Task<Coupon?> GetCouponByCodeAsync(string couponCode);
-    Task<List<Coupon>> GetActiveAvailableCouponsAsync(DateTime now);
-
     // ── Persistence ────────────────────────────────────────────────────────────
     Task<int> SaveChangesAsync();
 }

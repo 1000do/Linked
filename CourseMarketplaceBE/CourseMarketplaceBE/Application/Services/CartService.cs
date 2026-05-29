@@ -14,10 +14,17 @@ namespace CourseMarketplaceBE.Application.Services;
 public class CartService : ICartService
 {
     private readonly ICartRepository _repo;
+    private readonly ICourseRepository _courseRepo;
+    private readonly ICouponRepository _couponRepo;
 
-    public CartService(ICartRepository repo)
+    public CartService(
+        ICartRepository repo,
+        ICourseRepository courseRepo,
+        ICouponRepository couponRepo)
     {
         _repo = repo;
+        _courseRepo = courseRepo;
+        _couponRepo = couponRepo;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -26,12 +33,12 @@ public class CartService : ICartService
     public async Task AddToCartAsync(int userId, int courseId)
     {
         // Kiểm tra khóa học có tồn tại và đang được published không
-        var course = await _repo.GetPublishedCourseAsync(courseId);
-        if (course == null)
+        var course = await _courseRepo.GetByIdAsync(courseId);
+        if (course == null || course.CourseStatus != "published")
             throw new InvalidOperationException("Course does not exist or is not published.");
 
         // Kiểm tra user đã enrolled chưa (không cần mua lại)
-        if (await _repo.IsEnrolledAsync(userId, courseId))
+        if (await _courseRepo.IsEnrolledAsync(userId, courseId))
             throw new InvalidOperationException("You have already purchased this course.");
 
         // Kiểm tra khóa học đã có trong giỏ chưa
@@ -119,7 +126,7 @@ public class CartService : ICartService
 
             foreach (var code in codes)
             {
-                var coupon = await _repo.GetCouponByCodeAsync(code);
+                var coupon = await _couponRepo.GetByCodeAsync(code);
                 if (coupon == null || coupon.IsActive != true) continue;
                 if (coupon.StartDate.HasValue && now < coupon.StartDate.Value) continue;
                 if (coupon.EndDate.HasValue && now > coupon.EndDate.Value) continue;
@@ -182,7 +189,7 @@ public class CartService : ICartService
 
         // ── 3.6 Query danh sách voucher khả dụng (Voucher Wallet) ─────────────
         var now2           = DateTime.Now;
-        var activeCoupons  = await _repo.GetActiveAvailableCouponsAsync(now2);
+        var activeCoupons  = await _couponRepo.GetActiveAvailableCouponsAsync(now2);
 
         response.AvailableCoupons = activeCoupons.Select(cp =>
         {

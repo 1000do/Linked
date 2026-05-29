@@ -411,6 +411,22 @@ public class CourseRepository : ICourseRepository
         return await _context.Courses.AnyAsync(c => c.CourseId == courseId && c.InstructorId == userId);
     }
 
+    public async Task<Course?> GetCourseWithInstructorAsync(int courseId)
+    {
+        return await _context.Courses
+            .Include(c => c.Instructor)
+            .Include(c => c.Coupon)
+            .FirstOrDefaultAsync(c => c.CourseId == courseId);
+    }
+
+    public async Task<Enrollment?> GetActiveEnrollmentAsync(int userId, int courseId)
+    {
+        return await _context.Enrollments
+            .FirstOrDefaultAsync(e => e.UserId == userId
+                                   && e.CourseId == courseId
+                                   && e.EnrollmentStatus == "active");
+    }
+
     public async Task<int> SaveChangesAsync()
     {
         return await _context.SaveChangesAsync();
