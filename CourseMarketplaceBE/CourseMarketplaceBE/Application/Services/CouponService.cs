@@ -22,11 +22,16 @@ namespace CourseMarketplaceBE.Application.Services;
 public class CouponService : ICouponService
 {
     private readonly ICouponRepository _repo;
+    private readonly ICourseRepository _courseRepo;
     private readonly IRedisService _redisService;
 
-    public CouponService(ICouponRepository repo, IRedisService redisService)
+    public CouponService(
+        ICouponRepository repo,
+        ICourseRepository courseRepo,
+        IRedisService redisService)
     {
         _repo = repo;
+        _courseRepo = courseRepo;
         _redisService = redisService;
     }
 
@@ -217,7 +222,7 @@ public class CouponService : ICouponService
     public async Task ApplyCouponToCourseAsync(int courseId, int couponId, int instructorUserId)
     {
         // 1. Kiểm tra khóa học tồn tại + JWT ownership
-        var course = await _repo.GetCourseWithInstructorAsync(courseId);
+        var course = await _courseRepo.GetCourseWithInstructorAsync(courseId);
         if (course == null)
             throw new KeyNotFoundException($"Course #{courseId} not found.");
 
@@ -248,7 +253,7 @@ public class CouponService : ICouponService
 
         // 4. Gắn coupon vào course
         course.CouponId = couponId;
-        _repo.UpdateCourse(course);
+        _courseRepo.Update(course);
         int numberOfRowsAffected = await _repo.SaveChangesAsync();
         if (numberOfRowsAffected <= 0)
             throw new InvalidOperationException("Failed to save changes");
@@ -263,7 +268,7 @@ public class CouponService : ICouponService
 
     public async Task RemoveCouponFromCourseAsync(int courseId, int instructorUserId)
     {
-        var course = await _repo.GetCourseWithInstructorAsync(courseId);
+        var course = await _courseRepo.GetCourseWithInstructorAsync(courseId);
         if (course == null)
             throw new KeyNotFoundException($"Course #{courseId} not found.");
 
@@ -271,7 +276,7 @@ public class CouponService : ICouponService
             throw new UnauthorizedAccessException("You are not the owner of this course.");
 
         course.CouponId = null;
-        _repo.UpdateCourse(course);
+        _courseRepo.Update(course);
         int numberOfRowsAffected = await _repo.SaveChangesAsync();
         if (numberOfRowsAffected <= 0)
             throw new InvalidOperationException("Failed to save changes");

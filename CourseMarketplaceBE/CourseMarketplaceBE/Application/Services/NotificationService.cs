@@ -10,11 +10,16 @@ namespace CourseMarketplaceBE.Application.Services
     public class NotificationService : INotificationService
     {
         private readonly INotificationRepository _repo;
+        private readonly IUserRepository _userRepo;
         private readonly IHubContext<NotificationHub> _hubContext;
 
-        public NotificationService(INotificationRepository repo, IHubContext<NotificationHub> hubContext)
+        public NotificationService(
+            INotificationRepository repo,
+            IUserRepository userRepo,
+            IHubContext<NotificationHub> hubContext)
         {
             _repo = repo;
+            _userRepo = userRepo;
             _hubContext = hubContext;
         }
 
@@ -110,7 +115,7 @@ namespace CourseMarketplaceBE.Application.Services
         }
 
         public async Task<List<string>> SearchEmailsAsync(string query)
-            => await _repo.SearchEmailsByQueryAsync(query);
+            => await _userRepo.SearchEmailsByQueryAsync(query);
 
         public async Task<int> GetUnreadCountAsync(int userId)
         {
@@ -123,13 +128,13 @@ namespace CourseMarketplaceBE.Application.Services
 
             if (dto.TargetType == "ALL")
             {
-                targetUserIds = await _repo.GetAllUserIdsAsync();
+                targetUserIds = await _userRepo.GetAllUserIdsAsync();
             }
             else if (dto.Emails != null && dto.Emails.Any())
             {
                 foreach (var email in dto.Emails)
                 {
-                    var userId = await _repo.GetUserIdByEmailAsync(email);
+                    var userId = await _userRepo.GetUserIdByEmailAsync(email);
                     if (userId.HasValue) targetUserIds.Add(userId.Value);
                 }
             }

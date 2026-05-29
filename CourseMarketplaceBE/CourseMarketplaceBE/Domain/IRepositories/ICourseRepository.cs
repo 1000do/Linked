@@ -39,5 +39,7 @@ public interface ICourseRepository
     Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseModerationDto>> GetPendingCoursesModerationAsync(ModerationFilterDto filter);
     Task<CourseModerationStatsDto> GetCourseModerationStatsAsync();
     Task<bool> IsOwnerAsync(int userId, int courseId);
+    Task<Course?> GetCourseWithInstructorAsync(int courseId);
+    Task<Enrollment?> GetActiveEnrollmentAsync(int userId, int courseId);
     Task<int> SaveChangesAsync();
 }

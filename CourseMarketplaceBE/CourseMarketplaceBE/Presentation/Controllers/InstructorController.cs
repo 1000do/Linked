@@ -213,15 +213,11 @@ public class InstructorController : ControllerBase
     [HttpGet("stripe-countries")]
     [AllowAnonymous]
     public async Task<IActionResult> GetStripeCountries(
-        [FromServices] CourseMarketplaceBE.Domain.IRepositories.IAdminFinanceRepository financeRepo)
+        [FromServices] CourseMarketplaceBE.Application.IServices.IAdminFinanceService financeService)
     {
         try
         {
-            var json = await financeRepo.GetConfigValueAsync("StripeCountries");
-            if (string.IsNullOrEmpty(json))
-                return Ok(new { status = 200, data = new List<object>() });
-
-            var countries = System.Text.Json.JsonSerializer.Deserialize<List<object>>(json);
+            var countries = await financeService.GetStripeCountriesAsync();
             return Ok(new { status = 200, data = countries });
         }
         catch (Exception ex)
@@ -429,12 +425,4 @@ public class InstructorController : ControllerBase
         var str = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return int.TryParse(str, out int id) ? id : null;
     }
-}
-
-/// <summary>
-/// Request body for PUT /api/instructor/stripe-country
-/// </summary>
-public class SetCountryRequest
-{
-    public string CountryCode { get; set; } = null!;
 }

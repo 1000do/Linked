@@ -1,6 +1,5 @@
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
-using CourseMarketplaceBE.Domain.IRepositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -14,28 +13,19 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class ChatController : ControllerBase
 {
     private readonly IChatService _chatService;
-    private readonly IUserRepository _userRepository;
 
-    public ChatController(IChatService chatService, IUserRepository userRepository)
+    public ChatController(IChatService chatService)
     {
         _chatService = chatService;
-        _userRepository = userRepository;
     }
 
     [HttpGet("support-account")]
     public async Task<IActionResult> GetSupportAccount()
     {
-        // Giả sử lấy Admin/Staff đầu tiên làm hỗ trợ
-        // Trong thực tế nên lấy manager có role 'staff'
-        var staffId = await _userRepository.GetStaffAccountIdAsync();
-        if (staffId == null) return NotFound(new { message = "No support staff available." });
+        var support = await _chatService.GetSupportAccountAsync();
+        if (support == null) return NotFound(new { message = "No support staff available." });
         
-        var staff = await _userRepository.GetAccountByIdAsync(staffId.Value);
-        return Ok(new { 
-            AccountId = staffId,
-            FullName = staff?.User?.FullName ?? "Support Team",
-            AvatarUrl = staff?.AvatarUrl ?? ""
-        });
+        return Ok(support);
     }
 
     [HttpGet("list")]

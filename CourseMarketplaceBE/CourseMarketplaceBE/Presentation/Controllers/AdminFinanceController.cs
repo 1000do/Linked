@@ -141,11 +141,6 @@ public class AdminFinanceController : ControllerBase
         }
     }
 
-    public class SetPayoutDaysRequest
-    {
-        public string PayoutDays { get; set; } = "15";
-    }
-
     // ═══════════════════════════════════════════════════════════════════════
     // POST /api/admin/finance/payouts/{payoutId}/mark-paid
     // Đánh dấu khoản thanh toán là đã thanh toán
@@ -387,9 +382,4 @@ public class AdminFinanceController : ControllerBase
             return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
     }
-}
-
-public class RefundDecisionRequest
-{
-    public string? AdminNote { get; set; }
 }

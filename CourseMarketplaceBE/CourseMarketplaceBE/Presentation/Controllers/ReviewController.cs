@@ -108,10 +108,3 @@ public class ReviewController : ControllerBase
         }
     }
 }
-
-public class ReportRequest
-{
-    public int ReviewId { get; set; }
-    public string Type { get; set; } // "course" or "lesson"
-    public string Reason { get; set; }
-}

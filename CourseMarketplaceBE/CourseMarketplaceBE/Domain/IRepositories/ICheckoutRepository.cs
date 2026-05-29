@@ -13,14 +13,6 @@ public interface ICheckoutRepository
     /// <summary>Lấy cart items kèm Course → Instructor navigation để tính payout.</summary>
     Task<List<CartItem>> GetCartItemsWithCourseAndInstructorAsync(int userId);
 
-    /// <summary>Lấy thông tin khóa học kèm Instructor để thanh toán trực tiếp.</summary>
-    Task<Course?> GetCourseWithInstructorAsync(int courseId);
-
-    /// <summary>Lấy coupon hợp lệ theo code (kiểm tra active, thời hạn, usage).</summary>
-    Task<Coupon?> GetValidCouponAsync(string couponCode, DateTime now);
-
-    /// <summary>Kiểm tra user đã enrolled course chưa (tránh mua trùng).</summary>
-    Task<bool> IsEnrolledAsync(int userId, int courseId);
     Task<Enrollment?> GetEnrollmentAsync(int userId, int courseId);
     Task<Enrollment?> GetEnrollmentWithProgressAsync(int userId, int courseId);
     Task<List<Enrollment>> GetMyEnrolledCoursesAsync(int userId);
@@ -29,8 +21,7 @@ public interface ICheckoutRepository
     Task<List<int>> GetCompletedMaterialIdsAsync(int enrollmentId);
     Task<List<int>> GetEnrolledUserIdsAsync(int courseId);
 
-    /// <summary>Lấy email của user từ account (gửi cho Stripe).</summary>
-    Task<string?> GetUserEmailAsync(int userId);
+
 
     // ── Tìm transaction theo Stripe Session ID (cho success callback) ─────────
     /// <summary>Tìm tất cả transactions liên kết với 1 Stripe session.</summary>
@@ -44,11 +35,7 @@ public interface ICheckoutRepository
     /// <summary>Lấy danh sách đơn hàng pending của user để dọn dẹp trước khi tạo checkout mới.</summary>
     Task<List<OrderInfo>> GetPendingOrdersByUserAsync(int userId);
 
-    /// <summary>Lấy Stripe Connected Account ID của instructor (cần để tạo Transfer).</summary>
-    Task<string?> GetInstructorStripeAccountIdAsync(int instructorId);
 
-    /// <summary>Lấy Stripe Country của instructor để tính toán tiền tệ.</summary>
-    Task<string?> GetInstructorStripeCountryAsync(int instructorId);
 
     // ── Ghi dữ liệu ─────────────────────────────────────────────────────────
     Task AddOrderAsync(OrderInfo order);

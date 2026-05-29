@@ -1,6 +1,6 @@
+using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
-using CourseMarketplaceBE.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseMarketplaceBE.Infrastructure.Repositories;
@@ -17,43 +17,6 @@ public class AdminFinanceRepository : IAdminFinanceRepository
     private readonly AppDbContext _context;
 
     public AdminFinanceRepository(AppDbContext context) => _context = context;
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SYSTEM CONFIG — Upsert pattern
-    // ═══════════════════════════════════════════════════════════════════════
-
-    public async Task<string?> GetConfigValueAsync(string configKey)
-    {
-        return await _context.SystemConfigs
-            .Where(c => c.ConfigKey == configKey)
-            .Select(c => c.ConfigValue)
-            .FirstOrDefaultAsync();
-    }
-
-    public async Task UpsertConfigAsync(string configKey, string configValue, string? description = null)
-    {
-        var existing = await _context.SystemConfigs
-            .FirstOrDefaultAsync(c => c.ConfigKey == configKey);
-
-        if (existing != null)
-        {
-            existing.ConfigValue = configValue;
-            existing.Description = description ?? existing.Description;
-            existing.UpdatedAt = DateTime.Now;
-        }
-        else
-        {
-            _context.SystemConfigs.Add(new SystemConfig
-            {
-                ConfigKey = configKey,
-                ConfigValue = configValue,
-                Description = description ?? $"Auto-created config: {configKey}",
-                UpdatedAt = DateTime.Now
-            });
-        }
-
-        await _context.SaveChangesAsync();
-    }
 
     // ═══════════════════════════════════════════════════════════════════════
     // FINANCIAL AGGREGATIONS — Chạy trên PostgreSQL, không kéo về RAM
@@ -287,10 +250,11 @@ public class AdminFinanceRepository : IAdminFinanceRepository
 
     // ── Platform Withdrawals ──────────────────────────────────────────────
 
-    public async Task AddWithdrawalAsync(PlatformWithdrawal withdrawal)
+    public async Task<int> AddWithdrawalAsync(PlatformWithdrawal withdrawal)
     {
         _context.PlatformWithdrawals.Add(withdrawal);
-        await _context.SaveChangesAsync();
+        return await _context.SaveChangesAsync();
+
     }
 
     public async Task<(List<PlatformWithdrawal> Items, int TotalCount)> GetWithdrawalsAsync(int? year = null, int? month = null, int page = 1, int pageSize = 10)
@@ -358,17 +322,7 @@ public class AdminFinanceRepository : IAdminFinanceRepository
             .FirstOrDefaultAsync(t => t.TransactionId == transactionId);
     }
 
-    /// <summary>
-    /// Tìm Enrollment active của user cho khóa học cụ thể.
-    /// Chỉ trả về enrollment có status "active" (không tìm enrollment đã bị revoke trước đó).
-    /// </summary>
-    public async Task<Enrollment?> GetActiveEnrollmentAsync(int userId, int courseId)
-    {
-        return await _context.Enrollments
-            .FirstOrDefaultAsync(e => e.UserId == userId
-                                   && e.CourseId == courseId
-                                   && e.EnrollmentStatus == "active");
-    }
+
 
     /// <summary>
     /// Resolve DestinationPaymentId (py_xxx) → Transfer ID (tr_xxx).

@@ -29,22 +29,6 @@ public class CheckoutRepository : ICheckoutRepository
             .OrderBy(c => c.AddedDate)
             .ToListAsync();
 
-    public async Task<Course?> GetCourseWithInstructorAsync(int courseId)
-        => await _context.Courses
-            .Include(c => c.Instructor)
-            .FirstOrDefaultAsync(c => c.CourseId == courseId);
-
-    public async Task<Coupon?> GetValidCouponAsync(string couponCode, DateTime now)
-        => await _context.Coupons.FirstOrDefaultAsync(cp =>
-            cp.CouponCode.ToLower() == couponCode.Trim().ToLower() &&
-            cp.IsActive == true &&
-            (cp.StartDate == null || cp.StartDate <= now) &&
-            (cp.EndDate == null || cp.EndDate >= now) &&
-            (cp.UsageLimit == null || (cp.UsedCount ?? 0) < cp.UsageLimit));
-
-    public async Task<bool> IsEnrolledAsync(int userId, int courseId)
-        => await _context.Enrollments.AnyAsync(e => e.UserId == userId && e.CourseId == courseId);
-
     public async Task<Enrollment?> GetEnrollmentAsync(int userId, int courseId)
         => await _context.Enrollments
             .Include(e => e.Progress)
@@ -88,11 +72,7 @@ public class CheckoutRepository : ICheckoutRepository
             .ToListAsync();
     }
 
-    public async Task<string?> GetUserEmailAsync(int userId)
-        => await _context.Accounts
-            .Where(a => a.AccountId == userId)
-            .Select(a => a.Email)
-            .FirstOrDefaultAsync();
+
 
     // ── Tìm transaction theo Stripe Session ID ───────────────────────────────
 
@@ -126,17 +106,7 @@ public class CheckoutRepository : ICheckoutRepository
             .Include(o => o.OrderItems)
             .ToListAsync();
 
-    public async Task<string?> GetInstructorStripeAccountIdAsync(int instructorId)
-        => await _context.Instructors
-            .Where(i => i.InstructorId == instructorId)
-            .Select(i => i.StripeAccountId)
-            .FirstOrDefaultAsync();
 
-    public async Task<string?> GetInstructorStripeCountryAsync(int instructorId)
-        => await _context.Instructors
-            .Where(i => i.InstructorId == instructorId)
-            .Select(i => i.StripeCountry)
-            .FirstOrDefaultAsync();
 
     // ── Ghi dữ liệu ─────────────────────────────────────────────────────────
 
