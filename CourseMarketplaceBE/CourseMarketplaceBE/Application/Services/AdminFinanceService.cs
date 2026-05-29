@@ -878,7 +878,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 txn.TransactionExt.RefundAdminNote = adminNote;
             }
-            await _repo.SaveChangesAsync();
+            
 
 
             int numberOfRowsAffected = await _repo.SaveChangesAsync();
