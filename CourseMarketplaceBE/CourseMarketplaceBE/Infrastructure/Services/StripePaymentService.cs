@@ -182,7 +182,7 @@ public class StripePaymentService : IPaymentGatewayService
     ///   - Nếu đã Transfer cho GV, phải gọi ReverseTransferAsync TRƯỚC.
     ///   - Phí Stripe (2.9% + $0.30) KHÔNG được hoàn lại.
     /// </summary>
-    public async Task<string> RefundAsync(string paymentIntentId, string? reason = null)
+    public async Task<string> RefundAsync(string paymentIntentId, decimal? amount = null, string? reason = null)
     {
         var refundService = new RefundService();
         var metadata = new Dictionary<string, string>
@@ -202,6 +202,11 @@ public class StripePaymentService : IPaymentGatewayService
             Reason = "requested_by_customer", // Phải là 1 trong: duplicate, fraudulent, requested_by_customer
             Metadata = metadata
         };
+
+        if (amount.HasValue)
+        {
+            options.Amount = (long)Math.Round(amount.Value * 100); // Đổi sang cents
+        }
 
         var refund = await refundService.CreateAsync(options);
         return refund.Id; // re_xxx

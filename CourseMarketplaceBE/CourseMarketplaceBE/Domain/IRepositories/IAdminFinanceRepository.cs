@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using CourseMarketplaceBE.Application.DTOs;
+
 namespace CourseMarketplaceBE.Domain.IRepositories;
 
 /// <summary>
@@ -93,48 +98,15 @@ public interface IAdminFinanceRepository
     /// </summary>
     Task<Domain.Entities.Transaction?> GetTransactionByPaymentIntentIdAsync(string paymentIntentId);
 
+    Task<RefundEligibilityDto> GetRefundEligibilityMetricsAsync(int transactionId, int studentId, int courseId);
+
     Task<List<InstructorCourseRevenueProjection>> GetInstructorCourseRevenuesAsync(int year, int month);
+
+    Task<List<InstructorCourseRevenueProjection>> GetInstructorCourseRevenuesByInstructorAsync(int instructorId, int year, int month);
 
     /// <summary>Xóa bản ghi chia tiền giảng viên (dùng khi hoàn tiền).</summary>
     void RemoveInstructorPayout(Domain.Entities.InstructorPayout payout);
 
     /// <summary>Commit changes.</summary>
     Task<int> SaveChangesAsync();
-}
-
-public class InstructorCourseRevenueProjection
-{
-    public int CourseId { get; set; }
-    public string CourseTitle { get; set; } = string.Empty;
-    public int InstructorId { get; set; }
-    public string InstructorName { get; set; } = string.Empty;
-    public int SalesCount { get; set; }
-    public decimal MonthlyRevenue { get; set; }
-    public decimal YearlyRevenue { get; set; }
-    public decimal LifetimeRevenue { get; set; }
-}
-
-/// <summary>
-/// Projection DTO dùng nội bộ trong Repository → Service.
-/// Tránh expose EF entity ra ngoài (DIP).
-/// </summary>
-public class PayoutDetailProjection
-{
-    public int PayoutId { get; set; }
-    public int TransactionId { get; set; }
-    public string InstructorName { get; set; } = string.Empty;
-    public string InstructorEmail { get; set; } = string.Empty;
-    public string CourseTitle { get; set; } = string.Empty;
-    public decimal TotalAmount { get; set; }
-    public decimal InstructorReceived { get; set; }
-    public decimal TransferRate { get; set; }
-    public bool IsPaid { get; set; }
-    public DateTime? TransactionDate { get; set; }
-    public DateTime PayoutDate { get; set; }
-
-    // ★ Cột bổ sung cho Webhook tracking
-    public string? PayoutStatus { get; set; }
-    public string? StripeTransferId { get; set; }
-    public string? StripePayoutId { get; set; }
-    public DateTime? PaidToBankAt { get; set; }
 }

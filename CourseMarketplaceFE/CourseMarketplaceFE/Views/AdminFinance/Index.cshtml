@@ -89,7 +89,7 @@
     });
 }
 <!-- Thống kê tổng quan Doanh thu (3 nhóm riêng biệt cho người dùng dễ coi) -->
-<div class="space-y-8 mb-8">
+<div id="stats-overview" class="space-y-8 mb-8">
     <!-- Nhóm 1: Doanh thu Khóa học (Course Revenue) -->
     <div>
         <div class="flex items-center gap-2 mb-4">
@@ -103,7 +103,7 @@
                 <div class="relative z-10 flex items-center justify-between">
                     <div>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">GROSS REVENUE</p>
-                        <p class="text-3xl font-black text-slate-900 font-mono">@grossEarnings.ToString("C")</p>
+                        <p class="text-3xl font-black text-slate-900 font-mono">$@grossEarnings.ToString("N2")</p>
                         <p class="text-[10px] font-semibold text-slate-400 mt-2">TOTAL SALES REVENUE</p>
                     </div>
                     <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm self-start">
@@ -118,7 +118,7 @@
                 <div class="relative z-10 flex items-center justify-between">
                     <div>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">TOTAL REFUNDED</p>
-                        <p class="text-3xl font-black text-rose-600 font-mono">@totalRefunded.ToString("C")</p>
+                        <p class="text-3xl font-black text-rose-600 font-mono">$@totalRefunded.ToString("N2")</p>
                         <p class="text-[10px] font-semibold text-slate-400 mt-2">DEDUCTIONS & RETURNS</p>
                     </div>
                     <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600 shadow-sm self-start">
@@ -133,7 +133,7 @@
                 <div class="relative z-10 flex items-center justify-between">
                     <div>
                         <p class="text-[10px] font-black text-indigo-200 uppercase tracking-wider mb-2">NET EARNINGS</p>
-                        <p class="text-3xl font-black text-white font-mono">@netEarnings.ToString("C")</p>
+                        <p class="text-3xl font-black text-white font-mono">$@netEarnings.ToString("N2")</p>
                         <p class="text-[10px] font-semibold text-indigo-100 mt-2">ACTUAL REVENUE AFTER REFUND</p>
                     </div>
                     <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white shadow-sm self-start">
@@ -157,7 +157,7 @@
                 <div class="relative z-10 flex items-center justify-between">
                     <div>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">PAID TO INSTRUCTORS</p>
-                        <p class="text-3xl font-black text-slate-900 font-mono">@Model.Dashboard.Summary.TotalPaidOut.ToString("C")</p>
+                        <p class="text-3xl font-black text-slate-900 font-mono">$@Model.Dashboard.Summary.TotalPaidOut.ToString("N2")</p>
                         <p class="text-[10px] font-semibold text-slate-400 mt-2">TRANSFERRED TO INSTRUCTORS</p>
                     </div>
                     <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 shadow-sm self-start">
@@ -174,7 +174,7 @@
                         <div>
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">ESCROW FUNDS</p>
                             <div class="flex items-baseline gap-1.5">
-                                <span class="text-3xl font-black text-amber-500 font-mono">@Model.Dashboard.Summary.PendingEscrow.ToString("C")</span>
+                                <span class="text-3xl font-black text-amber-500 font-mono">$@Model.Dashboard.Summary.PendingEscrow.ToString("N2")</span>
                                 <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">Locked (&lt; 14d)</span>
                             </div>
                         </div>
@@ -187,7 +187,7 @@
                             <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
                             Matured (Ready)
                         </span>
-                        <span class="font-black text-emerald-600 font-mono">@Model.Dashboard.Summary.MaturedEscrow.ToString("C")</span>
+                        <span class="font-black text-emerald-600 font-mono">$@Model.Dashboard.Summary.MaturedEscrow.ToString("N2")</span>
                     </div>
                 </div>
             </div>
@@ -197,7 +197,7 @@
                 <div class="relative z-10 flex items-center justify-between">
                     <div>
                         <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">PLATFORM NET PROFIT</p>
-                        <p class="text-3xl font-black text-white font-mono">@platformNetProfit.ToString("C")</p>
+                        <p class="text-3xl font-black text-white font-mono">$@platformNetProfit.ToString("N2")</p>
                         <p class="text-[10px] font-semibold text-slate-400 mt-2">NET PLATFORM CUT AFTER SPLITS</p>
                     </div>
                     <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white shadow-sm self-start">
@@ -209,7 +209,7 @@
     </div>
 
     <!-- Nhóm 3: Số dư tài khoản Stripe (Stripe Gateway Balances) -->
-    <div>
+    <div id="stripe-balances">
         <div class="flex items-center gap-2 mb-4">
             <span class="material-symbols-outlined text-slate-900 text-xl font-bold">insights</span>
             <h2 class="text-xs font-black text-slate-800 uppercase tracking-wider">Stripe Gateway Balances</h2>
@@ -699,12 +699,12 @@
                                             }
                                             @if (status == "refunded")
                                             {
-                                                <span class="text-sm font-black text-rose-600 tracking-tight font-black">- @Math.Abs(p.InstructorReceived).ToString("C")</span>
+                                                <span class="text-sm font-black text-rose-600 tracking-tight font-black">- $@Math.Abs(p.InstructorReceived).ToString("N2")</span>
                                                 <span class="text-[10px] text-slate-400 font-bold mt-0.5">Refunded Split: @p.TransferRate%</span>
                                             }
                                             else
                                             {
-                                                <span class="text-sm font-black text-slate-900 tracking-tight font-black">@p.InstructorReceived.ToString("C")</span>
+                                                <span class="text-sm font-black text-slate-900 tracking-tight font-black">$@p.InstructorReceived.ToString("N2")</span>
                                                 <span class="text-[10px] text-slate-400 font-bold mt-0.5">Split Rate: @p.TransferRate%</span>
                                             }
                                         </div>
@@ -994,7 +994,7 @@
                                     </td>
                                     <td class="px-5 py-3.5 text-slate-600 font-medium">@item.BuyerName</td>
                                     <td class="px-5 py-3.5 text-right font-black text-slate-800">
-                                        @((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
+                                        $@item.Amount.ToString("N2")
                                     </td>
                                     <td class="px-5 py-3.5 text-slate-500 text-xs whitespace-nowrap">
                                         @(item.TransactionCreatedAt.HasValue ? item.TransactionCreatedAt.Value.ToString("dd/MM/yyyy HH:mm") : "—")

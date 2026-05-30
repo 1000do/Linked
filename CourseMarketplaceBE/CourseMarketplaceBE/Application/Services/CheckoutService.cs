@@ -23,6 +23,7 @@ namespace CourseMarketplaceBE.Application.Services;
 public class CheckoutService : ICheckoutService
 {
     private readonly ICheckoutRepository _repo;
+    private readonly IEnrollmentRepository _enrollmentRepo;
     private readonly IPaymentGatewayService _paymentGateway;
     private readonly ILogger<CheckoutService> _logger;
     private readonly IHubContext<FinanceHub> _hubContext;
@@ -34,6 +35,7 @@ public class CheckoutService : ICheckoutService
 
     public CheckoutService(
         ICheckoutRepository repo,
+        IEnrollmentRepository enrollmentRepo,
         IPaymentGatewayService paymentGateway,
         ILogger<CheckoutService> logger,
         IHubContext<FinanceHub> hubContext,
@@ -44,6 +46,7 @@ public class CheckoutService : ICheckoutService
         IUserRepository userRepo)
     {
         _repo = repo;
+        _enrollmentRepo = enrollmentRepo;
         _paymentGateway = paymentGateway;
         _logger = logger;
         _hubContext = hubContext;
@@ -411,8 +414,19 @@ public class CheckoutService : ICheckoutService
                     int rows3 = await _repo.SaveChangesAsync();
                     if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
 
-                    // Cấp Enrollment & Progress
-                    if (!await _courseRepo.IsEnrolledAsync(userId, courseId))
+                    // Cấp Enrollment (Hoặc kích hoạt lại nếu đã từng refund)
+                    var existingEnrollment = await _enrollmentRepo.GetEnrollmentIncludingRefundedAsync(userId, courseId);
+                    if (existingEnrollment != null)
+                    {
+                        existingEnrollment.EnrollmentStatus = "active";
+                        existingEnrollment.EnrollDate = DateOnly.FromDateTime(DateTime.Now);
+                        existingEnrollment.IsCompleted = false;
+                        existingEnrollment.CompletedDate = null;
+                        existingEnrollment.LastAccessedAt = DateTime.Now;
+
+                        await _enrollmentRepo.ClearMaterialCompletionsAsync(existingEnrollment.EnrollmentId);
+                    }
+                    else
                     {
                         var enrollment = new Enrollment
                         {
@@ -424,17 +438,9 @@ public class CheckoutService : ICheckoutService
                             EnrollmentStatus = "active",
                             LastAccessedAt = DateTime.Now
                         };
-                        await _repo.AddEnrollmentAsync(enrollment);
-                        int rows4 = await _repo.SaveChangesAsync();
+                        await _enrollmentRepo.AddEnrollmentAsync(enrollment);
+                        int rows4 = await _enrollmentRepo.SaveChangesAsync();
                         if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
-
-                        var progress = new EnrollmentProgress
-                        {
-                            EnrollmentId = enrollment.EnrollmentId,
-                            LearnedMaterialCount = 0,
-                            LastModifiedAt = DateTime.Now
-                        };
-                        await _repo.AddEnrollmentProgressAsync(progress);
                     }
 
                     // Tính toán phí Stripe (2.9% + $0.30) và lấy doanh thu thuần của khoá học
@@ -465,7 +471,7 @@ public class CheckoutService : ICheckoutService
                         await _notificationService.SendNotificationAsync(
                             instructorId.Value,
                             "You have a new order",
-                            $"The course '{courseTitle}' has been successfully sold. Expected revenue: {payoutAmount:N0} VND.",
+                            $"The course '{courseTitle}' has been successfully sold. Expected revenue: ${payoutAmount:N2} USD.",
                             $"/Instructor/Payouts"
                         );
                     }

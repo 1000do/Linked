@@ -117,6 +117,7 @@ namespace CourseMarketplaceFE.Models
         public string InstructorName { get; set; } = string.Empty;
         public int SalesCount { get; set; }
         public decimal MonthlyRevenue { get; set; }
+        public decimal PreviousMonthRevenue { get; set; }
         public decimal YearlyRevenue { get; set; }
         public decimal LifetimeRevenue { get; set; }
     }

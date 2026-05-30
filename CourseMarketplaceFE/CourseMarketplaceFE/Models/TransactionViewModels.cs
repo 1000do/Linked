@@ -33,6 +33,7 @@ namespace CourseMarketplaceFE.Models
     {
         public TransactionPagedVM Transactions { get; set; } = new();
         public InstructorPayoutPagedViewModel Payouts { get; set; } = new();
+        public List<InstructorCourseRevenueResponse> CourseRevenues { get; set; } = new();
     }
 
     public class TransactionDetailVM
@@ -66,5 +67,18 @@ namespace CourseMarketplaceFE.Models
         public string? RefundReason { get; set; }
         public string? RefundAdminNote { get; set; }
         public DateTime? RefundRequestedAt { get; set; }
+    }
+
+    public class ApiResp<T>
+    {
+        public bool Success { get; set; }
+        public T? Data { get; set; }
+        public string? Message { get; set; }
+    }
+
+    public class RefundResultDto
+    {
+        public bool IsAutoRejected { get; set; }
+        public string? RejectReason { get; set; }
     }
 }

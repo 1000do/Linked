@@ -18,7 +18,6 @@ DROP TABLE IF EXISTS order_info CASCADE;
 DROP TABLE IF EXISTS course_reviews CASCADE;
 DROP TABLE IF EXISTS cart_items CASCADE;
 DROP TABLE IF EXISTS wishlist_items CASCADE;
-DROP TABLE IF EXISTS enrollment CASCADE;
 DROP TABLE IF EXISTS enrollments CASCADE;
 DROP TABLE IF EXISTS material_completions CASCADE;
 DROP TABLE IF EXISTS learning_materials CASCADE;
@@ -256,11 +255,7 @@ CREATE TABLE enrollments (
     enrollment_status VARCHAR(50)
 );
 
-CREATE TABLE enrollment_progress (
-    enrollment_id INT PRIMARY KEY REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
-    learned_material_count INT NOT NULL DEFAULT 0,
-    last_modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+
 
 CREATE TABLE material_completions (
     id SERIAL PRIMARY KEY,

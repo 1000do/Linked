@@ -33,7 +33,6 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<Coupon> Coupons { get; set; }
     public virtual DbSet<Course> Courses { get; set; }
     public virtual DbSet<Enrollment> Enrollments { get; set; }
-    public virtual DbSet<EnrollmentProgress> EnrollmentProgresses { get; set; }
     public virtual DbSet<Instructor> Instructors { get; set; }
     public virtual DbSet<InstructorPayout> InstructorPayouts { get; set; }
     public virtual DbSet<LearningMaterial> LearningMaterials { get; set; }
@@ -513,26 +512,7 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("enrollments_user_id_fkey");
         });
 
-        // ── enrollment_progress (★ BẢNG MỚI v2) ──────────────────────────────
-        modelBuilder.Entity<EnrollmentProgress>(entity =>
-        {
-            entity.HasKey(e => e.EnrollmentId).HasName("enrollment_progress_pkey");
-            entity.ToTable("enrollment_progress");
 
-            entity.Property(e => e.EnrollmentId).ValueGeneratedNever().HasColumnName("enrollment_id");
-            entity.Property(e => e.LearnedMaterialCount)
-                .HasDefaultValue(0)
-                .HasColumnName("learned_material_count");
-            entity.Property(e => e.LastModifiedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("last_modified_at");
-
-            entity.HasOne(d => d.Enrollment).WithOne(p => p.Progress)
-                .HasForeignKey<EnrollmentProgress>(d => d.EnrollmentId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("enrollment_progress_enrollment_id_fkey");
-        });
 
         // ── material_completions ─────────────────────────────────────────────
         modelBuilder.Entity<MaterialCompletion>(entity =>

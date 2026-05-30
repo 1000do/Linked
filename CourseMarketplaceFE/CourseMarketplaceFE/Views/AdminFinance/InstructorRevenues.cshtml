@@ -125,7 +125,7 @@
             </div>
             <div>
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">GROSS REVENUE</p>
-                <p class="text-3xl font-black text-slate-900 font-headline tracking-tight">₫@Model.TotalGrossRevenue.ToString("N0")</p>
+                <p class="text-3xl font-black text-slate-900 font-headline tracking-tight">$@Model.TotalGrossRevenue.ToString("N2")</p>
                 <p class="text-[10px] font-semibold text-slate-400 mt-2">compared to last year</p>
             </div>
         </div>
@@ -159,7 +159,7 @@
             </div>
             <div>
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">NET PROFIT</p>
-                <p class="text-3xl font-black text-slate-900 font-headline tracking-tight">₫@Model.PlatformNetProfit.ToString("N0")</p>
+                <p class="text-3xl font-black text-slate-900 font-headline tracking-tight">$@Model.PlatformNetProfit.ToString("N2")</p>
                 <p class="text-[10px] font-semibold text-slate-400 mt-2">after deducting fees</p>
             </div>
         </div>
@@ -268,7 +268,9 @@
                         <th class="pl-8 pr-4 py-4 w-96">Course Title</th>
                         <th class="px-4 py-4">Category</th>
                         <th class="px-4 py-4 text-center">Sales Quantity</th>
-                        <th class="px-4 py-4 text-right">Revenue</th>
+                        <th class="px-4 py-4 text-right">Monthly Revenue</th>
+                        <th class="px-4 py-4 text-right">Yearly Revenue</th>
+                        <th class="px-4 py-4 text-right">Lifetime Revenue</th>
                         <th class="pl-4 pr-8 py-4 text-right">Growth %</th>
                     </tr>
                 </thead>
@@ -337,8 +339,14 @@
                                 <td class="px-4 py-4 align-middle text-center">
                                     <span class="font-black text-slate-900 font-mono text-sm bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/50">@item.SalesCount</span>
                                 </td>
-                                <td class="px-4 py-4 align-middle text-right font-black text-slate-800 font-mono text-sm">
-                                    ₫@item.LifetimeRevenue.ToString("N0")
+                                <td class="px-4 py-4 align-middle text-right font-bold text-slate-600 font-mono text-sm">
+                                    $@item.MonthlyRevenue.ToString("N2")
+                                </td>
+                                <td class="px-4 py-4 align-middle text-right font-bold text-slate-600 font-mono text-sm">
+                                    $@item.YearlyRevenue.ToString("N2")
+                                </td>
+                                <td class="px-4 py-4 align-middle text-right font-black text-slate-900 font-mono text-sm">
+                                    $@item.LifetimeRevenue.ToString("N2")
                                 </td>
                                 <td class="pl-4 pr-8 py-4 align-middle text-right">
                                     @if (isGrowthPositive)
@@ -360,7 +368,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="5" class="px-6 py-20 text-center">
+                            <td colspan="7" class="px-6 py-20 text-center">
                                 <div class="flex flex-col items-center justify-center text-slate-400">
                                     <span class="material-symbols-outlined text-6xl mb-4 text-slate-200">payments</span>
                                     <p class="text-base font-bold text-slate-600">No course revenues match your period selection.</p>
@@ -499,7 +507,7 @@
                             displayColors: true,
                             callbacks: {
                                 label: function(context) {
-                                    return `${context.dataset.label}: ₫${context.parsed.y.toLocaleString('en-US')}`;
+                                    return `${context.dataset.label}: $${context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
                                 }
                             }
                         }
@@ -512,9 +520,9 @@
                                 font: { family: 'Inter', size: 10, weight: '600' },
                                 color: '#94a3b8',
                                 callback: function(value) {
-                                    if (value >= 1000000) return '₫' + (value / 1000000) + 'M';
-                                    if (value >= 1000) return '₫' + (value / 1000) + 'K';
-                                    return '₫' + value;
+                                    if (value >= 1000000) return '$' + (value / 1000000) + 'M';
+                                    if (value >= 1000) return '$' + (value / 1000) + 'K';
+                                    return '$' + value;
                                 }
                             },
                             border: { display: false }
