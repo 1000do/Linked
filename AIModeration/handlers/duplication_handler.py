@@ -96,6 +96,10 @@ class DuplicationHandler(BaseHandler):
         async with httpx.AsyncClient() as client:
             for material in matches:
                 try:
+                    if not material.material_url:
+                        self.logger.warning(f"Skipping material {material.material_id} as materialUrl is null or empty.")
+                        continue
+
                     # Download bytes from cloudinary/URL
                     self.logger.info(f"Downloading material {material.material_id} from {material.material_url}")
                     resp = await client.get(material.material_url, timeout=30.0)
@@ -112,6 +116,9 @@ class DuplicationHandler(BaseHandler):
                     
                     # Mapping should follow allowed types in embedding_service, not text_extraction_service
                     mapped_type = self.embedding_service.get_file_type_for_embedding(file_ext)
+                    
+                    # Resolve embedding_type: "media" for image/video, "text" for text/pdf/word
+                    emb_type = "media" if mapped_type in ("image", "video") else "text"
                     
                     # Map generators based on process type if possible
                     selected_model_id = model_id
@@ -136,7 +143,8 @@ class DuplicationHandler(BaseHandler):
                     new_embeddings_dict[target_key].append(MaterialEmbeddingResponse(
                         embedding_id=0,
                         material_id=emb_res.material_id,
-                        embedding=emb_res.embedding
+                        embedding=emb_res.embedding,
+                        embedding_type=emb_type
                     ))
                 except Exception as e:
                     self.logger.error(f"Error processing material embedding for material {material.material_id}: {e}")

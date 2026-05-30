@@ -1,5 +1,6 @@
 using CourseMarketplaceBE.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Pgvector;
 
 namespace CourseMarketplaceBE.Infrastructure.Data;
 
@@ -51,7 +52,8 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<UserReport> UserReports { get; set; }
     public virtual DbSet<WishlistItem> WishlistItems { get; set; }
     public virtual DbSet<CourseExt> CourseExts { get; set; }
-    public virtual DbSet<MaterialEmbedding> MaterialEmbeddings { get; set; }
+    public virtual DbSet<TextEmbedding> TextEmbeddings { get; set; }
+    public virtual DbSet<MediaEmbedding> MediaEmbeddings { get; set; }
     public virtual DbSet<InstructorStats> InstructorStats { get; set; }
     public virtual DbSet<CourseStats> CourseStats { get; set; }
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
@@ -69,13 +71,15 @@ public partial class AppDbContext : DbContext
 
         var conn = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
                    ?? "Host=localhost;Port=5432;Database=linked;Username=postgres;Password=123456";
-        optionsBuilder.UseNpgsql(conn);
+        optionsBuilder.UseNpgsql(conn, o => o.UseVector());
     }
 
     // ─── OnModelCreating ──────────────────────────────────────────────────────
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasPostgresExtension("vector");
+
         // ── accounts ──────────────────────────────────────────────────────────
         modelBuilder.Entity<Account>(entity =>
         {
@@ -662,7 +666,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.ThumbnailUrl).HasColumnName("thumbnail_url");
             entity.Property(e => e.LessonStatus).HasMaxLength(50).HasColumnName("lesson_status");
-            
+
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
@@ -1036,24 +1040,56 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("course_exts_course_id_fkey");
         });
 
-        // ── material_embeddings ───────────────────────────────────────────────
-        modelBuilder.Entity<MaterialEmbedding>(entity =>
+        // ── text_embeddings ───────────────────────────────────────────────────
+        modelBuilder.Entity<TextEmbedding>(entity =>
         {
-            entity.HasKey(e => e.EmbeddingId).HasName("material_embeddings_pkey");
-            entity.ToTable("material_embeddings");
+            entity.HasKey(e => e.TextEmbeddingId).HasName("text_embeddings_pkey");
+            entity.ToTable("text_embeddings");
 
-            entity.Property(e => e.EmbeddingId).HasColumnName("embedding_id");
+            entity.Property(e => e.TextEmbeddingId).HasColumnName("text_embedding_id");
             entity.Property(e => e.MaterialId).HasColumnName("material_id");
-            entity.Property(e => e.Embedding).HasColumnType("vector(768)").HasColumnName("embedding");
+            entity.Property(e => e.Embedding)
+                .HasColumnType("vector(768)")
+                .HasColumnName("text_embedding")
+                .HasConversion(
+                      v => v != null ? new Vector(v.ToArray()) : null,
+                      v => v != null ? v.ToArray().ToList() : null
+                );
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
 
-            entity.HasOne(d => d.Material).WithMany(p => p.MaterialEmbeddings)
+            entity.HasOne(d => d.Material).WithMany(p => p.TextEmbeddings)
                 .HasForeignKey(d => d.MaterialId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("material_embeddings_material_id_fkey");
+                .HasConstraintName("text_embeddings_material_id_fkey");
+        });
+
+        // ── media_embeddings ──────────────────────────────────────────────────
+        modelBuilder.Entity<MediaEmbedding>(entity =>
+        {
+            entity.HasKey(e => e.MediaEmbeddingId).HasName("media_embeddings_pkey");
+            entity.ToTable("media_embeddings");
+
+            entity.Property(e => e.MediaEmbeddingId).HasColumnName("media_embedding_id");
+            entity.Property(e => e.MaterialId).HasColumnName("material_id");
+            entity.Property(e => e.Embedding)
+                .HasColumnType("vector(512)")
+                .HasColumnName("media_embedding")
+                .HasConversion(
+                      v => v != null ? new Vector(v.ToArray()) : null,
+                      v => v != null ? v.ToArray().ToList() : null
+                );
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Material).WithMany(p => p.MediaEmbeddings)
+                .HasForeignKey(d => d.MaterialId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("media_embeddings_material_id_fkey");
         });
 
         // ── audit_logs ────────────────────────────────────────────────────────

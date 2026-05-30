@@ -61,6 +61,14 @@ class DuplicationService(BaseService):
             if not existing.embedding or existing.material_id == new_embedding.material_id:
                 continue
 
+            # Skip comparison if embedding types do not match
+            if new_embedding.embedding_type and existing.embedding_type and new_embedding.embedding_type != existing.embedding_type:
+                continue
+
+            # Skip comparison if dimensions do not match to prevent numpy shape mismatch exceptions
+            if len(new_embedding.embedding) != len(existing.embedding):
+                continue
+
             sim = self.cosine_similarity(new_embedding.embedding, existing.embedding)
             if sim >= threshold:
                 return {

@@ -30,6 +30,11 @@ class BaseHandler:
                         import torch
                         from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
+                        old_spam_model = getattr(TextClassifierService, "_spam_model", None)
+                        old_spam_tok = getattr(TextClassifierService, "_spam_tokenizer", None)
+                        old_toxic_model = getattr(TextClassifierService, "_toxic_model", None)
+                        old_toxic_tok = getattr(TextClassifierService, "_toxic_tokenizer", None)
+
                         current_spam_path = getattr(TextClassifierService, "_spam_path", None)
                         current_toxic_path = getattr(TextClassifierService, "_toxic_path", None)
 
@@ -38,12 +43,6 @@ class BaseHandler:
 
                         if (req_spam and req_spam != current_spam_path) or (req_toxic and req_toxic != current_toxic_path):
                             self.logger.info(f"Dynamic loading requested: spam={req_spam}, toxic={req_toxic}")
-                            
-                            # Keep old for rollback
-                            old_spam_model = TextClassifierService._spam_model
-                            old_spam_tok = TextClassifierService._spam_tokenizer
-                            old_toxic_model = TextClassifierService._toxic_model
-                            old_toxic_tok = TextClassifierService._toxic_tokenizer
                             
                             device = torch.device(getattr(TextClassifierService, "device", "cpu"))
 

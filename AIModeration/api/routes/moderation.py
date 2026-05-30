@@ -107,6 +107,12 @@ async def moderation_stage2(
 # FULL PIPELINE (Stages 1 + 2)
 # ============================================================================
 
+def _get_log_attr(log, attr, default=None):
+    """Retrieve attribute from stage log safely regardless of dict or Pydantic model."""
+    if isinstance(log, dict):
+        return log.get(attr, default)
+    return getattr(log, attr, default)
+
 @router.post("/full-pipeline", response_model=CourseModerationResponse)
 async def full_moderation_pipeline(
     request: FullModerationPipelineRequest,
@@ -141,9 +147,21 @@ async def full_moderation_pipeline(
         
         # Final confidence
         if final_status == "FLAGGED":
-            confidences = [log.confidence_score for log in combined_logs if log.result == 'FLAGGED'] if combined_logs else [0.9669]
+            confidences = [
+                _get_log_attr(log, "confidence_score", 0.9669)
+                for log in combined_logs
+                if _get_log_attr(log, "result") == 'FLAGGED'
+            ] if combined_logs else [0.9669]
+            if not confidences:
+                confidences = [0.9669]
         else:
-            confidences = [log.confidence_score for log in combined_logs if log.result not in ["ERROR", "PENDING_MODEL"]] if combined_logs else [1.0]
+            confidences = [
+                _get_log_attr(log, "confidence_score", 1.0)
+                for log in combined_logs
+                if _get_log_attr(log, "result") not in ["ERROR", "PENDING_MODEL"]
+            ] if combined_logs else [1.0]
+            if not confidences:
+                confidences = [1.0]
             
         final_confidence = sum(confidences) / len(confidences)
   

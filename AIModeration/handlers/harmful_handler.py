@@ -84,7 +84,7 @@ class HarmfulHandler(BaseHandler):
                 course_id=course_id,
                 moderation_status=ModerationStatus.FLAGGED.value,
                 flagged_fields=flagged_fields,
-                overall_confidence_score=step1_logs[0].confidence_score if step1_logs else 0.9,
+                overall_confidence_score=step1_logs[0].get("confidence_score", 0.9) if (step1_logs and isinstance(step1_logs[0], dict)) else (step1_logs[0].confidence_score if step1_logs else 0.9),
                 total_latency_ms=total_latency,
                 stage_logs=all_stage_logs
             )
@@ -142,7 +142,7 @@ class HarmfulHandler(BaseHandler):
                 course_id=course_id,
                 moderation_status=ModerationStatus.FLAGGED.value,
                 flagged_fields=flagged_media,
-                overall_confidence_score=step2_logs[0].confidence_score if step2_logs else 0.85,
+                overall_confidence_score=step2_logs[0].get("confidence_score", 0.85) if (step2_logs and isinstance(step2_logs[0], dict)) else (step2_logs[0].confidence_score if step2_logs else 0.85),
                 total_latency_ms=total_latency,
                 stage_logs=all_stage_logs
             )

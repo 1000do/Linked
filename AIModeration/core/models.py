@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Optional, List, Dict, Any
 from enum import Enum
 from datetime import datetime
@@ -50,6 +50,31 @@ class AiModelDto(BaseModel):
     model_updated_at: Optional[datetime] = Field(None, alias="modelUpdatedAt")
     model_path: Optional[str] = Field(None, alias="modelPath")
     process_type: Optional[str] = Field(None, alias="processType")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_keys(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            mapping = {
+                "modelid": "model_id",
+                "modelname": "model_name",
+                "modeltype": "model_type",
+                "modelprovider": "model_provider",
+                "modelversion": "model_version",
+                "modelstatus": "model_status",
+                "description": "description",
+                "modelcreatedat": "model_created_at",
+                "modelupdatedat": "model_updated_at",
+                "modelpath": "model_path",
+                "processtype": "process_type"
+            }
+            new_data = {}
+            for k, v in data.items():
+                k_lower = k.lower()
+                mapped_key = mapping.get(k_lower, k)
+                new_data[mapped_key] = v
+            return new_data
+        return data
 
     class Config:
         populate_by_name = True
@@ -109,6 +134,7 @@ class MaterialEmbeddingResponse(BaseModel):
     embedding_id: int = Field(..., alias="embeddingId")
     material_id: Optional[int] = Field(None, alias="materialId")
     embedding: Optional[List[float]] = Field(None, alias="embedding")
+    embedding_type: Optional[str] = Field(None, alias="embeddingType")
 
     class Config:
         populate_by_name = True
@@ -131,14 +157,37 @@ class EmbeddingGenerationResult(BaseModel):
 
 class MaterialMetadataDto(BaseModel):
     """Mirrors CourseMarketplaceBE.Domain.Entities.MaterialMetadata."""
-    metadata_id: int = Field(..., alias="metadataId")
-    material_id: int = Field(..., alias="materialId")
+    metadata_id: Optional[int] = Field(0, alias="metadataId")
+    material_id: Optional[int] = Field(0, alias="materialId")
     file_name: Optional[str] = Field(None, alias="fileName")
     file_size: Optional[int] = Field(None, alias="fileSize")
     file_extension: Optional[str] = Field(None, alias="fileExtension")
     duration_seconds: Optional[int] = Field(None, alias="durationSeconds")
     word_count: Optional[int] = Field(None, alias="wordCount")
     page_count: Optional[int] = Field(None, alias="pageCount")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_keys(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            mapping = {
+                "metadataid": "metadata_id",
+                "materialid": "material_id",
+                "filename": "file_name",
+                "filesize": "file_size",
+                "fileextension": "file_extension",
+                "durationseconds": "duration_seconds",
+                "duration": "duration_seconds",
+                "wordcount": "word_count",
+                "pagecount": "page_count"
+            }
+            new_data = {}
+            for k, v in data.items():
+                k_lower = k.lower()
+                mapped_key = mapping.get(k_lower, k)
+                new_data[mapped_key] = v
+            return new_data
+        return data
 
     class Config:
         populate_by_name = True
@@ -149,10 +198,65 @@ class MaterialDto(BaseModel):
     material_id: int = Field(..., alias="materialId")
     lesson_id: int = Field(..., alias="lessonId")
     material_title: str = Field(..., alias="materialTitle")
-    material_type: str = Field(..., alias="materialType")
-    material_url: str = Field(..., alias="materialUrl")
+    material_type: Optional[str] = Field("text", alias="materialType")
+    material_url: Optional[str] = Field(None, alias="materialUrl")
     material_description: Optional[str] = Field(None, alias="materialDescription")
     material_metadata: Optional[MaterialMetadataDto] = Field(None, alias="materialMetadata")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_keys(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            mapping = {
+                "materialid": "material_id",
+                "lessonid": "lesson_id",
+                "materialtitle": "material_title",
+                "title": "material_title",
+                "materialtype": "material_type",
+                "type": "material_type",
+                "materialurl": "material_url",
+                "url": "material_url",
+                "materialdescription": "material_description",
+                "description": "material_description",
+                "materialmetadata": "material_metadata",
+                "metadata": "material_metadata"
+            }
+            new_data = {}
+            for k, v in data.items():
+                k_lower = k.lower()
+                mapped_key = mapping.get(k_lower, k)
+                new_data[mapped_key] = v
+            
+            # Infer material_type from metadata if missing
+            if not new_data.get("material_type"):
+                metadata = new_data.get("material_metadata")
+                if isinstance(metadata, dict):
+                    ft = metadata.get("file_type") or metadata.get("fileType") or metadata.get("file_extension") or metadata.get("fileExtension")
+                    if ft:
+                        new_data["material_type"] = str(ft)
+                
+                # If still not found, try to infer from material_url
+                if not new_data.get("material_type") and new_data.get("material_url"):
+                    url = new_data["material_url"]
+                    if url:
+                        ext = url.split(".")[-1].lower()
+                        if ext in ("mp4", "mov", "avi", "mkv", "webm"):
+                            new_data["material_type"] = "video"
+                        elif ext in ("jpg", "jpeg", "png", "webp", "gif"):
+                            new_data["material_type"] = "image"
+                        elif ext in ("pdf",):
+                            new_data["material_type"] = "pdf"
+                        elif ext in ("doc", "docx"):
+                            new_data["material_type"] = "word"
+                        else:
+                            new_data["material_type"] = "text"
+            
+            # Fallback if still empty
+            if not new_data.get("material_type"):
+                new_data["material_type"] = "text"
+                
+            return new_data
+        return data
 
     class Config:
         populate_by_name = True
@@ -164,6 +268,25 @@ class LessonDto(BaseModel):
     course_id: int = Field(..., alias="courseId")
     title: str = Field(..., alias="title")
     materials: List[MaterialDto] = Field(default_factory=list, alias="materials")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_keys(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            mapping = {
+                "lessonid": "lesson_id",
+                "courseid": "course_id",
+                "title": "title",
+                "materials": "materials",
+                "learningmaterials": "materials"
+            }
+            new_data = {}
+            for k, v in data.items():
+                k_lower = k.lower()
+                mapped_key = mapping.get(k_lower, k)
+                new_data[mapped_key] = v
+            return new_data
+        return data
 
     class Config:
         populate_by_name = True
@@ -179,6 +302,28 @@ class CourseDetailDto(BaseModel):
     thumbnail_url: Optional[str] = Field(None, alias="thumbnailUrl")
     lessons: List[LessonDto] = Field(default_factory=list, alias="lessons")
 
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_keys(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            mapping = {
+                "courseid": "course_id",
+                "title": "title",
+                "description": "description",
+                "whatyouwilllearn": "what_you_will_learn",
+                "requirements": "requirements",
+                "thumbnailurl": "thumbnail_url",
+                "coursethumbnailurl": "thumbnail_url",
+                "lessons": "lessons"
+            }
+            new_data = {}
+            for k, v in data.items():
+                k_lower = k.lower()
+                mapped_key = mapping.get(k_lower, k)
+                new_data[mapped_key] = v
+            return new_data
+        return data
+
     class Config:
         populate_by_name = True
 
@@ -189,12 +334,12 @@ class CourseDetailDto(BaseModel):
 
 class CourseModerationResponse(BaseModel):
     """Unified response from moderation pipeline."""
-    course_id: int = Field(..., alias="courseId")
-    moderation_status: str = Field(..., alias="moderationStatus")
-    flagged_fields: List[str] = Field(default_factory=list, alias="flaggedFields")
-    overall_confidence_score: float = Field(..., alias="overallConfidenceScore")
-    total_latency_ms: float = Field(..., alias="totalLatencyMs")
-    stage_logs: List[StageLog] = Field(default_factory=list, alias="stageLogs")
+    course_id: int = Field(..., validation_alias="courseId", serialization_alias="course_id")
+    moderation_status: str = Field(..., validation_alias="moderationStatus", serialization_alias="moderation_status")
+    flagged_fields: List[str] = Field(default_factory=list, validation_alias="flaggedFields", serialization_alias="flagged_fields")
+    overall_confidence_score: float = Field(..., validation_alias="overallConfidenceScore", serialization_alias="overall_confidence_score")
+    total_latency_ms: float = Field(..., validation_alias="totalLatencyMs", serialization_alias="total_latency_ms")
+    stage_logs: List[StageLog] = Field(default_factory=list, validation_alias="stageLogs", serialization_alias="stage_logs")
 
     class Config:
         populate_by_name = True

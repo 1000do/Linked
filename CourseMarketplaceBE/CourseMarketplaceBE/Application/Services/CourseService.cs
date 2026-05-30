@@ -261,12 +261,15 @@ public class CourseService : ICourseService
 
     public async Task<CourseDetailResponse?> GetCourseWithDetailsAsync(int courseId, int instructorId, int? userId = null)
     {
+        
         string cacheKey = CacheKeys.CourseDetail.GetKey(courseId);
+        _logger.LogInformation("GetCourseWithDetailsAsync: {CacheKey}", cacheKey);
         var response = await _redisService.GetCacheAsync<CourseDetailResponse>(cacheKey);
-
+        _logger.LogInformation("GetCourseWithDetailsAsync: {Response}", response);
         if (response == null)
         {
             var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
+            _logger.LogInformation("GetCourseWithDetailsAsync: {Course}", course);
             if (course == null) return null;
 
             var courseStats = await _courseRepository.GetCourseStatsAsync(courseId);
@@ -328,8 +331,11 @@ public class CourseService : ICourseService
                     }).ToList()
                 }).ToList()
             };
+            _logger.LogInformation("GetCourseWithDetailsAsync: {Response}", response);
 
             await _redisService.SetCacheAsync(cacheKey, response, CacheTtl.Short.GetTtl());
+
+            _logger.LogInformation("Cached course {CourseId} with key {CacheKey} : {CacheValue}", courseId, cacheKey, await _redisService.GetCacheAsync<CourseDetailResponse>(cacheKey));
         }
 
         // Cập nhật thông tin định danh riêng cho từng User (Không cache phần này)

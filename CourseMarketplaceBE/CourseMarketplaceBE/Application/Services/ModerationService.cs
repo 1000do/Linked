@@ -25,7 +25,6 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly IAiModerationService _aiModerationService;
         private readonly IContentHashService _contentHashService;
         private readonly ICourseAiIntegrationRepository _aiIntegrationRepository;
-        private readonly IMaterialEmbeddingRepository _embeddingRepository;
         private readonly IUserRepository _userRepository;
         private readonly ICourseService _courseService;
         private readonly ILessonService _lessonService;
@@ -47,7 +46,6 @@ namespace CourseMarketplaceBE.Application.Services
             IAiModerationService aiModerationService,
             IContentHashService contentHashService,
             ICourseAiIntegrationRepository aiIntegrationRepository,
-            IMaterialEmbeddingRepository embeddingRepository,
             IUserRepository userRepository,
             ILessonService lessonService,
             ICourseService courseService,
@@ -65,7 +63,6 @@ namespace CourseMarketplaceBE.Application.Services
             _aiModerationService = aiModerationService;
             _contentHashService = contentHashService;
             _aiIntegrationRepository = aiIntegrationRepository;
-            _embeddingRepository = embeddingRepository;
             _userRepository = userRepository;
             _lessonService = lessonService;
             _courseService = courseService;
@@ -458,7 +455,7 @@ namespace CourseMarketplaceBE.Application.Services
                 var textGeneratorPath = await _systemConfigRepository.GetValueAsync(SystemConfigKeys.CourseTextEmbeddingGenerator);
                 var mediaGeneratorPath = await _systemConfigRepository.GetValueAsync(SystemConfigKeys.CourseMediaEmbeddingGenerator);
 
-                
+
                 var classifiers = new List<AiModelDto>();
                 var emb_generators = new List<AiModelDto>();
 
@@ -481,16 +478,16 @@ namespace CourseMarketplaceBE.Application.Services
                 // If models are not configured in system configs, fetch active ones by type as fallback
                 if (classifiers.Count == 0) classifiers = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.Classifier);
                 if (emb_generators.Count == 0) emb_generators = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.EmbeddingGenerator);
-                
+
                 var models = classifiers.Concat(emb_generators).ToList();
 
                 // Get existing course integrations
                 var integrations = await _aiIntegrationRepository.GetByCourseIdAsync(courseId);
                 var thresholds = await _aiModerationService.GetScoreThresholdConfigAsync(SystemConfigKeys.ModerationThreshold);
-                
+
                 if (integrations == null || !integrations.Any())
                 {
-                    
+
                     await AssignAIModeratorsToCourseAsync(courseId, models);
                 }
                 else
@@ -557,22 +554,54 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task ResolveCourseAIModerationResult(CourseModerationResult result)
         {
+            _logger.LogInformation("Resolving AI moderation result for course {CourseId}", result.CourseId);
             var courseId = result.CourseId;
             var course = await _courseService.GetCourseWithDetailsAsync(courseId, 0);
-            if (course == null) return;
+
+            if (course == null)
+            {
+                _logger.LogError("Course not found for courseId {id}", courseId);
+                return;
+            }
 
             // Save material embeddings from Redis cache to database
             var materialIds = course.Lessons?
                 .SelectMany(l => l.LearningMaterials?.Select(m => m.MaterialId) ?? [])
                 .ToList() ?? [];
+            _logger.LogInformation("Materials count: {n}", materialIds.Count);
 
             foreach (var matId in materialIds)
             {
                 string cacheKey = CacheKeys.MaterialEmbedding.GetKey(matId);
-                var cachedEmbedding = await _redisService.GetCacheAsync<List<float>>(cacheKey);
-                if (cachedEmbedding != null && cachedEmbedding.Any())
+                _logger.LogInformation("Retrieving MaterialEmbeddingResponse from cache key {cacheKey}", cacheKey);
+                var cachedResponse = await _redisService.GetCacheAsync<MaterialEmbeddingResponse>(cacheKey);
+
+                if (cachedResponse == null)
                 {
-                    await _lessonService.SaveMaterialEmbeddingsAsync(matId, cachedEmbedding);
+                    _logger.LogWarning("MaterialEmbeddingResponse for material {matId} is not found in cache", matId);
+                    continue;
+                }
+                if (cachedResponse.Embedding == null)
+                {
+                    _logger.LogWarning("Embedding is not provided for material {matId}", matId);
+                    continue;
+                }
+                if (!cachedResponse.Embedding.Any())
+                {
+                    _logger.LogWarning("Embedding is empty for material {matId}", matId);
+                    continue;
+                }
+
+                if (cachedResponse != null && cachedResponse.Embedding != null && cachedResponse.Embedding.Any())
+                {
+                    _logger.LogInformation("Successfully retrieved MaterialEmbeddingResponse from cache key {cacheKey}", cacheKey);
+                    string embeddingType = cachedResponse.EmbeddingType ?? "";
+                    if (embeddingType != "text" && embeddingType != "media")
+                    {
+                        embeddingType = cachedResponse.Embedding.Count == 512 ? "media" : "text";
+                    }
+                    
+                    await _lessonService.SaveMaterialEmbeddingsAsync(matId, cachedResponse.Embedding, embeddingType);
                 }
             }
             //APPROVED
@@ -756,7 +785,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 string subject = "Course Violation Warning";
                 string message = "";
- 
+
                 if (currentFlags == 1)
                 {
                     subject = "Course Violation Reminder (1st Time)";
@@ -869,7 +898,7 @@ namespace CourseMarketplaceBE.Application.Services
                     MaterialIds = materialIds,
                     SimilarityScoreThreshold = thresholds.GetValueOrDefault(AiModelConst.Similarity,
                                                                             AiModelConst.DefaultSimilarityScoreThreshold),
-                    Models = semDupModels                                                                             
+                    Models = semDupModels
                 };
 
                 var harmfulReq = new CourseHarmfulRequest
@@ -888,7 +917,7 @@ namespace CourseMarketplaceBE.Application.Services
 
                 var result = await _aiModerationService.ModerateCourseFullPipelineAsync(semanticReq, harmfulReq);
 
-
+                _logger.LogInformation("AI Moderation Result: {result}", JsonSerializer.Serialize(result));
                 if (result.ModerationStatus == ModerationStatus.ManualAudit.ToValue())
                 {
                     await NotifyAdminAsync("Manual Audit Required", $"Course {request.CourseId} flagged for manual review by AI.", UrlConst.AdminCourseModerationURL);

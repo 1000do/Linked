@@ -808,26 +808,22 @@ END $$;
 
 
 
-	INSERT INTO 
-	ai_models (model_name,model_type,model_provider,model_version, model_path, model_status,description, process_type)
-	VALUES
-	('harmful_text_classifier','classifier','local','1','/app/models/spam_1/,/app/models/toxic_3/','active','an ensemble of spam and toxic text classifier that was fine-tuned from distilbert multilingual cased','text'),
-	('clip','embedding_generator','openai','1','openai/clip-vit-base-patch32','active','a multimodal model that was used to generate embeddings','media'),
-	('distilbert','embedding_generator','hugging_face','1','distilbert-base-multilingual-cased','active','a language model that was used to generate embeddings','text')
-	
-	INSERT INTO
-    system_configs(config_key,config_value,description)
-    VALUES
-    ('course_harmful_text_classifier','/app/models/spam_1/,/app/models/toxic_3/','system config of course_harmful_text_classifier')
-    ('course_text_embedding_generator', 'distilbert-base-multilingual-cased','system config of course_text_embedding_generator')
-    ('course_media_embedding_generator','openai/clip-vit-base-patch32','system config of course_media_embedding_generator')
-    ('review_harmful_text_classifier','/app/models/spam_1/,/app/models/toxic_3/','system config of review_harmful_text_classifier')
+INSERT INTO 
+ai_models (model_name,model_type,model_provider,model_version, model_path, model_status,description, process_type)
+VALUES
+('harmful_text_classifier','classifier','local','1','/app/models/spam_1/,/app/models/toxic_3/','active','an ensemble of spam and toxic text classifier that was fine-tuned from distilbert multilingual cased','text'),
+('clip','embedding_generator','openai','1','openai/clip-vit-base-patch32','active','a multimodal model that was used to generate embeddings','media'),
+('distilbert','embedding_generator','hugging_face','1','distilbert-base-multilingual-cased','active','a language model that was used to generate embeddings','text');
 
-    CREATE TABLE system_configs (
-    config_id SERIAL PRIMARY KEY,
-    manager_id INT REFERENCES managers(manager_id) ON DELETE SET NULL,
-    config_key VARCHAR(255) UNIQUE NOT NULL,
-    config_value TEXT,
-    description TEXT,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+INSERT INTO
+system_configs(config_key,config_value,description)
+VALUES
+('course_harmful_text_classifier','/app/models/spam_1/,/app/models/toxic_3/','system config of course_harmful_text_classifier'),
+('course_text_embedding_generator', 'distilbert-base-multilingual-cased','system config of course_text_embedding_generator'),
+('course_media_embedding_generator','openai/clip-vit-base-patch32','system config of course_media_embedding_generator'),
+('review_harmful_text_classifier','/app/models/spam_1/,/app/models/toxic_3/','system config of review_harmful_text_classifier');
+
+   
+
+
+         

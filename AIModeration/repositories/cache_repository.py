@@ -171,7 +171,11 @@ class CacheRepository:
             if data is None:
                 raise CacheNotFoundException(key, {"material_id": material_id})
             
-            embedding = json.loads(data)
+            parsed = json.loads(data)
+            embedding = parsed
+            if isinstance(parsed, dict):
+                embedding = parsed.get("embedding")
+                
             logger.debug(f"Retrieved embedding: {key}")
             return embedding
             
@@ -179,13 +183,14 @@ class CacheRepository:
             logger.error(f"Failed to decode embedding for {key}: {e}")
             raise CacheNotFoundException(key, {"error": str(e)})
     
-    def set_material_embedding(self, material_id: int, embedding: List[float], ttl: int = None) -> bool:
+    def set_material_embedding(self, material_id: int, embedding: List[float], embedding_type: str, ttl: int = None) -> bool:
         """
         Store material embedding in cache.
         
         Args:
             material_id: Material identifier
-            embedding: 768-dim embedding vector
+            embedding: embedding vector
+            embedding_type: 'text' or 'media'
             ttl: Time-to-live in seconds
             
         Returns:
@@ -199,7 +204,13 @@ class CacheRepository:
         ttl = ttl or self.CACHE_TTL
         
         try:
-            json_data = json.dumps(embedding)
+            dto_dict = {
+                "embeddingId": 0,
+                "materialId": material_id,
+                "embedding": embedding,
+                "embeddingType": embedding_type
+            }
+            json_data = json.dumps(dto_dict)
             self.redis_client.setex(key, ttl, json_data)
             logger.debug(f"Embedding cached: {key}")
             return True

@@ -3,11 +3,11 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
-using CourseMarketplaceBE.Application.Exceptions;
-using CourseMarketplaceBE.Domain.Constants;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -19,16 +19,21 @@ public class LessonService : ILessonService
     private readonly IFileUploadService _uploadService;
     private readonly IRedisService _redisService;
     private readonly IInstructorRepository _instructorRepository;
-    private readonly IMaterialEmbeddingRepository _materialEmbeddingRepository;
+    private readonly ITextEmbeddingRepository _textEmbeddingRepository;
+    private readonly IMediaEmbeddingRepository _mediaEmbeddingRepository;
+    private readonly ILogger<LessonService> _logger;
 
     public LessonService(
-        ILessonRepository lessonRepository, 
+        ILessonRepository lessonRepository,
         ICourseRepository courseRepository,
         IMaterialRepository materialRepository,
         IFileUploadService uploadService,
         IRedisService redisService,
         IInstructorRepository instructorRepository,
-        IMaterialEmbeddingRepository materialEmbeddingRepository)
+        ITextEmbeddingRepository textEmbeddingRepository,
+        IMediaEmbeddingRepository mediaEmbeddingRepository,
+        ILogger<LessonService> logger
+        )
     {
         _lessonRepository = lessonRepository;
         _courseRepository = courseRepository;
@@ -36,7 +41,9 @@ public class LessonService : ILessonService
         _uploadService = uploadService;
         _redisService = redisService;
         _instructorRepository = instructorRepository;
-        _materialEmbeddingRepository = materialEmbeddingRepository;
+        _textEmbeddingRepository = textEmbeddingRepository;
+        _mediaEmbeddingRepository = mediaEmbeddingRepository;
+        _logger = logger;
     }
 
     public async Task<LessonResponse> CreateLessonAsync(LessonCreateRequest request, int instructorId)
@@ -97,7 +104,7 @@ public class LessonService : ILessonService
         };
 
         await _lessonRepository.AddAsync(lesson);
-        
+
         if (string.Equals(course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             course.CourseStatus = CourseStatus.Draft.ToValue();
@@ -158,7 +165,7 @@ public class LessonService : ILessonService
         if (request.MaterialFile != null)
         {
             var uploadedUrl = await _uploadService.UploadVideoAsync(request.MaterialFile);
-                if (uploadedUrl != null)
+            if (uploadedUrl != null)
             {
                 materialUrl = uploadedUrl;
             }
@@ -166,11 +173,11 @@ public class LessonService : ILessonService
 
         var allMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
         fileType = request.MaterialMetadata?.FileType ?? "video";
-        
+
         var existingActiveVideos = new List<LearningMaterial>();
         if (fileType == "video")
         {
-            existingActiveVideos = allMaterials.Where(m => 
+            existingActiveVideos = allMaterials.Where(m =>
                 m.LearningStatus == "active" &&
                 ((m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || (m.MaterialMetadata == null))).ToList();
         }
@@ -249,7 +256,7 @@ public class LessonService : ILessonService
         }
 
         await _materialRepository.SaveChangesAsync();
-        
+
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
@@ -296,7 +303,7 @@ public class LessonService : ILessonService
         {
             var cloudPublicId = _uploadService.GetPublicIdFromUrl(material.MaterialUrl);
             var trashUrl = await _uploadService.MoveToTrashAsync(material.MaterialUrl);
-            
+
             material.CloudPublicId = cloudPublicId;
             // Giữ lại URL (đã được đổi sang link trong thư mục trash/) để vẫn có thể xem được detail
             if (!string.IsNullOrEmpty(trashUrl))
@@ -345,7 +352,7 @@ public class LessonService : ILessonService
             {
                 var cloudPublicId = _uploadService.GetPublicIdFromUrl(m.MaterialUrl);
                 var trashUrl = await _uploadService.MoveToTrashAsync(m.MaterialUrl);
-                
+
                 m.CloudPublicId = cloudPublicId;
                 if (!string.IsNullOrEmpty(trashUrl))
                 {
@@ -380,7 +387,7 @@ public class LessonService : ILessonService
     public async Task<IEnumerable<MaterialTrashResponse>> GetTrashMaterialsAsync(int instructorId)
     {
         var materials = await _materialRepository.GetTrashMaterialsAsync(instructorId);
-        
+
         return materials.Select(m => new MaterialTrashResponse
         {
             MaterialId = m.MaterialId,
@@ -402,7 +409,7 @@ public class LessonService : ILessonService
         var materials = await _materialRepository.GetTrashMaterialsAsync(instructorId);
         if (!materials.Any(m => m.MaterialId == materialId))
         {
-             throw new UnauthorizedAccessException("You do not have permission to permanently delete this material.");
+            throw new UnauthorizedAccessException("You do not have permission to permanently delete this material.");
         }
 
         // Get course status to prevent deletion if pending
@@ -415,7 +422,7 @@ public class LessonService : ILessonService
         {
             // Note: Since it was moved to trash/ prefix, we need to delete it using the trash prefix
             var resourceType = material.MaterialMetadata?.FileType ?? "image";
-            await _uploadService.DeleteFileByPublicIdAsync($"trash/{material.CloudPublicId}", resourceType); 
+            await _uploadService.DeleteFileByPublicIdAsync($"trash/{material.CloudPublicId}", resourceType);
         }
 
         // 2. Delete from DB
@@ -457,10 +464,10 @@ public class LessonService : ILessonService
         if (fileType == "video")
         {
             var existingMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lesson.LessonId);
-            var activeVideo = existingMaterials.FirstOrDefault(m => 
-                m.LearningStatus == "active" && 
+            var activeVideo = existingMaterials.FirstOrDefault(m =>
+                m.LearningStatus == "active" &&
                 ((m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || m.MaterialMetadata == null));
-            
+
             if (activeVideo != null)
             {
                 // Thay vì throw lỗi, ta move video hiện tại vào trash để "tráo đổi"
@@ -514,36 +521,100 @@ public class LessonService : ILessonService
 
     public async Task<List<MaterialEmbeddingResponse>> GetAllMaterialEmbeddingsAsync()
     {
-        var list = await _materialEmbeddingRepository.GetAllAsync();
-        return list.Select(e => new MaterialEmbeddingResponse
+        var textList = await _textEmbeddingRepository.GetAllAsync();
+        var mediaList = await _mediaEmbeddingRepository.GetAllAsync();
+
+        var result = new List<MaterialEmbeddingResponse>();
+
+        result.AddRange(textList.Select(e => new MaterialEmbeddingResponse
         {
-            EmbeddingId = e.EmbeddingId,
+            EmbeddingId = e.TextEmbeddingId,
             MaterialId = e.MaterialId,
-            Embedding = e.Embedding
-        }).ToList();
+            Embedding = e.Embedding,
+            EmbeddingType = "text"
+        }));
+
+        result.AddRange(mediaList.Select(e => new MaterialEmbeddingResponse
+        {
+            EmbeddingId = e.MediaEmbeddingId,
+            MaterialId = e.MaterialId,
+            Embedding = e.Embedding,
+            EmbeddingType = "media"
+        }));
+
+        return result;
     }
 
-    public async Task SaveMaterialEmbeddingsAsync(int materialId, List<float> embedding)
+    public async Task SaveMaterialEmbeddingsAsync(int materialId, List<float> embedding, string embeddingType)
     {
-        
-        var entity = new MaterialEmbedding
+        _logger.LogInformation("Saving new material embeddings for material {matId} with embedding type as {type}", materialId, embeddingType);
+        int rows = 0;
+        if (string.Equals(embeddingType, "media", StringComparison.OrdinalIgnoreCase))
         {
-            MaterialId = materialId,
-            Embedding = System.Text.Json.JsonSerializer.Serialize(embedding),
-            
-        };
-        var existing = _materialEmbeddingRepository.GetByMaterialIdAsync(materialId);
-        if(existing == null){
-            entity.CreatedAt = DateTime.UtcNow;
-            await _materialEmbeddingRepository.AddAsync(entity);
+
+
+            _logger.LogInformation("Retrieving existing media embeddings for material {matId}", materialId);
+            var existingList = await _mediaEmbeddingRepository.GetByMaterialIdAsync(materialId);
+
+            var existing = existingList.FirstOrDefault();
+
+            if (existing == null)
+            {
+                _logger.LogInformation("No existing media embeddings found. Inserting new media embeddings for material {matId}", materialId);
+                var entity = new MediaEmbedding
+                {
+                    MaterialId = materialId,
+                    Embedding = embedding,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _mediaEmbeddingRepository.AddAsync(entity);
+            }
+            else
+            {
+                _logger.LogInformation("Existing media embeddings found. Updating media embeddings for material {matId}", materialId);
+                existing.Embedding = embedding;
+                _mediaEmbeddingRepository.Update(existing);
+            }
+
+            rows = await _mediaEmbeddingRepository.SaveChangesAsync();
 
         }
-        else{
-            _materialEmbeddingRepository.Update(entity);
+        else
+        {
+            _logger.LogInformation("Retrieving existing text embeddings for material {matId}", materialId);
+            var existingList = await _textEmbeddingRepository.GetByMaterialIdAsync(materialId);
+            var existing = existingList.FirstOrDefault();
+
+            if (existing == null)
+            {
+                _logger.LogInformation("No existing text embeddings found. Inserting new text embeddings for material {matId}", materialId);
+                var entity = new TextEmbedding
+                {
+                    MaterialId = materialId,
+                    Embedding = embedding,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _textEmbeddingRepository.AddAsync(entity);
+            }
+            else
+            {
+                _logger.LogInformation("Existing text embeddings found. Updating text embeddings for material {matId}", materialId);
+                existing.Embedding = embedding;
+                _textEmbeddingRepository.Update(existing);
+            }
+
+            rows = await _textEmbeddingRepository.SaveChangesAsync();
+
         }
 
-
-        await _materialEmbeddingRepository.SaveChangesAsync();
+        if (rows > 0)
+        {
+            _logger.LogInformation("Saved embeddings for material {matId} with embedding type as {type}", materialId, embeddingType);
+        }
+        else
+        {
+            _logger.LogError("Failed to save embeddings for material {matId} with embedding type as {type}", materialId, embeddingType);
+        }
 
         // Invalidate redis cache for material_embedding
         await _redisService.RemoveCacheAsync(CacheKeys.MaterialEmbedding.GetKey(materialId));

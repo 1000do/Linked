@@ -52,7 +52,10 @@ class RedisService:
         """
         if not dto.material_id or not dto.embedding:
             return False
-        return self.cache_repository.set_material_embedding(dto.material_id, dto.embedding, ttl)
+        emb_type = dto.embedding_type
+        if not emb_type or emb_type not in ("text", "media"):
+            emb_type = "media" if len(dto.embedding) == 512 else "text"
+        return self.cache_repository.set_material_embedding(dto.material_id, dto.embedding, emb_type, ttl)
 
     def get_all_existing_embeddings(self) -> List[MaterialEmbeddingResponse]:
         """
@@ -72,11 +75,12 @@ class RedisService:
                 try:
                     parsed = json.loads(val)
                     embedding_vector = None
+                    embedding_type = None
                     if isinstance(parsed, list):
                         # Direct list of floats
                         embedding_vector = [float(x) for x in parsed]
                     elif isinstance(parsed, dict):
-                        # C# DTO format: could have Embedding field as a string containing JSON array or serialized representation
+                        # C# DTO format
                         raw_emb = parsed.get("Embedding") or parsed.get("embedding")
                         if isinstance(raw_emb, list):
                             embedding_vector = [float(x) for x in raw_emb]
@@ -88,12 +92,19 @@ class RedisService:
                                     embedding_vector = [float(x) for x in parsed_emb]
                             except Exception:
                                 pass
+                        
+                        embedding_type = parsed.get("EmbeddingType") or parsed.get("embeddingType")
                     
                     if embedding_vector:
+                        if not embedding_type or embedding_type not in ("text", "media"):
+                            embedding_type = "media" if len(embedding_vector) == 512 else "text"
+                        embedding_id = parsed.get("EmbeddingId") or parsed.get("embeddingId")
+                        
                         results.append(MaterialEmbeddingResponse(
+                            embedding_id= embedding_id if embedding_id else 0,
                             material_id=material_id,
                             embedding=embedding_vector,
-                            success=True
+                            embedding_type=embedding_type
                         ))
                 except Exception as e:
                     logger.warning(f"Failed to parse embedding value for key {key}: {e}")

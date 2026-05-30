@@ -257,7 +257,8 @@ namespace CourseMarketplaceBE.Application.DTOs
     {
         public int EmbeddingId { get; set; }
         public int? MaterialId { get; set; }
-        public string? Embedding { get; set; }
+        public List<float>? Embedding { get; set; }
+        public string? EmbeddingType { get; set; }
     }
 
     public class LogCourseAiModerationCommand

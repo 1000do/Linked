@@ -152,7 +152,14 @@ class EmbeddingService(BaseService):
                 # Get image features
                 with torch.no_grad():
                     outputs = self._clip_model.get_image_features(**inputs)
-                    embedding = outputs.cpu().numpy()[0]
+                    if hasattr(outputs, "pooler_output") and outputs.pooler_output is not None:
+                        embedding = outputs.pooler_output.cpu().numpy()[0]
+                    elif hasattr(outputs, "last_hidden_state") and outputs.last_hidden_state is not None:
+                        embedding = outputs.last_hidden_state.mean(dim=1).cpu().numpy()[0]
+                    elif isinstance(outputs, torch.Tensor):
+                        embedding = outputs.cpu().numpy()[0]
+                    else:
+                        embedding = outputs[0].cpu().numpy()[0]
                 
                 return embedding.tolist()
         
@@ -207,7 +214,14 @@ class EmbeddingService(BaseService):
                             
                             with torch.no_grad():
                                 outputs = self._clip_model.get_image_features(**inputs)
-                                embedding = outputs.cpu().numpy()[0]
+                                if hasattr(outputs, "pooler_output") and outputs.pooler_output is not None:
+                                    embedding = outputs.pooler_output.cpu().numpy()[0]
+                                elif hasattr(outputs, "last_hidden_state") and outputs.last_hidden_state is not None:
+                                    embedding = outputs.last_hidden_state.mean(dim=1).cpu().numpy()[0]
+                                elif isinstance(outputs, torch.Tensor):
+                                    embedding = outputs.cpu().numpy()[0]
+                                else:
+                                    embedding = outputs[0].cpu().numpy()[0]
                                 embeddings.append(embedding)
                         
                         frame_idx += 1
