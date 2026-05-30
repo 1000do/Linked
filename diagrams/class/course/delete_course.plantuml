@@ -1,0 +1,81 @@
+@startuml DeleteCourse
+' Styling & Settings - Simplified for compatibility
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #333333
+    ArrowColor #333333
+}
+hide empty members
+
+' === PARTICIPANTS ===
+
+' --- Frontend ---
+class InstructorCourseController {
+    + Delete(courseId: int): IActionResult
+}
+
+' --- Backend Controller ---
+class CourseController {
+    + DeleteCourse(courseId: int): Task<IActionResult>
+}
+
+' --- Services ---
+interface ICourseService {
+    + DeleteCourseAsync(courseId: int, instructorId: int): Task<void>
+}
+
+class CourseService {
+    + DeleteCourseAsync(courseId: int, instructorId: int): Task<void>
+}
+
+' --- Repositories ---
+interface ICourseRepository {
+    + GetByIdAsync(courseId: int): Task<Course?>
+    + Delete(course: Course): void
+    + SaveChangesAsync(): Task<void>
+}
+
+class CourseRepository {
+    + GetByIdAsync(courseId: int): Task<Course?>
+    + Delete(course: Course): void
+    + SaveChangesAsync(): Task<void>
+}
+
+' --- Entities & DbContext ---
+class Course {
+    + CourseId: int
+    + InstructorId: int?
+}
+
+class Instructor {
+    + InstructorId: int
+}
+
+' --- DbContext represented as a class for compatibility ---
+class ApplicationDbContext
+
+
+' === RELATIONSHIPS ===
+
+' Frontend to Backend Dependency
+InstructorCourseController ..> CourseController
+
+' Dependency Injection (Unidirectional Association)
+CourseController --> ICourseService
+CourseService --> ICourseRepository
+CourseRepository --> ApplicationDbContext
+
+' Repository to Entity Dependency
+' Service uses the Course entity after fetching it via the repository
+CourseService ..> Course
+CourseRepository ..> Course
+
+' Entity to Entity Composition
+Instructor *-- Course
+
+' Interface Realization
+CourseService ..|> ICourseService
+CourseRepository ..|> ICourseRepository
+
+@enduml
