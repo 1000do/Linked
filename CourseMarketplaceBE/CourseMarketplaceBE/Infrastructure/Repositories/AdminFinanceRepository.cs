@@ -1,6 +1,7 @@
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
+using CourseMarketplaceBE.Application.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace CourseMarketplaceBE.Infrastructure.Repositories;
@@ -399,6 +400,9 @@ public class AdminFinanceRepository : IAdminFinanceRepository
         var monthStart = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
         var monthEnd = monthStart.AddMonths(1);
 
+        var prevMonthStart = monthStart.AddMonths(-1);
+        var prevMonthEnd = monthStart;
+
         var yearStart = new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         var yearEnd = yearStart.AddYears(1);
 
@@ -424,20 +428,165 @@ public class AdminFinanceRepository : IAdminFinanceRepository
                     .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
                                 && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
                                 && t.TransactionCreatedAt >= monthStart && t.TransactionCreatedAt < monthEnd)
-                    .Sum(t => (decimal?)t.Amount) ?? 0,
+                    .SelectMany(t => t.InstructorPayouts)
+                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0,
+
+                PreviousMonthRevenue = _context.Transactions
+                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
+                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
+                                && t.TransactionCreatedAt >= prevMonthStart && t.TransactionCreatedAt < prevMonthEnd)
+                    .SelectMany(t => t.InstructorPayouts)
+                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0,
 
                 YearlyRevenue = _context.Transactions
                     .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
                                 && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
                                 && t.TransactionCreatedAt >= yearStart && t.TransactionCreatedAt < yearEnd)
-                    .Sum(t => (decimal?)t.Amount) ?? 0,
+                    .SelectMany(t => t.InstructorPayouts)
+                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0,
 
                 LifetimeRevenue = _context.Transactions
                     .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
                                 && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending"))
-                    .Sum(t => (decimal?)t.Amount) ?? 0
+                    .SelectMany(t => t.InstructorPayouts)
+                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0
             })
             .ToListAsync();
+    }
+
+    public async Task<List<InstructorCourseRevenueProjection>> GetInstructorCourseRevenuesByInstructorAsync(int instructorId, int year, int month)
+    {
+        var monthStart = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var monthEnd = monthStart.AddMonths(1);
+
+        var prevMonthStart = monthStart.AddMonths(-1);
+        var prevMonthEnd = monthStart;
+
+        var yearStart = new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var yearEnd = yearStart.AddYears(1);
+
+        return await _context.Courses
+            .Include(c => c.Instructor)
+                .ThenInclude(i => i!.InstructorNavigation)
+            .Where(c => !c.IsRemoved && c.InstructorId == instructorId)
+            .Select(c => new InstructorCourseRevenueProjection
+            {
+                CourseId = c.CourseId,
+                CourseTitle = c.Title,
+                InstructorId = c.InstructorId ?? 0,
+                InstructorName = c.Instructor != null && c.Instructor.InstructorNavigation != null
+                    ? c.Instructor.InstructorNavigation.FullName ?? "N/A"
+                    : "N/A",
+
+                SalesCount = _context.Transactions
+                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
+                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending"))
+                    .Count(),
+
+                MonthlyRevenue = _context.Transactions
+                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
+                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
+                                && t.TransactionCreatedAt >= monthStart && t.TransactionCreatedAt < monthEnd)
+                    .SelectMany(t => t.InstructorPayouts)
+                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0,
+
+                PreviousMonthRevenue = _context.Transactions
+                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
+                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
+                                && t.TransactionCreatedAt >= prevMonthStart && t.TransactionCreatedAt < prevMonthEnd)
+                    .SelectMany(t => t.InstructorPayouts)
+                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0,
+
+                YearlyRevenue = _context.Transactions
+                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
+                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
+                                && t.TransactionCreatedAt >= yearStart && t.TransactionCreatedAt < yearEnd)
+                    .SelectMany(t => t.InstructorPayouts)
+                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0,
+
+                LifetimeRevenue = _context.Transactions
+                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
+                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending"))
+                    .SelectMany(t => t.InstructorPayouts)
+                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0
+            })
+            .ToListAsync();
+    }
+
+    public async Task<RefundEligibilityDto> GetRefundEligibilityMetricsAsync(int transactionId, int studentId, int courseId)
+    {
+        var account = await _context.Accounts
+            .Where(a => a.AccountId == studentId)
+            .Select(a => new { a.AccountFlagCount })
+            .FirstOrDefaultAsync();
+        var accountFlagCount = account?.AccountFlagCount ?? 0;
+
+        var pastRefundedCount = await _context.Transactions
+            .Where(t => t.AccountFrom == studentId 
+                        && t.OrderItem != null 
+                        && t.OrderItem.CourseId == courseId 
+                        && t.TransactionsStatus == "refunded")
+            .CountAsync();
+
+        var refundRequestsLast14Days = await _context.Transactions
+            .Where(t => t.AccountFrom == studentId 
+                        && t.TransactionId != transactionId 
+                        && t.TransactionExt != null 
+                        && t.TransactionExt.RefundRequestedAt >= DateTime.UtcNow.AddDays(-14))
+            .CountAsync();
+
+        // Load active materials to RAM for safe jsonb duration calculations
+        var activeMaterials = await _context.LearningMaterials
+            .Where(m => m.Lesson != null 
+                        && m.Lesson.CourseId == courseId 
+                        && !m.Lesson.IsRemoved 
+                        && m.LearningStatus != "removed")
+            .Select(m => new {
+                m.MaterialId,
+                m.MaterialMetadata
+            })
+            .ToListAsync();
+
+        var totalDurationSeconds = activeMaterials.Sum(m => m.MaterialMetadata?.Duration ?? 0);
+        var courseTotalDurationHours = totalDurationSeconds / 3600.0;
+        
+        var enrollment = await _context.Enrollments
+            .FirstOrDefaultAsync(e => e.UserId == studentId && e.CourseId == courseId);
+
+        double studentProgressPercentage = 0.0;
+        double completedVideoDurationHours = 0.0;
+
+        if (enrollment != null)
+        {
+            var completedMaterialIds = await _context.MaterialCompletions
+                .Where(c => c.EnrollmentId == enrollment.EnrollmentId)
+                .Select(c => c.MaterialId)
+                .ToListAsync();
+
+            var completedActiveMaterials = activeMaterials
+                .Where(m => completedMaterialIds.Contains(m.MaterialId))
+                .ToList();
+
+            studentProgressPercentage = activeMaterials.Count > 0
+                ? (double)completedActiveMaterials.Count / activeMaterials.Count * 100.0
+                : 0.0;
+
+            var completedVideoDurationSeconds = completedActiveMaterials
+                .Where(m => m.MaterialMetadata?.FileType == "video" || m.MaterialMetadata == null)
+                .Sum(m => m.MaterialMetadata?.Duration ?? 0);
+
+            completedVideoDurationHours = completedVideoDurationSeconds / 3600.0;
+        }
+
+        return new RefundEligibilityDto
+        {
+            AccountFlagCount = accountFlagCount,
+            PastRefundedCountForCourse = pastRefundedCount,
+            RefundRequestsLast14DaysCount = refundRequestsLast14Days,
+            CourseTotalDurationHours = courseTotalDurationHours,
+            StudentProgressPercentage = studentProgressPercentage,
+            CompletedVideoDurationHours = completedVideoDurationHours
+        };
     }
 
     public void RemoveInstructorPayout(InstructorPayout payout)

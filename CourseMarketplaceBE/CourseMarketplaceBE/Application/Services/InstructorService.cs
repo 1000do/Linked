@@ -70,8 +70,7 @@ namespace CourseMarketplaceBE.Application.Services
                 existing.StripeCountry       = request.StripeCountry.ToUpper();
                 existing.ApprovalStatus      = "Pending";
 
-                int rows1 = await _repo.SaveChangesAsync();
-                if (rows1 <= 0) throw new InvalidOperationException("Failed to save changes");
+                await _repo.SaveChangesAsync();
                 return "Your application has been resubmitted. Please wait for admin approval.";
             }
 
@@ -99,8 +98,7 @@ namespace CourseMarketplaceBE.Application.Services
             };
 
             await _repo.AddAsync(instructor);
-            int rows2 = await _repo.SaveChangesAsync();
-            if (rows2 <= 0) throw new InvalidOperationException("Failed to save changes");
+            await _repo.SaveChangesAsync();
 
             return "Your application has been submitted. Please wait for admin approval.";
         }
@@ -118,8 +116,7 @@ namespace CourseMarketplaceBE.Application.Services
                 throw new InvalidOperationException("Invalid status. Only 'Approved' or 'Rejected' are allowed.");
 
             instructor.ApprovalStatus = status;
-            int rows3 = await _repo.SaveChangesAsync();
-            if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
+            await _repo.SaveChangesAsync();
 
             return true;
         }
@@ -160,8 +157,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 instructor.StripeAccountId         = setupResult.StripeAccountId;
                 instructor.StripeOnboardingStatus  = "Pending";
-                int rows4 = await _repo.SaveChangesAsync();
-                if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
+                await _repo.SaveChangesAsync();
             }
 
             return new StripeSetupResponse
@@ -193,8 +189,7 @@ namespace CourseMarketplaceBE.Application.Services
                 instructor.PayoutsEnabled         = true;
                 instructor.ChargesEnabled         = true;
                 instructor.StripeOnboardingStatus = "Active";
-                int rows5 = await _repo.SaveChangesAsync();
-                if (rows5 <= 0) throw new InvalidOperationException("Failed to save changes");
+                await _repo.SaveChangesAsync();
                 return "Active";
             }
 
@@ -202,8 +197,7 @@ namespace CourseMarketplaceBE.Application.Services
             instructor.PayoutsEnabled         = stripeAccountStatus.PayoutsEnabled;
             instructor.ChargesEnabled         = stripeAccountStatus.ChargesEnabled;
             instructor.StripeOnboardingStatus = "Pending";
-            int rows6 = await _repo.SaveChangesAsync();
-            if (rows6 <= 0) throw new InvalidOperationException("Failed to save changes");
+            await _repo.SaveChangesAsync();
 
             return "Pending";
         }
@@ -271,8 +265,7 @@ namespace CourseMarketplaceBE.Application.Services
             instructor.StripeOnboardingStatus = null;
             instructor.PayoutsEnabled = false;
             instructor.ChargesEnabled = false;
-            int rows7 = await _repo.SaveChangesAsync();
-            if (rows7 <= 0) throw new InvalidOperationException("Failed to save changes");
+            await _repo.SaveChangesAsync();
 
             return $"Stripe account for instructor {instructorId} has been reset. The instructor needs to set up Stripe again.";
         }
@@ -306,8 +299,7 @@ namespace CourseMarketplaceBE.Application.Services
                 throw new InvalidOperationException("Cannot change country once a Stripe account exists. Please reset Stripe first.");
 
             instructor.StripeCountry = countryCode.ToUpper();
-            int rows8 = await _repo.SaveChangesAsync();
-            if (rows8 <= 0) throw new InvalidOperationException("Failed to save changes");
+            await _repo.SaveChangesAsync();
         }
 
         public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.InstructorPayoutDto>> GetPayoutsAsync(int userId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
@@ -362,8 +354,7 @@ namespace CourseMarketplaceBE.Application.Services
                 }
             }
 
-            int rows9 = await _repo.SaveChangesAsync();
-            if (rows9 <= 0) throw new InvalidOperationException("Failed to save changes");
+            await _repo.SaveChangesAsync();
         }
 
         private void UpdatePayoutStatusFromStripe(InstructorPayout dbp, string status, DateTime? arrivalDate)

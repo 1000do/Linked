@@ -15,7 +15,7 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly ICourseRepository _courseRepository;
         private readonly IMaterialRepository _materialRepository;
         private readonly ILessonRepository _lessonRepository;
-        private readonly ICheckoutRepository _checkoutRepository;
+        private readonly IEnrollmentRepository _enrollmentRepository;
         private readonly IRedisService _redisService;
         private readonly INotificationService _notificationService;
         private readonly IUserRepository _userRepository;
@@ -24,7 +24,7 @@ namespace CourseMarketplaceBE.Application.Services
             ICourseRepository courseRepository,
             IMaterialRepository materialRepository,
             ILessonRepository lessonRepository,
-            ICheckoutRepository checkoutRepository,
+            IEnrollmentRepository enrollmentRepository,
             IRedisService redisService,
             INotificationService notificationService,
             IUserRepository userRepository)
@@ -32,7 +32,7 @@ namespace CourseMarketplaceBE.Application.Services
             _courseRepository = courseRepository;
             _materialRepository = materialRepository;
             _lessonRepository = lessonRepository;
-            _checkoutRepository = checkoutRepository;
+            _enrollmentRepository = enrollmentRepository;
             _redisService = redisService;
             _notificationService = notificationService;
             _userRepository = userRepository;
@@ -91,7 +91,7 @@ namespace CourseMarketplaceBE.Application.Services
                     $"/Course/Details/{courseId}"
                 );
 
-                var enrolledUserIds = await _checkoutRepository.GetEnrolledUserIdsAsync(courseId);
+                var enrolledUserIds = await _enrollmentRepository.GetEnrolledUserIdsAsync(courseId);
                 if (enrolledUserIds.Any())
                 {
                     foreach (var studentId in enrolledUserIds)

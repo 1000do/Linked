@@ -116,6 +116,28 @@ public class TransactionController : ControllerBase
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // GET /api/transactions/instructor/course-revenues
+    // Lấy doanh thu khóa học chi tiết của giảng viên
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpGet("instructor/course-revenues")]
+    public async Task<IActionResult> GetInstructorCourseRevenues([FromQuery] int year, [FromQuery] int month)
+    {
+        try
+        {
+            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId))
+                return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
+
+            var result = await _financeService.GetInstructorCourseRevenuesByInstructorAsync(userId, year, month);
+            return Ok(ApiResponse<List<InstructorCourseRevenueResponse>>.SuccessResponse(result, "Instructor course revenues."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // GET /api/transactions/my?page=1&pageSize=20
     // Lấy danh sách giao dịch cho Người mua (Dùng token để xác định ID)
     // ═══════════════════════════════════════════════════════════════════════
@@ -158,8 +180,8 @@ public class TransactionController : ControllerBase
             if (string.IsNullOrWhiteSpace(request.Reason))
                 return BadRequest(ApiResponse<string>.ErrorResponse("Refund reason cannot be empty."));
 
-            await _financeService.RequestRefundAsync(transactionId, userId, request.Reason);
-            return Ok(ApiResponse<string>.SuccessResponse("Refund request submitted successfully. Please wait for Admin approval."));
+            var result = await _financeService.RequestRefundAsync(transactionId, userId, request.Reason);
+            return Ok(ApiResponse<RefundResultDto>.SuccessResponse(result, "Refund request processed."));
         }
         catch (InvalidOperationException ex)
         {

@@ -13,7 +13,7 @@ namespace CourseMarketplaceBE.Application.Services;
 public class ReportService : IReportService
 {
     private readonly IReportRepository _reportRepo;
-    private readonly ICheckoutRepository _checkoutRepo;
+    private readonly IEnrollmentRepository _enrollmentRepo;
     private readonly ICourseRepository _courseRepo;
     private readonly IReviewRepository _reviewRepo;
     private readonly INotificationService _notificationService;
@@ -24,7 +24,7 @@ public class ReportService : IReportService
 
     public ReportService(
         IReportRepository reportRepo,
-        ICheckoutRepository checkoutRepo,
+        IEnrollmentRepository enrollmentRepo,
         ICourseRepository courseRepo,
         IReviewRepository reviewRepo,
         INotificationService notificationService,
@@ -34,7 +34,7 @@ public class ReportService : IReportService
         ILockoutRepository lockoutRepo)
     {
         _reportRepo = reportRepo;
-        _checkoutRepo = checkoutRepo;
+        _enrollmentRepo = enrollmentRepo;
         _courseRepo = courseRepo;
         _reviewRepo = reviewRepo;
         _notificationService = notificationService;
@@ -62,7 +62,7 @@ public class ReportService : IReportService
         if (!isInstructor)
         {
             // Regular user: must be enrolled
-            var enrollment = await _checkoutRepo.GetEnrollmentWithProgressAsync(reporterId, request.CourseId);
+            var enrollment = await _enrollmentRepo.GetEnrollmentWithProgressAsync(reporterId, request.CourseId);
             if (enrollment == null)
                 throw new InvalidOperationException("You must be enrolled in the course before reporting it.");
         }
@@ -489,7 +489,7 @@ public class ReportService : IReportService
         var notifiedUserIds = new HashSet<int>();
         foreach (var c in courses)
         {
-            var studentIds = await _checkoutRepo.GetEnrolledUserIdsAsync(c.CourseId);
+            var studentIds = await _enrollmentRepo.GetEnrolledUserIdsAsync(c.CourseId);
             foreach (var sId in studentIds)
             {
                 if (notifiedUserIds.Add(sId))

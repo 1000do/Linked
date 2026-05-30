@@ -13,18 +13,8 @@ public interface ICheckoutRepository
     /// <summary>Lấy cart items kèm Course → Instructor navigation để tính payout.</summary>
     Task<List<CartItem>> GetCartItemsWithCourseAndInstructorAsync(int userId);
 
-    Task<Enrollment?> GetEnrollmentAsync(int userId, int courseId);
-    Task<Enrollment?> GetEnrollmentWithProgressAsync(int userId, int courseId);
-    Task<List<Enrollment>> GetMyEnrolledCoursesAsync(int userId);
-    Task<bool> IsMaterialCompletedAsync(int enrollmentId, int materialId);
-    Task<int> GetCompletedMaterialCountAsync(int enrollmentId);
-    Task<List<int>> GetCompletedMaterialIdsAsync(int enrollmentId);
-    Task<List<int>> GetEnrolledUserIdsAsync(int courseId);
-
-
-
     // ── Tìm transaction theo Stripe Session ID (cho success callback) ─────────
-    /// <summary>Tìm tất cả transactions liên kết với 1 Stripe session.</summary>
+    /// <summary>Tìm tất cả transactions liên kết with 1 Stripe session.</summary>
     Task<List<Transaction>> GetTransactionsBySessionIdAsync(string stripeSessionId);
 
     Task<List<Transaction>> GetTransactionsByOrderIdAsync(int orderId);
@@ -35,15 +25,10 @@ public interface ICheckoutRepository
     /// <summary>Lấy danh sách đơn hàng pending của user để dọn dẹp trước khi tạo checkout mới.</summary>
     Task<List<OrderInfo>> GetPendingOrdersByUserAsync(int userId);
 
-
-
     // ── Ghi dữ liệu ─────────────────────────────────────────────────────────
     Task AddOrderAsync(OrderInfo order);
     Task AddOrderItemAsync(OrderItem item);
     Task AddTransactionAsync(Transaction transaction);
-    Task AddEnrollmentAsync(Enrollment enrollment);
-    Task AddEnrollmentProgressAsync(EnrollmentProgress progress);
-    Task AddMaterialCompletionAsync(MaterialCompletion completion);
     Task AddInstructorPayoutAsync(InstructorPayout payout);
 
     /// <summary>Xóa toàn bộ cart items của user sau khi thanh toán thành công.</summary>
