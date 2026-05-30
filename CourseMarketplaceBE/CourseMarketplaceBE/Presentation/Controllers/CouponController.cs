@@ -230,10 +230,3 @@ public class CouponController : ControllerBase
         }
     }
 }
-
-// ── Request DTO cho ApplyCouponToCourse ─────────────────────────────────
-public class ApplyCouponToCourseRequest
-{
-    public int CourseId { get; set; }
-    public int CouponId { get; set; }
-}

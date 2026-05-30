@@ -115,4 +115,9 @@ public interface IAdminFinanceService
     /// Lấy doanh thu khóa học của giảng viên chi tiết theo tháng, năm và trọn đời.
     /// </summary>
     Task<List<InstructorCourseRevenueResponse>> GetInstructorCourseRevenuesAsync(int year, int month);
+
+    /// <summary>
+    /// Lấy danh sách quốc gia mà Stripe hỗ trợ từ cấu hình hệ thống.
+    /// </summary>
+    Task<List<object>> GetStripeCountriesAsync();
 }

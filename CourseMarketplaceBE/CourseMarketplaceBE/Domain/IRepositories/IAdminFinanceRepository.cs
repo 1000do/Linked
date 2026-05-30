@@ -6,17 +6,6 @@ namespace CourseMarketplaceBE.Domain.IRepositories;
 /// </summary>
 public interface IAdminFinanceRepository
 {
-    // ── System Config ────────────────────────────────────────────────────
-
-    /// <summary>Lấy giá trị config theo key từ bảng system_configs.</summary>
-    Task<string?> GetConfigValueAsync(string configKey);
-
-    /// <summary>
-    /// Upsert (Insert hoặc Update) config value.
-    /// Nếu key đã tồn tại → update. Chưa có → insert.
-    /// </summary>
-    Task UpsertConfigAsync(string configKey, string configValue, string? description = null);
-
     // ── Financial Aggregations (tính trực tiếp trong DB bằng SUM) ─────
 
     /// <summary>
@@ -24,6 +13,11 @@ public interface IAdminFinanceRepository
     /// Thực thi trên PostgreSQL, KHÔNG kéo data về RAM.
     /// </summary>
     Task<decimal> GetGrossRevenueAsync(int? year = null, int? month = null);
+
+    /// <summary>
+    /// Tổng số tiền đã hoàn trả cho học viên (status = 'refunded')
+    /// </summary>
+    Task<decimal> GetTotalRefundedAsync(int? year = null, int? month = null);
 
     /// <summary>Tổng số giao dịch thành công.</summary>
     Task<int> GetSucceededTransactionCountAsync(int? year = null, int? month = null);
@@ -67,7 +61,7 @@ public interface IAdminFinanceRepository
     // ── Platform Withdrawals ──────────────────────────────────────────────
 
     /// <summary>Thêm mới bản ghi rút tiền Sàn.</summary>
-    Task AddWithdrawalAsync(Domain.Entities.PlatformWithdrawal withdrawal);
+    Task<int> AddWithdrawalAsync(Domain.Entities.PlatformWithdrawal withdrawal);
 
     /// <summary>Lấy danh sách rút tiền Sàn (mới nhất trước).</summary>
     Task<(List<Domain.Entities.PlatformWithdrawal> Items, int TotalCount)> GetWithdrawalsAsync(int? year = null, int? month = null, int page = 1, int pageSize = 10);
@@ -85,10 +79,7 @@ public interface IAdminFinanceRepository
     /// </summary>
     Task<Domain.Entities.Transaction?> GetTransactionWithFullGraphAsync(int transactionId);
 
-    /// <summary>
-    /// Tìm Enrollment active của user cho khóa học (để revoke khi refund).
-    /// </summary>
-    Task<Domain.Entities.Enrollment?> GetActiveEnrollmentAsync(int userId, int courseId);
+
 
     /// <summary>
     /// Lấy Stripe Transfer ID gốc (tr_xxx) từ DestinationPayment (py_xxx).

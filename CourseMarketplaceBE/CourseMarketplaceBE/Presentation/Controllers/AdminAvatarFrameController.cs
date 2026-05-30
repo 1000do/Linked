@@ -1,4 +1,5 @@
 using CourseMarketplaceBE.Application.Interfaces;
+using CourseMarketplaceBE.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -38,11 +39,5 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             if (success) return Ok(new { message = "Avatar frame created successfully!" });
             return BadRequest(new { message = "Error creating avatar frame." });
         }
-    }
-
-    public class GrantFrameRequest
-    {
-        public string UserId { get; set; } = null!;
-        public int FrameId { get; set; }
     }
 }

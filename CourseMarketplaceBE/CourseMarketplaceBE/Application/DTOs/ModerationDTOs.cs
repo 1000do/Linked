@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json.Serialization;
+using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Domain.Constants;
 
 
@@ -26,7 +27,7 @@ namespace CourseMarketplaceBE.Application.DTOs
         public bool IsRemoved { get; set; }
     }
 
-    public class ModerationFilterDto : Common.PagedRequestDto
+    public class ModerationFilterDto : PagedRequestDto
     {
         public string? Search { get; set; }
         public string? Category { get; set; }

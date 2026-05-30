@@ -47,11 +47,6 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                     .ThenInclude(u => u!.UserNavigation)
                 .FirstOrDefaultAsync(i => i.InstructorId == instructorId);
 
-        // ── Account ───────────────────────────────────────────────────────────
-
-        public async Task<Account?> GetAccountByIdAsync(int userId)
-            => await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == userId);
-
         // ── Write ─────────────────────────────────────────────────────────────
 
         public async Task AddAsync(Instructor instructor)

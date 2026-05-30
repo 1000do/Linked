@@ -1,8 +1,13 @@
-using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Hubs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Stripe;
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -11,41 +16,24 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 ///
 /// Nhận và xử lý các sự kiện từ Stripe Dashboard → Developers → Webhooks.
 ///
-/// ★ QUAN TRỌNG (Production Checklist):
-///   1. Tạo Webhook Endpoint trên Stripe Dashboard:
-///      URL: https://your-domain.com/api/webhooks/stripe-connect
-///      Events cần đăng ký (chọn "Events on Connected accounts"):
-///        - payout.paid          → Tiền đã về ngân hàng giảng viên ✅
-///        - payout.failed        → Lỗi chuyển tiền về ngân hàng ❌
-///        - payout.created       → Stripe bắt đầu xử lý lệnh chuyển tiền 🔵
-///
-///   2. Set biến môi trường:
-///      STRIPE_CONNECT_WEBHOOK_SECRET=whsec_xxxx
-///
-///   3. Test local với Stripe CLI:
-///      stripe listen --forward-connect-to localhost:5001/api/webhooks/stripe-connect
-///
 /// SOLID — SRP: Controller chỉ parse + route event. Không chứa business logic.
-/// SOLID — DIP: Phụ thuộc IAdminFinanceRepository qua constructor injection.
+/// SOLID — DIP: Phụ thuộc IStripeWebhookService qua constructor injection.
 /// </summary>
 [Route("api/webhooks")]
 [ApiController]
 public class StripeWebhookController : ControllerBase
 {
-    private readonly IAdminFinanceRepository _financeRepo;
+    private readonly IStripeWebhookService _webhookService;
     private readonly ILogger<StripeWebhookController> _logger;
-    private readonly IHubContext<FinanceHub> _hubContext;
     private readonly string _connectWebhookSecret;
 
     public StripeWebhookController(
-        IAdminFinanceRepository financeRepo,
+        IStripeWebhookService webhookService,
         ILogger<StripeWebhookController> logger,
-        IConfiguration configuration,
-        IHubContext<FinanceHub> hubContext)
+        IConfiguration configuration)
     {
-        _financeRepo = financeRepo;
+        _webhookService = webhookService;
         _logger = logger;
-        _hubContext = hubContext;
         _connectWebhookSecret = Environment.GetEnvironmentVariable("STRIPE_CONNECT_WEBHOOK_SECRET")
             ?? configuration["Stripe:ConnectWebhookSecret"]
             ?? string.Empty;
@@ -143,37 +131,7 @@ public class StripeWebhookController : ControllerBase
             stripePayout.Id, stripePayout.Amount / 100.0,
             stripePayout.Currency.ToUpper(), e.Account);
 
-        // Tìm các bản ghi DB đã được lưu stripe_payout_id lúc payout.created
-        var dbPayouts = await _financeRepo.GetPayoutsByStripePayoutIdAsync(stripePayout.Id);
-        if (dbPayouts == null || !dbPayouts.Any())
-        {
-            _logger.LogWarning("payout.paid: No DB record found for StripePayoutId={Id}", stripePayout.Id);
-            return;
-        }
-
-        // ★ Tiền đã về ngân hàng — cập nhật trạng thái cuối cùng cho tất cả
-        foreach (var p in dbPayouts)
-        {
-            p.PayoutStatus = "paid";
-            p.PaidToBankAt = DateTime.UtcNow;
-        }
-        await _financeRepo.SaveChangesAsync();
-
-        // 🔥 Gửi SignalR báo cho Admin và Instructor (refresh toàn bảng)
-        var instructorId = dbPayouts.First().InstructorId;
-        await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new {
-            refresh = true
-        });
-        if (instructorId.HasValue)
-        {
-            await _hubContext.Clients.Group($"InstructorFinance_{instructorId.Value}").SendAsync("UpdatePayoutStatus", new {
-                refresh = true
-            });
-        }
-
-        _logger.LogInformation(
-            "✅ {Count} InstructorPayouts → PAID TO BANK at {Time}",
-            dbPayouts.Count, DateTime.UtcNow);
+        await _webhookService.OnPayoutPaidAsync(stripePayout.Id, e.Account!);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -188,21 +146,11 @@ public class StripeWebhookController : ControllerBase
             "payout.failed | StripePayoutId={Id} | Reason={Reason} | Account={Acc}",
             stripePayout.Id, stripePayout.FailureMessage, e.Account);
 
-        var dbPayouts = await _financeRepo.GetPayoutsByStripePayoutIdAsync(stripePayout.Id);
-        if (dbPayouts == null || !dbPayouts.Any()) return;
-
-        foreach (var p in dbPayouts)
-        {
-            p.PayoutStatus = "failed";
-        }
-        await _financeRepo.SaveChangesAsync();
-
-        _logger.LogError("❌ {Count} InstructorPayouts → FAILED", dbPayouts.Count);
+        await _webhookService.OnPayoutFailedAsync(stripePayout.Id, stripePayout.FailureMessage, e.Account!);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
     // payout.created → Stripe vừa tạo lệnh chuyển về ngân hàng (in_transit)
-    // ★ Lưu stripe_payout_id để match khi payout.paid đến
     // ═══════════════════════════════════════════════════════════════════════
     private async Task OnPayoutCreatedAsync(Event e)
     {
@@ -213,48 +161,12 @@ public class StripeWebhookController : ControllerBase
             "payout.created | StripePayoutId={Id} | Amount={Amt} | Account={Acc}",
             stripePayout.Id, stripePayout.Amount / 100.0, e.Account);
 
-        // Tìm tất cả các khoản đang ở trạng thái 'transferred' thuộc account này
-        var dbPayouts = await _financeRepo.GetTransferredPayoutsByAccountAsync(e.Account!);
-        if (dbPayouts == null || !dbPayouts.Any())
-        {
-            _logger.LogWarning(
-                "payout.created: No 'transferred' payouts found for Account={Acc}", e.Account);
-            return;
-        }
-
-        // ★ Lưu stripe_payout_id, chuyển sang in_transit cho TẤT CẢ các khoản
-        foreach (var p in dbPayouts)
-        {
-            p.StripePayoutId = stripePayout.Id;
-            p.PayoutStatus = "in_transit";
-        }
-        await _financeRepo.SaveChangesAsync();
-
-        // 🔥 Gửi SignalR báo cho Admin và Instructor
-        var instructorId = dbPayouts.First().InstructorId;
-        await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new {
-            refresh = true
-        });
-        if (instructorId.HasValue)
-        {
-            await _hubContext.Clients.Group($"InstructorFinance_{instructorId.Value}").SendAsync("UpdatePayoutStatus", new {
-                refresh = true
-            });
-        }
-
-        _logger.LogInformation(
-            "🔵 {Count} InstructorPayouts → IN TRANSIT | StripePayoutId={PoId}",
-            dbPayouts.Count, stripePayout.Id);
+        await _webhookService.OnPayoutCreatedAsync(stripePayout.Id, e.Account!);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
     // charge.refunded → Stripe xác nhận refund đã hoàn tất
-    // ★ Safety net: Bắt refund từ cả Dashboard lẫn API
     // ═══════════════════════════════════════════════════════════════════════
-    /// <summary>
-    /// charge.refunded → Stripe xác nhận refund đã hoàn tất
-    /// ★ Safety net: Bắt refund từ cả Dashboard lẫn API
-    /// ═══════════════════════════════════════════════════════════════════════
     private async Task OnChargeRefundedAsync(Event e)
     {
         var charge = e.Data.Object as Charge;
@@ -264,44 +176,7 @@ public class StripeWebhookController : ControllerBase
             "charge.refunded | ChargeId={Id} | PaymentIntent={PI} | Amount={Amt}",
             charge.Id, charge.PaymentIntentId, charge.AmountRefunded / 100.0);
 
-        // 1. Tìm transaction theo PaymentIntentId (pi_xxx)
-        var txn = await _financeRepo.GetTransactionByPaymentIntentIdAsync(charge.PaymentIntentId);
-        
-        if (txn != null && txn.TransactionsStatus != "refunded")
-        {
-            _logger.LogInformation("🔄 Syncing refund from Stripe Dashboard for TxnId={Id}", txn.TransactionId);
-            
-            // 2. Cập nhật trạng thái
-            txn.TransactionsStatus = "refunded";
-            
-            // 3. Cập nhật payout liên quan
-            var payout = txn.InstructorPayouts.FirstOrDefault();
-            if (payout != null)
-            {
-                _financeRepo.RemoveInstructorPayout(payout);
-            }
-
-            // 4. Thu hồi Enrollment
-            var buyerUserId = txn.AccountFromNavigation?.User?.UserId;
-            var courseId = txn.OrderItem?.CourseId;
-            if (buyerUserId.HasValue && courseId.HasValue)
-            {
-                var enrollment = await _financeRepo.GetActiveEnrollmentAsync(buyerUserId.Value, courseId.Value);
-                if (enrollment != null)
-                {
-                    enrollment.EnrollmentStatus = "revoked";
-                    _logger.LogInformation("🚫 Enrollment revoked via Webhook sync");
-                }
-            }
-
-            await _financeRepo.SaveChangesAsync();
-        }
-
-        // 🔥 Gửi SignalR báo cho Admin để refresh UI
-        await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new
-        {
-            refresh = true
-        });
+        await _webhookService.OnChargeRefundedAsync(charge.PaymentIntentId, charge.AmountRefunded / 100.0);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -310,29 +185,14 @@ public class StripeWebhookController : ControllerBase
     [HttpGet("test-force-paid")]
     public async Task<IActionResult> TestForcePaid(string payoutId)
     {
-        var dbPayouts = await _financeRepo.GetPayoutsByStripePayoutIdAsync(payoutId);
-        if (dbPayouts == null || !dbPayouts.Any()) return NotFound("This Payout ID was not found in the DB.");
-
-        foreach (var p in dbPayouts)
+        try
         {
-            p.PayoutStatus = "paid";
-            p.PaidToBankAt = DateTime.UtcNow;
-            p.IsPaid = true;
+            await _webhookService.ForcePayoutPaidAsync(payoutId);
+            return Ok("Successfully forced transactions to PAID status!");
         }
-        await _financeRepo.SaveChangesAsync();
-
-        // 🔥 Bắn SignalR để Web tự nhảy chữ
-        var instructorId = dbPayouts.First().InstructorId;
-        await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new {
-            refresh = true
-        });
-        if (instructorId.HasValue)
+        catch (InvalidOperationException ex)
         {
-            await _hubContext.Clients.Group($"InstructorFinance_{instructorId.Value}").SendAsync("UpdatePayoutStatus", new {
-                refresh = true
-            });
+            return NotFound(ex.Message);
         }
-
-        return Ok($"Successfully forced {dbPayouts.Count} transactions to PAID status!");
     }
 }

@@ -310,4 +310,18 @@ public class ChatService : IChatService
         };
         await _chatRepository.AddAuditLogAsync(log);
     }
+
+    public async Task<SupportAccountDto?> GetSupportAccountAsync()
+    {
+        var staffId = await _userRepository.GetStaffAccountIdAsync();
+        if (staffId == null) return null;
+        
+        var staff = await _userRepository.GetAccountByIdAsync(staffId.Value);
+        return new SupportAccountDto
+        { 
+            AccountId = staffId.Value,
+            FullName = staff?.User?.FullName ?? "Support Team",
+            AvatarUrl = staff?.AvatarUrl ?? ""
+        };
+    }
 }

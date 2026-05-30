@@ -34,7 +34,7 @@ public class EnrollmentService : IEnrollmentService
             throw new InvalidOperationException("You cannot enroll in your own course.");
 
         // 2. Check if already enrolled
-        if (await _repo.IsEnrolledAsync(userId, courseId))
+        if (await _courseRepo.IsEnrolledAsync(userId, courseId))
             throw new InvalidOperationException("You have already enrolled in this course.");
 
         // 3. Perform enrollment

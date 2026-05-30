@@ -1,5 +1,6 @@
 using CourseMarketplaceBE.Domain.Entities;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace CourseMarketplaceBE.Domain.IRepositories;
@@ -34,4 +35,14 @@ public interface IUserRepository
     Task<int?> GetStaffAccountIdAsync();
     Task<int?> GetAdminIdAsync();
     Task<int> GetTotalStudentsCountAsync();
+
+    // Migrated from INotificationRepository
+    Task<List<int>> GetAllUserIdsAsync();
+    Task<int?> GetUserIdByEmailAsync(string email);
+    Task<List<string>> SearchEmailsByQueryAsync(string query, int take = 5);
+
+    // Migrated from ICheckoutRepository
+    Task<string?> GetUserEmailAsync(int userId);
+    Task<string?> GetInstructorStripeAccountIdAsync(int instructorId);
+    Task<string?> GetInstructorStripeCountryAsync(int instructorId);
 }

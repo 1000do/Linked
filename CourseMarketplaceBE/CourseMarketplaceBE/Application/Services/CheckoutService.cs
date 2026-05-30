@@ -28,6 +28,8 @@ public class CheckoutService : ICheckoutService
     private readonly IHubContext<FinanceHub> _hubContext;
     private readonly INotificationService _notificationService;
     private readonly ICourseRepository _courseRepo;
+    private readonly ICouponRepository _couponRepo;
+    private readonly IUserRepository _userRepo;
     private readonly IAdminFinanceService _adminFinanceService;
 
     public CheckoutService(
@@ -37,7 +39,9 @@ public class CheckoutService : ICheckoutService
         IHubContext<FinanceHub> hubContext,
         IAdminFinanceService adminFinanceService,
         INotificationService notificationService,
-        ICourseRepository courseRepo)
+        ICourseRepository courseRepo,
+        ICouponRepository couponRepo,
+        IUserRepository userRepo)
     {
         _repo = repo;
         _paymentGateway = paymentGateway;
@@ -45,6 +49,8 @@ public class CheckoutService : ICheckoutService
         _hubContext = hubContext;
         _notificationService = notificationService;
         _courseRepo = courseRepo;
+        _couponRepo = couponRepo;
+        _userRepo = userRepo;
         _adminFinanceService = adminFinanceService;
     }
 
@@ -69,7 +75,7 @@ public class CheckoutService : ICheckoutService
         // ── 1.2 Kiểm tra không mua trùng (đã enrolled) ──────────────────────
         foreach (var item in cartItems)
         {
-            if (item.CourseId.HasValue && await _repo.IsEnrolledAsync(userId, item.CourseId.Value))
+            if (item.CourseId.HasValue && await _courseRepo.IsEnrolledAsync(userId, item.CourseId.Value))
                 throw new InvalidOperationException(
                     $"You have already purchased the course \"{item.Course?.Title}\". Please remove it from the cart.");
         }
@@ -86,7 +92,7 @@ public class CheckoutService : ICheckoutService
 
             foreach (var code in codes)
             {
-                var cp = await _repo.GetValidCouponAsync(code, DateTime.Now);
+                var cp = await _couponRepo.GetValidCouponAsync(code, DateTime.Now);
                 if (cp != null)
                 {
                     decimal eligibleSubTotal = cartItems
@@ -102,7 +108,7 @@ public class CheckoutService : ICheckoutService
         }
 
         // Lấy email user cho Stripe
-        var userEmail = await _repo.GetUserEmailAsync(userId);
+        var userEmail = await _userRepo.GetUserEmailAsync(userId);
 
         // ── 1.4 Chuẩn bị line items cho Stripe ──────────────────────────────
         var paymentLineItems = new List<PaymentLineItem>();
@@ -181,14 +187,14 @@ public class CheckoutService : ICheckoutService
         string successUrl,
         string cancelUrl)
     {
-        var course = await _repo.GetCourseWithInstructorAsync(courseId);
+        var course = await _courseRepo.GetCourseWithInstructorAsync(courseId);
         if (course == null)
             throw new InvalidOperationException("Course not found.");
 
-        if (await _repo.IsEnrolledAsync(userId, courseId))
+        if (await _courseRepo.IsEnrolledAsync(userId, courseId))
             throw new InvalidOperationException($"You have already purchased the course \"{course.Title}\".");
 
-        var stripeAccountId = await _repo.GetInstructorStripeAccountIdAsync(course.InstructorId ?? 0);
+        var stripeAccountId = await _userRepo.GetInstructorStripeAccountIdAsync(course.InstructorId ?? 0);
         if (string.IsNullOrEmpty(stripeAccountId))
             throw new InvalidOperationException("Instructor has not connected a Stripe payment account.");
 
@@ -198,7 +204,7 @@ public class CheckoutService : ICheckoutService
         
         if (!string.IsNullOrWhiteSpace(couponCode))
         {
-            coupon = await _repo.GetValidCouponAsync(couponCode, DateTime.Now);
+            coupon = await _couponRepo.GetValidCouponAsync(couponCode, DateTime.Now);
             if (coupon != null)
             {
                 if (course.CouponId != coupon.CouponId)
@@ -223,7 +229,7 @@ public class CheckoutService : ICheckoutService
         }
 
         var purchasePrice = Math.Max(originalPrice - discountAmount, 0m);
-        var userEmail = await _repo.GetUserEmailAsync(userId);
+        var userEmail = await _userRepo.GetUserEmailAsync(userId);
 
         var paymentLineItems = new List<PaymentLineItem>
         {
@@ -235,7 +241,7 @@ public class CheckoutService : ICheckoutService
             }
         };
 
-        var instructorCountry = await _repo.GetInstructorStripeCountryAsync(course.InstructorId ?? 0);
+        var instructorCountry = await _userRepo.GetInstructorStripeCountryAsync(course.InstructorId ?? 0);
         var sessionCurrency = GetCurrencyFromCountry(instructorCountry);
 
         var orderReference = $"tx_{Guid.NewGuid().ToString("N")}";
@@ -320,7 +326,7 @@ public class CheckoutService : ICheckoutService
 
             // ── 2.4 Load các khóa học & áp coupon để tính giá chính xác ─────────
             var coupon = !string.IsNullOrWhiteSpace(couponCode)
-                ? await _repo.GetValidCouponAsync(couponCode, DateTime.Now)
+                ? await _couponRepo.GetValidCouponAsync(couponCode, DateTime.Now)
                 : null;
 
             // ════ BẮT ĐẦU DB TRANSACTION ════════════════════════════════════════
@@ -342,7 +348,7 @@ public class CheckoutService : ICheckoutService
 
                 foreach (var courseId in courseIds)
                 {
-                    var course = await _repo.GetCourseWithInstructorAsync(courseId);
+                    var course = await _courseRepo.GetCourseWithInstructorAsync(courseId);
                     if (course == null) continue;
 
                     decimal originalPrice = course.Price;
@@ -406,7 +412,7 @@ public class CheckoutService : ICheckoutService
                     if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
 
                     // Cấp Enrollment & Progress
-                    if (!await _repo.IsEnrolledAsync(userId, courseId))
+                    if (!await _courseRepo.IsEnrolledAsync(userId, courseId))
                     {
                         var enrollment = new Enrollment
                         {

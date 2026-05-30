@@ -16,9 +16,6 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         Task<Instructor?> GetByIdAsync(int id);
         Task<Instructor?> GetByIdWithNavigationAsync(int instructorId);
 
-        // ── Account ────────────────────────────────────────────────────────────
-        Task<Account?> GetAccountByIdAsync(int userId);
-
         // ── Write ──────────────────────────────────────────────────────────────
         Task AddAsync(Instructor instructor);
         void Update(Instructor instructor);

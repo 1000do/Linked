@@ -11,5 +11,6 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         Task<string?> GetValueAsync(string key);
         Task<List<Dictionary<string, object>>> GetAllConfigAsync();
         Task SetConfigByKeyAsync(string key, Dictionary<string, object> value);
+        Task UpsertConfigAsync(string configKey, string configValue, string? description = null);
     }
 }

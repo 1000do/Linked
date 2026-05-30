@@ -45,10 +45,10 @@ public class PayoutScheduleTask : BackgroundService
     {
         using var scope = _serviceProvider.CreateScope();
         var financeService = scope.ServiceProvider.GetRequiredService<IAdminFinanceService>();
-        var repo = scope.ServiceProvider.GetRequiredService<IAdminFinanceRepository>();
+        var configRepo = scope.ServiceProvider.GetRequiredService<ISystemConfigRepository>();
 
         // 1. Lấy cấu hình ngày thanh toán (Mặc định là ngày 15 hàng tháng nếu DB trống)
-        var payoutDaysStr = await repo.GetConfigValueAsync("PayoutDays") ?? "15";
+        var payoutDaysStr = await configRepo.GetValueAsync("PayoutDays") ?? "15";
         if (string.IsNullOrWhiteSpace(payoutDaysStr)) payoutDaysStr = "15";
 
         var today = DateTime.Today.Day;
@@ -62,7 +62,7 @@ public class PayoutScheduleTask : BackgroundService
         {
             // Kiểm tra xem hôm nay đã chạy chưa để tránh double-run (Worker quét mỗi tiếng)
             var todayStr = DateTime.Today.ToString("yyyy-MM-dd");
-            var lastPayoutDateStr = await repo.GetConfigValueAsync("LastBulkPayoutDate") ?? "";
+            var lastPayoutDateStr = await configRepo.GetValueAsync("LastBulkPayoutDate") ?? "";
             
             if (lastPayoutDateStr == todayStr)
             {
@@ -75,7 +75,7 @@ public class PayoutScheduleTask : BackgroundService
             var result = await financeService.BulkPayAllViaStripeAsync();
             
             // Lưu lại ngày chạy hôm nay để đánh dấu hoàn tất
-            await repo.UpsertConfigAsync("LastBulkPayoutDate", todayStr, "The last date when bulk payout was successfully executed.");
+            await configRepo.UpsertConfigAsync("LastBulkPayoutDate", todayStr, "The last date when bulk payout was successfully executed.");
             
             _logger.LogInformation("Bulk payout finished. Success: {Success}, Fail: {Fail}", 
                 result.SuccessCount, result.FailCount);

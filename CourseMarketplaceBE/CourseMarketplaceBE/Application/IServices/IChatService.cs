@@ -17,4 +17,5 @@ public interface IChatService
     Task<bool> SubmitReportAsync(int reporterId, int chatId, string reason, string description);
     Task<int> GetTotalUnreadCountAsync(int accountId);
     Task LogActionAsync(int actorId, string action, string targetType, int? targetId, string details);
+    Task<SupportAccountDto?> GetSupportAccountAsync();
 }
