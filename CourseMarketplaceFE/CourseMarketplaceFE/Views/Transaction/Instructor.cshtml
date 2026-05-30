@@ -4,17 +4,19 @@
     ViewData["Title"] = "Revenue & Payouts";
     Layout = "_InstructorLayout";
     
-    // Tính toán thống kê từ Payouts
-    var grossRevenue = Model.Payouts.Items.Sum(x => Math.Abs(x.Amount));
-    var refundedRevenue = Model.Payouts.Items.Where(x => x.PayoutStatus?.ToLower() == "refunded").Sum(x => Math.Abs(x.Amount));
+    // Tính toán thống kê từ TẤT CẢ Payouts của tháng (tránh lỗi phân trang)
+    var allPayouts = ViewBag.AllPayouts as List<CourseMarketplaceFE.Models.InstructorPayoutViewModel> ?? new List<CourseMarketplaceFE.Models.InstructorPayoutViewModel>();
+    
+    var grossRevenue = allPayouts.Sum(x => Math.Abs(x.Amount));
+    var refundedRevenue = allPayouts.Where(x => x.PayoutStatus?.ToLower() == "refunded").Sum(x => Math.Abs(x.Amount));
     var netRevenue = grossRevenue - refundedRevenue; // grossRevenue - refundedRevenue
     
-    var stripeWallet = Model.Payouts.Items.Where(x => x.PayoutStatus?.ToLower() == "transferred" || (x.PayoutStatus?.ToLower() == "refunded" && x.IsPaid)).Sum(x => x.Amount);
-    var pendingPayout = Model.Payouts.Items.Where(x => x.PayoutStatus?.ToLower() == "pending" || x.PayoutStatus?.ToLower() == "in_transit").Sum(x => x.Amount);
-    var paidPayout = Model.Payouts.Items.Where(x => x.PayoutStatus?.ToLower() == "paid").Sum(x => x.Amount);
+    var stripeWallet = allPayouts.Where(x => x.PayoutStatus?.ToLower() == "transferred" || (x.PayoutStatus?.ToLower() == "refunded" && x.IsPaid && x.PaidToBankAt != null)).Sum(x => x.Amount);
+    var pendingPayout = allPayouts.Where(x => x.PayoutStatus?.ToLower() == "pending" || x.PayoutStatus?.ToLower() == "in_transit").Sum(x => x.Amount);
+    var paidPayout = allPayouts.Where(x => x.PayoutStatus?.ToLower() == "paid").Sum(x => x.Amount);
     
     // Đơn vị tiền tệ
-    var currency = (Model.Transactions.Items?.FirstOrDefault()?.PayoutCurrency ?? Model.Transactions.Items?.FirstOrDefault()?.Currency ?? "USD").ToUpper();
+    var currency = "USD";
 
     // Lấy thông tin ngày quyết toán từ ViewBag
     var payoutDaysStr = ViewBag.PayoutDays as string ?? "15";
@@ -143,7 +145,7 @@
     <!-- ========================================== -->
     
     <!-- Thống kê Tài chính đối soát chi tiết (gồm 2 nhóm riêng biệt giao diện đẹp) -->
-    <div class="space-y-8 mb-8 animate-fadeIn">
+    <div id="stats-overview" class="space-y-8 mb-8 animate-fadeIn">
         <!-- Nhóm 1: Thống kê Doanh thu (Revenue Statistics) -->
         <div>
             <div class="flex items-center gap-2 mb-4">
@@ -160,7 +162,7 @@
                         </div>
                     </div>
                     <div>
-                        <p class="text-2xl font-headline font-black text-slate-900 group-hover:text-emerald-600 transition-colors">@grossRevenue.ToString("C")</p>
+                        <p class="text-2xl font-headline font-black text-slate-900 group-hover:text-emerald-600 transition-colors">$@grossRevenue.ToString("N2")</p>
                         <p class="text-[10px] font-bold text-slate-400 mt-1.5 uppercase tracking-wide">Total Sales Revenue</p>
                     </div>
                 </div>
@@ -177,11 +179,11 @@
                         <p class="text-2xl font-headline font-black text-rose-600">
                             @if (refundedRevenue > 0)
                             {
-                                <span>- @refundedRevenue.ToString("C")</span>
+                                <span>- $@refundedRevenue.ToString("N2")</span>
                             }
                             else
                             {
-                                <span>@refundedRevenue.ToString("C")</span>
+                                <span>$@refundedRevenue.ToString("N2")</span>
                             }
                         </p>
                         <p class="text-[10px] font-bold text-slate-400 mt-1.5 uppercase tracking-wide">Deductions & Returns</p>
@@ -198,7 +200,7 @@
                         </div>
                     </div>
                     <div class="relative z-10">
-                        <p class="text-2xl font-headline font-black text-white">@netRevenue.ToString("C")</p>
+                        <p class="text-2xl font-headline font-black text-white">$@netRevenue.ToString("N2")</p>
                         <p class="text-[10px] font-bold text-indigo-200 mt-1.5 uppercase tracking-wide">Actual Revenue after Payout</p>
                     </div>
                 </div>
@@ -223,11 +225,11 @@
                     <div>
                         @if (pendingPayout < 0)
                         {
-                            <p class="text-2xl font-headline font-black text-rose-600">@pendingPayout.ToString("C")</p>
+                            <p class="text-2xl font-headline font-black text-rose-600">-$@Math.Abs(pendingPayout).ToString("N2")</p>
                         }
                         else
                         {
-                            <p class="text-2xl font-headline font-black text-slate-900 group-hover:text-amber-600 transition-colors">@pendingPayout.ToString("C")</p>
+                            <p class="text-2xl font-headline font-black text-slate-900 group-hover:text-amber-600 transition-colors">$@pendingPayout.ToString("N2")</p>
                         }
                         <p class="text-[10px] font-bold text-slate-400 mt-1.5 uppercase tracking-wide">Escrow Hold / In Transit</p>
                     </div>
@@ -245,11 +247,11 @@
                     <div class="relative z-10">
                         @if (stripeWallet < 0)
                         {
-                            <p class="text-2xl font-headline font-black text-rose-200">@stripeWallet.ToString("C")</p>
+                            <p class="text-2xl font-headline font-black text-rose-200">-$@Math.Abs(stripeWallet).ToString("N2")</p>
                         }
                         else
                         {
-                            <p class="text-2xl font-headline font-black text-white">@stripeWallet.ToString("C")</p>
+                            <p class="text-2xl font-headline font-black text-white">$@stripeWallet.ToString("N2")</p>
                         }
                         <p class="text-[10px] font-bold text-violet-100 mt-1.5 uppercase tracking-wide">Ready for Bank Transfer</p>
                     </div>
@@ -265,7 +267,7 @@
                         </div>
                     </div>
                     <div class="relative z-10">
-                        <p class="text-2xl font-headline font-black text-white">@paidPayout.ToString("C")</p>
+                        <p class="text-2xl font-headline font-black text-white">$@paidPayout.ToString("N2")</p>
                         <p class="text-[10px] font-bold text-emerald-100 mt-1.5 uppercase tracking-wide">Transferred to Bank Account</p>
                     </div>
                 </div>
@@ -286,7 +288,8 @@
         </div>
         <!-- Hidden input storing serialized chart items for AJAX updates -->
         <div id="chart-data-json" class="hidden" data-chart="@System.Text.Json.JsonSerializer.Serialize(
-            Model.Transactions.Items?.Where(x => x.Status != "refunded" && x.Amount > 0).OrderBy(x => x.Date).Select(x => new {
+            (ViewBag.AllTransactions as List<CourseMarketplaceFE.Models.TransactionListItemVM>)?
+            .Where(x => x.Status != "refunded" && x.Amount > 0).OrderBy(x => x.Date).Select(x => new {
                 date = x.Date?.ToString("dd/MM"),
                 amount = x.Amount,
                 currency = x.PayoutCurrency ?? x.Currency
@@ -374,6 +377,10 @@
                     <span class="material-symbols-outlined text-[18px]">payments</span>
                     Payout History
                 </button>
+                <button id="tab-btn-cr" onclick="switchTable('cr')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-800 transition-all duration-300">
+                    <span class="material-symbols-outlined text-[18px]">auto_graph</span>
+                    Course Revenues
+                </button>
             </div>
             
             <div class="flex items-center" id="tab-indicator-tx">
@@ -385,6 +392,11 @@
                 <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white border border-slate-200/80 text-slate-600 shadow-sm/5">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Paid: @Model.Payouts.Items.Count(x => x.IsPaid)
                 </span>
+            </div>
+            <div class="hidden flex items-center" id="tab-indicator-cr">
+                <div class="text-xs font-bold text-slate-500 px-3.5 py-1.5 bg-white border border-slate-200/80 rounded-xl shadow-sm/5">
+                    Courses: <span class="text-slate-800">@(Model.CourseRevenues?.Count ?? 0)</span> records
+                </div>
             </div>
         </div>
 
@@ -472,13 +484,13 @@
                                             @if (item.Status == "refunded")
                                             {
                                                 <span class="text-sm font-black text-rose-600 tracking-tight font-black">
-                                                    - @((item.PayoutCurrency ?? item.Currency ?? "USD").ToUpper()) @Math.Abs(item.Amount).ToString("N2")
+                                                    - $@Math.Abs(item.Amount).ToString("N2")
                                                 </span>
                                             }
                                             else
                                             {
                                                 <span class="text-sm font-black text-slate-900 tracking-tight font-black">
-                                                    @((item.PayoutCurrency ?? item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")
+                                                    $@item.Amount.ToString("N2")
                                                 </span>
                                             }
                                             <span class="text-[9px] text-slate-400 font-bold mt-0.5 uppercase tracking-wider">Net Amount</span>
@@ -652,19 +664,19 @@
                                     <td class="px-4 py-4.5 align-middle max-w-[280px]">
                                         <div class="flex flex-col">
                                             <span class="text-sm font-bold text-slate-900 leading-snug line-clamp-1 group-hover/row:text-emerald-700 transition-colors" title="@item.CourseTitle">@item.CourseTitle</span>
-                                            <span class="text-[10px] text-slate-400 font-mono mt-1.5 bg-slate-50 px-1.5 py-0.5 border border-slate-100 rounded w-fit">Escrow Split: @item.TotalAmount.ToString("C")</span>
+                                            <span class="text-[10px] text-slate-400 font-mono mt-1.5 bg-slate-50 px-1.5 py-0.5 border border-slate-100 rounded w-fit">Escrow Split: $@item.TotalAmount.ToString("N2")</span>
                                         </div>
                                     </td>
                                     <td class="px-4 py-4.5 text-right align-middle whitespace-nowrap">
                                         <div class="flex flex-col items-end">
                                             @if (item.PayoutStatus?.ToLower() == "refunded")
                                             {
-                                                <span class="text-sm font-black text-rose-600 tracking-tight font-black">- @Math.Abs(item.Amount).ToString("C")</span>
+                                                <span class="text-sm font-black text-rose-600 tracking-tight font-black">- $@Math.Abs(item.Amount).ToString("N2")</span>
                                                 <span class="text-[9px] text-slate-400 font-bold mt-0.5 uppercase tracking-wider">Deducted</span>
                                             }
                                             else
                                             {
-                                                <span class="text-sm font-black text-emerald-700 tracking-tight font-black">@item.Amount.ToString("C")</span>
+                                                <span class="text-sm font-black text-emerald-700 tracking-tight font-black">$@item.Amount.ToString("N2")</span>
                                                 <span class="text-[9px] text-slate-400 font-bold mt-0.5 uppercase tracking-wider">Credited</span>
                                             }
                                         </div>
@@ -768,6 +780,180 @@
                     </div>
                 </div>
             }
+        </div>
+
+        <!-- ================= CONTENT: COURSE REVENUES ================= -->
+        <div id="tab-content-cr" class="hidden flex-col animate-fadeIn">
+            <!-- Bộ lọc & Sắp xếp Doanh thu Khóa học -->
+            <div class="px-6 py-5 border-b border-slate-100 bg-white">
+                <form id="courseRevenuesForm" onsubmit="event.preventDefault(); ajaxReloadInstructor();" method="get" action="/Transaction/Instructor" class="flex flex-col lg:flex-row items-center justify-between gap-4 w-full">
+                    <input type="hidden" name="page" value="@Model.Transactions.Page" />
+                    <input type="hidden" name="pageSize" value="@Model.Transactions.PageSize" />
+                    <input type="hidden" name="keyword" value="@ViewBag.Keyword" />
+                    <input type="hidden" name="sortBy" value="@ViewBag.SortBy" />
+                    <input type="hidden" name="status" value="@ViewBag.Status" />
+                    <input type="hidden" name="year" value="@ViewBag.Year" />
+                    <input type="hidden" name="month" value="@ViewBag.Month" />
+                    <input type="hidden" name="tab" value="cr" />
+
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-800">Course Revenue Breakdown</h4>
+                        <p class="text-xs text-slate-400 mt-0.5">Summary of earnings generated by each of your courses.</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 w-full lg:w-auto">
+                        <div class="relative w-full lg:w-64">
+                            <select name="courseSortBy" onchange="ajaxReloadInstructor()" class="w-full pl-3.5 pr-8 py-2.5 appearance-none bg-slate-50/70 border border-slate-200/80 rounded-xl text-xs focus:ring-4 focus:ring-indigo-600/10 focus:border-indigo-600 outline-none shadow-sm cursor-pointer font-black text-slate-700">
+                                <option value="sales_desc" selected="@(ViewBag.CourseSortBy == "sales_desc")">Best-Selling (Sales: High-Low)</option>
+                                <option value="sales_asc" selected="@(ViewBag.CourseSortBy == "sales_asc")">Best-Selling (Sales: Low-High)</option>
+                                <option value="lifetime_desc" selected="@(ViewBag.CourseSortBy == "lifetime_desc")">Lifetime Revenue: High-Low</option>
+                                <option value="lifetime_asc" selected="@(ViewBag.CourseSortBy == "lifetime_asc")">Lifetime Revenue: Low-High</option>
+                                <option value="monthly_desc" selected="@(ViewBag.CourseSortBy == "monthly_desc")">Monthly Revenue: High-Low</option>
+                                <option value="monthly_asc" selected="@(ViewBag.CourseSortBy == "monthly_asc")">Monthly Revenue: Low-High</option>
+                                <option value="yearly_desc" selected="@(ViewBag.CourseSortBy == "yearly_desc")">Yearly Revenue: High-Low</option>
+                                <option value="yearly_asc" selected="@(ViewBag.CourseSortBy == "yearly_asc")">Yearly Revenue: Low-High</option>
+                            </select>
+                            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">arrow_drop_down</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Bảng Doanh thu Khóa học -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-[10px] font-bold text-slate-400 tracking-wider bg-slate-50/40 border-b border-slate-100 uppercase sticky top-0 z-10">
+                            <th class="pl-6 pr-4 py-3.5">Course Title</th>
+                            <th class="px-4 py-3.5 text-center">Sales Quantity</th>
+                            <th class="px-4 py-3.5 text-right">Monthly Revenue</th>
+                            <th class="px-4 py-3.5 text-right">Yearly Revenue</th>
+                            <th class="pr-6 pl-4 py-3.5 text-right">Lifetime Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                        @if (Model.CourseRevenues != null && Model.CourseRevenues.Any())
+                        {
+                            foreach (var item in Model.CourseRevenues)
+                            {
+                                // Premium layout variables
+                                string category = "Information Technology";
+                                string gradientClass = "from-indigo-500 to-purple-600";
+                                string thumbIcon = "menu_book";
+
+                                var t = item.CourseTitle.ToLower();
+                                if (t.Contains("web") || t.Contains("js") || t.Contains("design"))
+                                {
+                                    category = "Design & Development";
+                                    gradientClass = "from-blue-500 to-indigo-600";
+                                    thumbIcon = "code";
+                                }
+                                else if (t.Contains("data") || t.Contains("phân tích") || t.Contains("python"))
+                                {
+                                    category = "Data Science";
+                                    gradientClass = "from-teal-500 to-emerald-600";
+                                    thumbIcon = "analytics";
+                                }
+                                else if (t.Contains("marketing") || t.Contains("seo") || t.Contains("ads"))
+                                {
+                                    category = "Business & Marketing";
+                                    gradientClass = "from-orange-400 to-rose-500";
+                                    thumbIcon = "campaign";
+                                }
+                                else if (t.Contains("quản trị") || t.Contains("doanh nghiệp") || t.Contains("kinh doanh"))
+                                {
+                                    category = "Business Management";
+                                    gradientClass = "from-amber-400 to-rose-500";
+                                    thumbIcon = "corporate_fare";
+                                }
+
+                                decimal diff = item.MonthlyRevenue - item.PreviousMonthRevenue;
+                                string growthText = "";
+                                bool showGrowth = false;
+                                bool isGrowthPositive = true;
+                                if (item.PreviousMonthRevenue > 0)
+                                {
+                                    decimal growthPercent = (diff / item.PreviousMonthRevenue) * 100;
+                                    growthText = $"{(growthPercent >= 0 ? "+" : "")}{growthPercent:F1}%";
+                                    isGrowthPositive = growthPercent >= 0;
+                                    showGrowth = true;
+                                }
+                                else if (item.MonthlyRevenue > 0)
+                                {
+                                    growthText = "New Sales";
+                                    isGrowthPositive = true;
+                                    showGrowth = true;
+                                }
+
+                                 string displayCurrency = currency;
+                                 string formatSpecifier = displayCurrency == "USD" ? "N2" : "N0";
+                                 string currencyPrefix = displayCurrency == "USD" ? "$" : (displayCurrency + " ");
+
+                                 <tr class="hover:bg-slate-50/50 group/row border-b border-slate-100 transition-all duration-300">
+                                     <td class="pl-6 pr-4 py-4 align-middle max-w-[320px]">
+                                         <div class="flex items-center gap-3.5">
+                                             <!-- Mockup High-Fidelity Cover Art Thumbnail -->
+                                             <div class="w-10 h-10 bg-gradient-to-br @gradientClass rounded-xl flex items-center justify-center text-white shrink-0 font-bold shadow-sm relative overflow-hidden transition-transform duration-300 group-hover/row:scale-105">
+                                                 <span class="material-symbols-outlined text-[20px] font-bold">@thumbIcon</span>
+                                             </div>
+                                             <div class="flex flex-col min-w-0">
+                                                 <span class="font-extrabold text-slate-900 group-hover/row:text-[#0f4c43] transition-colors duration-200 truncate leading-snug" title="@item.CourseTitle">
+                                                     @item.CourseTitle
+                                                 </span>
+                                                 <span class="text-[10px] text-slate-400 font-bold mt-0.5">Category: @category</span>
+                                             </div>
+                                         </div>
+                                     </td>
+                                     <td class="px-4 py-4 align-middle text-center">
+                                         <span class="font-black text-slate-900 font-mono text-sm bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/50">@item.SalesCount</span>
+                                     </td>
+                                     <td class="px-4 py-4 text-right align-middle">
+                                         <div class="flex flex-col items-end">
+                                             <span class="font-mono font-bold text-slate-700">@currencyPrefix@item.MonthlyRevenue.ToString(formatSpecifier)</span>
+                                             @if (showGrowth)
+                                             {
+                                                 if (isGrowthPositive)
+                                                 {
+                                                     <span class="text-[10px] font-black text-emerald-600 flex items-center gap-0.5 mt-0.5" title="Previous Month: @currencyPrefix@item.PreviousMonthRevenue.ToString(formatSpecifier)">
+                                                         <span class="material-symbols-outlined text-[10px] font-bold">arrow_upward</span> @growthText
+                                                     </span>
+                                                 }
+                                                 else
+                                                 {
+                                                     <span class="text-[10px] font-black text-rose-600 flex items-center gap-0.5 mt-0.5" title="Previous Month: @currencyPrefix@item.PreviousMonthRevenue.ToString(formatSpecifier)">
+                                                         <span class="material-symbols-outlined text-[10px] font-bold">arrow_downward</span> @growthText
+                                                     </span>
+                                                 }
+                                             }
+                                             else
+                                             {
+                                                 <span class="text-[9px] font-bold text-slate-400 mt-0.5">No change</span>
+                                             }
+                                         </div>
+                                     </td>
+                                     <td class="px-4 py-4 text-right align-middle font-mono font-bold text-slate-700">
+                                         @currencyPrefix@item.YearlyRevenue.ToString(formatSpecifier)
+                                     </td>
+                                     <td class="pr-6 pl-4 py-4 text-right align-middle font-mono font-black text-slate-950">
+                                         @currencyPrefix@item.LifetimeRevenue.ToString(formatSpecifier)
+                                     </td>
+                                 </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="px-6 py-16 text-center">
+                                    <div class="flex flex-col items-center justify-center text-slate-400">
+                                        <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">menu_book</span>
+                                        <p class="text-sm font-bold text-slate-700">No courses or revenues found for this period.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -885,35 +1071,61 @@
         function switchTable(tabId) {
             const btnTx = document.getElementById('tab-btn-tx');
             const btnPo = document.getElementById('tab-btn-po');
+            const btnCr = document.getElementById('tab-btn-cr');
             const contentTx = document.getElementById('tab-content-tx');
             const contentPo = document.getElementById('tab-content-po');
+            const contentCr = document.getElementById('tab-content-cr');
             const indTx = document.getElementById('tab-indicator-tx');
             const indPo = document.getElementById('tab-indicator-po');
+            const indCr = document.getElementById('tab-indicator-cr');
+
+            const activeClass = 'flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-primary shadow-sm transition-all duration-300';
+            const inactiveClass = 'flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-800 transition-all duration-300';
+
+            btnTx.className = inactiveClass;
+            btnPo.className = inactiveClass;
+            if (btnCr) btnCr.className = inactiveClass;
+
+            contentTx.classList.add('hidden');
+            contentTx.classList.remove('flex');
+            contentPo.classList.add('hidden');
+            contentPo.classList.remove('flex');
+            if (contentCr) {
+                contentCr.classList.add('hidden');
+                contentCr.classList.remove('flex');
+            }
+
+            indTx.classList.add('hidden');
+            indTx.classList.remove('flex');
+            indPo.classList.add('hidden');
+            indPo.classList.remove('flex');
+            if (indCr) {
+                indCr.classList.add('hidden');
+                indCr.classList.remove('flex');
+            }
 
             if (tabId === 'tx') {
-                btnTx.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-primary shadow-sm transition-all duration-300';
-                btnPo.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-800 transition-all duration-300';
+                btnTx.className = activeClass;
                 contentTx.classList.remove('hidden');
                 contentTx.classList.add('flex');
-                contentPo.classList.add('hidden');
-                contentPo.classList.remove('flex');
-                
                 indTx.classList.remove('hidden');
                 indTx.classList.add('flex');
-                indPo.classList.add('hidden');
-                indPo.classList.remove('flex');
-            } else {
-                btnPo.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-primary shadow-sm transition-all duration-300';
-                btnTx.className = 'flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-800 transition-all duration-300';
+            } else if (tabId === 'po') {
+                btnPo.className = activeClass;
                 contentPo.classList.remove('hidden');
                 contentPo.classList.add('flex');
-                contentTx.classList.add('hidden');
-                contentTx.classList.remove('flex');
-                
                 indPo.classList.remove('hidden');
                 indPo.classList.add('flex');
-                indTx.classList.add('hidden');
-                indTx.classList.remove('flex');
+            } else if (tabId === 'cr') {
+                if (btnCr) btnCr.className = activeClass;
+                if (contentCr) {
+                    contentCr.classList.remove('hidden');
+                    contentCr.classList.add('flex');
+                }
+                if (indCr) {
+                    indCr.classList.remove('hidden');
+                    indCr.classList.add('flex');
+                }
             }
         }
 
@@ -976,7 +1188,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: `Revenue (${filteredItems.length > 0 && filteredItems[0] && filteredItems[0].currency ? filteredItems[0].currency.toUpperCase() : 'USD'})`,
+                        label: `Revenue (USD)`,
                         data: dataValues,
                         borderColor: '#006a62',
                         borderWidth: 3,
@@ -1008,8 +1220,7 @@
                             displayColors: false,
                             callbacks: {
                                 label: function(context) {
-                                    const curr = filteredItems.length > 0 && filteredItems[0] && filteredItems[0].currency ? filteredItems[0].currency.toUpperCase() : 'USD';
-                                    return curr + ' ' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2});
+                                    return '$' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2});
                                 }
                             }
                         }
@@ -1023,8 +1234,7 @@
                                 font: { family: 'Inter', size: 11, weight: '600' },
                                 color: '#94a3b8',
                                 callback: function(value) {
-                                    const curr = filteredItems.length > 0 && filteredItems[0] && filteredItems[0].currency ? filteredItems[0].currency.toUpperCase() : 'USD';
-                                    return curr + ' ' + value;
+                                    return '$' + value;
                                 }
                             },
                             border: { display: false }
@@ -1044,6 +1254,8 @@
             var activeTab = '@ViewBag.ActiveTab';
             if (activeTab === 'po') {
                 switchTable('po');
+            } else if (activeTab === 'cr') {
+                switchTable('cr');
             } else {
                 switchTable('tx');
             }
@@ -1242,13 +1454,16 @@
                 const activeTab = activeBtn ? activeBtn.id.replace('tab-btn-', '') : 'tx';
                 params.set('tab', activeTab);
 
-                // Preserve active filters
-                const searchForm = document.querySelector(`form[action="/Transaction/Instructor"]:not(#periodFilterForm)`);
-                if (searchForm) {
-                    const searchData = new FormData(searchForm);
-                    for (const [key, value] of searchData.entries()) {
-                        if (value && key !== 'year' && key !== 'month' && key !== 'tab') {
-                            params.set(key, value);
+                // Preserve active filters for active tab
+                const activeTabContent = document.getElementById('tab-content-' + activeTab);
+                if (activeTabContent) {
+                    const searchForm = activeTabContent.querySelector('form');
+                    if (searchForm) {
+                        const searchData = new FormData(searchForm);
+                        for (const [key, value] of searchData.entries()) {
+                            if (value && key !== 'year' && key !== 'month' && key !== 'tab') {
+                                params.set(key, value);
+                            }
                         }
                     }
                 }
@@ -1266,14 +1481,14 @@
                     if (oldStats && newStats) oldStats.innerHTML = newStats.innerHTML;
 
                     // 2. Swap All Tab Contents to keep them synchronized
-                    ['tx', 'po'].forEach(t => {
+                    ['tx', 'po', 'cr'].forEach(t => {
                         const oldTabContent = document.getElementById('tab-content-' + t);
                         const newTabContent = doc.getElementById('tab-content-' + t);
                         if (oldTabContent && newTabContent) oldTabContent.innerHTML = newTabContent.innerHTML;
                     });
 
                     // 3. Swap counters
-                    ['tx', 'po'].forEach(t => {
+                    ['tx', 'po', 'cr'].forEach(t => {
                         const oldInd = document.getElementById('tab-indicator-' + t);
                         const newInd = doc.getElementById('tab-indicator-' + t);
                         if (oldInd && newInd) oldInd.innerHTML = newInd.innerHTML;

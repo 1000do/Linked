@@ -175,13 +175,13 @@ public class CourseRepository : ICourseRepository
     public async Task<bool> IsEnrolledAsync(int userId, int courseId)
     {
         return await _context.Enrollments
-            .AnyAsync(e => e.UserId == userId && e.CourseId == courseId);
+            .AnyAsync(e => e.UserId == userId && e.CourseId == courseId && e.EnrollmentStatus != "revoked");
     }
 
     public async Task<IEnumerable<Course>> GetEnrolledCoursesAsync(int userId)
     {
         return await _context.Enrollments
-            .Where(e => e.UserId == userId)
+            .Where(e => e.UserId == userId && e.EnrollmentStatus != "revoked")
             .Include(e => e.Course)
                 .ThenInclude(c => c!.Instructor)
                     .ThenInclude(i => i!.InstructorNavigation)
@@ -286,11 +286,11 @@ public class CourseRepository : ICourseRepository
 
     public async Task<decimal> GetAveragePlatformRatingAsync()
     {
-        return await _context.CourseStats
+        var avg = await _context.CourseStats
             .Where(s => s.RatingAverage > 0)
-            .Select(s => (decimal)s.RatingAverage)
-            .DefaultIfEmpty(0)
+            .Select(s => (double?)s.RatingAverage)
             .AverageAsync();
+        return (decimal)(avg ?? 0.0);
     }
 
     public async Task<CourseModerationStatsDto> GetCourseModerationStatsAsync()

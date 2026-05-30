@@ -305,7 +305,7 @@ public class CouponService : ICouponService
 
         if (coupon.MinOrderValue > 0 && originalPrice < coupon.MinOrderValue)
             throw new InvalidOperationException(
-                $"Minimum order value required to use this coupon is {coupon.MinOrderValue:N0} VND.");
+                $"Minimum order value required to use this coupon is ${coupon.MinOrderValue:N2} USD.");
 
         var finalPrice = coupon.CouponType == "percentage"
             ? originalPrice - (originalPrice * coupon.DiscountValue / 100)

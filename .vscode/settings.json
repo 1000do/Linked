@@ -1,8 +1,5 @@
 {
-    "dotrush.roslyn.projectOrSolutionFiles": [
-        "CourseMarketplaceBE\\CourseMarketplaceBE.sln",
-        "CourseMarketplaceFE\\CourseMarketplaceFE.sln"
-    ],
+    "dotrush.roslyn.projectOrSolutionFiles": [],
     "python-envs.pythonProjects": [
         {
             "path": "AIModeration",

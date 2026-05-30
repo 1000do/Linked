@@ -301,12 +301,13 @@
                 allowOutsideClick: () => !Swal.isLoading()
             }).then((result) => {
                 if (result.isConfirmed) {
+                    const isRejected = result.value.autoRejected;
                     Swal.fire({
-                        title: 'Request Submitted!',
+                        title: isRejected ? 'Refund Rejected' : 'Request Submitted!',
                         text: result.value.message,
-                        icon: 'success',
+                        icon: isRejected ? 'error' : 'success',
                         confirmButtonText: 'Close',
-                        confirmButtonColor: '#10b981',
+                        confirmButtonColor: isRejected ? '#e11d48' : '#10b981',
                         customClass: {
                             popup: 'rounded-3xl',
                             title: 'text-xl font-black text-slate-900',
