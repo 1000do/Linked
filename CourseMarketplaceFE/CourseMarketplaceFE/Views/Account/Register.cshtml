@@ -48,6 +48,15 @@
                 <span asp-validation-for="Email" class="text-[11px] text-red-500 mt-1 block font-medium"></span>
             </div>
 
+            @* Username *@
+            <div>
+                <label asp-for="Username" class="block text-sm font-semibold text-on-surface mb-1.5">Username</label>
+                <input asp-for="Username"
+                       class="w-full px-4 py-3 bg-slate-50 border border-transparent rounded-lg focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+                       placeholder="username123" />
+                <span asp-validation-for="Username" class="text-[11px] text-red-500 mt-1 block font-medium"></span>
+            </div>
+
             @* Password *@
             <div>
                 <label asp-for="Password" class="block text-sm font-semibold text-on-surface mb-1.5">Password</label>

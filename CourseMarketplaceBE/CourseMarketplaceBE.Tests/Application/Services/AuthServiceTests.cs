@@ -59,10 +59,10 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         public async Task LoginAsync_WhenEmailDoesNotExist_ShouldReturnNull()
         {
             // Arrange (Thiết lập trạng thái ban đầu)
-            var request = new LoginRequest { Email = "notfound@example.com", Password = "Password123" };
+            var request = new LoginRequest { UsernameOrEmail = "notfound@example.com", Password = "Password123" };
             
             // Giả lập: Tìm kiếm email này trong DB trả về null
-            _mockUserRepo.GetAccountByEmailAsync(request.Email.ToLower())
+            _mockUserRepo.GetAccountByEmailOrUsernameAsync(request.UsernameOrEmail.ToLower())
                 .Returns(Task.FromResult<Account?>(null));
 
             // Act (Thực hiện hành động kiểm thử)
@@ -79,7 +79,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         public async Task LoginAsync_WhenPasswordIsIncorrect_ShouldReturnNull()
         {
             // Arrange
-            var request = new LoginRequest { Email = "user@example.com", Password = "WrongPassword" };
+            var request = new LoginRequest { UsernameOrEmail = "user@example.com", Password = "WrongPassword" };
             var existingAccount = new Account
             {
                 AccountId = 1,
@@ -87,7 +87,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("CorrectPassword") // Hash password đúng
             };
 
-            _mockUserRepo.GetAccountByEmailAsync(request.Email.ToLower())
+            _mockUserRepo.GetAccountByEmailOrUsernameAsync(request.UsernameOrEmail.ToLower())
                 .Returns(Task.FromResult<Account?>(existingAccount));
 
             // Act
@@ -101,7 +101,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         public async Task LoginAsync_WhenAccountIsLocked_ShouldThrowUnauthorizedAccessException()
         {
             // Arrange
-            var request = new LoginRequest { Email = "locked@example.com", Password = "CorrectPassword" };
+            var request = new LoginRequest { UsernameOrEmail = "locked@example.com", Password = "CorrectPassword" };
             var existingAccount = new Account
             {
                 AccountId = 42,
@@ -116,7 +116,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 LockoutEnd = DateTime.UtcNow.AddHours(2)
             };
 
-            _mockUserRepo.GetAccountByEmailAsync(request.Email.ToLower())
+            _mockUserRepo.GetAccountByEmailOrUsernameAsync(request.UsernameOrEmail.ToLower())
                 .Returns(Task.FromResult<Account?>(existingAccount));
 
             // Giả lập: Tài khoản này có một Lockout đang hoạt động
@@ -135,7 +135,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         public async Task LoginAsync_WhenCredentialsAreValid_ShouldReturnLoginResponseWithTokens()
         {
             // Arrange
-            var request = new LoginRequest { Email = "valid@example.com", Password = "CorrectPassword" };
+            var request = new LoginRequest { UsernameOrEmail = "valid@example.com", Password = "CorrectPassword" };
             var existingAccount = new Account
             {
                 AccountId = 10,
@@ -145,7 +145,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 User = new User { FullName = "Nguyễn Văn A" }
             };
 
-            _mockUserRepo.GetAccountByEmailAsync(request.Email.ToLower())
+            _mockUserRepo.GetAccountByEmailOrUsernameAsync(request.UsernameOrEmail.ToLower())
                 .Returns(Task.FromResult<Account?>(existingAccount));
 
             // Giả lập: Không có Lockout nào

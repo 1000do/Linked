@@ -34,6 +34,8 @@ public class UserProfileService : IUserProfileService
         {
             FullName = user.FullName,
             Email = user.UserNavigation.Email,
+            Username = user.UserNavigation.Username,
+            AuthProvider = user.UserNavigation.AuthProvider,
             Bio = user.Bio,
             DateOfBirth = user.DateOfBirth,
             AvatarUrl = user.UserNavigation.AvatarUrl,
@@ -51,6 +53,21 @@ public class UserProfileService : IUserProfileService
 
     public async Task<bool> UpdateProfileAsync(int userId, UpdateProfileRequest request)
     {
+        var user = await _userRepo.GetUserByIdAsync(userId);
+        if (user == null || user.UserNavigation == null) return false;
+
+        // Block email changes if AuthProvider == "google"
+        if (user.UserNavigation.AuthProvider == "google" && !string.IsNullOrWhiteSpace(request.Email) && !request.Email.Equals(user.UserNavigation.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Google Account email addresses cannot be modified.");
+        }
+
+        // Validate email ends with @gmail.com if modified
+        if (!string.IsNullOrWhiteSpace(request.Email) && !request.Email.ToLower().EndsWith("@gmail.com"))
+        {
+            throw new InvalidOperationException("Email must be a @gmail.com address.");
+        }
+
         string? avatarUrl = null;
 
         if (request.AvatarFile != null)
@@ -90,7 +107,8 @@ public class UserProfileService : IUserProfileService
             request.ExpertiseCategories,
             request.LinkedinUrl,
             request.YoutubeUrl,
-            request.FacebookUrl
+            request.FacebookUrl,
+            request.Email
         );
     }
 

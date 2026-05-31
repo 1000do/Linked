@@ -4,6 +4,8 @@ namespace LinkedLearn.Models.UserVM
     {
         public string FullName { get; set; }
         public string Email { get; set; }
+        public string? Username { get; set; }
+        public string? AuthProvider { get; set; }
         public string? Bio { get; set; }
         public DateOnly? DateOfBirth { get; set; }
         public string? AvatarUrl { get; set; }

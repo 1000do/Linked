@@ -8,7 +8,9 @@ namespace CourseMarketplaceBE.Domain.IRepositories;
 public interface IUserRepository
 {
     Task<bool> IsEmailExistsAsync(string email);
+    Task<bool> IsUsernameExistsAsync(string username);
     Task<Account?> GetAccountByEmailAsync(string email);
+    Task<Account?> GetAccountByEmailOrUsernameAsync(string emailOrUsername);
     Task<Account?> GetAccountByIdAsync(int accountId);
     Task<User?> GetUserByIdAsync(int userId);
     Task UpdateLastLoginAsync(int accountId);
@@ -24,7 +26,8 @@ public interface IUserRepository
         string? expertiseCategories = null,
         string? linkedinUrl = null,
         string? youtubeUrl = null,
-        string? facebookUrl = null);
+        string? facebookUrl = null,
+        string? email = null);
     Task SaveRefreshTokenAsync(int accountId, string refreshToken, DateTime expiry);
     Task<Account?> GetAccountByRefreshTokenAsync(string refreshToken);
     Task RevokeRefreshTokenAsync(int accountId);

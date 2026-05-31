@@ -35,14 +35,14 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        if (string.IsNullOrEmpty(request.Email))
+        if (string.IsNullOrEmpty(request.UsernameOrEmail))
         {
-            return BadRequest(new { status = 400, message = "Account must end with @gmail.com." });
+            return BadRequest(new { status = 400, message = "Username or Email is required." });
         }
         var result = await _authService.LoginAsync(request);
     
         if (result == null)
-            return Unauthorized(new { status = 401, message = "Incorrect email or password." });
+            return Unauthorized(new { status = 401, message = "Incorrect username/email or password." });
 
         // Access token: HttpOnly cookie, dài hạn (24 giờ — khớp JWT)
         Response.Cookies.Append("AccessToken", result.AccessToken, new CookieOptions

@@ -17,10 +17,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class CartController : ControllerBase
 {
     private readonly ICartService _cartService;
+    private readonly IAuthService _authService;
 
-    public CartController(ICartService cartService)
+    public CartController(ICartService cartService, IAuthService authService)
     {
         _cartService = cartService;
+        _authService = authService;
     }
 
     // ─── Lấy userId từ JWT Claim (helper dùng chung) ─────────────────────
@@ -41,6 +43,9 @@ public class CartController : ControllerBase
         var userId = GetUserId();
         if (userId == null)
             return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
+
+        if (!await _authService.IsEmailVerifiedAsync(userId.Value))
+            return BadRequest(ApiResponse<string>.ErrorResponse("Please verify your email address."));
 
         try
         {

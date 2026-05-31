@@ -1,0 +1,52 @@
+@{
+    ViewData["Title"] = "Verify Email Recommendation";
+    var email = ViewBag.Email as string;
+}
+
+<main class="min-h-[85vh] flex items-center justify-center pt-24 pb-12 px-6 bg-login-gradient relative overflow-hidden">
+    <!-- Animated background elements -->
+    <div class="absolute top-10 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+    <div class="absolute bottom-10 right-10 w-80 h-80 bg-violet-500/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
+
+    <div class="max-w-lg w-full bg-white/80 backdrop-blur-xl p-10 rounded-3xl shadow-2xl border border-slate-100/50 relative z-10 text-center transition-all duration-300 hover:shadow-primary/5">
+        
+        <!-- Verification Recommended Badge/Icon -->
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mb-6 animate-bounce">
+            <span class="material-symbols-outlined text-4xl font-light">mark_email_unread</span>
+        </div>
+
+        <h2 class="text-3xl font-headline font-extrabold text-slate-800 mb-3 tracking-tight">
+            Account Created Successfully!
+        </h2>
+        
+        <p class="text-slate-500 text-base mb-6 leading-relaxed px-2">
+            Welcome to <span class="text-primary font-bold">LinkedLearn</span>. To secure your account and unlock essential features like <span class="font-semibold text-slate-700">Add to Cart</span>, <span class="font-semibold text-slate-700">Checkout</span>, and <span class="font-semibold text-slate-700">Course Enrollment</span>, please verify your email address.
+        </p>
+
+        <!-- Email Display Box -->
+        <div class="bg-slate-50/80 border border-slate-100 rounded-2xl py-4 px-6 mb-8 inline-block max-w-full">
+            <span class="text-xs text-slate-400 block font-semibold uppercase tracking-wider mb-0.5">Your Registered Email</span>
+            <span class="text-slate-700 font-bold text-lg break-all">@email</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <a href="/Account/SendRegisterOtp?email=@Uri.EscapeDataString(email ?? "")" 
+               class="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-primary/95 text-white font-bold rounded-2xl shadow-xl shadow-primary/25 hover:shadow-primary/35 transition-all duration-300 text-center hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-xl">verified_user</span>
+                <span>Verify Now (Recommended)</span>
+            </a>
+            
+            <a href="/Account/Login" 
+               class="w-full sm:w-auto px-8 py-4 bg-slate-100 hover:bg-slate-200/80 text-slate-600 font-bold rounded-2xl transition-all duration-300 text-center hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+                <span>Skip to Login</span>
+                <span class="material-symbols-outlined text-xl">arrow_forward</span>
+            </a>
+        </div>
+
+        <!-- Footer Notice -->
+        <div class="mt-10 pt-6 border-t border-slate-100 text-xs text-slate-400">
+            <p>You can also verify your email later at any time from your Account Profile settings.</p>
+        </div>
+    </div>
+</main>

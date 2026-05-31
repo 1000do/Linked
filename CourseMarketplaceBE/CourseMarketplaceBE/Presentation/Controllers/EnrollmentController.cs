@@ -14,10 +14,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class EnrollmentController : ControllerBase
 {
     private readonly IEnrollmentService _enrollmentService;
+    private readonly IAuthService _authService;
 
-    public EnrollmentController(IEnrollmentService enrollmentService)
+    public EnrollmentController(IEnrollmentService enrollmentService, IAuthService authService)
     {
         _enrollmentService = enrollmentService;
+        _authService = authService;
     }
 
     private int? GetUserId()
@@ -32,6 +34,9 @@ public class EnrollmentController : ControllerBase
         var userId = GetUserId();
         if (userId == null)
             return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
+
+        if (!await _authService.IsEmailVerifiedAsync(userId.Value))
+            return BadRequest(ApiResponse<string>.ErrorResponse("Please verify your email address."));
 
         try
         {
