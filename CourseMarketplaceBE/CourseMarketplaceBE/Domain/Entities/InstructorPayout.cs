@@ -1,4 +1,5 @@
 using System;
+using CourseMarketplaceBE.Domain.Constants;
 
 namespace CourseMarketplaceBE.Domain.Entities;
 
@@ -25,7 +26,7 @@ public partial class InstructorPayout
     /// Trạng thái thanh toán end-to-end:
     /// pending | transferred | in_transit | paid | failed
     /// </summary>
-    public string PayoutStatus { get; set; } = "pending";
+    public string PayoutStatus { get; set; } = Constants.PayoutStatus.Pending.ToValue();
 
     /// <summary>ID lệnh Transfer (tx_xxx): Sàn → Connected Account</summary>
     public string? StripeTransferId { get; set; }

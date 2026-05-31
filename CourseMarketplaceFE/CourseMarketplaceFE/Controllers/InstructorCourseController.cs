@@ -209,7 +209,18 @@ namespace CourseMarketplaceFE.Controllers
             if (!ModelState.IsValid)
             {
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                    return Json(new { success = false, message = "Please complete all required fields." });
+                {
+                    var errors = new List<string>();
+                    foreach (var state in ModelState)
+                    {
+                        foreach (var error in state.Value.Errors)
+                        {
+                            errors.Add(error.ErrorMessage);
+                        }
+                    }
+                    var errorMsg = string.Join("<br/>", errors);
+                    return Json(new { success = false, message = errorMsg });
+                }
                     
                 await LoadStripeStatusAsync();
                 await LoadTransferRateAsync();

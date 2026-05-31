@@ -98,7 +98,7 @@ public class ReviewService : IReviewService
             if (isRemoved)
             {
                 rating = 0;
-                if (status == "removed")
+                if (status == "removed" || status == "violating")
                 {
                     comment = "This comment has been removed for violating community standards";
                 }
@@ -148,7 +148,7 @@ public class ReviewService : IReviewService
             if (isRemoved)
             {
                 rating = 0;
-                if (status == "removed")
+                if (status == "removed" || status == "violating")
                 {
                     comment = "This comment has been removed for violating community standards";
                 }

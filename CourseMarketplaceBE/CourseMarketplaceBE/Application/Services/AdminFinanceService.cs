@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Hubs;
 using Microsoft.AspNetCore.SignalR;
@@ -126,7 +127,7 @@ namespace CourseMarketplaceBE.Application.Services
         //   PlatformNetProfit  = GrossRevenue - TotalPaidOut - PendingEscrow
         //                      = Tiền sàn THỰC SỰ giữ được
         // ═══════════════════════════════════════════════════════════════════════
-        public async Task<FinancialSummaryResponse> GetFinancialSummaryAsync(int? year = null, int? month = null)
+            public async Task<FinancialSummaryResponse> GetFinancialSummaryAsync(int? year = null, int? month = null)
         {
             var grossRevenue = await _repo.GetGrossRevenueAsync(year, month);
             var totalPaidOut = await _repo.GetTotalPaidOutAsync(year, month);
@@ -143,7 +144,7 @@ namespace CourseMarketplaceBE.Application.Services
             decimal platformNetProfit = 0m;
             foreach (var p in items)
             {
-                if (p.PayoutStatus?.ToLower() != "refunded")
+                if (p.PayoutStatus != PayoutStatus.Refunded.ToValue())
                 {
                     var absAmount = Math.Abs(p.TotalAmount);
                     var fee = Math.Round(absAmount * 0.029m + 0.30m, 2);
@@ -190,7 +191,7 @@ namespace CourseMarketplaceBE.Application.Services
                 stripeFee = Math.Min(stripeFee, absAmount);
 
                 decimal platformReceived;
-                if (p.PayoutStatus?.ToLower() == "refunded")
+                if (p.PayoutStatus == PayoutStatus.Refunded.ToValue())
                 {
                     var absInstructorReceived = Math.Abs(p.InstructorReceived);
                     var absPlatformCut = absAmount - stripeFee - absInstructorReceived;
@@ -216,7 +217,7 @@ namespace CourseMarketplaceBE.Application.Services
                     IsPaid = p.IsPaid,
                     TransactionDate = p.TransactionDate,
                     PayoutDate = p.PayoutDate,
-                    PayoutStatus = p.PayoutStatus ?? "pending",
+                    PayoutStatus = p.PayoutStatus ?? PayoutStatus.Pending.ToValue(),
                     StripeTransferId = p.StripeTransferId,
                     StripePayoutId = p.StripePayoutId,
                     PaidToBankAt = p.PaidToBankAt
@@ -472,7 +473,7 @@ namespace CourseMarketplaceBE.Application.Services
                 Amount = amountToWithdraw,
                 Currency = "usd",
                 StripePayoutId = stripePayout.Id,
-                Status = stripePayout.Status ?? "pending",
+                Status = stripePayout.Status ?? PlatformWithdrawalStatus.Pending.ToValue(),
                 Description = request.Description,
                 CreatedAt = DateTime.UtcNow
             };
@@ -496,7 +497,7 @@ namespace CourseMarketplaceBE.Application.Services
                 WithdrawalId = withdrawal.WithdrawalId,
                 StripePayoutId = stripePayout.Id,
                 Amount = amountToWithdraw,
-                Status = stripePayout.Status ?? "pending",
+                Status = stripePayout.Status ?? PlatformWithdrawalStatus.Pending.ToValue(),
                 CreatedAt = withdrawal.CreatedAt
             };
         }
@@ -509,7 +510,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             foreach (var w in withdrawals)
             {
-                if (w.Status == "pending" || w.Status == "in_transit")
+                if (w.Status == PlatformWithdrawalStatus.Pending.ToValue() || w.Status == PlatformWithdrawalStatus.InTransit.ToValue())
                 {
                     try
                     {
@@ -517,7 +518,7 @@ namespace CourseMarketplaceBE.Application.Services
                         if (stripePayout.Status != w.Status)
                         {
                             w.Status = stripePayout.Status;
-                            if (stripePayout.Status == "paid")
+                            if (stripePayout.Status == PlatformWithdrawalStatus.Paid.ToValue())
                             {
                                 w.ArrivedAt = stripePayout.ArrivalDate;
                             }
@@ -576,10 +577,10 @@ namespace CourseMarketplaceBE.Application.Services
             if (txn == null)
                 throw new InvalidOperationException($"Transaction #{transactionId} not found.");
 
-            if (txn.TransactionsStatus == "refunded")
+            if (txn.TransactionsStatus == TransactionStatus.Refunded.ToValue())
                 throw new InvalidOperationException("This transaction was previously refunded.");
 
-            if (txn.TransactionsStatus != "succeeded" && txn.TransactionsStatus != "refund_pending")
+            if (txn.TransactionsStatus != TransactionStatus.Succeeded.ToValue() && txn.TransactionsStatus != TransactionStatus.RefundPending.ToValue())
                 throw new InvalidOperationException(
                     $"Only successful transactions can be refunded. Current status: {txn.TransactionsStatus}.");
 
@@ -776,17 +777,17 @@ namespace CourseMarketplaceBE.Application.Services
             var statusLower = status.ToLower();
             if (statusLower == "paid")
             {
-                dbp.PayoutStatus = "paid";
+                dbp.PayoutStatus = PayoutStatus.Paid.ToValue();
                 dbp.IsPaid = true;
                 dbp.PaidToBankAt = arrivalDate;
             }
             else if (statusLower == "in_transit" || statusLower == "pending")
             {
-                dbp.PayoutStatus = "in_transit";
+                dbp.PayoutStatus = PayoutStatus.InTransit.ToValue();
             }
             else if (statusLower == "failed" || statusLower == "canceled")
             {
-                dbp.PayoutStatus = "failed";
+                dbp.PayoutStatus = PayoutStatus.Failed.ToValue();
                 dbp.IsPaid = false;
             }
         }
@@ -800,13 +801,13 @@ namespace CourseMarketplaceBE.Application.Services
             if (txn.AccountFrom != studentId)
                 throw new InvalidOperationException("You do not own this transaction.");
 
-            if (txn.TransactionsStatus == "refund_pending")
+            if (txn.TransactionsStatus == TransactionStatus.RefundPending.ToValue())
                 throw new InvalidOperationException("This transaction is currently pending refund approval.");
 
-            if (txn.TransactionsStatus == "refunded")
+            if (txn.TransactionsStatus == TransactionStatus.Refunded.ToValue())
                 throw new InvalidOperationException("This transaction has already been refunded.");
 
-            if (txn.TransactionsStatus != "succeeded")
+            if (txn.TransactionsStatus != TransactionStatus.Succeeded.ToValue())
                 throw new InvalidOperationException($"Refunds are only allowed for successful transactions. Current status: {txn.TransactionsStatus}");
 
             // Kiểm tra thời hạn 14 ngày hoàn tiền
@@ -875,7 +876,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             // Hợp lệ -> Đẩy qua cho admin duyệt
-            txn.TransactionsStatus = "refund_pending";
+            txn.TransactionsStatus = TransactionStatus.RefundPending.ToValue();
             if (txn.TransactionExt == null)
             {
                 txn.TransactionExt = new Domain.Entities.TransactionExt
@@ -926,7 +927,7 @@ namespace CourseMarketplaceBE.Application.Services
             if (txn == null)
                 throw new InvalidOperationException("Transaction not found.");
 
-            if (txn.TransactionsStatus != "refund_pending")
+            if (txn.TransactionsStatus != TransactionStatus.RefundPending.ToValue())
                 throw new InvalidOperationException("Transaction is not in pending refund approval status.");
 
             // Thực thi refund Stripe & Reverse Transfer & Revoke Enrollment
@@ -975,11 +976,11 @@ namespace CourseMarketplaceBE.Application.Services
             if (txn == null)
                 throw new InvalidOperationException("Transaction not found.");
 
-            if (txn.TransactionsStatus != "refund_pending")
+            if (txn.TransactionsStatus != TransactionStatus.RefundPending.ToValue())
                 throw new InvalidOperationException("Transaction is not in pending refund approval status.");
 
             // Khôi phục trạng thái thành công ban đầu và lưu ghi chú từ chối
-            txn.TransactionsStatus = "succeeded";
+            txn.TransactionsStatus = TransactionStatus.Succeeded.ToValue();
             if (txn.TransactionExt == null)
             {
                 txn.TransactionExt = new Domain.Entities.TransactionExt

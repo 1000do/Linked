@@ -472,26 +472,93 @@
         function validateStep(step) {
             let errors = [];
             if (step === 1) {
-                const title = document.getElementById('Title').value;
+                const title = document.getElementById('Title').value.trim();
                 const catId = document.getElementById('CategoryId').value;
-                if (!title || title.trim() === '') errors.push("Course Title");
-                if (!catId || catId === '0') errors.push("Category");
+                if (!title) {
+                    errors.push("Course Title is required.");
+                } else if (title.length < 5) {
+                    errors.push("Course Title must be at least 5 characters long.");
+                } else if (title.length > 100) {
+                    errors.push("Course Title cannot exceed 100 characters.");
+                }
+                if (!catId || catId === '0') {
+                    errors.push("Category is required.");
+                }
             } else if (step === 2) {
-                const desc = quill.root.innerHTML;
-                const learnText = learnQuill.root.innerHTML;
-                const reqText = reqQuill.root.innerHTML;
-                if (!desc || desc === '<p><br></p>') errors.push("Course Description");
-                if (!learnText || learnText === '<p><br></p>') errors.push("What you will learn");
-                if (!reqText || reqText === '<p><br></p>') errors.push("Requirements");
+                const descText = quill.getText().trim();
+                const learnText = learnQuill.getText().trim();
+                const reqText = reqQuill.getText().trim();
+                if (!descText) {
+                    errors.push("Course Description is required.");
+                }
+                if (!learnText) {
+                    errors.push("What you will learn is required.");
+                } else if (learnText.length < 20) {
+                    errors.push("What you will learn must be at least 20 characters long.");
+                }
+                if (!reqText) {
+                    errors.push("Requirements are required.");
+                } else if (reqText.length < 20) {
+                    errors.push("Requirements must be at least 20 characters long.");
+                }
             } else if (step === 3) {
                 const thumb = document.getElementById('CourseThumbnailUrl').value;
-                if (!thumb || thumb === '') errors.push("Course Thumbnail");
+                if (!thumb || thumb === '') {
+                    errors.push("Course Thumbnail is required.");
+                }
+            } else if (step === 4) {
+                // Validate Step 1
+                const title = document.getElementById('Title').value.trim();
+                const catId = document.getElementById('CategoryId').value;
+                if (!title) {
+                    errors.push("Course Title is required.");
+                } else if (title.length < 5) {
+                    errors.push("Course Title must be at least 5 characters long.");
+                } else if (title.length > 100) {
+                    errors.push("Course Title cannot exceed 100 characters.");
+                }
+                if (!catId || catId === '0') {
+                    errors.push("Category is required.");
+                }
+
+                // Validate Step 2
+                const descText = quill.getText().trim();
+                const learnText = learnQuill.getText().trim();
+                const reqText = reqQuill.getText().trim();
+                if (!descText) {
+                    errors.push("Course Description is required.");
+                }
+                if (!learnText) {
+                    errors.push("What you will learn is required.");
+                } else if (learnText.length < 20) {
+                    errors.push("What you will learn must be at least 20 characters long.");
+                }
+                if (!reqText) {
+                    errors.push("Requirements are required.");
+                } else if (reqText.length < 20) {
+                    errors.push("Requirements must be at least 20 characters long.");
+                }
+
+                // Validate Step 3
+                const thumb = document.getElementById('CourseThumbnailUrl').value;
+                if (!thumb || thumb === '') {
+                    errors.push("Course Thumbnail is required.");
+                }
+
+                // Validate Step 4
+                const priceEl = document.getElementById('Price');
+                if (priceEl) {
+                    const price = parseFloat(priceEl.value);
+                    if (isNaN(price) || price < 0 || price > 10000) {
+                        errors.push("Price must be between 0 and 10000 USD.");
+                    }
+                }
             }
             
             if (errors.length > 0) {
                 Swal.fire({
-                    title: 'Incomplete Information',
-                    html: `<div class="text-left">Please complete the following fields:<ul class="list-disc ml-6 mt-2 text-red-600 font-semibold">${errors.map(err => `<li>${err}</li>`).join('')}</ul></div>`,
+                    title: 'Incomplete or Invalid Information',
+                    html: `<div class="text-left">Please resolve the following issues:<ul class="list-disc ml-6 mt-2 text-red-600 font-semibold">${errors.map(err => `<li>${err}</li>`).join('')}</ul></div>`,
                     icon: 'warning',
                     confirmButtonColor: '#006a62'
                 });

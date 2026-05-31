@@ -727,18 +727,31 @@
                 const result = await res.json();
                 if (result.success && Array.isArray(result.data)) {
                     lessonRatingMap = {};
-                    result.data.forEach(x => { lessonRatingMap[x.lessonId] = x; });
-                    // Cập nhật badge rating trên tất cả material items
+                    result.data.forEach(x => {
+                        const lid = x.lessonId !== undefined ? x.lessonId : x.LessonId;
+                        if (lid !== undefined) {
+                            lessonRatingMap[lid] = x;
+                        }
+                    });
+                    // Cập nhật badge rating trên tất cả lesson items
                     document.querySelectorAll('[data-lesson-id]').forEach(el => {
                         const lid = parseInt(el.dataset.lessonId);
+                        const ratingInfo = lessonRatingMap[lid];
                         const badge = el.querySelector('.lesson-rating-badge');
-                        if (badge && lessonRatingMap[lid]) {
-                            badge.textContent = `★ ${lessonRatingMap[lid].averageRating.toFixed(1)}`;
-                            badge.classList.remove('hidden');
+                        if (badge) {
+                            if (ratingInfo) {
+                                const avg = ratingInfo.averageRating !== undefined ? ratingInfo.averageRating : ratingInfo.AverageRating;
+                                if (avg !== undefined && avg !== null) {
+                                    badge.textContent = `★ ${parseFloat(avg).toFixed(1)}`;
+                                    badge.classList.remove('hidden');
+                                    return;
+                                }
+                            }
+                            badge.classList.add('hidden');
                         }
                     });
                 }
-            } catch (e) { /* silent */ }
+            } catch (e) { console.error('Error loading lesson ratings:', e); }
         }
 
 

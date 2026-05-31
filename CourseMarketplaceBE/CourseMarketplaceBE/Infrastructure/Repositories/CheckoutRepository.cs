@@ -1,3 +1,4 @@
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
@@ -58,7 +59,7 @@ public class CheckoutRepository : ICheckoutRepository
 
     public async Task<List<OrderInfo>> GetPendingOrdersByUserAsync(int userId)
         => await _context.OrderInfos
-            .Where(o => o.UserId == userId && o.OrderStatus == "pending")
+            .Where(o => o.UserId == userId && o.OrderStatus == TransactionStatus.Pending.ToValue())
             .Include(o => o.OrderItems)
             .ToListAsync();
 

@@ -1,5 +1,6 @@
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using System;
@@ -53,7 +54,7 @@ namespace CourseMarketplaceBE.Application.Services
             if (existing != null)
             {
                 // Chỉ cho phép nộp lại nếu đơn đang ở trạng thái 'Rejected'
-                if (existing.ApprovalStatus != "Rejected")
+                if (existing.ApprovalStatus != InstructorApprovalStatus.Rejected.ToValue())
                     throw new InvalidOperationException("You have already submitted an instructor application.");
 
                 // Upload file mới nếu có, không thì giữ file cũ
@@ -68,7 +69,7 @@ namespace CourseMarketplaceBE.Application.Services
                 existing.YoutubeUrl          = request.YoutubeUrl;
                 existing.FacebookUrl         = request.FacebookUrl;
                 existing.StripeCountry       = request.StripeCountry.ToUpper();
-                existing.ApprovalStatus      = "Pending";
+                existing.ApprovalStatus      = InstructorApprovalStatus.Pending.ToValue();
 
                 await _repo.SaveChangesAsync();
                 return "Your application has been resubmitted. Please wait for admin approval.";
@@ -89,7 +90,7 @@ namespace CourseMarketplaceBE.Application.Services
                 YoutubeUrl           = request.YoutubeUrl,
                 FacebookUrl          = request.FacebookUrl,
                 DocumentUrl          = documentUrl,
-                ApprovalStatus       = "Pending",
+                ApprovalStatus       = InstructorApprovalStatus.Pending.ToValue(),
                 StripeCountry        = request.StripeCountry.ToUpper(),
                 StripeAccountId      = null,
                 StripeOnboardingStatus = null,
@@ -112,7 +113,7 @@ namespace CourseMarketplaceBE.Application.Services
             if (instructor == null)
                 throw new InvalidOperationException("Application not found.");
 
-            if (status != "Approved" && status != "Rejected")
+            if (status != InstructorApprovalStatus.Approved.ToValue() && status != InstructorApprovalStatus.Rejected.ToValue())
                 throw new InvalidOperationException("Invalid status. Only 'Approved' or 'Rejected' are allowed.");
 
             instructor.ApprovalStatus = status;
@@ -131,7 +132,7 @@ namespace CourseMarketplaceBE.Application.Services
             if (instructor == null)
                 throw new InvalidOperationException("You have not submitted an instructor application.");
 
-            if (instructor.ApprovalStatus != "Approved")
+            if (instructor.ApprovalStatus != InstructorApprovalStatus.Approved.ToValue())
                 throw new InvalidOperationException("Application is not approved yet. Please wait for admin approval.");
 
             // Lấy email từ Account (qua User → Account navigation)
@@ -156,7 +157,7 @@ namespace CourseMarketplaceBE.Application.Services
             if (instructor.StripeAccountId != setupResult.StripeAccountId)
             {
                 instructor.StripeAccountId         = setupResult.StripeAccountId;
-                instructor.StripeOnboardingStatus  = "Pending";
+                instructor.StripeOnboardingStatus  = StripeOnboardingStatus.Pending.ToValue();
                 await _repo.SaveChangesAsync();
             }
 
@@ -179,7 +180,7 @@ namespace CourseMarketplaceBE.Application.Services
             if (string.IsNullOrEmpty(instructor.StripeAccountId))
                 throw new InvalidOperationException("Instructor does not have a Stripe account.");
 
-            if (instructor.StripeOnboardingStatus == "Active") return "Active";
+            if (instructor.StripeOnboardingStatus == StripeOnboardingStatus.Active.ToValue()) return StripeOnboardingStatus.Active.ToValue();
 
             var stripeAccountStatus = await _stripeConnect.GetAccountStatusAsync(instructor.StripeAccountId);
 
@@ -188,18 +189,18 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 instructor.PayoutsEnabled         = true;
                 instructor.ChargesEnabled         = true;
-                instructor.StripeOnboardingStatus = "Active";
+                instructor.StripeOnboardingStatus = StripeOnboardingStatus.Active.ToValue();
                 await _repo.SaveChangesAsync();
-                return "Active";
+                return StripeOnboardingStatus.Active.ToValue();
             }
 
             // Nếu chưa nộp form
             instructor.PayoutsEnabled         = stripeAccountStatus.PayoutsEnabled;
             instructor.ChargesEnabled         = stripeAccountStatus.ChargesEnabled;
-            instructor.StripeOnboardingStatus = "Pending";
+            instructor.StripeOnboardingStatus = StripeOnboardingStatus.Pending.ToValue();
             await _repo.SaveChangesAsync();
 
-            return "Pending";
+            return StripeOnboardingStatus.Pending.ToValue();
         }
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -362,17 +363,17 @@ namespace CourseMarketplaceBE.Application.Services
             var statusLower = status.ToLower();
             if (statusLower == "paid")
             {
-                dbp.PayoutStatus = "paid";
+                dbp.PayoutStatus = PayoutStatus.Paid.ToValue();
                 dbp.IsPaid = true;
                 dbp.PaidToBankAt = arrivalDate;
             }
             else if (statusLower == "in_transit" || statusLower == "pending")
             {
-                dbp.PayoutStatus = "in_transit";
+                dbp.PayoutStatus = PayoutStatus.InTransit.ToValue();
             }
             else if (statusLower == "failed" || statusLower == "canceled")
             {
-                dbp.PayoutStatus = "failed";
+                dbp.PayoutStatus = PayoutStatus.Failed.ToValue();
                 dbp.IsPaid = false;
             }
         }
@@ -383,7 +384,7 @@ namespace CourseMarketplaceBE.Application.Services
         public async Task<InstructorPublicProfileDto?> GetPublicProfileAsync(int instructorId)
         {
             var instructor = await _repo.GetByIdWithNavigationAsync(instructorId);
-            if (instructor == null || instructor.ApprovalStatus != "Approved")
+            if (instructor == null || instructor.ApprovalStatus != InstructorApprovalStatus.Approved.ToValue())
                 return null;
 
             var user = instructor.InstructorNavigation;
@@ -392,7 +393,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             // Lấy danh sách khóa học published
             var courses = instructor.Courses
-                .Where(c => c.CourseStatus == "published")
+                .Where(c => c.CourseStatus == CourseStatus.Published.ToValue())
                 .Select(c => new InstructorCourseDto
                 {
                     CourseId = c.CourseId,

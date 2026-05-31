@@ -13,7 +13,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using CourseMarketplaceBE.Infrastructure.BackgroundServices;
 using Microsoft.IdentityModel.Tokens;
-using CourseMarketplaceBE.Application.Interfaces;
 using Microsoft.OpenApi.Models;
 using Stripe;
 using StackExchange.Redis;

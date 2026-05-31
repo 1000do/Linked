@@ -1,4 +1,5 @@
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
@@ -22,7 +23,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
             var query = _context.Instructors
                 .Include(i => i.InstructorNavigation)
                     .ThenInclude(u => u!.UserNavigation)
-                .Where(i => i.ApprovalStatus != null && i.ApprovalStatus.ToLower() == "pending");
+                .Where(i => i.ApprovalStatus == InstructorApprovalStatus.Pending.ToValue());
                 
             var totalCount = await query.CountAsync();
             var items = await query
@@ -109,7 +110,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
             => await _context.Instructors
                 .Include(i => i.InstructorNavigation)
                     .ThenInclude(u => u!.UserNavigation)
-                .Where(i => i.InstructorId == userId && i.ApprovalStatus == "Rejected")
+                .Where(i => i.InstructorId == userId && i.ApprovalStatus == InstructorApprovalStatus.Rejected.ToValue())
                 .Select(i => new InstructorDashboardDto
                 {
                     InstructorId        = i.InstructorId,
@@ -151,7 +152,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
         }
 
         public async Task<int> CountActiveCoursesAsync(int instructorId)
-            => await _context.Courses.CountAsync(c => c.InstructorId == instructorId && c.CourseStatus == "published");
+            => await _context.Courses.CountAsync(c => c.InstructorId == instructorId && c.CourseStatus == CourseStatus.Published.ToValue());
 
         public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.InstructorPayoutDto>> GetPayoutsAsync(int instructorId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
         {
@@ -183,9 +184,9 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
             {
                 query = status.ToLower() switch
                 {
-                    "succeeded" => query.Where(p => p.PayoutStatus == "paid" || p.PayoutStatus == "transferred"),
-                    "pending" => query.Where(p => p.PayoutStatus == "pending" || p.PayoutStatus == "in_transit"),
-                    "failed" => query.Where(p => p.PayoutStatus == "failed" || p.PayoutStatus == "canceled"),
+                    "succeeded" => query.Where(p => p.PayoutStatus == PayoutStatus.Paid.ToValue() || p.PayoutStatus == PayoutStatus.Transferred.ToValue()),
+                    "pending" => query.Where(p => p.PayoutStatus == PayoutStatus.Pending.ToValue() || p.PayoutStatus == PayoutStatus.InTransit.ToValue()),
+                    "failed" => query.Where(p => p.PayoutStatus == PayoutStatus.Failed.ToValue() || p.PayoutStatus == PayoutStatus.Canceled.ToValue()),
                     _ => query.Where(p => p.PayoutStatus == status)
                 };
             }
@@ -228,7 +229,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
         }
 
         public async Task<int> GetTotalApprovedInstructorsCountAsync()
-            => await _context.Instructors.CountAsync(i => i.ApprovalStatus == "Approved");
+            => await _context.Instructors.CountAsync(i => i.ApprovalStatus == InstructorApprovalStatus.Approved.ToValue());
 
         public async Task<List<Instructor>> GetInstructorsWithStripeAsync()
         {

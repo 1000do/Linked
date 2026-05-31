@@ -1,4 +1,4 @@
-using CourseMarketplaceBE.Application.Interfaces;
+using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 

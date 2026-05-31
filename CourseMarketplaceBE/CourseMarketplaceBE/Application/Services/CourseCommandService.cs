@@ -60,7 +60,7 @@ public class CourseCommandService : ICourseCommandService
     public async Task<CourseResponse> CreateCourseAsync(CourseCreateRequest request, int instructorId)
     {
         var instructor = await _instructorRepository.GetByIdAsync(instructorId);
-        if (instructor == null || !string.Equals(instructor.ApprovalStatus, "Approved", StringComparison.OrdinalIgnoreCase))
+        if (instructor == null || !string.Equals(instructor.ApprovalStatus, InstructorApprovalStatus.Approved.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             throw new BadRequestException("You must be an approved instructor to create a course.");
         }
@@ -72,7 +72,7 @@ public class CourseCommandService : ICourseCommandService
         }
 
         var isStripeActive = !string.IsNullOrEmpty(instructor.StripeAccountId)
-            && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+            && string.Equals(instructor.StripeOnboardingStatus, StripeOnboardingStatus.Active.ToValue(), StringComparison.OrdinalIgnoreCase);
 
         if (!isStripeActive)
         {
@@ -106,7 +106,7 @@ public class CourseCommandService : ICourseCommandService
             CourseThumbnailUrl = thumbnailUrl,
             WhatYouWillLearn = request.WhatYouWillLearn,
             Requirements = request.Requirements,
-            CourseStatus = "draft",
+            CourseStatus = CourseStatus.Draft.ToValue(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -134,12 +134,12 @@ public class CourseCommandService : ICourseCommandService
             throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update courses.");
         }
 
-        if (string.Equals(course.CourseStatus, "archived", StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
+        if (string.Equals(course.CourseStatus, CourseStatus.Archived.ToValue(), StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
         {
             throw new BadRequestException("This course has been permanently discontinued due to policy violations and cannot be edited.");
         }
 
-        if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (CourseStatus.Pending.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot modify course while it is pending review.");
 
         string? thumbnailUrl = request.CourseThumbnailUrl ?? course.CourseThumbnailUrl;
@@ -162,7 +162,7 @@ public class CourseCommandService : ICourseCommandService
         var instructor = await _instructorRepository.GetByIdAsync(instructorId);
         var isStripeActive = instructor != null
             && !string.IsNullOrEmpty(instructor.StripeAccountId)
-            && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+            && string.Equals(instructor.StripeOnboardingStatus, StripeOnboardingStatus.Active.ToValue(), StringComparison.OrdinalIgnoreCase);
         
         var newPrice = isStripeActive ? request.Price : 0m;
         if (course.Price != newPrice) isChanged = true;
@@ -183,9 +183,9 @@ public class CourseCommandService : ICourseCommandService
         {
             course.UpdatedAt = DateTime.UtcNow;
 
-            if ("published".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+            if (CourseStatus.Published.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             {
-                course.CourseStatus = "draft";
+                course.CourseStatus = CourseStatus.Draft.ToValue();
                 course.ModerationFeedback = null;
             }
         }
@@ -244,17 +244,17 @@ public class CourseCommandService : ICourseCommandService
             throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot change course status.");
         }
 
-        if (string.Equals(course.CourseStatus, "archived", StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
+        if (string.Equals(course.CourseStatus, CourseStatus.Archived.ToValue(), StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
         {
             throw new BadRequestException("This course has been permanently discontinued due to policy violations and its status cannot be changed.");
         }
 
-        if (status.Equals("published", StringComparison.OrdinalIgnoreCase))
+        if (status.Equals(CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
-            if (!"archived".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+            if (!CourseStatus.Archived.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
                 throw new BadRequestException("Only archived courses can be set back to published by instructor.");
         }
-        else if (!status.Equals("pending", StringComparison.OrdinalIgnoreCase) && !status.Equals("archived", StringComparison.OrdinalIgnoreCase))
+        else if (!status.Equals(CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase) && !status.Equals(CourseStatus.Archived.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             throw new BadRequestException("Invalid status. Allowed values are 'pending', 'archived', or 'published' (for unarchiving).");
         }
@@ -262,12 +262,12 @@ public class CourseCommandService : ICourseCommandService
         course.CourseStatus = status.ToLower();
         course.UpdatedAt = DateTime.UtcNow;
 
-        if (status.Equals("pending", StringComparison.OrdinalIgnoreCase))
+        if (status.Equals(CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             var instructor = await _instructorRepository.GetByIdAsync(instructorId);
             var isStripeActive = instructor != null
                 && !string.IsNullOrEmpty(instructor.StripeAccountId)
-                && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+                && string.Equals(instructor.StripeOnboardingStatus, StripeOnboardingStatus.Active.ToValue(), StringComparison.OrdinalIgnoreCase);
 
             var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
             var activeLessons = lessons.Where(l => !l.IsRemoved).ToList();
@@ -280,13 +280,13 @@ public class CourseCommandService : ICourseCommandService
             int totalDurationSeconds = 0;
             foreach (var lesson in activeLessons)
             {
-                bool hasVideo = lesson.LearningMaterials.Any(m => m.LearningStatus != "removed" && (m.MaterialMetadata?.FileType == "video" || m.MaterialMetadata == null));
+                bool hasVideo = lesson.LearningMaterials.Any(m => m.LearningStatus != LearningStatus.Removed.ToValue() && (m.MaterialMetadata?.FileType == "video" || m.MaterialMetadata == null));
                 if (!hasVideo)
                 {
                     throw new BadRequestException($"Cannot submit course for review. Every lesson must contain at least one video. Lesson '{lesson.Title}' is missing a video.");
                 }
 
-                foreach (var material in lesson.LearningMaterials.Where(m => m.LearningStatus != "removed" && (m.MaterialMetadata?.FileType == "video" || m.MaterialMetadata == null)))
+                foreach (var material in lesson.LearningMaterials.Where(m => m.LearningStatus != LearningStatus.Removed.ToValue() && (m.MaterialMetadata?.FileType == "video" || m.MaterialMetadata == null)))
                 {
                     totalDurationSeconds += material.MaterialMetadata?.Duration ?? 0;
                 }
@@ -313,9 +313,9 @@ public class CourseCommandService : ICourseCommandService
                 foreach (var material in materials)
                 {
                     material.ModerationFeedback = null;
-                    if (material.LearningStatus == "rejected")
+                    if (material.LearningStatus == LearningStatus.Rejected.ToValue())
                     {
-                        material.LearningStatus = "active";
+                        material.LearningStatus = LearningStatus.Active.ToValue();
                     }
                     _materialRepository.Update(material);
                 }
@@ -326,7 +326,7 @@ public class CourseCommandService : ICourseCommandService
             {
                 foreach (var lesson in lessons)
                 {
-                    lesson.LessonStatus = "active";
+                    lesson.LessonStatus = LessonStatus.Active.ToValue();
                     _lessonRepository.Update(lesson);
                 }
             }
@@ -352,7 +352,7 @@ public class CourseCommandService : ICourseCommandService
             throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot delete courses.");
         }
 
-        if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (CourseStatus.Pending.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot delete course while it is pending review.");
 
         var hasEnrollments = await _courseRepository.HasEnrollmentsAsync(courseId);

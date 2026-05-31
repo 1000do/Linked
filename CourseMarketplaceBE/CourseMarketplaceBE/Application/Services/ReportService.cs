@@ -7,6 +7,7 @@ using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Domain.Constants;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -51,7 +52,7 @@ public class ReportService : IReportService
         var course = await _courseRepo.GetByIdAsync(request.CourseId)
             ?? throw new InvalidOperationException("Course not found.");
 
-        if (course.CourseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase) || 
+        if (course.CourseStatus.Equals(CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase) || 
             course.CourseStatus.Equals("under_review", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("This course is currently under review and cannot be reported.");
 
@@ -81,7 +82,7 @@ public class ReportService : IReportService
             CourseId = request.CourseId,
             Reason = request.Reason,
             Description = request.Description,
-            CourseReportsStatus = "pending",
+            CourseReportsStatus = ReportStatus.Pending.ToValue(),
             CreatedAt = DateTime.Now
         };
 
@@ -109,7 +110,7 @@ public class ReportService : IReportService
             CourseReviewId = request.CourseReviewId,
             Reason = request.Reason,
             Description = request.Description,
-            UserReportsStatus = "pending",
+            UserReportsStatus = ReportStatus.Pending.ToValue(),
             CreatedAt = DateTime.Now
         };
 
@@ -137,7 +138,7 @@ public class ReportService : IReportService
             LessonReviewId = request.LessonReviewId,
             Reason = request.Reason,
             Description = request.Description,
-            UserReportsStatus = "pending",
+            UserReportsStatus = ReportStatus.Pending.ToValue(),
             CreatedAt = DateTime.Now
         };
 
@@ -213,13 +214,13 @@ public class ReportService : IReportService
         var (allCourseReview, _) = await _reportRepo.GetAllCourseReviewReportsAsync(null, 1, 100000);
         var (allLessonReview, _) = await _reportRepo.GetAllLessonReviewReportsAsync(null, 1, 100000);
 
-        int resolvedToday = allCourse.Count(r => r.ResolvedAt?.Date == today && r.CourseReportsStatus == "resolved")
-                          + allCourseReview.Count(r => r.ResolvedAt?.Date == today && r.UserReportsStatus == "resolved")
-                          + allLessonReview.Count(r => r.ResolvedAt?.Date == today && r.UserReportsStatus == "resolved");
+        int resolvedToday = allCourse.Count(r => r.ResolvedAt?.Date == today && r.CourseReportsStatus == ReportStatus.Resolved.ToValue())
+                          + allCourseReview.Count(r => r.ResolvedAt?.Date == today && r.UserReportsStatus == ReportStatus.Resolved.ToValue())
+                          + allLessonReview.Count(r => r.ResolvedAt?.Date == today && r.UserReportsStatus == ReportStatus.Resolved.ToValue());
 
-        int rejectedToday = allCourse.Count(r => r.ResolvedAt?.Date == today && r.CourseReportsStatus == "rejected")
-                          + allCourseReview.Count(r => r.ResolvedAt?.Date == today && r.UserReportsStatus == "rejected")
-                          + allLessonReview.Count(r => r.ResolvedAt?.Date == today && r.UserReportsStatus == "rejected");
+        int rejectedToday = allCourse.Count(r => r.ResolvedAt?.Date == today && r.CourseReportsStatus == ReportStatus.Rejected.ToValue())
+                          + allCourseReview.Count(r => r.ResolvedAt?.Date == today && r.UserReportsStatus == ReportStatus.Rejected.ToValue())
+                          + allLessonReview.Count(r => r.ResolvedAt?.Date == today && r.UserReportsStatus == ReportStatus.Rejected.ToValue());
 
         return new ReportStatsResponse
         {
@@ -239,7 +240,7 @@ public class ReportService : IReportService
         if (report == null) return false;
 
         // Chặn Staff giải quyết báo cáo đã bị escalated
-        if (report.CourseReportsStatus == "escalated")
+        if (report.CourseReportsStatus == ReportStatus.Escalated.ToValue())
         {
             var resolverRole = await _userRepo.GetRoleByAccountIdAsync(resolverId);
             if (resolverRole != "admin")
@@ -270,7 +271,7 @@ public class ReportService : IReportService
                 // Áp dụng hình phạt theo cờ vi phạm
                 if (currentFlags == 1)
                 {
-                    course.CourseStatus = "rejected";
+                    course.CourseStatus = CourseStatus.Rejected.ToValue();
                     if (course.InstructorId.HasValue)
                     {
                         await _notificationService.SendNotificationAsync(
@@ -284,7 +285,7 @@ public class ReportService : IReportService
                 else if (currentFlags == 2)
                 {
                     // Cờ 2: Chuyển về rejected, vẫn giữ flag count
-                    course.CourseStatus = "rejected";
+                    course.CourseStatus = CourseStatus.Rejected.ToValue();
                     if (course.InstructorId.HasValue)
                     {
                         await _notificationService.SendNotificationAsync(
@@ -298,7 +299,7 @@ public class ReportService : IReportService
                 else if (currentFlags >= 3)
                 {
                     // Cờ 3: Khóa vĩnh viễn khóa học, khóa instructor 30 ngày
-                    course.CourseStatus = "archived";
+                    course.CourseStatus = CourseStatus.Archived.ToValue();
                     if (course.InstructorId.HasValue)
                     {
                         var instructor = await _instructorRepo.GetByIdAsync(course.InstructorId.Value);
@@ -330,7 +331,7 @@ public class ReportService : IReportService
                 if (request.RemoveContent)
                 {
                     course.IsRemoved = true;
-                    course.CourseStatus = "removed";
+                    course.CourseStatus = LearningStatus.Removed.ToValue();
                 }
             }
         }
@@ -341,7 +342,7 @@ public class ReportService : IReportService
         // Notify reporter of outcome
         if (report.ReporterId.HasValue)
         {
-            var message = request.Status == "resolved"
+            var message = request.Status == ReportStatus.Resolved.ToValue()
                 ? "Your report has been accepted and the violating content has been actioned."
                 : "Your report has been reviewed and dismissed.";
             await _notificationService.SendNotificationAsync(
@@ -353,7 +354,7 @@ public class ReportService : IReportService
         }
 
         // Notify instructor if content was removed
-        if (request.RemoveContent && request.Status == "resolved" && course != null)
+        if (request.RemoveContent && request.Status == ReportStatus.Resolved.ToValue() && course != null)
         {
             if (course.InstructorId.HasValue)
             {
@@ -381,15 +382,14 @@ public class ReportService : IReportService
         report.ResolverId = resolverId;
         report.ResolvedAt = DateTime.Now;
 
-        // Nếu approve: soft-remove review và ghi đè nội dung bình luận vi phạm
-        if (request.RemoveContent && request.Status == "resolved" && report.CourseReviewId.HasValue)
+        // Nếu approve: soft-remove review và gán trạng thái vi phạm (giữ nguyên nội dung comment gốc)
+        if (request.RemoveContent && request.Status == ReportStatus.Resolved.ToValue() && report.CourseReviewId.HasValue)
         {
             var review = await _reviewRepo.GetCourseReviewByIdAsync(report.CourseReviewId.Value);
             if (review != null)
             {
                 review.IsRemoved = true;
-                review.Comment = "This comment has been removed for violating community standards";
-                review.CourseReviewStatus = "removed";
+                review.CourseReviewStatus = ReviewStatus.Violating.ToValue();
                 review.UpdatedAt = DateTime.Now;
                 _reviewRepo.UpdateCourseReview(review);
                 
@@ -403,7 +403,7 @@ public class ReportService : IReportService
         // Notify reporter of outcome
         if (report.ReporterId.HasValue)
         {
-            var message = request.Status == "resolved"
+            var message = request.Status == ReportStatus.Resolved.ToValue()
                 ? "Your report about the course review has been accepted."
                 : "Your report about the course review has been reviewed and dismissed.";
             await _notificationService.SendNotificationAsync(
@@ -429,15 +429,14 @@ public class ReportService : IReportService
         report.ResolverId = resolverId;
         report.ResolvedAt = DateTime.Now;
 
-        // Nếu approve: soft-remove review và ghi đè nội dung bình luận vi phạm
-        if (request.RemoveContent && request.Status == "resolved" && report.LessonReviewId.HasValue)
+        // Nếu approve: soft-remove review và gán trạng thái vi phạm (giữ nguyên nội dung comment gốc)
+        if (request.RemoveContent && request.Status == ReportStatus.Resolved.ToValue() && report.LessonReviewId.HasValue)
         {
             var review = await _reviewRepo.GetLessonReviewByIdAsync(report.LessonReviewId.Value);
             if (review != null)
             {
                 review.IsRemoved = true;
-                review.Comment = "This comment has been removed for violating community standards";
-                review.LessonReviewStatus = "removed";
+                review.LessonReviewStatus = ReviewStatus.Violating.ToValue();
                 review.UpdatedAt = DateTime.Now;
                 _reviewRepo.UpdateLessonReview(review);
 
@@ -451,7 +450,7 @@ public class ReportService : IReportService
         // Notify reporter of outcome
         if (report.ReporterId.HasValue)
         {
-            var message = request.Status == "resolved"
+            var message = request.Status == ReportStatus.Resolved.ToValue()
                 ? "Your report about the lesson review has been accepted."
                 : "Your report about the lesson review has been reviewed and dismissed.";
             await _notificationService.SendNotificationAsync(
@@ -473,7 +472,7 @@ public class ReportService : IReportService
 
         // Gỡ khóa học khỏi nền tảng (xóa mềm/khóa)
         course.IsRemoved = true;
-        course.CourseStatus = "archived";
+        course.CourseStatus = CourseStatus.Archived.ToValue();
         course.UpdatedAt = DateTime.Now;
 
         await _reportRepo.SaveChangesAsync();
@@ -536,11 +535,11 @@ public class ReportService : IReportService
                 LockoutLevel = "severe",
                 LockoutEnd = DateTime.Now.AddDays(30)
             });
-            account.AccountStatus = "Banned";
+            account.AccountStatus = AccountStatus.Banned.ToValue();
             await _notificationService.SendNotificationAsync(userId, "Account Suspended (3rd Violation)", "Your account has been suspended for 30 days due to repeated and severe community standards violations.", null!);
 
             var inst = await _instructorRepo.GetByIdAsync(userId);
-            if (inst != null && string.Equals(inst.ApprovalStatus, "Approved", StringComparison.OrdinalIgnoreCase))
+            if (inst != null && string.Equals(inst.ApprovalStatus, InstructorApprovalStatus.Approved.ToValue(), StringComparison.OrdinalIgnoreCase))
             {
                 await NotifyStudentsAboutInstructorSuspensionAsync(userId);
             }

@@ -57,14 +57,14 @@ public class LessonService : ILessonService
             throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot create lessons.");
         }
 
-        if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (CourseStatus.Pending.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot add lessons while the course is pending review.");
 
         // ★ Limit: Max 5 lessons for unlinked Stripe
         var instructor = await _instructorRepository.GetByIdAsync(instructorId);
         var isStripeActive = instructor != null
             && !string.IsNullOrEmpty(instructor.StripeAccountId)
-            && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+            && string.Equals(instructor.StripeOnboardingStatus, StripeOnboardingStatus.Active.ToValue(), StringComparison.OrdinalIgnoreCase);
 
         if (!isStripeActive)
         {
@@ -102,7 +102,7 @@ public class LessonService : ILessonService
             ThumbnailUrl = thumbnailUrl,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            LessonStatus = "active"
+            LessonStatus = LessonStatus.Active.ToValue()
         };
 
         await _lessonRepository.AddAsync(lesson);
@@ -206,20 +206,20 @@ public class LessonService : ILessonService
             throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot add materials.");
         }
 
-        if ("pending".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (CourseStatus.Pending.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot add materials while the course is pending review.");
 
         // ★ Limit: Max 1 resource for unlinked Stripe
         var instructor = await _instructorRepository.GetByIdAsync(instructorId);
         var isStripeActive = instructor != null
             && !string.IsNullOrEmpty(instructor.StripeAccountId)
-            && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+            && string.Equals(instructor.StripeOnboardingStatus, StripeOnboardingStatus.Active.ToValue(), StringComparison.OrdinalIgnoreCase);
 
         var fileType = request.MaterialMetadata?.FileType ?? "video";
         if (!isStripeActive && (fileType == "document" || fileType == "file" || fileType == "raw"))
         {
             var existingMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
-            if (existingMaterials.Count(m => m.LearningStatus != "removed" && (m.MaterialMetadata?.FileType == "document" || m.MaterialMetadata?.FileType == "file" || m.MaterialMetadata?.FileType == "raw")) >= 1)
+            if (existingMaterials.Count(m => m.LearningStatus != LearningStatus.Removed.ToValue() && (m.MaterialMetadata?.FileType == "document" || m.MaterialMetadata?.FileType == "file" || m.MaterialMetadata?.FileType == "raw")) >= 1)
             {
                 throw new BadRequestException("Instructors who have not linked a Stripe account are only allowed to attach up to 1 document per lesson.");
             }
@@ -244,7 +244,7 @@ public class LessonService : ILessonService
         if (fileType == "video")
         {
             existingActiveVideos = allMaterials.Where(m => 
-                m.LearningStatus == "active" &&
+                m.LearningStatus == LearningStatus.Active.ToValue() &&
                 ((m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || (m.MaterialMetadata == null))).ToList();
         }
 
@@ -262,7 +262,7 @@ public class LessonService : ILessonService
                     activeVideo.MaterialUrl = trashUrl ?? activeVideo.MaterialUrl;
                     activeVideo.CloudPublicId = cloudId;
                 }
-                activeVideo.LearningStatus = "removed";
+                activeVideo.LearningStatus = LearningStatus.Removed.ToValue();
                 activeVideo.UpdatedAt = DateTime.UtcNow;
                 _materialRepository.Update(activeVideo);
             }
@@ -277,7 +277,7 @@ public class LessonService : ILessonService
                 MaterialMetadata = request.MaterialMetadata ?? new MaterialMetadata { FileType = "video" },
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                LearningStatus = "active"
+                LearningStatus = LearningStatus.Active.ToValue()
             };
             await _materialRepository.AddAsync(material);
         }
@@ -299,7 +299,7 @@ public class LessonService : ILessonService
             // Dọn dẹp dữ liệu lỗi nếu có nhiều hơn 1 video active
             foreach (var extraVideo in existingActiveVideos.Skip(1))
             {
-                extraVideo.LearningStatus = "removed";
+                extraVideo.LearningStatus = LearningStatus.Removed.ToValue();
                 extraVideo.UpdatedAt = DateTime.UtcNow;
                 _materialRepository.Update(extraVideo);
             }
@@ -316,7 +316,7 @@ public class LessonService : ILessonService
                 MaterialMetadata = request.MaterialMetadata ?? new MaterialMetadata { FileType = "video" },
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                LearningStatus = "active"
+                LearningStatus = LearningStatus.Active.ToValue()
             };
             await _materialRepository.AddAsync(material);
         }
@@ -369,7 +369,7 @@ public class LessonService : ILessonService
             throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update materials.");
         }
 
-        if ("pending".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (CourseStatus.Pending.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot update materials while the course is pending review.");
 
         material.Title = request.Title;
@@ -422,7 +422,7 @@ public class LessonService : ILessonService
             throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot remove materials.");
         }
 
-        if ("pending".Equals(lesson.Course?.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (CourseStatus.Pending.ToValue().Equals(lesson.Course?.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot update material while the course is pending review.");
 
         // Move file to trash on Cloudinary instead of deleting
@@ -439,7 +439,7 @@ public class LessonService : ILessonService
             }
         }
 
-        material.LearningStatus = "removed";
+        material.LearningStatus = LearningStatus.Removed.ToValue();
         material.UpdatedAt = DateTime.UtcNow;
         _materialRepository.Update(material);
         int rows4 = await _materialRepository.SaveChangesAsync();
@@ -494,7 +494,7 @@ public class LessonService : ILessonService
                     m.MaterialUrl = trashUrl;
                 }
             }
-            m.LearningStatus = "removed";
+            m.LearningStatus = LearningStatus.Removed.ToValue();
             m.UpdatedAt = DateTime.UtcNow;
             _materialRepository.Update(m);
         }
@@ -557,7 +557,7 @@ public class LessonService : ILessonService
 
         // Get course status to prevent deletion if pending
         var courseStatus = material.Lesson?.Course?.CourseStatus;
-        if (courseStatus != null && courseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+        if (courseStatus != null && courseStatus.Equals(CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot permanently delete materials while the course is pending review.");
 
         // 1. Delete from Cloudinary if public ID exists
@@ -615,7 +615,7 @@ public class LessonService : ILessonService
         {
             var existingMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lesson.LessonId);
             var activeVideo = existingMaterials.FirstOrDefault(m => 
-                m.LearningStatus == "active" && 
+                m.LearningStatus == LearningStatus.Active.ToValue() && 
                 ((m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || m.MaterialMetadata == null));
             
             if (activeVideo != null)
@@ -628,7 +628,7 @@ public class LessonService : ILessonService
                     activeVideo.MaterialUrl = trashUrl ?? activeVideo.MaterialUrl;
                     activeVideo.CloudPublicId = cloudId;
                 }
-                activeVideo.LearningStatus = "removed";
+                activeVideo.LearningStatus = LearningStatus.Removed.ToValue();
                 activeVideo.UpdatedAt = DateTime.UtcNow;
                 _materialRepository.Update(activeVideo);
             }
@@ -657,7 +657,7 @@ public class LessonService : ILessonService
             }
         }
 
-        material.LearningStatus = "active";
+        material.LearningStatus = LearningStatus.Active.ToValue();
         material.UpdatedAt = DateTime.UtcNow;
         _materialRepository.Update(material);
         int rows9 = await _materialRepository.SaveChangesAsync();

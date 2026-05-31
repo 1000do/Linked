@@ -1,3 +1,4 @@
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
@@ -62,7 +63,7 @@ public class ReportRepository : IReportRepository
         => await _context.CourseReports
             .FirstOrDefaultAsync(r => r.ReporterId == reporterId
                                    && r.CourseId == courseId
-                                   && r.CourseReportsStatus == "pending");
+                                   && r.CourseReportsStatus == ReportStatus.Pending.ToValue());
 
     public async Task AddCourseReportAsync(CourseReport report)
         => await _context.CourseReports.AddAsync(report);
@@ -113,7 +114,7 @@ public class ReportRepository : IReportRepository
         => await _context.CourseReviewReports
             .FirstOrDefaultAsync(r => r.ReporterId == reporterId
                                    && r.CourseReviewId == reviewId
-                                   && r.UserReportsStatus == "pending");
+                                   && r.UserReportsStatus == ReportStatus.Pending.ToValue());
 
     public async Task AddCourseReviewReportAsync(CourseReviewReport report)
         => await _context.CourseReviewReports.AddAsync(report);
@@ -164,7 +165,7 @@ public class ReportRepository : IReportRepository
         => await _context.LessonReviewReports
             .FirstOrDefaultAsync(r => r.ReporterId == reporterId
                                    && r.LessonReviewId == reviewId
-                                   && r.UserReportsStatus == "pending");
+                                   && r.UserReportsStatus == ReportStatus.Pending.ToValue());
 
     public async Task AddLessonReviewReportAsync(LessonReviewReport report)
         => await _context.LessonReviewReports.AddAsync(report);
