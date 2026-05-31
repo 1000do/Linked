@@ -741,6 +741,68 @@
                     });
                 }).catch(err => console.error("Chat Hub Error", err));
             }
+
+            // --- Global Email Verification Interceptor ---
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
+                return null;
+            }
+
+            function checkEmailVerification(event, actionName) {
+                const token = getCookie('AccessToken');
+                if (!token) return true; // Let them click, they'll be redirected to login anyway
+
+                const isVerified = getCookie('IsVerified');
+                if (isVerified !== 'true') {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    Swal.fire({
+                        title: 'Email Verification Required',
+                        text: `Please verify your email address to ${actionName}.`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#006a62',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Verify Now',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = '/Account/SendVerifyOtp';
+                        }
+                    });
+                    return false;
+                }
+                return true;
+            }
+
+            // Intercept form submissions
+            document.addEventListener('submit', (e) => {
+                const action = e.target.getAttribute('action') || '';
+                const id = e.target.getAttribute('id') || '';
+                if (action.includes('Checkout') || action.includes('Cart') || id.includes('checkout') || id.includes('cart')) {
+                    checkEmailVerification(e, 'complete checkout');
+                }
+            }, true);
+
+            // Intercept button/link clicks
+            document.addEventListener('click', (e) => {
+                const target = e.target.closest('a, button');
+                if (!target) return;
+
+                const onclickAttr = target.getAttribute('onclick') || '';
+                const hrefAttr = target.getAttribute('href') || '';
+                const idAttr = target.getAttribute('id') || '';
+                const classAttr = target.getAttribute('class') || '';
+
+                if (onclickAttr.includes('addToCart') || hrefAttr.includes('Cart/add') || idAttr.includes('add-to-cart') || classAttr.includes('add-to-cart')) {
+                    checkEmailVerification(e, 'add courses to cart');
+                } else if (onclickAttr.includes('enrollFree') || hrefAttr.includes('Enrollment/free') || idAttr.includes('enroll-btn') || classAttr.includes('enroll-btn')) {
+                    checkEmailVerification(e, 'enroll in this course');
+                }
+            }, true);
         });
     </script>
 </body>

@@ -406,52 +406,67 @@ public class AdminFinanceRepository : IAdminFinanceRepository
         var yearStart = new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         var yearEnd = yearStart.AddYears(1);
 
-        return await _context.Courses
+        var courses = await _context.Courses
             .Include(c => c.Instructor)
                 .ThenInclude(i => i!.InstructorNavigation)
             .Where(c => !c.IsRemoved)
-            .Select(c => new InstructorCourseRevenueProjection
+            .ToListAsync();
+
+        var transactions = await _context.Transactions
+            .Where(t => t.OrderItem != null && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending"))
+            .Select(t => new
+            {
+                CourseId = t.OrderItem!.CourseId,
+                Amount = t.Amount,
+                CreatedAt = t.TransactionCreatedAt
+            })
+            .ToListAsync();
+
+        decimal CalculateNetRevenue(decimal amount)
+        {
+            var fee = Math.Round(amount * 0.029m + 0.30m, 2);
+            fee = Math.Min(fee, amount);
+            return amount - fee;
+        }
+
+        var result = new List<InstructorCourseRevenueProjection>();
+
+        foreach (var c in courses)
+        {
+            var courseTx = transactions.Where(t => t.CourseId == c.CourseId).ToList();
+
+            var salesCount = courseTx.Count();
+
+            var monthlyRevenue = courseTx
+                .Where(t => t.CreatedAt >= monthStart && t.CreatedAt < monthEnd)
+                .Sum(t => CalculateNetRevenue(t.Amount));
+
+            var prevMonthRevenue = courseTx
+                .Where(t => t.CreatedAt >= prevMonthStart && t.CreatedAt < prevMonthEnd)
+                .Sum(t => CalculateNetRevenue(t.Amount));
+
+            var yearlyRevenue = courseTx
+                .Where(t => t.CreatedAt >= yearStart && t.CreatedAt < yearEnd)
+                .Sum(t => CalculateNetRevenue(t.Amount));
+
+            var lifetimeRevenue = courseTx
+                .Sum(t => CalculateNetRevenue(t.Amount));
+
+            result.Add(new InstructorCourseRevenueProjection
             {
                 CourseId = c.CourseId,
                 CourseTitle = c.Title,
                 InstructorId = c.InstructorId ?? 0,
-                InstructorName = c.Instructor != null && c.Instructor.InstructorNavigation != null
-                    ? c.Instructor.InstructorNavigation.FullName ?? "N/A"
-                    : "N/A",
+                InstructorName = c.Instructor?.InstructorNavigation?.FullName ?? "N/A",
+                SalesCount = salesCount,
+                MonthlyRevenue = monthlyRevenue,
+                PreviousMonthRevenue = prevMonthRevenue,
+                YearlyRevenue = yearlyRevenue,
+                LifetimeRevenue = lifetimeRevenue
+            });
+        }
 
-                SalesCount = _context.Transactions
-                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
-                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending"))
-                    .Count(),
-
-                MonthlyRevenue = _context.Transactions
-                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
-                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
-                                && t.TransactionCreatedAt >= monthStart && t.TransactionCreatedAt < monthEnd)
-                    .SelectMany(t => t.InstructorPayouts)
-                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0,
-
-                PreviousMonthRevenue = _context.Transactions
-                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
-                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
-                                && t.TransactionCreatedAt >= prevMonthStart && t.TransactionCreatedAt < prevMonthEnd)
-                    .SelectMany(t => t.InstructorPayouts)
-                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0,
-
-                YearlyRevenue = _context.Transactions
-                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
-                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
-                                && t.TransactionCreatedAt >= yearStart && t.TransactionCreatedAt < yearEnd)
-                    .SelectMany(t => t.InstructorPayouts)
-                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0,
-
-                LifetimeRevenue = _context.Transactions
-                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
-                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending"))
-                    .SelectMany(t => t.InstructorPayouts)
-                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0
-            })
-            .ToListAsync();
+        return result;
     }
 
     public async Task<List<InstructorCourseRevenueProjection>> GetInstructorCourseRevenuesByInstructorAsync(int instructorId, int year, int month)
@@ -465,52 +480,67 @@ public class AdminFinanceRepository : IAdminFinanceRepository
         var yearStart = new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         var yearEnd = yearStart.AddYears(1);
 
-        return await _context.Courses
+        var courses = await _context.Courses
             .Include(c => c.Instructor)
                 .ThenInclude(i => i!.InstructorNavigation)
             .Where(c => !c.IsRemoved && c.InstructorId == instructorId)
-            .Select(c => new InstructorCourseRevenueProjection
+            .ToListAsync();
+
+        var transactions = await _context.Transactions
+            .Where(t => t.OrderItem != null && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending"))
+            .Select(t => new
+            {
+                CourseId = t.OrderItem!.CourseId,
+                Amount = t.Amount,
+                CreatedAt = t.TransactionCreatedAt
+            })
+            .ToListAsync();
+
+        decimal CalculateNetRevenue(decimal amount)
+        {
+            var fee = Math.Round(amount * 0.029m + 0.30m, 2);
+            fee = Math.Min(fee, amount);
+            return amount - fee;
+        }
+
+        var result = new List<InstructorCourseRevenueProjection>();
+
+        foreach (var c in courses)
+        {
+            var courseTx = transactions.Where(t => t.CourseId == c.CourseId).ToList();
+
+            var salesCount = courseTx.Count();
+
+            var monthlyRevenue = courseTx
+                .Where(t => t.CreatedAt >= monthStart && t.CreatedAt < monthEnd)
+                .Sum(t => CalculateNetRevenue(t.Amount));
+
+            var prevMonthRevenue = courseTx
+                .Where(t => t.CreatedAt >= prevMonthStart && t.CreatedAt < prevMonthEnd)
+                .Sum(t => CalculateNetRevenue(t.Amount));
+
+            var yearlyRevenue = courseTx
+                .Where(t => t.CreatedAt >= yearStart && t.CreatedAt < yearEnd)
+                .Sum(t => CalculateNetRevenue(t.Amount));
+
+            var lifetimeRevenue = courseTx
+                .Sum(t => CalculateNetRevenue(t.Amount));
+
+            result.Add(new InstructorCourseRevenueProjection
             {
                 CourseId = c.CourseId,
                 CourseTitle = c.Title,
                 InstructorId = c.InstructorId ?? 0,
-                InstructorName = c.Instructor != null && c.Instructor.InstructorNavigation != null
-                    ? c.Instructor.InstructorNavigation.FullName ?? "N/A"
-                    : "N/A",
+                InstructorName = c.Instructor?.InstructorNavigation?.FullName ?? "N/A",
+                SalesCount = salesCount,
+                MonthlyRevenue = monthlyRevenue,
+                PreviousMonthRevenue = prevMonthRevenue,
+                YearlyRevenue = yearlyRevenue,
+                LifetimeRevenue = lifetimeRevenue
+            });
+        }
 
-                SalesCount = _context.Transactions
-                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
-                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending"))
-                    .Count(),
-
-                MonthlyRevenue = _context.Transactions
-                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
-                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
-                                && t.TransactionCreatedAt >= monthStart && t.TransactionCreatedAt < monthEnd)
-                    .SelectMany(t => t.InstructorPayouts)
-                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0,
-
-                PreviousMonthRevenue = _context.Transactions
-                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
-                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
-                                && t.TransactionCreatedAt >= prevMonthStart && t.TransactionCreatedAt < prevMonthEnd)
-                    .SelectMany(t => t.InstructorPayouts)
-                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0,
-
-                YearlyRevenue = _context.Transactions
-                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
-                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending")
-                                && t.TransactionCreatedAt >= yearStart && t.TransactionCreatedAt < yearEnd)
-                    .SelectMany(t => t.InstructorPayouts)
-                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0,
-
-                LifetimeRevenue = _context.Transactions
-                    .Where(t => t.OrderItem != null && t.OrderItem.CourseId == c.CourseId
-                                && (t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending"))
-                    .SelectMany(t => t.InstructorPayouts)
-                    .Sum(p => (decimal?)p.PayoutAmount) ?? 0
-            })
-            .ToListAsync();
+        return result;
     }
 
     public async Task<RefundEligibilityDto> GetRefundEligibilityMetricsAsync(int transactionId, int studentId, int courseId)

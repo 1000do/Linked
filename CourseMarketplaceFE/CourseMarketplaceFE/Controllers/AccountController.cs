@@ -41,6 +41,7 @@ namespace CourseMarketplaceFE.Controllers
             var response = await client.PostAsJsonAsync("Auth/register", new
             {
                 model.Email,
+                model.Username,
                 model.Password,
                 model.ConfirmPassword,
                 model.FullName
@@ -48,8 +49,8 @@ namespace CourseMarketplaceFE.Controllers
 
             if (response.IsSuccessStatusCode)
             {
-                TempData["SuccessMessage"] = "Registration successful!";
-                return RedirectToAction("Login");
+                TempData["RecommendVerifyEmail"] = model.Email;
+                return RedirectToAction("VerifyRecommend");
             }
 
             await HandleApiError(response);
@@ -73,7 +74,7 @@ namespace CourseMarketplaceFE.Controllers
 
             // Endpoint login không cần auth → dùng HttpClient trực tiếp
             var client = _httpClientFactory.CreateClient("BackendApi");
-            var loginRequest = new { Email = model.Identifier.Trim().ToLower(), Password = model.Password };
+            var loginRequest = new { UsernameOrEmail = model.UsernameOrEmail.Trim(), Password = model.Password };
             var response = await client.PostAsJsonAsync("Auth/login", loginRequest);
 
             if (response.IsSuccessStatusCode)
@@ -117,10 +118,11 @@ namespace CourseMarketplaceFE.Controllers
                     Expires = tokenExpiry,
                     Path = "/"
                 };
-                Response.Cookies.Append("UserName", result.FullName ?? model.Identifier, displayOpts);
+                Response.Cookies.Append("UserName", result.FullName ?? model.UsernameOrEmail, displayOpts);
                 Response.Cookies.Append("AvatarUrl", result.AvatarUrl ?? "", displayOpts);
                 Response.Cookies.Append("UserRole", result.Role ?? "user", displayOpts);
                 Response.Cookies.Append("UserId", result.AccountId.ToString(), displayOpts);
+                Response.Cookies.Append("IsVerified", result.IsVerified ? "true" : "false", displayOpts);
 
                 if (string.IsNullOrEmpty(result.Role))
                 {
@@ -135,11 +137,10 @@ namespace CourseMarketplaceFE.Controllers
                 return RedirectToAction("Index", "Home", new { debug = "is_user" });
 
             }
-                var errorJson = await response.Content.ReadAsStringAsync();
-                ViewBag.ErrorMessage = ParseErrorMessage(errorJson, "Incorrect email or password.");
-                return View(model);
-            
-            }
+            var errorJson = await response.Content.ReadAsStringAsync();
+            ViewBag.ErrorMessage = ParseErrorMessage(errorJson, "Incorrect username/email or password.");
+            return View(model);
+        }
         
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -189,6 +190,12 @@ namespace CourseMarketplaceFE.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<UserProfileApiResponse>(_jsonOptions);
+
+                // Đồng bộ cờ IsVerified
+                var isVerified = result?.Data?.IsVerified ?? false;
+                var displayOpts = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddHours(24), Path = "/" };
+                Response.Cookies.Append("IsVerified", isVerified ? "true" : "false", displayOpts);
+
                 return View(result?.Data);
             }
 
@@ -212,6 +219,9 @@ namespace CourseMarketplaceFE.Controllers
             {
                 FirstName = nameParts.Length > 0 ? nameParts[0] : "",
                 LastName = nameParts.Length > 1 ? string.Join(" ", nameParts.Skip(1)) : "",
+                Email = data?.Email,
+                Username = data?.Username,
+                AuthProvider = data?.AuthProvider,
                 Bio = data?.Bio,
                 PhoneNumber = data?.PhoneNumber,
                 AvatarUrl = data?.AvatarUrl,
@@ -235,6 +245,7 @@ namespace CourseMarketplaceFE.Controllers
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent(model.FirstName ?? ""), "FirstName");
             content.Add(new StringContent(model.LastName ?? ""), "LastName");
+            content.Add(new StringContent(model.Email ?? ""), "Email");
             content.Add(new StringContent(model.Bio ?? ""), "Bio");
             content.Add(new StringContent(model.PhoneNumber ?? ""), "PhoneNumber");
             content.Add(new StringContent(model.DateOfBirth ?? ""), "DateOfBirth");
@@ -258,7 +269,7 @@ namespace CourseMarketplaceFE.Controllers
             var response = await _api.PutAsync("Profile/update", content);
             if (response.IsSuccessStatusCode)
             {
-                // Đồng bộ lại cookie display (FullName, AvatarUrl)
+                // Đồng bộ lại cookie display (FullName, AvatarUrl, IsVerified)
                 var profileResponse = await _api.GetAsync("Profile");
                 if (profileResponse.IsSuccessStatusCode)
                 {
@@ -268,13 +279,15 @@ namespace CourseMarketplaceFE.Controllers
                     var cookieOptions = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7), Path = "/" };
                     Response.Cookies.Append("UserName", updated?.FullName ?? "User", cookieOptions);
                     Response.Cookies.Append("AvatarUrl", updated?.AvatarUrl ?? "", cookieOptions);
+                    Response.Cookies.Append("IsVerified", (updated?.IsVerified ?? false) ? "true" : "false", cookieOptions);
                 }
 
                 TempData["SuccessMessage"] = "Updated successfully!";
                 return RedirectToAction("Profile");
             }
 
-            ViewBag.ErrorMessage = "Cannot update profile.";
+            var errorJson = await response.Content.ReadAsStringAsync();
+            ViewBag.ErrorMessage = ParseErrorMessage(errorJson, "Cannot update profile.");
             return View(model);
         }
 
@@ -388,6 +401,7 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Append("AvatarUrl", result?.AvatarUrl ?? "", cookieOptions);
             Response.Cookies.Append("UserRole", result?.Role ?? "user", cookieOptions);
             Response.Cookies.Append("UserId", result?.AccountId.ToString() ?? "0", cookieOptions);
+            Response.Cookies.Append("IsVerified", (result?.IsVerified ?? true) ? "true" : "false", cookieOptions);
 
             return Ok();
         }
@@ -483,6 +497,9 @@ namespace CourseMarketplaceFE.Controllers
                 TempData.Remove("IsVerifyFlow");
                 TempData.Remove("VerifyEmail");
 
+                var cookieOptions = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddHours(24), Path = "/" };
+                Response.Cookies.Append("IsVerified", "true", cookieOptions);
+
                 TempData["SuccessMessage"] = "Email verification successful!";
                 return RedirectToAction("Profile");
             }
@@ -571,6 +588,36 @@ namespace CourseMarketplaceFE.Controllers
                 TempData["ErrorMessage"] = "Could not send OTP";
                 return RedirectToAction("Profile");
             }
+
+            return RedirectToAction("VerifyOtp");
+        }
+
+        [HttpGet]
+        public IActionResult VerifyRecommend()
+        {
+            var email = TempData["RecommendVerifyEmail"]?.ToString();
+            if (string.IsNullOrEmpty(email)) return RedirectToAction("Login");
+            ViewBag.Email = email;
+            TempData.Keep("RecommendVerifyEmail");
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SendRegisterOtp(string email)
+        {
+            if (string.IsNullOrEmpty(email)) return RedirectToAction("Login");
+
+            var client = _httpClientFactory.CreateClient("BackendApi");
+            var res = await client.PostAsync($"Auth/send-otp?email={email}", null);
+
+            if (!res.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = "Could not send OTP";
+                return RedirectToAction("Login");
+            }
+
+            TempData["VerifyEmail"] = email;
+            TempData["IsVerifyFlow"] = true;
 
             return RedirectToAction("VerifyOtp");
         }

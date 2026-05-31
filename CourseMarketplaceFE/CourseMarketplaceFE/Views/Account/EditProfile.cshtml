@@ -28,6 +28,8 @@
 
                     <form id="editProfileForm" asp-controller="Account" asp-action="EditProfile" method="post" enctype="multipart/form-data" class="space-y-10 relative">
                         <input type="hidden" asp-for="AvatarUrl" />
+                        <input type="hidden" asp-for="Username" />
+                        <input type="hidden" asp-for="AuthProvider" />
 
                         @* Avatar Section *@
                         <div class="flex flex-col md:flex-row items-center gap-8 pb-10 border-b border-slate-100">
@@ -67,6 +69,30 @@
                                     <input asp-for="LastName" class="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-6 py-4 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-slate-800" placeholder="Last name..." />
                                 </div>
                                 <span asp-validation-for="LastName" class="text-xs text-red-500 font-bold ml-1"></span>
+                            </div>
+
+                            <div class="space-y-3">
+                                <label class="text-sm font-black text-slate-700 ml-1">Username (Cannot Change)</label>
+                                <div class="group relative">
+                                    <input asp-for="Username" readonly class="w-full bg-slate-100 border-2 border-slate-200 rounded-2xl px-6 py-4 focus:outline-none font-medium text-slate-500 cursor-not-allowed" />
+                                </div>
+                            </div>
+
+                            <div class="space-y-3">
+                                <label class="text-sm font-black text-slate-700 ml-1">Email Address</label>
+                                <div class="relative group" title="@(Model.AuthProvider == "google" ? "Google Account emails cannot be changed." : "")">
+                                    @if (Model.AuthProvider == "google")
+                                    {
+                                        <input asp-for="Email" readonly class="w-full bg-slate-100 border-2 border-slate-200 rounded-2xl px-6 py-4 focus:outline-none font-medium text-slate-500 cursor-not-allowed" />
+                                        <p class="text-[10px] text-amber-600 font-bold ml-1 mt-1 uppercase tracking-wider font-medium">Google login emails cannot be modified</p>
+                                    }
+                                    else
+                                    {
+                                        <input asp-for="Email" class="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-6 py-4 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-slate-800" placeholder="yourname@gmail.com" />
+                                        <span asp-validation-for="Email" class="text-xs text-red-500 font-bold ml-1"></span>
+                                        <p class="text-[10px] text-slate-400 font-bold ml-1 mt-1 uppercase tracking-wider font-medium">Changing email will reset email verification status</p>
+                                    }
+                                </div>
                             </div>
 
                             <div class="space-y-3">
@@ -165,6 +191,32 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+        // Helper functions to show and clear input errors visually
+        function setFieldError(inputEl, message) {
+            inputEl.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500/10');
+            inputEl.classList.remove('border-slate-100', 'focus:border-primary', 'focus:ring-primary/5');
+            
+            const parent = inputEl.closest('.space-y-3') || inputEl.parentElement;
+            let errSpan = parent.querySelector('.text-xs.text-red-500.font-bold');
+            if (!errSpan) {
+                errSpan = document.createElement('span');
+                errSpan.className = 'text-xs text-red-500 font-bold ml-1 field-validation-error';
+                parent.appendChild(errSpan);
+            }
+            errSpan.innerText = message;
+        }
+
+        function clearFieldError(inputEl) {
+            inputEl.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500/10');
+            inputEl.classList.add('border-slate-100', 'focus:border-primary', 'focus:ring-primary/5');
+            
+            const parent = inputEl.closest('.space-y-3') || inputEl.parentElement;
+            const errSpan = parent.querySelector('.text-xs.text-red-500.font-bold');
+            if (errSpan) {
+                errSpan.innerText = '';
+            }
+        }
+
         // 1. Kiểm tra ảnh
         function previewImage(event) {
             const file = event.target.files[0];
@@ -189,29 +241,139 @@
             }
         }
 
-        // 2. Chặn nhập chữ và kiểm tra độ dài số điện thoại
+        // 2. Chặn nhập chữ cho số điện thoại
         const phoneInput = document.getElementById('PhoneInput');
         const profileForm = document.getElementById('editProfileForm');
 
         if (phoneInput) {
             phoneInput.addEventListener('input', function (e) {
-                // Chỉ cho phép nhập số
                 this.value = this.value.replace(/[^0-9]/g, '');
             });
         }
 
+        // Clear validation highlights on input
+        ['FirstName', 'LastName', 'Email', 'PhoneInput', 'DateOfBirth', 'Bio'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => clearFieldError(el));
+                el.addEventListener('change', () => clearFieldError(el));
+            }
+        });
+
         // 3. Kiểm tra trước khi Submit
         profileForm.addEventListener('submit', function (e) {
-            const phoneVal = phoneInput.value;
+            let isValid = true;
+            
+            const firstNameEl = document.getElementById('FirstName');
+            const lastNameEl = document.getElementById('LastName');
+            const emailEl = document.getElementById('Email');
+            const phoneEl = document.getElementById('PhoneInput');
+            const dobEl = document.getElementById('DateOfBirth');
+            const bioEl = document.getElementById('Bio');
 
-            // Nếu ít hơn 10 số hoặc nhiều hơn 11 số
-            if (phoneVal.length < 10 || phoneVal.length > 11) {
-                e.preventDefault(); // Chặn gửi form
+            // Validate FirstName
+            if (firstNameEl) {
+                const val = firstNameEl.value.trim();
+                clearFieldError(firstNameEl);
+                if (!val) {
+                    setFieldError(firstNameEl, 'First & Middle Name is required.');
+                    isValid = false;
+                } else if (val.length > 50) {
+                    setFieldError(firstNameEl, 'First & Middle Name cannot exceed 50 characters.');
+                    isValid = false;
+                } else if (/[\d!@@#$%^&*()_+={}\[\]|\\:;"'<>,.?/~`-]/.test(val)) {
+                    setFieldError(firstNameEl, 'First & Middle Name can only contain letters and spaces.');
+                    isValid = false;
+                }
+            }
 
+            // Validate LastName
+            if (lastNameEl) {
+                const val = lastNameEl.value.trim();
+                clearFieldError(lastNameEl);
+                if (!val) {
+                    setFieldError(lastNameEl, 'Last Name is required.');
+                    isValid = false;
+                } else if (val.length > 50) {
+                    setFieldError(lastNameEl, 'Last Name cannot exceed 50 characters.');
+                    isValid = false;
+                } else if (/[\d!@@#$%^&*()_+={}\[\]|\\:;"'<>,.?/~`-]/.test(val)) {
+                    setFieldError(lastNameEl, 'Last Name can only contain letters and spaces.');
+                    isValid = false;
+                }
+            }
+
+            // Validate Email
+            if (emailEl && !emailEl.readOnly && !emailEl.disabled) {
+                const val = emailEl.value.trim();
+                clearFieldError(emailEl);
+                const emailRegex = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                if (!val) {
+                    setFieldError(emailEl, 'Email Address is required.');
+                    isValid = false;
+                } else if (!emailRegex.test(val)) {
+                    setFieldError(emailEl, 'Invalid Email address format.');
+                    isValid = false;
+                } else if (!val.toLowerCase().endsWith('@@gmail.com')) {
+                    setFieldError(emailEl, 'Only @@gmail.com email addresses are accepted.');
+                    isValid = false;
+                }
+            }
+
+            // Validate Phone
+            if (phoneEl) {
+                const val = phoneEl.value.trim();
+                clearFieldError(phoneEl);
+                if (!val) {
+                    setFieldError(phoneEl, 'Phone Number is required.');
+                    isValid = false;
+                } else if (val.length < 10 || val.length > 11) {
+                    setFieldError(phoneEl, 'Phone number must contain exactly 10 or 11 digits.');
+                    isValid = false;
+                }
+            }
+
+            // Validate DOB
+            if (dobEl) {
+                const val = dobEl.value.trim();
+                clearFieldError(dobEl);
+                if (!val) {
+                    setFieldError(dobEl, 'Date of Birth is required.');
+                    isValid = false;
+                } else {
+                    const dobDate = new Date(val);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0); // normalize today to midnight
+                    if (dobDate >= today) {
+                        setFieldError(dobEl, 'Date of Birth must be in the past.');
+                        isValid = false;
+                    } else {
+                        const age = today.getFullYear() - dobDate.getFullYear();
+                        if (age < 10) {
+                            setFieldError(dobEl, 'You must be at least 10 years old.');
+                            isValid = false;
+                        }
+                    }
+                }
+            }
+
+            // Validate Bio
+            if (bioEl) {
+                const val = bioEl.value.trim();
+                clearFieldError(bioEl);
+                if (val.length > 500) {
+                    setFieldError(bioEl, 'Bio description cannot exceed 500 characters.');
+                    isValid = false;
+                }
+            }
+
+            if (!isValid) {
+                e.preventDefault(); // Stop form submission
+                
                 Swal.fire({
-                    title: 'Invalid Phone Number',
-                    text: 'Phone number must contain exactly 10 or 11 digits.',
-                    icon: 'warning',
+                    title: 'Validation Errors',
+                    text: 'Please check the invalid fields highlighted in red.',
+                    icon: 'error',
                     confirmButtonColor: '#006a62'
                 });
             }

@@ -568,6 +568,44 @@ public class AdminFinanceController : Controller
                     yearlyMonthlyData[y] = monthlyArray;
                 }
                 vm.YearlyMonthlyRevenue = yearlyMonthlyData;
+
+                // Overwrite Gross Revenue, Profit Before Payout, and Net Profit with the best-selling course's metrics
+                if (!string.IsNullOrEmpty(vm.TopSellingCourseTitle) && vm.TopSellingCourseTitle != "N/A")
+                {
+                    var topSellingPayouts = allPayouts.Where(p => 
+                        p.TransactionDate.HasValue && 
+                        p.TransactionDate.Value.Year == selectedYear && 
+                        p.TransactionDate.Value.Month == selectedMonth && 
+                        p.CourseTitle != null && 
+                        string.Equals(p.CourseTitle.Trim(), vm.TopSellingCourseTitle.Trim(), StringComparison.OrdinalIgnoreCase)
+                    ).ToList();
+
+                    decimal topSellingGross = 0m;
+                    decimal topSellingFees = 0m;
+                    decimal topSellingPayoutsAmount = 0m;
+                    decimal topSellingRefunded = 0m;
+
+                    foreach (var p in topSellingPayouts)
+                    {
+                        var absAmount = Math.Abs(p.TotalAmount);
+                        var fee = Math.Round(absAmount * 0.029m + 0.30m, 2);
+                        fee = Math.Min(fee, absAmount);
+
+                        if (p.PayoutStatus?.ToLower() == "refunded")
+                        {
+                            topSellingRefunded += absAmount;
+                        }
+                        else
+                        {
+                            topSellingGross += absAmount;
+                            topSellingFees += fee;
+                            topSellingPayoutsAmount += Math.Abs(p.InstructorReceived);
+                        }
+                    }
+
+                    vm.TotalGrossRevenue = topSellingGross - topSellingFees;
+                    vm.PlatformNetProfit = (topSellingGross - topSellingFees) - topSellingPayoutsAmount;
+                }
             }
         }
 

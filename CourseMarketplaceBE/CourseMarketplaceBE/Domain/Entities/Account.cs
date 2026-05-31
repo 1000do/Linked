@@ -8,6 +8,7 @@ public partial class Account
     public int AccountId { get; set; }
 
     public string Email { get; set; } = null!;
+    public string? Username { get; set; }
 
     public string? PasswordHash { get; set; }
 

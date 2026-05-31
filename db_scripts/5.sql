@@ -74,6 +74,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 CREATE TABLE accounts (
     account_id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(255) UNIQUE,
     password_hash TEXT,
     phone_number VARCHAR(50),
     account_status VARCHAR(50), -- VD: 'active', 'suspended', 'banned'
@@ -751,10 +752,11 @@ DECLARE
 BEGIN
     -- 1. Tạo account Admin
     INSERT INTO accounts (
-        email, password_hash, phone_number, account_status, 
+        email, username, password_hash, phone_number, account_status, 
         auth_provider, is_verified, account_created_at, account_updated_at
     ) VALUES (
         'admin@gmail.com',
+        'admin',
         '$2a$11$O7PrVmv/I5yxkexhkdrY2OB2tQf5c6Gy9P8hvqLIAF2NO34wt9C3i',
         '+84123456789',
         'active',
@@ -771,10 +773,11 @@ BEGIN
 
     -- 2. Tạo account Staff
     INSERT INTO accounts (
-        email, password_hash, phone_number, account_status, 
+        email, username, password_hash, phone_number, account_status, 
         auth_provider, is_verified, account_created_at, account_updated_at
     ) VALUES (
         'staff@gmail.com',
+        'staff',
         '$2a$11$O7PrVmv/I5yxkexhkdrY2OB2tQf5c6Gy9P8hvqLIAF2NO34wt9C3i',
         '+84987654321',
         'active',
