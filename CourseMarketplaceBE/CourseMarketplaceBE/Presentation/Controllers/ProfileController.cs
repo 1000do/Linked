@@ -38,17 +38,34 @@ public class ProfileController : ControllerBase
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileRequest request)
     {
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            return BadRequest(new { status = 400, message = string.Join(" ", errors) });
+        }
+
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (!int.TryParse(userIdStr, out int userId))
             return Unauthorized(new { status = 401, message = "Invalid login session." });
 
-        var result = await _profileService.UpdateProfileAsync(userId, request);
+        try
+        {
+            var result = await _profileService.UpdateProfileAsync(userId, request);
 
-        if (result)
-            return Ok(new { status = 200, message = "Profile updated successfully!" });
+            if (result)
+                return Ok(new { status = 200, message = "Profile updated successfully!" });
 
-        return BadRequest(new { status = 400, message = "Profile update failed." });
+            return BadRequest(new { status = 400, message = "Profile update failed." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { status = 400, message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = 500, message = $"An unexpected error occurred: {ex.Message}" });
+        }
     }
 
     [HttpPost("change-password")]

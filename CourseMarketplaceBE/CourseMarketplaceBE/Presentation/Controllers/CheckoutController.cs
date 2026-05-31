@@ -23,10 +23,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class CheckoutController : ControllerBase
 {
     private readonly ICheckoutService _checkoutService;
+    private readonly IAuthService _authService;
 
-    public CheckoutController(ICheckoutService checkoutService)
+    public CheckoutController(ICheckoutService checkoutService, IAuthService authService)
     {
         _checkoutService = checkoutService;
+        _authService = authService;
     }
 
     // ─── Helper lấy userId từ JWT Claim ──────────────────────────────────
@@ -50,6 +52,9 @@ public class CheckoutController : ControllerBase
         var userId = GetUserId();
         if (userId == null)
             return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
+
+        if (!await _authService.IsEmailVerifiedAsync(userId.Value))
+            return BadRequest(ApiResponse<string>.ErrorResponse("Please verify your email address."));
 
         try
         {
@@ -85,6 +90,9 @@ public class CheckoutController : ControllerBase
         var userId = GetUserId();
         if (userId == null)
             return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
+
+        if (!await _authService.IsEmailVerifiedAsync(userId.Value))
+            return BadRequest(ApiResponse<string>.ErrorResponse("Please verify your email address."));
 
         try
         {

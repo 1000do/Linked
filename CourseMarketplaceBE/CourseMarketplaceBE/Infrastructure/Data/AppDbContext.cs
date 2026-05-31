@@ -88,9 +88,11 @@ public partial class AppDbContext : DbContext
             entity.HasKey(e => e.AccountId).HasName("accounts_pkey");
             entity.ToTable("accounts");
             entity.HasIndex(e => e.Email, "accounts_email_key").IsUnique();
+            entity.HasIndex(e => e.Username, "accounts_username_key").IsUnique();
 
             entity.Property(e => e.AccountId).HasColumnName("account_id");
             entity.Property(e => e.Email).HasMaxLength(255).HasColumnName("email");
+            entity.Property(e => e.Username).HasMaxLength(255).HasColumnName("username");
             entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
             entity.Property(e => e.PhoneNumber).HasMaxLength(50).HasColumnName("phone_number");
             entity.Property(e => e.AccountStatus).HasMaxLength(50).HasColumnName("account_status");

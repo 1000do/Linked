@@ -33,7 +33,7 @@ public class AuthService : IAuthService
 
     public async Task<LoginResponse?> LoginAsync(LoginRequest r)
     {
-        var a = await _userRepo.GetAccountByEmailAsync(r.Email.ToLower());
+        var a = await _userRepo.GetAccountByEmailOrUsernameAsync(r.UsernameOrEmail.ToLower());
 
         if (a == null || !BCrypt.Net.BCrypt.Verify(r.Password, a.PasswordHash))
             return null;
@@ -65,7 +65,8 @@ public class AuthService : IAuthService
             AccountId = a.AccountId,
             FullName = fullName,
             AvatarUrl = avatar,
-            Role = role
+            Role = role,
+            IsVerified = a.IsVerified
         };
     }
 
@@ -109,12 +110,19 @@ public class AuthService : IAuthService
 
     public async Task<string> RegisterAsync(RegisterRequest r)
     {
+        if (!r.Email.ToLower().EndsWith("@gmail.com"))
+            return "Email must be a @gmail.com address";
+
         if (await _userRepo.IsEmailExistsAsync(r.Email.ToLower()))
             return "Email already exists";
+
+        if (await _userRepo.IsUsernameExistsAsync(r.Username))
+            return "Username already exists";
 
         var acc = new Account
         {
             Email = r.Email.ToLower(),
+            Username = r.Username.ToLower(),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(r.Password),
             AccountStatus = "active",
             AuthProvider = "local",
@@ -126,7 +134,6 @@ public class AuthService : IAuthService
         var user = new User
         {
             FullName = r.FullName,
-         
         };
 
         return await _userRepo.RegisterUserAsync(acc, user) ? "Success" : "Error";
@@ -181,9 +188,19 @@ public class AuthService : IAuthService
 
         if (account == null)
         {
+            var baseUsername = email.Split('@')[0];
+            var username = baseUsername;
+            int count = 1;
+            while (await _userRepo.IsUsernameExistsAsync(username))
+            {
+                username = $"{baseUsername}{count}";
+                count++;
+            }
+
             var acc = new Account
             {
                 Email = email,
+                Username = username,
                 PasswordHash = null, // GOOGLE → NULL
                 AuthProvider = "google",
                 IsVerified = true, // AUTO VERIFIED
@@ -316,5 +333,11 @@ public class AuthService : IAuthService
     public bool VerifyOtpForReset(string email, string otp)
     {
         return _otpService.ValidateOtp(email, otp, "reset");
+    }
+
+    public async Task<bool> IsEmailVerifiedAsync(int userId)
+    {
+        var account = await _userRepo.GetAccountByIdAsync(userId);
+        return account?.IsVerified ?? false;
     }
 }
