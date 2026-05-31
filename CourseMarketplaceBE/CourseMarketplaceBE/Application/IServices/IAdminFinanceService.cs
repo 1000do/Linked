@@ -64,7 +64,7 @@ public interface IAdminFinanceService
     /// <summary>
     /// Học viên gửi yêu cầu hoàn tiền cho một giao dịch (đơn hàng).
     /// </summary>
-    Task RequestRefundAsync(int transactionId, int studentId, string reason);
+    Task<RefundResultDto> RequestRefundAsync(int transactionId, int studentId, string reason);
 
     /// <summary>
     /// Lấy danh sách các yêu cầu hoàn tiền đang chờ duyệt.
@@ -115,6 +115,8 @@ public interface IAdminFinanceService
     /// Lấy doanh thu khóa học của giảng viên chi tiết theo tháng, năm và trọn đời.
     /// </summary>
     Task<List<InstructorCourseRevenueResponse>> GetInstructorCourseRevenuesAsync(int year, int month);
+
+    Task<List<InstructorCourseRevenueResponse>> GetInstructorCourseRevenuesByInstructorAsync(int instructorId, int year, int month);
 
     /// <summary>
     /// Lấy danh sách quốc gia mà Stripe hỗ trợ từ cấu hình hệ thống.

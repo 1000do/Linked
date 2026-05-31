@@ -1,0 +1,108 @@
+@startuml EditCourse
+' Styling & Settings - Simplified for compatibility
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #333333
+    ArrowColor #333333
+}
+hide empty members
+
+' === PARTICIPANTS ===
+
+' --- Frontend ---
+class InstructorCourseController {
+    + Edit(courseId: int): IActionResult
+    + Edit(model: UpdateCourseViewModel): IActionResult
+}
+
+class UpdateCourseViewModel {
+    + CourseId: int
+    + Title: string
+    + Description: string?
+    + Price: decimal
+}
+
+' --- Backend Controller ---
+class CourseController {
+    + UpdateCourse(courseId: int, request: CourseUpdateRequest): Task<IActionResult>
+}
+
+' --- DTOs ---
+class CourseUpdateRequest {
+    + Title: string
+    + Description: string?
+    + Price: decimal
+}
+
+class CourseResponse {
+    + CourseId: int
+    + Title: string
+    + Description: string?
+}
+
+' --- Services ---
+interface ICourseService {
+    + UpdateCourseAsync(courseId: int, request: CourseUpdateRequest, instructorId: int): Task<CourseResponse>
+}
+
+class CourseService {
+    + UpdateCourseAsync(courseId: int, request: CourseUpdateRequest, instructorId: int): Task<CourseResponse>
+}
+
+' --- Repositories ---
+interface ICourseRepository {
+    + GetByIdAsync(courseId: int): Task<Course?>
+    + Update(course: Course): void
+    + SaveChangesAsync(): Task<void>
+}
+
+class CourseRepository {
+    + GetByIdAsync(courseId: int): Task<Course?>
+    + Update(course: Course): void
+    + SaveChangesAsync(): Task<void>
+}
+
+' --- Entities & DbContext ---
+class Course {
+    + CourseId: int
+    + InstructorId: int?
+    + Title: string
+    + Description: string?
+    + Price: decimal
+}
+
+class Instructor {
+    + InstructorId: int
+}
+
+' --- DbContext represented as a class for compatibility ---
+class ApplicationDbContext
+
+' === RELATIONSHIPS ===
+
+' Frontend to Backend Dependency
+InstructorCourseController ..> CourseController
+
+' ViewModel/DTO Dependencies
+InstructorCourseController ..> UpdateCourseViewModel
+CourseController ..> CourseUpdateRequest
+CourseService ..> CourseUpdateRequest
+CourseService ..> CourseResponse
+
+' Dependency Injection (Unidirectional Association)
+CourseController --> ICourseService
+CourseService --> ICourseRepository
+CourseRepository --> ApplicationDbContext
+
+' Repository to Entity Dependency
+CourseRepository ..> Course
+
+' Entity to Entity Composition
+Instructor *-- Course
+
+' Interface Realization
+CourseService ..|> ICourseService
+CourseRepository ..|> ICourseRepository
+
+@enduml

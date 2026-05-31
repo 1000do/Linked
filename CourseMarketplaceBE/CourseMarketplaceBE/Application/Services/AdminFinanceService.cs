@@ -627,7 +627,7 @@ namespace CourseMarketplaceBE.Application.Services
             string refundId;
             try
             {
-                refundId = await _paymentGateway.RefundAsync(txn.StripePaymentintentId, reason);
+                refundId = await _paymentGateway.RefundAsync(txn.StripePaymentintentId, txn.Amount, reason);
                 _logger.LogInformation("✅ Stripe Refund created | RefundId={RfId}", refundId);
             }
             catch (Exception ex)
@@ -791,7 +791,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
         }
 
-        public async Task RequestRefundAsync(int transactionId, int studentId, string reason)
+        public async Task<RefundResultDto> RequestRefundAsync(int transactionId, int studentId, string reason)
         {
             var txn = await _repo.GetTransactionWithFullGraphAsync(transactionId);
             if (txn == null)
@@ -813,6 +813,68 @@ namespace CourseMarketplaceBE.Application.Services
             if (txn.TransactionCreatedAt.HasValue && txn.TransactionCreatedAt.Value < DateTime.UtcNow.AddDays(-14))
                 throw new InvalidOperationException("The transaction has exceeded the 14-day refund period required by platform rules.");
 
+            var courseId = txn.OrderItem?.CourseId;
+            if (courseId == null)
+                throw new InvalidOperationException("Course not found for this transaction.");
+
+            // Gọi repository lấy dữ liệu kiểm duyệt tự động
+            var metrics = await _repo.GetRefundEligibilityMetricsAsync(transactionId, studentId, courseId.Value);
+
+            string? rejectReason = null;
+
+            if (metrics.AccountFlagCount >= 3)
+            {
+                rejectReason = "your account having multiple flags";
+            }
+            else if (metrics.RefundRequestsLast14DaysCount >= 3)
+            {
+                rejectReason = "having requested too many refunds within the refund period";
+            }
+            else if (metrics.PastRefundedCountForCourse >= 1)
+            {
+                rejectReason = "previous refund history for this course";
+            }
+            else if (metrics.CourseTotalDurationHours < 4.0 && metrics.StudentProgressPercentage > 15.0)
+            {
+                rejectReason = "learning progress exceeding the limit for short courses";
+            }
+            else if (metrics.CourseTotalDurationHours >= 4.0 && metrics.CompletedVideoDurationHours > 1.0)
+            {
+                rejectReason = "video watch time exceeding the limit allowed for long courses";
+            }
+
+            if (rejectReason != null)
+            {
+                // Bị tự động từ chối
+                if (txn.TransactionExt == null)
+                {
+                    txn.TransactionExt = new Domain.Entities.TransactionExt
+                    {
+                        TransactionId = txn.TransactionId,
+                        RefundReason = reason,
+                        RefundRequestedAt = DateTime.UtcNow,
+                        RefundAdminNote = $"Auto-rejected: {rejectReason}"
+                    };
+                }
+                else
+                {
+                    txn.TransactionExt.RefundReason = reason;
+                    txn.TransactionExt.RefundRequestedAt = DateTime.UtcNow;
+                    txn.TransactionExt.RefundAdminNote = $"Auto-rejected: {rejectReason}";
+                }
+
+                int rowsAffected = await _repo.SaveChangesAsync();
+                if (rowsAffected <= 0)
+                    throw new InvalidOperationException("Failed to save changes");
+
+                return new RefundResultDto
+                {
+                    IsAutoRejected = true,
+                    RejectReason = rejectReason
+                };
+            }
+
+            // Hợp lệ -> Đẩy qua cho admin duyệt
             txn.TransactionsStatus = "refund_pending";
             if (txn.TransactionExt == null)
             {
@@ -827,6 +889,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 txn.TransactionExt.RefundReason = reason;
                 txn.TransactionExt.RefundRequestedAt = DateTime.UtcNow;
+                txn.TransactionExt.RefundAdminNote = null; // Clear previous notes if any
             }
 
             int numberOfRowsAffected = await _repo.SaveChangesAsync();
@@ -844,6 +907,11 @@ namespace CourseMarketplaceBE.Application.Services
                 );
             }
             catch { }
+
+            return new RefundResultDto
+            {
+                IsAutoRejected = false
+            };
         }
 
         public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<Domain.Entities.Transaction>> GetPendingRefundRequestsAsync(int page = 1, int pageSize = 10)
@@ -957,6 +1025,24 @@ namespace CourseMarketplaceBE.Application.Services
                 InstructorName = p.InstructorName,
                 SalesCount = p.SalesCount,
                 MonthlyRevenue = p.MonthlyRevenue,
+                PreviousMonthRevenue = p.PreviousMonthRevenue,
+                YearlyRevenue = p.YearlyRevenue,
+                LifetimeRevenue = p.LifetimeRevenue
+            }).ToList();
+        }
+
+        public async Task<List<InstructorCourseRevenueResponse>> GetInstructorCourseRevenuesByInstructorAsync(int instructorId, int year, int month)
+        {
+            var projections = await _repo.GetInstructorCourseRevenuesByInstructorAsync(instructorId, year, month);
+            return projections.Select(p => new InstructorCourseRevenueResponse
+            {
+                CourseId = p.CourseId,
+                CourseTitle = p.CourseTitle,
+                InstructorId = p.InstructorId,
+                InstructorName = p.InstructorName,
+                SalesCount = p.SalesCount,
+                MonthlyRevenue = p.MonthlyRevenue,
+                PreviousMonthRevenue = p.PreviousMonthRevenue,
                 YearlyRevenue = p.YearlyRevenue,
                 LifetimeRevenue = p.LifetimeRevenue
             }).ToList();

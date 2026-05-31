@@ -462,7 +462,7 @@ public class AdminFinanceController : Controller
         var revTask = _api.GetAsync($"admin/finance/instructor-courses-revenue?year={selectedYear}&month={selectedMonth}");
         var summaryTask = _api.GetAsync($"admin/finance/summary?year={selectedYear}&month={selectedMonth}");
         var txTask = _api.GetAsync($"transactions?page=1&pageSize=1000&year={selectedYear}&month={selectedMonth}");
-        var payoutsTask = _api.GetAsync("admin/finance/payouts");
+        var payoutsTask = _api.GetAsync("admin/finance/payouts?page=1&pageSize=100000");
 
         await Task.WhenAll(revTask, summaryTask, txTask, payoutsTask);
 
@@ -548,10 +548,10 @@ public class AdminFinanceController : Controller
         if (payoutsResp.IsSuccessStatusCode)
         {
             var json = await payoutsResp.Content.ReadAsStringAsync();
-            var parsed = JsonSerializer.Deserialize<ApiResp<List<PayoutDetailVM>>>(json, _jsonOpts);
-            if (parsed?.Data != null)
+            var parsed = JsonSerializer.Deserialize<ApiResp<PagedResult<PayoutDetailVM>>>(json, _jsonOpts);
+            if (parsed?.Data?.Items != null)
             {
-                var allPayouts = parsed.Data;
+                var allPayouts = parsed.Data.Items;
                 var yearlyMonthlyData = new Dictionary<int, decimal[]>();
                 int[] targetYears = { selectedYear, selectedYear - 1, selectedYear - 2 };
 

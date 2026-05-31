@@ -14,7 +14,7 @@ namespace CourseMarketplaceBE.Application.Services;
 public class ReviewService : IReviewService
 {
     private readonly IReviewRepository _reviewRepo;
-    private readonly ICheckoutRepository _checkoutRepo;
+    private readonly IEnrollmentRepository _enrollmentRepo;
     private readonly ICourseRepository _courseRepo;
     private readonly INotificationService _notificationService;
     private readonly IReportService _reportService;
@@ -23,7 +23,7 @@ public class ReviewService : IReviewService
 
     public ReviewService(
         IReviewRepository reviewRepo, 
-        ICheckoutRepository checkoutRepo, 
+        IEnrollmentRepository enrollmentRepo, 
         ICourseRepository courseRepo,
         INotificationService notificationService,
         IReportService reportService,
@@ -31,7 +31,7 @@ public class ReviewService : IReviewService
         ILockoutRepository lockoutRepo)
     {
         _reviewRepo = reviewRepo;
-        _checkoutRepo = checkoutRepo;
+        _enrollmentRepo = enrollmentRepo;
         _courseRepo = courseRepo;
         _notificationService = notificationService;
         _reportService = reportService;
@@ -51,7 +51,7 @@ public class ReviewService : IReviewService
 
     private async Task<Enrollment> GetOrCreateOwnerEnrollmentAsync(int userId, int courseId)
     {
-        var enrollment = await _checkoutRepo.GetEnrollmentWithProgressAsync(userId, courseId);
+        var enrollment = await _enrollmentRepo.GetEnrollmentWithProgressAsync(userId, courseId);
 
         if (enrollment == null)
         {
@@ -67,24 +67,11 @@ public class ReviewService : IReviewService
                 EnrollmentStatus = "active",
                 LastAccessedAt = DateTime.Now
             };
-            await _checkoutRepo.AddEnrollmentAsync(enrollment);
-            int numberOfRowsAffected = await _checkoutRepo.SaveChangesAsync();
+            await _enrollmentRepo.AddEnrollmentAsync(enrollment);
+            int numberOfRowsAffected = await _enrollmentRepo.SaveChangesAsync();
             if (numberOfRowsAffected <= 0)
                 throw new InvalidOperationException("Failed to save changes");
 
-            // Tạo progress record
-            var progress = new EnrollmentProgress
-            {
-                EnrollmentId = enrollment.EnrollmentId,
-                LearnedMaterialCount = 0,
-                LastModifiedAt = DateTime.Now
-            };
-            await _checkoutRepo.AddEnrollmentProgressAsync(progress);
-            int numberOfRowsAffected2 = await _checkoutRepo.SaveChangesAsync();
-            if (numberOfRowsAffected2 <= 0)
-                throw new InvalidOperationException("Failed to save changes");
-            
-            enrollment.Progress = progress;
         }
 
         return enrollment;
@@ -173,7 +160,7 @@ public class ReviewService : IReviewService
         {
             var courseStats = await _courseRepo.GetCourseStatsAsync(courseId);
             var totalMats = courseStats?.TotalMaterials ?? 0;
-            var ownerEnrollment = await _checkoutRepo.GetEnrollmentWithProgressAsync(userId, courseId);
+            var ownerEnrollment = await _enrollmentRepo.GetEnrollmentWithProgressAsync(userId, courseId);
             bool hasReviewed = ownerEnrollment != null && (await _reviewRepo.GetCourseReviewByEnrollmentAsync(ownerEnrollment.EnrollmentId)) != null;
 
             return new EnrollmentStatusResponse
@@ -190,7 +177,7 @@ public class ReviewService : IReviewService
             };
         }
 
-        var enrollment = await _checkoutRepo.GetEnrollmentWithProgressAsync(userId, courseId);
+        var enrollment = await _enrollmentRepo.GetEnrollmentWithProgressAsync(userId, courseId);
 
         if (enrollment == null)
         {
@@ -205,7 +192,7 @@ public class ReviewService : IReviewService
 
         var stats = await _courseRepo.GetCourseStatsAsync(courseId);
         var totalMaterials = stats?.TotalMaterials ?? 0;
-        var learnedCount = await _checkoutRepo.GetCompletedMaterialCountAsync(enrollment.EnrollmentId);
+        var learnedCount = await _enrollmentRepo.GetCompletedMaterialCountAsync(enrollment.EnrollmentId);
         var pct = totalMaterials > 0 ? (double)learnedCount / totalMaterials * 100 : 0;
         var isCompleted = enrollment.IsCompleted == true;
 
@@ -247,7 +234,7 @@ public class ReviewService : IReviewService
         else
         {
             // Người dùng bình thường → kiểm tra enrollment + ràng buộc
-            enrollment = await _checkoutRepo.GetEnrollmentWithProgressAsync(userId, request.CourseId)
+            enrollment = await _enrollmentRepo.GetEnrollmentWithProgressAsync(userId, request.CourseId)
                 ?? throw new InvalidOperationException("You need to enroll in the course before writing a review.");
 
             if (requireCompletion)
@@ -257,7 +244,7 @@ public class ReviewService : IReviewService
             }
             else
             {
-                var learnedCount = await _checkoutRepo.GetCompletedMaterialCountAsync(enrollment.EnrollmentId);
+                var learnedCount = await _enrollmentRepo.GetCompletedMaterialCountAsync(enrollment.EnrollmentId);
                 if (learnedCount <= 0)
                     throw new InvalidOperationException("You need to complete at least 1 lesson before writing a review.");
             }

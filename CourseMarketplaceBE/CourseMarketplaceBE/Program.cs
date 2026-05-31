@@ -197,6 +197,7 @@ public class Program
 
         // 💳 Checkout & Payment (UC-19)
         builder.Services.AddScoped<ICheckoutRepository, CheckoutRepository>();
+        builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
         builder.Services.AddScoped<ICheckoutService, CourseMarketplaceBE.Application.Services.CheckoutService>();
         builder.Services.AddScoped<IStripeConnectService, StripeConnectService>();
         builder.Services.AddScoped<IPaymentGatewayService, StripePaymentService>();
