@@ -8,6 +8,7 @@ from typing import Optional, Dict, List, Any
 from config.settings import Settings, get_settings
 from core.exceptions import CacheNotFoundException
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -205,12 +206,14 @@ class CacheRepository:
         
         try:
             dto_dict = {
-                "embeddingId": 0,
-                "materialId": material_id,
+                "embedding_id": 0,
+                "material_id": material_id,
                 "embedding": embedding,
-                "embeddingType": embedding_type
+                "embedding_type": embedding_type
             }
+
             json_data = json.dumps(dto_dict)
+            logger.info(f"\nCaching MaterialEmbeddingResponse...\nCache key: {key}\nValue: {json_data}")
             self.redis_client.setex(key, ttl, json_data)
             logger.debug(f"Embedding cached: {key}")
             return True

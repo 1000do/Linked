@@ -255,9 +255,13 @@ namespace CourseMarketplaceBE.Application.DTOs
 
     public class MaterialEmbeddingResponse
     {
+        [JsonPropertyName("embedding_id")]
         public int EmbeddingId { get; set; }
+        [JsonPropertyName("material_id")]
         public int? MaterialId { get; set; }
+        [JsonPropertyName("embedding")]
         public List<float>? Embedding { get; set; }
+        [JsonPropertyName("embedding_type")]
         public string? EmbeddingType { get; set; }
     }
 

@@ -6,10 +6,13 @@ DROP TABLE IF EXISTS ai_activity_logs CASCADE;
 DROP TABLE IF EXISTS courses_ai_integrations CASCADE;
 DROP TABLE IF EXISTS ai_models CASCADE;
 DROP TABLE IF EXISTS system_configs CASCADE;
-DROP TABLE IF EXISTS user_reports CASCADE;
+DROP TABLE IF EXISTS course_reports CASCADE;
+DROP TABLE IF EXISTS course_review_reports CASCADE;
+DROP TABLE IF EXISTS lesson_review_reports CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS messages CASCADE;
 DROP TABLE IF EXISTS chats CASCADE;
+DROP TABLE IF EXISTS transaction_exts CASCADE;
 DROP TABLE IF EXISTS transactions CASCADE;
 DROP TABLE IF EXISTS order_items CASCADE;
 DROP TABLE IF EXISTS order_info CASCADE;
@@ -28,13 +31,15 @@ DROP TABLE IF EXISTS instructors CASCADE;
 DROP TABLE IF EXISTS managers CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS accounts CASCADE;
-DROP TABLE IF EXISTS material_embeddings CASCADE;
+DROP TABLE IF EXISTS text_embeddings CASCADE;
+DROP TABLE IF EXISTS media_embeddings CASCADE;
 DROP TABLE IF EXISTS course_exts CASCADE;
 DROP TABLE IF EXISTS lesson_reviews CASCADE;
 DROP TABLE IF EXISTS course_ai_usage_logs CASCADE;
 DROP TABLE IF EXISTS message_moderation_logs CASCADE;
 DROP TABLE IF EXISTS user_avatar_frames CASCADE;
 DROP TABLE IF EXISTS avatar_frames CASCADE;
+DROP TABLE IF EXISTS lockouts CASCADE;
 
 DROP TABLE IF EXISTS lesson_review_moderation_logs CASCADE;
 DROP TABLE IF EXISTS course_review_moderation_logs CASCADE;
@@ -231,10 +236,17 @@ CREATE TABLE course_exts (
     thumbnail_hash CHAR(32)
 );
 
-CREATE TABLE material_embeddings (
-    embedding_id SERIAL PRIMARY KEY,
+CREATE TABLE text_embeddings (
+    text_embedding_id SERIAL PRIMARY KEY,
     material_id INT REFERENCES learning_materials(material_id) ON DELETE CASCADE,
-    embedding vector(768),
+    text_embedding vector(768),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE media_embeddings (
+    media_embedding_id SERIAL PRIMARY KEY,
+    material_id INT REFERENCES learning_materials(material_id) ON DELETE CASCADE,
+    media_embedding vector(512),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -563,7 +575,6 @@ CREATE TABLE message_moderation_logs (
     input_json JSONB,
     output_json JSONB,
     latency_ms REAL,
-    log_status VARCHAR(50),
     error_message TEXT,
     log_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -575,7 +586,6 @@ CREATE TABLE course_review_moderation_logs (
     input_json JSONB,
     output_json JSONB,
     latency_ms REAL,
-    log_status VARCHAR(50),
     error_message TEXT,
     log_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -587,7 +597,6 @@ CREATE TABLE lesson_review_moderation_logs (
     input_json JSONB,
     output_json JSONB,
     latency_ms REAL,
-    log_status VARCHAR(50),
     error_message TEXT,
     log_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

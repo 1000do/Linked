@@ -131,10 +131,10 @@ class EmbeddingGenerationResponse(BaseModel):
 
 class MaterialEmbeddingResponse(BaseModel):
     """DTO representing MaterialEmbeddingResponse from C#."""
-    embedding_id: int = Field(..., alias="embeddingId")
-    material_id: Optional[int] = Field(None, alias="materialId")
-    embedding: Optional[List[float]] = Field(None, alias="embedding")
-    embedding_type: Optional[str] = Field(None, alias="embeddingType")
+    embedding_id: int = Field(..., validation_alias="embeddingId", serialization_alias = "embedding_id")
+    material_id: Optional[int] = Field(None, validation_alias="materialId", serialization_alias = "material_id")
+    embedding: Optional[List[float]] = Field(None, validation_alias="embedding", serialization_alias = "embedding")
+    embedding_type: Optional[str] = Field(None, validation_alias="embeddingType",serialization_alias = "embedding_type")
 
     class Config:
         populate_by_name = True

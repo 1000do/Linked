@@ -135,7 +135,7 @@ class DuplicationHandler(BaseHandler):
                     )
                     
                     emb_res = await self.embedding_service.embed_generic(cmd)
-                    
+                    self.logger.info(f"Embedding generated for material {emb_res.material_id}: {emb_res.embedding[:50]} \n ... First 50 coordinates")
                     target_key = f"model_{selected_model_id}"
                     if target_key not in new_embeddings_dict:
                         new_embeddings_dict[target_key] = []
@@ -146,6 +146,8 @@ class DuplicationHandler(BaseHandler):
                         embedding=emb_res.embedding,
                         embedding_type=emb_type
                     ))
+                    
+                    self.logger.info(f"Appended {len(new_embeddings_dict[target_key])} MaterialEmbeddingResponse for {target_key}")
                 except Exception as e:
                     self.logger.error(f"Error processing material embedding for material {material.material_id}: {e}")
                     continue
@@ -175,6 +177,7 @@ class DuplicationHandler(BaseHandler):
         # 6. If not duplicate, cache new embeddings in Redis
         for key, lst in new_embeddings_dict.items():
             for new_emb in lst:
+                self.logger.info(f"Setting new embeddings to cache {new_emb.embedding[:50]} ... for material {new_emb.material_id}")
                 self.redis_service.set_material_embedding(new_emb)
 
         self.logger.info(f"Stage 1 approved for Course ID {course_id}")

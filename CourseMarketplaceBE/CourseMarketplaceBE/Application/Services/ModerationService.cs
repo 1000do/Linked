@@ -579,28 +579,30 @@ namespace CourseMarketplaceBE.Application.Services
                 if (cachedResponse == null)
                 {
                     _logger.LogWarning("MaterialEmbeddingResponse for material {matId} is not found in cache", matId);
-                    continue;
-                }
-                if (cachedResponse.Embedding == null)
-                {
-                    _logger.LogWarning("Embedding is not provided for material {matId}", matId);
-                    continue;
-                }
-                if (!cachedResponse.Embedding.Any())
-                {
-                    _logger.LogWarning("Embedding is empty for material {matId}", matId);
-                    continue;
+
                 }
 
-                if (cachedResponse != null && cachedResponse.Embedding != null && cachedResponse.Embedding.Any())
+
+                else if (cachedResponse.Embedding == null)
                 {
-                    _logger.LogInformation("Successfully retrieved MaterialEmbeddingResponse from cache key {cacheKey}", cacheKey);
+                    _logger.LogWarning("Embedding is not provided for material {matId}", matId);
+
+                }
+                else if (!cachedResponse.Embedding.Any())
+                {
+                    _logger.LogWarning("Embedding contains no coordinate values for material {matId}", matId);
+
+                }
+
+                else
+                {
+                    _logger.LogInformation("Successfully retrieved MaterialEmbeddingResponse from cache key {cacheKey}\n{embedding}", cacheKey, JsonSerializer.Serialize(cachedResponse));
                     string embeddingType = cachedResponse.EmbeddingType ?? "";
                     if (embeddingType != "text" && embeddingType != "media")
                     {
                         embeddingType = cachedResponse.Embedding.Count == 512 ? "media" : "text";
                     }
-                    
+
                     await _lessonService.SaveMaterialEmbeddingsAsync(matId, cachedResponse.Embedding, embeddingType);
                 }
             }
