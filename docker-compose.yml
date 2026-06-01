@@ -27,39 +27,39 @@ services:
       timeout: 3s
       retries: 5
 
-  # ai-moderation:
-  #   build:
-  #     context: .
-  #     dockerfile: AIModeration/Dockerfile
-  #   environment:
-  #     REDIS_HOST: ${REDIS_HOST}
-  #     REDIS_PORT: ${REDIS_PORT}
-  #     REDIS_DB: ${REDIS_DB}
-  #     REDIS_PASSWORD: ${REDIS_PASSWORD}
-  #     AI_HOST: ${AI_HOST}
-  #     AI_PORT: ${AI_PORT}
-  #     AI_DEBUG: ${AI_DEBUG}
-  #     AI_LOG_LEVEL: ${AI_LOG_LEVEL}
-  #     HF_TOKEN: ${HF_TOKEN}
-  #     DEVICE: ${DEVICE}
-  #     SPAM_MODEL_PATH: ${SPAM_MODEL_PATH}
-  #     TOXIC_MODEL_PATH: ${TOXIC_MODEL_PATH}
-  #     CLIP_MODEL_NAME: ${CLIP_MODEL_NAME}
-  #     DISTILBERT_MODEL_NAME: ${DISTILBERT_MODEL_NAME}
-  #   volumes:
-  #     - ./ai_models:/app/models
-  #   ports:
-  #     - "8001:8000"
-  #   depends_on:
-  #     redis:
-  #       condition: service_started
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 40s
+  ai-moderation:
+    build:
+      context: .
+      dockerfile: AIModeration/Dockerfile
+    environment:
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_DB: ${REDIS_DB}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      AI_HOST: ${AI_HOST}
+      AI_PORT: ${AI_PORT}
+      AI_DEBUG: ${AI_DEBUG}
+      AI_LOG_LEVEL: ${AI_LOG_LEVEL}
+      HF_TOKEN: ${HF_TOKEN}
+      DEVICE: ${DEVICE}
+      SPAM_MODEL_PATH: ${SPAM_MODEL_PATH}
+      TOXIC_MODEL_PATH: ${TOXIC_MODEL_PATH}
+      CLIP_MODEL_NAME: ${CLIP_MODEL_NAME}
+      DISTILBERT_MODEL_NAME: ${DISTILBERT_MODEL_NAME}
+    volumes:
+      - ./ai_models:/app/models
+    ports:
+      - "8001:8000"
+    depends_on:
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   backend:
     build:

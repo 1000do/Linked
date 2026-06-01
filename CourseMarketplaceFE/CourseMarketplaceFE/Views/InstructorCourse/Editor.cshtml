@@ -2095,16 +2095,16 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         isSubmitting = true;
-                        // fetch('/InstructorCourse/ModerateCourse', {  
-                        //     method: 'POST', 
-                        //     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        //     body: new URLSearchParams({ courseId: courseId })
-                        // })
-                        fetch('/InstructorCourse/UpdateCourseStatus', { 
+                        fetch('/InstructorCourse/ModerateCourse', {  
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: new URLSearchParams({ courseId: courseId, status: "pending" })
+                            body: new URLSearchParams({ courseId: courseId })
                         })
+                        // fetch('/InstructorCourse/UpdateCourseStatus', { 
+                        //     method: 'POST', 
+                        //     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        //     body: new URLSearchParams({ courseId: courseId, status: "pending" })
+                        // })
                         .then(res => res.json())
                         .then(json => {
                             if (json.success) {
