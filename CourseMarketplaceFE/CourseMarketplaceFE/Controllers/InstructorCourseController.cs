@@ -122,25 +122,45 @@ namespace CourseMarketplaceFE.Controllers
 
                     if (root.TryGetProperty("data", out var dataEl))
                     {
-                        var coursesEl = dataEl.GetProperty("courses");
+                        // API returns PagedResult: items, totalCount, totalPages, page, pageSize
+                        JsonElement coursesEl;
+                        if (dataEl.TryGetProperty("items", out var itemsProp))
+                            coursesEl = itemsProp;
+                        else if (dataEl.TryGetProperty("courses", out var coursesProp))
+                            coursesEl = coursesProp;
+                        else
+                            coursesEl = default;
+
                         var allCourses = new List<CourseListViewModel>();
-                        foreach (var item in coursesEl.EnumerateArray())
+                        if (coursesEl.ValueKind == JsonValueKind.Array)
                         {
-                            allCourses.Add(new CourseListViewModel
+                            foreach (var item in coursesEl.EnumerateArray())
                             {
-                                Id = item.GetProperty("courseId").GetInt32(),
-                                Title = item.GetProperty("title").GetString() ?? "Untitled",
-                                Students = item.TryGetProperty("totalStudents", out var s) ? s.GetInt32() : 0, 
-                                Rating = item.TryGetProperty("ratingAverage", out var r) ? (double)r.GetDecimal() : 0,
-                                Status = item.GetProperty("courseStatus").GetString() ?? "Draft",
-                                ThumbnailUrl = item.TryGetProperty("courseThumbnailUrl", out var t) ? t.GetString() ?? "" : "",
-                                UpdatedAt = item.TryGetProperty("updatedAt", out var u) && u.ValueKind != JsonValueKind.Null
-                                    ? u.GetDateTime() : DateTime.Now
-                            });
+                                allCourses.Add(new CourseListViewModel
+                                {
+                                    Id = item.GetProperty("courseId").GetInt32(),
+                                    Title = item.GetProperty("title").GetString() ?? "Untitled",
+                                    Students = item.TryGetProperty("totalStudents", out var s) ? s.GetInt32() : 0, 
+                                    Rating = item.TryGetProperty("ratingAverage", out var r) ? (double)r.GetDecimal() : 0,
+                                    Status = item.GetProperty("courseStatus").GetString() ?? "Draft",
+                                    ThumbnailUrl = item.TryGetProperty("courseThumbnailUrl", out var t) ? t.GetString() ?? "" : "",
+                                    IsRemoved = item.TryGetProperty("isRemoved", out var ir) && ir.ValueKind != JsonValueKind.Null && ir.GetBoolean(),
+                                    UpdatedAt = item.TryGetProperty("updatedAt", out var u) && u.ValueKind != JsonValueKind.Null
+                                        ? u.GetDateTime() : DateTime.Now
+                                });
+                            }
                         }
 
-                        viewModel.TotalItems = dataEl.GetProperty("totalItems").GetInt32();
-                        viewModel.TotalPages = dataEl.GetProperty("totalPages").GetInt32();
+                        // totalCount from PagedResult, fallback to totalItems for legacy format
+                        int totalItems = 0;
+                        if (dataEl.TryGetProperty("totalCount", out var tcProp)) totalItems = tcProp.GetInt32();
+                        else if (dataEl.TryGetProperty("totalItems", out var tiProp)) totalItems = tiProp.GetInt32();
+                        
+                        int totalPages = 1;
+                        if (dataEl.TryGetProperty("totalPages", out var tpProp)) totalPages = tpProp.GetInt32();
+
+                        viewModel.TotalItems = totalItems;
+                        viewModel.TotalPages = totalPages;
                         viewModel.Courses = allCourses;
                     }
                 }
@@ -188,6 +208,11 @@ namespace CourseMarketplaceFE.Controllers
         {
             if (!ModelState.IsValid)
             {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    return Json(new { success = false, message = "Please complete all required fields." });
+                    
+                await LoadStripeStatusAsync();
+                await LoadTransferRateAsync();
                 model.AvailableCategories = await GetCategoriesAsync();
                 return View(model);
             }
@@ -215,7 +240,6 @@ namespace CourseMarketplaceFE.Controllers
                     using var doc = JsonDocument.Parse(json);
                     var root = doc.RootElement;
 
-                    // Get the new courseId, apply coupon if selected, and redirect to editor
                     if (root.TryGetProperty("data", out var dataEl) &&
                         dataEl.TryGetProperty("courseId", out var idEl))
                     {
@@ -225,20 +249,33 @@ namespace CourseMarketplaceFE.Controllers
                             var couponPayload = new { courseId = newCourseId, couponId = model.CouponId.Value };
                             await _api.PostJsonAsync("coupon/platform/apply", couponPayload);
                         }
+                        
+                        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                        {
+                            return Json(new { success = true, courseId = newCourseId, title = model.Title });
+                        }
                         return RedirectToAction("Editor", new { id = newCourseId });
                     }
                 }
                 else
                 {
                     var errorBody = await resp.Content.ReadAsStringAsync();
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                        return Json(new { success = false, message = errorBody });
+                        
                     ViewBag.ApiError = errorBody;
                 }
             }
             catch (Exception ex)
             {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    return Json(new { success = false, message = "System error: " + ex.Message });
+                    
                 ViewBag.ApiError = "Failed to create course: " + ex.Message;
             }
 
+            await LoadStripeStatusAsync();
+            await LoadTransferRateAsync();
             model.AvailableCategories = await GetCategoriesAsync();
             return View(model);
         }
@@ -676,6 +713,63 @@ namespace CourseMarketplaceFE.Controllers
                     return Json(new { success = true });
                 var error = await resp.Content.ReadAsStringAsync();
                 return Json(new { success = false, message = error });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateLessonTitle(int lessonId, [FromBody] object requestBody)
+        {
+            try
+            {
+                var resp = await _api.PatchJsonAsync($"lessons/{lessonId}/title", requestBody);
+                var respContent = await resp.Content.ReadAsStringAsync();
+                
+                if (resp.IsSuccessStatusCode)
+                    return Json(new { success = true, data = respContent });
+                
+                return Json(new { success = false, message = respContent });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateLessonDescription(int lessonId, [FromBody] object requestBody)
+        {
+            try
+            {
+                var resp = await _api.PatchJsonAsync($"lessons/{lessonId}/description", requestBody);
+                var respContent = await resp.Content.ReadAsStringAsync();
+                
+                if (resp.IsSuccessStatusCode)
+                    return Json(new { success = true, data = respContent });
+                
+                return Json(new { success = false, message = respContent });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateMaterialDetails(int materialId, [FromBody] object requestBody)
+        {
+            try
+            {
+                var resp = await _api.PatchJsonAsync($"lessons/materials/{materialId}", requestBody);
+                var respContent = await resp.Content.ReadAsStringAsync();
+                
+                if (resp.IsSuccessStatusCode)
+                    return Json(new { success = true, data = respContent });
+                
+                return Json(new { success = false, message = respContent });
             }
             catch (Exception ex)
             {

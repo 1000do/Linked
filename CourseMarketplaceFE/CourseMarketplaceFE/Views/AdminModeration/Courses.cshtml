@@ -1,4 +1,4 @@
-@model List<CourseMarketplaceFE.Models.CourseModerationViewModel>
+@model CourseMarketplaceFE.Models.PagedResult<CourseMarketplaceFE.Models.CourseModerationViewModel>
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Course Moderation Queue";
@@ -14,7 +14,16 @@
             </div>
             <div>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Pending Review</p>
-                <h3 class="text-2xl font-display font-extrabold text-slate-900">@Model.Count</h3>
+                <h3 class="text-2xl font-display font-extrabold text-slate-900">@(ViewBag.PendingCount ?? 0)</h3>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-blue-600">task_alt</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Resolved Today</p>
+                <h3 class="text-2xl font-display font-extrabold text-slate-900">@(ViewBag.ResolvedTodayCount ?? 0)</h3>
             </div>
         </div>
         <div class="bg-accent p-6 rounded-3xl shadow-lg shadow-emerald-900/20 flex items-center gap-4">
@@ -64,6 +73,7 @@
                     <option value="published" selected="@(ViewBag.Status == "published")">Approved</option>
                     <option value="rejected" selected="@(ViewBag.Status == "rejected")">Rejected</option>
                     <option value="flagged" selected="@(ViewBag.Status == "flagged")">Flagged</option>
+                    <option value="archived" selected="@(ViewBag.Status == "archived")">Archived</option>
                 </select>
                 <span class="material-symbols-outlined absolute right-3 bottom-3 text-slate-400 pointer-events-none">arrow_drop_down</span>
             </div>
@@ -100,7 +110,7 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
-                    @if (!Model.Any())
+                    @if (!Model.Items.Any())
                     {
                         <tr>
                             <td colspan="8" class="px-8 py-20 text-center">
@@ -114,7 +124,7 @@
                             </td>
                         </tr>
                     }
-                    @foreach (var item in Model)
+                    @foreach (var item in Model.Items)
                     {
                         var isPending = item.CourseStatus?.Equals("pending", StringComparison.OrdinalIgnoreCase) ?? false;
                         var rowOpacity = isPending ? "opacity-100" : "opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0";
@@ -235,7 +245,7 @@
                                         </button>
                                     }
                                     
-                                    @if (item.CourseStatus?.ToLower() == "published")
+                                    @if (item.CourseStatus?.ToLower() == "published" || item.CourseStatus?.ToLower() == "archived")
                                     {
                                         <button onclick="flagCourse(@item.CourseId)" class="flex items-center justify-center gap-2 px-4 py-2 bg-accent text-white rounded-xl hover:bg-red-600 transition-all shadow-lg shadow-red-900/20 active:scale-95" title="Flag for violation">
                                             <span class="material-symbols-outlined text-[18px]">flag</span> Flag
@@ -260,6 +270,46 @@
                 </tbody>
             </table>
         </div>
+        
+        <!-- Pagination UI -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
+                <p class="text-xs font-semibold text-slate-500">
+                    Showing <span class="font-bold text-slate-800">@((Model.Page - 1) * Model.PageSize + 1)</span> ?" <span class="font-bold text-slate-800">@Math.Min(Model.Page * Model.PageSize, Model.TotalCount)</span> of <span class="font-bold text-slate-800">@Model.TotalCount</span>
+                </p>
+                <div class="flex items-center gap-1.5">
+                    @if (Model.Page > 1)
+                    {
+                        <a href="@Url.Action("Courses", new { page = Model.Page - 1, pageSize = Model.PageSize, search = ViewBag.Search, category = ViewBag.Category, status = ViewBag.Status, sortBy = ViewBag.SortBy })"
+                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5">
+                            <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+                        </a>
+                    }
+
+                    @for (int p = Math.Max(1, Model.Page - 2); p <= Math.Min(Model.TotalPages, Model.Page + 2); p++)
+                    {
+                        if (p == Model.Page)
+                        {
+                            <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-600 text-white font-extrabold text-xs shadow-md shadow-emerald-600/10">@p</span>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Courses", new { page = p, pageSize = Model.PageSize, search = ViewBag.Search, category = ViewBag.Category, status = ViewBag.Status, sortBy = ViewBag.SortBy })"
+                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5 font-semibold text-xs">@p</a>
+                        }
+                    }
+
+                    @if (Model.Page < Model.TotalPages)
+                    {
+                        <a href="@Url.Action("Courses", new { page = Model.Page + 1, pageSize = Model.PageSize, search = ViewBag.Search, category = ViewBag.Category, status = ViewBag.Status, sortBy = ViewBag.SortBy })"
+                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5 font-bold">
+                            <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
     </div>
 </div>
 

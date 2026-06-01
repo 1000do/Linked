@@ -27,7 +27,7 @@ public class CourseCommandService : ICourseCommandService
     private readonly ILogger<CourseCommandService> _logger;
     private readonly HttpClient _httpClient;
     private readonly IMapper _mapper;
-    // private readonly ILockoutRepository _lockoutRepo;
+    private readonly ILockoutRepository _lockoutRepo;
 
     public CourseCommandService(
         ICourseRepository courseRepository,
@@ -40,9 +40,9 @@ public class CourseCommandService : ICourseCommandService
         ICourseAiIntegrationRepository aiIntegrationRepository,
         ILogger<CourseCommandService> logger,
         IHttpClientFactory httpClientFactory,
-        IMapper mapper)
-        // IMapper mapper,
-        // ILockoutRepository lockoutRepo)
+        // IMapper mapper)
+        IMapper mapper,
+        ILockoutRepository lockoutRepo)
     {
         _courseRepository = courseRepository;
         _instructorRepository = instructorRepository;
@@ -55,7 +55,7 @@ public class CourseCommandService : ICourseCommandService
         _logger = logger;
         _httpClient = httpClientFactory.CreateClient("AiContentModeration");
         _mapper = mapper;
-        // _lockoutRepo = lockoutRepo;
+        _lockoutRepo = lockoutRepo;
     }
 
     private async Task<(int, bool)> CheckInstructorRights(int instructorId)
@@ -66,11 +66,11 @@ public class CourseCommandService : ICourseCommandService
             throw new BadRequestException("You must be an approved instructor to create a course.");
         }
 
-        // var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
-        // if (activeLockout != null)
-        // {
-        //     throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot create new courses.");
-        // }
+        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
+        if (activeLockout != null)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot create new courses.");
+        }
 
         // ★ Limit: Max 2 courses for unlinked Stripe
         var isStripeActive = !string.IsNullOrEmpty(instructor.StripeAccountId)
@@ -144,11 +144,11 @@ public class CourseCommandService : ICourseCommandService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to modify this course.");
 
-        // var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
-        // if (activeLockout != null)
-        // {
-        //     throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update courses.");
-        // }
+        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
+        if (activeLockout != null)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update courses.");
+        }
 
         if (string.Equals(course.CourseStatus, "archived", StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
         {
@@ -255,11 +255,11 @@ public class CourseCommandService : ICourseCommandService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to modify this course.");
 
-        // var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
-        // if (activeLockout != null)
-        // {
-        //     throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot change course status.");
-        // }
+        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
+        if (activeLockout != null)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot change course status.");
+        }
 
         if (string.Equals(course.CourseStatus, "archived", StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
         {
@@ -363,11 +363,11 @@ public class CourseCommandService : ICourseCommandService
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to delete this course.");
 
-        // var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
-        // if (activeLockout != null)
-        // {
-        //     throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot delete courses.");
-        // }
+        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
+        if (activeLockout != null)
+        {
+            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot delete courses.");
+        }
 
         if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot delete course while it is pending review.");

@@ -2,6 +2,6 @@ namespace CourseMarketplaceBE.Application.DTOs;
 
 public class LoginRequest
 {
-    public string Email { get; set; } = null!;
+    public string UsernameOrEmail { get; set; } = null!;
     public string Password { get; set; } = null!;
 }

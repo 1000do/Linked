@@ -1,4 +1,4 @@
-﻿namespace CourseMarketplaceBE.Application.IServices
+namespace CourseMarketplaceBE.Application.IServices
 {
     public interface IEmailService
     {

@@ -10,10 +10,10 @@ namespace CourseMarketplaceBE.Application.Services;
 
 public class EnrollmentService : IEnrollmentService
 {
-    private readonly ICheckoutRepository _repo;
+    private readonly IEnrollmentRepository _repo;
     private readonly ICourseRepository _courseRepo;
 
-    public EnrollmentService(ICheckoutRepository repo, ICourseRepository courseRepo)
+    public EnrollmentService(IEnrollmentRepository repo, ICourseRepository courseRepo)
     {
         _repo = repo;
         _courseRepo = courseRepo;
@@ -34,7 +34,7 @@ public class EnrollmentService : IEnrollmentService
             throw new InvalidOperationException("You cannot enroll in your own course.");
 
         // 2. Check if already enrolled
-        if (await _repo.IsEnrolledAsync(userId, courseId))
+        if (await _courseRepo.IsEnrolledAsync(userId, courseId))
             throw new InvalidOperationException("You have already enrolled in this course.");
 
         // 3. Perform enrollment
@@ -52,16 +52,9 @@ public class EnrollmentService : IEnrollmentService
                 LastAccessedAt = DateTime.Now
             };
             await _repo.AddEnrollmentAsync(enrollment);
-            await _repo.SaveChangesAsync();
+            int rows1 = await _repo.SaveChangesAsync();
+            if (rows1 <= 0) throw new InvalidOperationException("Failed to save changes");
 
-            var progress = new EnrollmentProgress
-            {
-                EnrollmentId = enrollment.EnrollmentId,
-                LearnedMaterialCount = 0,
-                LastModifiedAt = DateTime.Now
-            };
-            await _repo.AddEnrollmentProgressAsync(progress);
-            await _repo.SaveChangesAsync();
 
             await transaction.CommitAsync();
         }
@@ -136,31 +129,13 @@ public class EnrollmentService : IEnrollmentService
             await _repo.AddMaterialCompletionAsync(completion);
 
             // Lưu thay đổi ngay để các hàm đếm phía sau chính xác
-            await _repo.SaveChangesAsync();
-
-            // 2. Cập nhật số lượng bài đã học trong bảng Progress
-            if (enrollment.Progress == null)
-            {
-                enrollment.Progress = new EnrollmentProgress
-                {
-                    EnrollmentId = enrollment.EnrollmentId,
-                    LearnedMaterialCount = 1,
-                    LastModifiedAt = DateTime.UtcNow
-                };
-                await _repo.AddEnrollmentProgressAsync(enrollment.Progress);
-            }
-            else
-            {
-                // Đếm chính xác số lượng từ DB sau khi đã SaveChanges bản ghi mới
-                var actualCount = await _repo.GetCompletedMaterialCountAsync(enrollment.EnrollmentId);
-                enrollment.Progress.LearnedMaterialCount = actualCount;
-                enrollment.Progress.LastModifiedAt = DateTime.UtcNow;
-            }
+            int rows3 = await _repo.SaveChangesAsync();
+            if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
 
             // 3. Kiểm tra hoàn thành khóa học
             var stats = await _courseRepo.GetCourseStatsAsync(courseId);
             var totalMaterials = stats?.TotalMaterials ?? 0;
-            var currentLearned = enrollment.Progress.LearnedMaterialCount;
+            var currentLearned = await _repo.GetCompletedMaterialCountAsync(enrollment.EnrollmentId);
 
             if (currentLearned >= totalMaterials && totalMaterials > 0)
             {
@@ -168,7 +143,8 @@ public class EnrollmentService : IEnrollmentService
                 enrollment.CompletedDate = DateOnly.FromDateTime(DateTime.UtcNow);
             }
 
-            await _repo.SaveChangesAsync();
+            int rows4 = await _repo.SaveChangesAsync();
+            if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
         }
     }
 
@@ -179,14 +155,15 @@ public class EnrollmentService : IEnrollmentService
         var courseIds = enrollments.Select(e => e.CourseId ?? 0).Where(id => id > 0).ToList();
         var stats = await _courseRepo.GetCourseStatsAsync(courseIds);
 
-        return await Task.WhenAll(enrollments.Select(async e =>
+        var responseList = new List<DTOs.EnrolledCourseResponse>();
+        foreach (var e in enrollments)
         {
             var s = stats.FirstOrDefault(st => st.CourseId == e.CourseId);
             var totalMaterials = s?.TotalMaterials ?? 0;
             var learnedCount = await _repo.GetCompletedMaterialCountAsync(e.EnrollmentId);
             var pct = totalMaterials > 0 ? (double)learnedCount / totalMaterials * 100 : 0;
 
-            return new DTOs.EnrolledCourseResponse
+            responseList.Add(new DTOs.EnrolledCourseResponse
             {
                 CourseId = e.CourseId ?? 0,
                 Title = e.Course?.Title ?? "Unknown Course",
@@ -195,7 +172,9 @@ public class EnrollmentService : IEnrollmentService
                 ProgressPercentage = Math.Round(pct, 1),
                 IsCompleted = e.IsCompleted == true,
                 LastAccessedAt = e.LastAccessedAt
-            };
-        }));
+            });
+        }
+
+        return responseList;
     }
 }

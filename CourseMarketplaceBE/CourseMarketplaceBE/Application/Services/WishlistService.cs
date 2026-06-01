@@ -63,7 +63,9 @@ public class WishlistService : IWishlistService
         };
 
         await _wishlistRepository.AddAsync(newItem);
-        await _wishlistRepository.SaveChangesAsync();
+        int numberOfRowsAffected = await _wishlistRepository.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
     }
 
     public async Task RemoveFromWishlistAsync(int userId, int courseId)
@@ -75,7 +77,9 @@ public class WishlistService : IWishlistService
         }
 
         await _wishlistRepository.RemoveAsync(item);
-        await _wishlistRepository.SaveChangesAsync();
+        int numberOfRowsAffected = await _wishlistRepository.SaveChangesAsync();
+        if (numberOfRowsAffected <= 0)
+            throw new InvalidOperationException("Failed to save changes");
     }
 
     public async Task<bool> ToggleWishlistAsync(int userId, int courseId)
@@ -84,7 +88,9 @@ public class WishlistService : IWishlistService
         if (item != null)
         {
             await _wishlistRepository.RemoveAsync(item);
-            await _wishlistRepository.SaveChangesAsync();
+            int numberOfRowsAffected = await _wishlistRepository.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
             
             // Notify via SignalR
             await _hubContext.Clients.User(userId.ToString()).SendAsync("UpdateWishlistCount");
@@ -100,7 +106,9 @@ public class WishlistService : IWishlistService
                 AddedDate = DateTime.UtcNow
             };
             await _wishlistRepository.AddAsync(newItem);
-            await _wishlistRepository.SaveChangesAsync();
+            int numberOfRowsAffected = await _wishlistRepository.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
             
             // Notify via SignalR
             await _hubContext.Clients.User(userId.ToString()).SendAsync("UpdateWishlistCount");

@@ -43,14 +43,13 @@
         h1, h2, h3, h4, h5, h6, .font-display { font-family: 'Manrope', system-ui, sans-serif; }
         
         /* Custom scrollbar for modern feel */
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        /* Dark scrollbar for Sidebar */
-        aside .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); }
-        aside .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.22); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        
+        aside .custom-scrollbar::-webkit-scrollbar-thumb { background: transparent; }
+        aside:hover .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; }
         
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
@@ -58,21 +57,18 @@
 
         /* Smooth Nav Item Transition */
         .nav-item {
-            border-left: 3px solid transparent;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         .nav-link-active {
-            background: linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.01) 100%);
-            color: #34d399 !important; /* emerald-400 */
+            background-color: #ecfdf5; /* emerald-50 */
+            color: #047857 !important; /* emerald-700 */
             font-weight: 600;
-            border-left: 3px solid #10b981 !important;
-            box-shadow: inset 1px 0 0 0 rgba(16, 185, 129, 0.15);
         }
         
         .nav-link-active .material-symbols-outlined {
             font-variation-settings: 'FILL' 1;
-            color: #34d399 !important;
+            color: #059669 !important; /* emerald-600 */
             transform: scale(1.05);
         }
 
@@ -110,67 +106,67 @@
 <body class="bg-slate-50 text-slate-800 flex h-screen overflow-hidden antialiased selection:bg-primary/20 selection:text-primary">
 
     <!-- SIDEBAR -->
-    <aside class="w-64 flex flex-col bg-[#0b0f19] shrink-0 z-20 relative border-r border-slate-800/60 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
-        <div class="h-16 flex items-center px-6 border-b border-slate-800/40 bg-slate-950/20">
-            <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.35)] shrink-0">
-                    <span class="material-symbols-outlined text-white text-[18px]">@(isStaff ? "support_agent" : "admin_panel_settings")</span>
+    <aside class="w-[260px] flex flex-col bg-white shrink-0 z-20 relative border-r border-slate-100 shadow-[2px_0_16px_rgba(0,0,0,0.02)]">
+        <div class="h-16 flex items-center px-7 border-b border-slate-100">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center border border-emerald-100 shrink-0">
+                    <span class="material-symbols-outlined text-emerald-600 text-[18px]">@(isStaff ? "support_agent" : "admin_panel_settings")</span>
                 </div>
-                <span class="font-display font-extrabold text-white text-base tracking-tight leading-none">Linked<span class="text-[#34d399]">@(isStaff ? "Staff" : "Admin")</span></span>
+                <span class="font-display font-extrabold text-slate-800 text-lg tracking-tight leading-none">Linked<span class="text-emerald-500">@(isStaff ? "Staff" : "Admin")</span></span>
             </div>
         </div>
         
-        <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto custom-scrollbar bg-gradient-to-b from-[#0b0f19] to-[#0d1222]">
-            <div class="px-3.5 mb-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none">Workspace</div>
+        <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto custom-scrollbar">
+            <div class="px-3 mb-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">Workspace</div>
             
-            <a href="/AdminApproval" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
-                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">how_to_reg</span> 
+            <a href="/AdminApproval" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+                <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">how_to_reg</span> 
                 Instructor Approvals
             </a>
             @if (!isStaff) {
-                <a href="/AdminAccount" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
-                    <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">manage_accounts</span> 
+                <a href="/AdminAccount" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+                    <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">manage_accounts</span> 
                     Manage Accounts
                 </a>
             }
-            <a href="/AdminModeration/Courses" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
-                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">school</span> 
+            <a href="/AdminModeration/Courses" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+                <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">school</span> 
                 Course Moderation
             </a>
-            <a href="/AdminModeration/Reports" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
-                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">report</span> 
-                User Reports
+            <a href="/AdminModeration/Reports" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+                <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">flag</span> 
+                Report Center
             </a>
-            <a href="/Notification/Admin" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group relative">
-                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">notifications</span> 
+            <a href="/Notification/Admin" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group relative">
+                <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">notifications</span> 
                 Notifications
-                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-red-500 hidden" id="admin-noti-badge"></span>
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500 hidden" id="admin-noti-badge"></span>
             </a>
             @if (!isStaff) {
-                <a href="/Coupon/Admin" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
-                    <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">local_activity</span> 
+                <a href="/Coupon/Admin" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+                    <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">local_activity</span> 
                     Coupons & Offers
                 </a>
             }
-            <a href="/Chat/Admin" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
-                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">forum</span> 
+            <a href="/Chat/Admin" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+                <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">forum</span> 
                 Monitor Chats
             </a>
-            <a href="/AdminAvatarFrame" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
-                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">military_tech</span> 
+            <a href="/AdminAvatarFrame" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+                <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">military_tech</span> 
                 Manage Avatar Frames
             </a>
 
             @if (!isStaff) {
-                <div class="px-3.5 mb-2 mt-6 text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none">Finance & Transactions</div>
+                <div class="px-3 mb-3 mt-8 text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">Finance & Transactions</div>
                 
-                <a href="/AdminFinance" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
-                    <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">monitoring</span> 
+                <a href="/AdminFinance" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+                    <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">monitoring</span> 
                     Revenue Dashboard
                 </a>
-                <a href="/Transaction/Admin" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
-                    <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">receipt_long</span> 
-                    Transaction Logs
+                <a href="/AdminFinance/InstructorRevenues" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 transition-all group">
+                    <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-emerald-400 transition-all duration-300">payments</span> 
+                    Instructor Revenues
                 </a>
             }
             
@@ -179,8 +175,8 @@
     @{
         var avatarUrl = Context.Request.Cookies["AvatarUrl"];
     }
-    <div class="p-3 border-t border-slate-800/40 bg-[#0d1222] shrink-0">
-        <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-900/60 border border-slate-800/80 shadow-md backdrop-blur-md hover:border-slate-700/80 transition-all duration-300">
+    <div class="p-4 border-t border-slate-100">
+        <div class="flex items-center gap-3 p-3 rounded-2xl bg-white border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.02)] hover:border-emerald-100 hover:shadow-[0_4px_12px_rgba(16,185,129,0.05)] transition-all duration-300 cursor-pointer">
             <div class="relative shrink-0">
                 @await Html.PartialAsync("_UserAvatar", new { 
                     Url = avatarUrl, 
@@ -190,15 +186,14 @@
                     ShowFrame = true,
                     FrameUrl = ""
                 })
-                <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#0d1222] rounded-full shadow-[0_0_8px_#10b981]"></span>
+                <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
             </div>
             <div class="flex flex-col flex-1 overflow-hidden">
-                <span class="text-xs font-bold text-slate-200 truncate">@managerName</span>
-                <span class="text-[9px] text-slate-500 font-medium truncate uppercase tracking-wider">@(isStaff ? "Support Staff" : "Super Admin")</span>
-                <form method="post" action="/Account/Logout" class="m-0 mt-1">
+                <span class="text-xs font-bold text-slate-800 truncate">@managerName</span>
+                <span class="text-[10px] text-slate-400 font-medium truncate uppercase tracking-wider mt-0.5">@(isStaff ? "Support Staff" : "Super Admin")</span>
+                <form method="post" action="/Account/Logout" class="m-0 mt-1.5">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="text-[10px] text-red-400 hover:text-red-300 font-semibold flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer text-left transition-colors duration-200">
-                        <span class="material-symbols-outlined text-[12px] font-normal leading-none">logout</span>
+                    <button type="submit" class="text-[11px] text-slate-400 hover:text-rose-500 font-semibold flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer text-left transition-colors duration-200">
                         Logout
                     </button>
                 </form>
@@ -250,7 +245,7 @@
                 if (href === currentPath || 
                    (currentPath.includes('/adminapproval') && href.includes('/adminapproval')) ||
                    (currentPath.includes('/adminaccount') && href.includes('/adminaccount')) ||
-                   (currentPath.includes('/transaction') && href.includes('/transaction/admin'))) {
+                   (currentPath.includes('/instructorrevenues') && href.includes('/instructorrevenues'))) {
                     link.classList.add('nav-link-active');
                 }
             });
@@ -284,6 +279,13 @@
     </script>
     <!-- SweetAlert2 for general use -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Prevent SweetAlert from altering the body height/padding, which breaks the fixed layout
+        window.Swal = window.Swal.mixin({
+            heightAuto: false,
+            scrollbarPadding: false
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -36,6 +36,9 @@ public class FinancialSummaryResponse
 
     /// <summary>Tổng số giao dịch thành công</summary>
     public int TotalTransactions { get; set; }
+
+    /// <summary>Tổng số tiền đã hoàn trả cho học viên</summary>
+    public decimal TotalRefunded { get; set; }
 }
 
 /// <summary>
@@ -211,5 +214,18 @@ public class RefundResultResponse
 
     /// <summary>Trạng thái giao dịch sau khi refund</summary>
     public string TransactionStatus { get; set; } = "refunded";
+}
+
+public class InstructorCourseRevenueResponse
+{
+    public int CourseId { get; set; }
+    public string CourseTitle { get; set; } = string.Empty;
+    public int InstructorId { get; set; }
+    public string InstructorName { get; set; } = string.Empty;
+    public int SalesCount { get; set; }
+    public decimal MonthlyRevenue { get; set; }
+    public decimal PreviousMonthRevenue { get; set; }
+    public decimal YearlyRevenue { get; set; }
+    public decimal LifetimeRevenue { get; set; }
 }
 

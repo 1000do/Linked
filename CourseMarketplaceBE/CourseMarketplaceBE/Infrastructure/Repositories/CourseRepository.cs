@@ -175,13 +175,13 @@ public class CourseRepository : ICourseRepository
     public async Task<bool> IsEnrolledAsync(int userId, int courseId)
     {
         return await _context.Enrollments
-            .AnyAsync(e => e.UserId == userId && e.CourseId == courseId);
+            .AnyAsync(e => e.UserId == userId && e.CourseId == courseId && e.EnrollmentStatus != "revoked");
     }
 
     public async Task<IEnumerable<Course>> GetEnrolledCoursesAsync(int userId)
     {
         return await _context.Enrollments
-            .Where(e => e.UserId == userId)
+            .Where(e => e.UserId == userId && e.EnrollmentStatus != "revoked")
             .Include(e => e.Course)
                 .ThenInclude(c => c!.Instructor)
                     .ThenInclude(i => i!.InstructorNavigation)
@@ -287,14 +287,35 @@ public class CourseRepository : ICourseRepository
 
     public async Task<decimal> GetAveragePlatformRatingAsync()
     {
-        return await _context.CourseStats
+        var avg = await _context.CourseStats
             .Where(s => s.RatingAverage > 0)
-            .Select(s => (decimal)s.RatingAverage)
-            .DefaultIfEmpty(0)
+            .Select(s => (double?)s.RatingAverage)
             .AverageAsync();
+        return (decimal)(avg ?? 0.0);
     }
 
-    public async Task<List<CourseModerationDto>> GetPendingCoursesModerationAsync(ModerationFilterDto filter)
+    public async Task<CourseModerationStatsDto> GetCourseModerationStatsAsync()
+    {
+        var today = DateTime.Today;
+
+        var pendingCount = await _context.Courses
+            .Where(c => c.CourseStatus == "pending" && !c.IsRemoved)
+            .CountAsync();
+
+        var resolvedTodayCount = await _context.Courses
+            .Where(c => (c.CourseStatus == "published" || c.CourseStatus == "rejected")
+                     && c.UpdatedAt >= today
+                     && !c.IsRemoved)
+            .CountAsync();
+
+        return new CourseModerationStatsDto
+        {
+            PendingCount = pendingCount,
+            ResolvedTodayCount = resolvedTodayCount
+        };
+    }
+
+    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseModerationDto>> GetPendingCoursesModerationAsync(ModerationFilterDto filter)
     {
         var query = _context.Courses
             .Include(c => c.Instructor).ThenInclude(i => i.InstructorNavigation)
@@ -336,10 +357,15 @@ public class CourseRepository : ICourseRepository
             query = query.OrderBy(c => c.CreatedAt);
         }
 
-        var courses = await query.ToListAsync();
+        var totalCount = await query.CountAsync();
+
+        var courses = await query
+            .Skip((filter.Page - 1) * filter.PageSize)
+            .Take(filter.PageSize)
+            .ToListAsync();
         var now = DateTime.Now;
 
-        return courses.Select(c => {
+        var items = courses.Select(c => {
             var dto = new CourseModerationDto
             {
                 CourseId = c.CourseId,
@@ -350,7 +376,8 @@ public class CourseRepository : ICourseRepository
                 CreatedAt = c.CreatedAt,
                 CourseStatus = c.CourseStatus,
                 CourseThumbnailUrl = c.CourseThumbnailUrl,
-                FlagCount = c.CourseFlagCount ?? 0
+                FlagCount = c.CourseFlagCount ?? 0,
+                IsRemoved = c.IsRemoved
             };
 
             // Calculate Urgency
@@ -376,11 +403,29 @@ public class CourseRepository : ICourseRepository
 
             return dto;
         }).ToList();
+
+        return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseModerationDto>(items, totalCount, filter.Page, filter.PageSize);
     }
 
     public async Task<bool> IsOwnerAsync(int userId, int courseId)
     {
         return await _context.Courses.AnyAsync(c => c.CourseId == courseId && c.InstructorId == userId);
+    }
+
+    public async Task<Course?> GetCourseWithInstructorAsync(int courseId)
+    {
+        return await _context.Courses
+            .Include(c => c.Instructor)
+            .Include(c => c.Coupon)
+            .FirstOrDefaultAsync(c => c.CourseId == courseId);
+    }
+
+    public async Task<Enrollment?> GetActiveEnrollmentAsync(int userId, int courseId)
+    {
+        return await _context.Enrollments
+            .FirstOrDefaultAsync(e => e.UserId == userId
+                                   && e.CourseId == courseId
+                                   && e.EnrollmentStatus == "active");
     }
 
     public async Task<int> SaveChangesAsync()

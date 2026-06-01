@@ -1,5 +1,5 @@
 @using CourseMarketplaceFE.Controllers
-@model TransactionController.TransactionDetailVM
+@model CourseMarketplaceFE.Models.TransactionDetailVM
 @{
     ViewData["Title"] = $"Transaction #{Model.TransactionId}";
     Layout = "_InstructorLayout";
@@ -145,11 +145,11 @@
                     <p class="text-3xl font-headline font-black @(Model.Status == "refunded" ? "text-rose-400" : "")">
                         @if (Model.Status == "refunded")
                         {
-                            <span class="text-rose-400 text-xl mr-1">- @Model.Currency?.ToUpper()</span>@Model.GrossAmount.ToString("N2")
+                            <span class="text-rose-400 text-xl mr-1">- $</span>@Math.Abs(Model.GrossAmount).ToString("N2")
                         }
                         else
                         {
-                            <span class="text-primary text-xl mr-1">@Model.Currency?.ToUpper()</span>@Model.GrossAmount.ToString("N2")
+                            <span class="text-primary text-xl mr-1">$</span>@Model.GrossAmount.ToString("N2")
                         }
                     </p>
                 </div>
@@ -269,10 +269,17 @@
                 <div class="p-8">
                     <h3 class="text-lg font-headline font-black text-slate-900 mb-6">Split Summary</h3>
                     
+                    @{
+                        var stripeFee = Math.Round(Model.GrossAmount * 0.029m + 0.30m, 2);
+                        stripeFee = Math.Min(stripeFee, Model.GrossAmount);
+                        var netPrice = Model.GrossAmount - stripeFee;
+                        var netPlatformProfit = Model.PlatformProfit - stripeFee;
+                    }
+
                     <div class="space-y-4">
                         <div class="flex items-center justify-between text-sm">
                             <span class="text-slate-500 font-medium">Original Course Price</span>
-                            <span class="text-slate-900 font-bold">@Model.Currency?.ToUpper() @Model.OriginalPrice.ToString("N2")</span>
+                            <span class="text-slate-900 font-bold">$@Model.OriginalPrice.ToString("N2")</span>
                         </div>
                         @if (Model.CouponUsed) {
                             <div class="flex items-center justify-between text-sm">
@@ -284,41 +291,52 @@
                                         </span>
                                     }
                                 </div>
-                                <span class="text-emerald-600 font-bold">- @Model.Currency?.ToUpper() @Model.DiscountAmount.ToString("N2")</span>
+                                <span class="text-emerald-600 font-bold">- $@Model.DiscountAmount.ToString("N2")</span>
                             </div>
                         } else {
-                             <div class="flex items-center justify-between text-sm">
+                            <div class="flex items-center justify-between text-sm">
                                 <span class="text-slate-500 font-medium">Coupon Discount</span>
-                                <span class="text-slate-400 font-bold">@Model.Currency?.ToUpper() 0.00</span>
+                                <span class="text-slate-400 font-bold">$0.00</span>
                             </div>
                         }
                         <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
-                            <span class="text-base font-bold text-slate-950 uppercase font-headline">Gross Amount</span>
+                            <span class="text-base font-bold text-slate-955 uppercase font-headline">Gross Amount</span>
                             <div class="text-right">
                                 @if (Model.CouponUsed) {
                                     <div class="text-xs text-slate-400 line-through mb-1">
-                                        @Model.Currency?.ToUpper() @Model.OriginalPrice.ToString("N2")
+                                        $@Model.OriginalPrice.ToString("N2")
                                     </div>
                                 }
                                 @if (Model.Status == "refunded") {
-                                    <span class="text-2xl font-headline font-black text-rose-600">- @Model.Currency?.ToUpper() @Model.GrossAmount.ToString("N2")</span>
+                                    <span class="text-2xl font-headline font-black text-rose-600">- $@Math.Abs(Model.GrossAmount).ToString("N2")</span>
                                 } else {
-                                    <span class="text-2xl font-headline font-black text-slate-950">@Model.Currency?.ToUpper() @Model.GrossAmount.ToString("N2")</span>
+                                    <span class="text-2xl font-headline font-black text-slate-955">$@Model.GrossAmount.ToString("N2")</span>
                                 }
                             </div>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-slate-500 font-medium flex items-center gap-1">
+                                Stripe Processing Fee
+                                <span class="text-[9px] font-bold text-slate-400 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/50">2.9% + $0.30</span>
+                            </span>
+                            <span class="text-rose-600 font-bold">- $@stripeFee.ToString("N2")</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-slate-500 font-medium">Net Course Revenue to Split</span>
+                            <span class="text-slate-900 font-black">$@netPrice.ToString("N2")</span>
                         </div>
                     </div>
 
                     <div class="mt-8 space-y-3">
                         <div class="@(Model.Status == "refunded" ? "bg-rose-50/30 border-rose-100/50" : "bg-indigo-50/50 rounded-2xl p-4 border border-indigo-100/50") rounded-2xl p-4 border transition-all">
                             <div class="flex items-center justify-between mb-1">
-                                <p class="text-[11px] font-black @(Model.Status == "refunded" ? "text-rose-400" : "text-indigo-400") uppercase tracking-widest">Platform Service Fee</p>
+                                <p class="text-[11px] font-black @(Model.Status == "refunded" ? "text-rose-400" : "text-indigo-400") uppercase tracking-widest">Platform Net Profit</p>
                                 <span class="text-[10px] font-bold @(Model.Status == "refunded" ? "text-rose-600 bg-rose-100" : "text-indigo-600 bg-indigo-100") px-1.5 py-0.5 rounded">@(100 - Model.TransferRate)%</span>
                             </div>
                             @if (Model.Status == "refunded") {
-                                <p class="text-xl font-headline font-black text-rose-600">- @Model.Currency?.ToUpper() @Model.PlatformProfit.ToString("N2")</p>
+                                <p class="text-xl font-headline font-black text-rose-600">- $@Math.Abs(netPlatformProfit).ToString("N2")</p>
                             } else {
-                                <p class="text-xl font-headline font-black text-indigo-700">@Model.Currency?.ToUpper() @Model.PlatformProfit.ToString("N2")</p>
+                                <p class="text-xl font-headline font-black text-indigo-700">$@netPlatformProfit.ToString("N2")</p>
                             }
                         </div>
 
@@ -328,9 +346,9 @@
                                 <span class="text-[10px] font-bold @(Model.Status == "refunded" ? "text-rose-600 bg-rose-100" : Model.IsPaid ? "text-emerald-600 bg-emerald-100" : "text-amber-600 bg-amber-100") px-1.5 py-0.5 rounded">@Model.TransferRate%</span>
                             </div>
                             @if (Model.Status == "refunded") {
-                                <p class="text-xl font-headline font-black text-rose-700">- @Model.Currency?.ToUpper() @Model.InstructorPayout.ToString("N2")</p>
+                                <p class="text-xl font-headline font-black text-rose-700">- $@Math.Abs(Model.InstructorPayout).ToString("N2")</p>
                             } else {
-                                <p class="text-xl font-headline font-black @(Model.IsPaid ? "text-emerald-700" : "text-amber-700")">@Model.Currency?.ToUpper() @Model.InstructorPayout.ToString("N2")</p>
+                                <p class="text-xl font-headline font-black @(Model.IsPaid ? "text-emerald-700" : "text-amber-700")">$@Model.InstructorPayout.ToString("N2")</p>
                             }
                         </div>
                     </div>

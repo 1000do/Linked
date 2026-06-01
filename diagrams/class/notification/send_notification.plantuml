@@ -1,0 +1,78 @@
+@startuml SendNotifications
+
+hide empty members
+
+class AdminNotificationController {
+    + Send()
+}
+
+class SendNotificationViewModel {
+    + Title
+    + Content
+    + TargetUsers
+}
+
+class NotificationController {
+    + SendNotification()
+}
+
+class NotificationSendRequestDto {
+    + Title
+    + Content
+}
+
+interface INotificationService {
+    + SendNotificationAsync()
+    + SendAdvancedAsync()
+}
+
+class NotificationService {
+    + SendNotificationAsync()
+    + SendAdvancedAsync()
+}
+
+interface INotificationRepository {
+    + AddAsync()
+    + AddRangeAsync()
+    + SaveChangesAsync()
+}
+
+class NotificationRepository {
+    + AddAsync()
+    + AddRangeAsync()
+    + SaveChangesAsync()
+}
+
+class Notification {
+    + NotificationId
+    + ReceiverId
+    + Title
+    + Content
+    + IsRead
+}
+
+' Represents the SignalR Hub for real-time communication
+class NotificationHub
+
+class ApplicationDbContext
+
+
+' === RELATIONSHIPS ===
+AdminNotificationController ..> NotificationController
+AdminNotificationController ..> SendNotificationViewModel
+NotificationController ..> NotificationSendRequestDto
+NotificationController --> INotificationService
+NotificationService ..|> INotificationService
+NotificationService --> INotificationRepository
+
+' Service depends on the Hub to send real-time messages
+NotificationService --> NotificationHub
+
+' Service and Repo depend on the Notification entity
+NotificationService ..> Notification
+NotificationRepository ..> Notification
+
+NotificationRepository ..|> INotificationRepository
+NotificationRepository --> ApplicationDbContext
+
+@enduml

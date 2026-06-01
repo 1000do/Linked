@@ -11,7 +11,7 @@ using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using CourseMarketplaceBE.Application.BackgroundTasks;
+using CourseMarketplaceBE.Infrastructure.BackgroundServices;
 using Microsoft.IdentityModel.Tokens;
 using CourseMarketplaceBE.Application.Interfaces;
 using Microsoft.OpenApi.Models;
@@ -138,13 +138,15 @@ public class Program
 
         // 🔥 5. DI
         builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<ILockoutRepository, LockoutRepository>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<ICourseRepository, CourseRepository>();
         builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
         builder.Services.AddScoped<ILessonRepository, LessonRepository>();
         builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
         builder.Services.AddScoped<IAvatarFrameRepository, AvatarFrameRepository>();
-        builder.Services.AddScoped<ICourseService, CourseService>();
+        builder.Services.AddScoped<ICourseQueryService, CourseQueryService>();
+        builder.Services.AddScoped<ICourseCommandService, CourseCommandService>();
         builder.Services.AddScoped<ILessonService, LessonService>();
         builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
         builder.Services.AddScoped<IReviewService, CourseMarketplaceBE.Application.Services.ReviewService>();
@@ -167,6 +169,8 @@ public class Program
         builder.Services.AddScoped<ICouponRepository, CouponRepository>();
         builder.Services.AddScoped<ICouponService, CourseMarketplaceBE.Application.Services.CouponService>();
 
+        // builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+        builder.Services.AddAutoMapper(cfg => {}, typeof(Program).Assembly);
         // Register file upload implementation conditionally.
         // If Cloudinary config is present, use CloudinaryUploadService; otherwise use a no-op fallback.
         var cloudName = configuration["CloudinarySettings:CloudName"];
@@ -195,19 +199,25 @@ public class Program
 
         // 💳 Checkout & Payment (UC-19)
         builder.Services.AddScoped<ICheckoutRepository, CheckoutRepository>();
+        builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
         builder.Services.AddScoped<ICheckoutService, CourseMarketplaceBE.Application.Services.CheckoutService>();
+        builder.Services.AddScoped<IStripeConnectService, StripeConnectService>();
         builder.Services.AddScoped<IPaymentGatewayService, StripePaymentService>();
         // OCP: Đổi sang VNPay chỉ cần tạo VNPayPaymentService và đổi dòng trên.
 
         // 💰 Admin Finance (UC-112, UC-120)
         builder.Services.AddScoped<IAdminFinanceRepository, AdminFinanceRepository>();
         builder.Services.AddScoped<IAdminFinanceService, AdminFinanceService>();
+        builder.Services.AddScoped<IAdminAccountService, AdminAccountService>();
+        builder.Services.AddScoped<IStripeWebhookService, StripeWebhookService>();
 
         // 📊 Transactions (UC-114, UC-115)
         builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
         builder.Services.AddScoped<ITransactionService, TransactionService>();
         builder.Services.AddScoped<IChatService, ChatService>();
-        builder.Services.AddScoped<IModerationService, ModerationService>();
+        builder.Services.AddScoped<ICourseModerationService, CourseModerationService>();
+        builder.Services.AddScoped<ICourseAiModerationService, CourseAiModerationService>();
+        builder.Services.AddScoped<IUserReportModerationService, UserReportModerationService>();
         builder.Services.AddScoped<IAiModelRepository, AiModelRepository>();
         builder.Services.AddScoped<ICourseAiIntegrationRepository, CourseAiIntegrationRepository>();
         builder.Services.AddScoped<IAiModerationService, AiModerationService>();
@@ -219,6 +229,11 @@ public class Program
         builder.Services.AddScoped<IContentHashService, ContentHashService>();
         builder.Services.AddScoped<IAvatarFrameRepository, AvatarFrameRepository>();
         builder.Services.AddScoped<IAvatarFrameService, AvatarFrameService>();
+
+        // 📋 Report (User, Instructor, Staff, Admin)
+        builder.Services.AddScoped<IReportRepository, ReportRepository>();
+        builder.Services.AddScoped<IReportService, ReportService>();
+
         
         // 🔥 Background Tasks
         builder.Services.AddHostedService<PayoutScheduleTask>();
@@ -366,9 +381,15 @@ public class Program
                     using (var cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"
-                            ALTER TABLE transactions ADD COLUMN IF NOT EXISTS refund_reason TEXT;
-                            ALTER TABLE transactions ADD COLUMN IF NOT EXISTS refund_admin_note TEXT;
-                            ALTER TABLE transactions ADD COLUMN IF NOT EXISTS refund_requested_at TIMESTAMP WITHOUT TIME ZONE;
+                            CREATE TABLE IF NOT EXISTS transaction_exts (
+                                transaction_id INT PRIMARY KEY REFERENCES transactions(transaction_id) ON DELETE CASCADE,
+                                refund_reason TEXT,
+                                refund_admin_note TEXT,
+                                refund_requested_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                            );
+                            ALTER TABLE transactions DROP COLUMN IF EXISTS refund_reason;
+                            ALTER TABLE transactions DROP COLUMN IF EXISTS refund_admin_note;
+                            ALTER TABLE transactions DROP COLUMN IF EXISTS refund_requested_at;
                         ";
                         cmd.ExecuteNonQuery();
                     }

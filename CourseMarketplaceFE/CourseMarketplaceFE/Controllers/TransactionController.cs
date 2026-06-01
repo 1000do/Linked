@@ -1,5 +1,6 @@
 using System.Text.Json;
 using CourseMarketplaceFE.Helpers;
+using CourseMarketplaceFE.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceFE.Controllers;
@@ -15,113 +16,14 @@ public class TransactionController : Controller
 
     public TransactionController(ApiClient api) => _api = api;
 
-    // ─── Wrapper cho BE ApiResponse<T> ────────────────────────────────────
-    private class ApiResp<T>
-    {
-        public bool Success { get; set; }
-        public T? Data { get; set; }
-        public string? Message { get; set; }
-    }
-
-    // ─── View Models (mirror BE DTOs) ─────────────────────────────────────
-
-    public class TransactionListItemVM
-    {
-        public int TransactionId { get; set; }
-        public string? StripeSessionId { get; set; }
-        public DateTime? Date { get; set; }
-        public decimal Amount { get; set; }
-        public string? Status { get; set; }
-        public string BuyerName { get; set; } = "";
-        public string CourseTitle { get; set; } = "";
-        public string InstructorName { get; set; } = "";
-        public string? Currency { get; set; }
-        public string? PayoutCurrency { get; set; }
-        public string? RefundReason { get; set; }
-        public string? RefundAdminNote { get; set; }
-        public DateTime? RefundRequestedAt { get; set; }
-    }
-
-    public class TransactionPagedVM
-    {
-        public List<TransactionListItemVM> Items { get; set; } = new();
-        public int TotalCount { get; set; }
-        public int Page { get; set; }
-        public int PageSize { get; set; }
-        public int TotalPages { get; set; }
-    }
-
-    public class InstructorFinancePageVM
-    {
-        public TransactionPagedVM Transactions { get; set; } = new();
-        public CourseMarketplaceFE.Controllers.InstructorController.InstructorPayoutPagedViewModel Payouts { get; set; } = new();
-    }
-
-    public class TransactionDetailVM
-    {
-        public int TransactionId { get; set; }
-        public string? StripeSessionId { get; set; }
-        public string? StripePaymentIntentId { get; set; }
-        public DateTime? Date { get; set; }
-        public string? Status { get; set; }
-        public string? Currency { get; set; }
-        public string BuyerName { get; set; } = "";
-        public string BuyerEmail { get; set; } = "";
-        public string CourseTitle { get; set; } = "";
-        public string? CourseThumbnail { get; set; }
-        public string InstructorName { get; set; } = "";
-        public string InstructorEmail { get; set; } = "";
-        public decimal GrossAmount { get; set; }
-        
-        // ★ Mới thêm: Thông tin Coupon
-        public decimal OriginalPrice { get; set; }
-        public decimal DiscountAmount { get; set; }
-        public bool CouponUsed { get; set; }
-        public string? CouponCode { get; set; }
-        public string? CouponType { get; set; }
-        public decimal? CouponDiscountValue { get; set; }
-
-        public decimal TransferRate { get; set; }
-        public decimal InstructorPayout { get; set; }
-        public decimal PlatformProfit { get; set; }
-        public bool IsPaid { get; set; }
-        public string? RefundReason { get; set; }
-        public string? RefundAdminNote { get; set; }
-        public DateTime? RefundRequestedAt { get; set; }
-    }
-
     // ═══════════════════════════════════════════════════════════════════════
     // GET /Transaction?page=1&pageSize=20
     // UC-115: Danh sách giao dịch
     // ═══════════════════════════════════════════════════════════════════════
     [HttpGet]
-    public async Task<IActionResult> Index(int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null)
+    public IActionResult Index()
     {
-        var vm = new TransactionPagedVM { Page = page, PageSize = pageSize };
-
-        ViewBag.Keyword = keyword;
-        ViewBag.SortBy = sortBy;
-        ViewBag.Status = status;
-
-        var query = $"transactions?page={page}&pageSize={pageSize}";
-        if (!string.IsNullOrEmpty(keyword)) query += $"&keyword={Uri.EscapeDataString(keyword)}";
-        if (!string.IsNullOrEmpty(sortBy)) query += $"&sortBy={Uri.EscapeDataString(sortBy)}";
-        if (!string.IsNullOrEmpty(status)) query += $"&status={Uri.EscapeDataString(status)}";
-
-        var resp = await _api.GetAsync(query);
-        if (resp.IsSuccessStatusCode)
-        {
-            var json = await resp.Content.ReadAsStringAsync();
-            var parsed = JsonSerializer.Deserialize<ApiResp<TransactionPagedVM>>(json, _jsonOpts);
-            if (parsed?.Data != null)
-                vm = parsed.Data;
-        }
-        else if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-        {
-            return RedirectToAction("Login", "Account");
-        }
-
-        return View(vm);
+        return Redirect("/AdminFinance");
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -165,7 +67,7 @@ public class TransactionController : Controller
     [HttpGet]
     public async Task<IActionResult> Instructor(int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null, string tab = "tx",
         int payoutPage = 1, int payoutPageSize = 20, string? payoutKeyword = null, string? payoutSortBy = "date_desc", string? payoutStatus = null,
-        int? year = null, int? month = null)
+        int? year = null, int? month = null, string? courseSortBy = "sales_desc")
     {
         // Guard: Chỉ giảng viên đã duyệt mới được xem Earnings
         var approvalStatus = Request.Cookies["InstructorApprovalStatus"];
@@ -192,6 +94,7 @@ public class TransactionController : Controller
         ViewBag.ActiveTab = tab;
         ViewBag.Year = selectedYear;
         ViewBag.Month = selectedMonth;
+        ViewBag.CourseSortBy = courseSortBy;
 
         var txQuery = $"transactions/instructor?page={page}&pageSize={pageSize}&year={selectedYear}&month={selectedMonth}";
         if (!string.IsNullOrEmpty(keyword)) txQuery += $"&keyword={Uri.EscapeDataString(keyword)}";
@@ -203,14 +106,23 @@ public class TransactionController : Controller
         if (!string.IsNullOrEmpty(payoutSortBy)) payoutQuery += $"&sortBy={Uri.EscapeDataString(payoutSortBy)}";
         if (!string.IsNullOrEmpty(payoutStatus)) payoutQuery += $"&status={Uri.EscapeDataString(payoutStatus)}";
 
+        var allTxQuery = $"transactions/instructor?page=1&pageSize=100000&year={selectedYear}&month={selectedMonth}";
+        var allPayoutQuery = $"instructor/payouts?page=1&pageSize=100000&year={selectedYear}&month={selectedMonth}";
+
         // Fetch Transactions
         var txTask = _api.GetAsync(txQuery);
         // Fetch Payouts
         var payoutTask = _api.GetAsync(payoutQuery);
         // Fetch Payout Days Config
         var payoutDaysTask = _api.GetAsync("instructor/payout-days");
+        // Fetch ALL Transactions (for chart)
+        var allTxTask = _api.GetAsync(allTxQuery);
+        // Fetch ALL Payouts (for overview metrics)
+        var allPayoutTask = _api.GetAsync(allPayoutQuery);
+        // Fetch Course Revenues
+        var courseRevenuesTask = _api.GetAsync($"transactions/instructor/course-revenues?year={selectedYear}&month={selectedMonth}");
 
-        await Task.WhenAll(txTask, payoutTask, payoutDaysTask);
+        await Task.WhenAll(txTask, payoutTask, payoutDaysTask, allTxTask, allPayoutTask, courseRevenuesTask);
 
         var txResp = await txTask;
         if (txResp.IsSuccessStatusCode)
@@ -229,10 +141,32 @@ public class TransactionController : Controller
         if (payoutResp.IsSuccessStatusCode)
         {
             var json = await payoutResp.Content.ReadAsStringAsync();
-            var parsed = JsonSerializer.Deserialize<ApiResp<CourseMarketplaceFE.Controllers.InstructorController.InstructorPayoutPagedViewModel>>(json, _jsonOpts);
+            var parsed = JsonSerializer.Deserialize<ApiResp<InstructorPayoutPagedViewModel>>(json, _jsonOpts);
             if (parsed?.Data != null)
                 vm.Payouts = parsed.Data;
         }
+
+        List<TransactionListItemVM> allTransactionsList = new();
+        var allTxResp = await allTxTask;
+        if (allTxResp.IsSuccessStatusCode)
+        {
+            var json = await allTxResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<TransactionPagedVM>>(json, _jsonOpts);
+            if (parsed?.Data?.Items != null)
+                allTransactionsList = parsed.Data.Items;
+        }
+        ViewBag.AllTransactions = allTransactionsList;
+
+        List<InstructorPayoutViewModel> allPayoutsList = new();
+        var allPayoutResp = await allPayoutTask;
+        if (allPayoutResp.IsSuccessStatusCode)
+        {
+            var json = await allPayoutResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<InstructorPayoutPagedViewModel>>(json, _jsonOpts);
+            if (parsed?.Data?.Items != null)
+                allPayoutsList = parsed.Data.Items;
+        }
+        ViewBag.AllPayouts = allPayoutsList;
 
         string payoutDays = "15";
         var payoutDaysResp = await payoutDaysTask;
@@ -244,6 +178,30 @@ public class TransactionController : Controller
                 payoutDays = parsed.Data;
         }
         ViewBag.PayoutDays = payoutDays;
+
+        var courseRevenuesResp = await courseRevenuesTask;
+        if (courseRevenuesResp.IsSuccessStatusCode)
+        {
+            var json = await courseRevenuesResp.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<List<InstructorCourseRevenueResponse>>>(json, _jsonOpts);
+            if (parsed?.Data != null)
+            {
+                var courseRevenues = parsed.Data;
+                courseRevenues = courseSortBy switch
+                {
+                    "sales_desc" => courseRevenues.OrderByDescending(r => r.SalesCount).ToList(),
+                    "sales_asc" => courseRevenues.OrderBy(r => r.SalesCount).ToList(),
+                    "lifetime_desc" => courseRevenues.OrderByDescending(r => r.LifetimeRevenue).ToList(),
+                    "lifetime_asc" => courseRevenues.OrderBy(r => r.LifetimeRevenue).ToList(),
+                    "monthly_desc" => courseRevenues.OrderByDescending(r => r.MonthlyRevenue).ToList(),
+                    "monthly_asc" => courseRevenues.OrderBy(r => r.MonthlyRevenue).ToList(),
+                    "yearly_desc" => courseRevenues.OrderByDescending(r => r.YearlyRevenue).ToList(),
+                    "yearly_asc" => courseRevenues.OrderBy(r => r.YearlyRevenue).ToList(),
+                    _ => courseRevenues.OrderByDescending(r => r.SalesCount).ToList()
+                };
+                vm.CourseRevenues = courseRevenues;
+            }
+        }
 
         return View(vm);
     }
@@ -371,7 +329,20 @@ public class TransactionController : Controller
 
         if (response.IsSuccessStatusCode)
         {
-            return Json(new { success = true, message = "Refund request submitted successfully. Please wait for Admin approval." });
+            var json = await response.Content.ReadAsStringAsync();
+            var parsed = JsonSerializer.Deserialize<ApiResp<RefundResultDto>>(json, _jsonOpts);
+            if (parsed?.Success == true && parsed.Data != null)
+            {
+                var result = parsed.Data;
+                if (result.IsAutoRejected)
+                {
+                    return Json(new { success = true, autoRejected = true, message = $"Your refund request has been rejected due to {result.RejectReason}." });
+                }
+                else
+                {
+                    return Json(new { success = true, autoRejected = false, message = "Your refund request has been successfully received and is currently under review." });
+                }
+            }
         }
 
         var errorBody = await response.Content.ReadAsStringAsync();

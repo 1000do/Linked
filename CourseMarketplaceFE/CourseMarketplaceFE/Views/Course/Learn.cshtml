@@ -501,8 +501,8 @@
                 try {
                     const res = await fetch('/Course/GetLessonReviews/' + currentLessonId);
                     const result = await res.json();
-                    if (result.success && result.data && result.data.length > 0) {
-                        lessonList.innerHTML = result.data.map(r => renderReviewItem(r)).join('');
+                    if (result.success && result.data && result.data.items && result.data.items.length > 0) {
+                        lessonList.innerHTML = result.data.items.map(r => renderReviewItem(r)).join('');
                     } else {
                         lessonList.innerHTML = '<p class="text-slate-400 italic">No reviews yet for this lesson.</p>';
                     }
@@ -513,8 +513,8 @@
             try {
                 const res = await fetch('/Course/GetReviews/@Model.CourseId');
                 const result = await res.json();
-                if (result.success && result.data && result.data.length > 0) {
-                    courseList.innerHTML = result.data.map(r => renderReviewItem(r)).join('');
+                if (result.success && result.data && result.data.items && result.data.items.length > 0) {
+                    courseList.innerHTML = result.data.items.map(r => renderReviewItem(r)).join('');
                 } else {
                     courseList.innerHTML = '<p class="text-slate-400 italic">No general reviews yet for this course.</p>';
                 }

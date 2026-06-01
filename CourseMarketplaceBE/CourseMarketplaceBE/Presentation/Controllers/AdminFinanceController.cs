@@ -46,12 +46,12 @@ public class AdminFinanceController : ControllerBase
     // GET /api/admin/finance/payouts
     // ═══════════════════════════════════════════════════════════════════════
     [HttpGet("payouts")]
-    public async Task<IActionResult> GetPayouts([FromQuery] int? year, [FromQuery] int? month)
+    public async Task<IActionResult> GetPayouts([FromQuery] int? year, [FromQuery] int? month, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         try
         {
-            var payouts = await _financeService.GetInstructorPayoutsAsync(year, month);
-            return Ok(ApiResponse<List<PayoutDetailResponse>>.SuccessResponse(payouts, "Payout list."));
+            var payouts = await _financeService.GetInstructorPayoutsAsync(year, month, page, pageSize);
+            return Ok(ApiResponse<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<PayoutDetailResponse>>.SuccessResponse(payouts, "Payout list."));
             
         }
         catch (Exception ex)
@@ -139,11 +139,6 @@ public class AdminFinanceController : ControllerBase
         {
             return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
         }
-    }
-
-    public class SetPayoutDaysRequest
-    {
-        public string PayoutDays { get; set; } = "15";
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -274,16 +269,12 @@ public class AdminFinanceController : ControllerBase
 
     /// <summary>GET /api/admin/finance/withdrawals — Lịch sử rút tiền</summary>
     [HttpGet("withdrawals")]
-    public async Task<IActionResult> GetWithdrawalHistory([FromQuery] int? year, [FromQuery] int? month)
+    public async Task<IActionResult> GetWithdrawalHistory([FromQuery] int? year, [FromQuery] int? month, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         try
         {
-            var history = await _financeService.GetWithdrawalHistoryAsync();
-            if (year.HasValue && month.HasValue)
-            {
-                history = history.Where(w => w.CreatedAt.Year == year.Value && w.CreatedAt.Month == month.Value).ToList();
-            }
-            return Ok(ApiResponse<List<WithdrawalHistoryItem>>.SuccessResponse(history,"Withdrawal history."));
+            var history = await _financeService.GetWithdrawalHistoryAsync(year, month, page, pageSize);
+            return Ok(ApiResponse<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<WithdrawalHistoryItem>>.SuccessResponse(history,"Withdrawal history."));
         }
         catch (Exception ex)
         {
@@ -318,12 +309,12 @@ public class AdminFinanceController : ControllerBase
     // Lấy danh sách các yêu cầu hoàn tiền đang chờ duyệt
     // ═══════════════════════════════════════════════════════════════════════
     [HttpGet("refunds/pending")]
-    public async Task<IActionResult> GetPendingRefundRequests()
+    public async Task<IActionResult> GetPendingRefundRequests([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         try
         {
-            var list = await _financeService.GetPendingRefundRequestsAsync();
-            return Ok(ApiResponse<List<Domain.Entities.Transaction>>.SuccessResponse(list, "List of pending refund requests."));
+            var list = await _financeService.GetPendingRefundRequestsAsync(page, pageSize);
+            return Ok(ApiResponse<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<Domain.Entities.Transaction>>.SuccessResponse(list, "List of pending refund requests."));
         }
         catch (Exception ex)
         {
@@ -374,9 +365,21 @@ public class AdminFinanceController : ControllerBase
             return StatusCode(500, ApiResponse<string>.ErrorResponse($"System error: {ex.Message}"));
         }
     }
-}
 
-public class RefundDecisionRequest
-{
-    public string? AdminNote { get; set; }
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET /api/admin/finance/instructor-courses-revenue
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpGet("instructor-courses-revenue")]
+    public async Task<IActionResult> GetInstructorCourseRevenues([FromQuery] int year, [FromQuery] int month)
+    {
+        try
+        {
+            var revenues = await _financeService.GetInstructorCourseRevenuesAsync(year, month);
+            return Ok(ApiResponse<List<InstructorCourseRevenueResponse>>.SuccessResponse(revenues, "Instructor course revenues list."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
+        }
+    }
 }

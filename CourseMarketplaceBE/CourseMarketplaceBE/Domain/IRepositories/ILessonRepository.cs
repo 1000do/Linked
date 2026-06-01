@@ -10,5 +10,5 @@ public interface ILessonRepository
     void Update(Lesson lesson);
     void Delete(Lesson lesson);
     Task<List<Lesson>> GetByCourseIdAsync(int courseId);
-    Task SaveChangesAsync();
+    Task<int> SaveChangesAsync();
 }

@@ -68,7 +68,7 @@
         </div>
 
         <div id="chat-content" class="chat-content-panel flex-1 flex flex-col min-h-0 overflow-hidden" style="display:none;">
-            <header class="chat-header">
+            <header class="chat-header d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-3">
                     <div class="avatar-wrapper">
                         <img id="header-avatar" src="" class="avatar-img shadow-sm" onerror="this.src='/img/default-avatar.png'">
@@ -78,6 +78,11 @@
                         <h6 id="header-name" class="m-0 font-bold text-slate-800">...</h6>
                         <span id="header-status" class="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Online</span>
                     </div>
+                </div>
+                <div>
+                    <button type="button" onclick="confirmDeleteChat()" class="btn btn-light btn-sm text-danger d-flex align-items-center gap-1 bg-transparent hover:bg-red-50 border-0" title="Clear chat history">
+                        <span class="material-symbols-outlined" style="font-size: 20px;">delete</span>
+                    </button>
                 </div>
             </header>
 
@@ -177,6 +182,40 @@
                 }
             });
 
+            connection.on("UserOnlineStatus", (data) => {
+                // Update specific chat list items
+                const chatCard = allChats.find(c => c.partnerId === data.accountId);
+                if (chatCard) {
+                    chatCard.isOnline = data.isOnline;
+                    applyChatFilters(); // Re-render chat list to update green dot
+                }
+
+                // Update header if this is the active chat
+                if (chatCard && activeChatId === chatCard.chatId) {
+                    const statusText = document.getElementById('header-status');
+                    if (data.isOnline) {
+                        statusText.innerText = 'Online';
+                        statusText.classList.remove('text-slate-400');
+                        statusText.classList.add('text-emerald-500');
+                    } else {
+                        statusText.innerText = 'Offline';
+                        statusText.classList.remove('text-emerald-500');
+                        statusText.classList.add('text-slate-400');
+                    }
+                }
+            });
+
+            connection.on("MessageRead", (data) => {
+                if (activeChatId === data.chatId && data.accountId !== myAccountId) {
+                    // Update all my sent messages in this chat to show double blue ticks
+                    const ticks = document.querySelectorAll('.msg-row.me .read-receipt');
+                    ticks.forEach(tick => {
+                        tick.innerText = 'done_all';
+                        tick.classList.add('text-blue-500');
+                    });
+                }
+            });
+
             try {
                 await connection.start();
                 console.log("SignalR Connected.");
@@ -203,10 +242,10 @@
 
             container.innerHTML = chats.map(c => `
                 <div class="chat-card ${activeChatId === c.chatId ? 'active' : ''}" 
-                     onclick="selectChat(${c.chatId}, '${c.partnerName}', '${c.partnerAvatar}')">
+                     onclick="selectChat(${c.chatId}, '${c.partnerName.replace(/'/g, "\\'")}', '${c.partnerAvatar}', ${c.isOnline})">
                     <div class="avatar-wrapper">
                         <img src="${c.partnerAvatar || '/img/default-avatar.png'}" class="avatar-img" onerror="this.src='/img/default-avatar.png'">
-                        <div class="status-dot" style="background: #10b981"></div>
+                        ${c.isOnline ? '<div class="status-dot" style="background: #10b981"></div>' : ''}
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="d-flex justify-content-between align-items-center">
@@ -267,7 +306,7 @@
         }
 
         // 3. Chọn cuộc hội thoại
-        async function selectChat(chatId, name, avatar) {
+        async function selectChat(chatId, name, avatar, isOnline = true) {
             if (activeChatId === chatId) return;
             activeChatId = chatId;
             
@@ -275,6 +314,17 @@
             document.getElementById('chat-content').style.display = 'flex';
             document.getElementById('header-name').innerText = name;
             
+            const statusText = document.getElementById('header-status');
+            if (isOnline) {
+                statusText.innerText = 'Online';
+                statusText.classList.remove('text-slate-400');
+                statusText.classList.add('text-emerald-500');
+            } else {
+                statusText.innerText = 'Offline';
+                statusText.classList.remove('text-emerald-500');
+                statusText.classList.add('text-slate-400');
+            }
+
             let cleanAvatar = avatar;
             if (!cleanAvatar || cleanAvatar === 'null' || cleanAvatar === 'undefined' || cleanAvatar.trim() === '') {
                 cleanAvatar = '/img/default-avatar.png';
@@ -293,6 +343,9 @@
                 list.innerHTML = "";
                 messages.forEach(m => appendMessage(m));
                 scrollToBottom();
+
+                // Broadcast read receipt
+                connection.invoke("MarkAsRead", chatId);
             } catch (err) {
                 console.error("Load history error:", err);
             }
@@ -343,6 +396,16 @@
 
             const fallback = getFallbackAvatar(m.senderRole);
             const frameClass = getFrameClass(m.senderRole);
+            
+            // Determine ticks for sent messages
+            let tickHtml = '';
+            if (isMe) {
+                // Temporary logic: if the message was sent a while ago, assume it might be seen, 
+                // but real logic should rely on m.isSeen or real-time events.
+                const isSeen = m.isSeen || false; 
+                tickHtml = `<span class="material-symbols-outlined read-receipt text-[14px] ${isSeen ? 'text-blue-500' : 'text-slate-300'} ml-1" style="vertical-align: middle;">${isSeen ? 'done_all' : 'done'}</span>`;
+            }
+
             const html = `
                 <div class="msg-row ${isMe ? 'me' : 'them'}">
                     <div class="avatar-container ${frameClass}">
@@ -352,7 +415,7 @@
                     </div>
                     <div class="bubble-container">
                         <div class="sender-name">${isMe ? 'You' : m.senderName}</div>
-                        <div class="bubble shadow-sm"><div class="bubble-text">${m.content}</div>${attachmentHtml}<div class="msg-time">${new Date(m.sentAt || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div></div>
+                        <div class="bubble shadow-sm"><div class="bubble-text">${m.content}</div>${attachmentHtml}<div class="msg-time">${new Date(m.sentAt || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}${tickHtml}</div></div>
                     </div>
                 </div>
             `;
@@ -441,6 +504,37 @@
             renderAttachmentPreview();
         }
 
+        async function confirmDeleteChat() {
+            if (!activeChatId) return;
+            
+            if (confirm("Are you sure you want to clear this chat history? This cannot be undone.")) {
+                try {
+                    const res = await fetch(`${API_URL}/api/chat/${activeChatId}/clear`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (res.ok) {
+                        // Clear message list UI
+                        document.getElementById('message-list').innerHTML = "";
+                        
+                        // Hide chat content panel
+                        activeChatId = null;
+                        document.getElementById('chat-content').style.display = 'none';
+                        document.getElementById('empty-state').style.display = 'block';
+                        
+                        // Refresh sidebar
+                        loadChats();
+                    } else {
+                        alert("Failed to clear chat history.");
+                    }
+                } catch (err) {
+                    console.error("Clear chat error:", err);
+                    alert("An error occurred while clearing chat history.");
+                }
+            }
+        }
+
         // Typing & Auto-resize logic
         const msgInput = document.getElementById('msg-input');
         let typingTimeout;
@@ -489,9 +583,9 @@
                 const parsedId = parseInt(chatId);
                 const foundChat = allChats.find(c => c.chatId === parsedId);
                 if (foundChat) {
-                    selectChat(parsedId, foundChat.partnerName, foundChat.partnerAvatar);
+                    selectChat(parsedId, foundChat.partnerName, foundChat.partnerAvatar, foundChat.isOnline);
                 } else {
-                    selectChat(parsedId, "Technical Support", "/img/default-avatar.png");
+                    selectChat(parsedId, "Technical Support", "/img/default-avatar.png", false);
                 }
             }
         });

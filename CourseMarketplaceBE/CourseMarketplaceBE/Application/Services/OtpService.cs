@@ -1,4 +1,4 @@
-Ôªøusing CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Application.IServices;
 using System.Collections.Concurrent;
 
 
@@ -29,7 +29,7 @@ namespace CourseMarketplaceBE.Application.Services
             return otp;
         }
 
-        // CH·ªà CHECK - KH√îNG XO√Å
+        // CH? CHECK - KH‘NG XO¡
         public bool ValidateOtp(string email, string otp, string purpose)
         {
             var key = $"{email}_{purpose}";
@@ -46,7 +46,7 @@ namespace CourseMarketplaceBE.Application.Services
             return info.Code == otp;
         }
 
-        //  CHECK + XO√Å
+        //  CHECK + XO¡
         public bool ConsumeOtp(string email, string otp, string purpose)
         {
             var key = $"{email}_{purpose}";

@@ -132,17 +132,17 @@ namespace CourseMarketplaceBE.Application.Services
             return models.Select(m => m.ModelId).ToList();
         }
 
-        public async Task<List<AiModelDto>> GetModelsByTypeAsync(string modelType)
+        public async Task<List<AiModelResponse>> GetModelsByTypeAsync(string modelType)
         {
             string cacheKey = CacheKeys.AiModelType.GetKey(modelType);
-            var cached = await _redisService.GetCacheAsync<List<AiModelDto>>(cacheKey);
+            var cached = await _redisService.GetCacheAsync<List<AiModelResponse>>(cacheKey);
             if (cached != null)
             {
                 return cached;
             }
 
             var dbModels = await _aiModelRepository.GetModelsByTypeAsync(modelType);
-            var result = dbModels.Select(m => new AiModelDto
+            var result = dbModels.Select(m => new AiModelResponse
             {
                 ModelId = m.ModelId,
                 ModelName = m.ModelName,
@@ -150,9 +150,7 @@ namespace CourseMarketplaceBE.Application.Services
                 ModelProvider = m.ModelProvider,
                 ModelVersion = m.ModelVersion,
                 ModelStatus = m.ModelStatus,
-                Description = m.Description,
-                ModelPath = m.ModelPath,
-                ProcessType = m.ProcessType
+                Description = m.Description
             }).ToList();
 
             await _redisService.SetCacheAsync(cacheKey, result, CacheTtl.Medium.GetTtl());
@@ -174,7 +172,9 @@ namespace CourseMarketplaceBE.Application.Services
             };
 
             await _usageLogRepository.AddAsync(log);
-            await _usageLogRepository.SaveChangesAsync();
+            int numberOfRowsAffected = await _usageLogRepository.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+                throw new InvalidOperationException("Failed to save changes");
         }
 
         public async Task<bool> HealthCheckAsync()

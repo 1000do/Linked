@@ -41,9 +41,9 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
             _context.CourseAiIntegrations.Remove(integration);
         }
 
-        public async Task SaveChangesAsync()
+        public async Task<int> SaveChangesAsync()
         {
-            await _context.SaveChangesAsync();
+            return await _context.SaveChangesAsync();
         }
 
         public async Task<CourseAiIntegration?> GetByIdAsync(int integrationId)

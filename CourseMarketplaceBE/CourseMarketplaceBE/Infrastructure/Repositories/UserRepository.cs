@@ -1,8 +1,10 @@
-using CourseMarketplaceBE.Domain.Entities;
+ using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace CourseMarketplaceBE.Infrastructure.Repositories;
@@ -35,7 +37,8 @@ public class UserRepository : IUserRepository
       string? expertiseCategories = null,
       string? linkedinUrl = null,
       string? youtubeUrl = null,
-      string? facebookUrl = null)
+      string? facebookUrl = null,
+      string? email = null)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -61,6 +64,17 @@ public class UserRepository : IUserRepository
                 }
                 account.PhoneNumber = phoneNumber;
                 account.AccountUpdatedAt = DateTime.Now;
+
+                if (!string.IsNullOrWhiteSpace(email) && !email.Equals(account.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    var isEmailTaken = await _context.Accounts.AnyAsync(a => a.AccountId != account.AccountId && a.Email.ToLower() == email.ToLower());
+                    if (isEmailTaken)
+                    {
+                        throw new InvalidOperationException("Email is already taken by another account.");
+                    }
+                    account.Email = email.ToLower();
+                    account.IsVerified = false;
+                }
             }
 
             // Update instructor fields if they exist
@@ -84,13 +98,23 @@ public class UserRepository : IUserRepository
             return false;
         }
     }
-    public async Task<bool> IsEmailExistsAsync(string email) => await _context.Accounts.AnyAsync(a => a.Email == email);
+    public async Task<bool> IsEmailExistsAsync(string email) => await _context.Accounts.AnyAsync(a => a.Email.ToLower() == email.ToLower());
+
+    public async Task<bool> IsUsernameExistsAsync(string username) =>
+        await _context.Accounts.AnyAsync(a => a.Username != null && a.Username.ToLower() == username.ToLower());
 
     public async Task<Account?> GetAccountByEmailAsync(string email) =>
         await _context.Accounts
             .Include(a => a.User)
             .Include(a => a.Manager)
-            .FirstOrDefaultAsync(a => a.Email == email);
+            .FirstOrDefaultAsync(a => a.Email.ToLower() == email.ToLower());
+
+    public async Task<Account?> GetAccountByEmailOrUsernameAsync(string emailOrUsername) =>
+        await _context.Accounts
+            .Include(a => a.User)
+            .Include(a => a.Manager)
+            .FirstOrDefaultAsync(a => (a.Email != null && a.Email.ToLower() == emailOrUsername.ToLower()) 
+                                   || (a.Username != null && a.Username.ToLower() == emailOrUsername.ToLower()));
             
     public async Task<Account?> GetAccountByIdAsync(int accountId) =>
         await _context.Accounts
@@ -205,5 +229,53 @@ public class UserRepository : IUserRepository
     public async Task<int> GetTotalStudentsCountAsync()
     {
         return await _context.Users.CountAsync();
+    }
+
+    public async Task<List<int>> GetAllUserIdsAsync()
+    {
+        return await _context.Users
+            .Select(u => u.UserId)
+            .ToListAsync();
+    }
+
+    public async Task<int?> GetUserIdByEmailAsync(string email)
+    {
+        return await _context.Accounts
+            .Where(a => a.Email == email)
+            .Select(a => (int?)a.AccountId)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<List<string>> SearchEmailsByQueryAsync(string query, int take = 5)
+    {
+        return await _context.Accounts
+            .Where(a => a.Email != null && a.Email.ToLower().Contains(query.ToLower()))
+            .Select(a => a.Email!)
+            .Take(take)
+            .ToListAsync();
+    }
+
+    public async Task<string?> GetUserEmailAsync(int userId)
+    {
+        return await _context.Accounts
+            .Where(a => a.AccountId == userId)
+            .Select(a => a.Email)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<string?> GetInstructorStripeAccountIdAsync(int instructorId)
+    {
+        return await _context.Instructors
+            .Where(i => i.InstructorId == instructorId)
+            .Select(i => i.StripeAccountId)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<string?> GetInstructorStripeCountryAsync(int instructorId)
+    {
+        return await _context.Instructors
+            .Where(i => i.InstructorId == instructorId)
+            .Select(i => i.StripeCountry)
+            .FirstOrDefaultAsync();
     }
 }

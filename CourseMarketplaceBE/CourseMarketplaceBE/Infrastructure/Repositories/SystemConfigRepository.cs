@@ -84,5 +84,30 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task UpsertConfigAsync(string configKey, string configValue, string? description = null)
+        {
+            var existing = await _context.SystemConfigs
+                .FirstOrDefaultAsync(c => c.ConfigKey == configKey);
+
+            if (existing != null)
+            {
+                existing.ConfigValue = configValue;
+                existing.Description = description ?? existing.Description;
+                existing.UpdatedAt = DateTime.Now;
+            }
+            else
+            {
+                _context.SystemConfigs.Add(new Domain.Entities.SystemConfig
+                {
+                    ConfigKey = configKey,
+                    ConfigValue = configValue,
+                    Description = description ?? $"Auto-created config: {configKey}",
+                    UpdatedAt = DateTime.Now
+                });
+            }
+
+            await _context.SaveChangesAsync();
+        }
     }
 }

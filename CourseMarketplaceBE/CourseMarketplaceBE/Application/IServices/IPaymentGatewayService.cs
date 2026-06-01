@@ -74,9 +74,10 @@ public interface IPaymentGatewayService
     /// Stripe sẽ trả lại tiền vào phương thức thanh toán gốc.
     /// </summary>
     /// <param name="paymentIntentId">Mã PaymentIntent gốc (pi_xxx).</param>
+    /// <param name="amount">Số tiền cần hoàn (optional, nếu null sẽ hoàn toàn bộ).</param>
     /// <param name="reason">Lý do hoàn tiền (duplicate, fraudulent, requested_by_customer).</param>
     /// <returns>Stripe Refund ID (re_xxx).</returns>
-    Task<string> RefundAsync(string paymentIntentId, string? reason = null);
+    Task<string> RefundAsync(string paymentIntentId, decimal? amount = null, string? reason = null);
 
     /// <summary>
     /// Đảo ngược lệnh Transfer đã chuyển cho instructor.

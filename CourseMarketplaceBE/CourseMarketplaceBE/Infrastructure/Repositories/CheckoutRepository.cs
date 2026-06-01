@@ -29,70 +29,6 @@ public class CheckoutRepository : ICheckoutRepository
             .OrderBy(c => c.AddedDate)
             .ToListAsync();
 
-    public async Task<Course?> GetCourseWithInstructorAsync(int courseId)
-        => await _context.Courses
-            .Include(c => c.Instructor)
-            .FirstOrDefaultAsync(c => c.CourseId == courseId);
-
-    public async Task<Coupon?> GetValidCouponAsync(string couponCode, DateTime now)
-        => await _context.Coupons.FirstOrDefaultAsync(cp =>
-            cp.CouponCode.ToLower() == couponCode.Trim().ToLower() &&
-            cp.IsActive == true &&
-            (cp.StartDate == null || cp.StartDate <= now) &&
-            (cp.EndDate == null || cp.EndDate >= now) &&
-            (cp.UsageLimit == null || (cp.UsedCount ?? 0) < cp.UsageLimit));
-
-    public async Task<bool> IsEnrolledAsync(int userId, int courseId)
-        => await _context.Enrollments.AnyAsync(e => e.UserId == userId && e.CourseId == courseId);
-
-    public async Task<Enrollment?> GetEnrollmentAsync(int userId, int courseId)
-        => await _context.Enrollments
-            .Include(e => e.Progress)
-            .FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == courseId);
-
-    public async Task<Enrollment?> GetEnrollmentWithProgressAsync(int userId, int courseId)
-        => await _context.Enrollments
-            .Include(e => e.Progress)
-            .FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == courseId);
-
-    public async Task<List<Enrollment>> GetMyEnrolledCoursesAsync(int userId)
-    {
-        return await _context.Enrollments
-            .Where(e => e.UserId == userId)
-            .Include(e => e.Progress)
-            .Include(e => e.Course)
-                .ThenInclude(c => c!.Instructor)
-                    .ThenInclude(i => i!.InstructorNavigation)
-            .OrderByDescending(e => e.LastAccessedAt)
-            .ToListAsync();
-    }
-    public async Task<bool> IsMaterialCompletedAsync(int enrollmentId, int materialId)
-        => await _context.MaterialCompletions.AnyAsync(mc => mc.EnrollmentId == enrollmentId && mc.MaterialId == materialId);
-
-    public async Task<int> GetCompletedMaterialCountAsync(int enrollmentId)
-        => await _context.MaterialCompletions.CountAsync(mc => mc.EnrollmentId == enrollmentId);
-
-    public async Task<List<int>> GetCompletedMaterialIdsAsync(int enrollmentId)
-        => await _context.MaterialCompletions
-            .Where(mc => mc.EnrollmentId == enrollmentId)
-            .Select(mc => mc.MaterialId)
-            .ToListAsync();
-
-    public async Task<List<int>> GetEnrolledUserIdsAsync(int courseId)
-    {
-        return await _context.Enrollments
-            .Where(e => e.CourseId == courseId)
-            .Select(e => e.UserId ?? 0)
-            .Where(id => id != 0)
-            .Distinct()
-            .ToListAsync();
-    }
-
-    public async Task<string?> GetUserEmailAsync(int userId)
-        => await _context.Accounts
-            .Where(a => a.AccountId == userId)
-            .Select(a => a.Email)
-            .FirstOrDefaultAsync();
 
     // ── Tìm transaction theo Stripe Session ID ───────────────────────────────
 
@@ -126,17 +62,7 @@ public class CheckoutRepository : ICheckoutRepository
             .Include(o => o.OrderItems)
             .ToListAsync();
 
-    public async Task<string?> GetInstructorStripeAccountIdAsync(int instructorId)
-        => await _context.Instructors
-            .Where(i => i.InstructorId == instructorId)
-            .Select(i => i.StripeAccountId)
-            .FirstOrDefaultAsync();
 
-    public async Task<string?> GetInstructorStripeCountryAsync(int instructorId)
-        => await _context.Instructors
-            .Where(i => i.InstructorId == instructorId)
-            .Select(i => i.StripeCountry)
-            .FirstOrDefaultAsync();
 
     // ── Ghi dữ liệu ─────────────────────────────────────────────────────────
 
@@ -149,14 +75,7 @@ public class CheckoutRepository : ICheckoutRepository
     public async Task AddTransactionAsync(Transaction transaction)
         => await _context.Transactions.AddAsync(transaction);
 
-    public async Task AddEnrollmentAsync(Enrollment enrollment)
-        => await _context.Enrollments.AddAsync(enrollment);
 
-    public async Task AddEnrollmentProgressAsync(EnrollmentProgress progress)
-        => await _context.EnrollmentProgresses.AddAsync(progress);
-
-    public async Task AddMaterialCompletionAsync(MaterialCompletion completion)
-        => await _context.MaterialCompletions.AddAsync(completion);
 
     public async Task AddInstructorPayoutAsync(InstructorPayout payout)
         => await _context.InstructorPayouts.AddAsync(payout);
@@ -200,6 +119,6 @@ public class CheckoutRepository : ICheckoutRepository
     public async Task<IDbContextTransaction> BeginTransactionAsync()
         => await _context.Database.BeginTransactionAsync();
 
-    public async Task SaveChangesAsync()
+    public async Task<int> SaveChangesAsync()
         => await _context.SaveChangesAsync();
 }

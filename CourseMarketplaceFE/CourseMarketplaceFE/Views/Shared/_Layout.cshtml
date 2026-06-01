@@ -89,102 +89,30 @@
             position: fixed;
             bottom: 100px;
             right: 30px;
-            width: 350px;
-            max-height: 500px;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            width: 360px;
+            height: 500px;
             z-index: 1001;
             display: none;
             flex-direction: column;
-            overflow: hidden;
-            border: 1px solid #e2e8f0;
-            animation: slideUp 0.3s ease;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @@keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            from { transform: translateY(30px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
         }
 
-        .support-header {
-            background: #059669;
-            color: white;
-            padding: 15px;
-            text-align: center;
+        /* Minimal scrollbar for chat */
+        .chat-scroll::-webkit-scrollbar {
+            width: 6px;
         }
-
-        .support-content {
-            height: 300px;
-            padding: 15px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            background: #ffffff;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .chat-scroll::-webkit-scrollbar-track {
+            background: transparent;
         }
-
-        .support-footer {
-            padding: 10px 15px;
-            border-top: 1px solid #e2e8f0;
-            background: white;
-            display: flex;
-            gap: 8px;
+        .chat-scroll::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 10px;
         }
-
-        .support-input {
-            flex: 1;
-            border: 1px solid #e2e8f0;
-            border-radius: 20px;
-            padding: 8px 15px;
-            font-size: 13px;
-            outline: none;
-        }
-
-        .support-input:focus { border-color: #059669; }
-
-        .support-send {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: #059669;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            cursor: pointer;
-        }
-
-        .mini-msg {
-            max-width: 85%;
-            padding: 8px 12px;
-            border-radius: 15px;
-            font-size: 13px;
-            line-height: 1.4;
-            word-break: break-word;
-            overflow-wrap: break-word;
-        }
-        .mini-msg.them { background: #f1f5f9; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .mini-msg.me { background: #059669; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
-
-        .mini-sender-name {
-            font-size: 10px;
-            font-weight: 700;
-            color: #64748b;
-            margin-bottom: 2px;
-            padding: 0 4px;
-        }
-        .mini-msg-container {
-            display: flex;
-            flex-direction: column;
-            max-width: 85%;
-            width: fit-content;
-        }
-        .mini-msg-container.me { align-self: flex-end; }
-        .mini-msg-container.them { align-self: flex-start; }
-        .mini-msg-container.me .mini-sender-name { text-align: right; }
 
         .chat-badge {
             position: absolute;
@@ -272,6 +200,13 @@
     
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Prevent SweetAlert from altering the body height/padding, which breaks the fixed layout
+        window.Swal = window.Swal.mixin({
+            heightAuto: false,
+            scrollbarPadding: false
+        });
+    </script>
 
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -290,34 +225,71 @@
     @await Html.PartialAsync("_Footer")
 
 
-    @if (ViewData["Title"]?.ToString() != "Messages & Support")
+    @{
+        bool isHome = ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index";
+        bool isLoggedIn = !string.IsNullOrEmpty(tokenForLayout);
+    }
+    @if (isLoggedIn && isHome)
     {
-        <div id="support-chat-popup" class="support-popup">
-            <div class="support-header">
-                <h6 class="mb-0 fw-bold">Online Support</h6>
-                <div class="d-flex align-items-center justify-content-center gap-1 text-[10px] opacity-75 mt-1">
-                    <span class="w-1.5 h-1.5 rounded-circle bg-emerald-300"></span>
-                    Online & Ready
+        <div id="support-chat-popup" class="support-popup bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] border border-slate-100 overflow-hidden flex-col" style="display: none;">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-4 text-white flex items-center justify-between shadow-md relative z-10">
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm overflow-hidden">
+                            <img id="support-avatar" src="" alt="Support" class="w-full h-full object-cover hidden" />
+                            <span id="support-icon" class="material-symbols-outlined text-[22px]">support_agent</span>
+                        </div>
+                        <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-emerald-600 rounded-full"></div>
+                    </div>
+                    <div>
+                        <h6 id="support-name" class="font-display font-bold text-[15px] leading-tight m-0 text-white">Online Support</h6>
+                        <p class="text-[11px] font-medium text-emerald-50 m-0 opacity-90">Typically replies instantly</p>
+                    </div>
                 </div>
-            </div>
-            <div class="support-content" id="mini-chat-content">
-                <div class="text-center py-4">
-                    <p class="text-xs text-slate-400">Loading support history...</p>
-                </div>
-            </div>
-            <div class="support-footer">
-                <input type="text" id="mini-chat-input" class="support-input" placeholder="Type a message..." onkeypress="if(event.key === 'Enter') sendMiniMsg()">
-                <button class="support-send" onclick="sendMiniMsg()">
-                    <i class="material-symbols-outlined text-sm">send</i>
+                <button onclick="toggleSupportPopup()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors text-white border-0 bg-transparent">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
                 </button>
+            </div>
+            
+            <!-- Chat Content -->
+            <div class="flex-1 bg-slate-50/50 p-4 overflow-y-auto overflow-x-hidden flex flex-col gap-3 chat-scroll relative" id="mini-chat-content">
+                <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
+                <div class="text-center py-6 w-full relative z-10">
+                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
+                        <span class="material-symbols-outlined">hourglass_empty</span>
+                    </div>
+                    <p class="text-xs font-medium text-slate-400">Loading conversation...</p>
+                </div>
+            </div>
+            
+            <!-- Chat Input Footer -->
+            <div class="p-4 bg-white border-t border-slate-100 relative z-10">
+                <div class="flex items-end gap-2 bg-slate-50 border border-slate-200 rounded-[24px] p-1.5 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/50 transition-all shadow-sm">
+                    <input type="text" id="mini-chat-input" class="flex-1 bg-transparent border-none focus:ring-0 px-3 py-2 text-[14px] text-slate-700 placeholder:text-slate-400 w-full" placeholder="Type your message..." autocomplete="off" oninput="handleInputTyping()" onkeypress="if(event.key === 'Enter') sendMiniMsg()">
+                    <button class="w-[40px] h-[40px] shrink-0 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center transition-transform hover:scale-105 active:scale-95 border-0" onclick="sendMiniMsg()">
+                        <span class="material-symbols-outlined text-[18px] ml-0.5">send</span>
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- FLOATING CHAT BUTTON -->
-        <button class="floating-chat-btn" onclick="toggleSupportPopup()" title="Support">
-            <i class="material-symbols-outlined" style="font-size: 28px;">support_agent</i>
-            <span class="chat-badge" style="display: none;" id="global-chat-badge">1</span>
-        </button>
+        <div class="fixed bottom-[30px] right-[30px] z-[1000] flex flex-col items-end gap-3 pointer-events-none" id="floating-chat-container">
+            <!-- Unread Preview Bubble -->
+            <div id="unread-preview-bubble" class="hidden bg-white p-3.5 rounded-2xl rounded-br-sm shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-slate-100 max-w-[280px] pointer-events-auto cursor-pointer animate-[slideUp_0.3s_ease] transition-transform hover:scale-105 origin-bottom-right" onclick="toggleSupportPopup()">
+                <div class="flex items-center gap-1.5 mb-1.5">
+                    <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">New Message</span>
+                </div>
+                <p class="text-[13px] text-slate-700 m-0 line-clamp-2 leading-relaxed" id="preview-content">...</p>
+            </div>
+            
+            <button class="w-[56px] h-[56px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(5,150,105,0.4)] cursor-pointer transition-all duration-300 hover:scale-110 hover:-rotate-6 border-none pointer-events-auto relative" onclick="toggleSupportPopup()" title="Support">
+                <i class="material-symbols-outlined text-[28px]">support_agent</i>
+                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white" style="display: none;" id="global-chat-badge">1</span>
+            </button>
+        </div>
     }
 
 
@@ -478,7 +450,32 @@
                 const staffRes = await fetch("http://localhost:5207/api/chat/support-account", {
                     headers: { 'Authorization': `Bearer ${currentToken}` }
                 });
+                
+                if (!staffRes.ok) {
+                    const errorContainer = document.getElementById('mini-chat-content');
+                    if (errorContainer) {
+                        errorContainer.innerHTML = '<div class="text-center p-4 text-red-500 text-sm mt-4">Unable to connect to support.</div>';
+                    }
+                    return;
+                }
+                
                 const staff = await staffRes.json();
+                
+                if (!staff || !staff.accountId) {
+                    const errorContainer = document.getElementById('mini-chat-content');
+                    if (errorContainer) {
+                        errorContainer.innerHTML = '<div class="text-center p-4 text-red-500 text-sm mt-4">Unable to connect to support.</div>';
+                    }
+                    return;
+                }
+                
+                document.getElementById('support-name').innerText = staff.fullName || 'Support Team';
+                if (staff.avatarUrl) {
+                    const img = document.getElementById('support-avatar');
+                    img.src = staff.avatarUrl;
+                    img.classList.remove('hidden');
+                    document.getElementById('support-icon').classList.add('hidden');
+                }
                 
                 // Create/Get chat room
                 const createRes = await fetch("http://localhost:5207/api/chat/create", {
@@ -489,6 +486,17 @@
                     },
                     body: JSON.stringify({ targetAccountId: staff.accountId, contextType: 'system' })
                 });
+                
+                if (!createRes.ok) {
+                    const errorData = await createRes.json();
+                    console.error("Create chat error", errorData);
+                    const errorContainer = document.getElementById('mini-chat-content');
+                    if (errorContainer) {
+                        errorContainer.innerHTML = `<div class="text-center p-4 text-red-500 text-sm mt-4">${errorData.message || 'Unable to connect to support.'}</div>`;
+                    }
+                    return;
+                }
+                
                 const chatData = await createRes.json();
                 miniChatId = chatData.chatId;
 
@@ -512,21 +520,71 @@
                 });
                 const msgs = await res.json();
                 const container = document.getElementById('mini-chat-content');
-                container.innerHTML = msgs.map(m => {
+                let html = '';
+                const staffName = document.getElementById('support-name').innerText;
+                
+                if (msgs.length === 0) {
+                    html += `
+                        <div class="flex flex-col w-fit max-w-[85%] self-start relative z-10 mb-1 mt-2">
+                            <div class="text-[10px] font-bold text-slate-400 mb-1 px-1 text-left">${staffName}</div>
+                            <div class="text-[13.5px] px-4 py-2.5 rounded-2xl leading-relaxed shadow-sm bg-white border border-slate-100 text-slate-700 rounded-bl-sm">
+                                Hello! 👋 Thanks for reaching out. How can we help you today?
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2 mb-4" id="quick-replies">
+                            <button onclick="sendQuickReply('I need to ask about course content')" class="text-[12px] px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full hover:bg-emerald-100 transition-colors cursor-pointer">Ask about course</button>
+                            <button onclick="sendQuickReply('I encountered a payment error')" class="text-[12px] px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full hover:bg-emerald-100 transition-colors cursor-pointer">Payment error</button>
+                            <button onclick="sendQuickReply('I need more advice')" class="text-[12px] px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full hover:bg-emerald-100 transition-colors cursor-pointer">Need advice</button>
+                        </div>`;
+                }
+
+                html += msgs.map(m => {
                     const sid = getMiniSenderId(m);
                     const isMe = sid === currentUserId && currentUserId > 0;
                     const name = getMiniSenderName(m);
                     return `
-                        <div class="mini-msg-container ${isMe ? 'me' : 'them'}">
-                            <div class="mini-sender-name">${isMe ? 'You' : name}</div>
-                            <div class="mini-msg ${isMe ? 'me' : 'them'}">${m.content}</div>
+                        <div class="flex flex-col w-fit max-w-[85%] ${isMe ? 'self-end' : 'self-start'} relative z-10 mb-1">
+                            <div class="text-[10px] font-bold text-slate-400 mb-1 px-1 ${isMe ? 'text-right' : 'text-left'}">${isMe ? 'You' : name}</div>
+                            <div class="text-[13.5px] px-4 py-2.5 rounded-2xl leading-relaxed shadow-sm ${isMe ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white rounded-br-sm' : 'bg-white border border-slate-100 text-slate-700 rounded-bl-sm'}">${m.content}</div>
                         </div>`;
                 }).join('');
+                
+                html += `
+                    <div id="typing-indicator" class="hidden flex-col w-fit max-w-[85%] self-start relative z-10 mt-1">
+                        <div class="text-[10px] font-bold text-slate-400 mb-1 px-1 text-left" id="typing-name">${staffName}</div>
+                        <div class="px-4 py-3 rounded-2xl bg-white border border-slate-100 rounded-bl-sm shadow-sm flex items-center gap-1 h-[36px]">
+                            <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0s"></div>
+                            <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.15s"></div>
+                            <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
+                        </div>
+                    </div>`;
+                    
+                container.innerHTML = html;
                 container.scrollTop = container.scrollHeight;
             } catch (err) {
                 console.error("Load mini history error:", err);
             }
         }
+
+        window.sendQuickReply = async function(text) {
+            const input = document.getElementById('mini-chat-input');
+            input.value = text;
+            await sendMiniMsg();
+            const qr = document.getElementById('quick-replies');
+            if (qr) qr.style.display = 'none';
+        };
+
+        let typingTimeout;
+        window.handleInputTyping = function() {
+            if (!miniChatConn || !miniChatId) return;
+            miniChatConn.invoke("Typing", miniChatId, true).catch(e => console.error(e));
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                if (miniChatConn.state === signalR.HubConnectionState.Connected) {
+                    miniChatConn.invoke("Typing", miniChatId, false).catch(e => console.error(e));
+                }
+            }, 2000);
+        };
 
         async function sendMiniMsg() {
             const input = document.getElementById('mini-chat-input');
@@ -539,6 +597,7 @@
                     content: content
                 });
                 input.value = "";
+                miniChatConn.invoke("Typing", miniChatId, false).catch(e=>console.error(e));
             } catch (err) {
                 console.error("Send mini msg error:", err);
             }
@@ -551,11 +610,16 @@
             const isMe = sid === currentUserId && currentUserId > 0;
             const name = getMiniSenderName(m);
             const html = `
-                <div class="mini-msg-container ${isMe ? 'me' : 'them'}">
-                    <div class="mini-sender-name">${isMe ? 'You' : name}</div>
-                    <div class="mini-msg ${isMe ? 'me' : 'them'}">${m.content}</div>
+                <div class="flex flex-col w-fit max-w-[85%] ${isMe ? 'self-end' : 'self-start'} relative z-10 mb-1">
+                    <div class="text-[10px] font-bold text-slate-400 mb-1 px-1 ${isMe ? 'text-right' : 'text-left'}">${isMe ? 'You' : name}</div>
+                    <div class="text-[13.5px] px-4 py-2.5 rounded-2xl leading-relaxed shadow-sm ${isMe ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white rounded-br-sm' : 'bg-white border border-slate-100 text-slate-700 rounded-bl-sm'}">${m.content}</div>
                 </div>`;
-            container.insertAdjacentHTML('beforeend', html);
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.insertAdjacentHTML('beforebegin', html);
+            } else {
+                container.insertAdjacentHTML('beforeend', html);
+            }
             container.scrollTop = container.scrollHeight;
         }
 
@@ -634,6 +698,35 @@
                             const current = parseInt(chatBadge.innerText || "0");
                             chatBadge.innerText = current + 1;
                         }
+                        const bubble = document.getElementById('unread-preview-bubble');
+                        const previewContent = document.getElementById('preview-content');
+                        if (bubble && previewContent && document.getElementById('support-chat-popup').style.display !== 'flex') {
+                            previewContent.innerText = message.content;
+                            bubble.classList.remove('hidden');
+                            bubble.classList.add('block');
+                            setTimeout(() => {
+                                bubble.classList.add('hidden');
+                                bubble.classList.remove('block');
+                            }, 5000);
+                        }
+                    }
+                });
+
+                miniChatConn.on("UserTyping", function(data) {
+                    if (data.chatId == miniChatId && data.accountId !== currentUserId) {
+                        const indicator = document.getElementById('typing-indicator');
+                        if (indicator) {
+                            if (data.isTyping) {
+                                document.getElementById('typing-name').innerText = data.name || "Support Team";
+                                indicator.classList.remove('hidden');
+                                indicator.classList.add('flex');
+                                const container = document.getElementById('mini-chat-content');
+                                container.scrollTop = container.scrollHeight;
+                            } else {
+                                indicator.classList.add('hidden');
+                                indicator.classList.remove('flex');
+                            }
+                        }
                     }
                 });
 
@@ -648,6 +741,68 @@
                     });
                 }).catch(err => console.error("Chat Hub Error", err));
             }
+
+            // --- Global Email Verification Interceptor ---
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
+                return null;
+            }
+
+            function checkEmailVerification(event, actionName) {
+                const token = getCookie('AccessToken');
+                if (!token) return true; // Let them click, they'll be redirected to login anyway
+
+                const isVerified = getCookie('IsVerified');
+                if (isVerified !== 'true') {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    Swal.fire({
+                        title: 'Email Verification Required',
+                        text: `Please verify your email address to ${actionName}.`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#006a62',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Verify Now',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = '/Account/SendVerifyOtp';
+                        }
+                    });
+                    return false;
+                }
+                return true;
+            }
+
+            // Intercept form submissions
+            document.addEventListener('submit', (e) => {
+                const action = e.target.getAttribute('action') || '';
+                const id = e.target.getAttribute('id') || '';
+                if (action.includes('Checkout') || action.includes('Cart') || id.includes('checkout') || id.includes('cart')) {
+                    checkEmailVerification(e, 'complete checkout');
+                }
+            }, true);
+
+            // Intercept button/link clicks
+            document.addEventListener('click', (e) => {
+                const target = e.target.closest('a, button');
+                if (!target) return;
+
+                const onclickAttr = target.getAttribute('onclick') || '';
+                const hrefAttr = target.getAttribute('href') || '';
+                const idAttr = target.getAttribute('id') || '';
+                const classAttr = target.getAttribute('class') || '';
+
+                if (onclickAttr.includes('addToCart') || hrefAttr.includes('Cart/add') || idAttr.includes('add-to-cart') || classAttr.includes('add-to-cart')) {
+                    checkEmailVerification(e, 'add courses to cart');
+                } else if (onclickAttr.includes('enrollFree') || hrefAttr.includes('Enrollment/free') || idAttr.includes('enroll-btn') || classAttr.includes('enroll-btn')) {
+                    checkEmailVerification(e, 'enroll in this course');
+                }
+            }, true);
         });
     </script>
 </body>

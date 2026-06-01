@@ -31,6 +31,7 @@ public class ChatHub : Hub
         if (int.TryParse(accountIdStr, out int accountId))
         {
             await _redisService.SetUserOnlineAsync(accountId, Context.ConnectionId);
+            await Clients.Others.SendAsync("UserOnlineStatus", new { AccountId = accountId, IsOnline = true });
 
             // Tự động join vào tất cả các group chat mà user tham gia
             var myChats = await _chatService.GetMyChatsAsync(accountId);
@@ -48,6 +49,13 @@ public class ChatHub : Hub
         if (int.TryParse(accountIdStr, out int accountId))
         {
             await _redisService.SetUserOfflineAsync(accountId, Context.ConnectionId);
+            
+            // Check if user has other active connections before broadcasting offline
+            var isStillOnline = await _redisService.IsUserOnlineAsync(accountId);
+            if (!isStillOnline)
+            {
+                await Clients.Others.SendAsync("UserOnlineStatus", new { AccountId = accountId, IsOnline = false });
+            }
         }
         await base.OnDisconnectedAsync(exception);
     }
@@ -106,6 +114,12 @@ public class ChatHub : Hub
         var name = Context.User?.FindFirst(ClaimTypes.Name)?.Value ?? "Someone";
         
         await Clients.Group($"Chat_{chatId}").SendAsync("UserTyping", new { ChatId = chatId, AccountId = accountId, Name = name, IsTyping = isTyping });
+    }
+
+    public async Task MarkAsRead(int chatId)
+    {
+        var accountId = GetAccountId();
+        await Clients.Group($"Chat_{chatId}").SendAsync("MessageRead", new { ChatId = chatId, AccountId = accountId });
     }
 
     private int GetAccountId()

@@ -58,12 +58,37 @@ namespace CourseMarketplaceFE.Controllers
                 var json = JsonDocument.Parse(content);
                 var data = json.RootElement.GetProperty("data");
                 
-                var coursesJson = data.GetProperty("courses").ToString();
+                // Handle both old format (courses) and new format (items from PagedResult)
+                string coursesJson;
+                if (data.TryGetProperty("items", out var itemsProp))
+                {
+                    coursesJson = itemsProp.ToString();
+                }
+                else if (data.TryGetProperty("courses", out var coursesProp))
+                {
+                    coursesJson = coursesProp.ToString();
+                }
+                else 
+                {
+                    coursesJson = data.ToString();
+                }
+                
                 var paginatedCourses = JsonSerializer.Deserialize<List<PublicCourseViewModel>>(coursesJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<PublicCourseViewModel>();
                 
-                int totalItems = data.GetProperty("totalItems").GetInt32();
-                int totalPages = data.GetProperty("totalPages").GetInt32();
-                int currentPage = data.GetProperty("currentPage").GetInt32();
+                int totalPages = 1;
+                int totalItems = paginatedCourses.Count;
+                if (data.TryGetProperty("totalPages", out var tp))
+                {
+                    totalPages = tp.GetInt32();
+                }
+                if (data.TryGetProperty("totalCount", out var tc))
+                {
+                    totalItems = tc.GetInt32();
+                }
+                
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.TotalItems = totalItems;
 
                 // Check wishlist status
                 var wishlistIds = await GetWishlistIdsAsync();
@@ -77,9 +102,6 @@ namespace CourseMarketplaceFE.Controllers
                 ViewBag.Sort = sort;
                 ViewBag.Price = price;
                 ViewBag.Rating = rating;
-                ViewBag.CurrentPage = currentPage;
-                ViewBag.TotalPages = totalPages;
-                ViewBag.TotalItems = totalItems;
 
                 var catResponse = await _apiClient.GetAsync("public/courses/categories");
                 if (catResponse.IsSuccessStatusCode)
@@ -106,7 +128,21 @@ namespace CourseMarketplaceFE.Controllers
                 var json = JsonDocument.Parse(content);
                 var data = json.RootElement.GetProperty("data");
                 
-                var coursesJson = data.GetProperty("courses").ToString();
+                // Handle both old format (courses) and new format (items from PagedResult)
+                string coursesJson;
+                if (data.TryGetProperty("items", out var itemsProp))
+                {
+                    coursesJson = itemsProp.ToString();
+                }
+                else if (data.TryGetProperty("courses", out var coursesProp))
+                {
+                    coursesJson = coursesProp.ToString();
+                }
+                else 
+                {
+                    coursesJson = data.ToString();
+                }
+                
                 var courses = JsonSerializer.Deserialize<List<PublicCourseViewModel>>(coursesJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<PublicCourseViewModel>();
 
                 var results = courses.Select(c => new {
@@ -235,29 +271,29 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetReviews(int id)
+        public async Task<IActionResult> GetReviews(int id, int page = 1, int pageSize = 5)
         {
-            var response = await _apiClient.GetAsync($"review/course/{id}");
+            var response = await _apiClient.GetAsync($"review/course/{id}?page={page}&pageSize={pageSize}");
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
                 var json = JsonDocument.Parse(content);
                 return Json(new { success = true, data = json.RootElement.GetProperty("data") });
             }
-            return Json(new { success = false, data = new List<object>() });
+            return Json(new { success = false, data = new { items = new List<object>(), totalCount = 0 } });
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetLessonReviews(int id)
+        public async Task<IActionResult> GetLessonReviews(int id, int page = 1, int pageSize = 5)
         {
-            var response = await _apiClient.GetAsync($"review/lesson/{id}");
+            var response = await _apiClient.GetAsync($"review/lesson/{id}?page={page}&pageSize={pageSize}");
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
                 var json = JsonDocument.Parse(content);
                 return Json(new { success = true, data = json.RootElement.GetProperty("data") });
             }
-            return Json(new { success = false, data = new List<object>() });
+            return Json(new { success = false, data = new { items = new List<object>(), totalCount = 0 } });
         }
 
         /// <summary>Thống kê phân bổ sao (dynamic từ DB)</summary>

@@ -49,7 +49,7 @@ public class TransactionController : ControllerBase
         try
         {
             var result = await _transactionService.GetTransactionsAsync(page, pageSize, keyword, sortBy, status, year, month);
-            return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Transaction list."));
+            return Ok(ApiResponse<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>>.SuccessResponse(result, "Transaction list."));
         }
         catch (Exception ex)
         {
@@ -107,7 +107,29 @@ public class TransactionController : ControllerBase
                 return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
 
             var result = await _transactionService.GetInstructorTransactionsAsync(userId, page, pageSize, keyword, sortBy, status, year, month);
-            return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Instructor transaction list."));
+            return Ok(ApiResponse<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>>.SuccessResponse(result, "Instructor transaction list."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET /api/transactions/instructor/course-revenues
+    // Lấy doanh thu khóa học chi tiết của giảng viên
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpGet("instructor/course-revenues")]
+    public async Task<IActionResult> GetInstructorCourseRevenues([FromQuery] int year, [FromQuery] int month)
+    {
+        try
+        {
+            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId))
+                return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
+
+            var result = await _financeService.GetInstructorCourseRevenuesByInstructorAsync(userId, year, month);
+            return Ok(ApiResponse<List<InstructorCourseRevenueResponse>>.SuccessResponse(result, "Instructor course revenues."));
         }
         catch (Exception ex)
         {
@@ -134,7 +156,7 @@ public class TransactionController : ControllerBase
                 return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
 
             var result = await _transactionService.GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status);
-            return Ok(ApiResponse<TransactionPagedResult>.SuccessResponse(result, "Your transaction list."));
+            return Ok(ApiResponse<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>>.SuccessResponse(result, "Your transaction list."));
         }
         catch (Exception ex)
         {
@@ -158,8 +180,8 @@ public class TransactionController : ControllerBase
             if (string.IsNullOrWhiteSpace(request.Reason))
                 return BadRequest(ApiResponse<string>.ErrorResponse("Refund reason cannot be empty."));
 
-            await _financeService.RequestRefundAsync(transactionId, userId, request.Reason);
-            return Ok(ApiResponse<string>.SuccessResponse("Refund request submitted successfully. Please wait for Admin approval."));
+            var result = await _financeService.RequestRefundAsync(transactionId, userId, request.Reason);
+            return Ok(ApiResponse<RefundResultDto>.SuccessResponse(result, "Refund request processed."));
         }
         catch (InvalidOperationException ex)
         {
@@ -170,9 +192,4 @@ public class TransactionController : ControllerBase
             return StatusCode(500, ApiResponse<string>.ErrorResponse($"System error: {ex.Message}"));
         }
     }
-}
-
-public class StudentRefundRequest
-{
-    public string Reason { get; set; } = string.Empty;
 }

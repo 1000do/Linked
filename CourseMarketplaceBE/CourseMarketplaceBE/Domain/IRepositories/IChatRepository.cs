@@ -13,6 +13,8 @@ public interface IChatRepository
     Task UpdateChatAsync(Chat chat);
     Task<Chat> CreateChatAsync(Chat chat);
     Task AddChatParticipantsAsync(IEnumerable<ChatParticipant> participants);
+    Task<ChatParticipant?> GetParticipantAsync(int chatId, int accountId);
+    Task UpdateParticipantAsync(ChatParticipant participant);
     Task<ChatParticipant?> FindPrivateChatAsync(int accountId1, int accountId2, string? contextType, int? contextId);
     Task<bool> IsParticipantAsync(int chatId, int accountId);
     Task<bool> HasActiveReportForChatAsync(int chatId);
@@ -22,7 +24,7 @@ public interface IChatRepository
     Task MarkAsReadAsync(int chatId, int accountId);
     Task<int> GetTotalUnreadCountAsync(int accountId);
     Task<List<int>> GetParticipantIdsAsync(int chatId);
-    Task<List<UserReport>> GetAllReportsAsync();
+    Task<(List<UserReport> Items, int TotalCount)> GetAllReportsAsync(int page = 1, int pageSize = 10);
     Task<UserReport?> GetReportByIdAsync(int reportId);
-    Task SaveChangesAsync();
+    Task<int> SaveChangesAsync();
 }

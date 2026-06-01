@@ -110,9 +110,9 @@ public class TransactionRepository : ITransactionRepository
                     ? t.OrderItem.Course.Instructor.InstructorNavigation.FullName ?? "N/A"
                     : "N/A",
 
-                RefundReason = t.RefundReason,
-                RefundAdminNote = t.RefundAdminNote,
-                RefundRequestedAt = t.RefundRequestedAt
+                RefundReason = t.TransactionExt != null ? t.TransactionExt.RefundReason : null,
+                RefundAdminNote = t.TransactionExt != null ? t.TransactionExt.RefundAdminNote : null,
+                RefundRequestedAt = t.TransactionExt != null ? t.TransactionExt.RefundRequestedAt : null
             });
 
         // ★ Đếm tổng trước (COUNT chạy trong DB)
@@ -205,9 +205,9 @@ public class TransactionRepository : ITransactionRepository
                     : Math.Round(t.Amount * (t.TransferRate / 100m), 2)),
                 IsPaid = t.InstructorPayouts.Any() && t.InstructorPayouts.First().IsPaid,
 
-                RefundReason = t.RefundReason,
-                RefundAdminNote = t.RefundAdminNote,
-                RefundRequestedAt = t.RefundRequestedAt
+                RefundReason = t.TransactionExt != null ? t.TransactionExt.RefundReason : null,
+                RefundAdminNote = t.TransactionExt != null ? t.TransactionExt.RefundAdminNote : null,
+                RefundRequestedAt = t.TransactionExt != null ? t.TransactionExt.RefundRequestedAt : null
             })
             .FirstOrDefaultAsync();
     }
@@ -282,9 +282,9 @@ public class TransactionRepository : ITransactionRepository
 
                 InstructorName = "Me",
 
-                RefundReason = t.RefundReason,
-                RefundAdminNote = t.RefundAdminNote,
-                RefundRequestedAt = t.RefundRequestedAt
+                RefundReason = t.TransactionExt != null ? t.TransactionExt.RefundReason : null,
+                RefundAdminNote = t.TransactionExt != null ? t.TransactionExt.RefundAdminNote : null,
+                RefundRequestedAt = t.TransactionExt != null ? t.TransactionExt.RefundRequestedAt : null
             });
 
         var totalCount = await query.CountAsync();
@@ -346,9 +346,9 @@ public class TransactionRepository : ITransactionRepository
                 CourseTitle     = t.OrderItem != null && t.OrderItem.Course != null ? t.OrderItem.Course.Title ?? "N/A" : "N/A",
                 InstructorName  = t.OrderItem != null && t.OrderItem.Course != null && t.OrderItem.Course.Instructor != null && t.OrderItem.Course.Instructor.InstructorNavigation != null ? t.OrderItem.Course.Instructor.InstructorNavigation.FullName ?? "N/A" : "N/A",
 
-                RefundReason = t.RefundReason,
-                RefundAdminNote = t.RefundAdminNote,
-                RefundRequestedAt = t.RefundRequestedAt
+                RefundReason = t.TransactionExt != null ? t.TransactionExt.RefundReason : null,
+                RefundAdminNote = t.TransactionExt != null ? t.TransactionExt.RefundAdminNote : null,
+                RefundRequestedAt = t.TransactionExt != null ? t.TransactionExt.RefundRequestedAt : null
             });
 
         var totalCount = await query.CountAsync();

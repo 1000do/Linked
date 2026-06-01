@@ -15,13 +15,15 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 [Authorize] // Requires authentication
 public class CourseController : ControllerBase
 {
-    private readonly ICourseService _courseService;
-    private readonly IModerationService _moderationService;
+    private readonly ICourseQueryService _courseQueryService;
+    private readonly ICourseCommandService _courseCommandService;
+    private readonly ICourseAiModerationService _aiModerationService;
 
-    public CourseController(ICourseService courseService, IModerationService moderationService)
+    public CourseController(ICourseQueryService courseQueryService, ICourseCommandService courseCommandService, ICourseAiModerationService aiModerationService)
     {
-        _courseService = courseService;
-        _moderationService = moderationService;
+        _courseQueryService = courseQueryService;
+        _courseCommandService = courseCommandService;
+        _aiModerationService = aiModerationService;
     }
 
     private int GetInstructorId()
@@ -45,7 +47,7 @@ public class CourseController : ControllerBase
         try
         {
             var instructorId = GetInstructorId();
-            var result = await _courseService.GetInstructorCoursesPagedAsync(instructorId, search, status, page, pageSize);
+            var result = await _courseQueryService.GetInstructorCoursesPagedAsync(instructorId, search, status, page, pageSize);
             return Ok(ApiResponse<object>.SuccessResponse(result, "Retrieved courses successfully."));
         }
         catch (UnauthorizedAccessException ex)
@@ -64,7 +66,7 @@ public class CourseController : ControllerBase
         try
         {
             var instructorId = GetInstructorId();
-            var course = await _courseService.GetCourseWithDetailsAsync(id, instructorId);
+            var course = await _courseQueryService.GetCourseWithDetailsAsync(id, instructorId);
             if (course == null)
             {
                 return NotFound(ApiResponse<object>.ErrorResponse("Course not found."));
@@ -87,7 +89,7 @@ public class CourseController : ControllerBase
         try
         {
             var instructorId = GetInstructorId();
-            var result = await _courseService.CreateCourseAsync(request, instructorId);
+            var result = await _courseCommandService.CreateCourseAsync(request, instructorId);
             return StatusCode(201, ApiResponse<object>.SuccessResponse(result, "Course created successfully."));
         }
         catch (BadRequestException ex)
@@ -110,7 +112,7 @@ public class CourseController : ControllerBase
         try
         {
             var instructorId = GetInstructorId();
-            var result = await _courseService.UpdateCourseAsync(id, request, instructorId);
+            var result = await _courseCommandService.UpdateCourseAsync(id, request, instructorId);
             return Ok(ApiResponse<object>.SuccessResponse(result, "Course updated successfully."));
         }
         catch (UnauthorizedAccessException ex)
@@ -129,7 +131,7 @@ public class CourseController : ControllerBase
         try
         {
             var instructorId = GetInstructorId();
-            await _courseService.UpdateCourseStatusAsync(id, request.Status, instructorId);
+            await _courseCommandService.UpdateCourseStatusAsync(id, request.Status, instructorId);
             return Ok(ApiResponse<object>.SuccessResponse(null, "Course status updated successfully."));
         }
         catch (UnauthorizedAccessException ex)
@@ -152,7 +154,7 @@ public class CourseController : ControllerBase
         try
         {
             var instructorId = GetInstructorId();
-            await _courseService.DeleteCourseAsync(id, instructorId);
+            await _courseCommandService.DeleteCourseAsync(id, instructorId);
             return Ok(ApiResponse<object>.SuccessResponse(null, "Course deleted successfully."));
         }
         catch (UnauthorizedAccessException ex)
@@ -177,7 +179,7 @@ public class CourseController : ControllerBase
             var instructorId = GetInstructorId();
             request.InstructorId = instructorId;
 
-            var result = await _moderationService.HandleCourseModerationAsync(request);
+            var result = await _aiModerationService.HandleCourseModerationAsync(request);
             return Ok(ApiResponse<CourseModerationResult>.SuccessResponse(result, "Moderation has been successfully processed."));
         }
         catch (Exception ex)
@@ -185,9 +187,4 @@ public class CourseController : ControllerBase
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
         }
     }
-}
-
-public class UpdateStatusRequest
-{
-    public string Status { get; set; } = string.Empty;
 }

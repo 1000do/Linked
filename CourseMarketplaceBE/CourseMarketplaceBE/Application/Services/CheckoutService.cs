@@ -23,28 +23,37 @@ namespace CourseMarketplaceBE.Application.Services;
 public class CheckoutService : ICheckoutService
 {
     private readonly ICheckoutRepository _repo;
+    private readonly IEnrollmentRepository _enrollmentRepo;
     private readonly IPaymentGatewayService _paymentGateway;
     private readonly ILogger<CheckoutService> _logger;
     private readonly IHubContext<FinanceHub> _hubContext;
     private readonly INotificationService _notificationService;
     private readonly ICourseRepository _courseRepo;
+    private readonly ICouponRepository _couponRepo;
+    private readonly IUserRepository _userRepo;
     private readonly IAdminFinanceService _adminFinanceService;
 
     public CheckoutService(
         ICheckoutRepository repo,
+        IEnrollmentRepository enrollmentRepo,
         IPaymentGatewayService paymentGateway,
         ILogger<CheckoutService> logger,
         IHubContext<FinanceHub> hubContext,
         IAdminFinanceService adminFinanceService,
         INotificationService notificationService,
-        ICourseRepository courseRepo)
+        ICourseRepository courseRepo,
+        ICouponRepository couponRepo,
+        IUserRepository userRepo)
     {
         _repo = repo;
+        _enrollmentRepo = enrollmentRepo;
         _paymentGateway = paymentGateway;
         _logger = logger;
         _hubContext = hubContext;
         _notificationService = notificationService;
         _courseRepo = courseRepo;
+        _couponRepo = couponRepo;
+        _userRepo = userRepo;
         _adminFinanceService = adminFinanceService;
     }
 
@@ -69,7 +78,7 @@ public class CheckoutService : ICheckoutService
         // ── 1.2 Kiểm tra không mua trùng (đã enrolled) ──────────────────────
         foreach (var item in cartItems)
         {
-            if (item.CourseId.HasValue && await _repo.IsEnrolledAsync(userId, item.CourseId.Value))
+            if (item.CourseId.HasValue && await _courseRepo.IsEnrolledAsync(userId, item.CourseId.Value))
                 throw new InvalidOperationException(
                     $"You have already purchased the course \"{item.Course?.Title}\". Please remove it from the cart.");
         }
@@ -86,7 +95,7 @@ public class CheckoutService : ICheckoutService
 
             foreach (var code in codes)
             {
-                var cp = await _repo.GetValidCouponAsync(code, DateTime.Now);
+                var cp = await _couponRepo.GetValidCouponAsync(code, DateTime.Now);
                 if (cp != null)
                 {
                     decimal eligibleSubTotal = cartItems
@@ -102,7 +111,7 @@ public class CheckoutService : ICheckoutService
         }
 
         // Lấy email user cho Stripe
-        var userEmail = await _repo.GetUserEmailAsync(userId);
+        var userEmail = await _userRepo.GetUserEmailAsync(userId);
 
         // ── 1.4 Chuẩn bị line items cho Stripe ──────────────────────────────
         var paymentLineItems = new List<PaymentLineItem>();
@@ -181,14 +190,14 @@ public class CheckoutService : ICheckoutService
         string successUrl,
         string cancelUrl)
     {
-        var course = await _repo.GetCourseWithInstructorAsync(courseId);
+        var course = await _courseRepo.GetCourseWithInstructorAsync(courseId);
         if (course == null)
             throw new InvalidOperationException("Course not found.");
 
-        if (await _repo.IsEnrolledAsync(userId, courseId))
+        if (await _courseRepo.IsEnrolledAsync(userId, courseId))
             throw new InvalidOperationException($"You have already purchased the course \"{course.Title}\".");
 
-        var stripeAccountId = await _repo.GetInstructorStripeAccountIdAsync(course.InstructorId ?? 0);
+        var stripeAccountId = await _userRepo.GetInstructorStripeAccountIdAsync(course.InstructorId ?? 0);
         if (string.IsNullOrEmpty(stripeAccountId))
             throw new InvalidOperationException("Instructor has not connected a Stripe payment account.");
 
@@ -198,7 +207,7 @@ public class CheckoutService : ICheckoutService
         
         if (!string.IsNullOrWhiteSpace(couponCode))
         {
-            coupon = await _repo.GetValidCouponAsync(couponCode, DateTime.Now);
+            coupon = await _couponRepo.GetValidCouponAsync(couponCode, DateTime.Now);
             if (coupon != null)
             {
                 if (course.CouponId != coupon.CouponId)
@@ -223,7 +232,7 @@ public class CheckoutService : ICheckoutService
         }
 
         var purchasePrice = Math.Max(originalPrice - discountAmount, 0m);
-        var userEmail = await _repo.GetUserEmailAsync(userId);
+        var userEmail = await _userRepo.GetUserEmailAsync(userId);
 
         var paymentLineItems = new List<PaymentLineItem>
         {
@@ -235,7 +244,7 @@ public class CheckoutService : ICheckoutService
             }
         };
 
-        var instructorCountry = await _repo.GetInstructorStripeCountryAsync(course.InstructorId ?? 0);
+        var instructorCountry = await _userRepo.GetInstructorStripeCountryAsync(course.InstructorId ?? 0);
         var sessionCurrency = GetCurrencyFromCountry(instructorCountry);
 
         var orderReference = $"tx_{Guid.NewGuid().ToString("N")}";
@@ -320,7 +329,7 @@ public class CheckoutService : ICheckoutService
 
             // ── 2.4 Load các khóa học & áp coupon để tính giá chính xác ─────────
             var coupon = !string.IsNullOrWhiteSpace(couponCode)
-                ? await _repo.GetValidCouponAsync(couponCode, DateTime.Now)
+                ? await _couponRepo.GetValidCouponAsync(couponCode, DateTime.Now)
                 : null;
 
             // ════ BẮT ĐẦU DB TRANSACTION ════════════════════════════════════════
@@ -337,11 +346,12 @@ public class CheckoutService : ICheckoutService
                     PaymentMethod = checkoutType == "direct" ? "stripe_direct" : "stripe"
                 };
                 await _repo.AddOrderAsync(order);
-                await _repo.SaveChangesAsync();
+                int rows1 = await _repo.SaveChangesAsync();
+                if (rows1 <= 0) throw new InvalidOperationException("Failed to save changes");
 
                 foreach (var courseId in courseIds)
                 {
-                    var course = await _repo.GetCourseWithInstructorAsync(courseId);
+                    var course = await _courseRepo.GetCourseWithInstructorAsync(courseId);
                     if (course == null) continue;
 
                     decimal originalPrice = course.Price;
@@ -376,7 +386,8 @@ public class CheckoutService : ICheckoutService
                         DiscountAmount = Math.Round(originalPrice - purchasePrice, 2)
                     };
                     await _repo.AddOrderItemAsync(orderItem);
-                    await _repo.SaveChangesAsync();
+                    int rows2 = await _repo.SaveChangesAsync();
+                    if (rows2 <= 0) throw new InvalidOperationException("Failed to save changes");
 
                     // Increment coupon usage
                     if (isDiscounted && coupon != null)
@@ -400,10 +411,22 @@ public class CheckoutService : ICheckoutService
                         TransactionCreatedAt = DateTime.Now
                     };
                     await _repo.AddTransactionAsync(transaction);
-                    await _repo.SaveChangesAsync();
+                    int rows3 = await _repo.SaveChangesAsync();
+                    if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
 
-                    // Cấp Enrollment & Progress
-                    if (!await _repo.IsEnrolledAsync(userId, courseId))
+                    // Cấp Enrollment (Hoặc kích hoạt lại nếu đã từng refund)
+                    var existingEnrollment = await _enrollmentRepo.GetEnrollmentIncludingRefundedAsync(userId, courseId);
+                    if (existingEnrollment != null)
+                    {
+                        existingEnrollment.EnrollmentStatus = "active";
+                        existingEnrollment.EnrollDate = DateOnly.FromDateTime(DateTime.Now);
+                        existingEnrollment.IsCompleted = false;
+                        existingEnrollment.CompletedDate = null;
+                        existingEnrollment.LastAccessedAt = DateTime.Now;
+
+                        await _enrollmentRepo.ClearMaterialCompletionsAsync(existingEnrollment.EnrollmentId);
+                    }
+                    else
                     {
                         var enrollment = new Enrollment
                         {
@@ -415,20 +438,18 @@ public class CheckoutService : ICheckoutService
                             EnrollmentStatus = "active",
                             LastAccessedAt = DateTime.Now
                         };
-                        await _repo.AddEnrollmentAsync(enrollment);
-                        await _repo.SaveChangesAsync();
-
-                        var progress = new EnrollmentProgress
-                        {
-                            EnrollmentId = enrollment.EnrollmentId,
-                            LearnedMaterialCount = 0,
-                            LastModifiedAt = DateTime.Now
-                        };
-                        await _repo.AddEnrollmentProgressAsync(progress);
+                        await _enrollmentRepo.AddEnrollmentAsync(enrollment);
+                        int rows4 = await _enrollmentRepo.SaveChangesAsync();
+                        if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
                     }
 
-                    // Tạo Payout record
-                    var payoutAmount = Math.Round(purchasePrice * (currentTransferRate / 100m), 2);
+                    // Tính toán phí Stripe (2.9% + $0.30) và lấy doanh thu thuần của khoá học
+                    var stripeFee = Math.Round(purchasePrice * 0.029m + 0.30m, 2);
+                    stripeFee = Math.Min(stripeFee, purchasePrice); // Tránh âm tiền nếu khoá học quá rẻ
+                    var netPrice = purchasePrice - stripeFee;
+
+                    // Tạo Payout record (chia tiền sau khi trừ phí Stripe)
+                    var payoutAmount = Math.Round(netPrice * (currentTransferRate / 100m), 2);
                     var payout = new InstructorPayout
                     {
                         TransactionId = transaction.TransactionId,
@@ -450,7 +471,7 @@ public class CheckoutService : ICheckoutService
                         await _notificationService.SendNotificationAsync(
                             instructorId.Value,
                             "You have a new order",
-                            $"The course '{courseTitle}' has been successfully sold. Expected revenue: {payoutAmount:N0} VND.",
+                            $"The course '{courseTitle}' has been successfully sold. Expected revenue: ${payoutAmount:N2} USD.",
                             $"/Instructor/Payouts"
                         );
                     }
@@ -463,7 +484,8 @@ public class CheckoutService : ICheckoutService
                     await _repo.ClearCartAsync(userId);
                 }
 
-                await _repo.SaveChangesAsync();
+                int rows5 = await _repo.SaveChangesAsync();
+                if (rows5 <= 0) throw new InvalidOperationException("Failed to save changes");
 
                 Console.WriteLine("[CHECKOUT-DEBUG] 🏁 Committing Transaction...");
                 await dbTransaction.CommitAsync();
@@ -515,7 +537,8 @@ public class CheckoutService : ICheckoutService
                     }
                     await _repo.DeleteOrderAsync(order);
                 }
-                await _repo.SaveChangesAsync();
+                int rows6 = await _repo.SaveChangesAsync();
+                if (rows6 <= 0) throw new InvalidOperationException("Failed to save changes");
                 _logger.LogInformation("[CHECKOUT] Abandoned pending orders cleaned up successfully for user {UserId}.", userId);
             }
         }

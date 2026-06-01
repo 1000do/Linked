@@ -40,12 +40,13 @@ public class LessonRepository : ILessonRepository
     public async Task<List<Lesson>> GetByCourseIdAsync(int courseId)
     {
         return await _context.Lessons
+            .Include(l => l.LearningMaterials)
             .Where(l => l.CourseId == courseId)
             .ToListAsync();
     }
 
-    public async Task SaveChangesAsync()
+    public async Task<int> SaveChangesAsync()
     {
-        await _context.SaveChangesAsync();
+        return await _context.SaveChangesAsync();
     }
 }

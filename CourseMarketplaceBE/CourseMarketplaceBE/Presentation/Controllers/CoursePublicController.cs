@@ -12,11 +12,11 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 [AllowAnonymous]
 public class CoursePublicController : ControllerBase
 {
-    private readonly ICourseService _courseService;
+    private readonly ICourseQueryService _courseQueryService;
 
-    public CoursePublicController(ICourseService courseService)
+    public CoursePublicController(ICourseQueryService courseQueryService)
     {
-        _courseService = courseService;
+        _courseQueryService = courseQueryService;
     }
 
     private int? GetUserId()
@@ -38,7 +38,7 @@ public class CoursePublicController : ControllerBase
         try
         {
             var userId = GetUserId();
-            var result = await _courseService.GetPublishedCoursesPagedAsync(query, category, sort, price, rating, page, pageSize, userId);
+            var result = await _courseQueryService.GetPublishedCoursesPagedAsync(query, category, sort, price, rating, page, pageSize, userId);
             return Ok(ApiResponse<object>.SuccessResponse(result, "Retrieved courses successfully."));
         }
         catch (Exception ex)
@@ -54,7 +54,7 @@ public class CoursePublicController : ControllerBase
         {
             var userId = GetUserId();
             // For public view, instructorId doesn't matter much if we just want to view it
-            var course = await _courseService.GetCourseWithDetailsAsync(id, 0, userId); 
+            var course = await _courseQueryService.GetCourseWithDetailsAsync(id, 0, userId); 
             if (course == null)
             {
                 return NotFound(ApiResponse<object>.ErrorResponse("Course not found."));
@@ -75,7 +75,7 @@ public class CoursePublicController : ControllerBase
     {
         try
         {
-            var categories = await _courseService.GetCategoriesAsync();
+            var categories = await _courseQueryService.GetCategoriesAsync();
             return Ok(ApiResponse<object>.SuccessResponse(categories, "Retrieved categories successfully."));
         }
         catch (Exception ex)

@@ -15,6 +15,8 @@ public class ChatListDto
     public string? ContextType { get; set; }
     public int? ContextId { get; set; }
     public int UnreadCount { get; set; }
+    public bool IsOnline { get; set; }
+    public int? PartnerId { get; set; }
 }
 
 public class MessageDto
@@ -67,4 +69,11 @@ public class SubmitReportDto
     public int ChatId { get; set; }
     public string Reason { get; set; } = null!;
     public string Description { get; set; } = null!;
+}
+
+public class SupportAccountDto
+{
+    public int AccountId { get; set; }
+    public string FullName { get; set; } = null!;
+    public string AvatarUrl { get; set; } = null!;
 }

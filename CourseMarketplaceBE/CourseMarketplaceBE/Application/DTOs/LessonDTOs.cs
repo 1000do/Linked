@@ -63,3 +63,14 @@ public class MaterialTrashResponse
     public string? FileType { get; set; }
     public string? CloudPublicId { get; set; }
 }
+
+public class LessonUpdateTitleRequest
+{
+    public string Title { get; set; } = null!;
+}
+
+public class MaterialUpdateRequest
+{
+    public string Title { get; set; } = null!;
+    public string? Description { get; set; }
+}

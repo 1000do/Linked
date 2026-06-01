@@ -17,27 +17,41 @@ public class ReviewRepository : IReviewRepository
         _context = context;
     }
 
-    public async Task<List<CourseReview>> GetCourseReviewsWithDetailsAsync(int courseId)
+    public async Task<(List<CourseReview> Items, int TotalCount)> GetCourseReviewsWithDetailsAsync(int courseId, int page, int pageSize)
     {
-        return await _context.CourseReviews
+        var query = _context.CourseReviews
             .Include(r => r.Enrollment)
                 .ThenInclude(e => e!.User)
                     .ThenInclude(u => u!.UserNavigation)
-            .Where(r => r.Enrollment != null && r.Enrollment.CourseId == courseId && r.IsRemoved != true)
+            .Where(r => r.Enrollment != null && r.Enrollment.CourseId == courseId && r.IsRemoved != true);
+            
+        var totalCount = await query.CountAsync();
+        var items = await query
             .OrderByDescending(r => r.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+            
+        return (items, totalCount);
     }
 
-    public async Task<List<LessonReview>> GetLessonReviewsWithDetailsAsync(int lessonId)
+    public async Task<(List<LessonReview> Items, int TotalCount)> GetLessonReviewsWithDetailsAsync(int lessonId, int page, int pageSize)
     {
-        return await _context.LessonReviews
+        var query = _context.LessonReviews
             .Include(r => r.Enrollment)
                 .ThenInclude(e => e!.User)
                     .ThenInclude(u => u!.UserNavigation)
             .Include(r => r.Lesson)
-            .Where(r => r.LessonId == lessonId && r.IsRemoved != true)
+            .Where(r => r.LessonId == lessonId && r.IsRemoved != true);
+            
+        var totalCount = await query.CountAsync();
+        var items = await query
             .OrderByDescending(r => r.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+            
+        return (items, totalCount);
     }
 
     public async Task<List<float>> GetCourseReviewRatingsAsync(int courseId)
@@ -83,16 +97,20 @@ public class ReviewRepository : IReviewRepository
 
     public async Task<CourseReview?> GetCourseReviewByIdAsync(int reviewId)
     {
-        return await _context.CourseReviews.FindAsync(reviewId);
+        return await _context.CourseReviews
+            .Include(r => r.Enrollment)
+            .FirstOrDefaultAsync(r => r.CourseReviewId == reviewId);
     }
 
     public async Task<LessonReview?> GetLessonReviewByIdAsync(int reviewId)
     {
-        return await _context.LessonReviews.FindAsync(reviewId);
+        return await _context.LessonReviews
+            .Include(r => r.Enrollment)
+            .FirstOrDefaultAsync(r => r.LessonReviewId == reviewId);
     }
 
-    public async Task SaveChangesAsync()
+    public async Task<int> SaveChangesAsync()
     {
-        await _context.SaveChangesAsync();
+        return await _context.SaveChangesAsync();
     }
 }

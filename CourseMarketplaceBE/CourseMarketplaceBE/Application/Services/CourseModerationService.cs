@@ -16,7 +16,7 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly ICourseRepository _courseRepository;
         private readonly IMaterialRepository _materialRepository;
         private readonly ILessonRepository _lessonRepository;
-        // private readonly IEnrollmentRepository _enrollmentRepository;
+        private readonly IEnrollmentRepository _enrollmentRepository;
         private readonly IRedisService _redisService;
         private readonly INotificationService _notificationService;
         private readonly IUserRepository _userRepository;
@@ -25,7 +25,7 @@ namespace CourseMarketplaceBE.Application.Services
             ICourseRepository courseRepository,
             IMaterialRepository materialRepository,
             ILessonRepository lessonRepository,
-            // IEnrollmentRepository enrollmentRepository,
+            IEnrollmentRepository enrollmentRepository,
             IRedisService redisService,
             INotificationService notificationService,
             IUserRepository userRepository)
@@ -33,7 +33,7 @@ namespace CourseMarketplaceBE.Application.Services
             _courseRepository = courseRepository;
             _materialRepository = materialRepository;
             _lessonRepository = lessonRepository;
-            // _enrollmentRepository = enrollmentRepository;
+            _enrollmentRepository = enrollmentRepository;
             _redisService = redisService;
             _notificationService = notificationService;
             _userRepository = userRepository;
@@ -41,14 +41,14 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task<CourseModerationStatsDto> GetCourseModerationStatsAsync()
         {
-            // return await _courseRepository.GetCourseModerationStatsAsync();
-            return new CourseModerationStatsDto();
+            return await _courseRepository.GetCourseModerationStatsAsync();
+            // return new CourseModerationStatsDto();
         }
 
         public async Task<PagedResult<CourseModerationDto>> GetPendingCoursesAsync(ModerationFilterDto filter)
         {
-            // return await _courseRepository.GetPendingCoursesModerationAsync(filter);
-            return new PagedResult<CourseModerationDto>();
+            return await _courseRepository.GetPendingCoursesModerationAsync(filter);
+            // return new PagedResult<CourseModerationDto>();
         }
 
         public async Task<bool> ApproveCourseAsync(int courseId, string? feedback)
@@ -94,8 +94,8 @@ namespace CourseMarketplaceBE.Application.Services
                     $"/Course/Details/{courseId}"
                 );
 
-                // var enrolledUserIds = await _enrollmentRepository.GetEnrolledUserIdsAsync(courseId);
-                var enrolledUserIds = new List<int>();
+                var enrolledUserIds = await _enrollmentRepository.GetEnrolledUserIdsAsync(courseId);
+                // var enrolledUserIds = new List<int>();
                 if (enrolledUserIds.Any())
                 {
                     foreach (var studentId in enrolledUserIds)

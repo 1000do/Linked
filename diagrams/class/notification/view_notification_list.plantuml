@@ -1,0 +1,77 @@
+@startuml ViewSystemNotificationList
+
+hide empty members
+
+class AdminNotificationController {
+    + Index()
+}
+
+class NotificationAdminViewModel {
+    ' Represents the data structure for the admin view
+    + Notifications
+}
+
+class NotificationController {
+    + GetAllNotificationsForAdmin()
+}
+
+class NotificationAdminDto {
+    ' DTO with extra info for admins
+    + NotificationId
+    + Title
+    + Content
+    + RecipientName
+    + SentAt
+}
+
+interface INotificationService {
+    + GetAllForAdminAsync()
+}
+
+class NotificationService {
+    + GetAllForAdminAsync()
+}
+
+interface INotificationRepository {
+    + GetAllWithRecipientInfoAsync()
+}
+
+class NotificationRepository {
+    + GetAllWithRecipientInfoAsync()
+}
+
+class Notification {
+    + NotificationId
+    + ReceiverId
+    + Title
+}
+
+class User {
+    + UserId
+    + UserName
+}
+
+class ApplicationDbContext
+
+
+' === RELATIONSHIPS ===
+AdminNotificationController ..> NotificationController
+AdminNotificationController ..> NotificationAdminViewModel
+NotificationController ..> NotificationAdminDto
+NotificationController --> INotificationService
+NotificationService ..|> INotificationService
+NotificationService --> INotificationRepository
+
+' Service maps from entities to the admin DTO
+NotificationService ..> Notification
+NotificationService ..> User
+NotificationService ..> NotificationAdminDto
+
+NotificationRepository ..|> INotificationRepository
+NotificationRepository --> ApplicationDbContext
+
+' Repository fetches Notification and joins with User
+NotificationRepository ..> Notification
+NotificationRepository ..> User
+
+@enduml

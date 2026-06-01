@@ -17,12 +17,21 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
 
         // ── Approval ──────────────────────────────────────────────────────────
 
-        public async Task<IEnumerable<Instructor>> GetPendingInstructorsAsync()
-            => await _context.Instructors
+        public async Task<(IEnumerable<Instructor> Items, int TotalCount)> GetPendingInstructorsAsync(int page = 1, int pageSize = 10)
+        {
+            var query = _context.Instructors
                 .Include(i => i.InstructorNavigation)
                     .ThenInclude(u => u!.UserNavigation)
-                .Where(i => i.ApprovalStatus != null && i.ApprovalStatus.ToLower() == "pending")
+                .Where(i => i.ApprovalStatus != null && i.ApprovalStatus.ToLower() == "pending");
+                
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+                
+            return (items, totalCount);
+        }
 
         // ── Lookup ────────────────────────────────────────────────────────────
 
@@ -37,11 +46,6 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .Include(i => i.InstructorNavigation)
                     .ThenInclude(u => u!.UserNavigation)
                 .FirstOrDefaultAsync(i => i.InstructorId == instructorId);
-
-        // ── Account ───────────────────────────────────────────────────────────
-
-        public async Task<Account?> GetAccountByIdAsync(int userId)
-            => await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == userId);
 
         // ── Write ─────────────────────────────────────────────────────────────
 
@@ -149,7 +153,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
         public async Task<int> CountActiveCoursesAsync(int instructorId)
             => await _context.Courses.CountAsync(c => c.InstructorId == instructorId && c.CourseStatus == "published");
 
-        public async Task<InstructorPayoutPagedDto> GetPayoutsAsync(int instructorId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
+        public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.InstructorPayoutDto>> GetPayoutsAsync(int instructorId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
         {
             var query = _context.InstructorPayouts
                 .Where(p => p.InstructorId == instructorId)
@@ -214,7 +218,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 })
                 .ToListAsync();
 
-            return new InstructorPayoutPagedDto
+            return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.InstructorPayoutDto>
             {
                 Items = items,
                 TotalCount = totalCount,
@@ -235,7 +239,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
 
         // ── Persistence ───────────────────────────────────────────────────────
 
-        public async Task SaveChangesAsync()
+        public async Task<int> SaveChangesAsync()
             => await _context.SaveChangesAsync();
     }
 }

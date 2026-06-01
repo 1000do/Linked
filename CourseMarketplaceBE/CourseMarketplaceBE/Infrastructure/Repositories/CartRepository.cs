@@ -41,36 +41,8 @@ public class CartRepository : ICartRepository
     public void RemoveCartItem(CartItem item)
         => _context.CartItems.Remove(item);
 
-    // ── Course / Enrollment ────────────────────────────────────────────────────
-
-    public async Task<Course?> GetPublishedCourseAsync(int courseId)
-        => await _context.Courses.FirstOrDefaultAsync(c => c.CourseId == courseId && c.CourseStatus == "published");
-
-    public async Task<bool> IsEnrolledAsync(int userId, int courseId)
-        => await _context.Enrollments.AnyAsync(e => e.UserId == userId && e.CourseId == courseId);
-
-    // ── Coupon ────────────────────────────────────────────────────────────────
-
-    public async Task<Coupon?> GetCouponByCodeAsync(string couponCode)
-    {
-        if (string.IsNullOrWhiteSpace(couponCode)) return null;
-        return await _context.Coupons
-            .FirstOrDefaultAsync(cp => cp.CouponCode.ToLower() == couponCode.Trim().ToLower());
-    }
-
-    public async Task<List<Coupon>> GetActiveAvailableCouponsAsync(DateTime now)
-        => await _context.Coupons
-            .Include(cp => cp.Courses)
-            .Where(cp =>
-                cp.IsActive == true &&
-                (cp.StartDate == null || cp.StartDate <= now) &&
-                (cp.EndDate == null || cp.EndDate >= now) &&
-                (cp.UsageLimit == null || (cp.UsedCount ?? 0) < cp.UsageLimit))
-            .OrderBy(cp => cp.MinOrderValue)
-            .ToListAsync();
-
     // ── Persistence ────────────────────────────────────────────────────────────
 
-    public async Task SaveChangesAsync()
+    public async Task<int> SaveChangesAsync()
         => await _context.SaveChangesAsync();
 }

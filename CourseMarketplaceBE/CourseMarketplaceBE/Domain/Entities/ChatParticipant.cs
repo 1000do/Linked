@@ -16,6 +16,8 @@ public partial class ChatParticipant
 
     public DateTime? JoinedAt { get; set; }
 
+    public DateTime? ClearedAt { get; set; }
+
     public virtual Account Account { get; set; } = null!;
 
     public virtual Chat Chat { get; set; } = null!;

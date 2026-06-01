@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS lesson_review_reports CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS messages CASCADE;
 DROP TABLE IF EXISTS chats CASCADE;
+DROP TABLE IF EXISTS lockouts CASCADE;
 DROP TABLE IF EXISTS transaction_exts CASCADE;
 DROP TABLE IF EXISTS transactions CASCADE;
 DROP TABLE IF EXISTS order_items CASCADE;
@@ -19,7 +20,6 @@ DROP TABLE IF EXISTS order_info CASCADE;
 DROP TABLE IF EXISTS course_reviews CASCADE;
 DROP TABLE IF EXISTS cart_items CASCADE;
 DROP TABLE IF EXISTS wishlist_items CASCADE;
-DROP TABLE IF EXISTS enrollment CASCADE;
 DROP TABLE IF EXISTS enrollments CASCADE;
 DROP TABLE IF EXISTS material_completions CASCADE;
 DROP TABLE IF EXISTS learning_materials CASCADE;
@@ -39,7 +39,6 @@ DROP TABLE IF EXISTS course_ai_usage_logs CASCADE;
 DROP TABLE IF EXISTS message_moderation_logs CASCADE;
 DROP TABLE IF EXISTS user_avatar_frames CASCADE;
 DROP TABLE IF EXISTS avatar_frames CASCADE;
-DROP TABLE IF EXISTS lockouts CASCADE;
 
 DROP TABLE IF EXISTS lesson_review_moderation_logs CASCADE;
 DROP TABLE IF EXISTS course_review_moderation_logs CASCADE;
@@ -78,6 +77,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 CREATE TABLE accounts (
     account_id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(255) UNIQUE,
     password_hash TEXT,
     phone_number VARCHAR(50),
     account_status VARCHAR(50), -- VD: 'active', 'suspended', 'banned'
@@ -93,13 +93,15 @@ CREATE TABLE accounts (
 );
 
 CREATE TABLE lockouts (
-	lockout_id SERIAL PRIMARY KEY,
+    lockout_id SERIAL PRIMARY KEY,
     account_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
-	lockout_type VARCHAR(50), -- account, review, instructor (lockout cái gì)
-	lockout_level VARCHAR(50), -- moderate, severe (mức vừa, mức nặng)
-    lockout_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- thời điểm bắt đầu lockout
-    lockout_end TIMESTAMP -- thời điểm kết thúc lockout
+    lockout_type VARCHAR(50), -- account, review, instructor
+    lockout_level VARCHAR(50), -- moderate, severe
+    lockout_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    lockout_end TIMESTAMP
 );
+
+CREATE INDEX IX_lockouts_account_id ON lockouts(account_id);
 
 CREATE TABLE users (
     user_id INT PRIMARY KEY REFERENCES accounts(account_id) ON DELETE CASCADE,
@@ -268,11 +270,7 @@ CREATE TABLE enrollments (
     enrollment_status VARCHAR(50)
 );
 
-CREATE TABLE enrollment_progress (
-    enrollment_id INT PRIMARY KEY REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
-    learned_material_count INT NOT NULL DEFAULT 0,
-    last_modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+
 
 CREATE TABLE material_completions (
     id SERIAL PRIMARY KEY,
@@ -362,14 +360,14 @@ CREATE TABLE transactions (
     currency VARCHAR(10) DEFAULT 'VND',
     transactions_status VARCHAR(50), -- VD: 'succeeded', 'failed', 'refunded'
     transaction_type VARCHAR(50), -- VD: 'payment', 'refund'
-    transaction_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+    transaction_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE transaction_exts (
-	transaction_id INT PRIMARY KEY REFERENCES transactions(transaction_id) ON DELETE CASCADE,
-	refund_reason TEXT,
+    transaction_id INT PRIMARY KEY REFERENCES transactions(transaction_id) ON DELETE CASCADE,
+    refund_reason TEXT,
     refund_admin_note TEXT,
-	refund_requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    refund_requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Bảng lưu dữ liệu những giao dịch chuyển tiền từ hệ thống vô tài khoản ngân hàng của instructor
@@ -429,6 +427,7 @@ CREATE TABLE chat_participants (
     unread_count INT DEFAULT 0,
     last_read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    cleared_at TIMESTAMP,
     PRIMARY KEY (chat_id, account_id)
 );
 
@@ -767,10 +766,11 @@ DECLARE
 BEGIN
     -- 1. Tạo account Admin
     INSERT INTO accounts (
-        email, password_hash, phone_number, account_status, 
+        email, username, password_hash, phone_number, account_status, 
         auth_provider, is_verified, account_created_at, account_updated_at
     ) VALUES (
         'admin@gmail.com',
+        'admin',
         '$2a$11$O7PrVmv/I5yxkexhkdrY2OB2tQf5c6Gy9P8hvqLIAF2NO34wt9C3i',
         '+84123456789',
         'active',
@@ -787,10 +787,11 @@ BEGIN
 
     -- 2. Tạo account Staff
     INSERT INTO accounts (
-        email, password_hash, phone_number, account_status, 
+        email, username, password_hash, phone_number, account_status, 
         auth_provider, is_verified, account_created_at, account_updated_at
     ) VALUES (
         'staff@gmail.com',
+        'staff',
         '$2a$11$O7PrVmv/I5yxkexhkdrY2OB2tQf5c6Gy9P8hvqLIAF2NO34wt9C3i',
         '+84987654321',
         'active',

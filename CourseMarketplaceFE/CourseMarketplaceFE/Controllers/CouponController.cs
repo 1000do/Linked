@@ -1,4 +1,5 @@
 using CourseMarketplaceFE.Helpers;
+using CourseMarketplaceFE.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceFE.Controllers
@@ -58,11 +59,5 @@ namespace CourseMarketplaceFE.Controllers
             var body = await resp.Content.ReadAsStringAsync();
             return Content(body, "application/json");
         }
-    }
-
-    public class ApplyCouponRequest
-    {
-        public int CourseId { get; set; }
-        public int CouponId { get; set; }
     }
 }

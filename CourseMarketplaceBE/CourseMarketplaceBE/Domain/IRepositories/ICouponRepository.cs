@@ -1,3 +1,4 @@
+using System;
 using CourseMarketplaceBE.Domain.Entities;
 
 namespace CourseMarketplaceBE.Domain.IRepositories;
@@ -19,7 +20,7 @@ public interface ICouponRepository
     Task<Coupon?> GetByCodeAsync(string couponCode);
     Task AddAsync(Coupon coupon);
     void Update(Coupon coupon);
-    Task SaveChangesAsync();
+    Task<int> SaveChangesAsync();
 
     // ── Instructor: Browse & Attach ───────────────────────────────────────
     /// <summary>
@@ -32,9 +33,8 @@ public interface ICouponRepository
     /// <summary>Lấy coupon by ID (không cần managerId — cho instructor dùng).</summary>
     Task<Coupon?> GetByIdGlobalAsync(int couponId);
 
-    /// <summary>Lấy course kèm Instructor navigation.</summary>
-    Task<Course?> GetCourseWithInstructorAsync(int courseId);
+    /// <summary>Lấy coupon hợp lệ theo code (kiểm tra active, thời hạn, usage).</summary>
+    Task<Coupon?> GetValidCouponAsync(string couponCode, DateTime now);
 
-    /// <summary>Cập nhật course (gắn/gỡ coupon_id).</summary>
-    void UpdateCourse(Course course);
+    Task<List<Coupon>> GetActiveAvailableCouponsAsync(DateTime now);
 }

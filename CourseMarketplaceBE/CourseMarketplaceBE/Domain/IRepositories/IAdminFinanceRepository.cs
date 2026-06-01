@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using CourseMarketplaceBE.Application.DTOs;
+
 namespace CourseMarketplaceBE.Domain.IRepositories;
 
 /// <summary>
@@ -6,17 +11,6 @@ namespace CourseMarketplaceBE.Domain.IRepositories;
 /// </summary>
 public interface IAdminFinanceRepository
 {
-    // ── System Config ────────────────────────────────────────────────────
-
-    /// <summary>Lấy giá trị config theo key từ bảng system_configs.</summary>
-    Task<string?> GetConfigValueAsync(string configKey);
-
-    /// <summary>
-    /// Upsert (Insert hoặc Update) config value.
-    /// Nếu key đã tồn tại → update. Chưa có → insert.
-    /// </summary>
-    Task UpsertConfigAsync(string configKey, string configValue, string? description = null);
-
     // ── Financial Aggregations (tính trực tiếp trong DB bằng SUM) ─────
 
     /// <summary>
@@ -24,6 +18,11 @@ public interface IAdminFinanceRepository
     /// Thực thi trên PostgreSQL, KHÔNG kéo data về RAM.
     /// </summary>
     Task<decimal> GetGrossRevenueAsync(int? year = null, int? month = null);
+
+    /// <summary>
+    /// Tổng số tiền đã hoàn trả cho học viên (status = 'refunded')
+    /// </summary>
+    Task<decimal> GetTotalRefundedAsync(int? year = null, int? month = null);
 
     /// <summary>Tổng số giao dịch thành công.</summary>
     Task<int> GetSucceededTransactionCountAsync(int? year = null, int? month = null);
@@ -44,7 +43,7 @@ public interface IAdminFinanceRepository
     ///   instructor_payouts → transactions → order_items → courses
     ///   instructor_payouts → instructors → users → accounts
     /// </summary>
-    Task<List<PayoutDetailProjection>> GetPayoutDetailsAsync(int? year = null, int? month = null);
+    Task<(List<PayoutDetailProjection> Items, int TotalCount)> GetPayoutDetailsAsync(int? year = null, int? month = null, int page = 1, int pageSize = 10);
 
     /// <summary>Lấy thông tin payout theo Id.</summary>
     Task<Domain.Entities.InstructorPayout?> GetPayoutByIdAsync(int payoutId);
@@ -67,17 +66,17 @@ public interface IAdminFinanceRepository
     // ── Platform Withdrawals ──────────────────────────────────────────────
 
     /// <summary>Thêm mới bản ghi rút tiền Sàn.</summary>
-    Task AddWithdrawalAsync(Domain.Entities.PlatformWithdrawal withdrawal);
+    Task<int> AddWithdrawalAsync(Domain.Entities.PlatformWithdrawal withdrawal);
 
     /// <summary>Lấy danh sách rút tiền Sàn (mới nhất trước).</summary>
-    Task<List<Domain.Entities.PlatformWithdrawal>> GetWithdrawalsAsync();
+    Task<(List<Domain.Entities.PlatformWithdrawal> Items, int TotalCount)> GetWithdrawalsAsync(int? year = null, int? month = null, int page = 1, int pageSize = 10);
 
     // ── Refund ─────────────────────────────────────────────────────────────
 
     /// <summary>
     /// Lấy danh sách các giao dịch có yêu cầu hoàn tiền đang chờ duyệt (status = 'refund_pending').
     /// </summary>
-    Task<List<Domain.Entities.Transaction>> GetPendingRefundRequestsAsync();
+    Task<(List<Domain.Entities.Transaction> Items, int TotalCount)> GetPendingRefundRequestsAsync(int page = 1, int pageSize = 10);
 
     /// <summary>
     /// Lấy Transaction entity đầy đủ kèm InstructorPayouts + OrderItem → Course → Enrollment.
@@ -85,10 +84,7 @@ public interface IAdminFinanceRepository
     /// </summary>
     Task<Domain.Entities.Transaction?> GetTransactionWithFullGraphAsync(int transactionId);
 
-    /// <summary>
-    /// Tìm Enrollment active của user cho khóa học (để revoke khi refund).
-    /// </summary>
-    Task<Domain.Entities.Enrollment?> GetActiveEnrollmentAsync(int userId, int courseId);
+
 
     /// <summary>
     /// Lấy Stripe Transfer ID gốc (tr_xxx) từ DestinationPayment (py_xxx).
@@ -102,34 +98,15 @@ public interface IAdminFinanceRepository
     /// </summary>
     Task<Domain.Entities.Transaction?> GetTransactionByPaymentIntentIdAsync(string paymentIntentId);
 
+    Task<RefundEligibilityDto> GetRefundEligibilityMetricsAsync(int transactionId, int studentId, int courseId);
+
+    Task<List<InstructorCourseRevenueProjection>> GetInstructorCourseRevenuesAsync(int year, int month);
+
+    Task<List<InstructorCourseRevenueProjection>> GetInstructorCourseRevenuesByInstructorAsync(int instructorId, int year, int month);
+
     /// <summary>Xóa bản ghi chia tiền giảng viên (dùng khi hoàn tiền).</summary>
     void RemoveInstructorPayout(Domain.Entities.InstructorPayout payout);
 
     /// <summary>Commit changes.</summary>
-    Task SaveChangesAsync();
-}
-
-/// <summary>
-/// Projection DTO dùng nội bộ trong Repository → Service.
-/// Tránh expose EF entity ra ngoài (DIP).
-/// </summary>
-public class PayoutDetailProjection
-{
-    public int PayoutId { get; set; }
-    public int TransactionId { get; set; }
-    public string InstructorName { get; set; } = string.Empty;
-    public string InstructorEmail { get; set; } = string.Empty;
-    public string CourseTitle { get; set; } = string.Empty;
-    public decimal TotalAmount { get; set; }
-    public decimal InstructorReceived { get; set; }
-    public decimal TransferRate { get; set; }
-    public bool IsPaid { get; set; }
-    public DateTime? TransactionDate { get; set; }
-    public DateTime PayoutDate { get; set; }
-
-    // ★ Cột bổ sung cho Webhook tracking
-    public string? PayoutStatus { get; set; }
-    public string? StripeTransferId { get; set; }
-    public string? StripePayoutId { get; set; }
-    public DateTime? PaidToBankAt { get; set; }
+    Task<int> SaveChangesAsync();
 }

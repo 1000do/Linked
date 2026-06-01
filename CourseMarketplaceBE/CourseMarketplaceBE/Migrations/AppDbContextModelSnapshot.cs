@@ -131,6 +131,10 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("model_name");
 
+                    b.Property<string>("ModelPath")
+                        .HasColumnType("text")
+                        .HasColumnName("model_path");
+
                     b.Property<string>("ModelProvider")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
@@ -161,55 +165,6 @@ namespace CourseMarketplaceBE.Migrations
                         .HasName("ai_models_pkey");
 
                     b.ToTable("ai_models", (string)null);
-                });
-
-            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.AiModelsCourse", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("AssignedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("assigned_at")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<string>("ConfigJson")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("config_json");
-
-                    b.Property<int?>("CourseId")
-                        .HasColumnType("integer")
-                        .HasColumnName("course_id");
-
-                    b.Property<bool?>("IsEnabled")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("is_enabled");
-
-                    b.Property<int?>("ModelId")
-                        .HasColumnType("integer")
-                        .HasColumnName("model_id");
-
-                    b.Property<string>("Role")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("role");
-
-                    b.HasKey("Id")
-                        .HasName("ai_models_courses_pkey");
-
-                    b.HasIndex("CourseId");
-
-                    b.HasIndex(new[] { "ModelId", "CourseId" }, "ai_models_courses_model_id_course_id_key")
-                        .IsUnique();
-
-                    b.ToTable("ai_models_courses", (string)null);
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.AuditLog", b =>
@@ -261,6 +216,59 @@ namespace CourseMarketplaceBE.Migrations
                     b.HasIndex("ActorId");
 
                     b.ToTable("audit_logs", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.AvatarFrame", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("image_url");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("RequirementType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("requirement_type");
+
+                    b.Property<int>("RequirementValue")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("requirement_value");
+
+                    b.HasKey("Id")
+                        .HasName("avatar_frames_pkey");
+
+                    b.ToTable("avatar_frames", (string)null);
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CartItem", b =>
@@ -400,6 +408,10 @@ namespace CourseMarketplaceBE.Migrations
                     b.Property<int>("AccountId")
                         .HasColumnType("integer")
                         .HasColumnName("account_id");
+
+                    b.Property<DateTime?>("ClearedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("cleared_at");
 
                     b.Property<DateTime?>("JoinedAt")
                         .ValueGeneratedOnAdd()
@@ -552,6 +564,16 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("instructor_id");
 
+                    b.Property<bool>("IsRemoved")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_removed");
+
+                    b.Property<DateTime?>("LastApprovedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("last_approved_at");
+
                     b.Property<string>("ModerationFeedback")
                         .HasColumnType("text")
                         .HasColumnName("moderation_feedback");
@@ -593,6 +615,55 @@ namespace CourseMarketplaceBE.Migrations
                     b.ToTable("courses", (string)null);
                 });
 
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseAiIntegration", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("AssignedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("assigned_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("ConfigJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("config_json");
+
+                    b.Property<int?>("CourseId")
+                        .HasColumnType("integer")
+                        .HasColumnName("course_id");
+
+                    b.Property<bool>("IsEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_enabled");
+
+                    b.Property<int?>("ModelId")
+                        .HasColumnType("integer")
+                        .HasColumnName("model_id");
+
+                    b.Property<string>("Role")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("role");
+
+                    b.HasKey("Id")
+                        .HasName("courses_ai_integrations_pkey");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex(new[] { "ModelId", "CourseId" }, "courses_ai_integrations_model_id_course_id_key")
+                        .IsUnique();
+
+                    b.ToTable("courses_ai_integrations", (string)null);
+                });
+
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseAiUsageLog", b =>
                 {
                     b.Property<int>("LogId")
@@ -602,10 +673,6 @@ namespace CourseMarketplaceBE.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("LogId"));
 
-                    b.Property<int?>("AiModelCourseId")
-                        .HasColumnType("integer")
-                        .HasColumnName("ai_model_course_id");
-
                     b.Property<string>("ErrorMessage")
                         .HasColumnType("text")
                         .HasColumnName("error_message");
@@ -613,6 +680,10 @@ namespace CourseMarketplaceBE.Migrations
                     b.Property<string>("InputJson")
                         .HasColumnType("jsonb")
                         .HasColumnName("input_json");
+
+                    b.Property<int?>("IntegrationId")
+                        .HasColumnType("integer")
+                        .HasColumnName("integration_id");
 
                     b.Property<string>("InteractionType")
                         .HasMaxLength(50)
@@ -629,11 +700,6 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnName("log_created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<string>("LogStatus")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("log_status");
-
                     b.Property<string>("OutputJson")
                         .HasColumnType("jsonb")
                         .HasColumnName("output_json");
@@ -645,7 +711,7 @@ namespace CourseMarketplaceBE.Migrations
                     b.HasKey("LogId")
                         .HasName("course_ai_usage_logs_pkey");
 
-                    b.HasIndex("AiModelCourseId");
+                    b.HasIndex("IntegrationId");
 
                     b.ToTable("course_ai_usage_logs", (string)null);
                 });
@@ -662,6 +728,12 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnName("description_hash")
                         .IsFixedLength();
 
+                    b.Property<string>("RequirementsHash")
+                        .HasMaxLength(32)
+                        .HasColumnType("character(32)")
+                        .HasColumnName("requirements_hash")
+                        .IsFixedLength();
+
                     b.Property<string>("ThumbnailHash")
                         .HasMaxLength(32)
                         .HasColumnType("character(32)")
@@ -674,10 +746,81 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnName("title_hash")
                         .IsFixedLength();
 
+                    b.Property<string>("WhatYouWillLearnHash")
+                        .HasMaxLength(32)
+                        .HasColumnType("character(32)")
+                        .HasColumnName("what_you_will_learn_hash")
+                        .IsFixedLength();
+
                     b.HasKey("CourseId")
                         .HasName("course_exts_pkey");
 
                     b.ToTable("course_exts", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseReport", b =>
+                {
+                    b.Property<int>("CourseReportId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("course_report_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CourseReportId"));
+
+                    b.Property<DateTime?>("AccessGrantedUntil")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("access_granted_until");
+
+                    b.Property<int?>("CourseId")
+                        .HasColumnType("integer")
+                        .HasColumnName("course_id");
+
+                    b.Property<string>("CourseReportsStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("course_reports_status");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("reason");
+
+                    b.Property<int?>("ReporterId")
+                        .HasColumnType("integer")
+                        .HasColumnName("reporter_id");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasColumnType("text")
+                        .HasColumnName("resolution_note");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<int?>("ResolverId")
+                        .HasColumnType("integer")
+                        .HasColumnName("resolver_id");
+
+                    b.HasKey("CourseReportId")
+                        .HasName("course_reports_pkey");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("ReporterId");
+
+                    b.HasIndex("ResolverId");
+
+                    b.ToTable("course_reports", (string)null);
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseReview", b =>
@@ -765,11 +908,6 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnName("log_created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<string>("LogStatus")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("log_status");
-
                     b.Property<int?>("ModelId")
                         .HasColumnType("integer")
                         .HasColumnName("model_id");
@@ -786,6 +924,71 @@ namespace CourseMarketplaceBE.Migrations
                     b.HasIndex("ModelId");
 
                     b.ToTable("course_review_moderation_logs", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseReviewReport", b =>
+                {
+                    b.Property<int>("CourseReviewReportId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("course_review_report_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CourseReviewReportId"));
+
+                    b.Property<DateTime?>("AccessGrantedUntil")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("access_granted_until");
+
+                    b.Property<int?>("CourseReviewId")
+                        .HasColumnType("integer")
+                        .HasColumnName("course_review_id");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("reason");
+
+                    b.Property<int?>("ReporterId")
+                        .HasColumnType("integer")
+                        .HasColumnName("reporter_id");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasColumnType("text")
+                        .HasColumnName("resolution_note");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<int?>("ResolverId")
+                        .HasColumnType("integer")
+                        .HasColumnName("resolver_id");
+
+                    b.Property<string>("UserReportsStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("user_reports_status");
+
+                    b.HasKey("CourseReviewReportId")
+                        .HasName("course_review_reports_pkey");
+
+                    b.HasIndex("CourseReviewId");
+
+                    b.HasIndex("ReporterId");
+
+                    b.HasIndex("ResolverId");
+
+                    b.ToTable("course_review_reports", (string)null);
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseStats", b =>
@@ -885,30 +1088,6 @@ namespace CourseMarketplaceBE.Migrations
                     b.ToTable("enrollments", (string)null);
                 });
 
-            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.EnrollmentProgress", b =>
-                {
-                    b.Property<int>("EnrollmentId")
-                        .HasColumnType("integer")
-                        .HasColumnName("enrollment_id");
-
-                    b.Property<DateTime?>("LastModifiedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("last_modified_at")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<int>("LearnedMaterialCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0)
-                        .HasColumnName("learned_material_count");
-
-                    b.HasKey("EnrollmentId")
-                        .HasName("enrollment_progress_pkey");
-
-                    b.ToTable("enrollment_progress", (string)null);
-                });
-
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Instructor", b =>
                 {
                     b.Property<int>("InstructorId")
@@ -936,6 +1115,10 @@ namespace CourseMarketplaceBE.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("expertise_categories");
+
+                    b.Property<string>("FacebookUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("facebook_url");
 
                     b.Property<string>("LinkedinUrl")
                         .HasColumnType("text")
@@ -966,6 +1149,10 @@ namespace CourseMarketplaceBE.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("stripe_onboarding_status");
+
+                    b.Property<string>("YoutubeUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("youtube_url");
 
                     b.HasKey("InstructorId")
                         .HasName("instructors_pkey");
@@ -1069,6 +1256,10 @@ namespace CourseMarketplaceBE.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("MaterialId"));
 
+                    b.Property<string>("CloudPublicId")
+                        .HasColumnType("text")
+                        .HasColumnName("cloud_public_id");
+
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp without time zone")
@@ -1087,11 +1278,6 @@ namespace CourseMarketplaceBE.Migrations
                     b.Property<int?>("LessonId")
                         .HasColumnType("integer")
                         .HasColumnName("lesson_id");
-
-                    b.Property<string>("MaterialHash")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("material_hash");
 
                     b.Property<MaterialMetadata>("MaterialMetadata")
                         .HasColumnType("jsonb")
@@ -1148,6 +1334,12 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
+                    b.Property<bool>("IsRemoved")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_removed");
+
                     b.Property<string>("LessonStatus")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
@@ -1175,36 +1367,6 @@ namespace CourseMarketplaceBE.Migrations
                     b.HasIndex("CourseId");
 
                     b.ToTable("lessons", (string)null);
-                });
-
-            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.LessonExt", b =>
-                {
-                    b.Property<int>("LessonId")
-                        .HasColumnType("integer")
-                        .HasColumnName("lesson_id");
-
-                    b.Property<string>("DescriptionHash")
-                        .HasMaxLength(32)
-                        .HasColumnType("character(32)")
-                        .HasColumnName("description_hash")
-                        .IsFixedLength();
-
-                    b.Property<string>("ThumbnailHash")
-                        .HasMaxLength(32)
-                        .HasColumnType("character(32)")
-                        .HasColumnName("thumbnail_hash")
-                        .IsFixedLength();
-
-                    b.Property<string>("TitleHash")
-                        .HasMaxLength(32)
-                        .HasColumnType("character(32)")
-                        .HasColumnName("title_hash")
-                        .IsFixedLength();
-
-                    b.HasKey("LessonId")
-                        .HasName("lesson_exts_pkey");
-
-                    b.ToTable("lesson_exts", (string)null);
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.LessonReview", b =>
@@ -1298,11 +1460,6 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnName("log_created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<string>("LogStatus")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("log_status");
-
                     b.Property<int?>("ModelId")
                         .HasColumnType("integer")
                         .HasColumnName("model_id");
@@ -1319,6 +1476,112 @@ namespace CourseMarketplaceBE.Migrations
                     b.HasIndex("ModelId");
 
                     b.ToTable("lesson_review_moderation_logs", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.LessonReviewReport", b =>
+                {
+                    b.Property<int>("LessonReviewReportId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("lesson_review_report_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("LessonReviewReportId"));
+
+                    b.Property<DateTime?>("AccessGrantedUntil")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("access_granted_until");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<int?>("LessonReviewId")
+                        .HasColumnType("integer")
+                        .HasColumnName("lesson_review_id");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("reason");
+
+                    b.Property<int?>("ReporterId")
+                        .HasColumnType("integer")
+                        .HasColumnName("reporter_id");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasColumnType("text")
+                        .HasColumnName("resolution_note");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<int?>("ResolverId")
+                        .HasColumnType("integer")
+                        .HasColumnName("resolver_id");
+
+                    b.Property<string>("UserReportsStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("user_reports_status");
+
+                    b.HasKey("LessonReviewReportId")
+                        .HasName("lesson_review_reports_pkey");
+
+                    b.HasIndex("LessonReviewId");
+
+                    b.HasIndex("ReporterId");
+
+                    b.HasIndex("ResolverId");
+
+                    b.ToTable("lesson_review_reports", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Lockout", b =>
+                {
+                    b.Property<int>("LockoutId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("lockout_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("LockoutId"));
+
+                    b.Property<int?>("AccountId")
+                        .HasColumnType("integer")
+                        .HasColumnName("account_id");
+
+                    b.Property<DateTime?>("LockoutEnd")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("lockout_end");
+
+                    b.Property<string>("LockoutLevel")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("lockout_level");
+
+                    b.Property<DateTime?>("LockoutStart")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("lockout_start")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("LockoutType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("lockout_type");
+
+                    b.HasKey("LockoutId")
+                        .HasName("lockouts_pkey");
+
+                    b.HasIndex("AccountId");
+
+                    b.ToTable("lockouts", (string)null);
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Manager", b =>
@@ -1342,6 +1605,40 @@ namespace CourseMarketplaceBE.Migrations
                         .HasName("managers_pkey");
 
                     b.ToTable("managers", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.MaterialCompletion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("completed_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int>("EnrollmentId")
+                        .HasColumnType("integer")
+                        .HasColumnName("enrollment_id");
+
+                    b.Property<int>("MaterialId")
+                        .HasColumnType("integer")
+                        .HasColumnName("material_id");
+
+                    b.HasKey("Id")
+                        .HasName("material_completions_pkey");
+
+                    b.HasIndex("MaterialId");
+
+                    b.HasIndex(new[] { "EnrollmentId", "MaterialId" }, "material_completions_enrollment_id_material_id_key")
+                        .IsUnique();
+
+                    b.ToTable("material_completions", (string)null);
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.MaterialEmbedding", b =>
@@ -1465,7 +1762,7 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnType("text")
                         .HasColumnName("file_url");
 
-                    b.Property<int?>("MessageId")
+                    b.Property<int>("MessageId")
                         .HasColumnType("integer")
                         .HasColumnName("message_id");
 
@@ -1503,11 +1800,6 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("log_created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<string>("LogStatus")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("log_status");
 
                     b.Property<int?>("MessageId")
                         .HasColumnType("integer")
@@ -1635,6 +1927,14 @@ namespace CourseMarketplaceBE.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CouponCode")
+                        .HasColumnType("text")
+                        .HasColumnName("coupon_code");
+
+                    b.Property<string>("CouponType")
+                        .HasColumnType("text")
+                        .HasColumnName("coupon_type");
+
                     b.Property<bool?>("CouponUsed")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -1645,9 +1945,17 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("course_id");
 
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("numeric")
+                        .HasColumnName("discount_amount");
+
                     b.Property<int?>("OrderId")
                         .HasColumnType("integer")
                         .HasColumnName("order_id");
+
+                    b.Property<decimal?>("OriginalPrice")
+                        .HasColumnType("numeric")
+                        .HasColumnName("original_price");
 
                     b.Property<decimal>("PurchasePrice")
                         .HasPrecision(10, 2)
@@ -1847,6 +2155,32 @@ namespace CourseMarketplaceBE.Migrations
                     b.ToTable("transactions", (string)null);
                 });
 
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.TransactionExt", b =>
+                {
+                    b.Property<int>("TransactionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("transaction_id");
+
+                    b.Property<string>("RefundAdminNote")
+                        .HasColumnType("text")
+                        .HasColumnName("refund_admin_note");
+
+                    b.Property<string>("RefundReason")
+                        .HasColumnType("text")
+                        .HasColumnName("refund_reason");
+
+                    b.Property<DateTime?>("RefundRequestedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("refund_requested_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("TransactionId")
+                        .HasName("transaction_exts_pkey");
+
+                    b.ToTable("transaction_exts", (string)null);
+                });
+
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.User", b =>
                 {
                     b.Property<int>("UserId")
@@ -1871,6 +2205,36 @@ namespace CourseMarketplaceBE.Migrations
                         .HasName("users_pkey");
 
                     b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.UserAvatarFrame", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("user_id");
+
+                    b.Property<int>("FrameId")
+                        .HasColumnType("integer")
+                        .HasColumnName("frame_id");
+
+                    b.Property<bool>("IsEquipped")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_equipped");
+
+                    b.Property<DateTime>("UnlockedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("unlocked_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("UserId", "FrameId")
+                        .HasName("user_avatar_frames_pkey");
+
+                    b.HasIndex("FrameId");
+
+                    b.ToTable("user_avatar_frames", (string)null);
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.UserReport", b =>
@@ -1978,25 +2342,6 @@ namespace CourseMarketplaceBE.Migrations
                     b.ToTable("wishlist_items", (string)null);
                 });
 
-            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.AiModelsCourse", b =>
-                {
-                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Course", "Course")
-                        .WithMany("AiModelsCourses")
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("ai_models_courses_course_id_fkey");
-
-                    b.HasOne("CourseMarketplaceBE.Domain.Entities.AiModel", "Model")
-                        .WithMany("AiModelsCourses")
-                        .HasForeignKey("ModelId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("ai_models_courses_model_id_fkey");
-
-                    b.Navigation("Course");
-
-                    b.Navigation("Model");
-                });
-
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.AuditLog", b =>
                 {
                     b.HasOne("CourseMarketplaceBE.Domain.Entities.Account", "Actor")
@@ -2086,15 +2431,34 @@ namespace CourseMarketplaceBE.Migrations
                     b.Navigation("Instructor");
                 });
 
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseAiIntegration", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Course", "Course")
+                        .WithMany("CourseAiIntegrations")
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("courses_ai_integrations_course_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.AiModel", "Model")
+                        .WithMany("CourseAiIntegrations")
+                        .HasForeignKey("ModelId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("courses_ai_integrations_model_id_fkey");
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Model");
+                });
+
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseAiUsageLog", b =>
                 {
-                    b.HasOne("CourseMarketplaceBE.Domain.Entities.AiModelsCourse", "AiModelCourse")
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.CourseAiIntegration", "CourseAiIntegration")
                         .WithMany("CourseAiUsageLogs")
-                        .HasForeignKey("AiModelCourseId")
+                        .HasForeignKey("IntegrationId")
                         .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("course_ai_usage_logs_ai_model_course_id_fkey");
+                        .HasConstraintName("course_ai_usage_logs_integration_id_fkey");
 
-                    b.Navigation("AiModelCourse");
+                    b.Navigation("CourseAiIntegration");
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseExt", b =>
@@ -2107,6 +2471,33 @@ namespace CourseMarketplaceBE.Migrations
                         .HasConstraintName("course_exts_course_id_fkey");
 
                     b.Navigation("Course");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseReport", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("course_reports_course_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Account", "Reporter")
+                        .WithMany()
+                        .HasForeignKey("ReporterId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("course_reports_reporter_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Account", "Resolver")
+                        .WithMany()
+                        .HasForeignKey("ResolverId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("course_reports_resolver_id_fkey");
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Reporter");
+
+                    b.Navigation("Resolver");
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseReview", b =>
@@ -2140,6 +2531,33 @@ namespace CourseMarketplaceBE.Migrations
                     b.Navigation("Model");
                 });
 
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseReviewReport", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.CourseReview", "CourseReview")
+                        .WithMany()
+                        .HasForeignKey("CourseReviewId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("course_review_reports_course_review_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Account", "Reporter")
+                        .WithMany()
+                        .HasForeignKey("ReporterId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("course_review_reports_reporter_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Account", "Resolver")
+                        .WithMany()
+                        .HasForeignKey("ResolverId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("course_review_reports_resolver_id_fkey");
+
+                    b.Navigation("CourseReview");
+
+                    b.Navigation("Reporter");
+
+                    b.Navigation("Resolver");
+                });
+
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Enrollment", b =>
                 {
                     b.HasOne("CourseMarketplaceBE.Domain.Entities.Course", "Course")
@@ -2157,18 +2575,6 @@ namespace CourseMarketplaceBE.Migrations
                     b.Navigation("Course");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.EnrollmentProgress", b =>
-                {
-                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Enrollment", "Enrollment")
-                        .WithOne("Progress")
-                        .HasForeignKey("CourseMarketplaceBE.Domain.Entities.EnrollmentProgress", "EnrollmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("enrollment_progress_enrollment_id_fkey");
-
-                    b.Navigation("Enrollment");
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Instructor", b =>
@@ -2224,18 +2630,6 @@ namespace CourseMarketplaceBE.Migrations
                     b.Navigation("Course");
                 });
 
-            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.LessonExt", b =>
-                {
-                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Lesson", "Lesson")
-                        .WithOne("LessonExt")
-                        .HasForeignKey("CourseMarketplaceBE.Domain.Entities.LessonExt", "LessonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("lesson_exts_lesson_id_fkey");
-
-                    b.Navigation("Lesson");
-                });
-
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.LessonReview", b =>
                 {
                     b.HasOne("CourseMarketplaceBE.Domain.Entities.Enrollment", "Enrollment")
@@ -2275,6 +2669,44 @@ namespace CourseMarketplaceBE.Migrations
                     b.Navigation("Model");
                 });
 
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.LessonReviewReport", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.LessonReview", "LessonReview")
+                        .WithMany()
+                        .HasForeignKey("LessonReviewId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("lesson_review_reports_lesson_review_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Account", "Reporter")
+                        .WithMany()
+                        .HasForeignKey("ReporterId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("lesson_review_reports_reporter_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Account", "Resolver")
+                        .WithMany()
+                        .HasForeignKey("ResolverId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("lesson_review_reports_resolver_id_fkey");
+
+                    b.Navigation("LessonReview");
+
+                    b.Navigation("Reporter");
+
+                    b.Navigation("Resolver");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Lockout", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Account", "Account")
+                        .WithMany("Lockouts")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("lockouts_account_id_fkey");
+
+                    b.Navigation("Account");
+                });
+
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Manager", b =>
                 {
                     b.HasOne("CourseMarketplaceBE.Domain.Entities.Account", "ManagerNavigation")
@@ -2285,6 +2717,27 @@ namespace CourseMarketplaceBE.Migrations
                         .HasConstraintName("managers_manager_id_fkey");
 
                     b.Navigation("ManagerNavigation");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.MaterialCompletion", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Enrollment", "Enrollment")
+                        .WithMany("MaterialCompletions")
+                        .HasForeignKey("EnrollmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("material_completions_enrollment_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.LearningMaterial", "Material")
+                        .WithMany("MaterialCompletions")
+                        .HasForeignKey("MaterialId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("material_completions_material_id_fkey");
+
+                    b.Navigation("Enrollment");
+
+                    b.Navigation("Material");
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.MaterialEmbedding", b =>
@@ -2324,6 +2777,7 @@ namespace CourseMarketplaceBE.Migrations
                         .WithMany("Attachments")
                         .HasForeignKey("MessageId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
                         .HasConstraintName("message_attachments_message_id_fkey");
 
                     b.Navigation("Message");
@@ -2446,6 +2900,18 @@ namespace CourseMarketplaceBE.Migrations
                     b.Navigation("OrderItem");
                 });
 
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.TransactionExt", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Transaction", "Transaction")
+                        .WithOne("TransactionExt")
+                        .HasForeignKey("CourseMarketplaceBE.Domain.Entities.TransactionExt", "TransactionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("transaction_exts_transaction_id_fkey");
+
+                    b.Navigation("Transaction");
+                });
+
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.User", b =>
                 {
                     b.HasOne("CourseMarketplaceBE.Domain.Entities.Account", "UserNavigation")
@@ -2456,6 +2922,18 @@ namespace CourseMarketplaceBE.Migrations
                         .HasConstraintName("users_user_id_fkey");
 
                     b.Navigation("UserNavigation");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.UserAvatarFrame", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.AvatarFrame", "Frame")
+                        .WithMany()
+                        .HasForeignKey("FrameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("user_avatar_frames_frame_id_fkey");
+
+                    b.Navigation("Frame");
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.UserReport", b =>
@@ -2516,6 +2994,8 @@ namespace CourseMarketplaceBE.Migrations
                 {
                     b.Navigation("ChatParticipants");
 
+                    b.Navigation("Lockouts");
+
                     b.Navigation("Manager");
 
                     b.Navigation("Messages");
@@ -2539,18 +3019,13 @@ namespace CourseMarketplaceBE.Migrations
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.AiModel", b =>
                 {
-                    b.Navigation("AiModelsCourses");
+                    b.Navigation("CourseAiIntegrations");
 
                     b.Navigation("CourseReviewModerationLogs");
 
                     b.Navigation("LessonReviewModerationLogs");
 
                     b.Navigation("MessageModerationLogs");
-                });
-
-            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.AiModelsCourse", b =>
-                {
-                    b.Navigation("CourseAiUsageLogs");
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Category", b =>
@@ -2574,9 +3049,9 @@ namespace CourseMarketplaceBE.Migrations
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Course", b =>
                 {
-                    b.Navigation("AiModelsCourses");
-
                     b.Navigation("CartItems");
+
+                    b.Navigation("CourseAiIntegrations");
 
                     b.Navigation("CourseExt");
 
@@ -2589,13 +3064,18 @@ namespace CourseMarketplaceBE.Migrations
                     b.Navigation("WishlistItems");
                 });
 
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseAiIntegration", b =>
+                {
+                    b.Navigation("CourseAiUsageLogs");
+                });
+
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Enrollment", b =>
                 {
                     b.Navigation("CourseReviews");
 
                     b.Navigation("LessonReviews");
 
-                    b.Navigation("Progress");
+                    b.Navigation("MaterialCompletions");
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Instructor", b =>
@@ -2607,14 +3087,14 @@ namespace CourseMarketplaceBE.Migrations
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.LearningMaterial", b =>
                 {
+                    b.Navigation("MaterialCompletions");
+
                     b.Navigation("MaterialEmbeddings");
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Lesson", b =>
                 {
                     b.Navigation("LearningMaterials");
-
-                    b.Navigation("LessonExt");
 
                     b.Navigation("LessonReviews");
                 });
@@ -2644,6 +3124,8 @@ namespace CourseMarketplaceBE.Migrations
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Transaction", b =>
                 {
                     b.Navigation("InstructorPayouts");
+
+                    b.Navigation("TransactionExt");
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.User", b =>

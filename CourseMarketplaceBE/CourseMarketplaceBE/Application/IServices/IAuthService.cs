@@ -1,4 +1,4 @@
-﻿using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs;
 
 namespace CourseMarketplaceBE.Application.IServices;
 
@@ -15,4 +15,5 @@ public interface IAuthService
 
     Task<LoginResponse?> RefreshTokenAsync(string refreshToken);
     Task<bool> LogoutAsync(int accountId);
+    Task<bool> IsEmailVerifiedAsync(int userId);
 }

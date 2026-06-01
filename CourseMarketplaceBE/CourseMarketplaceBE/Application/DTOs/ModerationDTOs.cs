@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json.Serialization;
+using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Domain.Constants;
 
 
@@ -23,9 +24,10 @@ namespace CourseMarketplaceBE.Application.DTOs
 
         // NEW: Flagging tracking
         public int FlagCount { get; set; }
+        public bool IsRemoved { get; set; }
     }
 
-    public class ModerationFilterDto
+    public class ModerationFilterDto : PagedRequestDto
     {
         public string? Search { get; set; }
         public string? Category { get; set; }
@@ -370,4 +372,3 @@ namespace CourseMarketplaceBE.Application.DTOs
         public int ResolvedTodayCount { get; set; }
     }
 }
-

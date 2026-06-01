@@ -103,11 +103,7 @@
                 }
 
                 <div class="max-w-4xl mx-auto space-y-12">
-                    <div class="flex items-center justify-between mb-8">
-                        <div>
-                            <h2 class="text-3xl font-headline font-extrabold text-slate-900">Course Curriculum</h2>
-                            <p class="text-slate-500 mt-1">Design your learning path. Drag and drop to reorder.</p>
-                        </div>
+                    <div class="flex items-center justify-end mb-8">
                         <div class="flex flex-col items-end gap-2">
                             <div id="video-duration-counter" class="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 flex items-center gap-2 border border-slate-200">
                                 <span class="material-symbols-outlined text-[16px]">schedule</span>
@@ -260,6 +256,11 @@
                                     </label>
                                 </div>
 
+                                <div id="coupon-free-warning" class="hidden text-xs text-amber-600 font-semibold px-1 mt-1 flex items-center gap-1.5 bg-amber-50 border border-amber-200/50 rounded-xl p-3 animate-in fade-in slide-in-from-top-1 duration-300">
+                                    <span class="material-symbols-outlined text-amber-600 text-[16px]">warning</span>
+                                    <span>Vouchers/Coupons cannot be applied to free courses.</span>
+                                </div>
+
                                 <!-- Coupon Action Area -->
                                 <div id="voucher-action-container" class="@(ViewBag.CouponCode != null ? "" : "hidden") space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                                     <!-- Select Button if not selected -->
@@ -313,6 +314,55 @@
                             const couponToggle = document.getElementById('coupon-toggle');
                             const voucherActionContainer = document.getElementById('voucher-action-container');
                             const currentCouponCode = '@ViewBag.CouponCode';
+
+                            window.syncCouponStateWithPrice = async function(price) {
+                                const val = parseFloat(price) || 0;
+                                const toggle = document.getElementById('coupon-toggle');
+                                const container = document.getElementById('voucher-action-container');
+                                const warning = document.getElementById('coupon-free-warning');
+                                const labelParent = toggle ? toggle.closest('.flex.items-center.justify-between.p-4') : null;
+
+                                if (val === 0) {
+                                    if (toggle) {
+                                        if (toggle.checked) {
+                                            toggle.checked = false;
+                                            // Silently remove the applied coupon
+                                            try {
+                                                const res = await fetch(`/Coupon/PlatformRemove?courseId=@courseId`, { method: 'DELETE' });
+                                                const result = await res.json();
+                                                if (result.success) {
+                                                    // Reset active coupon variables
+                                                    const displayCode = document.getElementById('display-coupon-code');
+                                                    if (displayCode) displayCode.textContent = '';
+                                                    const noSelectedState = document.getElementById('no-voucher-selected-state');
+                                                    if (noSelectedState) noSelectedState.classList.remove('hidden');
+                                                    const selectedState = document.getElementById('voucher-selected-state');
+                                                    if (selectedState) selectedState.classList.add('hidden');
+                                                }
+                                            } catch (e) {
+                                                console.error("Error removing platform coupon dynamically:", e);
+                                            }
+                                        }
+                                        toggle.disabled = true;
+                                        if (labelParent) {
+                                            labelParent.classList.add('opacity-60', 'pointer-events-none');
+                                        }
+                                    }
+                                    if (container) container.classList.add('hidden');
+                                    if (warning) warning.classList.remove('hidden');
+                                } else {
+                                    if (toggle) {
+                                        toggle.disabled = false;
+                                        if (labelParent) {
+                                            labelParent.classList.remove('opacity-60', 'pointer-events-none');
+                                        }
+                                    }
+                                    if (warning) warning.classList.add('hidden');
+                                    if (toggle && toggle.checked) {
+                                        if (container) container.classList.remove('hidden');
+                                    }
+                                }
+                            };
 
                             window.openCouponModal = function() {
                                 const modal = document.getElementById('coupon-modal');
@@ -457,6 +507,7 @@
 
                             // Load platform coupons on initialize
                             loadPlatformCoupons();
+                            syncCouponStateWithPrice(@(ViewBag.Price ?? 0));
                         </script>
 
 
@@ -539,7 +590,14 @@
                     <div class="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest mb-2">
                         <span class="material-symbols-outlined text-[14px]">edit</span> Editing Lesson <span id="editing-lesson-id">--</span>
                     </div>
-                    <h2 id="editing-lesson-title" class="text-3xl font-headline font-extrabold text-slate-900">Select a Lesson</h2>
+                    <div class="flex items-center gap-2 group">
+                        <input type="text" id="editing-lesson-title" 
+                            class="text-3xl font-headline font-extrabold text-slate-900 bg-transparent border-none p-0 focus:ring-0 focus:outline-none hover:bg-slate-100 rounded transition-colors w-full cursor-pointer" 
+                            value="Select a Lesson" 
+                            onblur="updateLessonTitleInline(this.value)" 
+                            onkeydown="if(event.key === 'Enter') this.blur();" />
+                        <span class="material-symbols-outlined text-[18px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">edit</span>
+                    </div>
                     <div class="flex items-center gap-4 mt-2 text-xs font-semibold text-slate-500">
                         <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">schedule</span> <span id="editing-lesson-duration">0 mins</span></span>
                         <span id="editing-lesson-status-badge" class="flex items-center gap-1 text-slate-400">
@@ -596,7 +654,10 @@
                                             <span class="material-symbols-outlined" style='font-variation-settings: "FILL" 1;'>play_circle</span>
                                         </div>
                                         <div>
-                                            <h4 class="font-bold text-slate-900" id="uploaded-filename"></h4>
+                                            <div class="flex items-center gap-2 group w-64">
+                                                <input type="text" id="uploaded-filename" class="font-bold text-slate-900 bg-transparent border-none p-0 focus:ring-0 focus:outline-none hover:bg-slate-100 rounded transition-colors w-full cursor-pointer truncate" value="Lesson Video Content" onblur="updateVideoTitleInline(this.value)" onkeydown="if(event.key === 'Enter') this.blur();" />
+                                                <span class="material-symbols-outlined text-[16px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">edit</span>
+                                            </div>
                                             <p class="text-xs text-slate-500" id="video-save-status">Video successfully processed</p>
                                         </div>
                                     </div>
@@ -637,10 +698,13 @@
                             </div>
                             
                             <!-- Add New Resource Form -->
-                            <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
-                                <h4 class="font-bold text-slate-900 mb-4">Add New Resource</h4>
+                            <div class="bg-slate-50 p-6 rounded-xl border border-slate-200" id="resource-form-container">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 id="resource-form-title" class="font-bold text-slate-900">Add New Resource</h4>
+                                    <button id="cancel-edit-resource-btn" class="hidden text-xs text-slate-500 hover:text-slate-700 underline font-semibold" onclick="resetResourceForm()">Cancel Edit</button>
+                                </div>
                                 
-                                <div class="mb-4">
+                                <div class="mb-4" id="resource-file-upload-section">
                                     <label class="text-sm font-bold text-slate-700 block mb-2">Resource File</label>
                                     <div class="flex items-center gap-4">
                                         <input type="hidden" id="ResourceUrl" name="ResourceUrl" />
@@ -658,12 +722,17 @@
                                     <input type="text" id="resource-title-input" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-primary focus:border-primary" placeholder="e.g. Presentation Slides" />
                                 </div>
                                 
-                                <div>
+                                <div class="mb-4">
                                     <label class="text-sm font-bold text-slate-700 block mb-2">Resource Description</label>
                                     <div class="bg-white rounded-xl">
                                         <div id="resource-editor"></div>
                                     </div>
                                 </div>
+
+                                <button id="update-resource-btn" class="hidden w-full mt-2 px-4 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors shadow-sm flex justify-center" onclick="submitResourceEdit()">
+                                    Save Changes
+                                </button>
+                                <input type="hidden" id="editing-resource-id" value="" />
                             </div>
                         </div>
                         <div class="space-y-6">
@@ -912,17 +981,23 @@
             const catId = document.getElementById('course-category-input').value;
             const thumb = document.getElementById('course-thumbnail-input').value;
             
-            const desc = window.courseDescQuill.root.innerHTML;
-            const learn = window.courseLearnQuill.root.innerHTML;
-            const req = window.courseReqQuill.root.innerHTML;
-
-            const autoSaveEl = document.getElementById('landing-autosave-status');
-            const autoSaveText = autoSaveEl?.querySelector('span:last-child') || { textContent: '' };
-
-            // Validation (silently return on invalid fields for auto-save flow)
+            const desc = window.courseDescQuill ? window.courseDescQuill.root.innerHTML : '';
+            
+            // Validate basic required fields before checking changes
             if (!title || title.trim() === '') return;
             if (!desc || desc.trim() === '' || desc === '<p><br></p>') return;
             if (catId == "0") return;
+
+            // Stop if there are no actual changes
+            if (typeof hasLandingChanges === 'function' && !hasLandingChanges()) {
+                return;
+            }
+
+            const learn = window.courseLearnQuill ? window.courseLearnQuill.root.innerHTML : '';
+            const req = window.courseReqQuill ? window.courseReqQuill.root.innerHTML : '';
+
+            const autoSaveEl = document.getElementById('landing-autosave-status');
+            const autoSaveText = autoSaveEl?.querySelector('span:last-child') || { textContent: '' };
             
             if (autoSaveEl) {
                 autoSaveEl.classList.remove('hidden');
@@ -1244,9 +1319,15 @@
                 
                 const iconName = hasRejected ? 'cancel' : 'play_circle';
                 const iconColor = hasRejected ? 'red-500' : (isSelected ? 'primary' : 'slate-400');
+                const lDesc = lesson.description || lesson.Description || 'Video Lesson';
+
                 const statusLabel = hasRejected 
                     ? '<span class="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">error</span> Rejected</span>'
-                    : '<p class="text-[10px] text-slate-500 mt-1">Video Lesson</p>';
+                    : `
+                    <div class="flex items-center gap-1 group mt-0.5" onclick="event.stopPropagation()">
+                        <input type="text" class="text-[10px] text-slate-500 bg-transparent border-none p-0 m-0 h-auto focus:ring-0 focus:outline-none hover:bg-slate-100 rounded w-full cursor-text truncate" value="${lDesc}" placeholder="Add description..." onblur="updateLessonInline(${lId}, 'description', this)" onkeydown="if(event.key==='Enter') this.blur();" />
+                        <span class="material-symbols-outlined text-[12px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shrink-0">edit</span>
+                    </div>`;
                 
                 const removeBtnHtml = isPending ? '' : `
                     <button onclick="removeLesson(event, ${lId})" class="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50 self-center" title="Remove Lesson">
@@ -1258,8 +1339,12 @@
                     <div class="lesson-item p-3 bg-white border rounded-lg flex items-start gap-3 cursor-pointer transition-colors ${activeClasses}" 
                          data-lesson-id="${lId}" data-num="${num}" data-title="${lTitle}" onclick="selectLesson(this)">
                         <span class="material-symbols-outlined text-${iconColor} text-[20px] mt-0.5" ${isSelected && !hasRejected ? "style='font-variation-settings: \"FILL\" 1;'" : ""}>${iconName}</span>
-                        <div class="flex-1">
-                            <p class="font-bold text-slate-900 text-sm">${num}. ${lTitle}</p>
+                        <div class="flex-1 overflow-hidden mr-2">
+                            <div class="flex items-center gap-1 group" onclick="event.stopPropagation()">
+                                <span class="font-bold text-slate-900 text-sm shrink-0">${num}.</span>
+                                <input type="text" class="font-bold text-slate-900 text-sm bg-transparent border-none p-0 m-0 h-auto focus:ring-0 focus:outline-none hover:bg-slate-100 rounded w-full cursor-text truncate lesson-title-input" value="${lTitle}" onblur="updateLessonInline(${lId}, 'title', this)" onkeydown="if(event.key==='Enter') this.blur();" />
+                                <span class="material-symbols-outlined text-[14px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shrink-0">edit</span>
+                            </div>
                             ${statusLabel}
                         </div>
                         ${removeBtnHtml}
@@ -1355,7 +1440,7 @@
             icon.style.fontVariationSettings = '"FILL" 1';
 
             document.getElementById('editing-lesson-id').textContent = el.dataset.num;
-            document.getElementById('editing-lesson-title').textContent = el.dataset.title;
+            document.getElementById('editing-lesson-title').value = el.dataset.title;
 
             // Extract duration from materialMetadata
             const lessonId = parseInt(el.dataset.lessonId);
@@ -1425,7 +1510,7 @@
                                 document.getElementById('MaterialUrl').value = mUrl;
                                 document.getElementById('video-drop-area').classList.add('hidden');
                                 document.getElementById('video-success').classList.remove('hidden');
-                                document.getElementById('uploaded-filename').textContent = mTitle || "Lesson Video Content";
+                                document.getElementById('uploaded-filename').value = mTitle || "Lesson Video Content";
                                 
                                 const totalSeconds = metadata?.duration || 0;
                                 const mins = Math.floor(totalSeconds / 60);
@@ -1468,15 +1553,21 @@
                                     </div>` : '';
                                 
                                 resourcesList.innerHTML += `
-                                    <div class="p-3 ${bgColor} border ${borderColor} rounded-lg shadow-sm" data-material-id="${mId}">
+                                    <div class="p-3 ${bgColor} border ${borderColor} rounded-lg shadow-sm cursor-pointer hover:bg-slate-50 transition-colors" data-material-id="${mId}" onclick="loadResourceForEdit(${mId}, event)">
                                         <div class="flex items-center justify-between">
                                             <div class="flex items-center gap-3">
                                                 <div class="w-10 h-10 ${iconBg} rounded flex items-center justify-center">
                                                     <span class="material-symbols-outlined">${iconName}</span>
                                                 </div>
-                                                <div>
-                                                    <p class="font-bold text-slate-900 text-sm">${mTitle || "Resource File"}</p>
-                                                    <p class="text-xs text-slate-500 truncate max-w-xs">${mDesc ? mDesc.replace(/<[^>]*>?/gm, '').substring(0, 50) + "..." : "No description"}</p>
+                                                <div class="flex-1 mr-4">
+                                                    <div class="flex items-center gap-1 group">
+                                                        <input type="text" class="font-bold text-slate-900 text-sm bg-transparent border-none p-0 m-0 h-auto focus:ring-0 focus:outline-none hover:bg-slate-100 rounded w-full cursor-pointer truncate" value="${mTitle || "Resource File"}" onblur="updateResourceInline(${mId}, 'title', this)" onkeydown="if(event.key==='Enter') this.blur();" />
+                                                        <span class="material-symbols-outlined text-[14px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shrink-0">edit</span>
+                                                    </div>
+                                                    <div class="flex items-center gap-1 group mt-1">
+                                                        <input type="text" class="text-xs text-slate-500 bg-transparent border-none p-0 m-0 h-auto focus:ring-0 focus:outline-none hover:bg-slate-100 rounded w-full cursor-pointer truncate" value="${mDesc ? mDesc.replace(/<[^>]*>?/gm, '') : ""}" placeholder="Add description..." onblur="updateResourceInline(${mId}, 'description', this)" onkeydown="if(event.key==='Enter') this.blur();" />
+                                                        <span class="material-symbols-outlined text-[12px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shrink-0">edit</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="flex items-center gap-2">
@@ -1505,6 +1596,320 @@
         };
 
 
+
+        window.updateLessonTitleInline = function(newTitle) {
+            const lessonIdEl = document.querySelector('.lesson-item.border-primary');
+            if (!lessonIdEl) return;
+            const lessonId = lessonIdEl.dataset.lessonId;
+            const currentTitle = lessonIdEl.dataset.title;
+            
+            if (newTitle === currentTitle || !newTitle.trim()) {
+                document.getElementById('editing-lesson-title').value = currentTitle;
+                return;
+            }
+            
+            fetch(`/InstructorCourse/UpdateLessonTitle?lessonId=${lessonId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lessonId: lessonId, title: newTitle.trim() })
+            })
+            .then(res => res.json())
+            .then(json => {
+                if(json.success) {
+                    const data = JSON.parse(json.data);
+                    if (data && data.data) {
+                        const updatedTitle = data.data.title;
+                        lessonIdEl.dataset.title = updatedTitle;
+                        const titleEl = lessonIdEl.querySelector('.lesson-title-input');
+                        if (titleEl) titleEl.value = updatedTitle;
+                        document.getElementById('editing-lesson-title').value = updatedTitle;
+                        
+                        // Update lessonsData array
+                        const l = lessonsData.find(x => (x.lessonId || x.LessonId) == lessonId);
+                        if (l) {
+                            if (l.title !== undefined) l.title = updatedTitle;
+                            else l.Title = updatedTitle;
+                        }
+                    }
+                } else {
+                    document.getElementById('editing-lesson-title').value = currentTitle;
+                    Swal.fire('Error', json.message || 'Failed to update lesson title', 'error');
+                }
+            })
+            .catch(err => {
+                document.getElementById('editing-lesson-title').value = currentTitle;
+                Swal.fire('Error', 'An error occurred', 'error');
+            });
+        };
+
+        window.updateLessonInline = function(lId, field, el) {
+            const lesson = lessonsData.find(x => (x.lessonId || x.LessonId) == lId);
+            if (!lesson) return;
+            
+            const currentVal = field === 'title' ? (lesson.title || lesson.Title) : (lesson.description || lesson.Description || 'Video Lesson');
+            const newVal = el.value.trim();
+            if (newVal === currentVal) return;
+            if (field === 'title' && !newVal) {
+                el.value = currentVal; // revert
+                return;
+            }
+
+            const url = field === 'title' 
+                ? `/InstructorCourse/UpdateLessonTitle?lessonId=${lId}`
+                : `/InstructorCourse/UpdateLessonDescription?lessonId=${lId}`;
+
+            const payload = {};
+            payload[field] = newVal;
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(json => {
+                if(json.success) {
+                    if (field === 'title') {
+                        lesson.title = newVal;
+                        lesson.Title = newVal; 
+                        
+                        // Update active editor if this is the currently selected lesson
+                        const lessonIdEl = document.querySelector('.lesson-item.border-primary');
+                        if (lessonIdEl && lessonIdEl.dataset.lessonId == lId) {
+                            document.getElementById('editing-lesson-title').value = newVal;
+                            lessonIdEl.dataset.title = newVal;
+                        }
+                    } else {
+                        lesson.description = newVal;
+                        lesson.Description = newVal;
+                    }
+                } else {
+                    el.value = currentVal; // revert
+                    Swal.fire('Error', json.message || 'Failed to update lesson', 'error');
+                }
+            })
+            .catch(err => {
+                el.value = currentVal;
+                Swal.fire('Error', 'An error occurred', 'error');
+            });
+        };
+
+        window.updateVideoTitleInline = function(newTitle) {
+            const lessonIdEl = document.querySelector('.lesson-item.border-primary');
+            if (!lessonIdEl) return;
+            const lessonId = lessonIdEl.dataset.lessonId;
+            const l = lessonsData.find(x => (x.lessonId || x.LessonId) == lessonId);
+            if (!l) return;
+            
+            const materials = l.learningMaterials || l.LearningMaterials || l.learning_materials || [];
+            let videoMat = materials.find(m => {
+                let meta = m.materialMetadata || m.MaterialMetadata;
+                if (typeof meta === 'string') { try { meta = JSON.parse(meta); } catch(e){meta={};} }
+                const type = (meta?.file_type || 'video').toLowerCase();
+                const mStatus = (m.learningStatus || m.LearningStatus || '').toLowerCase();
+                return type === 'video' && mStatus !== 'removed';
+            });
+            
+            if (!videoMat) return; // Cannot update if no active video
+            const matId = videoMat.materialId || videoMat.MaterialId;
+            const currentTitle = videoMat.title || videoMat.Title;
+            
+            if (newTitle === currentTitle || !newTitle.trim()) {
+                document.getElementById('uploaded-filename').value = currentTitle;
+                return;
+            }
+            
+            fetch(`/InstructorCourse/UpdateMaterialDetails?materialId=${matId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: newTitle.trim(), description: videoMat.description || videoMat.Description || window.videoQuill.root.innerHTML })
+            })
+            .then(res => res.json())
+            .then(json => {
+                if(json.success) {
+                    const data = JSON.parse(json.data);
+                    if (data && data.data) {
+                        const updatedTitle = data.data.title;
+                        document.getElementById('uploaded-filename').value = updatedTitle;
+                        if (videoMat.title !== undefined) videoMat.title = updatedTitle;
+                        else videoMat.Title = updatedTitle;
+                    }
+                } else {
+                    document.getElementById('uploaded-filename').value = currentTitle;
+                    Swal.fire('Error', json.message || 'Failed to update video title', 'error');
+                }
+            })
+            .catch(err => {
+                document.getElementById('uploaded-filename').value = currentTitle;
+                Swal.fire('Error', 'An error occurred', 'error');
+            });
+        };
+
+        window.updateResourceInline = function(matId, field, el) {
+            const newValue = el.value;
+            const lessonIdEl = document.querySelector('.lesson-item.border-primary');
+            if (!lessonIdEl) return;
+            const lessonId = lessonIdEl.dataset.lessonId;
+            const l = lessonsData.find(x => (x.lessonId || x.LessonId) == lessonId);
+            if (!l) return;
+            
+            const materials = l.learningMaterials || l.LearningMaterials || l.learning_materials || [];
+            const mat = materials.find(m => (m.materialId || m.MaterialId) == matId);
+            if (!mat) return;
+            
+            const currentTitle = mat.title || mat.Title || "";
+            const currentDesc = mat.description || mat.Description || "";
+            
+            let updatedTitle = field === 'title' ? newValue.trim() : currentTitle;
+            let updatedDesc = field === 'description' ? newValue.trim() : currentDesc;
+            
+            if (field === 'title' && (newValue.trim() === currentTitle || !newValue.trim())) {
+                el.value = currentTitle || "Resource File";
+                return;
+            }
+            if (field === 'description' && newValue.trim() === currentDesc) {
+                return;
+            }
+            
+            fetch(`/InstructorCourse/UpdateMaterialDetails?materialId=${matId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: updatedTitle, description: updatedDesc })
+            })
+            .then(res => res.json())
+            .then(json => {
+                if(json.success) {
+                    const data = JSON.parse(json.data);
+                    if (data && data.data) {
+                        if (mat.title !== undefined) mat.title = data.data.title;
+                        else mat.Title = data.data.title;
+                        
+                        if (mat.description !== undefined) mat.description = data.data.description;
+                        else mat.Description = data.data.description;
+                    }
+                } else {
+                    el.value = field === 'title' ? currentTitle : currentDesc;
+                    Swal.fire('Error', json.message || 'Failed to update resource', 'error');
+                }
+            })
+            .catch(err => {
+                el.value = field === 'title' ? currentTitle : currentDesc;
+                Swal.fire('Error', 'An error occurred', 'error');
+            });
+        };
+
+        window.loadResourceForEdit = function(mId, event) {
+            // Ignore if clicked on input, button, or link inside the card
+            if (event && event.target && (event.target.closest('button') || event.target.closest('a') || event.target.closest('input'))) {
+                return;
+            }
+
+            const lessonIdEl = document.querySelector('.lesson-item.border-primary');
+            if (!lessonIdEl) return;
+            const lessonId = lessonIdEl.dataset.lessonId;
+            const l = lessonsData.find(x => (x.lessonId || x.LessonId) == lessonId);
+            if (!l) return;
+            
+            const materials = l.learningMaterials || l.LearningMaterials || l.learning_materials || [];
+            const mat = materials.find(m => (m.materialId || m.MaterialId) == mId);
+            if (!mat) return;
+
+            // Highlight the selected card
+            document.querySelectorAll('#resources-list > div').forEach(el => el.classList.remove('ring-2', 'ring-primary'));
+            const card = document.querySelector(`[data-material-id="${mId}"]`);
+            if (card) card.classList.add('ring-2', 'ring-primary');
+
+            document.getElementById('resource-form-title').textContent = 'Edit Resource';
+            document.getElementById('cancel-edit-resource-btn').classList.remove('hidden');
+            document.getElementById('resource-file-upload-section').classList.add('hidden');
+            document.getElementById('update-resource-btn').classList.remove('hidden');
+            
+            document.getElementById('editing-resource-id').value = mId;
+            document.getElementById('resource-title-input').value = mat.title || mat.Title || "";
+            if (window.resourceQuill) {
+                window.resourceQuill.root.innerHTML = mat.description || mat.Description || "";
+            }
+            
+            // Scroll to form
+            document.getElementById('resource-form-container').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        };
+
+        window.resetResourceForm = function() {
+            document.querySelectorAll('#resources-list > div').forEach(el => el.classList.remove('ring-2', 'ring-primary'));
+            
+            document.getElementById('resource-form-title').textContent = 'Add New Resource';
+            document.getElementById('cancel-edit-resource-btn').classList.add('hidden');
+            document.getElementById('resource-file-upload-section').classList.remove('hidden');
+            document.getElementById('update-resource-btn').classList.add('hidden');
+            
+            document.getElementById('editing-resource-id').value = "";
+            document.getElementById('resource-title-input').value = "";
+            if (window.resourceQuill) {
+                window.resourceQuill.root.innerHTML = "";
+            }
+        };
+
+        window.submitResourceEdit = function() {
+            const mId = document.getElementById('editing-resource-id').value;
+            if (!mId) return;
+            
+            const newTitle = document.getElementById('resource-title-input').value.trim();
+            const newDesc = window.resourceQuill.root.innerHTML;
+            
+            const btn = document.getElementById('update-resource-btn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Saving...';
+            btn.disabled = true;
+
+            fetch(`/InstructorCourse/UpdateMaterialDetails?materialId=${mId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: newTitle, description: newDesc })
+            })
+            .then(res => res.json())
+            .then(json => {
+                if(json.success) {
+                    const data = JSON.parse(json.data);
+                    if (data && data.data) {
+                        const lessonIdEl = document.querySelector('.lesson-item.border-primary');
+                        const lessonId = lessonIdEl.dataset.lessonId;
+                        const l = lessonsData.find(x => (x.lessonId || x.LessonId) == lessonId);
+                        const materials = l.learningMaterials || l.LearningMaterials || l.learning_materials || [];
+                        const mat = materials.find(m => (m.materialId || m.MaterialId) == mId);
+                        
+                        if (mat) {
+                            if (mat.title !== undefined) mat.title = data.data.title;
+                            else mat.Title = data.data.title;
+                            
+                            if (mat.description !== undefined) mat.description = data.data.description;
+                            else mat.Description = data.data.description;
+                        }
+                        
+                        const card = document.querySelector(`[data-material-id="${mId}"]`);
+                        if (card) {
+                            const inputs = card.querySelectorAll('input[type="text"]');
+                            if (inputs.length >= 2) {
+                                inputs[0].value = data.data.title;
+                                const cleanedDesc = data.data.description ? data.data.description.replace(/<[^>]*>?/gm, '') : "";
+                                inputs[1].value = cleanedDesc;
+                            }
+                        }
+                        
+                        Swal.fire({ icon: 'success', title: 'Updated!', text: 'Resource details updated successfully.', timer: 1500, showConfirmButton: false });
+                        resetResourceForm();
+                    }
+                } else {
+                    Swal.fire('Error', json.message || 'Failed to update resource', 'error');
+                }
+            })
+            .catch(err => {
+                Swal.fire('Error', 'An error occurred', 'error');
+            })
+            .finally(() => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            });
+        };
 
         window.submitNewLesson = function() {
             const input = document.getElementById('new-lesson-title');
@@ -1588,9 +1993,14 @@
                         if (json.success) {
                             lessonsData = lessonsData.filter(l => (l.lessonId || l.LessonId) != lessonId);
                             renderCourseStructure();
-                            document.getElementById('lesson-editor-active').classList.add('hidden');
-                            document.getElementById('lesson-editor-empty').classList.remove('hidden');
-                            document.getElementById('lesson-editor-empty').style.display = 'flex';
+                            const editor = document.getElementById('lesson-editor-active');
+                            editor.style.display = 'none';
+                            editor.classList.add('hidden', 'opacity-0');
+                            
+                            const emptyState = document.getElementById('lesson-editor-empty');
+                            emptyState.classList.remove('hidden');
+                            emptyState.style.display = 'flex';
+                            emptyState.classList.add('z-10');
                             Swal.fire({ icon: 'success', title: 'Deleted!', text: 'Lesson deleted successfully.', timer: 1500, showConfirmButton: false });
                         } else {
                             Swal.fire('Error', json.message || 'Failed to delete lesson.', 'error');
@@ -1940,7 +2350,7 @@
                 </div>` : '';
             
             const html = `
-                <div class="p-3 ${bgColor} border ${borderColor} rounded-lg shadow-sm" data-material-id="${mId}">
+                <div class="p-3 ${bgColor} border ${borderColor} rounded-lg shadow-sm cursor-pointer hover:bg-slate-50 transition-colors" data-material-id="${mId}" onclick="loadResourceForEdit(${mId}, event)">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 ${iconBg} rounded flex items-center justify-center">
@@ -2067,17 +2477,27 @@
             }
             
             const proceedWithSubmit = () => {
-                // 3. Check if all lessons have content
-                const emptyLessons = lessonsData.filter(l => {
+                // 3. Check if all lessons have a video
+                const lessonsWithoutVideo = lessonsData.filter(l => {
                     const materials = l.learningMaterials || l.LearningMaterials || [];
-                    return materials.length === 0;
+                    if (materials.length === 0) return true;
+                    
+                    return !materials.some(m => {
+                        let metadata = m.materialMetadata || m.MaterialMetadata;
+                        if (typeof m.metadata === 'string') {
+                            try { metadata = JSON.parse(m.metadata); } catch(e) {}
+                        }
+                        const fileType = metadata?.file_type || metadata?.FileType || (m.materialType === 1 || m.MaterialType === 1 ? 'video' : 'document');
+                        const status = (m.learningStatus || m.LearningStatus || '').toLowerCase();
+                        return fileType.toLowerCase() === 'video' && status !== 'removed';
+                    });
                 });
                 
-                if (emptyLessons.length > 0) {
+                if (lessonsWithoutVideo.length > 0) {
                     switchMainTab('curriculum');
                     Swal.fire({
-                        title: 'Lesson has no content',
-                        text: `You have ${emptyLessons.length} lesson(s) without video or files. Please add content before submitting for review.`,
+                        title: 'Missing Video Content',
+                        text: `You have ${lessonsWithoutVideo.length} lesson(s) without any video material. Every lesson must contain at least one video before submitting for review.`,
                         icon: 'warning',
                         confirmButtonColor: '#006a62'
                     });
@@ -2211,6 +2631,9 @@
             if (!input.value) {
                 input.value = "0.00";
                 updatePayout(0);
+                if (typeof window.syncCouponStateWithPrice === 'function') {
+                    window.syncCouponStateWithPrice(0);
+                }
                 return;
             }
             // Parse float and format to 2 decimal places
@@ -2218,6 +2641,9 @@
             if (isNaN(val) || val < 0) val = 0;
             input.value = val.toFixed(2);
             updatePayout(val);
+            if (typeof window.syncCouponStateWithPrice === 'function') {
+                window.syncCouponStateWithPrice(val);
+            }
         };
 
         const transferRateMultiplier = @((((decimal)(ViewBag.TransferRate ?? 70.0m)) / 100m).ToString(System.Globalization.CultureInfo.InvariantCulture));
@@ -2235,6 +2661,12 @@
             if (input) {
                 input.value = parseFloat(price).toFixed(2);
                 updatePayout(price);
+                if (typeof window.syncCouponStateWithPrice === 'function') {
+                    window.syncCouponStateWithPrice(price);
+                }
+                // Dispatch input event so that debounced auto-save triggers!
+                input.dispatchEvent(new Event('input'));
+                
                 // Optional: visual feedback that price changed
                 input.classList.add('ring-2', 'ring-primary', 'bg-primary/5');
                 setTimeout(() => {
@@ -2340,8 +2772,10 @@
         if (currentStatus.toLowerCase() === 'pending') {
             // Disable all inputs, selects and textareas
             document.querySelectorAll('input, select, textarea').forEach(el => {
-                el.disabled = true;
-                el.classList.add('opacity-70', 'cursor-not-allowed');
+                if (el.name !== '__RequestVerificationToken') {
+                    el.disabled = true;
+                    el.classList.add('opacity-70', 'cursor-not-allowed');
+                }
             });
             
             // Disable all action buttons
@@ -2356,6 +2790,7 @@
                      onclick.includes('closeLessonModal') ||
                      onclick.includes('closeVideoModal') ||
                      onclick.includes('closeResourceModal') ||
+                     text === 'logout' ||
                      el.classList.contains('text-slate-400')) { // Like back button or close icons
                      return;
                  }

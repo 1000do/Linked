@@ -1,9 +1,11 @@
-﻿using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Application.IServices;
+using Microsoft.Extensions.Configuration;
+using System;
 using System.Net;
 using System.Net.Mail;
+using System.Threading.Tasks;
 
-
-namespace CourseMarketplaceBE.Application.Services
+namespace CourseMarketplaceBE.Infrastructure.Services
 {
     public class EmailService : IEmailService
     {
@@ -22,14 +24,13 @@ namespace CourseMarketplaceBE.Application.Services
             var email = _config["EmailSettings:Email"];
             var password = _config["EmailSettings:Password"];
 
-            //  CHECK NULL RÕ RÀNG (đỡ debug mù)
             if (string.IsNullOrWhiteSpace(host) ||
                 string.IsNullOrWhiteSpace(portStr) ||
                 string.IsNullOrWhiteSpace(enableSslStr) ||
                 string.IsNullOrWhiteSpace(email) ||
                 string.IsNullOrWhiteSpace(password))
             {
-                throw new Exception("EmailSettings is missing in configuration (.env or docker)");
+                throw new Exception("EmailSettings is missing in configuration (.env or appsettings)");
             }
 
             if (!int.TryParse(portStr, out var port))

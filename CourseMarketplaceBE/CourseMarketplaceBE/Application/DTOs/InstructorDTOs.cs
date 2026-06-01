@@ -80,14 +80,7 @@ public class InstructorPayoutDto
     public string? StripePayoutId { get; set; }
 }
 
-public class InstructorPayoutPagedDto
-{
-    public List<InstructorPayoutDto> Items { get; set; } = new();
-    public int TotalCount { get; set; }
-    public int Page { get; set; }
-    public int PageSize { get; set; }
-    public int TotalPages => (int)Math.Ceiling((double)TotalCount / (PageSize > 0 ? PageSize : 1));
-}
+
 
 /// <summary>
 /// DTO cho trang Instructor Public Profile.

@@ -14,15 +14,17 @@ namespace CourseMarketplaceBE.Application.IServices;
 public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepo;
+    private readonly ILockoutRepository _lockoutRepo;
     private readonly JwtSettings _jwtSettings;
     private readonly IOtpService _otpService;
     private readonly IEmailService _emailService;
     private readonly IConfiguration _config;
 
-    public AuthService(IUserRepository userRepo, JwtSettings jwtSettings, IOtpService otpService,
+    public AuthService(IUserRepository userRepo, ILockoutRepository lockoutRepo, JwtSettings jwtSettings, IOtpService otpService,
     IEmailService emailService, IConfiguration config)
     {
         _userRepo = userRepo;
+        _lockoutRepo = lockoutRepo;
         _jwtSettings = jwtSettings;
         _otpService = otpService;
         _emailService = emailService;
@@ -31,10 +33,14 @@ public class AuthService : IAuthService
 
     public async Task<LoginResponse?> LoginAsync(LoginRequest r)
     {
-        var a = await _userRepo.GetAccountByEmailAsync(r.Email.ToLower());
+        var a = await _userRepo.GetAccountByEmailOrUsernameAsync(r.UsernameOrEmail.ToLower());
 
         if (a == null || !BCrypt.Net.BCrypt.Verify(r.Password, a.PasswordHash))
             return null;
+
+        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(a.AccountId, "account");
+        if (activeLockout != null)
+            throw new UnauthorizedAccessException($"Your account has been suspended until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to community standards violations.");
 
         await _userRepo.UpdateLastLoginAsync(a.AccountId);
 
@@ -59,7 +65,8 @@ public class AuthService : IAuthService
             AccountId = a.AccountId,
             FullName = fullName,
             AvatarUrl = avatar,
-            Role = role
+            Role = role,
+            IsVerified = a.IsVerified
         };
     }
 
@@ -103,12 +110,19 @@ public class AuthService : IAuthService
 
     public async Task<string> RegisterAsync(RegisterRequest r)
     {
+        if (!r.Email.ToLower().EndsWith("@gmail.com"))
+            return "Email must be a @gmail.com address";
+
         if (await _userRepo.IsEmailExistsAsync(r.Email.ToLower()))
             return "Email already exists";
+
+        if (await _userRepo.IsUsernameExistsAsync(r.Username))
+            return "Username already exists";
 
         var acc = new Account
         {
             Email = r.Email.ToLower(),
+            Username = r.Username.ToLower(),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(r.Password),
             AccountStatus = "active",
             AuthProvider = "local",
@@ -120,7 +134,6 @@ public class AuthService : IAuthService
         var user = new User
         {
             FullName = r.FullName,
-         
         };
 
         return await _userRepo.RegisterUserAsync(acc, user) ? "Success" : "Error";
@@ -175,9 +188,19 @@ public class AuthService : IAuthService
 
         if (account == null)
         {
+            var baseUsername = email.Split('@')[0];
+            var username = baseUsername;
+            int count = 1;
+            while (await _userRepo.IsUsernameExistsAsync(username))
+            {
+                username = $"{baseUsername}{count}";
+                count++;
+            }
+
             var acc = new Account
             {
                 Email = email,
+                Username = username,
                 PasswordHash = null, // GOOGLE → NULL
                 AuthProvider = "google",
                 IsVerified = true, // AUTO VERIFIED
@@ -197,7 +220,11 @@ public class AuthService : IAuthService
             account = await _userRepo.GetAccountByEmailAsync(email);
         }
 
-        await _userRepo.UpdateLastLoginAsync(account!.AccountId);
+        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(account!.AccountId, "account");
+        if (activeLockout != null)
+            throw new UnauthorizedAccessException($"Your account has been suspended until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to community standards violations.");
+
+        await _userRepo.UpdateLastLoginAsync(account.AccountId);
 
         // ── Detect role ───────────────────────────────────────────────────────
         var role = await _userRepo.GetRoleByAccountIdAsync(account.AccountId);
@@ -306,5 +333,11 @@ public class AuthService : IAuthService
     public bool VerifyOtpForReset(string email, string otp)
     {
         return _otpService.ValidateOtp(email, otp, "reset");
+    }
+
+    public async Task<bool> IsEmailVerifiedAsync(int userId)
+    {
+        var account = await _userRepo.GetAccountByIdAsync(userId);
+        return account?.IsVerified ?? false;
     }
 }

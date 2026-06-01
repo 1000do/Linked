@@ -39,30 +39,35 @@ public class ChatService : IChatService
         var result = new List<ChatListDto>();
         foreach (var p in participants)
         {
+            // Bỏ qua nếu tin nhắn cuối cùng nhỏ hơn hoặc bằng ClearedAt (đã xóa)
+            if (p.ClearedAt.HasValue && p.Chat.LastMessageAt.HasValue && p.Chat.LastMessageAt.Value <= p.ClearedAt.Value)
+            {
+                continue;
+            }
+
             var unreadFromRedis = await _redisService.GetUnreadCountAsync(accountId, p.ChatId);
             
-            result.Add(new ChatListDto
-            {
-                ChatId = p.ChatId,
-                ChatName = p.Chat.ChatName,
-                ChatType = p.Chat.ChatType,
-                LastMessage = p.Chat.Messages
-                    .Where(m => !m.Content.StartsWith("__ADMIN_"))
-                    .FirstOrDefault()?.Content,
-                LastMessageAt = p.Chat.LastMessageAt,
-                ContextType = p.Chat.ContextType,
-                ContextId = p.Chat.ContextId,
-                UnreadCount = unreadFromRedis > 0 ? unreadFromRedis : p.UnreadCount,
-                PartnerName = p.Chat.ChatParticipants
-                    .Where(cp => cp.AccountId != accountId)
-                    .Select(cp => cp.Account.User != null ? cp.Account.User.FullName : 
-                                 (cp.Account.Manager != null ? cp.Account.Manager.DisplayName : cp.Account.Email))
-                    .FirstOrDefault(),
-                PartnerAvatar = p.Chat.ChatParticipants
-                    .Where(cp => cp.AccountId != accountId)
-                    .Select(cp => cp.Account.AvatarUrl)
-                    .FirstOrDefault()
-            });
+                var partner = p.Chat.ChatParticipants.FirstOrDefault(cp => cp.AccountId != accountId);
+                var partnerId = partner?.AccountId;
+                var isOnline = partnerId.HasValue ? await _redisService.IsUserOnlineAsync(partnerId.Value) : false;
+
+                result.Add(new ChatListDto
+                {
+                    ChatId = p.ChatId,
+                    ChatName = p.Chat.ChatName,
+                    ChatType = p.Chat.ChatType,
+                    LastMessage = p.Chat.Messages
+                        .Where(m => !m.Content.StartsWith("__ADMIN_"))
+                        .FirstOrDefault()?.Content,
+                    LastMessageAt = p.Chat.LastMessageAt,
+                    ContextType = p.Chat.ContextType,
+                    ContextId = p.Chat.ContextId,
+                    UnreadCount = unreadFromRedis > 0 ? unreadFromRedis : p.UnreadCount,
+                    PartnerName = partner?.Account.User?.FullName ?? partner?.Account.Manager?.DisplayName ?? partner?.Account.Email,
+                    PartnerAvatar = partner?.Account.AvatarUrl,
+                    PartnerId = partnerId,
+                    IsOnline = isOnline
+                });
         }
         return result;
     }
@@ -73,10 +78,16 @@ public class ChatService : IChatService
             throw new UnauthorizedAccessException("You do not have permission to view this chat.");
 
         // Đánh dấu đã xem
-        await _chatRepository.MarkAsReadAsync(chatId, accountId);
-        await _redisService.ClearUnreadCountAsync(accountId, chatId);
+        await MarkChatAsReadAsync(chatId, accountId);
 
+        var participant = await _chatRepository.GetParticipantAsync(chatId, accountId);
+        
         var messages = await _chatRepository.GetMessagesByChatIdAsync(chatId);
+
+        if (participant?.ClearedAt != null)
+        {
+            messages = messages.Where(m => m.SentAt > participant.ClearedAt.Value).ToList();
+        }
 
         return messages.Select(m => new MessageDto
         {
@@ -248,6 +259,23 @@ public class ChatService : IChatService
         return true;
     }
 
+    public async Task<bool> ClearChatHistoryAsync(int chatId, int accountId)
+    {
+        var participant = await _chatRepository.GetParticipantAsync(chatId, accountId);
+        if (participant == null) return false;
+
+        participant.ClearedAt = DateTime.UtcNow;
+        await _chatRepository.UpdateParticipantAsync(participant);
+        return true;
+    }
+
+    public async Task<bool> MarkChatAsReadAsync(int chatId, int accountId)
+    {
+        await _chatRepository.MarkAsReadAsync(chatId, accountId);
+        await _redisService.ClearUnreadCountAsync(accountId, chatId);
+        return true;
+    }
+
     public async Task<bool> SubmitReportAsync(int reporterId, int chatId, string reason, string description)
     {
         var report = new UserReport
@@ -281,5 +309,19 @@ public class ChatService : IChatService
             CreatedAt = DateTime.Now
         };
         await _chatRepository.AddAuditLogAsync(log);
+    }
+
+    public async Task<SupportAccountDto?> GetSupportAccountAsync()
+    {
+        var staffId = await _userRepository.GetStaffAccountIdAsync();
+        if (staffId == null) return null;
+        
+        var staff = await _userRepository.GetAccountByIdAsync(staffId.Value);
+        return new SupportAccountDto
+        { 
+            AccountId = staffId.Value,
+            FullName = staff?.User?.FullName ?? "Support Team",
+            AvatarUrl = staff?.AvatarUrl ?? ""
+        };
     }
 }

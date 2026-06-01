@@ -65,27 +65,6 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .CountAsync(n => n.ReceiverId == userId && (n.IsRead == false || n.IsRead == null));
         }
 
-        public async Task<List<string>> SearchEmailsByQueryAsync(string query, int take = 5) =>
-            await _context.Accounts
-                .Where(a => a.Email.Contains(query))
-                .Select(a => a.Email)
-                .Take(take)
-                .ToListAsync();
-
-        public async Task<List<int>> GetAllUserIdsAsync() =>
-            await _context.Users
-                .Select(u => u.UserId)
-                .ToListAsync();
-
-        public async Task<int?> GetUserIdByEmailAsync(string email)
-        {
-            var account = await _context.Accounts
-                .Include(a => a.User)
-                .FirstOrDefaultAsync(a => a.Email == email.Trim());
-
-            return account?.User?.UserId;
-        }
-
         public async Task AutoCleanupAdminNotificationsAsync()
         {
             var cutoffDate = DateTime.UtcNow.AddDays(-90);

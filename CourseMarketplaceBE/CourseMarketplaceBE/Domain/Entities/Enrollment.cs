@@ -27,8 +27,6 @@ public partial class Enrollment
 
     public virtual Course? Course { get; set; }
 
-    public virtual EnrollmentProgress? Progress { get; set; }
-
     public virtual ICollection<CourseReview> CourseReviews { get; set; } = new List<CourseReview>();
 
     public virtual ICollection<LessonReview> LessonReviews { get; set; } = new List<LessonReview>();
