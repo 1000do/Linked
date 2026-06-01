@@ -363,5 +363,11 @@ namespace CourseMarketplaceBE.Application.DTOs
         public Dictionary<string, float> ConfigJson { get; set; } = new();
         public string? Role { get; set; }
     }
+
+    public class CourseModerationStatsDto
+    {
+        public int PendingCount { get; set; }
+        public int ResolvedTodayCount { get; set; }
+    }
 }
 

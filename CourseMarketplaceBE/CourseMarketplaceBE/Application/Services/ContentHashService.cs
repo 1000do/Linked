@@ -90,5 +90,28 @@ namespace CourseMarketplaceBE.Application.Services
                 ThumbnailHash = entity.ThumbnailHash ?? ""
             }).ToList();
         }
+
+        public async Task<int> SaveCourseHashesAsync(SaveCourseHashesCommand command)
+    {
+        var entity = new Domain.Entities.CourseExt
+        {
+            CourseId = command.CourseId,
+            TitleHash = command.TitleHash,
+            DescriptionHash = command.DescriptionHash,
+            WhatYouWillLearnHash = command.WhatYouWillLearnHash,
+            RequirementsHash = command.RequirementsHash,
+            ThumbnailHash = command.ThumbnailHash
+        };
+        var existing = await _courseExtRepository.GetByIdAsync(command.CourseId);
+        if (existing != null)
+        {
+            _courseExtRepository.Update(entity);
+        }
+        else
+        {
+            await _courseExtRepository.AddAsync(entity);
+        }
+        return await _courseExtRepository.SaveChangesAsync();
+    }
     }
 }

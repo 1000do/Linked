@@ -364,6 +364,9 @@ public class CourseService : ICourseService
         {
             throw new BadRequestException("You must be an approved instructor to create a course.");
         }
+        
+        //...lockouts validation..
+
 
         // ★ Limit: Max 2 courses for unlinked Stripe
         var isStripeActive = !string.IsNullOrEmpty(instructor.StripeAccountId)
