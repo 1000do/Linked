@@ -72,7 +72,7 @@ public class CheckoutController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to initiate checkout"));
         }
         catch (Exception ex)
         {
@@ -110,7 +110,7 @@ public class CheckoutController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to initiate direct checkout"));
         }
         catch (Exception ex)
         {
@@ -144,7 +144,7 @@ public class CheckoutController : ControllerBase
         catch (InvalidOperationException ex)
         {
             Console.WriteLine($"[BE-CONTROLLER] ❌ InvalidOperationException: {ex.Message}");
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to process payment success"));
         }
         catch (Exception ex)
         {
@@ -171,9 +171,12 @@ public class CheckoutController : ControllerBase
 
         try
         {
-            // Không còn rác pending trong DB để dọn dẹp nên trả về thành công luôn
             await _checkoutService.ProcessPaymentCancelAsync(orderId);
             return Ok(ApiResponse<string>.SuccessResponse("Payment cancellation status updated."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to process payment cancel"));
         }
         catch (Exception ex)
         {

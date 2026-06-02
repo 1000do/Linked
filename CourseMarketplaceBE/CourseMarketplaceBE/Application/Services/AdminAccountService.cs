@@ -272,7 +272,9 @@ namespace CourseMarketplaceBE.Application.Services
             };
 
             await _context.Accounts.AddAsync(newAccount);
-            await _context.SaveChangesAsync();
+            int rows1 = await _context.SaveChangesAsync();
+            if (rows1 <= 0)
+                throw new InvalidOperationException("Failed to save changes when creating staff account.");
 
             var newManager = new Manager
             {
@@ -282,7 +284,9 @@ namespace CourseMarketplaceBE.Application.Services
             };
 
             await _context.Managers.AddAsync(newManager);
-            await _context.SaveChangesAsync();
+            int rows2 = await _context.SaveChangesAsync();
+            if (rows2 <= 0)
+                throw new InvalidOperationException("Failed to save changes when creating staff manager record.");
         }
 
         public async Task<bool> UpdateStaffAsync(int id, UpdateStaffRequest request)
@@ -309,7 +313,9 @@ namespace CourseMarketplaceBE.Application.Services
                 account.AccountStatus = request.AccountStatus;
             }
 
-            await _context.SaveChangesAsync();
+            int rows3 = await _context.SaveChangesAsync();
+            if (rows3 <= 0)
+                throw new InvalidOperationException("Failed to save changes when updating staff.");
             return true;
         }
 
@@ -336,7 +342,9 @@ namespace CourseMarketplaceBE.Application.Services
                 account.AccountStatus = "Banned";
             }
 
-            await _context.SaveChangesAsync();
+            int rows4 = await _context.SaveChangesAsync();
+            if (rows4 <= 0)
+                throw new InvalidOperationException("Failed to save changes when toggling ban status.");
             return account.AccountStatus;
         }
 
@@ -370,7 +378,9 @@ namespace CourseMarketplaceBE.Application.Services
                 account.AccountStatus = "Banned";
             }
 
-            await _context.SaveChangesAsync();
+            int rows5 = await _context.SaveChangesAsync();
+            if (rows5 <= 0)
+                throw new InvalidOperationException("Failed to save changes when flagging account.");
 
             // Send notification
             string reasonStr = string.IsNullOrWhiteSpace(reason) ? "No reason specified" : reason;

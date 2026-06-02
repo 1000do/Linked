@@ -84,7 +84,7 @@ public class ReviewController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to submit review"));
         }
         catch (Exception ex)
         {
@@ -101,6 +101,10 @@ public class ReviewController : ControllerBase
         {
             await _reviewService.ReportReviewAsync(userId.Value, request.ReviewId, request.Type, request.Reason);
             return Ok(ApiResponse<string>.SuccessResponse("Report submitted successfully."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to report review"));
         }
         catch (Exception ex)
         {

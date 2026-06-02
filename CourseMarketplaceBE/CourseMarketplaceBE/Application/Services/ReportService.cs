@@ -86,7 +86,9 @@ public class ReportService : IReportService
         };
 
         await _reportRepo.AddCourseReportAsync(report);
-        await _reportRepo.SaveChangesAsync();
+        int numRowsAffected = await _reportRepo.SaveChangesAsync();
+        if (numRowsAffected == 0)
+            throw new InvalidOperationException("Failed to save changes");
     }
 
     // ── User / Instructor: Tạo report review khóa học ──────────────────────
@@ -114,7 +116,9 @@ public class ReportService : IReportService
         };
 
         await _reportRepo.AddCourseReviewReportAsync(report);
-        await _reportRepo.SaveChangesAsync();
+        int numRowsAffected = await _reportRepo.SaveChangesAsync();
+        if (numRowsAffected == 0)
+            throw new InvalidOperationException("Failed to save changes");
     }
 
     // ── User / Instructor: Tạo report review bài học ───────────────────────
@@ -142,7 +146,9 @@ public class ReportService : IReportService
         };
 
         await _reportRepo.AddLessonReviewReportAsync(report);
-        await _reportRepo.SaveChangesAsync();
+        int numRowsAffected = await _reportRepo.SaveChangesAsync();
+        if (numRowsAffected == 0)
+            throw new InvalidOperationException("Failed to save changes");
     }
 
     // ── User / Instructor: Xem lịch sử report của mình ─────────────────────
@@ -336,7 +342,9 @@ public class ReportService : IReportService
         }
 
         _reportRepo.UpdateCourseReport(report);
-        await _reportRepo.SaveChangesAsync();
+        int numRowsAffected = await _reportRepo.SaveChangesAsync();
+        if (numRowsAffected == 0)
+            throw new InvalidOperationException("Failed to save changes");
 
         // Notify reporter of outcome
         if (report.ReporterId.HasValue)
@@ -381,6 +389,9 @@ public class ReportService : IReportService
         report.ResolverId = resolverId;
         report.ResolvedAt = DateTime.Now;
 
+        _reportRepo.UpdateCourseReviewReport(report);
+        bool hasSaved = false;
+
         // Nếu approve: soft-remove review và ghi đè nội dung bình luận vi phạm
         if (request.RemoveContent && request.Status == "resolved" && report.CourseReviewId.HasValue)
         {
@@ -394,11 +405,16 @@ public class ReportService : IReportService
                 _reviewRepo.UpdateCourseReview(review);
                 
                 await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote);
+                hasSaved = true;
             }
         }
 
-        _reportRepo.UpdateCourseReviewReport(report);
-        await _reportRepo.SaveChangesAsync();
+        if (!hasSaved)
+        {
+            int numRowsAffected = await _reportRepo.SaveChangesAsync();
+            if (numRowsAffected == 0)
+                throw new InvalidOperationException("Failed to save changes");
+        }
 
         // Notify reporter of outcome
         if (report.ReporterId.HasValue)
@@ -429,6 +445,9 @@ public class ReportService : IReportService
         report.ResolverId = resolverId;
         report.ResolvedAt = DateTime.Now;
 
+        _reportRepo.UpdateLessonReviewReport(report);
+        bool hasSaved = false;
+
         // Nếu approve: soft-remove review và ghi đè nội dung bình luận vi phạm
         if (request.RemoveContent && request.Status == "resolved" && report.LessonReviewId.HasValue)
         {
@@ -442,11 +461,16 @@ public class ReportService : IReportService
                 _reviewRepo.UpdateLessonReview(review);
 
                 await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote);
+                hasSaved = true;
             }
         }
 
-        _reportRepo.UpdateLessonReviewReport(report);
-        await _reportRepo.SaveChangesAsync();
+        if (!hasSaved)
+        {
+            int numRowsAffected = await _reportRepo.SaveChangesAsync();
+            if (numRowsAffected == 0)
+                throw new InvalidOperationException("Failed to save changes");
+        }
 
         // Notify reporter of outcome
         if (report.ReporterId.HasValue)
@@ -476,7 +500,9 @@ public class ReportService : IReportService
         course.CourseStatus = "archived";
         course.UpdatedAt = DateTime.Now;
 
-        await _reportRepo.SaveChangesAsync();
+        int numRowsAffected = await _reportRepo.SaveChangesAsync();
+        if (numRowsAffected == 0)
+            throw new InvalidOperationException("Failed to save changes");
         return true;
     }
 

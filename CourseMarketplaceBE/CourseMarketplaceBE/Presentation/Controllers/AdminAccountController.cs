@@ -111,6 +111,10 @@ public class AdminAccountController : ControllerBase
             await _accountService.CreateStaffAsync(request);
             return Ok(new { status = 200, message = "Staff account created successfully." });
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { status = 400, message = "Failed to create staff account" });
+        }
         catch (Exception ex)
         {
             return StatusCode(500, new { status = 500, message = $"Internal server error: {ex.Message}" });
@@ -137,6 +141,10 @@ public class AdminAccountController : ControllerBase
             }
 
             return Ok(new { status = 200, message = "Staff account updated successfully." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { status = 400, message = "Failed to update staff account" });
         }
         catch (Exception ex)
         {
@@ -165,7 +173,7 @@ public class AdminAccountController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { status = 400, message = ex.Message });
+            return BadRequest(new { status = 400, message = "Failed to toggle ban" });
         }
         catch (Exception ex)
         {
@@ -192,6 +200,10 @@ public class AdminAccountController : ControllerBase
             }
 
             return Ok(new { status = 200, message = "Account flagged successfully.", currentFlags = result.CurrentFlags, newStatus = result.NewStatus });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { status = 400, message = "Failed to flag account" });
         }
         catch (Exception ex)
         {
