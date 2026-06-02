@@ -87,7 +87,7 @@ class HarmfulService(BaseService):
         reason = (
             f"Harmful content detected in fields: {', '.join(flagged_fields)}"
             if is_flagged
-            else "No harmful content detected in text fields"
+            else f"No harmful content detected in text fields (spam_threshold: {spam_threshold}, toxic_threshold: {toxic_threshold})"
         )
         overall_details['flagged_count'] = len(flagged_fields)
         result_status = ModerationStatus.FLAGGED.value if is_flagged else ModerationStatus.APPROVED.value
@@ -186,7 +186,7 @@ class HarmfulService(BaseService):
         reason = (
             f"Harmful content detected in: {', '.join(flagged_content)}"
             if is_flagged
-            else "No harmful content detected in course media and resources"
+            else f"No harmful content detected in course media and resources (spam_threshold: {spam_threshold}, toxic_threshold: {toxic_threshold})"
         )
         overall_details['flagged_count'] = len(flagged_content)
         result_status = ModerationStatus.FLAGGED.value if is_flagged else ModerationStatus.APPROVED.value
