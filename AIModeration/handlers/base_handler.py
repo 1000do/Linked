@@ -1,5 +1,6 @@
 import logging
 import copy
+import os
 from typing import List, Optional
 from core.models import AiModelDto
 from services.base_service import BaseService
@@ -38,33 +39,41 @@ class BaseHandler:
                         current_spam_path = getattr(TextClassifierService, "_spam_path", None)
                         current_toxic_path = getattr(TextClassifierService, "_toxic_path", None)
 
-                        req_spam = paths[0] if len(paths) > 0 else None
-                        req_toxic = paths[1] if len(paths) > 1 else None
+                        req_spam = paths[0] if len(paths) > 0 else ""
+                        req_spam_path = os.path.abspath(req_spam)
+                        req_toxic = paths[1] if len(paths) > 1 else ""
+                        req_toxic_path = os.path.abspath(req_toxic)
+                        
+                        
 
-                        if (req_spam and req_spam != current_spam_path) or (req_toxic and req_toxic != current_toxic_path):
-                            self.logger.info(f"Dynamic loading requested: spam={req_spam}, toxic={req_toxic}")
+                        if (req_spam_path and req_spam_path != current_spam_path) and (req_toxic_path and req_toxic_path != current_toxic_path):
+                            self.logger.info(f"Dynamic loading requested: spam={req_spam_path}, toxic={req_toxic_path}")
                             
                             device = torch.device(getattr(TextClassifierService, "device", "cpu"))
 
-                            if req_spam:
-                                self.logger.info(f"Loading spam model from {req_spam}")
-                                t = AutoTokenizer.from_pretrained(req_spam, local_files_only=True)
-                                mod = AutoModelForSequenceClassification.from_pretrained(req_spam, local_files_only=True)
-                                mod.to(device)
-                                mod.eval()
-                                TextClassifierService._spam_tokenizer = t
-                                TextClassifierService._spam_model = mod
-                                TextClassifierService._spam_path = req_spam
+                            
+                            self.logger.info(f"Loading spam model from {req_spam_path}")
+                            spam_tokenizer = AutoTokenizer.from_pretrained(req_spam_path, local_files_only=True)
+                            spam_model = AutoModelForSequenceClassification.from_pretrained(req_spam_path, local_files_only=True)
+                            spam_model.to(device)
+                            spam_model.eval()
+                            TextClassifierService._spam_tokenizer = spam_tokenizer
+                            TextClassifierService._spam_model = spam_model
+                            TextClassifierService._spam_path = req_spam_path
 
-                            if req_toxic:
-                                self.logger.info(f"Loading toxic model from {req_toxic}")
-                                t = AutoTokenizer.from_pretrained(req_toxic, local_files_only=True)
-                                mod = AutoModelForSequenceClassification.from_pretrained(req_toxic, local_files_only=True)
-                                mod.to(device)
-                                mod.eval()
-                                TextClassifierService._toxic_tokenizer = t
-                                TextClassifierService._toxic_model = mod
-                                TextClassifierService._toxic_path = req_toxic
+                            
+                            self.logger.info(f"Loading toxic model from {req_toxic_path}")
+                            toxic_tokenzier = AutoTokenizer.from_pretrained(req_toxic_path, local_files_only=True)
+                            toxic_model = AutoModelForSequenceClassification.from_pretrained(req_toxic_path, local_files_only=True)
+                            toxic_model.to(device)
+                            toxic_model.eval()
+                            TextClassifierService._toxic_tokenizer = toxic_tokenzier
+                            TextClassifierService._toxic_model = toxic_model
+                            TextClassifierService._toxic_path = req_toxic_path
+                        
+                        else:
+                            self.logger.info("Model paths are not provided or unchanged.. proceed to next step...")
+                        
 
                     except Exception as e:
                         self.logger.error(f"Failed to dynamically load models from path {m.model_path}: {e}. Rolling back to default models.")
