@@ -29,6 +29,7 @@ class DuplicationService(BaseService):
         super().__init__("DuplicationService")
         self.cache_repo = cache_repository or CacheRepository(settings)
         self.settings = settings or get_settings()
+    
 
     @staticmethod
     def cosine_similarity(a: List[float], b: List[float]) -> float:
@@ -40,7 +41,11 @@ class DuplicationService(BaseService):
         norm_b = np.linalg.norm(arr_b)
         if norm_a == 0 or norm_b == 0:
             return 0.0
-        return float(dot_product / (norm_a * norm_b))
+        # return float(dot_product / (norm_a * norm_b))
+        sim = dot_product / (norm_a * norm_b)
+        return float(np.clip(sim, -1.0, 1.0))
+    
+
 
     def similarity_search(
         self,
@@ -170,6 +175,8 @@ class DuplicationService(BaseService):
                         latency_ms=(time.time() - start) * 1000,
                         model_id=model_id
                     )
+                    
+                    logger.info(f"Stage log:\n{log_entry}")
                     stage_logs.append(log_entry)
                     
                     if not checked_once:
