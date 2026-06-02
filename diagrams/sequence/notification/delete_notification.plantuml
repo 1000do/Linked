@@ -1,0 +1,92 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Delete Notification
+actor User as act
+
+participant "Index.cshtml" as view
+participant "NotificationController" as be_ctrl
+participant ":NotificationService" as sv
+participant ":NotificationHub" as hub
+participant ":NotificationRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:Click "Delete" button on notification
+view->view++:Show Confirm Delete dialog (Swal)
+view--
+act->view:Click "Delete" to confirm
+
+view->be_ctrl++:Send DELETE request to /api/Notification/{id} (with Bearer Token)
+
+be_ctrl->sv++:Call DeleteNotificationAsync(id, userId)
+sv->repo++:Call GetByIdAsync(id)
+repo->ctx++:Call GetByIdAsync(id)
+ctx->db++:Query notification
+db-->>ctx--:Return notification entity
+ctx-->>repo--:Return notification entity
+repo-->>sv--:Return notification entity
+
+sv->sv++:Check if notification exists and belongs to User
+sv--
+alt notification is null or belongs to another user
+    sv-->>be_ctrl: Return false
+    be_ctrl-->>view: Return statusCode 400 (BadRequest)
+    view-->>act: Display deletion failure message
+else notification is valid
+    sv->repo++:Call Delete(noti)
+    repo->ctx++:Set IsRemoved = true and Update
+    ctx-->>repo--:Return
+    repo-->>sv--:Return
+    
+    sv->repo++:Call SaveChangesAsync()
+    repo->ctx++:Call SaveChangesAsync()
+    ctx->db++:Save changes to Database
+    db-->>ctx--:Return numberOfRowsAffected
+    ctx-->>repo--:Return numberOfRowsAffected
+    repo-->>sv--:Return numberOfRowsAffected
+    
+    sv->sv++:Check numberOfRowsAffected > 0
+    sv--
+    alt numberOfRowsAffected > 0
+        sv->hub++: Call Clients.All.SendAsync("ReceiveNotification")
+        hub-->>sv: Broadcast notification via SignalR
+        hub--
+        sv-->>be_ctrl: Return true
+        be_ctrl-->>view: Return statusCode 200 (Ok)
+        view->view++: Remove notification from local list & re-render
+        view--
+        view-->>act: Display success alert
+    else numberOfRowsAffected = 0
+        sv-->>be_ctrl--: throw InvalidOperationException
+        be_ctrl-->>view--: Return statusCode 400 (BadRequest)
+        view-->>act--: Display deletion failure message
+    end
+end
+@enduml

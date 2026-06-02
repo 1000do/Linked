@@ -11,6 +11,14 @@ namespace LinkedLearn.Models.UserVM
         [Required(ErrorMessage = "Please enter Last Name")]
         public string LastName { get; set; }
 
+        [EmailAddress(ErrorMessage = "Invalid Email")]
+        [RegularExpression(@"^[a-zA-Z0-9._%+-]+@gmail\.com$", ErrorMessage = "Only @gmail.com addresses are accepted")]
+        public string? Email { get; set; }
+
+        public string? Username { get; set; }
+
+        public string? AuthProvider { get; set; }
+
         public string? Bio { get; set; }
 
         public string? DateOfBirth { get; set; }
