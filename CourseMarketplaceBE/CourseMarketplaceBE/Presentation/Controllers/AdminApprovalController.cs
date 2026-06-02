@@ -25,12 +25,19 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         [HttpPost("process")]
         public async Task<IActionResult> Process(UpdateApprovalStatusDto dto)
         {
-            var result = await _service.ApproveOrRejectAsync(dto);
-            if (result)
+            try
             {
-                return Ok(new { status = 200, message = "Operation successful" });
+                var result = await _service.ApproveOrRejectAsync(dto);
+                if (result)
+                {
+                    return Ok(new { status = 200, message = "Operation successful" });
+                }
+                return BadRequest(new { status = 400, message = "Instructor not found or an error occurred" });
             }
-            return BadRequest(new { status = 400, message = "Instructor not found or an error occurred" });
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { status = 400, message = "Failed to process instructor approval" });
+            }
         }
     }
 }

@@ -25,6 +25,7 @@ node_modules/
 
 # Misc
 private/
+private_ngoc/
 
 # python
 ai_models/

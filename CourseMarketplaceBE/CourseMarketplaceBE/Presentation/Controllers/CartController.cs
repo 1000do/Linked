@@ -49,7 +49,7 @@ public class CartController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to add to cart"));
         }
         catch (Exception ex)
         {
@@ -76,7 +76,7 @@ public class CartController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to remove from cart"));
         }
         catch (Exception ex)
         {

@@ -40,7 +40,7 @@ public class EnrollmentController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to enroll in free course"));
         }
         catch (Exception ex)
         {
@@ -70,6 +70,10 @@ public class EnrollmentController : ControllerBase
         {
             await _enrollmentService.UpdateProgressAsync(userId.Value, request.CourseId, request.MaterialId);
             return Ok(ApiResponse<string>.SuccessResponse("Progress updated."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to update progress"));
         }
         catch (Exception ex)
         {
