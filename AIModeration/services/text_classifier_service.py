@@ -1,5 +1,6 @@
 """Service for text toxicity and spam classification using pre-trained models."""
 
+import json
 import logging
 import sys
 import os
@@ -25,6 +26,8 @@ class TextClassifierService(BaseService):
     _spam_tokenizer = None
     _toxic_model = None
     _toxic_tokenizer = None
+    _spam_path = None
+    _toxic_path = None
     _models_loaded = False
     
     def __init__(self, settings: Settings = None):
@@ -32,6 +35,7 @@ class TextClassifierService(BaseService):
         super().__init__("TextClassifierService")
         self.settings = settings or get_settings()
         self.device = torch.device(self.settings.DEVICE)
+        
         
         if not TextClassifierService._models_loaded:
             self._load_models()
@@ -56,6 +60,7 @@ class TextClassifierService(BaseService):
             cls._spam_model = AutoModelForSequenceClassification.from_pretrained(spam_path, local_files_only=True)
             cls._spam_model.to(device)
             cls._spam_model.eval()
+            cls._spam_path = spam_path
             logger.info("✓ Spam model loaded")
             
             # Load toxicity model
@@ -66,6 +71,7 @@ class TextClassifierService(BaseService):
             cls._toxic_model = AutoModelForSequenceClassification.from_pretrained(toxic_path, local_files_only=True)
             cls._toxic_model.to(device)
             cls._toxic_model.eval()
+            cls._toxic_path = toxic_path
             logger.info("✓ Toxicity model loaded")
             
             cls._models_loaded = True
@@ -172,88 +178,140 @@ class TextClassifierService(BaseService):
 
     def aggregation_logic(self, chunk_results: List[Dict[str, Any]], spam_threshold: float = 0.85, toxic_threshold: float = 0.85) -> Dict[str, Any]:
         # 1. Identify High-Confidence Threats (The most dangerous)
-        high_conf_threats = [
+        candidates = []
+       
+        high_conf_spams = [
             r 
             for r in chunk_results
             if (r["spam_label"] != "SAFE" and r['spam_score'] >= spam_threshold)
-            or (r["toxic_label"] != 'SAFE' and r['toxic_score'] >= toxic_threshold)
         ]
         
-        if high_conf_threats:
-            worst_spam = max(high_conf_threats, key=lambda x: x["spam_score"])
-            worst_toxic = max(high_conf_threats, key=lambda x: x["toxic_score"])
+        high_conf_toxics = [
+            r 
+            for r in chunk_results
+            if (r["toxic_label"] != 'SAFE' and r['toxic_score'] >= toxic_threshold)
+        ]
+        
+        
+        if high_conf_spams or high_conf_toxics:
+            self.logger.info(f"High confidence threats:\n {json.dumps(high_conf_spams + high_conf_toxics, indent= 4)}")
             
-            if worst_spam['spam_score'] > worst_toxic['toxic_score']:
-                text = worst_spam['text']
-                score = worst_spam['spam_score']
-                raw_label = worst_spam['spam_label']   
-            else: 
-                text = worst_toxic['text']
-                score = worst_toxic['toxic_score']
-                raw_label = worst_toxic['toxic_label']
+            for threat in high_conf_spams:
+                candidates.append(
+                    {
+                        'text':threat['text'],
+                        'score': threat['spam_score'],
+                        'difference': abs(threat['spam_score'] - spam_threshold),
+                        'label': threat['spam_label']
+                    }
+                )
                 
+            for threat in high_conf_toxics:
+                candidates.append(
+                    {
+                        'text':threat['text'],
+                        'score': threat['toxic_score'],
+                        'difference': abs(threat['toxic_score'] - toxic_threshold),
+                        'label': threat['toxic_label']
+                    }
+                )
+            
+            most_severe_threat = max(candidates, key=lambda x : x['difference'])
+            
             return {
-                'text': text,
+                'text': most_severe_threat['text'],
                 'action': 'FLAGGED',
-                'score': score,
-                'raw_label': raw_label
+                'score': most_severe_threat['score'],
+                'raw_label': most_severe_threat['label']
             }
 
         # 2. Identify Low-Confidence Threats (Model is suspicious)
-        low_conf_threats = [
+        low_conf_spams = [
             r 
             for r in chunk_results
             if (r["spam_label"] != "SAFE" and r['spam_score'] < spam_threshold)
-            or (r["toxic_label"] != 'SAFE' and r['toxic_score'] < toxic_threshold)
+            
+        ]
+        low_conf_toxics = [
+            r 
+            for r in chunk_results
+            if (r["toxic_label"] != 'SAFE' and r['toxic_score'] < toxic_threshold)
         ]
         
-        if low_conf_threats:
-            most_suspicious_spam = max(low_conf_threats, key=lambda x: x["spam_score"])
-            most_suspicious_toxic = max(low_conf_threats, key=lambda x: x["toxic_score"])
+        if low_conf_spams or low_conf_toxics:
+            self.logger.info(f"Low confidence threats:\n {json.dumps(low_conf_toxics + low_conf_spams, indent= 4)}")
+            for threat in low_conf_spams:
+                candidates.append(
+                    {
+                        'text':threat['text'],
+                        'score': threat['spam_score'],
+                        'difference': abs(threat['spam_score'] - spam_threshold),
+                        'label': threat['spam_label']
+                    }
+                )
+                
+            for threat in low_conf_toxics:
+                candidates.append(
+                    {
+                        'text':threat['text'],
+                        'score': threat['toxic_score'],
+                        'difference': abs(threat['toxic_score'] - toxic_threshold),
+                        'label': threat['toxic_label']
+                    }
+                )        
             
-            if most_suspicious_spam['spam_score'] > most_suspicious_toxic['toxic_score']:
-                text = most_suspicious_spam['text']
-                score = most_suspicious_spam['spam_score']
-                raw_label = most_suspicious_spam['spam_label']
-            else:
-                text = most_suspicious_toxic['text']
-                score = most_suspicious_toxic['toxic_score']
-                raw_label = most_suspicious_toxic['toxic_label']
+            most_suspicious_threat = min(candidates, key=lambda x: x['difference'])
             
             return {
-                "text": text,
+                "text": most_suspicious_threat['text'],
                 "action": "MANUAL_AUDIT", 
                 "reason": "Probable Threat (Low Confidence)", 
-                "score": score, 
-                "raw_label": raw_label
+                "score": most_suspicious_threat['score'], 
+                "raw_label": most_suspicious_threat['label']
             }
 
         # 3. Identify Low-Confidence Safes (Model is confused)
-        low_conf_safes = [
+        low_conf_non_spams = [
             r 
             for r in chunk_results
             if (r["spam_label"] == "SAFE" and r['spam_score'] < spam_threshold)
-            or (r["toxic_label"] == 'SAFE' and r['toxic_score'] < toxic_threshold)
         ]
-        if low_conf_safes:
-            most_confused_spam = min(low_conf_safes, key=lambda x: x["spam_score"])
-            most_confused_toxic = min(low_conf_safes, key=lambda x: x["toxic_score"])
+        low_conf_non_toxics = [
+            r 
+            for r in chunk_results
+            if (r["toxic_label"] == 'SAFE' and r['toxic_score'] < toxic_threshold)
+        ]
+        if low_conf_non_spams or low_conf_non_toxics:
+            self.logger.info(f"Low confidence safe:\n {json.dumps(low_conf_non_spams + low_conf_non_toxics, indent= 4)}")
             
-            if most_confused_spam['spam_score'] < most_confused_toxic['toxic_score']:
-                text = most_confused_spam['text']
-                score = most_confused_spam['spam_score']
-                raw_label = most_confused_spam['spam_label']
-            else:
-                text = most_confused_toxic['text']
-                score = most_confused_toxic['toxic_score']
-                raw_label = most_confused_toxic['toxic_label']
+            for threat in low_conf_non_spams:
+                candidates.append(
+                    {
+                        'text':threat['text'],
+                        'score': threat['spam_score'],
+                        'difference': abs(threat['spam_score'] - spam_threshold),
+                        'label': threat['spam_label']
+                    }
+                )
+                
+            for threat in low_conf_non_toxics:
+                candidates.append(
+                    {
+                        'text':threat['text'],
+                        'score': threat['toxic_score'],
+                        'difference': abs(threat['toxic_score'] - toxic_threshold),
+                        'label': threat['toxic_label']
+                    }
+                )        
+            
+            most_confused_safe = max(candidates,key=lambda x:x['difference'])
                 
             return {
-                "text": text,
+                "text": most_confused_safe['text'],
                 "action": "MANUAL_AUDIT", 
                 "reason": "Ambiguous Content (Low Confidence Safe)", 
-                "score": score, 
-                "raw_label": raw_label
+                "score": most_confused_safe['score'], 
+                "raw_label": most_confused_safe['label']
             }
 
         # 4. APPROVED (Safest average)
@@ -270,8 +328,9 @@ class TextClassifierService(BaseService):
         start_time = time.time()
         try:
             chunk_results = self.robust_sliding_window(text, window_size=window_size, stride=stride)
+            logger.info(f"Aggregating harfum detection result with spam threshold {spam_threshold} and toxic threshold {toxic_threshold}")
             agg = self.aggregation_logic(chunk_results, spam_threshold=spam_threshold, toxic_threshold=toxic_threshold)
-            
+            self.logger.info(f"Aggregated results:\n{json.dumps(agg)}")
             elapsed_ms = (time.time() - start_time) * 1000
             
             # Map aggregated action to return tuple format
