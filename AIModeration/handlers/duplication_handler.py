@@ -44,7 +44,7 @@ class DuplicationHandler(BaseHandler):
         material_ids = request.material_ids
         threshold = request.similarity_score_threshold
         
-        self.logger.info(f"Starting Stage 1 orchestration for Course ID {course_id}")
+        self.logger.info(f"Starting Stage 1 orchestration for Course ID {course_id} with Similiarity Threshold {threshold}")
 
         # Process the models provided in request
         generators: List[AiModelDto] = self.process_request_models(request.models)
@@ -159,12 +159,15 @@ class DuplicationHandler(BaseHandler):
             threshold=threshold
         )
         
+        logger.info(f"Similarity score(s): {[score for score in similarity_scores]}")
+        
         all_stage_logs.extend(stage_logs)
         overall_confidence_score = float(np.mean(similarity_scores)) if similarity_scores else 1.0
+        logger.info(f"Mean score: {overall_confidence_score}")
         total_latency = (time.time() - stage_start) * 1000
 
         if is_duplicate:
-            self.logger.warning(f"Duplication detected for Course ID {course_id}. Flagged materials: {matched_ids}")
+            self.logger.warning(f"Duplication detected for Course ID {course_id}. Flagged materials: {[f'material_{mat_id}' for mat_id in matched_ids]}")
             return CourseModerationResponse(
                 course_id=course_id,
                 moderation_status=ModerationStatus.FLAGGED.value,

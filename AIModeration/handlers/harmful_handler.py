@@ -37,7 +37,7 @@ class HarmfulHandler(BaseHandler):
         spam_threshold = request.spam_score_threshold
         toxic_threshold = request.toxic_score_threshold
 
-        self.logger.info(f"Starting Stage 2 orchestration for Course ID {course_id}")
+        self.logger.info(f"Starting Stage 2 orchestration for Course ID {course_id} with Spam Threshold {spam_threshold} and Toxic Threshold {toxic_threshold}")
 
         # Process the models provided in request
         classifiers: List[AiModelDto] = self.process_request_models(request.models)
