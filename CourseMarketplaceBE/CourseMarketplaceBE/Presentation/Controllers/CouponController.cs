@@ -85,7 +85,7 @@ public class CouponController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return Conflict(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to create coupon"));
         }
         catch (ArgumentException ex)
         {
@@ -119,6 +119,10 @@ public class CouponController : ControllerBase
         {
             return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to update coupon"));
+        }
         catch (Exception ex)
         {
             return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
@@ -142,6 +146,10 @@ public class CouponController : ControllerBase
         catch (KeyNotFoundException ex)
         {
             return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to disable coupon"));
         }
         catch (Exception ex)
         {
@@ -195,7 +203,7 @@ public class CouponController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to apply coupon to course"));
         }
         catch (Exception ex)
         {
@@ -223,6 +231,10 @@ public class CouponController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return StatusCode(403, ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to remove coupon from course"));
         }
         catch (Exception ex)
         {

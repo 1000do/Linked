@@ -157,6 +157,10 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             {
                 return StatusCode(403, ApiResponse<string>.ErrorResponse(ex.Message));
             }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to resolve course report"));
+            }
         }
 
         /// <summary>
@@ -169,10 +173,17 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             var resolverId = GetUserId();
             if (resolverId == null) return Unauthorized();
 
-            var result = await _reportService.ResolveCourseReviewReportAsync(reportId, resolverId.Value, request);
-            return result
-                ? Ok(ApiResponse<string>.SuccessResponse("Course review report resolved successfully."))
-                : NotFound(ApiResponse<string>.ErrorResponse("Report not found."));
+            try
+            {
+                var result = await _reportService.ResolveCourseReviewReportAsync(reportId, resolverId.Value, request);
+                return result
+                    ? Ok(ApiResponse<string>.SuccessResponse("Course review report resolved successfully."))
+                    : NotFound(ApiResponse<string>.ErrorResponse("Report not found."));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to resolve course review report"));
+            }
         }
 
         /// <summary>
@@ -185,10 +196,17 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             var resolverId = GetUserId();
             if (resolverId == null) return Unauthorized();
 
-            var result = await _reportService.ResolveLessonReviewReportAsync(reportId, resolverId.Value, request);
-            return result
-                ? Ok(ApiResponse<string>.SuccessResponse("Lesson review report resolved successfully."))
-                : NotFound(ApiResponse<string>.ErrorResponse("Report not found."));
+            try
+            {
+                var result = await _reportService.ResolveLessonReviewReportAsync(reportId, resolverId.Value, request);
+                return result
+                    ? Ok(ApiResponse<string>.SuccessResponse("Lesson review report resolved successfully."))
+                    : NotFound(ApiResponse<string>.ErrorResponse("Report not found."));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to resolve lesson review report"));
+            }
         }
 
         // ── Admin only: Hard delete ─────────────────────────────────────────
@@ -204,10 +222,17 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             var adminId = GetUserId();
             if (adminId == null) return Unauthorized();
 
-            var result = await _reportService.RemoveCourseAsync(courseId, adminId.Value);
-            return result
-                ? Ok(ApiResponse<string>.SuccessResponse("Course removed successfully."))
-                : NotFound(ApiResponse<string>.ErrorResponse("Course not found."));
+            try
+            {
+                var result = await _reportService.RemoveCourseAsync(courseId, adminId.Value);
+                return result
+                    ? Ok(ApiResponse<string>.SuccessResponse("Course removed successfully."))
+                    : NotFound(ApiResponse<string>.ErrorResponse("Course not found."));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to remove course"));
+            }
         }
     }
 }

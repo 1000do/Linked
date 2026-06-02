@@ -100,6 +100,10 @@ public class CourseController : ControllerBase
         {
             return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to create course"));
+        }
         catch (Exception ex)
         {
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
@@ -118,6 +122,10 @@ public class CourseController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to update course"));
         }
         catch (Exception ex)
         {
@@ -142,6 +150,10 @@ public class CourseController : ControllerBase
         {
             return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to update course status"));
+        }
         catch (Exception ex)
         {
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
@@ -165,6 +177,10 @@ public class CourseController : ControllerBase
         {
             return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to delete course"));
+        }
         catch (Exception ex)
         {
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
@@ -181,6 +197,10 @@ public class CourseController : ControllerBase
 
             var result = await _aiModerationService.HandleCourseModerationAsync(request);
             return Ok(ApiResponse<CourseModerationResult>.SuccessResponse(result, "Moderation has been successfully processed."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to moderate course"));
         }
         catch (Exception ex)
         {

@@ -20,9 +20,16 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         [HttpPost("grant")]
         public async Task<IActionResult> GrantFrame([FromBody] GrantFrameRequest request)
         {
-            var success = await _frameService.GrantFrameToUserAsync(request.UserId, request.FrameId);
-            if (success) return Ok(new { message = "Avatar frame granted successfully!" });
-            return BadRequest(new { message = "Cannot grant avatar frame. Please verify UserId or FrameId." });
+            try
+            {
+                var success = await _frameService.GrantFrameToUserAsync(request.UserId, request.FrameId);
+                if (success) return Ok(new { message = "Avatar frame granted successfully!" });
+                return BadRequest(new { message = "Cannot grant avatar frame. Please verify UserId or FrameId." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = "Failed to grant avatar frame" });
+            }
         }
 
         [HttpGet("list")]
@@ -35,9 +42,16 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         [HttpPost("create")]
         public async Task<IActionResult> CreateFrame([FromBody] dynamic frameDto)
         {
-            var success = await _frameService.CreateFrameAsync(frameDto);
-            if (success) return Ok(new { message = "Avatar frame created successfully!" });
-            return BadRequest(new { message = "Error creating avatar frame." });
+            try
+            {
+                var success = await _frameService.CreateFrameAsync(frameDto);
+                if (success) return Ok(new { message = "Avatar frame created successfully!" });
+                return BadRequest(new { message = "Error creating avatar frame." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = "Failed to create avatar frame" });
+            }
         }
     }
 }

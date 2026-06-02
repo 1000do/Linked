@@ -27,6 +27,6 @@ public class LockoutRepository : ILockoutRepository
     public async Task AddAsync(Lockout lockout)
     {
         await _context.Lockouts.AddAsync(lockout);
-        await _context.SaveChangesAsync();
+        await Task.CompletedTask;
     }
 }

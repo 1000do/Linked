@@ -176,5 +176,43 @@ namespace CourseMarketplaceBE.Application.Services
 
             return targetUserIds.Count;
         }
+
+        public async Task SendBulkNotificationsAsync(IEnumerable<NotificationBulkDto> dtos)
+        {
+            if (dtos == null || !dtos.Any()) return;
+
+            var now = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(7), DateTimeKind.Unspecified);
+
+            var notifications = dtos.Select(dto => new Notification
+            {
+                ReceiverId = dto.ReceiverId,
+                Title = dto.Title,
+                Content = dto.Content,
+                LinkAction = dto.LinkAction,
+                IsRead = false,
+                CreatedAt = now
+            }).ToList();
+
+            await _repo.AddRangeAsync(notifications);
+            int numberOfRowsAffected = await _repo.SaveChangesAsync();
+            if (numberOfRowsAffected <= 0)
+            {
+                throw new InvalidOperationException("Failed to save changes");
+            }
+
+            foreach (var noti in notifications)
+            {
+                await _hubContext.Clients.User(noti.ReceiverId.ToString())
+                    .SendAsync("ReceiveNotification", new
+                    {
+                        notificationId = noti.NotificationId,
+                        title = noti.Title,
+                        content = noti.Content,
+                        createdAt = noti.CreatedAt,
+                        isRead = false,
+                        receiverId = noti.ReceiverId
+                    });
+            }
+        }
     }
 }

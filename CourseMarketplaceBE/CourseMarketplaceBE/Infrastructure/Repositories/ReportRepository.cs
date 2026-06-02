@@ -174,6 +174,6 @@ public class ReportRepository : IReportRepository
 
     // ── Shared ──────────────────────────────────────────────────────────────
 
-    public async Task SaveChangesAsync()
+    public async Task<int> SaveChangesAsync()
         => await _context.SaveChangesAsync();
 }

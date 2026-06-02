@@ -93,7 +93,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to set transfer rate"));
         }
         catch (Exception ex)
         {
@@ -133,7 +133,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to set payout days"));
         }
         catch (Exception ex)
         {
@@ -155,7 +155,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to mark payout as paid"));
         }
         catch (Exception ex)
         {
@@ -177,7 +177,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to transfer via Stripe"));
         }
         catch (Exception ex)
         {
@@ -217,7 +217,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to reset stripe account"));
         }
         catch (Exception ex)
         {
@@ -259,7 +259,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to withdraw"));
         }
         catch (Exception ex)
         {
@@ -296,7 +296,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to refund transaction"));
         }
         catch (Exception ex)
         {
@@ -336,7 +336,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to approve refund"));
         }
         catch (Exception ex)
         {
@@ -358,7 +358,7 @@ public class AdminFinanceController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to reject refund"));
         }
         catch (Exception ex)
         {
