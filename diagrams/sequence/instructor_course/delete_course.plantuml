@@ -1,0 +1,157 @@
+@startuml DeleteCourse
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Remove Course
+actor Instructor as act
+
+participant "CourseListView" as view
+participant "InstructorCourseController" as fe_ctrl
+participant "CourseController" as be_ctrl
+
+participant ":CourseCommandService" as sv
+participant ":LockoutRepository" as lock_repo
+participant ":CourseRepository" as repo
+participant ":LessonRepository" as lesson_repo
+participant ":RedisService" as redis
+participant ":AppDbContext" as ctx
+
+database Database as db
+
+act++
+act->view++: Click "Delete" button of a course
+view->view++: Show deletion confirmation dialog
+view--
+group opt [Instructor cancels deletion]
+    view-->>act: Close confirmation dialog
+end
+
+act->view: Confirm course deletion
+view->fe_ctrl++: Send AJAX POST request to InstructorCourse/Delete/{id}
+
+fe_ctrl->be_ctrl++: Send DELETE request to /api/courses/{id}
+be_ctrl->be_ctrl++: Call GetInstructorId()
+be_ctrl--
+be_ctrl->sv++: Call DeleteCourseAsync(id, instructorId)
+
+sv->repo++: Call GetByIdAsync(courseId)
+repo->ctx++: Call FindAsync(courseId)
+ctx->db++: Query Course by courseId
+db-->>ctx--: Return course or null
+ctx-->>repo--: Return course or null
+repo-->>sv--: Return course or null
+
+sv->lock_repo++: Call GetActiveLockoutAsync(instructorId, "instructor")
+lock_repo->ctx++: Call GetActiveLockoutAsync()
+ctx->db++: Query active lockout
+db-->>ctx--: Return activeLockout or null
+ctx-->>lock_repo--: Return activeLockout or null
+lock_repo-->>sv--: Return activeLockout or null
+
+sv->repo++: Call HasEnrollmentsAsync(courseId)
+repo->ctx++: Call AnyAsync()
+ctx->db++: Query course enrollments
+db-->>ctx--: Return hasEnrollments (true/false)
+ctx-->>repo--: Return hasEnrollments
+repo-->>sv--: Return hasEnrollments
+
+sv->sv++: Validate course deletion request
+sv--
+
+alt course is null
+    sv-->>be_ctrl: Throw Exception("Course not found.")
+    be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
+    fe_ctrl-->>view: Return JSON { success = false, message = "..." }
+    view-->>act: Display "Course not found" error message
+else course.InstructorId != instructorId
+    sv-->>be_ctrl: Throw UnauthorizedAccessException("You do not have permission to delete this course.")
+    be_ctrl-->>fe_ctrl: Return statusCode 403 (Forbidden)
+    fe_ctrl-->>view: Return JSON { success = false, message = "..." }
+    view-->>act: Display "Permission denied" error message
+else activeLockout is not null
+    sv-->>be_ctrl: Throw BadRequestException("Your instructor account is locked...")
+    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view: Return JSON { success = false, message = "..." }
+    view-->>act: Display "Account locked" error message
+else course.CourseStatus == "pending"
+    sv-->>be_ctrl: Throw InvalidOperationException("Cannot delete course while it is pending review.")
+    be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
+    fe_ctrl-->>view: Return JSON { success = false, message = "..." }
+    view-->>act: Display "Cannot delete pending course" error message
+else hasEnrollments is true
+    sv-->>be_ctrl: Throw BadRequestException("Cannot delete a course with active students.")
+    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view: Return JSON { success = false, message = "..." }
+    view-->>act: Display "Cannot delete course with active students" error message
+else Happy Path (All checks pass)
+    sv->sv++: Mark course as removed (IsRemoved = true)
+    sv--
+    
+    sv->lesson_repo++: Call GetByCourseIdAsync(courseId)
+    lesson_repo->ctx++: Call GetByCourseIdAsync(courseId)
+    ctx->db++: Query lessons by courseId
+    db-->>ctx--: Return lessons list
+    ctx-->>lesson_repo--: Return lessons list
+    lesson_repo-->>sv--: Return lessons list
+    
+    loop for each lesson in lessons
+        sv->sv++: Mark lesson as removed (IsRemoved = true)
+        sv--
+        sv->lesson_repo++: Call Update(lesson)
+        lesson_repo-->>sv--: Return success
+    end
+    
+    sv->repo++: Call Update(course)
+    repo-->>sv--: Return success
+    
+    sv->repo++: Call SaveChangesAsync()
+    repo->ctx++: Call SaveChangesAsync()
+    ctx->db++: Save changes to Database
+    db-->>ctx--: Return numberOfRowsAffected
+    ctx-->>repo--: Return numberOfRowsAffected
+    repo-->>sv--: Return numberOfRowsAffected
+    
+    sv->sv++: Check if numberOfRowsAffected > 0
+    sv--
+    
+    alt numberOfRowsAffected > 0
+        sv->redis++: Call RemoveCacheAsync(courseKey)
+        redis-->>sv--: Cache removed
+        
+        sv-->>be_ctrl: Return success
+        be_ctrl-->>fe_ctrl: Return statusCode 200 (SuccessResponse)
+        fe_ctrl-->>view: Return success JSON { success = true }
+        view-->>act: Display "Course deleted successfully" notification and refresh course list
+    else numberOfRowsAffected == 0
+        sv-->>be_ctrl--: Throw InvalidOperationException("Failed to delete course.")
+        be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
+        fe_ctrl-->>view--: Return JSON { success = false, message = "..." }
+        view-->>act--: Display "Deletion failed" error message
+    end
+end
+
+@enduml
