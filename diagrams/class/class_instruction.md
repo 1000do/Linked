@@ -85,7 +85,11 @@ To maintain consistency across diagrams, assign relationships strictly according
   }
   ```
 - **Namespaces / Packages**: Do not use namespaces/ packages.
-- **Members Representation**: Include key properties (`+ Name : string`) and primary public methods (`+ CreateCourse(dto: CourseDto) : Task<bool>`) but keep them clean and relevant to avoid clutter.
+- **Members Representation & Signatures**:
+  - **Field Attributes**: Include private field attributes related to the functionalities, formatted as `visibility attributeName : Interface/Class/Data Type` (e.g., `- _courseRepository : ICourseRepository`).
+  - **Full Method Signatures**: Provide complete signatures for methods, specifying visibility (`+` for public, `-` for private, `#` for protected), arguments with their types, and the return type (e.g., `+ CreateCourseAsync(request: CourseCreateRequest, instructorId: int): Task<CourseResponse>`).
+  - **Interface Content Styling**: For interfaces, write all internal contents (methods, properties, attributes) entirely in italics. In PlantUML, format them with double slashes (e.g., `//+ CreateCourseAsync(request: CourseCreateRequest, instructorId: int): Task<CourseResponse>//`).
+  - **Relevance**: Keep attributes and methods clean and relevant to the specific usecase/functionality to avoid clutter.
 - **Output Format**: Return **ONLY** the PlantUML code block enclosed in standard markdown code fences.
 
 ---
