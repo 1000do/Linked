@@ -1,0 +1,203 @@
+@startuml PublishCourse
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Publish Course
+actor Instructor as act
+
+participant "CourseEditForm" as view
+participant "InstructorCourseController" as fe_ctrl
+participant "CourseController" as be_ctrl
+
+participant ":CourseCommandService" as sv
+participant ":LockoutRepository" as lock_repo
+participant ":InstructorRepository" as inst_repo
+participant ":LessonRepository" as lesson_repo
+participant ":MaterialRepository" as material_repo
+participant ":CourseRepository" as repo
+participant ":RedisService" as redis
+participant ":AppDbContext" as ctx
+
+database Database as db
+
+act++
+act->view++: Click "Submit for Review" / "Publish" button
+view->fe_ctrl++: Send AJAX POST request to InstructorCourse/UpdateCourseStatus (status = "pending")
+
+fe_ctrl->be_ctrl++: Send PATCH request to /api/courses/{courseId}/status (JSON payload)
+be_ctrl->be_ctrl++: Call GetInstructorId()
+be_ctrl--
+be_ctrl->sv++: Call UpdateCourseStatusAsync(courseId, "pending", instructorId)
+
+sv->repo++: Call GetByIdAsync(courseId)
+repo->ctx++: Call FindAsync(courseId)
+ctx->db++: Query Course by courseId
+db-->>ctx--: Return course or null
+ctx-->>repo--: Return course or null
+repo-->>sv--: Return course or null
+
+sv->sv++: Check if course is null
+sv--
+group opt [Course is null]
+    sv-->>be_ctrl: Throw Exception("Course not found.")
+    be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
+    fe_ctrl-->>view: Return JSON { success = false }
+    view-->>act: Display "Course not found" error message
+end
+
+sv->sv++: Check course ownership
+sv--
+group opt [course.InstructorId != instructorId]
+    sv-->>be_ctrl: Throw UnauthorizedAccessException("...")
+    be_ctrl-->>fe_ctrl: Return statusCode 403 (Forbidden)
+    fe_ctrl-->>view: Return JSON { success = false }
+    view-->>act: Display "Permission denied" error message
+end
+
+sv->lock_repo++: Call GetActiveLockoutAsync(instructorId, "instructor")
+lock_repo->ctx++: Call GetActiveLockoutAsync()
+ctx->db++: Query active lockout
+db-->>ctx--: Return activeLockout or null
+ctx-->>lock_repo--: Return activeLockout or null
+lock_repo-->>sv--: Return activeLockout or null
+
+sv->sv++: Check if instructor is locked out
+sv--
+group opt [Instructor account is locked]
+    sv-->>be_ctrl: Throw BadRequestException("...")
+    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view: Return JSON { success = false }
+    view-->>act: Display lockout error message
+end
+
+sv->sv++: Check if course is discontinued
+sv--
+group opt [Course is archived and flag count >= 3]
+    sv-->>be_ctrl: Throw BadRequestException("...")
+    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view: Return JSON { success = false }
+    view-->>act: Display discontinued error message
+end
+
+sv->inst_repo++: Call GetByIdAsync(instructorId)
+inst_repo->ctx++: Call FindAsync(instructorId)
+ctx->db++: Query Instructor details
+db-->>ctx--: Return instructor
+ctx-->>inst_repo--: Return instructor
+inst_repo-->>sv--: Return instructor
+
+sv->sv++: Determine if Stripe onboarding is active
+sv--
+
+sv->lesson_repo++: Call GetByCourseIdAsync(courseId)
+lesson_repo->ctx++: Call GetByCourseIdAsync(courseId)
+ctx->db++: Query lessons list
+db-->>ctx--: Return lessons list
+ctx-->>lesson_repo--: Return lessons list
+lesson_repo-->>sv--: Return lessons list
+
+sv->sv++: Validate active lessons count > 0
+sv--
+group opt [No active lessons]
+    sv-->>be_ctrl: Throw BadRequestException("The course must have at least one lesson.")
+    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view: Return JSON { success = false }
+    view-->>act: Display error message
+end
+
+sv->sv++: Validate video materials and compute total duration
+sv--
+group opt [Any lesson is missing a video material]
+    sv-->>be_ctrl: Throw BadRequestException("Every lesson must contain at least one video.")
+    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view: Return JSON { success = false }
+    view-->>act: Display lesson video missing error message
+end
+
+sv->sv++: Validate video duration limits (Stripe and Free limitations)
+sv--
+group opt [Total duration exceeds Stripe limit (>30m) or Free limit (>60m)]
+    sv-->>be_ctrl: Throw BadRequestException("...")
+    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view: Return JSON { success = false }
+    view-->>act: Display duration limit violation message
+end
+
+sv->material_repo++: Call GetByCourseIdAsync(courseId)
+material_repo->ctx++: Call GetByCourseIdAsync(courseId)
+ctx->db++: Query materials list
+db-->>ctx--: Return materials list
+ctx-->>material_repo--: Return materials list
+material_repo-->>sv--: Return materials list
+
+loop for each material
+    group opt [material.LearningStatus == "rejected"]
+        sv->sv++: Set material.LearningStatus = "active" and reset feedback
+        sv--
+        sv->material_repo++: Call Update(material)
+        material_repo-->>sv--: Return success
+    end
+end
+
+loop for each lesson in course
+    sv->sv++: Set lesson.LessonStatus = "active"
+    sv--
+    sv->lesson_repo++: Call Update(lesson)
+    lesson_repo-->>sv--: Return success
+end
+
+sv->sv++: Set course.CourseStatus = "pending" and reset feedback
+sv--
+sv->repo++: Call Update(course)
+repo-->>sv--: Return success
+
+sv->repo++: Call SaveChangesAsync()
+repo->ctx++: Call SaveChangesAsync()
+ctx->db++: Save updates to Database
+db-->>ctx--: Return numberOfRowsAffected
+ctx-->>repo--: Return numberOfRowsAffected
+repo-->>sv--: Return numberOfRowsAffected
+
+sv->sv++: Check if numberOfRowsAffected > 0
+sv--
+
+alt numberOfRowsAffected > 0
+    sv->redis++: Call RemoveCacheAsync(courseKey)
+    redis-->>sv--: Cache removed
+    
+    sv-->>be_ctrl: Return success
+    be_ctrl-->>fe_ctrl: Return statusCode 200 (Ok)
+    fe_ctrl-->>view: Return success JSON { success = true }
+    view-->>act: Display "Submitted for review successfully" notification
+else numberOfRowsAffected == 0
+    sv-->>be_ctrl--: Throw InvalidOperationException("Failed to save changes")
+    be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view--: Return JSON { success = false }
+    view-->>act--: Display "Submission failed" error message
+end
+
+@enduml
