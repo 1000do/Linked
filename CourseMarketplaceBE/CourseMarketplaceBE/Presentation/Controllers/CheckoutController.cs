@@ -81,6 +81,35 @@ public class CheckoutController : ControllerBase
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/checkout/create-intent
+    // Tạo Stripe PaymentIntent và trả về Client Secret cho FE.
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("create-intent")]
+    public async Task<IActionResult> CreateIntent([FromBody] CheckoutRequest request)
+    {
+        var userId = GetUserId();
+        if (userId == null)
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
+
+        if (!await _authService.IsEmailVerifiedAsync(userId.Value))
+            return BadRequest(ApiResponse<string>.ErrorResponse("Please verify your email address."));
+
+        try
+        {
+            var result = await _checkoutService.InitiatePaymentIntentAsync(userId.Value, request.CouponCode);
+            return Ok(ApiResponse<CheckoutResponse>.SuccessResponse(result, "Payment intent created successfully."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Server error: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // POST /api/checkout/direct
     // Mua trực tiếp 1 khóa học sử dụng Destination Charges (bỏ giỏ hàng)
     // ═══════════════════════════════════════════════════════════════════════
@@ -139,6 +168,36 @@ public class CheckoutController : ControllerBase
             Console.WriteLine($"[BE-CONTROLLER] Calling _checkoutService.ProcessPaymentSuccessAsync...");
             await _checkoutService.ProcessPaymentSuccessAsync(sessionId);
             Console.WriteLine($"[BE-CONTROLLER] ✅ ProcessPaymentSuccessAsync completed WITHOUT exception.");
+            return Ok(ApiResponse<string>.SuccessResponse("Payment successful and course access granted."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"[BE-CONTROLLER] ❌ InvalidOperationException: {ex.Message}");
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[BE-CONTROLLER] ❌ EXCEPTION: {ex.Message}\n{ex.StackTrace}");
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Payment processing error: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET /api/checkout/success-intent?payment_intent_id=pi_xxx
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpGet("success-intent")]
+    public async Task<IActionResult> SuccessIntent([FromQuery(Name = "payment_intent_id")] string paymentIntentId)
+    {
+        Console.WriteLine($"[BE-CONTROLLER] ═══ CheckoutController.SuccessIntent ENTRY ═══ payment_intent_id={paymentIntentId}");
+
+        if (string.IsNullOrWhiteSpace(paymentIntentId))
+            return BadRequest(ApiResponse<string>.ErrorResponse("Missing payment_intent_id."));
+
+        try
+        {
+            Console.WriteLine($"[BE-CONTROLLER] Calling _checkoutService.ProcessPaymentIntentSuccessAsync...");
+            await _checkoutService.ProcessPaymentIntentSuccessAsync(paymentIntentId);
+            Console.WriteLine($"[BE-CONTROLLER] ✅ ProcessPaymentIntentSuccessAsync completed WITHOUT exception.");
             return Ok(ApiResponse<string>.SuccessResponse("Payment successful and course access granted."));
         }
         catch (InvalidOperationException ex)

@@ -50,17 +50,58 @@ namespace CourseMarketplaceBE.Application.Services
 
             var existing = await _repo.GetByIdAsync(userId);
 
+            // Thu thập các file tải lên từ cả DocumentFiles và DocumentFile (để tương thích ngược)
+            var filesToUpload = new List<Microsoft.AspNetCore.Http.IFormFile>();
+            if (request.DocumentFiles != null && request.DocumentFiles.Count > 0)
+            {
+                filesToUpload.AddRange(request.DocumentFiles.Where(f => f != null && f.Length > 0));
+            }
+            else if (request.DocumentFile != null && request.DocumentFile.Length > 0)
+            {
+                filesToUpload.Add(request.DocumentFile);
+            }
+
+            int retainedCount = request.RetainedDocumentUrls?.Count ?? 0;
+            int totalFiles = retainedCount + filesToUpload.Count;
+
+            if (totalFiles < 1)
+                throw new InvalidOperationException("Please upload at least 1 document/certificate file.");
+
+            if (totalFiles > 3)
+                throw new InvalidOperationException("You can upload a maximum of 3 document/certificate files.");
+
             if (existing != null)
             {
                 // Chỉ cho phép nộp lại nếu đơn đang ở trạng thái 'Rejected'
                 if (existing.ApprovalStatus != "Rejected")
                     throw new InvalidOperationException("You have already submitted an instructor application.");
 
-                // Upload file mới nếu có, không thì giữ file cũ
-                if (request.DocumentFile != null && request.DocumentFile.Length > 0)
-                    existing.DocumentUrl = await _uploadService.UploadImageAsync(request.DocumentFile);
-                else if (string.IsNullOrEmpty(existing.DocumentUrl))
-                    throw new InvalidOperationException("Please upload your CV / Certificates / ID card.");
+                // Chỉ giữ lại những URL thực sự thuộc về documentUrl cũ của chính user này
+                var previousUrls = existing.DocumentUrl?.Split(';', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                var validRetained = request.RetainedDocumentUrls?
+                    .Where(url => previousUrls.Contains(url))
+                    .ToList() ?? new List<string>();
+
+                var uploadedUrls = new List<string>();
+                if (filesToUpload.Count > 0)
+                {
+                    foreach (var file in filesToUpload)
+                    {
+                        var url = await _uploadService.UploadImageAsync(file);
+                        if (!string.IsNullOrEmpty(url))
+                            uploadedUrls.Add(url);
+                    }
+                }
+
+                var finalUrls = new List<string>(validRetained);
+                finalUrls.AddRange(uploadedUrls);
+
+                if (finalUrls.Count < 1)
+                    throw new InvalidOperationException("Please upload at least 1 document/certificate file.");
+                if (finalUrls.Count > 3)
+                    throw new InvalidOperationException("You can upload a maximum of 3 document/certificate files.");
+
+                existing.DocumentUrl = string.Join(";", finalUrls);
 
                 existing.ProfessionalTitle   = request.ProfessionalTitle;
                 existing.ExpertiseCategories = request.ExpertiseCategories;
@@ -75,10 +116,21 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             // ★ CV/Document bắt buộc cho đơn mới
-            if (request.DocumentFile == null || request.DocumentFile.Length == 0)
-                throw new InvalidOperationException("Please upload your CV / Certificates / ID card.");
+            if (filesToUpload.Count == 0)
+                throw new InvalidOperationException("Please upload at least 1 document/certificate file.");
 
-            string? documentUrl = await _uploadService.UploadImageAsync(request.DocumentFile);
+            var uploadedUrlsNew = new List<string>();
+            foreach (var file in filesToUpload)
+            {
+                var url = await _uploadService.UploadImageAsync(file);
+                if (!string.IsNullOrEmpty(url))
+                    uploadedUrlsNew.Add(url);
+            }
+
+            if (uploadedUrlsNew.Count == 0)
+                throw new InvalidOperationException("Failed to upload document files.");
+
+            string documentUrl = string.Join(";", uploadedUrlsNew);
 
             var instructor = new Instructor
             {

@@ -224,6 +224,10 @@ public class CouponController : ControllerBase
         {
             return StatusCode(403, ApiResponse<string>.ErrorResponse(ex.Message));
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
         catch (Exception ex)
         {
             return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));
