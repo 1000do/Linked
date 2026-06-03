@@ -1,12 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace CourseMarketplaceBE.Application.Services
 {
@@ -18,22 +18,22 @@ namespace CourseMarketplaceBE.Application.Services
     public class InstructorService : IInstructorService
     {
         private readonly IInstructorRepository _repo;
-        private readonly IFileUploadService    _uploadService;
+        private readonly IFileUploadService _uploadService;
         private readonly IAdminFinanceRepository _financeRepo;
         private readonly IUserRepository _userRepo;
         private readonly IStripeConnectService _stripeConnect;
 
         public InstructorService(
-            IInstructorRepository repo, 
-            IFileUploadService uploadService, 
-            IAdminFinanceRepository financeRepo, 
+            IInstructorRepository repo,
+            IFileUploadService uploadService,
+            IAdminFinanceRepository financeRepo,
             IUserRepository userRepo,
             IStripeConnectService stripeConnect)
         {
-            _repo          = repo;
+            _repo = repo;
             _uploadService = uploadService;
-            _financeRepo   = financeRepo;
-            _userRepo      = userRepo;
+            _financeRepo = financeRepo;
+            _userRepo = userRepo;
             _stripeConnect = stripeConnect;
         }
 
@@ -104,13 +104,13 @@ namespace CourseMarketplaceBE.Application.Services
 
                 existing.DocumentUrl = string.Join(";", finalUrls);
 
-                existing.ProfessionalTitle   = request.ProfessionalTitle;
+                existing.ProfessionalTitle = request.ProfessionalTitle;
                 existing.ExpertiseCategories = request.ExpertiseCategories;
-                existing.LinkedinUrl         = request.LinkedinUrl;
-                existing.YoutubeUrl          = request.YoutubeUrl;
-                existing.FacebookUrl         = request.FacebookUrl;
-                existing.StripeCountry       = request.StripeCountry.ToUpper();
-                existing.ApprovalStatus      = InstructorApprovalStatus.Pending.ToValue();
+                existing.LinkedinUrl = request.LinkedinUrl;
+                existing.YoutubeUrl = request.YoutubeUrl;
+                existing.FacebookUrl = request.FacebookUrl;
+                existing.StripeCountry = request.StripeCountry.ToUpper();
+                existing.ApprovalStatus = InstructorApprovalStatus.Pending.ToValue();
 
                 int rowsResubmit = await _repo.SaveChangesAsync();
                 if (rowsResubmit <= 0)
@@ -137,19 +137,19 @@ namespace CourseMarketplaceBE.Application.Services
 
             var instructor = new Instructor
             {
-                InstructorId         = userId,
-                ProfessionalTitle    = request.ProfessionalTitle,
-                ExpertiseCategories  = request.ExpertiseCategories,
-                LinkedinUrl          = request.LinkedinUrl,
-                YoutubeUrl           = request.YoutubeUrl,
-                FacebookUrl          = request.FacebookUrl,
-                DocumentUrl          = documentUrl,
-                ApprovalStatus       = InstructorApprovalStatus.Pending.ToValue(),
-                StripeCountry        = request.StripeCountry.ToUpper(),
-                StripeAccountId      = null,
+                InstructorId = userId,
+                ProfessionalTitle = request.ProfessionalTitle,
+                ExpertiseCategories = request.ExpertiseCategories,
+                LinkedinUrl = request.LinkedinUrl,
+                YoutubeUrl = request.YoutubeUrl,
+                FacebookUrl = request.FacebookUrl,
+                DocumentUrl = documentUrl,
+                ApprovalStatus = InstructorApprovalStatus.Pending.ToValue(),
+                StripeCountry = request.StripeCountry.ToUpper(),
+                StripeAccountId = null,
                 StripeOnboardingStatus = null,
-                PayoutsEnabled       = false,
-                ChargesEnabled       = false
+                PayoutsEnabled = false,
+                ChargesEnabled = false
             };
 
             await _repo.AddAsync(instructor);
@@ -203,10 +203,10 @@ namespace CourseMarketplaceBE.Application.Services
 
             // Gọi Stripe Connect setup service
             var setupResult = await _stripeConnect.SetupExpressAccountAsync(
-                userId, 
-                email, 
-                country, 
-                instructor.ProfessionalTitle ?? "", 
+                userId,
+                email,
+                country,
+                instructor.ProfessionalTitle ?? "",
                 instructor.ExpertiseCategories ?? "",
                 instructor.StripeAccountId
             );
@@ -215,7 +215,7 @@ namespace CourseMarketplaceBE.Application.Services
             if (instructor.StripeAccountId != setupResult.StripeAccountId)
             {
                 instructor.StripeAccountId = setupResult.StripeAccountId;
-                instructor.StripeOnboardingStatus  = StripeOnboardingStatus.Pending.ToValue();
+                instructor.StripeOnboardingStatus = StripeOnboardingStatus.Pending.ToValue();
                 int rowsSetup = await _repo.SaveChangesAsync();
                 if (rowsSetup <= 0)
                     throw new InvalidOperationException("Failed to save changes when setting up Stripe account.");
@@ -247,16 +247,16 @@ namespace CourseMarketplaceBE.Application.Services
             // Chỉ cần điền xong form (DetailsSubmitted = true) → coi như THÀNH CÔNG 100%
             if (stripeAccountStatus.DetailsSubmitted)
             {
-                instructor.PayoutsEnabled         = true;
-                instructor.ChargesEnabled         = true;
+                instructor.PayoutsEnabled = true;
+                instructor.ChargesEnabled = true;
                 instructor.StripeOnboardingStatus = StripeOnboardingStatus.Active.ToValue();
                 await _repo.SaveChangesAsync();
                 return "Active";
             }
 
             // Nếu chưa nộp form
-            instructor.PayoutsEnabled         = stripeAccountStatus.PayoutsEnabled;
-            instructor.ChargesEnabled         = stripeAccountStatus.ChargesEnabled;
+            instructor.PayoutsEnabled = stripeAccountStatus.PayoutsEnabled;
+            instructor.ChargesEnabled = stripeAccountStatus.ChargesEnabled;
             instructor.StripeOnboardingStatus = StripeOnboardingStatus.Pending.ToValue();
             await _repo.SaveChangesAsync();
 
@@ -281,9 +281,9 @@ namespace CourseMarketplaceBE.Application.Services
             var stats = await _repo.GetStatsAsync(userId);
             if (stats != null)
             {
-                dto.TotalStudents  = stats.TotalStudentsCount;
-                dto.AverageRating  = (decimal)stats.InstructorRating;
-                dto.TotalRevenue   = stats.TotalRevenue;
+                dto.TotalStudents = stats.TotalStudentsCount;
+                dto.AverageRating = (decimal)stats.InstructorRating;
+                dto.TotalRevenue = stats.TotalRevenue;
             }
 
             dto.ActiveCoursesCount = await _repo.CountActiveCoursesAsync(userId);
