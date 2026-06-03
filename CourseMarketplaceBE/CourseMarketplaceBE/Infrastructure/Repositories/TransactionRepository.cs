@@ -1,4 +1,6 @@
+using System;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -63,7 +65,7 @@ public class TransactionRepository : ITransactionRepository
         }
         else
         {
-            baseQuery = baseQuery.Where(t => t.TransactionsStatus != "pending");
+            baseQuery = baseQuery.Where(t => t.TransactionsStatus != TransactionStatus.Pending.ToValue());
         }
 
         switch (sortBy?.ToLower())
@@ -314,7 +316,7 @@ public class TransactionRepository : ITransactionRepository
         }
         else
         {
-            baseQuery = baseQuery.Where(t => t.TransactionsStatus == "succeeded" || t.TransactionsStatus == "refund_pending" || t.TransactionsStatus == "refunded");
+            baseQuery = baseQuery.Where(t => t.TransactionsStatus == TransactionStatus.Succeeded.ToValue() || t.TransactionsStatus == TransactionStatus.RefundPending.ToValue() || t.TransactionsStatus == TransactionStatus.Refunded.ToValue());
         }
 
         switch (sortBy?.ToLower())

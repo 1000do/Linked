@@ -1,4 +1,4 @@
-using CourseMarketplaceBE.Application.Interfaces;
+using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

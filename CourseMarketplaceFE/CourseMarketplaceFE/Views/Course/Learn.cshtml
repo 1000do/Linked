@@ -269,12 +269,15 @@
             <div class="flex-1 overflow-y-auto custom-scrollbar">
                 @foreach (var lesson in Model.Lessons)
                 {
-                    <div class="lesson-section border-b border-slate-50">
+                    <div class="lesson-section border-b border-slate-50" data-lesson-id="@lesson.LessonId">
                         <button class="w-full px-4 py-3 bg-slate-50 flex items-center justify-between text-left hover:bg-slate-100 transition-colors"
                                 onclick="this.nextElementSibling.classList.toggle('hidden')">
                             <div>
                                 <p class="text-xs font-bold text-[#006a62] uppercase tracking-tighter">Section @(Model.Lessons.IndexOf(lesson) + 1)</p>
-                                <h3 class="font-bold text-sm text-[#191c1b]">@lesson.Title</h3>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="font-bold text-sm text-[#191c1b]">@lesson.Title</h3>
+                                    <span class="lesson-rating-badge hidden text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md leading-none"></span>
+                                </div>
                             </div>
                             <span class="material-symbols-outlined text-slate-400">expand_more</span>
                         </button>
@@ -480,6 +483,7 @@
                     setRating(0);
                     loadReviews();
                     loadLearnStats();
+                    loadLessonRatings();
                 } else {
                     Swal.fire('Error', result.message || 'Could not submit review.', 'error');
                 }
@@ -556,9 +560,17 @@
             }
         }
 
+        // ── currentUserId từ JWT ────────────────────────────────────────────────────
+        const currentUserId = parseInt('@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0")') || 0;
+
         function renderReviewItem(r) {
+            const isOwn = currentUserId > 0 && r.userId === currentUserId;
+            const createdTime = r.createdAt ? new Date(r.createdAt).getTime() : 0;
+            const updatedTime = r.updatedAt ? new Date(r.updatedAt).getTime() : 0;
+            const isEdited = updatedTime && updatedTime > (createdTime + 60000);
+            const isRemoved = r.isRemoved;
             return `
-                <div class="border-t border-slate-100 pt-6 group">
+                <div class="border-t border-slate-100 pt-6 group" id="review-card-${r.reviewId}">
                     <div class="flex gap-4 mb-3">
                         <div class="w-10 h-10 rounded-full bg-[#191c1b] text-white flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
                             ${r.userAvatarUrl ? `<img src="${r.userAvatarUrl}" class="w-full h-full object-cover" />` : r.userFullName.charAt(0)}
@@ -569,19 +581,38 @@
                                     ${r.userFullName}
                                     ${r.isInstructor ? '<span class="ml-2 bg-[#006a62]/10 text-[#006a62] text-[10px] px-2 py-0.5 rounded-full border border-[#006a62]/20">Instructor</span>' : ''}
                                 </h4>
-                                <div class="flex items-center gap-3">
+                                <div class="relative flex items-center gap-2">
                                     <span class="text-[11px] text-slate-400 font-medium">${new Date(r.createdAt).toLocaleDateString('vi-VN')}</span>
-                                    <button onclick="reportReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}')" class="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500" title="Report review">
-                                        <span class="material-symbols-outlined text-[16px]">flag</span>
-                                    </button>
+                                    ${(isEdited && !isRemoved) ? '<span class="text-[10px] text-slate-400 italic">(edited)</span>' : ''}
+                                    ${!isRemoved ? `
+                                    <div class="relative opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onclick="toggleLearnMenu(this)" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors" title="More options">
+                                            <span class="material-symbols-outlined text-[18px]">more_vert</span>
+                                        </button>
+                                        <div class="learn-review-menu hidden absolute right-0 top-8 z-30 min-w-[160px] bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5">
+                                            ${isOwn ? `
+                                            <button onclick="editLearnReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}', ${r.rating}, ${JSON.stringify(r.comment).replace(/"/g, '&quot;')}); closeAllLearnMenus()" class="w-full text-left px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                                                <span class="material-symbols-outlined text-[16px] text-blue-500">edit</span> Edit
+                                            </button>
+                                            <button onclick="deleteLearnReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}'); closeAllLearnMenus()" class="w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2">
+                                                <span class="material-symbols-outlined text-[16px]">delete</span> Delete
+                                            </button>
+                                            ` : `
+                                            <button onclick="reportReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}'); closeAllLearnMenus()" class="w-full text-left px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2">
+                                                <span class="material-symbols-outlined text-[16px] text-orange-500">flag</span> Report
+                                            </button>
+                                            `}
+                                        </div>
+                                    </div>` : ''}
                                 </div>
                             </div>
                             <div class="flex items-center gap-3 mb-2">
+                                ${(!isRemoved && r.rating > 0) ? `
                                 <div class="flex text-amber-500">
                                     ${Array(5).fill(0).map((_, i) => `
                                         <span class="material-symbols-outlined text-[14px] ${i < r.rating ? 'fill-1' : ''}">star</span>
                                     `).join('')}
-                                </div>
+                                </div>` : ''}
                                 ${r.lessonTitle ? `
                                     <div class="flex items-center gap-1 bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded border border-slate-200">
                                         <span class="material-symbols-outlined text-[12px]">menu_book</span>
@@ -594,12 +625,135 @@
                                     </div>
                                 `}
                             </div>
-                            <p class="text-sm text-slate-700 leading-relaxed">${r.comment}</p>
+                            <p class="text-sm ${isRemoved ? 'text-slate-400 italic' : 'text-slate-700'} leading-relaxed" id="review-text-${r.reviewId}">${r.comment}</p>
+                            <!-- Edit form (hidden) -->
+                            ${!isRemoved ? `
+                            <div id="edit-form-${r.reviewId}" class="hidden mt-3 p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                                <div class="flex gap-1 mb-2" id="edit-stars-${r.reviewId}">
+                                    ${Array(5).fill(0).map((_, i) => `
+                                        <button type="button" onclick="setLearnEditRating(${r.reviewId}, ${i+1})" class="learn-edit-star text-slate-300 hover:text-amber-500 transition-colors">
+                                            <span class="material-symbols-outlined text-[20px]">star</span>
+                                        </button>
+                                    `).join('')}
+                                    <input type="hidden" id="edit-rating-${r.reviewId}" value="${r.rating}" />
+                                </div>
+                                <textarea id="edit-comment-${r.reviewId}" rows="3" class="w-full rounded-xl border-slate-200 text-sm p-2 focus:ring-[#006a62] resize-none">${r.comment}</textarea>
+                                <div class="flex gap-2 mt-2">
+                                    <button onclick="saveLearnEditReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}')" class="px-4 py-1.5 bg-[#006a62] text-white text-xs font-bold rounded-xl hover:bg-[#004d48] transition-colors">Save</button>
+                                    <button onclick="cancelLearnEdit(${r.reviewId})" class="px-4 py-1.5 bg-slate-100 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-200 transition-colors">Cancel</button>
+                                </div>
+                            </div>` : ''}
                         </div>
                     </div>
                 </div>
             `;
         }
+
+        // ── Menu helpers ─────────────────────────────────────────────────
+        function toggleLearnMenu(btn) {
+            closeAllLearnMenus();
+            btn.nextElementSibling.classList.toggle('hidden');
+            setTimeout(() => document.addEventListener('click', closeAllLearnMenus, { once: true }), 0);
+        }
+        function closeAllLearnMenus() {
+            document.querySelectorAll('.learn-review-menu').forEach(m => m.classList.add('hidden'));
+        }
+
+        // ── Edit helpers ────────────────────────────────────────────────
+        function editLearnReview(reviewId, type, currentRating, currentComment) {
+            document.getElementById(`edit-form-${reviewId}`).classList.remove('hidden');
+            document.getElementById(`review-text-${reviewId}`).classList.add('hidden');
+            setLearnEditRating(reviewId, Math.round(currentRating));
+        }
+        function cancelLearnEdit(reviewId) {
+            document.getElementById(`edit-form-${reviewId}`).classList.add('hidden');
+            document.getElementById(`review-text-${reviewId}`).classList.remove('hidden');
+        }
+        function setLearnEditRating(reviewId, n) {
+            document.getElementById(`edit-rating-${reviewId}`).value = n;
+            document.querySelectorAll(`#edit-stars-${reviewId} .learn-edit-star`).forEach((btn, i) => {
+                const icon = btn.querySelector('.material-symbols-outlined');
+                if (i < n) { btn.classList.add('text-amber-500'); btn.classList.remove('text-slate-300'); icon.classList.add('fill-1'); }
+                else { btn.classList.remove('text-amber-500'); btn.classList.add('text-slate-300'); icon.classList.remove('fill-1'); }
+            });
+        }
+        async function saveLearnEditReview(reviewId, type) {
+            const rating = parseFloat(document.getElementById(`edit-rating-${reviewId}`).value);
+            const comment = document.getElementById(`edit-comment-${reviewId}`).value.trim();
+            if (!rating || rating < 1) return Swal.fire('Error', 'Please select a rating.', 'warning');
+            if (!comment) return Swal.fire('Error', 'Comment cannot be empty.', 'warning');
+            try {
+                const res = await fetch(`/Course/UpdateReview?reviewId=${reviewId}&type=${type}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rating, comment, type })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    Swal.fire({ icon: 'success', title: 'Updated!', timer: 1500, showConfirmButton: false });
+                    loadReviews();
+                    loadLessonRatings();
+                } else {
+                    Swal.fire('Error', result.message || 'Could not update review.', 'error');
+                }
+            } catch { Swal.fire('Error', 'Could not connect to server.', 'error'); }
+        }
+        async function deleteLearnReview(reviewId, type) {
+            const confirm = await Swal.fire({
+                title: 'Delete this review?', text: 'This action cannot be undone.',
+                icon: 'warning', showCancelButton: true,
+                confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, delete it',
+                customClass: { popup: 'rounded-3xl' }
+            });
+            if (!confirm.isConfirmed) return;
+            try {
+                const res = await fetch(`/Course/DeleteReview?reviewId=${reviewId}&type=${type}`, { method: 'DELETE' });
+                const result = await res.json();
+            if (result.success) {
+                loadReviews();
+                loadLessonRatings();
+                Swal.fire({ icon: 'success', title: 'Deleted', timer: 1200, showConfirmButton: false });
+            } else {
+                    Swal.fire('Error', result.message || 'Could not delete review.', 'error');
+                }
+            } catch { Swal.fire('Error', 'Could not connect to server.', 'error'); }
+        }
+
+        // ── Sidebar: Load lesson avg ratings ──────────────────────────────
+        let lessonRatingMap = {}; // { lessonId: { averageRating, totalReviews } }
+        async function loadLessonRatings() {
+            try {
+                const res = await fetch('/Course/GetLessonRatings/@Model.CourseId');
+                const result = await res.json();
+                if (result.success && Array.isArray(result.data)) {
+                    lessonRatingMap = {};
+                    result.data.forEach(x => {
+                        const lid = x.lessonId !== undefined ? x.lessonId : x.LessonId;
+                        if (lid !== undefined) {
+                            lessonRatingMap[lid] = x;
+                        }
+                    });
+                    // Cập nhật badge rating trên tất cả lesson items
+                    document.querySelectorAll('[data-lesson-id]').forEach(el => {
+                        const lid = parseInt(el.dataset.lessonId);
+                        const ratingInfo = lessonRatingMap[lid];
+                        const badge = el.querySelector('.lesson-rating-badge');
+                        if (badge) {
+                            if (ratingInfo) {
+                                const avg = ratingInfo.averageRating !== undefined ? ratingInfo.averageRating : ratingInfo.AverageRating;
+                                if (avg !== undefined && avg !== null) {
+                                    badge.textContent = `★ ${parseFloat(avg).toFixed(1)}`;
+                                    badge.classList.remove('hidden');
+                                    return;
+                                }
+                            }
+                            badge.classList.add('hidden');
+                        }
+                    });
+                }
+            } catch (e) { console.error('Error loading lesson ratings:', e); }
+        }
+
 
         // ── Tab Switching ──────────────────────────────────────────
         function switchTab(tabId, element) {
@@ -772,6 +926,7 @@
                 firstItem.click();
             }
             loadProgress();
+            loadLessonRatings();
         });
     </script>
 </body>

@@ -1,3 +1,4 @@
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
@@ -119,13 +120,13 @@ public class ChatRepository : IChatRepository
     {
         return await _context.UserReports
             .AnyAsync(r => r.ChatId == chatId && 
-                          (r.UserReportsStatus == "pending" || r.UserReportsStatus == "processing"));
+                          (r.UserReportsStatus == ReportStatus.Pending.ToValue() || r.UserReportsStatus == ReportStatus.Processing.ToValue()));
     }
 
     public async Task UpdateAdminAccessAsync(int chatId, DateTime expiry)
     {
         var report = await _context.UserReports
-            .Where(r => r.ChatId == chatId && (r.UserReportsStatus == "pending" || r.UserReportsStatus == "processing"))
+            .Where(r => r.ChatId == chatId && (r.UserReportsStatus == ReportStatus.Pending.ToValue() || r.UserReportsStatus == ReportStatus.Processing.ToValue()))
             .OrderByDescending(r => r.CreatedAt)
             .FirstOrDefaultAsync();
 

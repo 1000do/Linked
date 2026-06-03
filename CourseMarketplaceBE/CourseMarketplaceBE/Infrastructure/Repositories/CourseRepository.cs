@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Application.DTOs;
@@ -71,7 +73,7 @@ public class CourseRepository : ICourseRepository
             .Include(c => c.Category)
             .Include(c => c.Instructor)
                 .ThenInclude(i => i!.InstructorNavigation)
-            .Where(c => c.CourseStatus == "published")
+            .Where(c => c.CourseStatus == CourseStatus.Published.ToValue())
             .OrderByDescending(c => c.CreatedAt)
             .AsNoTracking()
             .ToListAsync();
@@ -90,7 +92,7 @@ public class CourseRepository : ICourseRepository
             .Include(c => c.Category)
             .Include(c => c.Instructor)
                 .ThenInclude(i => i!.InstructorNavigation)
-            .Where(c => c.CourseStatus == "published")
+            .Where(c => c.CourseStatus == CourseStatus.Published.ToValue())
             .AsNoTracking();
 
         // 0.1. Filtering by price
@@ -175,13 +177,13 @@ public class CourseRepository : ICourseRepository
     public async Task<bool> IsEnrolledAsync(int userId, int courseId)
     {
         return await _context.Enrollments
-            .AnyAsync(e => e.UserId == userId && e.CourseId == courseId && e.EnrollmentStatus != "revoked");
+            .AnyAsync(e => e.UserId == userId && e.CourseId == courseId && e.EnrollmentStatus != EnrollmentStatus.Revoked.ToValue());
     }
 
     public async Task<IEnumerable<Course>> GetEnrolledCoursesAsync(int userId)
     {
         return await _context.Enrollments
-            .Where(e => e.UserId == userId && e.EnrollmentStatus != "revoked")
+            .Where(e => e.UserId == userId && e.EnrollmentStatus != EnrollmentStatus.Revoked.ToValue())
             .Include(e => e.Course)
                 .ThenInclude(c => c!.Instructor)
                     .ThenInclude(i => i!.InstructorNavigation)
@@ -203,7 +205,7 @@ public class CourseRepository : ICourseRepository
                 .ThenInclude(i => i!.InstructorNavigation)
                     .ThenInclude(u => u.UserNavigation)
             .Include(c => c.Lessons.Where(l => !l.IsRemoved).OrderBy(l => l.LessonId))
-                .ThenInclude(l => l.LearningMaterials.Where(m => m.LearningStatus != "removed").OrderBy(m => m.MaterialId))
+                .ThenInclude(l => l.LearningMaterials.Where(m => m.LearningStatus != LearningStatus.Removed.ToValue()).OrderBy(m => m.MaterialId))
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.CourseId == courseId);
     }
@@ -281,7 +283,7 @@ public class CourseRepository : ICourseRepository
 
     public async Task<int> GetTotalPublishedCoursesCountAsync()
     {
-        return await _context.Courses.CountAsync(c => c.CourseStatus == "published");
+        return await _context.Courses.CountAsync(c => c.CourseStatus == CourseStatus.Published.ToValue());
     }
 
     public async Task<decimal> GetAveragePlatformRatingAsync()
@@ -298,11 +300,11 @@ public class CourseRepository : ICourseRepository
         var today = DateTime.Today;
 
         var pendingCount = await _context.Courses
-            .Where(c => c.CourseStatus == "pending" && !c.IsRemoved)
+            .Where(c => c.CourseStatus == CourseStatus.Pending.ToValue() && !c.IsRemoved)
             .CountAsync();
 
         var resolvedTodayCount = await _context.Courses
-            .Where(c => (c.CourseStatus == "published" || c.CourseStatus == "rejected")
+            .Where(c => (c.CourseStatus == CourseStatus.Published.ToValue() || c.CourseStatus == CourseStatus.Rejected.ToValue())
                      && c.UpdatedAt >= today
                      && !c.IsRemoved)
             .CountAsync();
@@ -322,7 +324,7 @@ public class CourseRepository : ICourseRepository
             .AsQueryable();
 
         // Always exclude draft courses from moderation interface
-        query = query.Where(c => c.CourseStatus != "draft");
+        query = query.Where(c => c.CourseStatus != CourseStatus.Draft.ToValue());
 
         // 1. Filter by Status (Default is all)
         var statusFilter = string.IsNullOrEmpty(filter.Status) ? "all" : filter.Status;
@@ -380,7 +382,7 @@ public class CourseRepository : ICourseRepository
             };
 
             // Calculate Urgency
-            if (c.CreatedAt.HasValue && c.CourseStatus == "pending")
+            if (c.CreatedAt.HasValue && c.CourseStatus == CourseStatus.Pending.ToValue())
             {
                 var diff = now - c.CreatedAt.Value;
                 if (diff.TotalHours > 72)
@@ -424,7 +426,7 @@ public class CourseRepository : ICourseRepository
         return await _context.Enrollments
             .FirstOrDefaultAsync(e => e.UserId == userId
                                    && e.CourseId == courseId
-                                   && e.EnrollmentStatus == "active");
+                                   && e.EnrollmentStatus == EnrollmentStatus.Active.ToValue());
     }
 
     public async Task<int> SaveChangesAsync()

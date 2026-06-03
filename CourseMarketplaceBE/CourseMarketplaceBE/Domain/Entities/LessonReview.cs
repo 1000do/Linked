@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using CourseMarketplaceBE.Domain.Constants;
 
 namespace CourseMarketplaceBE.Domain.Entities;
 
@@ -15,7 +16,7 @@ public partial class LessonReview
 
     public string? Comment { get; set; }
 
-    public string LessonReviewStatus { get; set; } = "ok";
+    public string LessonReviewStatus { get; set; } = ReviewStatus.Ok.ToValue();
 
     public DateTime? CreatedAt { get; set; }
 

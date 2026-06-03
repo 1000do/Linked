@@ -13,7 +13,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using CourseMarketplaceBE.Infrastructure.BackgroundServices;
 using Microsoft.IdentityModel.Tokens;
-using CourseMarketplaceBE.Application.Interfaces;
 using Microsoft.OpenApi.Models;
 using Stripe;
 using StackExchange.Redis;
@@ -167,8 +166,8 @@ public class Program
         builder.Services.AddScoped<ICouponRepository, CouponRepository>();
         builder.Services.AddScoped<ICouponService, CourseMarketplaceBE.Application.Services.CouponService>();
 
-        // builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-        builder.Services.AddAutoMapper(cfg => {}, typeof(Program).Assembly);
+        builder.Services.AddAutoMapper(config => {}, AppDomain.CurrentDomain.GetAssemblies());
+
         // Register file upload implementation conditionally.
         // If Cloudinary config is present, use CloudinaryUploadService; otherwise use a no-op fallback.
         var cloudName = configuration["CloudinarySettings:CloudName"];

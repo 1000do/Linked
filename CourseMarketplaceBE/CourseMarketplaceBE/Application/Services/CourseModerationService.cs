@@ -53,7 +53,7 @@ namespace CourseMarketplaceBE.Application.Services
             var course = await _courseRepository.GetByIdAsync(courseId);
             if (course == null) return false;
 
-            course.CourseStatus = "published";
+            course.CourseStatus = CourseStatus.Published.ToValue();
             course.ModerationFeedback = null;
             course.UpdatedAt = DateTime.Now;
             course.LastApprovedAt = DateTime.Now;
@@ -64,7 +64,7 @@ namespace CourseMarketplaceBE.Application.Services
                 foreach (var material in materials)
                 {
                     material.ModerationFeedback = null;
-                    material.LearningStatus = "active";
+                    material.LearningStatus = LearningStatus.Active.ToValue();
                     _materialRepository.Update(material);
                 }
             }
@@ -74,7 +74,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 foreach (var lesson in lessons)
                 {
-                    lesson.LessonStatus = "active";
+                    lesson.LessonStatus = LessonStatus.Active.ToValue();
                     _lessonRepository.Update(lesson);
                 }
             }
@@ -177,7 +177,7 @@ namespace CourseMarketplaceBE.Application.Services
                     subject = "Permanent Course Discontinuation Notice (3rd Time)";
                     message = $"Your course '{course.Title}' has violated policies for the 3rd time. The platform has decided to permanently discontinue this course. You will not be able to edit the content or accept new students, but existing students can still access their purchased content.";
 
-                    course.CourseStatus = "archived";
+                    course.CourseStatus = CourseStatus.Archived.ToValue();
                     _courseRepository.Update(course);
                     int rowsArchive1 = await _courseRepository.SaveChangesAsync();
                     if (rowsArchive1 <= 0)
@@ -211,7 +211,7 @@ namespace CourseMarketplaceBE.Application.Services
                 foreach (var m in allMaterials)
                 {
                     m.ModerationFeedback = null;
-                    m.LearningStatus = "active";
+                    m.LearningStatus = LearningStatus.Active.ToValue();
                     _materialRepository.Update(m);
                 }
             }
@@ -221,7 +221,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 foreach (var l in lessons)
                 {
-                    l.LessonStatus = "active";
+                    l.LessonStatus = LessonStatus.Active.ToValue();
                     _lessonRepository.Update(l);
                 }
             }
@@ -233,7 +233,7 @@ namespace CourseMarketplaceBE.Application.Services
                     var material = await _materialRepository.GetByIdAsync(item.MaterialId.Value);
                     if (material != null)
                     {
-                        material.LearningStatus = "rejected";
+                        material.LearningStatus = LearningStatus.Rejected.ToValue();
                         material.ModerationFeedback = item.Reason;
                         material.UpdatedAt = DateTime.Now;
                         _materialRepository.Update(material);
@@ -269,7 +269,7 @@ namespace CourseMarketplaceBE.Application.Services
                 var lesson = await _lessonRepository.GetByIdAsync(lessonId);
                 if (lesson != null)
                 {
-                    lesson.LessonStatus = "rejected";
+                    lesson.LessonStatus = LessonStatus.Rejected.ToValue();
                     lesson.UpdatedAt = DateTime.Now;
                     _lessonRepository.Update(lesson);
                 }
@@ -315,7 +315,7 @@ namespace CourseMarketplaceBE.Application.Services
                 foreach (var m in allMaterials)
                 {
                     m.ModerationFeedback = null;
-                    m.LearningStatus = "active";
+                    m.LearningStatus = LearningStatus.Active.ToValue();
                     _materialRepository.Update(m);
                 }
             }
@@ -325,7 +325,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 foreach (var l in lessons)
                 {
-                    l.LessonStatus = "active";
+                    l.LessonStatus = LessonStatus.Active.ToValue();
                     _lessonRepository.Update(l);
                 }
             }
@@ -337,7 +337,7 @@ namespace CourseMarketplaceBE.Application.Services
                     var material = await _materialRepository.GetByIdAsync(item.MaterialId.Value);
                     if (material != null)
                     {
-                        material.LearningStatus = "flagged";
+                        material.LearningStatus = LearningStatus.Flagged.ToValue();
                         material.ModerationFeedback = item.Reason;
                         material.UpdatedAt = DateTime.Now;
                         _materialRepository.Update(material);
@@ -373,7 +373,7 @@ namespace CourseMarketplaceBE.Application.Services
                 var lesson = await _lessonRepository.GetByIdAsync(lessonId);
                 if (lesson != null)
                 {
-                    lesson.LessonStatus = "rejected";
+                    lesson.LessonStatus = LessonStatus.Rejected.ToValue();
                     lesson.UpdatedAt = DateTime.Now;
                     _lessonRepository.Update(lesson);
                 }

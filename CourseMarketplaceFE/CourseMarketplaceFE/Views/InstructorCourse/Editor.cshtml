@@ -1343,9 +1343,8 @@
                 const statusLabel = hasRejected 
                     ? '<span class="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">error</span> Rejected</span>'
                     : `
-                    <div class="flex items-center gap-1 group mt-0.5" onclick="event.stopPropagation()">
-                        <input type="text" class="text-[10px] text-slate-500 bg-transparent border-none p-0 m-0 h-auto focus:ring-0 focus:outline-none hover:bg-slate-100 rounded w-full cursor-text truncate" value="${lDesc}" placeholder="Add description..." onblur="updateLessonInline(${lId}, 'description', this)" onkeydown="if(event.key==='Enter') this.blur();" />
-                        <span class="material-symbols-outlined text-[12px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shrink-0">edit</span>
+                    <div class="text-[10px] text-slate-500 truncate mt-0.5">
+                        ${lDesc}
                     </div>`;
                 
                 const removeBtnHtml = isPending ? '' : `
@@ -1359,10 +1358,9 @@
                          data-lesson-id="${lId}" data-num="${num}" data-title="${lTitle}" onclick="selectLesson(this)">
                         <span class="material-symbols-outlined text-${iconColor} text-[20px] mt-0.5" ${isSelected && !hasRejected ? "style='font-variation-settings: \"FILL\" 1;'" : ""}>${iconName}</span>
                         <div class="flex-1 overflow-hidden mr-2">
-                            <div class="flex items-center gap-1 group" onclick="event.stopPropagation()">
+                            <div class="flex items-center gap-1">
                                 <span class="font-bold text-slate-900 text-sm shrink-0">${num}.</span>
-                                <input type="text" class="font-bold text-slate-900 text-sm bg-transparent border-none p-0 m-0 h-auto focus:ring-0 focus:outline-none hover:bg-slate-100 rounded w-full cursor-text truncate lesson-title-input" value="${lTitle}" onblur="updateLessonInline(${lId}, 'title', this)" onkeydown="if(event.key==='Enter') this.blur();" />
-                                <span class="material-symbols-outlined text-[14px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shrink-0">edit</span>
+                                <span class="font-bold text-slate-900 text-sm truncate lesson-title-display">${lTitle}</span>
                             </div>
                             ${statusLabel}
                         </div>
@@ -1579,14 +1577,8 @@
                                                     <span class="material-symbols-outlined">${iconName}</span>
                                                 </div>
                                                 <div class="flex-1 mr-4">
-                                                    <div class="flex items-center gap-1 group">
-                                                        <input type="text" class="font-bold text-slate-900 text-sm bg-transparent border-none p-0 m-0 h-auto focus:ring-0 focus:outline-none hover:bg-slate-100 rounded w-full cursor-pointer truncate" value="${mTitle || "Resource File"}" onblur="updateResourceInline(${mId}, 'title', this)" onkeydown="if(event.key==='Enter') this.blur();" />
-                                                        <span class="material-symbols-outlined text-[14px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shrink-0">edit</span>
-                                                    </div>
-                                                    <div class="flex items-center gap-1 group mt-1">
-                                                        <input type="text" class="text-xs text-slate-500 bg-transparent border-none p-0 m-0 h-auto focus:ring-0 focus:outline-none hover:bg-slate-100 rounded w-full cursor-pointer truncate" value="${mDesc ? mDesc.replace(/<[^>]*>?/gm, '') : ""}" placeholder="Add description..." onblur="updateResourceInline(${mId}, 'description', this)" onkeydown="if(event.key==='Enter') this.blur();" />
-                                                        <span class="material-symbols-outlined text-[12px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shrink-0">edit</span>
-                                                    </div>
+                                                    <p class="font-bold text-slate-900 text-sm resource-title-display">${mTitle || "Resource File"}</p>
+                                                    <p class="text-xs text-slate-500 truncate max-w-xs resource-desc-display">${mDesc ? mDesc.replace(/<[^>]*>?/gm, '') : "No description"}</p>
                                                 </div>
                                             </div>
                                             <div class="flex items-center gap-2">
@@ -1639,8 +1631,8 @@
                     if (data && data.data) {
                         const updatedTitle = data.data.title;
                         lessonIdEl.dataset.title = updatedTitle;
-                        const titleEl = lessonIdEl.querySelector('.lesson-title-input');
-                        if (titleEl) titleEl.value = updatedTitle;
+                        const titleEl = lessonIdEl.querySelector('.lesson-title-display');
+                        if (titleEl) titleEl.textContent = updatedTitle;
                         document.getElementById('editing-lesson-title').value = updatedTitle;
                         
                         // Update lessonsData array
@@ -1906,11 +1898,13 @@
                         
                         const card = document.querySelector(`[data-material-id="${mId}"]`);
                         if (card) {
-                            const inputs = card.querySelectorAll('input[type="text"]');
-                            if (inputs.length >= 2) {
-                                inputs[0].value = data.data.title;
-                                const cleanedDesc = data.data.description ? data.data.description.replace(/<[^>]*>?/gm, '') : "";
-                                inputs[1].value = cleanedDesc;
+                            const titleEl = card.querySelector('.resource-title-display');
+                            if (titleEl) titleEl.textContent = data.data.title;
+                            
+                            const descEl = card.querySelector('.resource-desc-display');
+                            if (descEl) {
+                                const cleanedDesc = data.data.description ? data.data.description.replace(/<[^>]*>?/gm, '') : "No description";
+                                descEl.textContent = cleanedDesc;
                             }
                         }
                         
@@ -2375,9 +2369,9 @@
                             <div class="w-10 h-10 ${iconBg} rounded flex items-center justify-center">
                                 <span class="material-symbols-outlined">${iconName}</span>
                             </div>
-                            <div>
-                                <p class="font-bold text-slate-900 text-sm">${mTitle}</p>
-                                <p class="text-xs text-slate-500 truncate max-w-xs">${mDesc ? mDesc.replace(/<[^>]*>?/gm, '').substring(0, 50) + "..." : "No description"}</p>
+                            <div class="flex-1 mr-4">
+                                <p class="font-bold text-slate-900 text-sm resource-title-display">${mTitle}</p>
+                                <p class="text-xs text-slate-500 truncate max-w-xs resource-desc-display">${mDesc ? mDesc.replace(/<[^>]*>?/gm, '') : "No description"}</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
