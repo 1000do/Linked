@@ -26,7 +26,7 @@
 
 hide footbox
 
-mainframe Mark Notification As Read
+mainframe Mark As Read
 actor User as act
 
 participant "Index.cshtml" as view
