@@ -12,60 +12,97 @@
         </h2>
     </div>
 
-    <div id="notification-container" class="space-y-1">
-        @if (Model == null || !Model.Any())
-        {
-            <div id="empty-message" class="py-20 text-center text-slate-400 border border-dashed border-slate-200 rounded-lg">
-                No notifications yet.
+    @* ── Notification Search, Sort, Filter Bar ───────────────────── *@
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center gap-4 mb-6">
+        <div class="relative w-full md:w-1/2">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+            <input type="text" id="notification-search" placeholder="Search by title or content..." 
+                   class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-slate-800 placeholder:text-slate-400 bg-slate-50 focus:bg-white" />
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto md:ml-auto">
+            <div class="relative w-full sm:w-auto">
+                <select id="notification-filter-read" class="w-full sm:w-auto appearance-none border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-slate-700 cursor-pointer">
+                    <option value="all">All Statuses</option>
+                    <option value="unread">Unread</option>
+                    <option value="read">Read</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
             </div>
-        }
-        else
-        {
-            @foreach (var noti in Model.OrderByDescending(x => x.CreatedAt))
-            {
-                <div id="noti-@noti.NotificationId"
-                     class="flex items-center justify-between p-4 transition-all @(noti.IsRead ? "bg-white opacity-60" : "bg-slate-50") border-b border-slate-100 last:border-0 hover:bg-slate-100 cursor-pointer"
-                     onclick="window.location.href='@(string.IsNullOrEmpty(noti.LinkAction) ? "#" : noti.LinkAction)'">
 
-                    <div class="flex items-center gap-4 flex-1">
-                        <div class="w-2 flex-shrink-0">
-                            @if (!noti.IsRead)
-                            {
-                                <div class="w-2 h-2 bg-teal-500 rounded-full"></div>
-                            }
-                        </div>
+            <div class="relative w-full sm:w-auto">
+                <select id="notification-sort" class="w-full sm:w-auto appearance-none border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all text-slate-700 cursor-pointer">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="title-asc">Title (A-Z)</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
+            </div>
 
-                        <div class="flex-1 grid grid-cols-12 gap-4 items-center">
-                            <div class="col-span-3 font-bold text-slate-700 truncate">@noti.Title</div>
-                            <div class="col-span-6 text-slate-500 text-sm truncate">@noti.Content</div>
-                            <div class="col-span-3 text-right text-[11px] text-slate-400 font-medium">
-                                @(noti.CreatedAt?.ToString("HH:mm dd/MM/yyyy"))
-                            </div>
-                        </div>
-                    </div>
+            <button type="button" id="notification-clear" class="w-full sm:w-auto px-4 py-2.5 text-sm font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all flex items-center justify-center gap-1.5 shrink-0">
+                <span class="material-symbols-outlined text-[18px]">filter_alt_off</span>
+                Reset
+            </button>
+        </div>
+    </div>
 
-                    <div class="flex items-center gap-2 ml-6" onclick="event.stopPropagation()">
-                        @if (!noti.IsRead)
-                        {
-                            <button onclick="handleAction(@noti.NotificationId, 'MarkAsRead')"
-                                    class="p-2 hover:bg-teal-100 text-teal-600 rounded-lg transition-colors">
-                                <span class="material-symbols-outlined text-lg">done_all</span>
-                            </button>
-                        }
-                        <button onclick="handleAction(@noti.NotificationId, 'DeleteNotification')"
-                                class="p-2 hover:bg-red-100 text-red-500 rounded-lg transition-colors">
-                            <span class="material-symbols-outlined text-lg">delete</span>
-                        </button>
-                    </div>
-                </div>
-            }
-        }
+    <div id="notification-container" class="space-y-1">
+        <div class="py-20 text-center text-slate-400">
+            Loading notifications...
+        </div>
+    </div>
+
+    <div id="pagination-bar" class="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between hidden">
+        <div class="text-xs text-slate-500 font-medium" id="pagination-info">
+            Showing 0-0 of 0 notifications
+        </div>
+        <div class="flex items-center gap-1" id="pagination-controls"></div>
+    </div>
+</div>
+
+<!-- Modal View Notification Detail -->
+<div id="modal-detail" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeModal()"></div>
+    <div class="bg-white w-full max-w-lg rounded-3xl relative z-10 flex flex-col overflow-hidden border border-slate-100 shadow-xl">
+        <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-teal-50/50">
+            <div class="flex items-center gap-2 text-teal-700">
+                <span class="material-symbols-outlined text-xl">info</span>
+                <span class="font-bold uppercase text-[11px] tracking-widest text-teal-700">Notification Details</span>
+            </div>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1 hover:bg-white rounded-full transition-all">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-8 max-h-[70vh] overflow-y-auto">
+            <h3 id="modal-title" class="text-2xl font-bold text-slate-800 mb-4 leading-tight break-all"></h3>
+            <div id="modal-time" class="flex items-center gap-2 mb-6 text-slate-400 text-xs uppercase tracking-tighter"></div>
+            <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-left">
+                <p id="modal-content" class="text-slate-600 leading-relaxed whitespace-pre-wrap break-words"></p>
+            </div>
+            <div id="modal-link" class="hidden mt-4 text-left">
+                <a id="modal-link-btn" href="#" 
+                   class="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-sm">
+                     <span class="material-symbols-outlined text-lg">open_in_new</span>
+                     <span id="modal-link-text">View Details</span>
+                </a>
+            </div>
+        </div>
+        <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <button onclick="closeModal()" class="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-100 transition-all text-sm">
+                Close
+            </button>
+        </div>
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
 
 <script>
+    let allNotifications = @Html.Raw(Json.Serialize(Model)) || [];
+    let filteredNotifications = [];
+    let currentPage = 1;
+    const pageSize = 10;
+
     // 2. Dùng biến toàn cục window để tránh lỗi "already declared"
     (function () {
         if (!window.isNotiInitialized) {
@@ -91,52 +128,8 @@
 
             window.notiConn.on("ReceiveNotification", function (noti) {
                 console.log("🔔 Received notification:", noti);
-                
-                const container = document.getElementById('notification-container');
-                const emptyMsg = document.getElementById('empty-message');
-                if (emptyMsg) emptyMsg.remove();
-                
-                if (container) {
-                    const temp = document.createElement('div');
-                    temp.id = `noti-${noti.notificationId}`;
-                    temp.className = "flex items-center justify-between p-4 transition-all bg-slate-50 border-b border-slate-100 last:border-0 hover:bg-slate-100 cursor-pointer opacity-0 -translate-y-4";
-                    temp.onclick = () => {
-                        window.location.href = noti.linkAction || '#';
-                    };
-                    temp.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-                    
-                    temp.innerHTML = `
-                        <div class="flex items-center gap-4 flex-1">
-                            <div class="w-2 flex-shrink-0">
-                                <div class="w-2 h-2 bg-teal-500 rounded-full"></div>
-                            </div>
-    
-                            <div class="flex-1 grid grid-cols-12 gap-4 items-center">
-                                <div class="col-span-3 font-bold text-slate-700 truncate">${noti.title}</div>
-                                <div class="col-span-6 text-slate-500 text-sm truncate">${noti.content}</div>
-                                <div class="col-span-3 text-right text-[11px] text-slate-400 font-medium">
-                                    ${new Date(noti.createdAt || Date.now()).toLocaleTimeString('en-US')} ${new Date(noti.createdAt || Date.now()).toLocaleDateString('en-US')}
-                                </div>
-                            </div>
-                        </div>
-    
-                        <div class="flex items-center gap-2 ml-6" onclick="event.stopPropagation()">
-                            <button onclick="handleAction(${noti.notificationId}, 'MarkAsRead')"
-                                    class="p-2 hover:bg-teal-100 text-teal-600 rounded-lg transition-colors">
-                                <span class="material-symbols-outlined text-lg">done_all</span>
-                            </button>
-                            <button onclick="handleAction(${noti.notificationId}, 'DeleteNotification')"
-                                    class="p-2 hover:bg-red-100 text-red-500 rounded-lg transition-colors">
-                                <span class="material-symbols-outlined text-lg">delete</span>
-                            </button>
-                        </div>
-                    `;
-                    
-                    container.prepend(temp);
-                    setTimeout(() => {
-                        temp.classList.remove('opacity-0', '-translate-y-4');
-                    }, 50);
-                }
+                allNotifications.push(noti);
+                applyNotificationFilters();
             });
 
             window.notiConn.start()
@@ -147,18 +140,194 @@
         }
     })();
 
-    function markNotificationAsReadInDOM(id) {
-        const element = document.getElementById(`noti-${id}`);
-        if (element) {
-            element.classList.remove('bg-slate-50');
-            element.classList.add('bg-white', 'opacity-60');
-            
-            const dotContainer = element.querySelector('.w-2.flex-shrink-0');
-            if (dotContainer) dotContainer.innerHTML = '';
-            
-            const markAsReadBtn = element.querySelector('button[onclick*="MarkAsRead"]');
-            if (markAsReadBtn) markAsReadBtn.remove();
+    document.addEventListener("DOMContentLoaded", () => {
+        applyNotificationFilters();
+
+        const searchInput = document.getElementById('notification-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', applyNotificationFilters);
         }
+
+        const filterRead = document.getElementById('notification-filter-read');
+        if (filterRead) {
+            filterRead.addEventListener('change', applyNotificationFilters);
+        }
+
+        const sortSelect = document.getElementById('notification-sort');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', applyNotificationFilters);
+        }
+
+        const clearBtn = document.getElementById('notification-clear');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                if (searchInput) searchInput.value = '';
+                if (filterRead) filterRead.value = 'all';
+                if (sortSelect) sortSelect.value = 'newest';
+                applyNotificationFilters();
+            });
+        }
+    });
+
+    function applyNotificationFilters() {
+        const query = (document.getElementById('notification-search')?.value || '').toLowerCase().trim();
+        const filterRead = document.getElementById('notification-filter-read')?.value || 'all';
+        const sortVal = document.getElementById('notification-sort')?.value || 'newest';
+
+        filteredNotifications = [...allNotifications];
+
+        // 1. Search Filter
+        if (query) {
+            filteredNotifications = filteredNotifications.filter(n => {
+                const title = (n.title || n.Title || '').toLowerCase();
+                const content = (n.content || n.Content || '').toLowerCase();
+                return title.includes(query) || content.includes(query);
+            });
+        }
+
+        // 2. Read state filter
+        if (filterRead === 'unread') {
+            filteredNotifications = filteredNotifications.filter(n => {
+                const isRead = n.isRead !== undefined ? n.isRead : n.IsRead;
+                return !isRead;
+            });
+        } else if (filterRead === 'read') {
+            filteredNotifications = filteredNotifications.filter(n => {
+                const isRead = n.isRead !== undefined ? n.isRead : n.IsRead;
+                return isRead;
+            });
+        }
+
+        // 3. Sorting
+        if (sortVal === 'newest') {
+            filteredNotifications.sort((a, b) => {
+                const dateA = new Date(a.createdAt || a.CreatedAt);
+                const dateB = new Date(b.createdAt || b.CreatedAt);
+                return dateB - dateA;
+            });
+        } else if (sortVal === 'oldest') {
+            filteredNotifications.sort((a, b) => {
+                const dateA = new Date(a.createdAt || a.CreatedAt);
+                const dateB = new Date(b.createdAt || b.CreatedAt);
+                return dateA - dateB;
+            });
+        } else if (sortVal === 'title-asc') {
+            filteredNotifications.sort((a, b) => {
+                const titleA = a.title || a.Title || '';
+                const titleB = b.title || b.Title || '';
+                return titleA.localeCompare(titleB, 'en');
+            });
+        }
+
+        currentPage = 1;
+        renderPage();
+    }
+
+    function formatDateTime(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${hours}:${minutes} ${day}/${month}/${year}`;
+    }
+
+    function renderPage() {
+        const container = document.getElementById('notification-container');
+        const paginationBar = document.getElementById('pagination-bar');
+
+        if (!container) return;
+
+        if (filteredNotifications.length === 0) {
+            container.innerHTML = `<div id="empty-message" class="py-20 text-center text-slate-400 border border-dashed border-slate-200 rounded-lg">No notifications found matching your criteria.</div>`;
+            if (paginationBar) paginationBar.classList.add('hidden');
+            return;
+        }
+
+        if (paginationBar) paginationBar.classList.remove('hidden');
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+        const pagedData = filteredNotifications.slice(start, end);
+
+        container.innerHTML = pagedData.map(noti => {
+            const isRead = noti.isRead !== undefined ? noti.isRead : noti.IsRead;
+            const notificationId = noti.notificationId || noti.NotificationId;
+            const title = noti.title || noti.Title;
+            const content = noti.content || noti.Content;
+            const createdAt = noti.createdAt || noti.CreatedAt;
+
+            return `
+                <div id="noti-${notificationId}"
+                     class="flex items-center justify-between p-4 transition-all ${isRead ? 'bg-white opacity-60' : 'bg-slate-50'} border-b border-slate-100 last:border-0 hover:bg-slate-100 cursor-pointer"
+                     onclick="showDetail(${notificationId})">
+
+                    <div class="flex items-center gap-4 flex-1">
+                        <div class="w-2 flex-shrink-0">
+                            ${!isRead ? `<div class="w-2 h-2 bg-teal-500 rounded-full"></div>` : ''}
+                        </div>
+
+                        <div class="flex-1 grid grid-cols-12 gap-4 items-center">
+                            <div class="col-span-3 font-bold text-slate-700 truncate">${title}</div>
+                            <div class="col-span-6 text-slate-500 text-sm truncate">${content}</div>
+                            <div class="col-span-3 text-right text-[11px] text-slate-400 font-medium">
+                                ${formatDateTime(createdAt)}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 ml-6" onclick="event.stopPropagation()">
+                        ${!isRead ? `
+                            <button onclick="handleAction(${notificationId}, 'MarkAsRead')"
+                                    class="p-2 hover:bg-teal-100 text-teal-600 rounded-lg transition-colors" title="Mark as read">
+                                <span class="material-symbols-outlined text-lg">done_all</span>
+                            </button>` : ''}
+                        <button onclick="handleAction(${notificationId}, 'DeleteNotification')"
+                                class="p-2 hover:bg-red-100 text-red-500 rounded-lg transition-colors" title="Delete">
+                            <span class="material-symbols-outlined text-lg">delete</span>
+                        </button>
+                    </div>
+                </div>`;
+        }).join('');
+
+        updatePaginationInfo(start + 1, Math.min(end, filteredNotifications.length), filteredNotifications.length);
+        renderPaginationControls();
+    }
+
+    function updatePaginationInfo(start, end, total) {
+        const infoEl = document.getElementById('pagination-info');
+        if (infoEl) {
+            infoEl.innerText = `Showing ${start}-${end} of ${total} notifications`;
+        }
+    }
+
+    function renderPaginationControls() {
+        const totalPages = Math.ceil(filteredNotifications.length / pageSize);
+        const container = document.getElementById('pagination-controls');
+        if (!container) return;
+        
+        let html = '';
+
+        html += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-20 transition-all"><span class="material-symbols-outlined text-sm">chevron_left</span></button>`;
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                html += `<button onclick="changePage(${i})" class="w-8 h-8 rounded-lg text-xs font-bold transition-all ${currentPage === i ? 'bg-teal-600 text-white' : 'text-slate-500 hover:bg-slate-100'}">${i}</button>`;
+            } else if (i === currentPage - 2 || i === currentPage + 2) {
+                html += `<span class="text-slate-300 text-xs px-1">...</span>`;
+            }
+        }
+
+        html += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''} class="p-1.5 rounded-lg hover:bg-slate-100 disabled:opacity-20 transition-all"><span class="material-symbols-outlined text-sm">chevron_right</span></button>`;
+
+        container.innerHTML = html;
+    }
+
+    function changePage(page) {
+        currentPage = page;
+        renderPage();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // 3. Hàm xử lý nút bấm
@@ -188,19 +357,9 @@
 
             if (response.ok) {
                 if (action === 'DeleteNotification') {
-                    const element = document.getElementById(`noti-${id}`);
-                    if (element) {
-                        element.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-                        element.style.opacity = '0';
-                        element.style.transform = 'translateX(20px)';
-                        setTimeout(() => {
-                            element.remove();
-                            const container = document.getElementById('notification-container');
-                            if (container && container.querySelectorAll('div[id^="noti-"]').length === 0) {
-                                container.innerHTML = `<div id="empty-message" class="py-20 text-center text-slate-400 border border-dashed border-slate-200 rounded-lg">No notifications yet.</div>`;
-                            }
-                        }, 300);
-                    }
+                    allNotifications = allNotifications.filter(n => (n.notificationId || n.NotificationId) !== id);
+                    applyNotificationFilters();
+                    
                     Swal.fire({
                         title: 'Deleted!',
                         text: 'The notification has been successfully deleted.',
@@ -211,9 +370,56 @@
                         customClass: { popup: 'rounded-2xl shadow-xl' }
                     });
                 } else {
-                    markNotificationAsReadInDOM(id);
+                    const noti = allNotifications.find(n => (n.notificationId || n.NotificationId) === id);
+                    if (noti) {
+                        if (noti.isRead !== undefined) noti.isRead = true;
+                        if (noti.IsRead !== undefined) noti.IsRead = true;
+                    }
+                    applyNotificationFilters();
                 }
             }
         } catch (e) { console.error(e); }
+    }
+
+    function showDetail(id) {
+        const noti = allNotifications.find(n => (n.notificationId || n.NotificationId) === id);
+        if (!noti) return;
+
+        const title = noti.title || noti.Title;
+        const content = noti.content || noti.Content;
+        const createdAt = noti.createdAt || noti.CreatedAt;
+        const linkAction = noti.linkAction || noti.LinkAction;
+        const isRead = noti.isRead !== undefined ? noti.isRead : noti.IsRead;
+
+        document.getElementById('modal-title').innerText = title;
+        document.getElementById('modal-content').innerText = content;
+        document.getElementById('modal-time').innerHTML = `
+            <span class="material-symbols-outlined text-[14px]">schedule</span>
+            ${new Date(createdAt).toLocaleString('en-US')}
+        `;
+
+        document.getElementById('modal-detail').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        const linkContainer = document.getElementById('modal-link');
+        const linkBtn = document.getElementById('modal-link-btn');
+        if (linkAction) {
+            linkBtn.href = linkAction;
+            linkContainer.classList.remove('hidden');
+        } else {
+            linkContainer.classList.add('hidden');
+        }
+
+        if (!isRead) {
+            // Cập nhật local state
+            if (noti.isRead !== undefined) noti.isRead = true;
+            if (noti.IsRead !== undefined) noti.IsRead = true;
+            handleAction(id, 'MarkAsRead');
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('modal-detail').classList.add('hidden');
+        document.body.style.overflow = 'auto';
     }
 </script>

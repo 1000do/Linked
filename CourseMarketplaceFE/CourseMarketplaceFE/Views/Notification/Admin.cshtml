@@ -138,6 +138,47 @@
     </div>
 </div>
 
+<!-- Modal View Notification Detail -->
+<div id="modal-detail" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity" onclick="closeDetailModal()"></div>
+    <div class="bg-white w-full max-w-lg rounded-xl shadow-xl relative z-10 flex flex-col overflow-hidden border border-slate-200">
+        <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <div class="flex items-center gap-2 text-teal-700">
+                <span class="material-symbols-outlined text-[20px]">info</span>
+                <span class="font-bold uppercase text-[11px] tracking-widest text-teal-700">Notification Details</span>
+            </div>
+            <button type="button" onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        <div class="p-6 space-y-4 text-left">
+            <div>
+                <label class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Recipient</label>
+                <div id="detail-recipient" class="text-sm font-medium text-slate-800 break-all"></div>
+            </div>
+            <div>
+                <label class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Title</label>
+                <h3 id="detail-title" class="text-base font-bold text-slate-900 leading-tight break-all"></h3>
+            </div>
+            <div>
+                <label class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Content</label>
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 mt-1">
+                    <p id="detail-content" class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap break-words"></p>
+                </div>
+            </div>
+            <div class="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-100">
+                <span id="detail-time"></span>
+                <span id="detail-status" class="font-semibold"></span>
+            </div>
+        </div>
+        <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <button type="button" onclick="closeDetailModal()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-semibold rounded-lg hover:bg-slate-100 transition-all text-xs">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         const API_URL = "http://localhost:5207/api/Notification";
@@ -250,7 +291,7 @@
             }
 
             tbody.innerHTML = pagedData.map(n => `
-                <tr class="hover:bg-slate-50/50 transition-colors">
+                <tr class="hover:bg-slate-50/50 cursor-pointer transition-colors" onclick="showDetail(${n.notificationId})">
                     <td class="px-5 py-3 align-top">
                         <div class="font-medium text-slate-900 truncate">${n.receiverFullName || 'System Broadcast'}</div>
                         <div class="text-xs text-slate-500 truncate mt-0.5">${n.receiverEmail || 'all-users@system.com'}</div>
@@ -352,6 +393,25 @@
         }
 
         function closeModal() { document.getElementById('modal-send').classList.add('hidden'); }
+
+        function showDetail(id) {
+            const noti = allNotifications.find(n => n.notificationId === id);
+            if (!noti) return;
+
+            document.getElementById('detail-recipient').innerText = `${noti.receiverFullName || 'System Broadcast'} (${noti.receiverEmail || 'all-users@system.com'})`;
+            document.getElementById('detail-title').innerText = noti.title;
+            document.getElementById('detail-content').innerText = noti.content;
+            document.getElementById('detail-time').innerText = `Created at: ${formatDateTime(noti.createdAt)}`;
+            document.getElementById('detail-status').innerHTML = noti.isRead 
+                ? `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Read</span>` 
+                : `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Unread</span>`;
+
+            document.getElementById('modal-detail').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('modal-detail').classList.add('hidden');
+        }
 
         document.getElementById('form-advanced').onsubmit = async (e) => {
             e.preventDefault();
