@@ -1,4 +1,4 @@
-@startuml ViewSystemNotificationList_ClassDiagram
+@startuml ViewNotificationDetail_ClassDiagram
 
 ' Styling & Settings
 skinparam style strictuml
@@ -26,9 +26,7 @@ skinparam arrowColor #333333
 class "NotificationController" as FENotificationController #FFE6E6 {
     - _client : HttpClient
     
-    + Index() : Task<IActionResult>
-    + GetListTiny() : Task<IActionResult>
-    + Admin() : IActionResult
+    + Details(id: int) : Task<IActionResult>
 }
 
 class NotificationViewModel #E6CCFF {
@@ -47,23 +45,8 @@ class NotificationViewModel #E6CCFF {
 
 class "NotificationController" as BENotificationController #FFE6E6 {
     - _notiService : INotificationService
-    - _chatService : IChatService
     
-    + GetMyNotifications() : Task<IActionResult>
-    + GetAllNotifications() : Task<IActionResult>
-    + GetUnreadSummary() : Task<IActionResult>
-}
-
-' ==================== BACKEND - DTOs ====================
-
-class NotificationAdminResponseDto #E6CCFF {
-    + NotificationId : int
-    + Title : string?
-    + Content : string?
-    + IsRead : bool?
-    + CreatedAt : DateTime?
-    + ReceiverEmail : string?
-    + ReceiverFullName : string?
+    + GetNotificationDetail(id: int) : Task<IActionResult>
 }
 
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -97,23 +80,15 @@ class User #CCFFE6 {
 ' ==================== BACKEND - SERVICE INTERFACES ====================
 
 interface INotificationService #FFE6CC {
-    //+ GetNotificationsForUserAsync(userId: int) : Task<List<Notification>>//
-    //+ GetAllNotificationsForAdminAsync() : Task<List<NotificationAdminResponseDto>>//
-    //+ GetAllNotificationsAsync() : Task<List<Notification>>//
-    //+ GetUnreadCountAsync(userId: int) : Task<int>//
-}
-
-interface IChatService #FFE6CC {
-    //+ GetTotalUnreadCountAsync(accountId: int) : Task<int>//
+    //+ GetNotificationDetailAsync(id: int, userId: int) : Task<Notification?>//
+    //+ MarkAsReadAsync(notificationId: int, userId: int) : Task<bool>//
 }
 
 ' ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 interface INotificationRepository #FFE6CC {
-    //+ GetByReceiverIdAsync(userId: int) : Task<List<Notification>>//
-    //+ GetAllAsync() : Task<List<Notification>>//
-    //+ GetUnreadCountAsync(userId: int) : Task<int>//
-    //+ AutoCleanupAdminNotificationsAsync() : Task<void>//
+    //+ GetByIdAsync(id: int) : Task<Notification?>//
+    //+ SaveChangesAsync() : Task<int>//
 }
 
 ' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
@@ -121,10 +96,8 @@ interface INotificationRepository #FFE6CC {
 class NotificationService #CCE5FF {
     - _repo : INotificationRepository
     
-    + GetNotificationsForUserAsync(userId: int) : Task<List<Notification>>
-    + GetAllNotificationsAsync() : Task<List<Notification>>
-    + GetAllNotificationsForAdminAsync() : Task<List<NotificationAdminResponseDto>>
-    + GetUnreadCountAsync(userId: int) : Task<int>
+    + GetNotificationDetailAsync(id: int, userId: int) : Task<Notification?>
+    + MarkAsReadAsync(notificationId: int, userId: int) : Task<bool>
 }
 
 ' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
@@ -132,10 +105,8 @@ class NotificationService #CCE5FF {
 class NotificationRepository #FFFFCC {
     - _context : AppDbContext
     
-    + GetByReceiverIdAsync(userId: int) : Task<List<Notification>>
-    + GetAllAsync() : Task<List<Notification>>
-    + GetUnreadCountAsync(userId: int) : Task<int>
-    + AutoCleanupAdminNotificationsAsync() : Task<void>
+    + GetByIdAsync(id: int) : Task<Notification?>
+    + SaveChangesAsync() : Task<int>
 }
 
 ' ==================== BACKEND - DbContext ====================
@@ -157,7 +128,6 @@ Account *-- Notification
 
 ' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 BENotificationController --> INotificationService
-BENotificationController --> IChatService
 NotificationService --> INotificationRepository
 NotificationRepository --> AppDbContext
 
@@ -168,9 +138,8 @@ NotificationRepository ..|> INotificationRepository
 ' === DEPENDENCY (dashed arrows) ===
 FENotificationController ..> BENotificationController : calls
 FENotificationController ..> NotificationViewModel : uses
-BENotificationController ..> NotificationAdminResponseDto : uses
-NotificationService ..> NotificationAdminResponseDto : uses
+BENotificationController ..> Notification : uses
 NotificationService ..> Notification : uses
-NotificationRepository ..> Notification : uses
+NotificationRepository ..> Notification : queries
 
 @enduml
