@@ -1,0 +1,128 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Verify Email
+
+actor User as act
+
+participant "VerifyOtpForm" as view
+participant "Profile" as r_view
+participant "AccountController" as fe_ctrl
+participant "AuthController" as be_ctrl
+participant ":AuthService" as sv
+participant ":OtpService" as otp_sv
+participant ":UserRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Enter OTP code received in email
+act->view: Click "Verify" / "Submit" button
+view->view++: Validate input
+view--
+group opt [Invalid input]
+    view-->>act: Display validation errors
+end
+
+view->fe_ctrl++: Send POST request to Account/VerifyOtp (with OTP)
+
+fe_ctrl->fe_ctrl++: Retrieve email and flow status from TempData
+fe_ctrl--
+group opt [Email is empty / Null]
+    fe_ctrl-->>view: Redirect to /Account/Login
+    view-->>act: Display login page
+end
+
+fe_ctrl->be_ctrl++: Send POST request to /api/Auth/verify-email (JSON request)
+
+be_ctrl->be_ctrl++: Validate ModelState
+be_ctrl--
+group opt [Invalid ModelState]
+    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view: Return statusCode 400 with error
+    view-->>act: Display error message
+end
+
+be_ctrl->sv++: Call VerifyEmailAsync(email, otp)
+
+sv->otp_sv++: Call ConsumeOtp(email, otp, "verify")
+otp_sv-->>sv--: Return isValid (boolean)
+
+sv->sv++: Check isValid == true
+sv--
+group opt [isValid == false]
+    sv-->>be_ctrl: Return false
+    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+    fe_ctrl->fe_ctrl++: Keep TempData verify flags
+    fe_ctrl--
+    fe_ctrl-->>view: Return View with ErrorMessage
+    view-->>act: Display "Incorrect or expired OTP" error
+end
+
+sv->repo++: Call UpdateEmailVerifiedAsync(email)
+
+repo->ctx++: Get Account by email
+ctx->db++: Query Accounts table
+db-->>ctx--: Return account record
+ctx-->>repo--: Return Account entity
+group opt [Account not found]
+    repo-->>sv: Return false
+    sv-->>be_ctrl: Return false
+    be_ctrl-->>fe_ctrl: Return statusCode 400
+    fe_ctrl-->>view: Return View with error
+    view-->>act: Display error message
+end
+
+repo->ctx++: Call SaveChangesAsync()
+ctx->db++: Save changes to Database
+db-->>ctx--: Return numberOfRowsAffected
+ctx-->>repo--: Return numberOfRowsAffected
+repo-->>sv--: Return true
+
+alt verificationSuccessful == true
+    sv-->>be_ctrl: Return true
+    be_ctrl-->>fe_ctrl: Return statusCode 200 (Success)
+    
+    fe_ctrl->fe_ctrl++: Remove TempData verify flags
+    fe_ctrl--
+    fe_ctrl->fe_ctrl++: Append IsVerified cookie (isVerified = "true")
+    fe_ctrl--
+    
+    fe_ctrl->r_view++: Redirect to /Account/Profile
+    r_view-->>act--: Display verification success message and show profile
+else verificationSuccessful == false
+    sv-->>be_ctrl--: Return false
+    be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
+    
+    fe_ctrl->fe_ctrl++: Keep TempData verify flags
+    fe_ctrl--
+    fe_ctrl-->>view--: Return View with ErrorMessage
+    view-->>act--: Display error message
+end
+
+@enduml

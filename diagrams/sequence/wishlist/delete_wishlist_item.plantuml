@@ -1,0 +1,104 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Delete Wishlist Items
+
+actor User as act
+
+participant "WishlistIndexView" as view
+participant "WishlistController" as fe_ctrl
+participant "WishlistController" as be_ctrl
+participant ":WishlistService" as sv
+participant ":WishlistRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Click "Remove" button next to a course
+view->fe_ctrl++: Send POST request to Wishlist/Remove (with courseId)
+
+fe_ctrl->be_ctrl++: Send DELETE request to /api/wishlist/{courseId} (with AccessToken)
+be_ctrl->be_ctrl++: GetUserId() from Token Claims
+be_ctrl--
+
+group opt [userId == null]
+    be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
+    fe_ctrl-->>view: Redirect to /Account/Login
+    view-->>act: Display login page
+end
+
+be_ctrl->sv++: Call RemoveFromWishlistAsync(userId, courseId)
+
+sv->repo++: Call GetByUserAndCourseAsync(userId, courseId)
+repo->ctx++: Query WishlistItems matching userId and courseId
+ctx->db++: SELECT first match
+db-->>ctx--: Return record
+ctx-->>repo--: Return WishlistItem entity
+repo-->>sv--: Return WishlistItem entity
+
+sv->sv++: Check if item is null
+sv--
+group opt [item == null]
+    sv-->>be_ctrl: Throw KeyNotFoundException
+    be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
+    fe_ctrl-->>view: Return view with error message
+    view-->>act: Display course not found error
+end
+
+sv->repo++: Call RemoveAsync(item)
+repo->ctx++: Remove entity from DB set
+ctx-->>repo--: Done
+repo-->>sv--: Done
+
+sv->repo++: Call SaveChangesAsync()
+repo->ctx++: Call SaveChangesAsync()
+ctx->db++: Save changes to Database
+db-->>ctx--: Return numberOfRowsAffected
+ctx-->>repo--: Return numberOfRowsAffected
+repo-->>sv--: Return numberOfRowsAffected
+
+sv->sv++: Check numberOfRowsAffected > 0
+sv--
+
+alt numberOfRowsAffected > 0
+    sv-->>be_ctrl: Return success
+    be_ctrl-->>fe_ctrl++: Return statusCode 200 (Success)
+    
+    fe_ctrl->fe_ctrl++: Redirect to Wishlist/Index
+    fe_ctrl--
+    
+    fe_ctrl->view--: Return RedirectToAction("Index")
+    view-->>act: Reload wishlist page with course removed
+else numberOfRowsAffected <= 0
+    sv-->>be_ctrl--: Throw InvalidOperationException
+    be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view--: Return View with error message
+    view-->>act--: Display deletion error message
+end
+
+@enduml
