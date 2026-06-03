@@ -316,6 +316,7 @@ namespace CourseMarketplaceFE.Controllers
                         ViewBag.CouponCode = data.TryGetProperty("appliedCouponCode", out var ccode) && ccode.ValueKind != JsonValueKind.Null ? ccode.GetString() : null;
                         ViewBag.CouponType = data.TryGetProperty("appliedCouponType", out var ctype) && ctype.ValueKind != JsonValueKind.Null ? ctype.GetString() : null;
                         ViewBag.CouponValue = data.TryGetProperty("appliedCouponValue", out var cval) && cval.ValueKind != JsonValueKind.Null ? cval.GetDecimal() : 0;
+                        ViewBag.IsInAnyCart = data.TryGetProperty("isInAnyCart", out var inCart) && inCart.ValueKind == JsonValueKind.True;
 
                         // Parse lessons
                         if (data.TryGetProperty("lessons", out var lessonsEl) && lessonsEl.ValueKind == JsonValueKind.Array)

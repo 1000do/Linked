@@ -232,55 +232,63 @@
                             </div>
 
                             <!-- Promotion Section -->
-                            <div class="space-y-4">
-                                <div class="flex items-center justify-between">
-                                    <label class="text-sm font-black text-slate-900 block tracking-tight">Promotions & Marketing</label>
-                                    <div class="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        <span class="text-[10px] font-black uppercase tracking-widest">Platform Funded</span>
-                                    </div>
-                                </div>
-                                
-                                <!-- Toggle Switch -->
-                                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 transition-all duration-300 hover:bg-slate-100/50">
-                                    <div class="flex flex-col gap-1">
-                                        <span class="text-xs font-bold text-slate-800 flex items-center gap-2">
-                                            <span class="material-symbols-outlined text-emerald-600 text-[16px]">loyalty</span>
-                                            Apply coupon to this course
-                                        </span>
-                                        <span class="text-[10px] text-slate-400">Boost enrollments with LinkedLearn-sponsored vouchers</span>
-                                    </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="coupon-toggle" class="sr-only peer" @(ViewBag.CouponCode != null ? "checked" : "") />
-                                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                                    </label>
-                                </div>
+                             <div class="space-y-4">
+                                 <div class="flex items-center justify-between">
+                                     <label class="text-sm font-black text-slate-900 block tracking-tight">Promotions & Marketing</label>
+                                     <div class="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg">
+                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                         <span class="text-[10px] font-black uppercase tracking-widest">Platform Funded</span>
+                                     </div>
+                                 </div>
+                                 
+                                 <!-- Toggle Switch -->
+                                 <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 transition-all duration-300 hover:bg-slate-100/50 @(ViewBag.IsInAnyCart == true ? "opacity-60 cursor-not-allowed select-none" : "")">
+                                     <div class="flex flex-col gap-1">
+                                         <span class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                             <span class="material-symbols-outlined text-emerald-600 text-[16px]">loyalty</span>
+                                             Apply coupon to this course
+                                         </span>
+                                         <span class="text-[10px] text-slate-400">Boost enrollments with LinkedLearn-sponsored vouchers</span>
+                                     </div>
+                                     <label class="relative inline-flex items-center @(ViewBag.IsInAnyCart == true ? "cursor-not-allowed pointer-events-none" : "cursor-pointer")">
+                                         <input type="checkbox" id="coupon-toggle" class="sr-only peer" @(ViewBag.CouponCode != null ? "checked" : "") @(ViewBag.IsInAnyCart == true ? "disabled" : "") />
+                                         <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                     </label>
+                                 </div>
 
-                                <div id="coupon-free-warning" class="hidden text-xs text-amber-600 font-semibold px-1 mt-1 flex items-center gap-1.5 bg-amber-50 border border-amber-200/50 rounded-xl p-3 animate-in fade-in slide-in-from-top-1 duration-300">
-                                    <span class="material-symbols-outlined text-amber-600 text-[16px]">warning</span>
-                                    <span>Vouchers/Coupons cannot be applied to free courses.</span>
-                                </div>
+                                 @if (ViewBag.IsInAnyCart == true)
+                                 {
+                                     <div id="coupon-cart-warning" class="text-xs text-rose-600 font-semibold px-1 mt-1 flex items-center gap-1.5 bg-rose-50 border border-rose-200/50 rounded-xl p-3 animate-in fade-in slide-in-from-top-1 duration-300">
+                                         <span class="material-symbols-outlined text-rose-600 text-[16px]">shopping_cart</span>
+                                         <span>Cannot modify coupon because this course is currently in a user's shopping cart.</span>
+                                     </div>
+                                 }
 
-                                <!-- Coupon Action Area -->
-                                <div id="voucher-action-container" class="@(ViewBag.CouponCode != null ? "" : "hidden") space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                    <!-- Select Button if not selected -->
-                                    <div id="no-voucher-selected-state" class="@(ViewBag.CouponCode == null ? "" : "hidden") flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
-                                        <span class="material-symbols-outlined text-slate-400 text-[32px] mb-2">confirmation_number</span>
-                                        <p class="text-xs text-slate-500 font-bold mb-4">No voucher selected for this course yet</p>
-                                        <button type="button" onclick="openCouponModal()" class="px-5 py-2.5 bg-slate-900 text-white hover:bg-slate-800 text-xs font-black rounded-xl uppercase tracking-widest transition-all active:scale-95 shadow-md flex items-center gap-2">
-                                            <span class="material-symbols-outlined text-[16px]">add_circle</span>
-                                            Select System Voucher
-                                        </button>
-                                    </div>
-
-                                    <!-- Selected Voucher Card -->
-                                    <div id="voucher-selected-state" class="@(ViewBag.CouponCode != null ? "" : "hidden") relative overflow-hidden bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/30 rounded-3xl p-6 flex items-center justify-between gap-6 shadow-sm">
-                                        <div class="flex items-center gap-5">
-                                            <div class="relative">
-                                                <div class="absolute inset-0 bg-emerald-400/20 blur-lg rounded-full animate-pulse"></div>
-                                                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg relative z-10">
-                                                    <span class="material-symbols-outlined text-[30px]">confirmation_number</span>
-                                                 </div>
+                                 <div id="coupon-free-warning" class="hidden text-xs text-amber-600 font-semibold px-1 mt-1 flex items-center gap-1.5 bg-amber-50 border border-amber-200/50 rounded-xl p-3 animate-in fade-in slide-in-from-top-1 duration-300">
+                                     <span class="material-symbols-outlined text-amber-600 text-[16px]">warning</span>
+                                     <span>Vouchers/Coupons cannot be applied to free courses.</span>
+                                 </div>
+ 
+                                 <!-- Coupon Action Area -->
+                                 <div id="voucher-action-container" class="@(ViewBag.CouponCode != null ? "" : "hidden") space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                     <!-- Select Button if not selected -->
+                                     <div id="no-voucher-selected-state" class="@(ViewBag.CouponCode == null ? "" : "hidden") flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+                                         <span class="material-symbols-outlined text-slate-400 text-[32px] mb-2">confirmation_number</span>
+                                         <p class="text-xs text-slate-500 font-bold mb-4">No voucher selected for this course yet</p>
+                                         <button type="button" @(ViewBag.IsInAnyCart == true ? "disabled" : "") onclick="openCouponModal()" class="px-5 py-2.5 bg-slate-900 text-white hover:bg-slate-800 text-xs font-black rounded-xl uppercase tracking-widest transition-all active:scale-95 shadow-md flex items-center gap-2 @(ViewBag.IsInAnyCart == true ? "opacity-50 pointer-events-none cursor-not-allowed" : "")">
+                                             <span class="material-symbols-outlined text-[16px]">add_circle</span>
+                                             Select System Voucher
+                                         </button>
+                                     </div>
+ 
+                                     <!-- Selected Voucher Card -->
+                                     <div id="voucher-selected-state" class="@(ViewBag.CouponCode != null ? "" : "hidden") relative overflow-hidden bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/30 rounded-3xl p-6 flex items-center justify-between gap-6 shadow-sm">
+                                         <div class="flex items-center gap-5">
+                                             <div class="relative">
+                                                 <div class="absolute inset-0 bg-emerald-400/20 blur-lg rounded-full animate-pulse"></div>
+                                                 <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg relative z-10">
+                                                     <span class="material-symbols-outlined text-[30px]">confirmation_number</span>
+                                                  </div>
                                              </div>
                                              <div>
                                                  <div class="flex items-center gap-2 mb-0.5">
@@ -293,12 +301,12 @@
                                                  </div>
                                              </div>
                                          </div>
-                                         <button type="button" onclick="openCouponModal()" class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-[10px] font-black rounded-xl uppercase tracking-widest border border-slate-200 transition-all shadow-sm active:scale-95 flex items-center gap-1.5">
+                                         <button type="button" @(ViewBag.IsInAnyCart == true ? "disabled" : "") onclick="openCouponModal()" class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-[10px] font-black rounded-xl uppercase tracking-widest border border-slate-200 transition-all shadow-sm active:scale-95 flex items-center gap-1.5 @(ViewBag.IsInAnyCart == true ? "opacity-50 pointer-events-none cursor-not-allowed" : "")">
                                              <span class="material-symbols-outlined text-[14px]">edit</span> Change
                                          </button>
                                      </div>
                                  </div>
-
+ 
                                  <div class="flex items-start gap-2 px-1">
                                      <span class="material-symbols-outlined text-amber-500 text-[14px] mt-0.5">verified_user</span>
                                      <p class="text-[10px] font-bold text-slate-400 italic leading-relaxed">
@@ -307,62 +315,73 @@
                                  </div>
                              </div>
                          </div>
+ 
+                         <!-- Coupon JS - ALWAYS rendered regardless of coupon state -->
+                         <script>
+                             // ─── LOAD AND SELECT PLATFORM COUPONS FOR EDITOR ───
+                             const couponToggle = document.getElementById('coupon-toggle');
+                             const voucherActionContainer = document.getElementById('voucher-action-container');
+                             const currentCouponCode = '@ViewBag.CouponCode';
+                             const isCourseInAnyCart = @(ViewBag.IsInAnyCart == true ? "true" : "false");
+ 
+                             window.syncCouponStateWithPrice = async function(price) {
+                                 const val = parseFloat(price) || 0;
+                                 const toggle = document.getElementById('coupon-toggle');
+                                 const container = document.getElementById('voucher-action-container');
+                                 const warning = document.getElementById('coupon-free-warning');
+                                 const labelParent = toggle ? toggle.closest('.flex.items-center.justify-between.p-4') : null;
+ 
+                                 if (isCourseInAnyCart) {
+                                     if (toggle) {
+                                         toggle.disabled = true;
+                                         if (labelParent) {
+                                             labelParent.classList.add('opacity-60', 'pointer-events-none');
+                                         }
+                                     }
+                                     return;
+                                 }
 
-                        <!-- Coupon JS - ALWAYS rendered regardless of coupon state -->
-                        <script>
-                            // ─── LOAD AND SELECT PLATFORM COUPONS FOR EDITOR ───
-                            const couponToggle = document.getElementById('coupon-toggle');
-                            const voucherActionContainer = document.getElementById('voucher-action-container');
-                            const currentCouponCode = '@ViewBag.CouponCode';
-
-                            window.syncCouponStateWithPrice = async function(price) {
-                                const val = parseFloat(price) || 0;
-                                const toggle = document.getElementById('coupon-toggle');
-                                const container = document.getElementById('voucher-action-container');
-                                const warning = document.getElementById('coupon-free-warning');
-                                const labelParent = toggle ? toggle.closest('.flex.items-center.justify-between.p-4') : null;
-
-                                if (val === 0) {
-                                    if (toggle) {
-                                        if (toggle.checked) {
-                                            toggle.checked = false;
-                                            // Silently remove the applied coupon
-                                            try {
-                                                const res = await fetch(`/Coupon/PlatformRemove?courseId=@courseId`, { method: 'DELETE' });
-                                                const result = await res.json();
-                                                if (result.success) {
-                                                    // Reset active coupon variables
-                                                    const displayCode = document.getElementById('display-coupon-code');
-                                                    if (displayCode) displayCode.textContent = '';
-                                                    const noSelectedState = document.getElementById('no-voucher-selected-state');
-                                                    if (noSelectedState) noSelectedState.classList.remove('hidden');
-                                                    const selectedState = document.getElementById('voucher-selected-state');
-                                                    if (selectedState) selectedState.classList.add('hidden');
-                                                }
-                                            } catch (e) {
-                                                console.error("Error removing platform coupon dynamically:", e);
-                                            }
-                                        }
-                                        toggle.disabled = true;
-                                        if (labelParent) {
-                                            labelParent.classList.add('opacity-60', 'pointer-events-none');
-                                        }
-                                    }
-                                    if (container) container.classList.add('hidden');
-                                    if (warning) warning.classList.remove('hidden');
-                                } else {
-                                    if (toggle) {
-                                        toggle.disabled = false;
-                                        if (labelParent) {
-                                            labelParent.classList.remove('opacity-60', 'pointer-events-none');
-                                        }
-                                    }
-                                    if (warning) warning.classList.add('hidden');
-                                    if (toggle && toggle.checked) {
-                                        if (container) container.classList.remove('hidden');
-                                    }
-                                }
-                            };
+                                 if (val === 0) {
+                                     if (toggle) {
+                                         if (toggle.checked) {
+                                             toggle.checked = false;
+                                             // Silently remove the applied coupon
+                                             try {
+                                                 const res = await fetch(`/Coupon/PlatformRemove?courseId=@courseId`, { method: 'DELETE' });
+                                                 const result = await res.json();
+                                                 if (result.success) {
+                                                     // Reset active coupon variables
+                                                     const displayCode = document.getElementById('display-coupon-code');
+                                                     if (displayCode) displayCode.textContent = '';
+                                                     const noSelectedState = document.getElementById('no-voucher-selected-state');
+                                                     if (noSelectedState) noSelectedState.classList.remove('hidden');
+                                                     const selectedState = document.getElementById('voucher-selected-state');
+                                                     if (selectedState) selectedState.classList.add('hidden');
+                                                 }
+                                             } catch (e) {
+                                                 console.error("Error removing platform coupon dynamically:", e);
+                                             }
+                                         }
+                                         toggle.disabled = true;
+                                         if (labelParent) {
+                                             labelParent.classList.add('opacity-60', 'pointer-events-none');
+                                         }
+                                     }
+                                     if (container) container.classList.add('hidden');
+                                     if (warning) warning.classList.remove('hidden');
+                                 } else {
+                                     if (toggle) {
+                                         toggle.disabled = false;
+                                         if (labelParent) {
+                                             labelParent.classList.remove('opacity-60', 'pointer-events-none');
+                                         }
+                                     }
+                                     if (warning) warning.classList.add('hidden');
+                                     if (toggle && toggle.checked) {
+                                         if (container) container.classList.remove('hidden');
+                                     }
+                                 }
+                             };
 
                             window.openCouponModal = function() {
                                 const modal = document.getElementById('coupon-modal');

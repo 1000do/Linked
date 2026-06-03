@@ -601,17 +601,6 @@
             }
         }
 
-        function exportReport() {
-            Swal.fire({
-                title: 'Export Financial Report',
-                text: 'Generating multi-year revenue reconciliation spreadsheet/PDF...',
-                icon: 'success',
-                showConfirmButton: false,
-                timer: 2000,
-                timerProgressBar: true
-            });
-        }
-
         async function ajaxReloadRevenues() {
             const periodForm = document.getElementById('periodFilterForm');
             const searchForm = document.getElementById('revenueFilterForm');
