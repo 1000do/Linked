@@ -24,15 +24,18 @@ public class CouponService : ICouponService
     private readonly ICouponRepository _repo;
     private readonly ICourseRepository _courseRepo;
     private readonly IRedisService _redisService;
+    private readonly ICartRepository _cartRepo;
 
     public CouponService(
         ICouponRepository repo,
         ICourseRepository courseRepo,
-        IRedisService redisService)
+        IRedisService redisService,
+        ICartRepository cartRepo)
     {
         _repo = repo;
         _courseRepo = courseRepo;
         _redisService = redisService;
+        _cartRepo = cartRepo;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -229,6 +232,11 @@ public class CouponService : ICouponService
         if (course.Instructor == null || course.Instructor.InstructorId != instructorUserId)
             throw new UnauthorizedAccessException("You are not the owner of this course.");
 
+        if (await _cartRepo.IsCourseInAnyCartAsync(courseId))
+        {
+            throw new InvalidOperationException("Cannot apply coupon. This course is currently in a user's shopping cart.");
+        }
+
         if (course.Price == 0)
             throw new InvalidOperationException("Coupons cannot be applied to free courses.");
 
@@ -274,6 +282,11 @@ public class CouponService : ICouponService
 
         if (course.Instructor == null || course.Instructor.InstructorId != instructorUserId)
             throw new UnauthorizedAccessException("You are not the owner of this course.");
+
+        if (await _cartRepo.IsCourseInAnyCartAsync(courseId))
+        {
+            throw new InvalidOperationException("Cannot remove coupon. This course is currently in a user's shopping cart.");
+        }
 
         course.CouponId = null;
         _courseRepo.Update(course);

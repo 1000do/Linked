@@ -47,4 +47,17 @@ public interface ICheckoutService
     /// Hủy Transaction, Hủy Order để dọn dẹp các đơn ảo.
     /// </summary>
     Task ProcessPaymentCancelAsync(int orderId);
+
+    /// <summary>
+    /// Khởi tạo thanh toán nhúng Stripe Elements bằng cách tạo một Stripe PaymentIntent.
+    /// </summary>
+    /// <returns>Client Secret của PaymentIntent.</returns>
+    Task<CheckoutResponse> InitiatePaymentIntentAsync(
+        int userId,
+        string? couponCode);
+
+    /// <summary>
+    /// Xử lý lưu DB (tạo Order, OrderItems, Transaction, Enrollment, Payout...) sau khi Stripe Elements thanh toán thành công.
+    /// </summary>
+    Task ProcessPaymentIntentSuccessAsync(string paymentIntentId);
 }

@@ -238,4 +238,39 @@ public class StripePaymentService : IPaymentGatewayService
             });
         return reversal.Id; // trr_xxx
     }
+
+    /// <summary>
+    /// Tạo Stripe PaymentIntent cho thanh toán nhúng Elements.
+    /// </summary>
+    public async Task<(string ClientSecret, string PaymentIntentId)> CreatePaymentIntentAsync(
+        decimal amount,
+        string currency,
+        Dictionary<string, string>? metadata = null)
+    {
+        var options = new PaymentIntentCreateOptions
+        {
+            Amount = (long)Math.Round(amount * 100), // Đổi sang cents (ví dụ USD)
+            Currency = currency.ToLower(),
+            Metadata = metadata,
+            AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
+            {
+                Enabled = false
+            },
+            PaymentMethodTypes = new List<string> { "card" }
+        };
+
+        var service = new PaymentIntentService();
+        var paymentIntent = await service.CreateAsync(options);
+        return (paymentIntent.ClientSecret, paymentIntent.Id); // Trả về client secret và ID
+    }
+
+    /// <summary>
+    /// Lấy metadata lưu trữ trên Stripe PaymentIntent.
+    /// </summary>
+    public async Task<Dictionary<string, string>?> GetPaymentIntentMetadataAsync(string paymentIntentId)
+    {
+        var service = new PaymentIntentService();
+        var paymentIntent = await service.GetAsync(paymentIntentId);
+        return paymentIntent?.Metadata;
+    }
 }

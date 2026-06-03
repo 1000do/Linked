@@ -36,5 +36,5 @@ public interface IReportRepository
 
     // ── Shared ──────────────────────────────────────────────────────────────
 
-    Task SaveChangesAsync();
+    Task<int> SaveChangesAsync();
 }

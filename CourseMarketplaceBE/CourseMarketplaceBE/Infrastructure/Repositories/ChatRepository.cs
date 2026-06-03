@@ -61,8 +61,6 @@ public class ChatRepository : IChatRepository
         {
             p.UnreadCount++;
         }
-
-        await _context.SaveChangesAsync();
     }
 
     public async Task<Chat?> GetChatByIdAsync(int chatId)
@@ -73,20 +71,20 @@ public class ChatRepository : IChatRepository
     public async Task UpdateChatAsync(Chat chat)
     {
         _context.Entry(chat).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
+        await Task.CompletedTask;
     }
 
     public async Task<Chat> CreateChatAsync(Chat chat)
     {
         _context.Chats.Add(chat);
-        await _context.SaveChangesAsync();
+        await Task.CompletedTask;
         return chat;
     }
 
     public async Task AddChatParticipantsAsync(IEnumerable<ChatParticipant> participants)
     {
         _context.ChatParticipants.AddRange(participants);
-        await _context.SaveChangesAsync();
+        await Task.CompletedTask;
     }
 
     public async Task<ChatParticipant?> GetParticipantAsync(int chatId, int accountId)
@@ -98,7 +96,7 @@ public class ChatRepository : IChatRepository
     public async Task UpdateParticipantAsync(ChatParticipant participant)
     {
         _context.Entry(participant).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
+        await Task.CompletedTask;
     }
 
     public async Task<ChatParticipant?> FindPrivateChatAsync(int accountId1, int accountId2, string? contextType, int? contextId)
@@ -134,20 +132,20 @@ public class ChatRepository : IChatRepository
         if (report != null)
         {
             report.AccessGrantedUntil = expiry;
-            await _context.SaveChangesAsync();
         }
+        await Task.CompletedTask;
     }
 
     public async Task AddReportAsync(UserReport report)
     {
         _context.UserReports.Add(report);
-        await _context.SaveChangesAsync();
+        await Task.CompletedTask;
     }
 
     public async Task AddAuditLogAsync(AuditLog log)
     {
         _context.AuditLogs.Add(log);
-        await _context.SaveChangesAsync();
+        await Task.CompletedTask;
     }
 
     public async Task MarkAsReadAsync(int chatId, int accountId)
@@ -159,8 +157,8 @@ public class ChatRepository : IChatRepository
         {
             participant.UnreadCount = 0;
             participant.LastReadAt = DateTime.Now;
-            await _context.SaveChangesAsync();
         }
+        await Task.CompletedTask;
     }
 
     public async Task<int> GetTotalUnreadCountAsync(int accountId)

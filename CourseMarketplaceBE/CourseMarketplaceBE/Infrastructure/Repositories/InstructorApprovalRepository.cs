@@ -95,6 +95,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                     YoutubeUrl             = i.YoutubeUrl,
                     FacebookUrl            = i.FacebookUrl,
                     ApprovalStatus         = i.ApprovalStatus,
+                    RejectionReason        = i.RejectionReason,
                     StripeAccountId        = i.StripeAccountId,
                     StripeOnboardingStatus = i.StripeOnboardingStatus,
                     PayoutsEnabled         = i.PayoutsEnabled ?? false,
@@ -120,6 +121,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                     FacebookUrl         = i.FacebookUrl,
                     DocumentUrl         = i.DocumentUrl,
                     ApprovalStatus      = i.ApprovalStatus,
+                    RejectionReason     = i.RejectionReason,
                     FullName            = i.InstructorNavigation!.FullName,
                     Email               = i.InstructorNavigation.UserNavigation!.Email
                 })

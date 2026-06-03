@@ -32,6 +32,9 @@ public class CartRepository : ICartRepository
     public async Task<bool> IsCourseInCartAsync(int userId, int courseId)
         => await _context.CartItems.AnyAsync(c => c.UserId == userId && c.CourseId == courseId);
 
+    public async Task<bool> IsCourseInAnyCartAsync(int courseId)
+        => await _context.CartItems.AnyAsync(c => c.CourseId == courseId);
+
     public async Task AddCartItemAsync(CartItem item)
         => await _context.CartItems.AddAsync(item);
 

@@ -34,9 +34,9 @@ namespace CourseMarketplaceFE.Controllers
 
         // Action xử lý duyệt/từ chối
         [HttpPost]
-        public async Task<IActionResult> Process(int id, string status)
+        public async Task<IActionResult> Process(int id, string status, string? reason)
         {
-            var payload = new { instructorId = id, status = status };
+            var payload = new { instructorId = id, status = status, reason = reason };
 
             // Sử dụng PostJsonAsync vì ApiClient của bạn có phương thức này để gửi Body JSON
             var response = await _apiClient.PostJsonAsync("/api/AdminApproval/process", payload);

@@ -61,6 +61,11 @@ public class InstructorController : Controller
                                 model.ExpertiseCategories = info.TryGetProperty("expertiseCategories", out var ec) ? ec.GetString() ?? "" : "";
                                 model.LinkedinUrl = info.TryGetProperty("linkedinUrl", out var li) ? li.GetString() : null;
                                 model.ExistingDocumentUrl = info.TryGetProperty("documentUrl", out var doc) ? doc.GetString() : null;
+                                model.RejectionReason = info.TryGetProperty("rejectionReason", out var rr) ? rr.GetString() : null;
+                                if (!string.IsNullOrEmpty(model.ExistingDocumentUrl))
+                                {
+                                    model.ExistingDocumentUrls = model.ExistingDocumentUrl.Split(';').Where(x => !string.IsNullOrEmpty(x)).ToList();
+                                }
                             }
                         }
 
@@ -204,11 +209,38 @@ public class InstructorController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Apply(InstructorApplyViewModel model)
     {
+        // Validate file count:
+        int newFileCount = model.DocumentFiles?.Count(f => f != null && f.Length > 0) ?? 0;
+        if (model.DocumentFile != null && model.DocumentFile.Length > 0)
+        {
+            newFileCount += 1;
+        }
+
+        int totalFileCount = newFileCount;
+        if (model.IsResubmit)
+        {
+            totalFileCount += model.RetainedDocumentUrls?.Count ?? 0;
+        }
+
+        if (totalFileCount == 0)
+        {
+            ModelState.AddModelError("DocumentFiles", "Please upload at least 1 document/certificate file.");
+        }
+        else if (totalFileCount > 3)
+        {
+            ModelState.AddModelError("DocumentFiles", "You can upload a maximum of 3 document/certificate files.");
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadEmailVerifiedAsync();
             model.AvailableCountries = await LoadStripeCountriesAsync();
             model.AvailableCategories = await LoadCategoriesAsync();
+            // Re-populate ExistingDocumentUrls with all original files on validation failure
+            if (model.IsResubmit && !string.IsNullOrEmpty(model.ExistingDocumentUrl))
+            {
+                model.ExistingDocumentUrls = model.ExistingDocumentUrl.Split(';').Where(x => !string.IsNullOrEmpty(x)).ToList();
+            }
             return View(model);
         }
 
@@ -223,11 +255,31 @@ public class InstructorController : Controller
             content.Add(new StringContent(model.FacebookUrl ?? ""), "FacebookUrl");
             content.Add(new StringContent(model.StripeCountry ?? "SG"), "StripeCountry");
 
-            if (model.DocumentFile != null)
+            if (model.RetainedDocumentUrls != null && model.RetainedDocumentUrls.Count > 0)
+            {
+                foreach (var url in model.RetainedDocumentUrls)
+                {
+                    content.Add(new StringContent(url), "RetainedDocumentUrls");
+                }
+            }
+
+            if (model.DocumentFiles != null && model.DocumentFiles.Count > 0)
+            {
+                foreach (var file in model.DocumentFiles)
+                {
+                    if (file != null && file.Length > 0)
+                    {
+                        var fileContent = new StreamContent(file.OpenReadStream());
+                        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+                        content.Add(fileContent, "DocumentFiles", file.FileName);
+                    }
+                }
+            }
+            else if (model.DocumentFile != null && model.DocumentFile.Length > 0)
             {
                 var fileContent = new StreamContent(model.DocumentFile.OpenReadStream());
                 fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(model.DocumentFile.ContentType);
-                content.Add(fileContent, "DocumentFile", model.DocumentFile.FileName);
+                content.Add(fileContent, "DocumentFiles", model.DocumentFile.FileName);
             }
 
             var response = await _api.PostFormDataAsync("instructor/apply", content);
@@ -258,6 +310,10 @@ public class InstructorController : Controller
             ViewBag.ApiError = $"Error: {ex.Message}";
         }
 
+        if (model.IsResubmit && !string.IsNullOrEmpty(model.ExistingDocumentUrl))
+        {
+            model.ExistingDocumentUrls = model.ExistingDocumentUrl.Split(';').Where(x => !string.IsNullOrEmpty(x)).ToList();
+        }
         model.AvailableCountries = await LoadStripeCountriesAsync();
         model.AvailableCategories = await LoadCategoriesAsync();
         return View(model);
@@ -289,7 +345,8 @@ public class InstructorController : Controller
                         StripeOnboardingStatus = dataEl.TryGetProperty("stripeOnboardingStatus", out var sos) ? sos.GetString() : null,
                         PayoutsEnabled = dataEl.TryGetProperty("payoutsEnabled", out var pe) && pe.GetBoolean(),
                         ChargesEnabled = dataEl.TryGetProperty("chargesEnabled", out var ce) && ce.GetBoolean(),
-                        FullName = dataEl.TryGetProperty("fullName", out var fn) ? fn.GetString() : null
+                        FullName = dataEl.TryGetProperty("fullName", out var fn) ? fn.GetString() : null,
+                        RejectionReason = dataEl.TryGetProperty("rejectionReason", out var rr) ? rr.GetString() : null
                     };
 
                     // ★ Lưu trạng thái duyệt vào Cookie để các phần khác kiểm tra nhanh

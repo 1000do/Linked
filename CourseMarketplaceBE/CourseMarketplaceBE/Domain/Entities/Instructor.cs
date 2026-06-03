@@ -22,6 +22,7 @@ public partial class Instructor
     // ── Trạng thái duyệt (Admin quản lý) ────────────────────────────
     /// <summary>Pending | Approved | Rejected</summary>
     public string? ApprovalStatus { get; set; }
+    public string? RejectionReason { get; set; }
 
     // ── Stripe Connect Onboarding ────────────────────────────────────
     public string? StripeAccountId { get; set; }

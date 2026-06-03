@@ -13,6 +13,7 @@ public interface ICartRepository
     /// <summary>Lấy tất cả cart items của user, kèm Course + Instructor navigation.</summary>
     Task<List<CartItem>> GetCartItemsWithDetailsAsync(int userId);
     Task<bool> IsCourseInCartAsync(int userId, int courseId);
+    Task<bool> IsCourseInAnyCartAsync(int courseId);
     Task AddCartItemAsync(CartItem item);
     Task<CartItem?> GetCartItemAsync(int userId, int courseId);
     void RemoveCartItem(CartItem item);

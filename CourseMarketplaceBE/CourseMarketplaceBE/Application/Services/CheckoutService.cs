@@ -520,6 +520,337 @@ public class CheckoutService : ICheckoutService
         // Hệ thống không tạo rác pending trong DB nữa nên không cần làm gì ở đây.
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // BƯỚC 4: STRIPE PAYMENTINTENT ONBOARDING & PROCESSING
+    // ═══════════════════════════════════════════════════════════════════════════
+    public async Task<CheckoutResponse> InitiatePaymentIntentAsync(
+        int userId,
+        string? couponCode)
+    {
+        // ── 4.1 Lấy cart items kèm Course + Instructor ──────────────────────
+        var cartItems = await _repo.GetCartItemsWithCourseAndInstructorAsync(userId);
+        if (!cartItems.Any())
+            throw new InvalidOperationException("Cart is empty. Cannot checkout.");
+
+        // ── 4.2 Kiểm tra không mua trùng (đã enrolled) ──────────────────────
+        foreach (var item in cartItems)
+        {
+            if (item.CourseId.HasValue && await _courseRepo.IsEnrolledAsync(userId, item.CourseId.Value))
+                throw new InvalidOperationException(
+                    $"You have already purchased the course \"{item.Course?.Title}\". Please remove it from the cart.");
+        }
+
+        // ── 4.3 Tính toán coupon (Hỗ trợ nhiều mã phân tách bằng dấu phẩy) ────
+        var appliedCoupons = new List<Coupon>();
+
+        if (!string.IsNullOrWhiteSpace(couponCode))
+        {
+            var codes = couponCode.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(c => c.Trim().ToUpper())
+                .Distinct()
+                .ToList();
+
+            foreach (var code in codes)
+            {
+                var cp = await _couponRepo.GetValidCouponAsync(code, DateTime.Now);
+                if (cp != null)
+                {
+                    decimal eligibleSubTotal = cartItems
+                        .Where(c => c.Course != null && c.Course.CouponId == cp.CouponId)
+                        .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
+
+                    if (eligibleSubTotal >= cp.MinOrderValue && eligibleSubTotal > 0)
+                    {
+                        appliedCoupons.Add(cp);
+                    }
+                }
+            }
+        }
+
+        // ── 4.4 Tính tổng tiền cần thanh toán ──────────────────────────────
+        decimal totalAmount = 0m;
+
+        foreach (var cartItem in cartItems)
+        {
+            var originalPrice = cartItem.Price ?? cartItem.Course?.Price ?? 0m;
+            decimal purchasePrice = originalPrice;
+            Coupon? matchedCoupon = null;
+
+            if (cartItem.Course != null)
+            {
+                matchedCoupon = appliedCoupons.FirstOrDefault(cp => cartItem.Course.CouponId == cp.CouponId);
+            }
+
+            if (matchedCoupon != null)
+            {
+                if (matchedCoupon.CouponType == "percentage")
+                {
+                    purchasePrice = originalPrice * (1 - (matchedCoupon.DiscountValue / 100m));
+                }
+                else
+                {
+                    purchasePrice = originalPrice - matchedCoupon.DiscountValue;
+                }
+            }
+
+            purchasePrice = Math.Round(Math.Max(purchasePrice, 0), 2);
+            totalAmount += purchasePrice;
+        }
+
+        var sessionCurrency = "usd"; 
+
+        // metadata để lưu thông tin đơn hàng lên Stripe PaymentIntent
+        var metadata = new Dictionary<string, string>
+        {
+            { "userId", userId.ToString() },
+            { "couponCode", couponCode ?? "" },
+            { "checkoutType", "cart" },
+            { "courseIds", string.Join(",", cartItems.Select(c => c.CourseId)) }
+        };
+
+        // Gọi Payment Gateway để tạo PaymentIntent
+        var (clientSecret, paymentIntentId) = await _paymentGateway.CreatePaymentIntentAsync(
+            totalAmount,
+            sessionCurrency,
+            metadata);
+
+        return new CheckoutResponse
+        {
+            SessionUrl = clientSecret, // Tận dụng trường SessionUrl để trả về clientSecret
+            SessionId = paymentIntentId // Tận dụng trường SessionId để trả về PaymentIntentId
+        };
+    }
+
+    public async Task ProcessPaymentIntentSuccessAsync(string paymentIntentId)
+    {
+        Console.WriteLine($"[CHECKOUT-DEBUG] ═══ ProcessPaymentIntentSuccess START ═══ PaymentIntentId={paymentIntentId}");
+
+        try 
+        {
+            // ── 4.5 Kiểm tra trùng lặp (Idempotency) ───────────────────────────
+            var existingTransactions = await _repo.GetTransactionsBySessionIdAsync(paymentIntentId);
+            if (existingTransactions.Any())
+            {
+                var allSucceeded = existingTransactions.All(t => t.TransactionsStatus == "succeeded");
+                var allPayoutsCreated = existingTransactions.All(t => t.InstructorPayouts.Any());
+
+                if (allSucceeded && allPayoutsCreated)
+                {
+                    Console.WriteLine("[CHECKOUT-DEBUG] Already processed and successful. Skipping.");
+                    return;
+                }
+            }
+
+            // ── 4.6 Lấy Metadata từ Stripe PaymentIntent ────────────────────────
+            Console.WriteLine("[CHECKOUT-DEBUG] Fetching Stripe PaymentIntent Metadata...");
+            var metadata = await _paymentGateway.GetPaymentIntentMetadataAsync(paymentIntentId);
+            if (metadata == null || !metadata.TryGetValue("userId", out var userIdStr))
+            {
+                throw new InvalidOperationException("Valid metadata or UserId was not found in the Stripe PaymentIntent.");
+            }
+
+            int userId = int.Parse(userIdStr);
+            string couponCode = metadata.TryGetValue("couponCode", out var cc) ? cc : "";
+            string checkoutType = metadata.TryGetValue("checkoutType", out var ct) ? ct : "cart";
+            string courseIdsStr = metadata.TryGetValue("courseIds", out var cids) ? cids : "";
+
+            if (string.IsNullOrEmpty(courseIdsStr))
+            {
+                throw new InvalidOperationException("Valid Course ID list was not found in the Stripe PaymentIntent.");
+            }
+
+            var courseIds = courseIdsStr.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(int.Parse)
+                .ToList();
+
+            // ── 4.7 Lấy thông tin cần thiết ─────────────────────────────────────
+            var currentTransferRate = await _adminFinanceService.GetCurrentTransferRateAsync();
+            Console.WriteLine($"[CHECKOUT-DEBUG] PaymentIntentId={paymentIntentId}");
+
+            // ── 4.8 Load các khóa học & áp coupon để tính giá chính xác ─────────
+            var coupon = !string.IsNullOrWhiteSpace(couponCode)
+                ? await _couponRepo.GetValidCouponAsync(couponCode, DateTime.Now)
+                : null;
+
+            // ════ BẮT ĐẦU DB TRANSACTION ════════════════════════════════════════
+            Console.WriteLine("[CHECKOUT-DEBUG] 🔄 Starting DB Transaction...");
+            await using var dbTransaction = await _repo.BeginTransactionAsync();
+            try
+            {
+                // Tạo đơn hàng OrderInfo directly as paid!
+                var order = new OrderInfo
+                {
+                    UserId = userId,
+                    OrderDate = DateTime.Now,
+                    OrderStatus = "paid",
+                    PaymentMethod = checkoutType == "direct" ? "stripe_direct" : "stripe"
+                };
+                await _repo.AddOrderAsync(order);
+                int rows1 = await _repo.SaveChangesAsync();
+                if (rows1 <= 0) throw new InvalidOperationException("Failed to save changes");
+
+                foreach (var courseId in courseIds)
+                {
+                    var course = await _courseRepo.GetCourseWithInstructorAsync(courseId);
+                    if (course == null) continue;
+
+                    decimal originalPrice = course.Price;
+                    decimal purchasePrice = originalPrice;
+                    bool isDiscounted = false;
+
+                    if (coupon != null && course.CouponId == coupon.CouponId)
+                    {
+                        if (originalPrice >= coupon.MinOrderValue)
+                        {
+                            isDiscounted = true;
+                            decimal discountAmount = coupon.CouponType == "percentage"
+                                ? originalPrice * (coupon.DiscountValue / 100m)
+                                : coupon.DiscountValue;
+                            discountAmount = Math.Round(Math.Min(discountAmount, originalPrice), 2);
+                            purchasePrice = Math.Max(originalPrice - discountAmount, 0m);
+                        }
+                    }
+
+                    purchasePrice = Math.Round(purchasePrice, 2);
+
+                    // Insert OrderItem
+                    var orderItem = new OrderItem
+                    {
+                        OrderId = order.OrderId,
+                        CourseId = courseId,
+                        PurchasePrice = purchasePrice,
+                        CouponUsed = isDiscounted,
+                        OriginalPrice = originalPrice,
+                        CouponCode = isDiscounted ? coupon?.CouponCode : null,
+                        CouponType = isDiscounted ? coupon?.CouponType : null,
+                        DiscountAmount = Math.Round(originalPrice - purchasePrice, 2)
+                    };
+                    await _repo.AddOrderItemAsync(orderItem);
+                    int rows2 = await _repo.SaveChangesAsync();
+                    if (rows2 <= 0) throw new InvalidOperationException("Failed to save changes");
+
+                    // Increment coupon usage
+                    if (isDiscounted && coupon != null)
+                    {
+                        await _repo.IncrementCouponUsageAsync(coupon.CouponId);
+                    }
+
+                    // Insert Transaction
+                    var transaction = new Transaction
+                    {
+                        OrderItemId = orderItem.Id,
+                        AccountFrom = userId,
+                        AccountTo = course.InstructorId,
+                        Amount = purchasePrice,
+                        TransferRate = currentTransferRate,
+                        StripeSessionId = paymentIntentId, // Sử dụng paymentIntentId cho StripeSessionId
+                        StripePaymentintentId = paymentIntentId,
+                        Currency = "usd",
+                        TransactionsStatus = "succeeded",
+                        TransactionType = "payment",
+                        TransactionCreatedAt = DateTime.Now
+                    };
+                    await _repo.AddTransactionAsync(transaction);
+                    int rows3 = await _repo.SaveChangesAsync();
+                    if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
+
+                    // Cấp Enrollment (Hoặc kích hoạt lại nếu đã từng refund)
+                    var existingEnrollment = await _enrollmentRepo.GetEnrollmentIncludingRefundedAsync(userId, courseId);
+                    if (existingEnrollment != null)
+                    {
+                        existingEnrollment.EnrollmentStatus = "active";
+                        existingEnrollment.EnrollDate = DateOnly.FromDateTime(DateTime.Now);
+                        existingEnrollment.IsCompleted = false;
+                        existingEnrollment.CompletedDate = null;
+                        existingEnrollment.LastAccessedAt = DateTime.Now;
+
+                        await _enrollmentRepo.ClearMaterialCompletionsAsync(existingEnrollment.EnrollmentId);
+                    }
+                    else
+                    {
+                        var enrollment = new Enrollment
+                        {
+                            UserId = userId,
+                            CourseId = courseId,
+                            Title = course.Title,
+                            EnrollDate = DateOnly.FromDateTime(DateTime.Now),
+                            IsCompleted = false,
+                            EnrollmentStatus = "active",
+                            LastAccessedAt = DateTime.Now
+                        };
+                        await _enrollmentRepo.AddEnrollmentAsync(enrollment);
+                        int rows4 = await _enrollmentRepo.SaveChangesAsync();
+                        if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
+                    }
+
+                    // Tính toán phí Stripe (2.9% + $0.30) và lấy doanh thu thuần của khoá học
+                    var stripeFee = Math.Round(purchasePrice * 0.029m + 0.30m, 2);
+                    stripeFee = Math.Min(stripeFee, purchasePrice); // Tránh âm tiền nếu khoá học quá rẻ
+                    var netPrice = purchasePrice - stripeFee;
+
+                    // Tạo Payout record (chia tiền sau khi trừ phí Stripe)
+                    var payoutAmount = Math.Round(netPrice * (currentTransferRate / 100m), 2);
+                    var payout = new InstructorPayout
+                    {
+                        TransactionId = transaction.TransactionId,
+                        InstructorId = course.InstructorId ?? 0,
+                        PayoutAmount = payoutAmount,
+                        PayoutDate = DateTime.Now.AddDays(14),
+                        IsPaid = false,
+                        PayoutStatus = "pending",
+                        StripeTransferId = null
+                    };
+                    await _repo.AddInstructorPayoutAsync(payout);
+
+                    var instructorId = course.InstructorId;
+
+                    // ── NEW: Thông báo cho giảng viên ──
+                    if (instructorId.HasValue)
+                    {
+                        var courseTitle = course.Title ?? "your course";
+                        await _notificationService.SendNotificationAsync(
+                            instructorId.Value,
+                            "You have a new order",
+                            $"The course '{courseTitle}' has been successfully sold. Expected revenue: ${payoutAmount:N2} USD.",
+                            $"/Instructor/Payouts"
+                        );
+                    }
+                }
+
+                // ── 4.9 CLEAR CART (nếu mua từ Cart) ───────────────────────────
+                if (checkoutType == "cart")
+                {
+                    Console.WriteLine("[CHECKOUT-DEBUG] 🔄 Clearing cart...");
+                    await _repo.ClearCartAsync(userId);
+                }
+
+                int rows5 = await _repo.SaveChangesAsync();
+                if (rows5 <= 0) throw new InvalidOperationException("Failed to save changes");
+
+                Console.WriteLine("[CHECKOUT-DEBUG] 🏁 Committing Transaction...");
+                await dbTransaction.CommitAsync();
+                Console.WriteLine("[CHECKOUT-DEBUG] ✅ SUCCESS!");
+
+                // 🔥 Gửi SignalR báo cho Admin
+                await _hubContext.Clients.Group("AdminFinance").SendAsync("UpdatePayoutStatus", new {
+                    refresh = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CHECKOUT-DEBUG] ❌ INNER EXCEPTION: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                await dbTransaction.RollbackAsync();
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CHECKOUT-DEBUG] ❌ TOP-LEVEL EXCEPTION: {ex.Message}");
+            throw;
+        }
+    }
+
     private async Task CleanupAbandonedPendingOrdersAsync(int userId)
     {
         try

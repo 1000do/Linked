@@ -14,13 +14,15 @@ namespace CourseMarketplaceFE.Controllers;
 public class CartController : Controller
 {
     private readonly ApiClient _api;
+    private readonly Microsoft.Extensions.Configuration.IConfiguration _config;
 
     // Tên cookie lưu mã giảm giá (không nhạy cảm, chỉ là text ngắn)
     private const string CouponCookieName = "cart_coupon";
 
-    public CartController(ApiClient api)
+    public CartController(ApiClient api, Microsoft.Extensions.Configuration.IConfiguration config)
     {
         _api = api;
+        _config = config;
     }
 
     private Dictionary<int, string> GetCouponMapFromCookie()
@@ -114,6 +116,26 @@ public class CartController : Controller
             catch { /* json parse lỗi → model rỗng */ }
         }
 
+        if (TempData["PendingCouponCheck"] is int pendingCourseId)
+        {
+            var enteredCode = couponMap.ContainsKey(pendingCourseId) ? couponMap[pendingCourseId] : null;
+            if (!string.IsNullOrEmpty(enteredCode))
+            {
+                var cartItem = model.Items.FirstOrDefault(i => i.CourseId == pendingCourseId);
+                if (cartItem == null || !string.Equals(cartItem.AppliedCouponCode, enteredCode, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Invalid or ineligible! Remove from cookie map
+                    couponMap.Remove(pendingCourseId);
+                    SaveCouponMapToCookie(couponMap);
+                    TempData["CartError"] = $"Voucher '{enteredCode}' is invalid or does not meet the requirements.";
+                }
+                else
+                {
+                    TempData["CartSuccess"] = $"Voucher '{enteredCode}' applied successfully!";
+                }
+            }
+        }
+
         return View(model);
     }
 
@@ -131,6 +153,7 @@ public class CartController : Controller
             var map = GetCouponMapFromCookie();
             map[courseId.Value] = couponCode.Trim().ToUpper();
             SaveCouponMapToCookie(map);
+            TempData["PendingCouponCheck"] = courseId.Value;
         }
 
         return RedirectToAction(nameof(Index));
@@ -150,6 +173,7 @@ public class CartController : Controller
         {
             map.Remove(courseId);
             SaveCouponMapToCookie(map);
+            TempData["CartSuccess"] = "Voucher removed successfully.";
         }
         return RedirectToAction(nameof(Index));
     }
@@ -236,41 +260,70 @@ public class CartController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // ─── 6. CHECKOUT — GỌI API THANH TOÁN ────────────────────────────────
+    // ─── 6. CHECKOUT — TRANG THANH TOÁN EMbedded STRIPE ELEMENTS ────────
     /// <summary>
-    /// POST /Cart/Checkout
-    /// Gọi BE API tạo Stripe session → redirect user tới Stripe Checkout Page.
-    /// Cookie JWT tự động được ApiClient gắn vào request (DIP — FE không cần biết Stripe).
+    /// GET /Cart/Checkout
+    /// Hiển thị trang thanh toán và tạo Stripe PaymentIntent.
     /// </summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    [HttpGet]
     public async Task<IActionResult> Checkout()
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
             return Redirect("/Account/Login");
 
-        // Đọc map coupon từ Cookie và ghép thành chuỗi phân tách bằng dấu phẩy
+        // 6.1 Lấy thông tin giỏ hàng hiện tại
         var couponMap = GetCouponMapFromCookie();
         var couponCode = string.Join(",", couponMap.Values.Distinct());
 
-        // Tạo base URL của FE (dựa vào Request context)
-        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        var url = string.IsNullOrWhiteSpace(couponCode)
+            ? "cart/summary"
+            : $"cart/summary?couponCode={Uri.EscapeDataString(couponCode)}";
 
-        // Gọi BE API checkout/process
-        var response = await _api.PostJsonAsync("checkout/process", new
-        {
-            couponCode = couponCode,
-            successUrl = $"{baseUrl}/Cart/CheckoutSuccess?session_id={{CHECKOUT_SESSION_ID}}",
-            cancelUrl = $"{baseUrl}/Cart/CheckoutCancel"
-        });
+        var summaryResponse = await _api.GetAsync(url);
+        var summaryJson = await summaryResponse.Content.ReadAsStringAsync();
+        var cartModel = new CartViewModel();
 
-        if (!response.IsSuccessStatusCode)
+        if (summaryResponse.IsSuccessStatusCode && !string.IsNullOrWhiteSpace(summaryJson))
         {
-            var errorJson = await response.Content.ReadAsStringAsync();
-            string errorMsg = "An error occurred while creating checkout session.";
             try
             {
-                using var doc = System.Text.Json.JsonDocument.Parse(errorJson);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                using var doc = JsonDocument.Parse(summaryJson);
+                if (doc.RootElement.TryGetProperty("data", out var dataEl))
+                {
+                    cartModel.Items = dataEl.TryGetProperty("items", out var itemsEl)
+                        ? JsonSerializer.Deserialize<List<CartItemViewModel>>(itemsEl.GetRawText(), opts) ?? new()
+                        : new();
+
+                    cartModel.SubTotal = dataEl.TryGetProperty("subTotal", out var st) ? st.GetDecimal() : 0m;
+                    cartModel.DiscountAmount = dataEl.TryGetProperty("discountAmount", out var da) ? da.GetDecimal() : 0m;
+                    cartModel.Total = dataEl.TryGetProperty("total", out var tot) ? tot.GetDecimal() : 0m;
+                    cartModel.AppliedCouponCode = dataEl.TryGetProperty("appliedCouponCode", out var ac) ? ac.GetString() : null;
+                    cartModel.CouponMessage = dataEl.TryGetProperty("couponMessage", out var cm) ? cm.GetString() : null;
+                }
+            }
+            catch { }
+        }
+
+        if (!cartModel.Items.Any())
+        {
+            TempData["CartError"] = "Your cart is empty. Cannot checkout.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // 6.2 Gọi BE API tạo Stripe PaymentIntent
+        var intentResponse = await _api.PostJsonAsync("checkout/create-intent", new
+        {
+            couponCode = couponCode
+        });
+
+        if (!intentResponse.IsSuccessStatusCode)
+        {
+            var errorJson = await intentResponse.Content.ReadAsStringAsync();
+            string errorMsg = "An error occurred while creating checkout intent.";
+            try
+            {
+                using var doc = JsonDocument.Parse(errorJson);
                 if (doc.RootElement.TryGetProperty("message", out var m))
                     errorMsg = m.GetString() ?? errorMsg;
             }
@@ -279,29 +332,55 @@ public class CartController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        // Parse response để lấy Stripe Session URL
-        var json = await response.Content.ReadAsStringAsync();
+        var intentJson = await intentResponse.Content.ReadAsStringAsync();
+        string clientSecret = "";
+        string paymentIntentId = "";
+
         try
         {
-            using var doc = System.Text.Json.JsonDocument.Parse(json);
-            if (doc.RootElement.TryGetProperty("data", out var dataEl) &&
-                dataEl.TryGetProperty("sessionUrl", out var urlEl))
+            using var doc = JsonDocument.Parse(intentJson);
+            if (doc.RootElement.TryGetProperty("data", out var dataEl))
             {
-                var sessionUrl = urlEl.GetString();
-                if (!string.IsNullOrEmpty(sessionUrl))
-                {
-                    // Xóa coupon cookie sau khi checkout thành công
-                    HttpContext.Response.Cookies.Delete(CouponCookieName);
+                clientSecret = dataEl.TryGetProperty("sessionUrl", out var csEl) ? csEl.GetString() ?? "" : "";
+                paymentIntentId = dataEl.TryGetProperty("sessionId", out var idEl) ? idEl.GetString() ?? "" : "";
+            }
+        }
+        catch
+        {
+            TempData["CartError"] = "Failed to parse checkout server data.";
+            return RedirectToAction(nameof(Index));
+        }
 
-                    // Redirect tới Stripe Checkout Page
-                    return Redirect(sessionUrl);
+        // 6.3 Lấy thông tin email người dùng từ Profile API
+        string userEmail = "";
+        try
+        {
+            var profileResponse = await _api.GetAsync("Profile");
+            if (profileResponse.IsSuccessStatusCode)
+            {
+                var profileJson = await profileResponse.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(profileJson);
+                if (doc.RootElement.TryGetProperty("data", out var dataEl))
+                {
+                    userEmail = dataEl.TryGetProperty("email", out var emailProp) ? emailProp.GetString() ?? "" : "";
                 }
             }
         }
         catch { }
 
-        TempData["CartError"] = "Cannot create checkout session. Please try again.";
-        return RedirectToAction(nameof(Index));
+        // 6.4 Lấy Stripe PublishableKey
+        var publishableKey = _config["Stripe:PublishableKey"] ?? "";
+
+        var model = new CheckoutViewModel
+        {
+            PublishableKey = publishableKey,
+            ClientSecret = clientSecret,
+            PaymentIntentId = paymentIntentId,
+            Email = userEmail,
+            Cart = cartModel
+        };
+
+        return View(model);
     }
 
     // ─── 6.5. DIRECT CHECKOUT (MUA NGAY KHÔNG QUA GIỎ HÀNG) ──────────────
@@ -355,51 +434,84 @@ public class CartController : Controller
 
     // ─── 7. CHECKOUT SUCCESS — STRIPE REDIRECT VỀ ĐÂY ───────────────────
     /// <summary>
-    /// GET /Cart/CheckoutSuccess?session_id=cs_xxx
-    /// Stripe redirect user về đây sau khi thanh toán thành công.
-    /// Gọi BE API để finalize (cấp enrollment, chia tiền...) rồi redirect My Learning.
+    /// GET /Cart/CheckoutSuccess
+    /// Hỗ trợ cả Stripe Checkout (session_id) và Stripe Elements (payment_intent hoặc payment_intent_id).
     /// </summary>
     [HttpGet]
-    public async Task<IActionResult> CheckoutSuccess([FromQuery(Name = "session_id")] string sessionId)
+    public async Task<IActionResult> CheckoutSuccess(
+        [FromQuery(Name = "session_id")] string? sessionId,
+        [FromQuery(Name = "payment_intent")] string? paymentIntent,
+        [FromQuery(Name = "payment_intent_id")] string? paymentIntentId)
     {
-        Console.WriteLine($"[FE-CHECKOUT] ═══ CheckoutSuccess CALLED ═══ session_id={sessionId}");
-
-        if (string.IsNullOrWhiteSpace(sessionId))
+        // 7.1 Ưu tiên kiểm tra PaymentIntent (Stripe Elements) trước
+        var targetPaymentIntentId = paymentIntentId ?? paymentIntent;
+        if (!string.IsNullOrWhiteSpace(targetPaymentIntentId))
         {
-            Console.WriteLine("[FE-CHECKOUT] ❌ session_id is EMPTY!");
-            TempData["CartError"] = "Invalid checkout session.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        try
-        {
-            Console.WriteLine($"[FE-CHECKOUT] Calling BE: GET checkout/success?session_id={sessionId}");
-
-            // Gọi BE API success endpoint
-            var response = await _api.GetAsync($"checkout/success?session_id={Uri.EscapeDataString(sessionId)}");
-
-            Console.WriteLine($"[FE-CHECKOUT] BE responded: {(int)response.StatusCode} {response.StatusCode}");
-
-            if (response.IsSuccessStatusCode)
+            Console.WriteLine($"[FE-CHECKOUT] ═══ CheckoutSuccess elements CALLED ═══ payment_intent_id={targetPaymentIntentId}");
+            try
             {
-                Console.WriteLine("[FE-CHECKOUT] ✅ SUCCESS — redirecting to /Course/MyCourses");
-                TempData["CartSuccess"] = "🎉 Payment successful! Happy learning! Start learning your new courses below.";
-                return Redirect("/Course/MyCourses");
+                Console.WriteLine($"[FE-CHECKOUT] Calling BE: GET checkout/success-intent?payment_intent_id={targetPaymentIntentId}");
+                var response = await _api.GetAsync($"checkout/success-intent?payment_intent_id={Uri.EscapeDataString(targetPaymentIntentId)}");
+                Console.WriteLine($"[FE-CHECKOUT] BE responded: {(int)response.StatusCode} {response.StatusCode}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("[FE-CHECKOUT] ✅ SUCCESS — redirecting to /Course/MyCourses");
+                    TempData["CartSuccess"] = "🎉 Payment successful! Happy learning! Start learning your new courses below.";
+                    
+                    // Xóa cookie lưu coupon
+                    HttpContext.Response.Cookies.Delete(CouponCookieName);
+                    return Redirect("/Course/MyCourses");
+                }
+
+                var errorBody = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"[FE-CHECKOUT] ❌ BE ERROR: {errorBody}");
+                TempData["CartError"] = "An error occurred while processing payment. Please contact support.";
+                return RedirectToAction(nameof(Index));
             }
-
-            // ★ Log chi tiết lỗi từ BE
-            var errorBody = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"[FE-CHECKOUT] ❌ BE ERROR: {errorBody}");
-
-            TempData["CartError"] = "An error occurred while processing payment. Please contact support.";
-            return RedirectToAction(nameof(Index));
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[FE-CHECKOUT] ❌ EXCEPTION: {ex.Message}\n{ex.StackTrace}");
+                TempData["CartError"] = "An error occurred while processing payment. Please contact support.";
+                return RedirectToAction(nameof(Index));
+            }
         }
-        catch (Exception ex)
+
+        // 7.2 Fallback về Stripe Checkout Session (cũ)
+        if (!string.IsNullOrWhiteSpace(sessionId))
         {
-            Console.WriteLine($"[FE-CHECKOUT] ❌ EXCEPTION: {ex.Message}\n{ex.StackTrace}");
-            TempData["CartError"] = "An error occurred while processing payment. Please contact support.";
-            return RedirectToAction(nameof(Index));
+            Console.WriteLine($"[FE-CHECKOUT] ═══ CheckoutSuccess session CALLED ═══ session_id={sessionId}");
+            try
+            {
+                Console.WriteLine($"[FE-CHECKOUT] Calling BE: GET checkout/success?session_id={sessionId}");
+                var response = await _api.GetAsync($"checkout/success?session_id={Uri.EscapeDataString(sessionId)}");
+                Console.WriteLine($"[FE-CHECKOUT] BE responded: {(int)response.StatusCode} {response.StatusCode}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("[FE-CHECKOUT] ✅ SUCCESS — redirecting to /Course/MyCourses");
+                    TempData["CartSuccess"] = "🎉 Payment successful! Happy learning! Start learning your new courses below.";
+                    
+                    HttpContext.Response.Cookies.Delete(CouponCookieName);
+                    return Redirect("/Course/MyCourses");
+                }
+
+                var errorBody = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"[FE-CHECKOUT] ❌ BE ERROR: {errorBody}");
+                TempData["CartError"] = "An error occurred while processing payment. Please contact support.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[FE-CHECKOUT] ❌ EXCEPTION: {ex.Message}\n{ex.StackTrace}");
+                TempData["CartError"] = "An error occurred while processing payment. Please contact support.";
+                return RedirectToAction(nameof(Index));
+            }
         }
+
+        Console.WriteLine("[FE-CHECKOUT] ❌ No valid session_id or payment_intent_id was found in callback query parameters.");
+        TempData["CartError"] = "Invalid checkout session parameters.";
+        return RedirectToAction(nameof(Index));
     }
 
     // ─── 8. CHECKOUT CANCEL — STRIPE REDIRECT VỀ ĐÂY KHI HỦY ─────────────────

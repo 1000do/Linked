@@ -558,6 +558,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.FacebookUrl).HasColumnName("facebook_url");
             entity.Property(e => e.DocumentUrl).HasColumnName("document_url");
             entity.Property(e => e.ApprovalStatus).HasMaxLength(50).HasDefaultValue("Pending").HasColumnName("approval_status");
+            entity.Property(e => e.RejectionReason).HasColumnName("rejection_reason");
 
             // Stripe
             entity.Property(e => e.StripeAccountId).HasMaxLength(255).HasColumnName("stripe_account_id");

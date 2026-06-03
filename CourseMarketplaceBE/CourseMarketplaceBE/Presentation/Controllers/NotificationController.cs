@@ -47,22 +47,39 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             if (userIdClaim == null) return Unauthorized();
 
             var userId = int.Parse(userIdClaim);
-            var result = await _notiService.MarkAsReadAsync(id, userId);
+            try
+            {
+                var result = await _notiService.MarkAsReadAsync(id, userId);
 
-            if (!result)
-                return NotFound(new { message = "Notification not found or access denied." });
+                if (!result)
+                    return NotFound(new { message = "Notification not found or access denied." });
 
-            return Ok(new { message = "Notification marked as read successfully." });
+                return Ok(new { message = "Notification marked as read successfully." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to mark notification as read"));
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
-            var result = await _notiService.DeleteNotificationAsync(id, userId);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdClaim == null) return Unauthorized();
+            var userId = int.Parse(userIdClaim);
 
-            if (!result) return BadRequest("Could not delete notification.");
-            return Ok();
+            try
+            {
+                var result = await _notiService.DeleteNotificationAsync(id, userId);
+
+                if (!result) return BadRequest("Could not delete notification.");
+                return Ok();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to delete notification"));
+            }
         }
 
         [HttpGet("search-emails")]
@@ -77,8 +94,15 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         [HttpPost("send-test")]
         public async Task<IActionResult> SendTest([FromBody] NotificationSendDto dto)
         {
-            await _notiService.SendNotificationAsync(dto.ReceiverId, dto.Title, dto.Content, null);
-            return Ok("Sent successfully.");
+            try
+            {
+                await _notiService.SendNotificationAsync(dto.ReceiverId, dto.Title, dto.Content, null);
+                return Ok("Sent successfully.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to send notification"));
+            }
         }
         [Authorize(Roles = "admin,staff")]
         [HttpPost("send-advanced")]
@@ -88,9 +112,16 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             if (dto.Title.Length > 100 || dto.Content.Length > 100)
                 return BadRequest("Title maximum 100 characters, content maximum 100 characters.");
 
-            var count = await _notiService.SendAdvancedAsync(dto);
-            if (count < 0) return BadRequest("Invalid data.");
-            return Ok(new { message = "Sent successfully.", count });
+            try
+            {
+                var count = await _notiService.SendAdvancedAsync(dto);
+                if (count < 0) return BadRequest("Invalid data.");
+                return Ok(new { message = "Sent successfully.", count });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to send advanced notifications"));
+            }
         }
 
         [HttpGet("unread-summary")]
