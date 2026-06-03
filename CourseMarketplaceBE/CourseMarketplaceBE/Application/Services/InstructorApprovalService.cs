@@ -40,6 +40,15 @@ namespace CourseMarketplaceBE.Application.Services
             if (instructor == null) return false;
 
             instructor.ApprovalStatus = dto.Status;
+            if (dto.Status == "Rejected")
+            {
+                instructor.RejectionReason = dto.Reason;
+            }
+            else if (dto.Status == "Approved")
+            {
+                instructor.RejectionReason = null;
+            }
+
             _repo.Update(instructor);
             int numberOfRowsAffected = await _repo.SaveChangesAsync();
             if (numberOfRowsAffected <= 0)
@@ -48,7 +57,7 @@ namespace CourseMarketplaceBE.Application.Services
             // Gửi thông báo cho người dùng (Sử dụng NotificationService bạn đã làm)
             string message = dto.Status == "Approved"
                 ? "Congratulations! Your instructor application has been approved."
-                : "Unfortunately, your instructor application was not accepted.";
+                : $"Unfortunately, your instructor application was not accepted. Reason: {dto.Reason}";
 
             string link = dto.Status == "Approved" ? "/InstructorCourse/Create" : "/Instructor/Dashboard";
             await _notiService.SendNotificationAsync(instructor.InstructorId, "Application Result", message, link);

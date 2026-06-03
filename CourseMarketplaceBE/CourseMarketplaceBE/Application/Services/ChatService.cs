@@ -164,6 +164,10 @@ public class ChatService : IChatService
             }
         }
 
+        int rows = await _chatRepository.SaveChangesAsync();
+        if (rows <= 0)
+            throw new InvalidOperationException("Failed to save message");
+
         // Lấy thông tin sender để trả về DTO đầy đủ
         var sender = await _userRepository.GetAccountByIdAsync(senderId);
 
@@ -225,16 +229,19 @@ public class ChatService : IChatService
             ChatType = "private",
             ContextType = dto.ContextType,
             ContextId = dto.ContextId,
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.Now,
+            ChatParticipants = new List<ChatParticipant>
+            {
+                new ChatParticipant { AccountId = senderId, Role = "member", JoinedAt = DateTime.Now },
+                new ChatParticipant { AccountId = dto.TargetAccountId, Role = "member", JoinedAt = DateTime.Now }
+            }
         };
 
         var createdChat = await _chatRepository.CreateChatAsync(chat);
 
-        await _chatRepository.AddChatParticipantsAsync(new List<ChatParticipant>
-        {
-            new ChatParticipant { ChatId = createdChat.ChatId, AccountId = senderId, Role = "member", JoinedAt = DateTime.Now },
-            new ChatParticipant { ChatId = createdChat.ChatId, AccountId = dto.TargetAccountId, Role = "member", JoinedAt = DateTime.Now }
-        });
+        int rows = await _chatRepository.SaveChangesAsync();
+        if (rows <= 0)
+            throw new InvalidOperationException("Failed to create chat");
 
         return createdChat.ChatId;
     }
@@ -256,6 +263,9 @@ public class ChatService : IChatService
     {
         var expiry = DateTime.Now.AddHours(hours);
         await _chatRepository.UpdateAdminAccessAsync(chatId, expiry);
+        int rows = await _chatRepository.SaveChangesAsync();
+        if (rows <= 0)
+            throw new InvalidOperationException("Failed to grant admin access");
         return true;
     }
 
@@ -266,12 +276,18 @@ public class ChatService : IChatService
 
         participant.ClearedAt = DateTime.UtcNow;
         await _chatRepository.UpdateParticipantAsync(participant);
+        int rows = await _chatRepository.SaveChangesAsync();
+        if (rows <= 0)
+            throw new InvalidOperationException("Failed to clear chat history");
         return true;
     }
 
     public async Task<bool> MarkChatAsReadAsync(int chatId, int accountId)
     {
         await _chatRepository.MarkAsReadAsync(chatId, accountId);
+        int rows = await _chatRepository.SaveChangesAsync();
+        if (rows <= 0)
+            throw new InvalidOperationException("Failed to mark chat as read");
         await _redisService.ClearUnreadCountAsync(accountId, chatId);
         return true;
     }
@@ -289,6 +305,9 @@ public class ChatService : IChatService
         };
 
         await _chatRepository.AddReportAsync(report);
+        int rows = await _chatRepository.SaveChangesAsync();
+        if (rows <= 0)
+            throw new InvalidOperationException("Failed to submit report");
         return true;
     }
 
@@ -309,6 +328,9 @@ public class ChatService : IChatService
             CreatedAt = DateTime.Now
         };
         await _chatRepository.AddAuditLogAsync(log);
+        int rows = await _chatRepository.SaveChangesAsync();
+        if (rows <= 0)
+            throw new InvalidOperationException("Failed to log action");
     }
 
     public async Task<SupportAccountDto?> GetSupportAccountAsync()

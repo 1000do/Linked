@@ -43,6 +43,10 @@ public class LessonController : ControllerBase
         {
             return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to create lesson"));
+        }
         catch (Exception ex)
         {
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
@@ -61,6 +65,10 @@ public class LessonController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to add material"));
         }
         catch (Exception ex)
         {
@@ -81,6 +89,10 @@ public class LessonController : ControllerBase
         {
             return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to update lesson title"));
+        }
         catch (Exception ex)
         {
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
@@ -99,6 +111,10 @@ public class LessonController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to update material details"));
         }
         catch (Exception ex)
         {
@@ -119,6 +135,10 @@ public class LessonController : ControllerBase
         {
             return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to remove material"));
+        }
         catch (Exception ex)
         {
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
@@ -137,6 +157,10 @@ public class LessonController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to delete lesson"));
         }
         catch (Exception ex)
         {
@@ -172,6 +196,10 @@ public class LessonController : ControllerBase
         {
             return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to permanently delete material"));
+        }
         catch (Exception ex)
         {
             return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
@@ -193,7 +221,7 @@ public class LessonController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to restore material"));
         }
         catch (Exception ex)
         {

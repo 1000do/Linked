@@ -40,7 +40,7 @@ public class WishlistController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return BadRequest(new { message = "Failed to add to wishlist" });
         }
     }
 
@@ -59,6 +59,10 @@ public class WishlistController : ControllerBase
         {
             return NotFound(new { message = ex.Message });
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = "Failed to remove from wishlist" });
+        }
     }
 
     [HttpPost("toggle/{courseId}")]
@@ -67,12 +71,19 @@ public class WishlistController : ControllerBase
         var userId = GetUserId();
         if (userId == null) return Unauthorized();
 
-        var isInWishlist = await _wishlistService.ToggleWishlistAsync(userId.Value, courseId);
-        return Ok(new 
-        { 
-            message = isInWishlist ? "Added to wishlist successfully" : "Removed from wishlist successfully", 
-            isInWishlist 
-        });
+        try
+        {
+            var isInWishlist = await _wishlistService.ToggleWishlistAsync(userId.Value, courseId);
+            return Ok(new 
+            { 
+                message = isInWishlist ? "Added to wishlist successfully" : "Removed from wishlist successfully", 
+                isInWishlist 
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = "Failed to toggle wishlist" });
+        }
     }
 
     [HttpGet("check/{courseId}")]

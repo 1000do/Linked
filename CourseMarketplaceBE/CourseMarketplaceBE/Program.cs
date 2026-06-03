@@ -386,6 +386,7 @@ public class Program
                             ALTER TABLE transactions DROP COLUMN IF EXISTS refund_reason;
                             ALTER TABLE transactions DROP COLUMN IF EXISTS refund_admin_note;
                             ALTER TABLE transactions DROP COLUMN IF EXISTS refund_requested_at;
+                            ALTER TABLE instructors ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
                         ";
                         cmd.ExecuteNonQuery();
                     }

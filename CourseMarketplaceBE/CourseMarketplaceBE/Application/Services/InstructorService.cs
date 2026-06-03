@@ -51,17 +51,58 @@ namespace CourseMarketplaceBE.Application.Services
 
             var existing = await _repo.GetByIdAsync(userId);
 
+            // Thu thập các file tải lên từ cả DocumentFiles và DocumentFile (để tương thích ngược)
+            var filesToUpload = new List<Microsoft.AspNetCore.Http.IFormFile>();
+            if (request.DocumentFiles != null && request.DocumentFiles.Count > 0)
+            {
+                filesToUpload.AddRange(request.DocumentFiles.Where(f => f != null && f.Length > 0));
+            }
+            else if (request.DocumentFile != null && request.DocumentFile.Length > 0)
+            {
+                filesToUpload.Add(request.DocumentFile);
+            }
+
+            int retainedCount = request.RetainedDocumentUrls?.Count ?? 0;
+            int totalFiles = retainedCount + filesToUpload.Count;
+
+            if (totalFiles < 1)
+                throw new InvalidOperationException("Please upload at least 1 document/certificate file.");
+
+            if (totalFiles > 3)
+                throw new InvalidOperationException("You can upload a maximum of 3 document/certificate files.");
+
             if (existing != null)
             {
                 // Chỉ cho phép nộp lại nếu đơn đang ở trạng thái 'Rejected'
                 if (existing.ApprovalStatus != InstructorApprovalStatus.Rejected.ToValue())
                     throw new InvalidOperationException("You have already submitted an instructor application.");
 
-                // Upload file mới nếu có, không thì giữ file cũ
-                if (request.DocumentFile != null && request.DocumentFile.Length > 0)
-                    existing.DocumentUrl = await _uploadService.UploadImageAsync(request.DocumentFile);
-                else if (string.IsNullOrEmpty(existing.DocumentUrl))
-                    throw new InvalidOperationException("Please upload your CV / Certificates / ID card.");
+                // Chỉ giữ lại những URL thực sự thuộc về documentUrl cũ của chính user này
+                var previousUrls = existing.DocumentUrl?.Split(';', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                var validRetained = request.RetainedDocumentUrls?
+                    .Where(url => previousUrls.Contains(url))
+                    .ToList() ?? new List<string>();
+
+                var uploadedUrls = new List<string>();
+                if (filesToUpload.Count > 0)
+                {
+                    foreach (var file in filesToUpload)
+                    {
+                        var url = await _uploadService.UploadImageAsync(file);
+                        if (!string.IsNullOrEmpty(url))
+                            uploadedUrls.Add(url);
+                    }
+                }
+
+                var finalUrls = new List<string>(validRetained);
+                finalUrls.AddRange(uploadedUrls);
+
+                if (finalUrls.Count < 1)
+                    throw new InvalidOperationException("Please upload at least 1 document/certificate file.");
+                if (finalUrls.Count > 3)
+                    throw new InvalidOperationException("You can upload a maximum of 3 document/certificate files.");
+
+                existing.DocumentUrl = string.Join(";", finalUrls);
 
                 existing.ProfessionalTitle   = request.ProfessionalTitle;
                 existing.ExpertiseCategories = request.ExpertiseCategories;
@@ -71,15 +112,28 @@ namespace CourseMarketplaceBE.Application.Services
                 existing.StripeCountry       = request.StripeCountry.ToUpper();
                 existing.ApprovalStatus      = InstructorApprovalStatus.Pending.ToValue();
 
-                await _repo.SaveChangesAsync();
+                int rowsResubmit = await _repo.SaveChangesAsync();
+                if (rowsResubmit <= 0)
+                    throw new InvalidOperationException("Failed to save changes when resubmitting application.");
                 return "Your application has been resubmitted. Please wait for admin approval.";
             }
 
             // ★ CV/Document bắt buộc cho đơn mới
-            if (request.DocumentFile == null || request.DocumentFile.Length == 0)
-                throw new InvalidOperationException("Please upload your CV / Certificates / ID card.");
+            if (filesToUpload.Count == 0)
+                throw new InvalidOperationException("Please upload at least 1 document/certificate file.");
 
-            string? documentUrl = await _uploadService.UploadImageAsync(request.DocumentFile);
+            var uploadedUrlsNew = new List<string>();
+            foreach (var file in filesToUpload)
+            {
+                var url = await _uploadService.UploadImageAsync(file);
+                if (!string.IsNullOrEmpty(url))
+                    uploadedUrlsNew.Add(url);
+            }
+
+            if (uploadedUrlsNew.Count == 0)
+                throw new InvalidOperationException("Failed to upload document files.");
+
+            string documentUrl = string.Join(";", uploadedUrlsNew);
 
             var instructor = new Instructor
             {
@@ -99,7 +153,9 @@ namespace CourseMarketplaceBE.Application.Services
             };
 
             await _repo.AddAsync(instructor);
-            await _repo.SaveChangesAsync();
+            int rowsSubmit = await _repo.SaveChangesAsync();
+            if (rowsSubmit <= 0)
+                throw new InvalidOperationException("Failed to save changes when submitting application.");
 
             return "Your application has been submitted. Please wait for admin approval.";
         }
@@ -117,7 +173,9 @@ namespace CourseMarketplaceBE.Application.Services
                 throw new InvalidOperationException("Invalid status. Only 'Approved' or 'Rejected' are allowed.");
 
             instructor.ApprovalStatus = status;
-            await _repo.SaveChangesAsync();
+            int rowsApprove = await _repo.SaveChangesAsync();
+            if (rowsApprove <= 0)
+                throw new InvalidOperationException("Failed to save changes when updating approval status.");
 
             return true;
         }
@@ -156,9 +214,11 @@ namespace CourseMarketplaceBE.Application.Services
             // Lưu stripe_account_id vào DB nếu chưa có hoặc có sự thay đổi
             if (instructor.StripeAccountId != setupResult.StripeAccountId)
             {
-                instructor.StripeAccountId         = setupResult.StripeAccountId;
+                instructor.StripeAccountId = setupResult.StripeAccountId;
                 instructor.StripeOnboardingStatus  = StripeOnboardingStatus.Pending.ToValue();
-                await _repo.SaveChangesAsync();
+                int rowsSetup = await _repo.SaveChangesAsync();
+                if (rowsSetup <= 0)
+                    throw new InvalidOperationException("Failed to save changes when setting up Stripe account.");
             }
 
             return new StripeSetupResponse
@@ -191,7 +251,7 @@ namespace CourseMarketplaceBE.Application.Services
                 instructor.ChargesEnabled         = true;
                 instructor.StripeOnboardingStatus = StripeOnboardingStatus.Active.ToValue();
                 await _repo.SaveChangesAsync();
-                return StripeOnboardingStatus.Active.ToValue();
+                return "Active";
             }
 
             // Nếu chưa nộp form
@@ -266,7 +326,9 @@ namespace CourseMarketplaceBE.Application.Services
             instructor.StripeOnboardingStatus = null;
             instructor.PayoutsEnabled = false;
             instructor.ChargesEnabled = false;
-            await _repo.SaveChangesAsync();
+            int rowsReset = await _repo.SaveChangesAsync();
+            if (rowsReset <= 0)
+                throw new InvalidOperationException("Failed to save changes when resetting Stripe account.");
 
             return $"Stripe account for instructor {instructorId} has been reset. The instructor needs to set up Stripe again.";
         }
@@ -300,7 +362,9 @@ namespace CourseMarketplaceBE.Application.Services
                 throw new InvalidOperationException("Cannot change country once a Stripe account exists. Please reset Stripe first.");
 
             instructor.StripeCountry = countryCode.ToUpper();
-            await _repo.SaveChangesAsync();
+            int rowsCountry = await _repo.SaveChangesAsync();
+            if (rowsCountry <= 0)
+                throw new InvalidOperationException("Failed to save changes when setting Stripe country.");
         }
 
         public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.InstructorPayoutDto>> GetPayoutsAsync(int userId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
@@ -355,7 +419,9 @@ namespace CourseMarketplaceBE.Application.Services
                 }
             }
 
-            await _repo.SaveChangesAsync();
+            int rowsSync = await _repo.SaveChangesAsync();
+            if (rowsSync <= 0)
+                throw new InvalidOperationException("Failed to save changes when syncing Stripe payouts.");
         }
 
         private void UpdatePayoutStatusFromStripe(InstructorPayout dbp, string status, DateTime? arrivalDate)

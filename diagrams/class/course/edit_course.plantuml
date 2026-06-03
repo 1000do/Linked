@@ -1,108 +1,220 @@
-@startuml EditCourse
-' Styling & Settings - Simplified for compatibility
+@startuml EditCourse_Complete_DbContext_ClassDiagram
+' Styling & Settings
+skinparam style strictuml
 skinparam shadowing false
 skinparam class {
     BackgroundColor White
-    BorderColor #333333
-    ArrowColor #333333
+    BorderColor #1A73E8
+    ArrowColor #5F6368
 }
-hide empty members
 
-' === PARTICIPANTS ===
+' ==================== FRONTEND ====================
 
-' --- Frontend ---
 class InstructorCourseController {
+    - _api: ApiClient
     + Edit(courseId: int): IActionResult
     + Edit(model: UpdateCourseViewModel): IActionResult
+    - GetCategoriesAsync(): Task<List<CategoryViewModel>>
+    - LoadCourseDataAsync(courseId: int): Task<UpdateCourseViewModel>
 }
 
 class UpdateCourseViewModel {
     + CourseId: int
     + Title: string
+    + CategoryId: int
     + Description: string?
     + Price: decimal
+    + CourseThumbnailUrl: string?
+    + WhatYouWillLearn: string
+    + Requirements: string
+    + AvailableCategories: List<CategoryViewModel>
 }
 
-' --- Backend Controller ---
+class CategoryViewModel {
+    + CategoryId: int
+    + CategoriesName: string
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
 class CourseController {
+    - _courseService: ICourseService
+    - _courseQueryService: ICourseQueryService
+    + EditCourse(courseId: int): Task<IActionResult>
     + UpdateCourse(courseId: int, request: CourseUpdateRequest): Task<IActionResult>
+    - GetInstructorId(): int
 }
 
-' --- DTOs ---
+' ==================== BACKEND - DTOs ====================
+
 class CourseUpdateRequest {
     + Title: string
+    + CategoryId: int
     + Description: string?
     + Price: decimal
+    + CourseThumbnailUrl: string?
+    + WhatYouWillLearn: string
+    + Requirements: string
 }
 
 class CourseResponse {
     + CourseId: int
-    + Title: string
-    + Description: string?
-}
-
-' --- Services ---
-interface ICourseService {
-    + UpdateCourseAsync(courseId: int, request: CourseUpdateRequest, instructorId: int): Task<CourseResponse>
-}
-
-class CourseService {
-    + UpdateCourseAsync(courseId: int, request: CourseUpdateRequest, instructorId: int): Task<CourseResponse>
-}
-
-' --- Repositories ---
-interface ICourseRepository {
-    + GetByIdAsync(courseId: int): Task<Course?>
-    + Update(course: Course): void
-    + SaveChangesAsync(): Task<void>
-}
-
-class CourseRepository {
-    + GetByIdAsync(courseId: int): Task<Course?>
-    + Update(course: Course): void
-    + SaveChangesAsync(): Task<void>
-}
-
-' --- Entities & DbContext ---
-class Course {
-    + CourseId: int
     + InstructorId: int?
+    + CategoryId: int?
     + Title: string
     + Description: string?
     + Price: decimal
+    + CourseThumbnailUrl: string?
+    + CourseStatus: string
+    + CreatedAt: DateTime?
+    + UpdatedAt: DateTime?
+    + WhatYouWillLearn: string
+    + Requirements: string
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Course {
+    + CourseId: int <<PK>>
+    + InstructorId: int? <<FK>>
+    + CategoryId: int? <<FK>>
+    + Title: string
+    + Description: string?
+    + Price: decimal
+    + CourseThumbnailUrl: string?
+    + CreatedAt: DateTime?
+    + UpdatedAt: DateTime?
+    + CourseStatus: string
+    + WhatYouWillLearn: string
+    + Requirements: string
+}
+
+class Category {
+    + CategoryId: int <<PK>>
+    + CategoriesName: string
 }
 
 class Instructor {
-    + InstructorId: int
+    + InstructorId: int <<PK>>
 }
 
-' --- DbContext represented as a class for compatibility ---
-class ApplicationDbContext
+' ==================== BACKEND - SERVICE INTERFACES ====================
 
-' === RELATIONSHIPS ===
+interface ICourseService {
+    *+ UpdateCourseAsync(courseId: int, request: CourseUpdateRequest, instructorId: int): Task<CourseResponse>*
+    *+ GetCourseForEditAsync(courseId: int, instructorId: int): Task<Course?>*
+}
 
-' Frontend to Backend Dependency
-InstructorCourseController ..> CourseController
+interface ICourseQueryService {
+    *+ GetCourseDetailsForEditAsync(courseId: int, instructorId: int): Task<Course?>*
+    *+ GetCategoriesAsync(): Task<IEnumerable<Category>>*
+}
 
-' ViewModel/DTO Dependencies
+interface ICourseRepository {
+    *+ GetByIdAsync(courseId: int): Task<Course?>*
+    *+ Update(course: Course): void*
+    *+ SaveChangesAsync(): Task<void>*
+    *+ GetCategoriesAsync(): Task<IEnumerable<Category>>*
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CourseService {
+    - _courseRepository: ICourseRepository
+    - _instructorRepository: IInstructorRepository
+    - _uploadService: IFileUploadService
+    + UpdateCourseAsync(courseId: int, request: CourseUpdateRequest, instructorId: int): Task<CourseResponse>
+    + GetCourseForEditAsync(courseId: int, instructorId: int): Task<Course?>
+}
+
+class CourseQueryService {
+    - _courseRepository: ICourseRepository
+    + GetCourseDetailsForEditAsync(courseId: int, instructorId: int): Task<Course?>
+    + GetCategoriesAsync(): Task<IEnumerable<Category>>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CourseRepository {
+    - _context: ApplicationDbContext
+    + GetByIdAsync(courseId: int): Task<Course?>
+    + Update(course: Course): void
+    + SaveChangesAsync(): Task<void>
+    + GetCategoriesAsync(): Task<IEnumerable<Category>>
+}
+
+' ==================== BACKEND - DbContext ====================
+class ApplicationDbContext {
+    + Courses: DbSet<Course>
+    + Categories: DbSet<Category>
+    + Instructors: DbSet<Instructor>
+    + Coupons: DbSet<Coupon>
+    + Lessons: DbSet<Lesson>
+    + CartItems: DbSet<CartItem>
+    + Enrollments: DbSet<Enrollment>
+    + Transactions: DbSet<Transaction>
+    + Users: DbSet<User>
+    + CourseReviews: DbSet<CourseReview>
+    + LessonReviews: DbSet<LessonReview>
+    + OrderInfo: DbSet<OrderInfo>
+    + OrderItems: DbSet<OrderItem>
+    + InstructorPayouts: DbSet<InstructorPayout>
+    + LearningMaterials: DbSet<LearningMaterial>
+    + Notifications: DbSet<Notification>
+    + WishlistItems: DbSet<WishlistItem>
+    + SystemConfigs: DbSet<SystemConfig>
+    + AiModels: DbSet<AiModel>
+    + CourseAiIntegrations: DbSet<CourseAiIntegration>
+    + Chats: DbSet<Chat>
+    + Messages: DbSet<Message>
+    + UserReports: DbSet<UserReport>
+    + Managers: DbSet<Manager>
+    + CourseExt: DbSet<CourseExt>
+    + MaterialEmbeddings: DbSet<MaterialEmbedding>
+    + AuditLogs: DbSet<AuditLog>
+    + CourseStats: DbSet<CourseStats>
+    + InstructorStats: DbSet<InstructorStats>
+    ---
+    # OnConfiguring(builder: DbContextOptionsBuilder): void
+    # OnModelCreating(builder: ModelBuilder): void
+}
+
+
+' ==================== RELATIONSHIPS ====================
+
+' --- Frontend to Backend ---
+InstructorCourseController ..> CourseController : calls
+
+' --- ViewModel/DTO Dependencies ---
 InstructorCourseController ..> UpdateCourseViewModel
 CourseController ..> CourseUpdateRequest
+CourseController ..> CourseResponse
 CourseService ..> CourseUpdateRequest
 CourseService ..> CourseResponse
+CourseQueryService ..> Course
+CourseQueryService ..> Category
+CourseService ..> Course
 
-' Dependency Injection (Unidirectional Association)
+' --- Dependency Injection (Unidirectional Association) ---
 CourseController --> ICourseService
+CourseController --> ICourseQueryService
 CourseService --> ICourseRepository
+CourseService --> IInstructorRepository
+CourseService --> IFileUploadService
+CourseQueryService --> ICourseRepository
 CourseRepository --> ApplicationDbContext
 
-' Repository to Entity Dependency
+' --- Repository to Entity Dependencies ---
 CourseRepository ..> Course
+CourseRepository ..> Category
 
-' Entity to Entity Composition
+' --- Entity to Entity Composition/Aggregation ---
 Instructor *-- Course
+Category o-- Course
 
-' Interface Realization
+' --- Interface Realization ---
 CourseService ..|> ICourseService
+CourseQueryService ..|> ICourseQueryService
 CourseRepository ..|> ICourseRepository
 
 @enduml

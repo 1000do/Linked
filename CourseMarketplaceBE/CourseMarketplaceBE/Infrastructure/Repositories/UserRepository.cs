@@ -194,8 +194,8 @@ public class UserRepository : IUserRepository
         var acc = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == email);
         if (acc == null) return false;
         acc.IsVerified = true;
-        await _context.SaveChangesAsync();
-        return true;
+        int numRowsAffected = await _context.SaveChangesAsync();
+        return numRowsAffected > 0;
     }
 
     public async Task<bool> UpdateAccountAsync(Account account)

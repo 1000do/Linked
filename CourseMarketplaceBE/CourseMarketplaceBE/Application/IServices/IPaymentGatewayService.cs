@@ -86,4 +86,21 @@ public interface IPaymentGatewayService
     /// <param name="transferId">Mã Transfer gốc (tr_xxx hoặc py_xxx).</param>
     /// <returns>Stripe Transfer Reversal ID (trr_xxx).</returns>
     Task<string> ReverseTransferAsync(string transferId);
+
+    /// <summary>
+    /// Tạo Stripe PaymentIntent cho thanh toán trực tiếp nhúng (Stripe Elements).
+    /// </summary>
+    /// <param name="amount">Số tiền cần thanh toán.</param>
+    /// <param name="currency">Tiền tệ (usd, vnd...).</param>
+    /// <param name="metadata">Thông tin metadata đi kèm.</param>
+    /// <returns>Client Secret và ID của PaymentIntent.</returns>
+    Task<(string ClientSecret, string PaymentIntentId)> CreatePaymentIntentAsync(
+        decimal amount,
+        string currency,
+        Dictionary<string, string>? metadata = null);
+
+    /// <summary>
+    /// Lấy thông tin metadata của PaymentIntent dựa trên PaymentIntent ID.
+    /// </summary>
+    Task<Dictionary<string, string>?> GetPaymentIntentMetadataAsync(string paymentIntentId);
 }

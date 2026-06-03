@@ -194,14 +194,11 @@
                         </div>
 
                         @* ── NÚT CHECKOUT ─────────────────────────────────── *@
-                        <form asp-action="Checkout" asp-controller="Cart" method="post" id="checkout-form">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" id="checkout-btn"
-                               class="mt-6 w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-sm uppercase tracking-wider">
-                                <span class="material-symbols-outlined text-lg">payment</span>
-                                Proceed to Checkout
-                            </button>
-                        </form>
+                        <a href="/Cart/Checkout" id="checkout-btn"
+                           class="mt-6 w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-sm uppercase tracking-wider">
+                            <span class="material-symbols-outlined text-lg">payment</span>
+                            Proceed to Checkout
+                        </a>
 
                         <a href="/"
                            class="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 text-sm text-slate-500 hover:text-primary font-medium transition-colors">
@@ -217,140 +214,53 @@
 </div>
 
 @* ════ VOUCHER WALLET MODAL ════ *@
-<div id="voucher-modal" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
-    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeVoucherModal()"></div>
+@* ════ VOUCHER POPUP MODAL (CENTERED & HIGHLY PREMIUM) ════ *@
+<div id="voucher-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 animate-in fade-in duration-300" aria-modal="true" role="dialog">
+    @* Backdrop click to close *@
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeVoucherModal()"></div>
 
-    <div class="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl flex flex-col">
+    @* Centered Modal Card *@
+    <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden transform scale-95 opacity-0 transition-all duration-300 ease-out" id="voucher-modal-content">
         @* Modal Header *@
-        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/50">
             <div>
-                <h3 class="text-base font-bold text-slate-900">🎫 Apply Voucher</h3>
-                <p class="text-xs text-slate-500 mt-1 font-semibold text-primary" id="modal-course-title"></p>
+                <h3 class="text-base font-black text-slate-900 flex items-center gap-2 tracking-tight">
+                    <span class="text-xl">🎫</span> Apply Voucher Code
+                </h3>
+                <p class="text-xs text-slate-500 mt-1 font-bold text-primary truncate max-w-[300px]" id="modal-course-title"></p>
             </div>
             <button type="button" onclick="closeVoucherModal()"
-                    class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors">
-                <span class="material-symbols-outlined text-slate-500 text-xl">close</span>
+                    class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors shadow-sm bg-white border border-slate-100">
+                <span class="material-symbols-outlined text-xl">close</span>
             </button>
         </div>
 
         @* Manual Code Input *@
-        <div class="px-5 py-3 border-b border-slate-100 bg-slate-50">
-            <form asp-action="ApplyCoupon" asp-controller="Cart" method="post" class="flex gap-2" id="manual-coupon-form">
+        <div class="p-6 bg-white space-y-4">
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Enter coupon code below</p>
+            <form asp-action="ApplyCoupon" asp-controller="Cart" method="post" class="flex flex-col gap-3" id="manual-coupon-form">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="courseId" id="manual-coupon-course-id" />
-                <input type="text" name="couponCode" id="manual-coupon-input"
-                       placeholder="Enter code manually..."
-                       class="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all uppercase bg-white"
-                       style="text-transform:uppercase" />
+                <div class="relative flex items-center">
+                    <span class="absolute left-3 text-slate-400 font-bold material-symbols-outlined text-[20px] pointer-events-none select-none">confirmation_number</span>
+                    <input type="text" name="couponCode" id="manual-coupon-input"
+                           placeholder="e.g. DISCOUNT50..."
+                           class="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm uppercase font-mono font-bold tracking-widest text-slate-800 bg-slate-50 hover:bg-slate-100/50 focus:bg-white"
+                           style="text-transform:uppercase"
+                           autocomplete="off" />
+                </div>
                 <button type="submit"
-                        class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-secondary transition-colors whitespace-nowrap">
-                    Apply
+                        class="w-full py-3 bg-primary text-white text-xs font-black rounded-xl hover:bg-secondary transition-all uppercase tracking-widest shadow-md shadow-primary/20 active:scale-[0.98] flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[16px]">check_circle</span> Apply Voucher
                 </button>
             </form>
         </div>
 
-        @* Voucher List *@
-        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-            <div id="no-vouchers-message" class="hidden flex flex-col items-center justify-center py-16 text-center">
-                <span class="text-5xl mb-3">🎟️</span>
-                <p class="text-slate-500 font-medium">No vouchers available</p>
-                <p class="text-xs text-slate-400 mt-1">This course is currently not participating in any discount promotions.</p>
-            </div>
-
-            @if (Model.AvailableCoupons.Any())
-            {
-                @foreach (var voucher in Model.AvailableCoupons.Where(c => c.IsEligible))
-                {
-                    <div class="voucher-item-card flex rounded-xl border border-emerald-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow" data-course-id="@voucher.CourseId">
-                        @* Left accent bar *@
-                        <div class="w-1.5 bg-primary shrink-0"></div>
-
-                        @* Coupon icon + cut circle *@
-                        <div class="flex items-center px-3 border-r border-dashed border-emerald-200 bg-emerald-50/50 shrink-0">
-                            <div class="w-10 h-10 flex items-center justify-center">
-                                <span class="text-2xl">
-                                    @(voucher.CouponType == "percentage" ? "%" : "$")
-                                </span>
-                            </div>
-                        </div>
-
-                        @* Voucher info *@
-                        <div class="flex-1 px-3 py-3 min-w-0">
-                            <div class="flex items-center gap-2 mb-0.5">
-                                <span class="font-mono font-bold text-slate-900 text-sm">@voucher.CouponCode</span>
-                                <span class="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded uppercase">
-                                    @(voucher.CouponType == "percentage" ? "%" : "Fixed amount")
-                                </span>
-                            </div>
-                            <p class="text-sm font-semibold text-primary">@voucher.ConditionMessage</p>
-                            @if (voucher.MinOrderValue > 0)
-                            {
-                                <p class="text-[11px] text-slate-500 mt-0.5">Min order $@voucher.MinOrderValue.ToString("N2")</p>
-                            }
-                            @if (voucher.EndDate.HasValue)
-                            {
-                                <p class="text-[10px] text-slate-400 mt-0.5">Exp: @voucher.EndDate.Value.ToString("dd/MM/yyyy")</p>
-                            }
-                        </div>
-
-                        @* Apply button *@
-                        <div class="flex items-center px-3 shrink-0">
-                            <form asp-action="ApplyCoupon" asp-controller="Cart" method="post" class="m-0">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="couponCode" value="@voucher.CouponCode" />
-                                <input type="hidden" name="courseId" class="voucher-apply-course-id" value="" />
-                                <button type="submit"
-                                        class="px-3 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-secondary transition-colors whitespace-nowrap shadow-sm shadow-primary/30">
-                                    Apply
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                }
-
-                @foreach (var voucher in Model.AvailableCoupons.Where(c => !c.IsEligible))
-                {
-                    <div class="voucher-item-card flex rounded-xl border border-slate-200 bg-slate-50 overflow-hidden opacity-75" data-course-id="@voucher.CourseId">
-                        <div class="w-1.5 bg-slate-300 shrink-0"></div>
-
-                        <div class="flex items-center px-3 border-r border-dashed border-slate-200 bg-slate-100 shrink-0">
-                            <div class="w-10 h-10 flex items-center justify-center">
-                                <span class="text-2xl opacity-50">
-                                    @(voucher.CouponType == "percentage" ? "%" : "$")
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="flex-1 px-3 py-3 min-w-0">
-                            <div class="flex items-center gap-2 mb-0.5">
-                                <span class="font-mono font-bold text-slate-500 text-sm">@voucher.CouponCode</span>
-                                <span class="text-[10px] font-bold text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded uppercase">
-                                    @(voucher.CouponType == "percentage" ? "%" : "Fixed amount")
-                                </span>
-                            </div>
-                            <p class="text-sm font-semibold text-slate-600">@voucher.ConditionMessage</p>
-                            <p class="text-[11px] text-slate-500 mt-0.5">Min order $@voucher.MinOrderValue.ToString("N2")</p>
-                            @if (voucher.EndDate.HasValue)
-                            {
-                                <p class="text-[10px] text-slate-400 mt-0.5">Exp: @voucher.EndDate.Value.ToString("dd/MM/yyyy")</p>
-                            }
-                        </div>
-
-                        <div class="flex items-center px-3 shrink-0">
-                            <button type="button" disabled
-                                    class="px-3 py-2 bg-slate-200 text-slate-400 text-xs font-bold rounded-lg cursor-not-allowed whitespace-nowrap">
-                                Apply
-                            </button>
-                        </div>
-                    </div>
-                }
-            }
-        </div>
-
         @* Modal Footer *@
-        <div class="px-5 py-3 border-t border-slate-100 bg-slate-50">
-            <p class="text-xs text-slate-400 text-center">
-                Only one voucher can be applied per order
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 text-center">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-center gap-1.5">
+                <span class="material-symbols-outlined text-[14px] text-amber-500">info</span>
+                Only one voucher can be applied per course
             </p>
         </div>
     </div>
@@ -391,42 +301,42 @@
         // Cập nhật courseId cho input nhập thủ công
         document.getElementById('manual-coupon-course-id').value = courseId;
         
-        // ★ Cập nhật courseId cho TẤT CẢ các form "Dùng" trong modal
-        document.querySelectorAll('.voucher-apply-course-id').forEach(input => {
-            input.value = courseId;
-        });
-        
-        // Lọc hiển thị voucher theo CourseId của item
-        const cards = document.querySelectorAll('.voucher-item-card');
-        let visibleCount = 0;
-        
-        cards.forEach(card => {
-            const cid = card.getAttribute('data-course-id');
-            if (cid == courseId) {
-                card.classList.remove('hidden');
-                visibleCount++;
-            } else {
-                card.classList.add('hidden');
-            }
-        });
-        
-        // Hiển thị hoặc ẩn thông báo "Không có voucher"
-        const noMsg = document.getElementById('no-vouchers-message');
-        if (visibleCount === 0) {
-            noMsg.classList.remove('hidden');
-        } else {
-            noMsg.classList.add('hidden');
-        }
-        
         const modal = document.getElementById('voucher-modal');
         modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // Auto-focus manual coupon input
+        const couponInput = document.getElementById('manual-coupon-input');
+        if (couponInput) {
+            couponInput.value = '';
+            setTimeout(() => couponInput.focus(), 150);
+        }
+
+        // Force reflow and add active transition classes for smooth popup scaling
+        setTimeout(() => {
+            const content = document.getElementById('voucher-modal-content');
+            if (content) {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }
+        }, 10);
+        
         document.body.style.overflow = 'hidden';
     }
 
     function closeVoucherModal() {
-        const modal = document.getElementById('voucher-modal');
-        modal.classList.add('hidden');
-        document.body.style.overflow = '';
+        const content = document.getElementById('voucher-modal-content');
+        if (content) {
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+        }
+        
+        setTimeout(() => {
+            const modal = document.getElementById('voucher-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = '';
+        }, 300);
     }
 
     // Đóng modal khi bấm Escape
@@ -529,13 +439,21 @@
             
             const newModal = doc.getElementById('voucher-modal');
             if (newModal && modalContainer) {
-                // Preserving classes/modal states while updating the lists/inputs
+                // Preserving classes/modal states while updating
                 const isHidden = modalContainer.classList.contains('hidden');
                 modalContainer.innerHTML = newModal.innerHTML;
                 if (isHidden) {
                     modalContainer.classList.add('hidden');
+                    modalContainer.classList.remove('flex');
                 } else {
                     modalContainer.classList.remove('hidden');
+                    modalContainer.classList.add('flex');
+                    // Ensure scale-100 opacity-100 is applied
+                    const content = modalContainer.querySelector('#voucher-modal-content');
+                    if (content) {
+                        content.classList.remove('scale-95', 'opacity-0');
+                        content.classList.add('scale-100', 'opacity-100');
+                    }
                 }
             }
             

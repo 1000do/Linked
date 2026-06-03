@@ -87,7 +87,9 @@ public class ReportService : IReportService
         };
 
         await _reportRepo.AddCourseReportAsync(report);
-        await _reportRepo.SaveChangesAsync();
+        int numRowsAffected = await _reportRepo.SaveChangesAsync();
+        if (numRowsAffected == 0)
+            throw new InvalidOperationException("Failed to save changes");
     }
 
     // ── User / Instructor: Tạo report review khóa học ──────────────────────
@@ -115,7 +117,9 @@ public class ReportService : IReportService
         };
 
         await _reportRepo.AddCourseReviewReportAsync(report);
-        await _reportRepo.SaveChangesAsync();
+        int numRowsAffected = await _reportRepo.SaveChangesAsync();
+        if (numRowsAffected == 0)
+            throw new InvalidOperationException("Failed to save changes");
     }
 
     // ── User / Instructor: Tạo report review bài học ───────────────────────
@@ -143,7 +147,9 @@ public class ReportService : IReportService
         };
 
         await _reportRepo.AddLessonReviewReportAsync(report);
-        await _reportRepo.SaveChangesAsync();
+        int numRowsAffected = await _reportRepo.SaveChangesAsync();
+        if (numRowsAffected == 0)
+            throw new InvalidOperationException("Failed to save changes");
     }
 
     // ── User / Instructor: Xem lịch sử report của mình ─────────────────────
@@ -337,7 +343,9 @@ public class ReportService : IReportService
         }
 
         _reportRepo.UpdateCourseReport(report);
-        await _reportRepo.SaveChangesAsync();
+        int numRowsAffected = await _reportRepo.SaveChangesAsync();
+        if (numRowsAffected == 0)
+            throw new InvalidOperationException("Failed to save changes");
 
         // Notify reporter of outcome
         if (report.ReporterId.HasValue)
@@ -377,6 +385,8 @@ public class ReportService : IReportService
         var report = await _reportRepo.GetCourseReviewReportByIdAsync(reportId);
         if (report == null) return false;
 
+        bool hasSaved = false;
+
         report.UserReportsStatus = request.Status;
         report.ResolutionNote = request.ResolutionNote;
         report.ResolverId = resolverId;
@@ -393,12 +403,16 @@ public class ReportService : IReportService
                 review.UpdatedAt = DateTime.Now;
                 _reviewRepo.UpdateCourseReview(review);
                 
-                await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote);
+                hasSaved = await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote);
             }
         }
 
-        _reportRepo.UpdateCourseReviewReport(report);
-        await _reportRepo.SaveChangesAsync();
+        if (!hasSaved)
+        {
+            int numRowsAffected = await _reportRepo.SaveChangesAsync();
+            if (numRowsAffected == 0)
+                throw new InvalidOperationException("Failed to save changes");
+        }
 
         // Notify reporter of outcome
         if (report.ReporterId.HasValue)
@@ -424,6 +438,8 @@ public class ReportService : IReportService
         var report = await _reportRepo.GetLessonReviewReportByIdAsync(reportId);
         if (report == null) return false;
 
+        bool hasSaved = false;
+
         report.UserReportsStatus = request.Status;
         report.ResolutionNote = request.ResolutionNote;
         report.ResolverId = resolverId;
@@ -440,12 +456,16 @@ public class ReportService : IReportService
                 review.UpdatedAt = DateTime.Now;
                 _reviewRepo.UpdateLessonReview(review);
 
-                await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote);
+                hasSaved = await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote);
             }
         }
 
-        _reportRepo.UpdateLessonReviewReport(report);
-        await _reportRepo.SaveChangesAsync();
+        if (!hasSaved)
+        {
+            int numRowsAffected = await _reportRepo.SaveChangesAsync();
+            if (numRowsAffected == 0)
+                throw new InvalidOperationException("Failed to save changes");
+        }
 
         // Notify reporter of outcome
         if (report.ReporterId.HasValue)
@@ -475,7 +495,9 @@ public class ReportService : IReportService
         course.CourseStatus = CourseStatus.Archived.ToValue();
         course.UpdatedAt = DateTime.Now;
 
-        await _reportRepo.SaveChangesAsync();
+        int numRowsAffected = await _reportRepo.SaveChangesAsync();
+        if (numRowsAffected == 0)
+            throw new InvalidOperationException("Failed to save changes");
         return true;
     }
 
@@ -504,10 +526,10 @@ public class ReportService : IReportService
         }
     }
 
-    private async Task ProcessReviewStrikeAsync(int userId, string resolutionNote)
+    private async Task<bool> ProcessReviewStrikeAsync(int userId, string resolutionNote)
     {
         var account = await _userRepo.GetAccountByIdAsync(userId);
-        if (account == null) return;
+        if (account == null) return false;
 
         account.AccountFlagCount = (account.AccountFlagCount ?? 0) + 1;
 
@@ -544,15 +566,16 @@ public class ReportService : IReportService
                 await NotifyStudentsAboutInstructorSuspensionAsync(userId);
             }
         }
-        await _userRepo.UpdateAccountAsync(account);
+        return await _userRepo.UpdateAccountAsync(account);
     }
 
-    private async Task HandleReviewRemovalPenaltyAsync(Enrollment? enrollment, string? resolutionNote)
+    private async Task<bool> HandleReviewRemovalPenaltyAsync(Enrollment? enrollment, string? resolutionNote)
     {
         if (enrollment != null && enrollment.UserId != 0)
         {
-            await ProcessReviewStrikeAsync((int)enrollment.UserId, resolutionNote ?? "Review violation");
+            return await ProcessReviewStrikeAsync((int)enrollment.UserId, resolutionNote ?? "Review violation");
         }
+        return false;
     }
 
 }

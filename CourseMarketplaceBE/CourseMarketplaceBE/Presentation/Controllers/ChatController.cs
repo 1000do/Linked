@@ -83,6 +83,10 @@ public class ChatController : ControllerBase
         {
             return StatusCode(403, new { message = ex.Message });
         }
+        catch (System.InvalidOperationException ex)
+        {
+            return BadRequest(new { message = "Failed to create chat" });
+        }
     }
 
     [Authorize] // Cả User và Instructor đều có thể báo cáo
@@ -90,8 +94,15 @@ public class ChatController : ControllerBase
     public async Task<IActionResult> SubmitReport([FromBody] SubmitReportDto dto)
     {
         var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-        var success = await _chatService.SubmitReportAsync(accountId, dto.ChatId, dto.Reason, dto.Description);
-        return success ? Ok() : BadRequest();
+        try
+        {
+            var success = await _chatService.SubmitReportAsync(accountId, dto.ChatId, dto.Reason, dto.Description);
+            return success ? Ok() : BadRequest();
+        }
+        catch (System.InvalidOperationException ex)
+        {
+            return BadRequest(new { message = "Failed to submit report" });
+        }
     }
 
     [HttpPost("grant-access/{chatId}")]
@@ -103,23 +114,44 @@ public class ChatController : ControllerBase
         if (!await _chatService.HasAccessToChatAsync(accountId, chatId))
             return Forbid();
 
-        var success = await _chatService.GrantAdminAccessAsync(chatId, 24);
-        return success ? Ok() : BadRequest();
+        try
+        {
+            var success = await _chatService.GrantAdminAccessAsync(chatId, 24);
+            return success ? Ok() : BadRequest();
+        }
+        catch (System.InvalidOperationException ex)
+        {
+            return BadRequest(new { message = "Failed to grant admin access" });
+        }
     }
 
     [HttpDelete("{chatId}/clear")]
     public async Task<IActionResult> ClearChatHistory(int chatId)
     {
         var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-        var success = await _chatService.ClearChatHistoryAsync(chatId, accountId);
-        return success ? Ok() : BadRequest("Chat not found or access denied.");
+        try
+        {
+            var success = await _chatService.ClearChatHistoryAsync(chatId, accountId);
+            return success ? Ok() : BadRequest("Chat not found or access denied.");
+        }
+        catch (System.InvalidOperationException ex)
+        {
+            return BadRequest(new { message = "Failed to clear chat history" });
+        }
     }
 
     [HttpPost("{chatId}/read")]
     public async Task<IActionResult> MarkAsRead(int chatId)
     {
         var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-        var success = await _chatService.MarkChatAsReadAsync(chatId, accountId);
-        return success ? Ok() : BadRequest();
+        try
+        {
+            var success = await _chatService.MarkChatAsReadAsync(chatId, accountId);
+            return success ? Ok() : BadRequest();
+        }
+        catch (System.InvalidOperationException ex)
+        {
+            return BadRequest(new { message = "Failed to mark chat as read" });
+        }
     }
 }

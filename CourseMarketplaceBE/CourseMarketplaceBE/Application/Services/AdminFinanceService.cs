@@ -930,10 +930,7 @@ namespace CourseMarketplaceBE.Application.Services
             if (txn.TransactionsStatus != TransactionStatus.RefundPending.ToValue())
                 throw new InvalidOperationException("Transaction is not in pending refund approval status.");
 
-            // Thực thi refund Stripe & Reverse Transfer & Revoke Enrollment
-            var refundResult = await RefundTransactionAsync(transactionId, txn.TransactionExt?.RefundReason);
-
-            // Lưu thông tin duyệt của Admin
+            // Lưu thông tin duyệt của Admin trước
             if (txn.TransactionExt == null)
             {
                 txn.TransactionExt = new Domain.Entities.TransactionExt
@@ -947,12 +944,9 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 txn.TransactionExt.RefundAdminNote = adminNote;
             }
-            
 
-
-            int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
-                throw new InvalidOperationException("Failed to save changes");
+            // Thực thi refund Stripe & Reverse Transfer & Revoke Enrollment (Sẽ tự động lưu cả note ở trên)
+            var refundResult = await RefundTransactionAsync(transactionId, txn.TransactionExt?.RefundReason);
 
             // Gửi thông báo đến học viên
             if (txn.AccountFrom.HasValue)
