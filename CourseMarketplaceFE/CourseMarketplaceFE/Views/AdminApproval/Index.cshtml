@@ -171,14 +171,30 @@
                     </a>
                 ` : `<span class="text-xs text-slate-400 italic font-medium px-2.5 py-1 bg-slate-50 rounded-lg border border-slate-100">Not Provided</span>`;
 
-                const documentHtml = item.documentUrl ? `
-                    <a href="${item.documentUrl}" target="_blank"
-                       class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 hover:scale-105 transition-all duration-300"
-                       title="View Document">
-                        <span class="material-symbols-outlined text-[15px]">description</span>
-                        <span class="max-w-[120px] truncate">${item.documentUrl.split('/').pop()}</span>
-                    </a>
-                ` : `<span class="text-xs text-slate-400 italic font-medium px-2.5 py-1 bg-slate-50 rounded-lg border border-slate-100">No Resume</span>`;
+                let documentHtml = `<span class="text-xs text-slate-400 italic font-medium px-2.5 py-1 bg-slate-50 rounded-lg border border-slate-100">No Resume</span>`;
+                if (item.documentUrl && item.documentUrl.trim() !== '') {
+                    const urls = item.documentUrl.split(';').filter(x => x.trim() !== '');
+                    if (urls.length > 0) {
+                        documentHtml = `
+                            <div class="flex flex-col gap-1.5 max-w-[200px]">
+                                ${urls.map((url, index) => {
+                                    const filename = url.split('/').pop();
+                                    const ext = filename.split('.').pop().toLowerCase();
+                                    const iconName = (ext === 'pdf') ? 'picture_as_pdf' : 'image';
+                                    const displayName = `Document #${index + 1} (.${ext})`;
+                                    return `
+                                        <a href="${url}" target="_blank"
+                                           class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 hover:scale-105 transition-all duration-300 w-fit"
+                                           title="View ${displayName}">
+                                            <span class="material-symbols-outlined text-[15px]">${iconName}</span>
+                                            <span>${displayName}</span>
+                                        </a>
+                                    `;
+                                }).join('')}
+                            </div>
+                        `;
+                    }
+                }
 
                 const expertiseHtml = item.expertiseCategories ? 
                     item.expertiseCategories.split(',').map(cat => `
@@ -279,29 +295,57 @@
         }
 
         async function processAction(id, status) {
+            let reason = '';
+            
+            if (status === 'Approved') {
+                const confirmResult = await Swal.fire({
+                    title: 'Approve Application',
+                    text: 'Are you absolutely sure you want to approve this instructor application?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Approve',
+                    cancelButtonText: 'Cancel',
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl'
+                    }
+                });
+                if (!confirmResult.isConfirmed) return;
+            } else {
+                // Rejected -> Open SweetAlert2 with Textarea for Reason
+                const { value: text, isConfirmed } = await Swal.fire({
+                    title: 'Reject Application',
+                    input: 'textarea',
+                    inputLabel: 'Reason for Rejection',
+                    inputPlaceholder: 'Please type the reason why this application is rejected...',
+                    inputAttributes: {
+                        'aria-label': 'Type your reason here'
+                    },
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Reject',
+                    cancelButtonText: 'Cancel',
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl'
+                    },
+                    inputValidator: (value) => {
+                        if (!value || value.trim() === '') {
+                            return 'You must enter a reason for rejection!';
+                        }
+                    }
+                });
+                if (!isConfirmed) return;
+                reason = text;
+            }
+
             const actionText = status === 'Approved' ? 'approved' : 'rejected';
-            const actionColor = status === 'Approved' ? '#10b981' : '#ef4444';
-            const confirmBtnText = status === 'Approved' ? 'Approve Application' : 'Reject Application';
-
-            const confirmResult = await Swal.fire({
-                title: 'Confirm Action',
-                text: `Are you absolutely sure you want to change this status to ${actionText}?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: actionColor,
-                cancelButtonColor: '#64748b',
-                confirmButtonText: confirmBtnText,
-                cancelButtonText: 'Cancel',
-                background: '#ffffff',
-                customClass: {
-                    popup: 'rounded-2xl border border-slate-100 shadow-xl'
-                }
-            });
-
-            if (!confirmResult.isConfirmed) return;
 
             try {
-                const response = await fetch(`/AdminApproval/Process?id=${id}&status=${status}`, {
+                const response = await fetch(`/AdminApproval/Process?id=${id}&status=${status}&reason=${encodeURIComponent(reason)}`, {
                     method: 'POST',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });

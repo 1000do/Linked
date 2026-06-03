@@ -37,11 +37,23 @@ public class InstructorApplyViewModel
     [Display(Name = "CV / ID Document")]
     public IFormFile? DocumentFile { get; set; }
 
+    [Display(Name = "CV / Certificates / ID Documents (Max 3)")]
+    public List<IFormFile>? DocumentFiles { get; set; }
+
     /// <summary>URL tài liệu cũ (khi nộp lại sau khi bị Rejected)</summary>
     public string? ExistingDocumentUrl { get; set; }
 
+    /// <summary>Danh sách các URL tài liệu cũ (khi nộp lại sau khi bị Rejected)</summary>
+    public List<string>? ExistingDocumentUrls { get; set; }
+
+    /// <summary>Danh sách các URL tài liệu cũ được giữ lại khi resubmit</summary>
+    public List<string>? RetainedDocumentUrls { get; set; }
+
     /// <summary>True nếu đang nộp lại (status cũ = Rejected)</summary>
     public bool IsResubmit { get; set; }
+
+    /// <summary>Lý do từ chối đơn đăng ký trước đó</summary>
+    public string? RejectionReason { get; set; }
 
     [Required(ErrorMessage = "Please select a country for your Stripe account.")]
     [Display(Name = "Stripe Country")]
@@ -67,6 +79,7 @@ public class InstructorDashboardViewModel
     public bool PayoutsEnabled { get; set; }
     public bool ChargesEnabled { get; set; }
     public string? FullName { get; set; }
+    public string? RejectionReason { get; set; }
 }
 
 public class InstructorPublicProfileViewModel

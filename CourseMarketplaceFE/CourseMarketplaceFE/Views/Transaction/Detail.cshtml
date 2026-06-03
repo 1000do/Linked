@@ -25,16 +25,7 @@
 
 @section HeaderActions {
     <div class="flex items-center gap-3">
-        <button type="button" onclick="window.print()" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
-            <span class="material-symbols-outlined text-[18px]">print</span>
-            Print Receipt
-        </button>
-        @if (Model.Status == "succeeded") {
-            <button type="button" onclick="confirmRefund()" class="inline-flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-100 rounded-lg text-sm font-bold text-red-600 hover:bg-red-100 transition-all shadow-sm">
-                <span class="material-symbols-outlined text-[18px]">currency_exchange</span>
-                Refund
-            </button>
-        } else if (Model.Status == "refunded") {
+        @if (Model.Status == "refunded") {
             <span class="inline-flex items-center gap-2 px-4 py-2 bg-rose-50 border border-rose-200 rounded-lg text-sm font-bold text-rose-600 cursor-not-allowed">
                 <span class="material-symbols-outlined text-[18px]">check_circle</span>
                 Refunded
@@ -482,40 +473,6 @@
                     timer: 2000,
                     timerProgressBar: true
                 });
-            });
-        }
-
-        function confirmRefund() {
-            Swal.fire({
-                title: 'Refund Transaction #@Model.TransactionId',
-                html: `
-                    <p class="text-sm text-gray-600 mb-4">
-                        This action will:<br>
-                        • Refund <strong>@Model.Currency?.ToUpper() @Model.GrossAmount.ToString("N2")</strong> back to the customer<br>
-                        • Revoke payouts processed for the instructor (if applicable)<br>
-                        • Revoke course enrollment access
-                    </p>
-                    <label class="block text-left text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Refund Reason</label>
-                    <select id="swal-reason" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-300 focus:border-red-400">
-                        <option value="requested_by_customer">Requested by Customer</option>
-                        <option value="duplicate">Duplicate Transaction</option>
-                        <option value="fraudulent">Fraudulent Activity</option>
-                    </select>
-                `,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: '<i class="material-symbols-outlined text-[16px] align-middle mr-1">currency_exchange</i> Confirm Refund',
-                cancelButtonText: 'Cancel',
-                showLoaderOnConfirm: true,
-                preConfirm: () => {
-                    const reason = document.getElementById('swal-reason').value;
-                    document.getElementById('refundReason').value = reason;
-                    document.getElementById('refundForm').submit();
-                    return false; // Keep the loading state
-                },
-                allowOutsideClick: () => !Swal.isLoading()
             });
         }
 

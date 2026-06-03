@@ -146,7 +146,8 @@ CREATE TABLE instructors (
     facebook_url TEXT,
     document_url TEXT,
     approval_status VARCHAR(50) DEFAULT 'Pending',
-    stripe_country VARCHAR(2)
+    stripe_country VARCHAR(2),
+    rejection_reason TEXT
 );
 
 -- ==============================================================================

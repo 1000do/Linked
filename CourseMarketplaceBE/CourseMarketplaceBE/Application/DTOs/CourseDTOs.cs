@@ -62,6 +62,7 @@ public class CourseResponse
     public string? AppliedCouponType { get; set; }
     public decimal? AppliedCouponValue { get; set; }
     public bool IsRemoved { get; set; }
+    public bool IsInAnyCart { get; set; }
 }
 
 public class CourseDetailResponse : CourseResponse
