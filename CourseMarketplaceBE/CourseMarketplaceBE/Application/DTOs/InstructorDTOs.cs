@@ -24,6 +24,12 @@ public class InstructorApplicationRequest
     /// <summary>File CV/CMND upload lên Cloudinary</summary>
     public IFormFile? DocumentFile { get; set; }
 
+    /// <summary>Danh sách file CV/chứng chỉ/tài liệu upload (tối đa 3)</summary>
+    public List<IFormFile>? DocumentFiles { get; set; }
+
+    /// <summary>Danh sách URL tài liệu cũ được giữ lại</summary>
+    public List<string>? RetainedDocumentUrls { get; set; }
+
     [Required(ErrorMessage = "Please select the country for your Stripe account.")]
     [StringLength(2)]
     public string StripeCountry { get; set; } = null!;
@@ -51,6 +57,7 @@ public class InstructorDashboardDto
     public string? FacebookUrl { get; set; }
     public string? DocumentUrl { get; set; }
     public string? ApprovalStatus { get; set; }
+    public string? RejectionReason { get; set; }
     public string? StripeAccountId { get; set; }
     public string? StripeOnboardingStatus { get; set; }
     public bool PayoutsEnabled { get; set; }

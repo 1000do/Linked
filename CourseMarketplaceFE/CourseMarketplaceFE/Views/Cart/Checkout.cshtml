@@ -1,0 +1,398 @@
+@model CourseMarketplaceFE.Models.CheckoutViewModel
+@{
+    ViewData["Title"] = "Secure Checkout";
+}
+
+<main class="min-h-screen pt-28 pb-16 bg-gradient-to-br from-slate-50 via-slate-100 to-emerald-50/20 relative overflow-hidden">
+    <!-- Background glowing accents -->
+    <div class="absolute top-1/4 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute bottom-1/4 right-0 w-96 h-96 bg-secondary/5 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-6xl mx-auto px-4 relative z-10">
+        
+        <!-- ── HEADER ──────────────────────────────────────────────────────── -->
+        <div class="mb-8 flex items-center justify-between border-b border-slate-200/60 pb-6">
+            <div>
+                <a href="/Cart" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-primary transition-colors mb-2 uppercase tracking-wider group">
+                    <span class="material-symbols-outlined text-sm group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
+                    Back to Cart
+                </a>
+                <h1 class="text-3xl font-headline font-extrabold text-slate-900 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary text-4xl" style='font-variation-settings:"FILL" 1;'>shield_with_heart</span>
+                    Secure Checkout
+                </h1>
+                <p class="text-slate-500 mt-1 text-sm">Please complete your payment to unlock your courses instantly.</p>
+            </div>
+            <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200/80 rounded-full text-emerald-700 text-xs font-bold shadow-sm">
+                <span class="material-symbols-outlined text-base animate-pulse">lock</span>
+                256-bit SSL Encryption
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- ════ LEFT COLUMN: CART SUMMARY (5 cols) ════ -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-slate-100 p-6">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
+                        <span class="material-symbols-outlined text-primary">shopping_bag</span>
+                        Order Summary
+                    </h2>
+
+                    <!-- Items List -->
+                    <div class="divide-y divide-slate-100 max-h-80 overflow-y-auto pr-1">
+                        @foreach (var item in Model.Cart.Items)
+                        {
+                            <div class="py-3.5 flex gap-3.5 items-center first:pt-0 last:pb-0">
+                                @if (!string.IsNullOrEmpty(item.ThumbnailUrl))
+                                {
+                                    <img src="@item.ThumbnailUrl" alt="@item.Title" class="w-16 h-10 object-cover rounded-lg bg-slate-100 border border-slate-200/50 shadow-sm shrink-0" />
+                                }
+                                else
+                                {
+                                    <div class="w-16 h-10 rounded-lg bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center shrink-0 border border-slate-200/50">
+                                        <span class="material-symbols-outlined text-primary text-lg">school</span>
+                                    </div>
+                                }
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-bold text-slate-800 text-xs leading-snug line-clamp-2">@item.Title</h3>
+                                    <p class="text-[10px] text-slate-400 mt-0.5 flex items-center gap-0.5">
+                                        <span class="material-symbols-outlined text-xs">person</span>
+                                        @item.InstructorName
+                                    </p>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    @if (!string.IsNullOrEmpty(item.AppliedCouponCode))
+                                    {
+                                        <span class="text-[10px] font-semibold text-slate-400 line-through block">$@item.OriginalPrice.ToString("N2")</span>
+                                        <span class="text-xs font-extrabold text-emerald-600">$@item.DiscountedPrice.ToString("N2")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs font-extrabold text-slate-800">$@item.Price.ToString("N2")</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Payment Pricing Details -->
+                    <div class="border-t border-slate-100 pt-4 mt-4 space-y-2.5">
+                        <div class="flex justify-between items-center text-xs text-slate-500">
+                            <span>Subtotal</span>
+                            <span class="font-semibold text-slate-700">$@Model.Cart.SubTotal.ToString("N2")</span>
+                        </div>
+                        @if (Model.Cart.HasDiscount)
+                        {
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-emerald-600 flex items-center gap-1 font-medium">
+                                    <span class="material-symbols-outlined text-sm">local_offer</span>
+                                    Discount (@Model.Cart.AppliedCouponCode)
+                                </span>
+                                <span class="font-bold text-emerald-600">-$@Model.Cart.DiscountAmount.ToString("N2")</span>
+                            </div>
+                        }
+                        <div class="border-t border-slate-100 pt-3 flex justify-between items-center">
+                            <span class="font-bold text-slate-800 text-sm">Total Amount</span>
+                            <span class="text-xl font-extrabold text-primary">$@Model.Cart.Total.ToString("N2")</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trust signals -->
+                <div class="bg-slate-50/80 backdrop-blur-md rounded-2xl border border-slate-200/50 p-5 flex items-start gap-4">
+                    <span class="material-symbols-outlined text-primary text-3xl shrink-0 mt-0.5" style='font-variation-settings:"FILL" 1;'>workspace_premium</span>
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800">LinkedLearn Guarantee</h4>
+                        <p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed">All courses include lifetime access, free updates, and a 14-day money-back guarantee. No questions asked.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════ RIGHT COLUMN: EMBEDDED STRIPE FORM (7 cols) ════ -->
+            <div class="lg:col-span-7">
+                <div class="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 relative overflow-hidden">
+                    
+                    <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+                        <span class="material-symbols-outlined text-primary">credit_card</span>
+                        Payment Information
+                    </h2>
+
+                    <!-- Custom HTML Form -->
+                    <form id="payment-form" class="space-y-5">
+                        
+                        <!-- Contact information (Read-only Account Email) -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Contact Information</label>
+                            <div class="relative group">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
+                                    <span class="material-symbols-outlined text-lg">mail</span>
+                                </div>
+                                <input type="email" value="@Model.Email" readonly disabled
+                                       class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 text-sm cursor-not-allowed focus:outline-none transition-all" />
+                            </div>
+                        </div>
+
+                        <!-- Card Information - using individual Card Elements -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Card Details</label>
+                            
+                            <!-- Card Number -->
+                            <div class="mb-3">
+                                <label class="block text-[10px] font-semibold text-slate-500 mb-1 uppercase tracking-wider">Card Number</label>
+                                <div id="card-number-element" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 transition-all focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10 focus-within:bg-white"></div>
+                            </div>
+                            
+                            <!-- Expiry + CVC row -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-500 mb-1 uppercase tracking-wider">Expiry Date</label>
+                                    <div id="card-expiry-element" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 transition-all focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10 focus-within:bg-white"></div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-500 mb-1 uppercase tracking-wider">CVC</label>
+                                    <div id="card-cvc-element" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 transition-all focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10 focus-within:bg-white"></div>
+                                </div>
+                            </div>
+
+                            <!-- Cardholder Name -->
+                            <div class="mt-3">
+                                <label class="block text-[10px] font-semibold text-slate-500 mb-1 uppercase tracking-wider">Cardholder Name</label>
+                                <input type="text" id="cardholder-name" placeholder="Full name on card" autocomplete="cc-name"
+                                       class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10 focus:bg-white focus:outline-none" />
+                            </div>
+
+                            <!-- Country or Region -->
+                            <div class="mt-3">
+                                <label class="block text-[10px] font-semibold text-slate-500 mb-1 uppercase tracking-wider">Country or Region</label>
+                                <div class="relative">
+                                    <select id="billing-country" autocomplete="country"
+                                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 appearance-none cursor-pointer transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/10 focus:bg-white focus:outline-none">
+                                        <option value="VN" selected>Vietnam</option>
+                                        <option value="US">United States</option>
+                                        <option value="GB">United Kingdom</option>
+                                        <option value="AU">Australia</option>
+                                        <option value="CA">Canada</option>
+                                        <option value="CN">China</option>
+                                        <option value="FR">France</option>
+                                        <option value="DE">Germany</option>
+                                        <option value="IN">India</option>
+                                        <option value="ID">Indonesia</option>
+                                        <option value="JP">Japan</option>
+                                        <option value="KR">South Korea</option>
+                                        <option value="MY">Malaysia</option>
+                                        <option value="NZ">New Zealand</option>
+                                        <option value="PH">Philippines</option>
+                                        <option value="SG">Singapore</option>
+                                        <option value="TH">Thailand</option>
+                                        <option value="TW">Taiwan</option>
+                                    </select>
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                                        <span class="material-symbols-outlined text-lg">expand_more</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Accepted cards badge -->
+                            <div class="flex items-center gap-2 mt-3">
+                                <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Accepted:</span>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">VISA</span>
+                                    <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">MasterCard</span>
+                                    <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">AMEX</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment error message wrapper -->
+                        <div id="payment-error-box" class="hidden bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <span class="material-symbols-outlined text-base shrink-0">error</span>
+                            <span id="error-message"></span>
+                        </div>
+
+                        <!-- Secure Submit Button -->
+                        <button id="submit-btn" disabled type="submit" 
+                                class="w-full flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-sm uppercase tracking-wider mt-4">
+                            <span class="material-symbols-outlined text-lg" id="lock-icon">lock</span>
+                            Pay Securely $@Model.Cart.Total.ToString("N2")
+                        </button>
+
+                        <div class="flex items-center justify-center gap-5 pt-4 text-slate-400 border-t border-slate-100">
+                            <div class="flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm text-emerald-500">verified_user</span>
+                                <span class="text-[10px] font-bold uppercase tracking-wider">Stripe Secure</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm text-emerald-500">lock_outline</span>
+                                <span class="text-[10px] font-bold uppercase tracking-wider">PCI Compliant</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── PROCESSING SCREEN OVERLAY (WOW EFFECT) ─── -->
+    <div id="processing-backdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex flex-col items-center justify-center gap-4 text-white opacity-0 transition-opacity duration-300">
+        <div class="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/20 shadow-2xl flex flex-col items-center text-center max-w-sm">
+            <div class="relative w-20 h-20 mb-4">
+                <!-- Dual concentric custom spinners -->
+                <div class="absolute inset-0 border-4 border-emerald-500/25 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-transparent border-t-emerald-400 rounded-full animate-spin"></div>
+                <div class="absolute inset-2 border-4 border-transparent border-b-primary rounded-full animate-spin" style="animation-direction: reverse; animation-duration: 0.8s;"></div>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-1">Verifying Transaction...</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">Stripe is processing your card details securely. Please do not close this window or refresh the page.</p>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const publishableKey = "@Model.PublishableKey";
+            const clientSecret = "@Model.ClientSecret";
+            const paymentIntentId = "@Model.PaymentIntentId";
+
+            if (!publishableKey || !clientSecret) {
+                console.error("Missing Stripe key or ClientSecret!");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Payment Error',
+                    text: 'Stripe keys are missing. Please try again.',
+                    confirmButtonColor: '#ef4444'
+                }).then(() => {
+                    window.location.href = "/Cart";
+                });
+                return;
+            }
+
+            // 1. Initialize Stripe
+            const stripe = Stripe(publishableKey);
+
+            // 2. Create Elements instance (NO clientSecret → classic Card Elements, NO payment method tabs)
+            const elements = stripe.elements({
+                fonts: [{ cssSrc: 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap' }]
+            });
+
+            // 3. Style for Card Elements
+            const elementStyle = {
+                base: {
+                    fontFamily: 'Outfit, Inter, system-ui, sans-serif',
+                    fontSize: '14px',
+                    color: '#0f172a',
+                    '::placeholder': { color: '#94a3b8' },
+                },
+                invalid: {
+                    color: '#ef4444',
+                    iconColor: '#ef4444',
+                }
+            };
+
+            // 4. Create individual card elements (ONLY card fields, no tabs)
+            const cardNumber = elements.create('cardNumber', { style: elementStyle, showIcon: true });
+            const cardExpiry = elements.create('cardExpiry', { style: elementStyle });
+            const cardCvc = elements.create('cardCvc', { style: elementStyle });
+
+            // 5. Mount elements
+            cardNumber.mount('#card-number-element');
+            cardExpiry.mount('#card-expiry-element');
+            cardCvc.mount('#card-cvc-element');
+
+            // 6. Enable submit button when card is complete AND cardholder name is filled
+            let cardComplete = { number: false, expiry: false, cvc: false };
+            const cardholderInput = document.getElementById('cardholder-name');
+
+            function checkReady() {
+                const nameValid = cardholderInput.value.trim().length > 0;
+                const allComplete = cardComplete.number && cardComplete.expiry && cardComplete.cvc && nameValid;
+                document.getElementById('submit-btn').disabled = !allComplete;
+
+                // Remove error style when user starts typing
+                if (nameValid) {
+                    cardholderInput.classList.remove('border-red-400', 'ring-2', 'ring-red-100');
+                }
+            }
+
+            cardNumber.on('change', (e) => { cardComplete.number = e.complete; checkReady(); });
+            cardExpiry.on('change', (e) => { cardComplete.expiry = e.complete; checkReady(); });
+            cardCvc.on('change', (e) => { cardComplete.cvc = e.complete; checkReady(); });
+            cardholderInput.addEventListener('input', checkReady);
+
+            // 7. Handle form submission
+            const form = document.getElementById('payment-form');
+            const submitBtn = document.getElementById('submit-btn');
+            const processingBackdrop = document.getElementById('processing-backdrop');
+            const errorBox = document.getElementById('payment-error-box');
+            const errorMsg = document.getElementById('error-message');
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                submitBtn.disabled = true;
+
+                // Show processing overlay
+                processingBackdrop.classList.remove('hidden');
+                setTimeout(() => { processingBackdrop.classList.add('opacity-100'); }, 10);
+
+                // Hide previous errors
+                errorBox.classList.add('hidden');
+
+                // Validate cardholder name
+                const cardholderName = cardholderInput.value.trim();
+                const billingCountry = document.getElementById('billing-country').value;
+
+                if (!cardholderName) {
+                    cardholderInput.classList.add('border-red-400', 'ring-2', 'ring-red-100');
+                    cardholderInput.focus();
+                    errorBox.classList.remove('hidden');
+                    errorMsg.innerText = 'Please enter the cardholder name.';
+                    submitBtn.disabled = false;
+                    processingBackdrop.classList.remove('opacity-100');
+                    setTimeout(() => { processingBackdrop.classList.add('hidden'); }, 300);
+                    return;
+                }
+
+                const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+                    payment_method: {
+                        card: cardNumber,
+                        billing_details: {
+                            email: "@Model.Email",
+                            name: cardholderName || undefined,
+                            address: {
+                                country: billingCountry || undefined
+                            }
+                        }
+                    }
+                });
+
+                if (error) {
+                    // Payment failed
+                    processingBackdrop.classList.remove('opacity-100');
+                    setTimeout(() => { processingBackdrop.classList.add('hidden'); }, 300);
+
+                    errorBox.classList.remove('hidden');
+                    errorMsg.innerText = error.message || "An unexpected card decline occurred.";
+                    submitBtn.disabled = false;
+                } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+                    // Payment succeeded → redirect to success page
+                    const baseUrl = window.location.origin;
+                    window.location.href = `${baseUrl}/Cart/CheckoutSuccess?payment_intent_id=${paymentIntentId}`;
+                } else if (paymentIntent && paymentIntent.status === 'requires_action') {
+                    // 3D Secure or additional authentication needed - Stripe handles this automatically
+                    // The confirmCardPayment promise will resolve after the customer completes authentication
+                } else {
+                    // Other status
+                    processingBackdrop.classList.remove('opacity-100');
+                    setTimeout(() => { processingBackdrop.classList.add('hidden'); }, 300);
+
+                    errorBox.classList.remove('hidden');
+                    errorMsg.innerText = "Payment could not be processed. Please try again.";
+                    submitBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+}

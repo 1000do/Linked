@@ -17,19 +17,22 @@ public class CourseQueryService : ICourseQueryService
     private readonly IRedisService _redisService;
     private readonly ICourseAiIntegrationRepository _aiIntegrationRepository;
     private readonly IMapper _mapper;
+    private readonly ICartRepository _cartRepository;
 
     public CourseQueryService(
         ICourseRepository courseRepository,
         IInstructorRepository instructorRepository,
         IRedisService redisService,
         ICourseAiIntegrationRepository aiIntegrationRepository,
-        IMapper mapper)
+        IMapper mapper,
+        ICartRepository cartRepository)
     {
         _courseRepository = courseRepository;
         _instructorRepository = instructorRepository;
         _redisService = redisService;
         _aiIntegrationRepository = aiIntegrationRepository;
         _mapper = mapper;
+        _cartRepository = cartRepository;
     }
 
     public async Task<IEnumerable<CourseResponse>> GetAllPublishedCoursesAsync(int? userId = null)
@@ -198,6 +201,8 @@ public class CourseQueryService : ICourseQueryService
 
             await _redisService.SetCacheAsync(cacheKey, response, CacheTtl.Short.GetTtl());
         }
+
+        response.IsInAnyCart = await _cartRepository.IsCourseInAnyCartAsync(courseId);
 
         if (userId.HasValue)
         {
