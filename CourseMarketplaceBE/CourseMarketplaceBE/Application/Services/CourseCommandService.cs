@@ -160,7 +160,14 @@ public class CourseCommandService : ICourseCommandService
     {
         //Extract column name from constraint name
         var dict = JsonSerializer.Deserialize<Dictionary<string, object?>>(message);
-        var parts = dict?["constraint"]?.ToString()?.Split("_") ?? [];
+        var constraint = dict?["constraint"]?.ToString() ?? "";
+        if (constraint.Contains("title_hash")) return "Title";
+        if (constraint.Contains("description_hash")) return "Description";
+        if (constraint.Contains("what_you_will_learn_hash")) return "What You Will Learn";
+        if (constraint.Contains("requirements_hash")) return "Requirements";
+        if (constraint.Contains("thumbnail_hash")) return "Thumbnail";
+
+        var parts = constraint.Split("_") ?? [];
         _logger.LogInformation("Raw parts: {parts}", JsonSerializer.Serialize(parts));
         List<string> nameparts = [];
         int len = parts.Length;
@@ -253,45 +260,17 @@ public class CourseCommandService : ICourseCommandService
         }
 
         _courseRepository.Update(course);
-        int rowsUpdate = await _courseRepository.SaveChangesAsync();
+
+        await UpdateCourseFingerprintAsync(course);
+
+        // Save course updates and hashes together to verify unique constraints before saving
+        int rowsUpdate = await SaveChangesWithFingerprintAsync();
         if (rowsUpdate <= 0)
             throw new InvalidOperationException("Failed to save changes when updating course.");
-
-        await UpdateCourseHashesAsync(course);
 
         await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(course.CourseId));
 
         return _mapper.Map<CourseResponse>(course);
-    }
-
-    private async Task UpdateCourseHashesAsync(Course course)
-    {
-        string? thumbHash = null;
-        if (!string.IsNullOrEmpty(course.CourseThumbnailUrl))
-        {
-            try
-            {
-                var bytes = await _httpClient.GetByteArrayAsync(course.CourseThumbnailUrl);
-                thumbHash = await _contentHashService.ComputeFileHashAsync(bytes);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning($"Failed to download thumbnail for hashing: {ex.Message}");
-            }
-        }
-
-        var command = new SaveCourseHashesCommand
-        {
-            CourseId = course.CourseId,
-            TitleHash = await _contentHashService.ComputeCourseHashAsync(course.Title),
-            DescriptionHash = await _contentHashService.ComputeCourseHashAsync(course.Description ?? ""),
-            WhatYouWillLearnHash = await _contentHashService.ComputeCourseHashAsync(course.WhatYouWillLearn ?? ""),
-            RequirementsHash = await _contentHashService.ComputeCourseHashAsync(course.Requirements ?? ""),
-            ThumbnailHash = thumbHash
-        };
-
-        int numRows = await _contentHashService.SaveCourseHashesAsync(command);
-        if (numRows == 0) throw new InvalidOperationException("Failed to update course fingerprint");
     }
 
     private async Task<Course> AddCourseFingerprintAsync(Course course)
@@ -322,6 +301,48 @@ public class CourseCommandService : ICourseCommandService
 
         course.CourseExt = courseExt;
         return course;
+    }
+
+    private async Task UpdateCourseFingerprintAsync(Course course)
+    {
+        var existingExt = await _courseExtRepo.GetByIdAsync(course.CourseId);
+
+        string? thumbHash = null;
+        if (!string.IsNullOrEmpty(course.CourseThumbnailUrl))
+        {
+            try
+            {
+                var bytes = await _httpClient.GetByteArrayAsync(course.CourseThumbnailUrl);
+                thumbHash = await _contentHashService.ComputeFileHashAsync(bytes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"Failed to download thumbnail for hashing: {ex.Message}");
+            }
+        }
+
+        if (existingExt != null)
+        {
+            existingExt.TitleHash = await _contentHashService.ComputeCourseHashAsync(course.Title);
+            existingExt.DescriptionHash = await _contentHashService.ComputeCourseHashAsync(course.Description ?? "");
+            existingExt.WhatYouWillLearnHash = await _contentHashService.ComputeCourseHashAsync(course.WhatYouWillLearn ?? "");
+            existingExt.RequirementsHash = await _contentHashService.ComputeCourseHashAsync(course.Requirements ?? "");
+            existingExt.ThumbnailHash = thumbHash;
+            _courseExtRepo.Update(existingExt);
+        }
+        else
+        {
+            var newExt = new CourseExt
+            {
+                CourseId = course.CourseId,
+                TitleHash = await _contentHashService.ComputeCourseHashAsync(course.Title),
+                DescriptionHash = await _contentHashService.ComputeCourseHashAsync(course.Description ?? ""),
+                WhatYouWillLearnHash = await _contentHashService.ComputeCourseHashAsync(course.WhatYouWillLearn ?? ""),
+                RequirementsHash = await _contentHashService.ComputeCourseHashAsync(course.Requirements ?? ""),
+                ThumbnailHash = thumbHash
+            };
+            await _courseExtRepo.AddAsync(newExt);
+        }
     }
 
 

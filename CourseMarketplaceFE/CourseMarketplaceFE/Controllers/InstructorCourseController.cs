@@ -1,10 +1,10 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using CourseMarketplaceFE.Models;
-using CourseMarketplaceFE.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using CourseMarketplaceFE.Helpers;
+using CourseMarketplaceFE.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceFE.Controllers
 {
@@ -47,7 +47,7 @@ namespace CourseMarketplaceFE.Controllers
                         dataEl.TryGetProperty("approvalStatus", out var statusEl))
                     {
                         var status = statusEl.GetString();
-                        
+
                         // Cập nhật lại Cookie cho lần sau
                         var statusCookieOpts = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7), Path = "/" };
                         Response.Cookies.Append("InstructorApprovalStatus", status ?? "None", statusCookieOpts);
@@ -58,7 +58,7 @@ namespace CourseMarketplaceFE.Controllers
                             return;
                         }
                     }
-                    else 
+                    else
                     {
                         context.Result = RedirectToAction("Apply", "Instructor");
                         return;
@@ -69,7 +69,7 @@ namespace CourseMarketplaceFE.Controllers
                     context.Result = RedirectToAction("Apply", "Instructor");
                     return;
                 }
-                else 
+                else
                 {
                     context.Result = RedirectToAction("Index", "Home");
                     return;
@@ -103,7 +103,7 @@ namespace CourseMarketplaceFE.Controllers
                     var statsJson = await statsResp.Content.ReadAsStringAsync();
                     using var statsDoc = JsonDocument.Parse(statsJson);
                     var statsData = statsDoc.RootElement.GetProperty("data");
-                    
+
                     viewModel.TotalStudents = statsData.GetProperty("totalStudents").GetInt32();
                     viewModel.AverageRating = (double)statsData.GetProperty("averageRating").GetDecimal();
                     viewModel.ActiveCoursesCount = statsData.GetProperty("activeCoursesCount").GetInt32();
@@ -140,7 +140,7 @@ namespace CourseMarketplaceFE.Controllers
                                 {
                                     Id = item.GetProperty("courseId").GetInt32(),
                                     Title = item.GetProperty("title").GetString() ?? "Untitled",
-                                    Students = item.TryGetProperty("totalStudents", out var s) ? s.GetInt32() : 0, 
+                                    Students = item.TryGetProperty("totalStudents", out var s) ? s.GetInt32() : 0,
                                     Rating = item.TryGetProperty("ratingAverage", out var r) ? (double)r.GetDecimal() : 0,
                                     Status = item.GetProperty("courseStatus").GetString() ?? "Draft",
                                     ThumbnailUrl = item.TryGetProperty("courseThumbnailUrl", out var t) ? t.GetString() ?? "" : "",
@@ -155,7 +155,7 @@ namespace CourseMarketplaceFE.Controllers
                         int totalItems = 0;
                         if (dataEl.TryGetProperty("totalCount", out var tcProp)) totalItems = tcProp.GetInt32();
                         else if (dataEl.TryGetProperty("totalItems", out var tiProp)) totalItems = tiProp.GetInt32();
-                        
+
                         int totalPages = 1;
                         if (dataEl.TryGetProperty("totalPages", out var tpProp)) totalPages = tpProp.GetInt32();
 
@@ -210,7 +210,7 @@ namespace CourseMarketplaceFE.Controllers
             {
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     return Json(new { success = false, message = "Please complete all required fields." });
-                    
+
                 await LoadStripeStatusAsync();
                 await LoadTransferRateAsync();
                 model.AvailableCategories = await GetCategoriesAsync();
@@ -226,7 +226,7 @@ namespace CourseMarketplaceFE.Controllers
                 formData.Add(new StringContent(model.Price.ToString()), "Price");
                 formData.Add(new StringContent(model.WhatYouWillLearn ?? ""), "WhatYouWillLearn");
                 formData.Add(new StringContent(model.Requirements ?? ""), "Requirements");
-                
+
                 if (!string.IsNullOrEmpty(model.CourseThumbnailUrl))
                 {
                     formData.Add(new StringContent(model.CourseThumbnailUrl), "CourseThumbnailUrl");
@@ -249,7 +249,7 @@ namespace CourseMarketplaceFE.Controllers
                             var couponPayload = new { courseId = newCourseId, couponId = model.CouponId.Value };
                             await _api.PostJsonAsync("coupon/platform/apply", couponPayload);
                         }
-                        
+
                         if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                         {
                             return Json(new { success = true, courseId = newCourseId, title = model.Title });
@@ -262,7 +262,7 @@ namespace CourseMarketplaceFE.Controllers
                     var errorBody = await resp.Content.ReadAsStringAsync();
                     if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                         return Json(new { success = false, message = errorBody });
-                        
+
                     ViewBag.ApiError = errorBody;
                 }
             }
@@ -270,7 +270,7 @@ namespace CourseMarketplaceFE.Controllers
             {
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                     return Json(new { success = false, message = "System error: " + ex.Message });
-                    
+
                 ViewBag.ApiError = "Failed to create course: " + ex.Message;
             }
 
@@ -338,7 +338,7 @@ namespace CourseMarketplaceFE.Controllers
                         Response.Cookies.Delete("AccessToken", new CookieOptions { Path = "/" });
                         return RedirectToAction("Login", "Account");
                     }
-                    
+
                     ViewBag.ApiError = $"API returned {(int)resp.StatusCode}.";
                 }
             }
@@ -427,7 +427,7 @@ namespace CourseMarketplaceFE.Controllers
                     formData.Add(new StringContent(description), "Description");
                 if (!string.IsNullOrEmpty(materialUrl))
                     formData.Add(new StringContent(materialUrl), "MaterialUrl");
-                
+
                 formData.Add(new StringContent(type ?? "video"), "MaterialMetadata.FileType");
                 if (duration.HasValue) formData.Add(new StringContent(duration.Value.ToString()), "MaterialMetadata.Duration");
                 if (fileSize.HasValue) formData.Add(new StringContent(fileSize.Value.ToString()), "MaterialMetadata.FileSize");
@@ -500,14 +500,14 @@ namespace CourseMarketplaceFE.Controllers
         //             // Trigger AI moderation pipeline
         //             var payload = new { courseId = courseId };
         //             var resp = await _api.PostJsonAsync("courses/moderate", payload);
-                    
+
         //             if (resp.IsSuccessStatusCode)
         //             {
         //                 var json = await resp.Content.ReadAsStringAsync();
         //                 using var doc = JsonDocument.Parse(json);
         //                 var data = doc.RootElement.GetProperty("data");
         //                 var modStatus = data.GetProperty("moderationStatus").GetString();
-                        
+
         //                 if (modStatus == "REJECTED")
         //                 {
         //                     return Json(new { success = false, message = "Khóa học bị từ chối tự động do trùng lặp hoặc vi phạm chính sách AI." });
@@ -536,7 +536,7 @@ namespace CourseMarketplaceFE.Controllers
         //         return Json(new { success = false, message = ex.Message });
         //     }
         // }
-        
+
         [HttpPost]
         public async Task<IActionResult> ModerateCourse([FromForm] int courseId)
         {
@@ -556,7 +556,7 @@ namespace CourseMarketplaceFE.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
-        
+
         // ─── UPDATE COURSE DETAILS (AJAX) ─────────────────────────────────
         [HttpPost]
         public async Task<IActionResult> UpdateDetails([FromForm] int courseId, [FromForm] string title, [FromForm] string description, [FromForm] decimal price, [FromForm] int categoryId, [FromForm] string whatYouWillLearn, [FromForm] string requirements, [FromForm] string thumbnailUrl)
@@ -583,8 +583,25 @@ namespace CourseMarketplaceFE.Controllers
                     var newStatus = data.GetProperty("courseStatus").GetString();
                     return Json(new { success = true, status = newStatus });
                 }
-                var error = await resp.Content.ReadAsStringAsync();
-                return Json(new { success = false, message = error });
+                else
+                {
+                    var error = await resp.Content.ReadAsStringAsync();
+                    string cleanMessage = error;
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(error);
+                        if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                        {
+                            cleanMessage = msgEl.GetString() ?? error;
+                        }
+                    }
+                    catch
+                    {
+                        // Fallback to raw error response if not valid JSON
+                    }
+                   
+                    return Json(new { success = false, message = cleanMessage });
+                }
             }
             catch (Exception ex)
             {
@@ -673,7 +690,7 @@ namespace CourseMarketplaceFE.Controllers
                     var json = await resp.Content.ReadAsStringAsync();
                     using var doc = JsonDocument.Parse(json);
                     var data = doc.RootElement.GetProperty("data");
-                    
+
                     var materials = JsonSerializer.Deserialize<List<MaterialTrashViewModel>>(data.GetRawText(), _jsonOpts);
                     return View(materials);
                 }
@@ -727,10 +744,10 @@ namespace CourseMarketplaceFE.Controllers
             {
                 var resp = await _api.PatchJsonAsync($"lessons/{lessonId}/title", requestBody);
                 var respContent = await resp.Content.ReadAsStringAsync();
-                
+
                 if (resp.IsSuccessStatusCode)
                     return Json(new { success = true, data = respContent });
-                
+
                 return Json(new { success = false, message = respContent });
             }
             catch (Exception ex)
@@ -746,10 +763,10 @@ namespace CourseMarketplaceFE.Controllers
             {
                 var resp = await _api.PatchJsonAsync($"lessons/{lessonId}/description", requestBody);
                 var respContent = await resp.Content.ReadAsStringAsync();
-                
+
                 if (resp.IsSuccessStatusCode)
                     return Json(new { success = true, data = respContent });
-                
+
                 return Json(new { success = false, message = respContent });
             }
             catch (Exception ex)
@@ -765,10 +782,10 @@ namespace CourseMarketplaceFE.Controllers
             {
                 var resp = await _api.PatchJsonAsync($"lessons/materials/{materialId}", requestBody);
                 var respContent = await resp.Content.ReadAsStringAsync();
-                
+
                 if (resp.IsSuccessStatusCode)
                     return Json(new { success = true, data = respContent });
-                
+
                 return Json(new { success = false, message = respContent });
             }
             catch (Exception ex)
