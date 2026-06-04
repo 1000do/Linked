@@ -93,6 +93,18 @@ namespace CourseMarketplaceBE.Application.Services
             }
             return result;
         }
+
+        public async Task<bool> MarkAllAsReadAsync(int userId)
+        {
+            var result = await _repo.MarkAllAsReadAsync(userId);
+            if (result)
+            {
+                await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", null);
+                await _hubContext.Clients.All.SendAsync("ReceiveNotification");
+            }
+            return result;
+        }
+
         public async Task<List<NotificationAdminResponseDto>> GetAllNotificationsForAdminAsync()
         {
             // Tự động dọn dẹp các thông báo đã đọc và cũ hơn 30 ngày

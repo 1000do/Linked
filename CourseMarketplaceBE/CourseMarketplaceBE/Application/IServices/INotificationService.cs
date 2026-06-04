@@ -13,6 +13,7 @@ namespace CourseMarketplaceBE.Application.IServices
         Task<bool> DeleteNotificationAsync(int notiId, int userId);
         Task<List<Notification>> GetAllNotificationsAsync();
         Task<bool> MarkAsReadAsync(int notificationId, int userId);
+        Task<bool> MarkAllAsReadAsync(int userId);
         Task<List<string>> SearchEmailsAsync(string query);
         Task<int> GetUnreadCountAsync(int userId);
         /// <summary>Gửi thông báo nâng cao (ALL hoặc danh sách email). Trả -1 nếu dữ liệu không hợp lệ.</summary>

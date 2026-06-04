@@ -57,6 +57,23 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
             return true;
         }
 
+        public async Task<bool> MarkAllAsReadAsync(int userId)
+        {
+            var unreadNotifications = await _context.Notifications
+                .Where(n => n.ReceiverId == userId && (n.IsRead == false || n.IsRead == null))
+                .ToListAsync();
+
+            if (!unreadNotifications.Any()) return true;
+
+            foreach (var notification in unreadNotifications)
+            {
+                notification.IsRead = true;
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<int> GetUnreadCountAsync(int userId)
         {
             return await _context.Notifications

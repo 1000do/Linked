@@ -40,6 +40,24 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             return Ok(data);
         }
 
+        [HttpPut("mark-all-as-read")]
+        public async Task<IActionResult> MarkAllAsRead()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdClaim == null) return Unauthorized();
+
+            var userId = int.Parse(userIdClaim);
+            try
+            {
+                var result = await _notiService.MarkAllAsReadAsync(userId);
+                return Ok(new { message = "All notifications marked as read." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to mark all notifications as read"));
+            }
+        }
+
         [HttpPut("mark-as-read/{id}")]
         public async Task<IActionResult> MarkAsRead(int id)
         {
