@@ -2430,6 +2430,61 @@
                 return;
             }
 
+            // Check what you will learn & requirements
+            const learnText = window.courseLearnQuill ? window.courseLearnQuill.getText().trim() : '';
+            const reqText = window.courseReqQuill ? window.courseReqQuill.getText().trim() : '';
+
+            if (!learnText || learnText === '') {
+                switchMainTab('landing');
+                Swal.fire({
+                    title: 'Incomplete Information',
+                    text: 'Please fill in "What you will learn" on the Course Landing Page tab before submitting.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+                return;
+            } else if (learnText.length < 20) {
+                switchMainTab('landing');
+                Swal.fire({
+                    title: 'Information Too Short',
+                    text: '"What you will learn" must be at least 20 characters long.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+                return;
+            }
+
+            if (!reqText || reqText === '') {
+                switchMainTab('landing');
+                Swal.fire({
+                    title: 'Incomplete Information',
+                    text: 'Please fill in "Requirements" on the Course Landing Page tab before submitting.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+                return;
+            } else if (reqText.length < 20) {
+                switchMainTab('landing');
+                Swal.fire({
+                    title: 'Information Too Short',
+                    text: '"Requirements" must be at least 20 characters long.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+                return;
+            }
+
+            if (!thumb || thumb.trim() === '') {
+                switchMainTab('landing');
+                Swal.fire({
+                    title: 'Incomplete Information',
+                    text: 'Please upload a Course Thumbnail on the Course Landing Page tab before submitting.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+                return;
+            }
+
             // 2. Check curriculum (Must have at least one lesson)
             if (!lessonsData || lessonsData.length === 0) {
                 switchMainTab('curriculum');

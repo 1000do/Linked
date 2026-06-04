@@ -429,23 +429,29 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── ADD MATERIAL (AJAX) ──────────────────────────────────────────
         [HttpPost]
-        public async Task<IActionResult> AddMaterial([FromForm] int lessonId, [FromForm] string title, [FromForm] string description, [FromForm] string materialUrl, [FromForm] string type, [FromForm] int? duration, [FromForm] long? fileSize, [FromForm] string? fileExtension)
+        public async Task<IActionResult> AddMaterial([FromForm] AddMaterialViewModel model)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return Json(new { success = false, message = errors });
+            }
+
             try
             {
                 var formData = new MultipartFormDataContent();
-                formData.Add(new StringContent(title ?? "Untitled Material"), "Title");
-                if (!string.IsNullOrEmpty(description))
-                    formData.Add(new StringContent(description), "Description");
-                if (!string.IsNullOrEmpty(materialUrl))
-                    formData.Add(new StringContent(materialUrl), "MaterialUrl");
+                formData.Add(new StringContent(model.Title), "Title");
+                if (!string.IsNullOrEmpty(model.Description))
+                    formData.Add(new StringContent(model.Description), "Description");
+                if (!string.IsNullOrEmpty(model.MaterialUrl))
+                    formData.Add(new StringContent(model.MaterialUrl), "MaterialUrl");
                 
-                formData.Add(new StringContent(type ?? "video"), "MaterialMetadata.FileType");
-                if (duration.HasValue) formData.Add(new StringContent(duration.Value.ToString()), "MaterialMetadata.Duration");
-                if (fileSize.HasValue) formData.Add(new StringContent(fileSize.Value.ToString()), "MaterialMetadata.FileSize");
-                if (!string.IsNullOrEmpty(fileExtension)) formData.Add(new StringContent(fileExtension), "MaterialMetadata.FileExtension");
+                formData.Add(new StringContent(model.Type), "MaterialMetadata.FileType");
+                if (model.Duration.HasValue) formData.Add(new StringContent(model.Duration.Value.ToString()), "MaterialMetadata.Duration");
+                if (model.FileSize.HasValue) formData.Add(new StringContent(model.FileSize.Value.ToString()), "MaterialMetadata.FileSize");
+                if (!string.IsNullOrEmpty(model.FileExtension)) formData.Add(new StringContent(model.FileExtension), "MaterialMetadata.FileExtension");
 
-                var resp = await _api.PostFormDataAsync($"lessons/{lessonId}/materials", formData);
+                var resp = await _api.PostFormDataAsync($"lessons/{model.LessonId}/materials", formData);
 
                 if (resp.IsSuccessStatusCode)
                 {
@@ -571,21 +577,27 @@ namespace CourseMarketplaceFE.Controllers
         
         // ─── UPDATE COURSE DETAILS (AJAX) ─────────────────────────────────
         [HttpPost]
-        public async Task<IActionResult> UpdateDetails([FromForm] int courseId, [FromForm] string title, [FromForm] string description, [FromForm] decimal price, [FromForm] int categoryId, [FromForm] string whatYouWillLearn, [FromForm] string requirements, [FromForm] string thumbnailUrl)
+        public async Task<IActionResult> UpdateDetails([FromForm] UpdateCourseDetailsViewModel model)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return Json(new { success = false, message = errors });
+            }
+
             try
             {
                 var formData = new MultipartFormDataContent();
-                formData.Add(new StringContent(courseId.ToString()), "CourseId");
-                formData.Add(new StringContent(title), "Title");
-                formData.Add(new StringContent(description ?? ""), "Description");
-                formData.Add(new StringContent(price.ToString()), "Price");
-                formData.Add(new StringContent(categoryId.ToString()), "CategoryId");
-                formData.Add(new StringContent(whatYouWillLearn ?? ""), "WhatYouWillLearn");
-                formData.Add(new StringContent(requirements ?? ""), "Requirements");
-                formData.Add(new StringContent(thumbnailUrl ?? ""), "CourseThumbnailUrl");
+                formData.Add(new StringContent(model.CourseId.ToString()), "CourseId");
+                formData.Add(new StringContent(model.Title), "Title");
+                formData.Add(new StringContent(model.Description ?? ""), "Description");
+                formData.Add(new StringContent(model.Price.ToString()), "Price");
+                formData.Add(new StringContent(model.CategoryId.ToString()), "CategoryId");
+                formData.Add(new StringContent(model.WhatYouWillLearn ?? ""), "WhatYouWillLearn");
+                formData.Add(new StringContent(model.Requirements ?? ""), "Requirements");
+                formData.Add(new StringContent(model.ThumbnailUrl ?? ""), "CourseThumbnailUrl");
 
-                var resp = await _api.PutFormDataAsync($"courses/{courseId}", formData);
+                var resp = await _api.PutFormDataAsync($"courses/{model.CourseId}", formData);
 
                 if (resp.IsSuccessStatusCode)
                 {

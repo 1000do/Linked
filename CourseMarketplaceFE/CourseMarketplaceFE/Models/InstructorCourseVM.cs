@@ -69,4 +69,58 @@ namespace CourseMarketplaceFE.Models
         public string? FileType { get; set; }
         public string? CloudPublicId { get; set; }
     }
+
+    public class AddMaterialViewModel
+    {
+        [Required(ErrorMessage = "Lesson ID is required")]
+        public int LessonId { get; set; }
+
+        [Required(ErrorMessage = "Material title is required")]
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Title must be between 3 and 100 characters")]
+        public string Title { get; set; } = null!;
+
+        public string? Description { get; set; }
+
+        [Required(ErrorMessage = "Material URL is required")]
+        public string MaterialUrl { get; set; } = null!;
+
+        [Required(ErrorMessage = "Material type is required")]
+        public string Type { get; set; } = null!; // "video" or "document"
+
+        public int? Duration { get; set; }
+        public long? FileSize { get; set; }
+        public string? FileExtension { get; set; }
+    }
+
+    public class UpdateCourseDetailsViewModel
+    {
+        [Required(ErrorMessage = "Course ID is required")]
+        public int CourseId { get; set; }
+
+        [Required(ErrorMessage = "Title is required")]
+        [MinLength(5, ErrorMessage = "Title must be at least 5 characters long")]
+        [MaxLength(100, ErrorMessage = "Title cannot exceed 100 characters")]
+        public string Title { get; set; } = null!;
+
+        [Required(ErrorMessage = "Description is required")]
+        public string Description { get; set; } = null!;
+
+        [Range(0, 10000, ErrorMessage = "Price must be between 0 and 10000")]
+        public decimal Price { get; set; }
+
+        [Required(ErrorMessage = "Category is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Please select a valid Category")]
+        public int CategoryId { get; set; }
+
+        [Required(ErrorMessage = "What you will learn is required")]
+        [MinLength(10, ErrorMessage = "What you will learn must be at least 10 characters long")]
+        public string WhatYouWillLearn { get; set; } = null!;
+
+        [Required(ErrorMessage = "Requirements are required")]
+        [MinLength(10, ErrorMessage = "Requirements must be at least 10 characters long")]
+        public string Requirements { get; set; } = null!;
+
+        [Required(ErrorMessage = "Thumbnail URL is required")]
+        public string ThumbnailUrl { get; set; } = null!;
+    }
 }
