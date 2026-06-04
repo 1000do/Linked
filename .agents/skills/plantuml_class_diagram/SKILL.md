@@ -1,3 +1,113 @@
+---
+name: plantuml_class_diagram
+description: Guides the generation and modification of standardized, high-quality PlantUML class diagrams for application modules following strict project design and styling guidelines.
+---
+
+# PlantUML Class Diagram Generation Skill
+
+This skill provides comprehensive instructions, architectural guidelines, styling rules, and concrete examples for creating and refactoring PlantUML class diagrams. It ensures diagrams are technically accurate, visually consistent, and represent class definitions (fields, properties, methods, interfaces, and database contexts) according to the project's class diagram standard.
+
+---
+
+## 1. General Participants (Stereotypes & Components)
+
+Depending on the specific use case, a class diagram may include:
+- **Frontend Controller**: MVC or API controllers in the frontend layer.
+- **ViewModel**: Client-side or UI-focused data models.
+- **Backend Controller**: API controllers handling backend routes.
+- **Service** & **IService**: Business logic implementation and its corresponding interface.
+- **DTO (Data Transfer Object)**: Structured objects for data transfer between layers (e.g., Request, Response, Command/Result DTOs).
+- **Repository** & **IRepository**: Data access logic and its corresponding interface.
+- **AppDbContext**: EF Core / Database context class.
+- **Entity**: Domain or database entities.
+- **Exclude**: Exclude any framework-native or programming-language-native participants (e.g., `ApiClient`, `List`, `Dictionary`, etc.).
+
+---
+
+## 2. Allowed Relationships & Syntax
+
+Use **ONLY** the following relationship connections. Do not use any custom or standard notations not listed here:
+
+| Relationship Type | PlantUML Syntax | Direction/Meaning |
+| :--- | :---: | :--- |
+| **Dependency** | `..>` | Points *towards* the class being depended on (e.g., `A ..> B`) |
+| **Unidirectional Association** | `-->` | Points *towards* the reference target (e.g., `A --> B`) |
+| **Bidirectional Association** | `--` | Standard reference link with no specific arrow direction |
+| **Aggregation** | `o--` | Part-of relationship; hollow diamond on the container side |
+| **Composition** | `*--` | Strong ownership; filled diamond on the owner/container side |
+| **Realization (Implementation)**| `..|>` | Standard interface implementation; hollow arrow pointing to interface |
+| **Inheritance** | `--|>` | Standard class inheritance; hollow arrow pointing to base class |
+
+> [!IMPORTANT]
+> **Multiplicity / Cardinality**: DO NOT include any multiplicity labels or cardinality text on relationships (e.g., do not use `class1 "1" --> "*" class2`). Leave relationships clean of cardinality.
+
+---
+
+## 3. Detailed Relationship Assignment Rules
+
+To maintain consistency across diagrams, assign relationships strictly according to these contextual rules:
+
+### A. Aggregation (`o--`) & Composition (`*--`)
+- **Strict Limit**: Use aggregation and composition **ONLY** for relationships between:
+  - An **Entity** and another **Entity**
+  - A **ViewModel** and another **ViewModel**
+  - A **DTO** and another **DTO**
+- *Example*: If `Order` entity owns a collection of `OrderItem` entities, use composition: `Order *-- OrderItem`.
+- **Fallbacks**: If composition/aggregation is not appropriate for these types, use **Unidirectional** (`-->`) or **Bidirectional** (`--`) Association.
+
+### B. Dependency (`..>`)
+- Use a **Dependency** arrow pointing *towards* the **ViewModel / DTO / Entity** for any references originating from controllers, services, or repositories.
+- *Triggers*: Method arguments, local variable declarations, or return values where a controller, service, or repository utilizes a ViewModel, DTO, or Entity.
+- *Example*: `CourseService ..> CourseDto` (Service returns or accepts the DTO).
+- Additionally, use a **Dependency** arrow from Frontend Controller to Backend Controller if Frontend Controller participates in the use case.
+
+### C. Unidirectional Association (`-->`)
+- Use a **Unidirectional Association** pointing *towards* the interface or DB context (i.e., **IService / IRepository / AppDbContext**) for relationships where these types are held as private fields/properties (e.g., dependency injection).
+- *Triggers*: A controller, service, or repository holds an instance of `IService`, `IRepository`, or `AppDbContext` as a member field.
+- *Example*: `CourseController --> ICourseService` (Controller references its service interface).
+
+### D. Realization (`..|>`) and Inheritance (`--|>`):
+- Apply standard object-oriented rules:
+  - Use `..|>` when a class implements an interface (e.g., `CourseService ..|> ICourseService`).
+  - Use `--|>` when a class inherits from a base class (e.g., `InstructorCourseController --|> Controller`).
+
+---
+
+## 4. Best Practices & Styling
+
+- **Modern Clean Theme**: Use standard PlantUML styling directives at the top of the file for professional aesthetics:
+  ```plantuml
+  ' Styling & Settings
+  skinparam style strictuml
+  skinparam shadowing false
+  skinparam class {
+      BackgroundColor White
+      BorderColor #1A73E8
+      ArrowColor #5F6368
+  }
+  ```
+- **Namespaces / Packages**: Do not use namespaces/packages.
+- **Members Representation & Signatures**:
+  - **Field Attributes**: Include private field attributes related to the functionalities, formatted as `visibility attributeName : Interface/Class/Data Type` (e.g., `- _courseRepository : ICourseRepository`).
+  - **Full Method Signatures**: Provide complete signatures for methods, specifying visibility (`+` for public, `-` for private, `#` for protected), arguments with their types, and the return type (e.g., `+ CreateCourseAsync(request: CourseCreateRequest, instructorId: int): Task<CourseResponse>`).
+  - **Interface Content Styling**: For interfaces, write all internal contents (methods, properties, attributes) entirely in italics. In PlantUML, format them with double slashes (e.g., `//+ CreateCourseAsync(request: CourseCreateRequest, instructorId: int): Task<CourseResponse>//`).
+  - **Relevance**: Keep attributes and methods clean and relevant to the specific usecase/functionality to avoid clutter.
+- **Standard Colors**:
+  - Abstract/Interface: `ABSTRACT_COLOR` `#FFE6CC`
+  - Service Implementation: `SERVICE_COLOR` `#CCE5FF`
+  - ViewModel/DTO: `DTO_COLOR` `#E6CCFF`
+  - Domain Entity: `ENTITY_COLOR` `#CCFFE6`
+  - Repository Implementation: `REPOSITORY_COLOR` `#FFFFCC`
+  - Controller: `CONTROLLER_COLOR` `#FFE6E6`
+  - DbContext: `DbContext` `#E6F3FF`
+
+---
+
+## 5. Complete Reference Template (`create_course.plantuml`)
+
+Below is the standard, working PlantUML class diagram depicting the "Create Course" structure:
+
+```plantuml
 @startuml CreateCourse_ClassDiagram
 
 ' Styling & Settings
@@ -336,3 +446,4 @@ CourseCommandService ..> CourseResponse : creates
 CourseRepository ..> Course : creates
 
 @enduml
+```
