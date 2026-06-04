@@ -1062,6 +1062,12 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.RequirementsHash).HasMaxLength(32).IsFixedLength().HasColumnName("requirements_hash");
             entity.Property(e => e.ThumbnailHash).HasMaxLength(32).IsFixedLength().HasColumnName("thumbnail_hash");
 
+            entity.HasIndex(e => e.TitleHash, "course_exts_title_hash_key").IsUnique();
+            entity.HasIndex(e => e.DescriptionHash, "course_exts_description_hash_key").IsUnique();
+            entity.HasIndex(e => e.WhatYouWillLearnHash, "course_exts_what_you_will_learn_hash_key").IsUnique();
+            entity.HasIndex(e => e.RequirementsHash, "course_exts_requirements_hash_key").IsUnique();
+            entity.HasIndex(e => e.ThumbnailHash, "course_exts_thumbnail_hash_key").IsUnique();
+
             entity.HasOne(d => d.Course).WithOne(p => p.CourseExt)
                 .HasForeignKey<CourseExt>(d => d.CourseId)
                 .OnDelete(DeleteBehavior.Cascade)

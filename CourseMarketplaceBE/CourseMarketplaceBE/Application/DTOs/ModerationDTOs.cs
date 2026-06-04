@@ -315,15 +315,35 @@ namespace CourseMarketplaceBE.Application.DTOs
 
 
     /// <summary>
-    /// DTO for course hashes (used internally)
+    /// DTO for course hashes (used internally). All hash fields have UNIQUE constraints in the database.
     /// </summary>
     public class CourseExtDto
     {
         public int CourseId { get; set; } = 0;
+
+        /// <summary>
+        /// Gets or sets the title hash. Must be unique across all courses.
+        /// </summary>
         public string TitleHash { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the description hash. Must be unique across all courses.
+        /// </summary>
         public string DescriptionHash { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the what-you-will-learn hash. Must be unique across all courses.
+        /// </summary>
         public string WhatYouWillLearnHash { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the requirements hash. Must be unique across all courses.
+        /// </summary>
         public string RequirementsHash { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the thumbnail hash. Must be unique across all courses.
+        /// </summary>
         public string ThumbnailHash { get; set; } = string.Empty;
     }
 

@@ -229,14 +229,30 @@ CREATE TABLE learning_materials (
     cloud_public_id TEXT
 );
 
+-- CREATE TABLE course_exts (
+--     course_id INT PRIMARY KEY REFERENCES courses(course_id) ON DELETE CASCADE,
+--     title_hash CHAR(32) UNIQUE,
+--     description_hash CHAR(32) UNIQUE,
+--     what_you_will_learn_hash CHAR(32) UNIQUE,
+--     requirements_hash CHAR(32) UNIQUE,
+--     thumbnail_hash CHAR(32) UNIQUE
+-- );
+
 CREATE TABLE course_exts (
     course_id INT PRIMARY KEY REFERENCES courses(course_id) ON DELETE CASCADE,
     title_hash CHAR(32),
     description_hash CHAR(32),
     what_you_will_learn_hash CHAR(32),
     requirements_hash CHAR(32),
-    thumbnail_hash CHAR(32)
+    thumbnail_hash CHAR(32),
+    
+    CONSTRAINT uq_title_hash UNIQUE (title_hash),
+    CONSTRAINT uq_description_hash UNIQUE (description_hash),
+    CONSTRAINT uq_what_you_will_learn_hash UNIQUE (what_you_will_learn_hash),
+    CONSTRAINT uq_requirements_hash UNIQUE (requirements_hash),
+    CONSTRAINT uq_thumbnail_hash UNIQUE (thumbnail_hash)
 );
+
 
 CREATE TABLE text_embeddings (
     text_embedding_id SERIAL PRIMARY KEY,

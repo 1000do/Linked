@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
-using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,10 +12,12 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories;
 public class CourseRepository : ICourseRepository
 {
     private readonly AppDbContext _context;
+    private readonly ICourseExtRepository _courseExtRepository;
 
-    public CourseRepository(AppDbContext context)
+    public CourseRepository(AppDbContext context, ICourseExtRepository courseExtRepository)
     {
         _context = context;
+        _courseExtRepository = courseExtRepository;
     }
 
     public async Task<IEnumerable<Course>> GetInstructorCoursesAsync(int instructorId)
@@ -78,12 +80,12 @@ public class CourseRepository : ICourseRepository
     }
 
     public async Task<(IEnumerable<Course> Courses, int TotalCount)> GetAllPublishedCoursesPagedAsync(
-        string? search = null, 
-        string? category = null, 
-        string? sort = null, 
+        string? search = null,
+        string? category = null,
+        string? sort = null,
         string? price = null,
         string? rating = null,
-        int? page = null, 
+        int? page = null,
         int? pageSize = null)
     {
         var queryable = _context.Courses
@@ -123,7 +125,7 @@ public class CourseRepository : ICourseRepository
         if (!string.IsNullOrEmpty(search))
         {
             var searchLower = search.ToLower();
-            queryable = queryable.Where(c => c.Title.ToLower().Contains(searchLower) || 
+            queryable = queryable.Where(c => c.Title.ToLower().Contains(searchLower) ||
                                              (c.Description != null && c.Description.ToLower().Contains(searchLower)));
         }
 
@@ -267,7 +269,12 @@ public class CourseRepository : ICourseRepository
     public async Task AddAsync(Course course)
     {
         await _context.Courses.AddAsync(course);
-        
+
+    }
+
+    public void Add(Course course)
+    {
+        _context.Courses.Add(course);
     }
 
     public void Update(Course course)
@@ -336,7 +343,7 @@ public class CourseRepository : ICourseRepository
         if (!string.IsNullOrEmpty(filter.Search))
         {
             var search = filter.Search.ToLower();
-            query = query.Where(c => c.Title.ToLower().Contains(search) || 
+            query = query.Where(c => c.Title.ToLower().Contains(search) ||
                                    c.Instructor!.InstructorNavigation!.FullName.ToLower().Contains(search));
         }
 
@@ -365,7 +372,8 @@ public class CourseRepository : ICourseRepository
             .ToListAsync();
         var now = DateTime.Now;
 
-        var items = courses.Select(c => {
+        var items = courses.Select(c =>
+        {
             var dto = new CourseModerationDto
             {
                 CourseId = c.CourseId,
@@ -432,4 +440,6 @@ public class CourseRepository : ICourseRepository
     {
         return await _context.SaveChangesAsync();
     }
+
+
 }

@@ -6,9 +6,13 @@ using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Exceptions;
 using CourseMarketplaceBE.Domain.IRepositories;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using CourseMarketplaceBE.Share.Helpers;
 
 namespace CourseMarketplaceBE.Application.Services
 {
@@ -58,7 +62,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
         }
 
-        
+
 
 
 
@@ -92,26 +96,39 @@ namespace CourseMarketplaceBE.Application.Services
         }
 
         public async Task<int> SaveCourseHashesAsync(SaveCourseHashesCommand command)
-    {
-        var entity = new Domain.Entities.CourseExt
         {
-            CourseId = command.CourseId,
-            TitleHash = command.TitleHash,
-            DescriptionHash = command.DescriptionHash,
-            WhatYouWillLearnHash = command.WhatYouWillLearnHash,
-            RequirementsHash = command.RequirementsHash,
-            ThumbnailHash = command.ThumbnailHash
-        };
-        var existing = await _courseExtRepository.GetByIdAsync(command.CourseId);
-        if (existing != null)
-        {
-            _courseExtRepository.Update(entity);
+            try
+            {
+
+                var entity = new Domain.Entities.CourseExt
+                {
+                    CourseId = command.CourseId,
+                    TitleHash = command.TitleHash,
+                    DescriptionHash = command.DescriptionHash,
+                    WhatYouWillLearnHash = command.WhatYouWillLearnHash,
+                    RequirementsHash = command.RequirementsHash,
+                    ThumbnailHash = command.ThumbnailHash
+                };
+                var existing = await _courseExtRepository.GetByIdAsync(command.CourseId);
+                if (existing != null)
+                {
+                    _courseExtRepository.Update(entity);
+                }
+                else
+                {
+                    await _courseExtRepository.AddAsync(entity);
+                }
+                return await _courseExtRepository.SaveChangesAsync();
+            }
+            catch (CourseExtException ex)
+            {
+                var dict = JsonSerializer.Deserialize<Dictionary<string, object?>>(ex.Message);
+                var column = dict?["column"];
+                var propertyName = CaseMapper.ToPascalCase(column?.ToString() ?? "");
+                _logger.LogError(ex, "Fingerprint duplication found for {Property} of course {CourseId}", propertyName, command.CourseId);
+                throw new BadRequestException($"Content duplication detected for {propertyName} of course {command.CourseId}");
+            }
+
         }
-        else
-        {
-            await _courseExtRepository.AddAsync(entity);
-        }
-        return await _courseExtRepository.SaveChangesAsync();
-    }
     }
 }

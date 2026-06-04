@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
 using CourseMarketplaceBE.Application.DTOs;
@@ -9,7 +10,9 @@ using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Exceptions;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Share.Helpers;
 using Microsoft.Extensions.Logging;
 
 namespace CourseMarketplaceBE.Application.Services;
@@ -28,6 +31,7 @@ public class CourseCommandService : ICourseCommandService
     private readonly HttpClient _httpClient;
     private readonly IMapper _mapper;
     private readonly ILockoutRepository _lockoutRepo;
+    private readonly ICourseExtRepository _courseExtRepo;
 
     public CourseCommandService(
         ICourseRepository courseRepository,
@@ -42,7 +46,8 @@ public class CourseCommandService : ICourseCommandService
         IHttpClientFactory httpClientFactory,
         // IMapper mapper)
         IMapper mapper,
-        ILockoutRepository lockoutRepo)
+        ILockoutRepository lockoutRepo,
+        ICourseExtRepository courseExtRepo)
     {
         _courseRepository = courseRepository;
         _instructorRepository = instructorRepository;
@@ -56,6 +61,7 @@ public class CourseCommandService : ICourseCommandService
         _httpClient = httpClientFactory.CreateClient("AiContentModeration");
         _mapper = mapper;
         _lockoutRepo = lockoutRepo;
+        _courseExtRepo = courseExtRepo;
     }
 
     private async Task<(int, bool)> CheckInstructorRights(int instructorId)
@@ -108,6 +114,8 @@ public class CourseCommandService : ICourseCommandService
             }
         }
 
+
+
         var course = new Course
         {
             InstructorId = validInstructorId,
@@ -123,14 +131,54 @@ public class CourseCommandService : ICourseCommandService
             UpdatedAt = DateTime.UtcNow
         };
 
-        await _courseRepository.AddAsync(course);
-        int rowsCreate = await _courseRepository.SaveChangesAsync();
-        if (rowsCreate <= 0)
-            throw new InvalidOperationException("Failed to save changes when creating course.");
+        _courseRepository.Add(await AddCourseFingerprintAsync(course));
 
-        await UpdateCourseHashesAsync(course);
+        int numRows = await SaveChangesWithFingerprintAsync();
+        if (numRows == 0) throw new InvalidOperationException("Failed to create course and fingerprint");
+
 
         return _mapper.Map<CourseResponse>(course);
+    }
+
+    private async Task<int> SaveChangesWithFingerprintAsync()
+    {
+        try
+        {
+            return await _courseExtRepo.SaveChangesAsync();
+        }
+        catch (CourseExtException ex)
+        {
+
+            string field = GetDuplicateFieldFromErrorMessage(ex.Message);
+            throw new BadRequestException($"Content duplication detected on '{field}'");
+
+
+
+        }
+    }
+    private string GetDuplicateFieldFromErrorMessage(string message)
+    {
+        //Extract column name from constraint name
+        var dict = JsonSerializer.Deserialize<Dictionary<string, object?>>(message);
+        var parts = dict?["constraint"]?.ToString()?.Split("_") ?? [];
+        _logger.LogInformation("Raw parts: {parts}", JsonSerializer.Serialize(parts));
+        List<string> nameparts = [];
+        int len = parts.Length;
+        _logger.LogInformation("Length of parts: {len}", len);
+        for (int i = 0; i < len; i++)
+        {
+            if (i == 0 || i == len - 1)
+            {
+                continue;
+            }
+
+            _logger.LogInformation("Part {i} : {part}", i, parts[i]);
+            nameparts.Add(parts[i].ToPascalCase());
+        }
+        _logger.LogInformation("Column name parts: {nameparts}", JsonSerializer.Serialize(nameparts));
+        string field = String.Join(" ", nameparts);
+        _logger.LogInformation("Column name: {columnName}", field);
+        return field;
     }
 
     public async Task<CourseResponse> UpdateCourseAsync(int courseId, CourseUpdateRequest request, int instructorId)
@@ -168,7 +216,7 @@ public class CourseCommandService : ICourseCommandService
         }
 
         bool isChanged = false;
-        
+
         if (course.CategoryId != request.CategoryId) isChanged = true;
         if (!string.Equals(course.Title, request.Title)) isChanged = true;
         if (!string.Equals(course.Description, request.Description)) isChanged = true;
@@ -177,10 +225,10 @@ public class CourseCommandService : ICourseCommandService
         var isStripeActive = instructor != null
             && !string.IsNullOrEmpty(instructor.StripeAccountId)
             && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
-        
+
         var newPrice = isStripeActive ? request.Price : 0m;
         if (course.Price != newPrice) isChanged = true;
-        
+
         if (!string.Equals(course.CourseThumbnailUrl, thumbnailUrl)) isChanged = true;
         if (!string.Equals(course.WhatYouWillLearn, request.WhatYouWillLearn)) isChanged = true;
         if (!string.Equals(course.Requirements, request.Requirements)) isChanged = true;
@@ -246,6 +294,37 @@ public class CourseCommandService : ICourseCommandService
         if (numRows == 0) throw new InvalidOperationException("Failed to update course fingerprint");
     }
 
+    private async Task<Course> AddCourseFingerprintAsync(Course course)
+    {
+        string? thumbHash = null;
+        if (!string.IsNullOrEmpty(course.CourseThumbnailUrl))
+        {
+            try
+            {
+                var bytes = await _httpClient.GetByteArrayAsync(course.CourseThumbnailUrl);
+                thumbHash = await _contentHashService.ComputeFileHashAsync(bytes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"Failed to download thumbnail for hashing: {ex.Message}");
+            }
+        }
+
+        var courseExt = new CourseExt
+        {
+            CourseId = course.CourseId,
+            TitleHash = await _contentHashService.ComputeCourseHashAsync(course.Title),
+            DescriptionHash = await _contentHashService.ComputeCourseHashAsync(course.Description ?? ""),
+            WhatYouWillLearnHash = await _contentHashService.ComputeCourseHashAsync(course.WhatYouWillLearn ?? ""),
+            RequirementsHash = await _contentHashService.ComputeCourseHashAsync(course.Requirements ?? ""),
+            ThumbnailHash = thumbHash
+        };
+
+        course.CourseExt = courseExt;
+        return course;
+    }
+
+
     public async Task UpdateCourseStatusAsync(int courseId, string status, int instructorId)
     {
         var course = await _courseRepository.GetByIdAsync(courseId);
@@ -288,7 +367,7 @@ public class CourseCommandService : ICourseCommandService
 
             var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
             var activeLessons = lessons.Where(l => !l.IsRemoved).ToList();
-            
+
             if (!activeLessons.Any())
             {
                 throw new BadRequestException("Cannot submit course for review. The course must have at least one lesson.");

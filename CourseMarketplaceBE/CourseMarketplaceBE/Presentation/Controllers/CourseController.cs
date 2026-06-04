@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -94,7 +95,7 @@ public class CourseController : ControllerBase
         }
         catch (BadRequestException ex)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+            return BadRequest(ex.Message);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -102,7 +103,7 @@ public class CourseController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to create course"));
+            return BadRequest($"Failed to create course");
         }
         catch (Exception ex)
         {
@@ -122,6 +123,9 @@ public class CourseController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (BadRequestException ex){
+            return StatusCode(400, ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (InvalidOperationException ex)
         {
