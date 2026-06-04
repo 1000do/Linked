@@ -200,7 +200,7 @@
                             <div class="text-center w-32 shrink-0">
                                 <p id="learn-stats-avg" class="text-5xl font-extrabold text-[#006a62] mb-1">—</p>
                                 <div id="learn-stats-stars" class="flex justify-center text-amber-500 mb-1"></div>
-                                <p id="learn-stats-total" class="text-xs font-bold text-[#006a62]">Course Rating</p>
+                                <p id="learn-stats-total" class="text-xs font-bold text-[#006a62]">Lesson Rating</p>
                             </div>
                             
                             <div id="learn-stats-bars" class="flex-1 w-full space-y-1.5 max-w-md">
@@ -381,8 +381,9 @@
 
         // ── Stats (dynamic from DB) ────────────────────────────────
         async function loadLearnStats() {
+            if (!currentLessonId) return;
             try {
-                const res = await fetch('/Course/GetReviewStats/@Model.CourseId');
+                const res = await fetch('/Course/GetLessonReviewStats/' + currentLessonId);
                 const result = await res.json();
                 if (result.success && result.data) {
                     const d = result.data;
@@ -412,8 +413,12 @@
                             </div>
                         </div>
                     `).join('');
+                } else {
+                    document.getElementById('learn-stats-bars').innerHTML = renderErrorState('Failed to load rating statistics.', 'loadLearnStats()');
                 }
-            } catch(e) {}
+            } catch(e) {
+                document.getElementById('learn-stats-bars').innerHTML = renderErrorState('Failed to load rating statistics.', 'loadLearnStats()');
+            }
         }
 
         // ── Eligibility Check ──────────────────────────────────────
@@ -510,7 +515,7 @@
                     } else {
                         lessonList.innerHTML = '<p class="text-slate-400 italic">No reviews yet for this lesson.</p>';
                     }
-                } catch (e) { lessonList.innerHTML = '<p class="text-red-400">Error loading lesson reviews.</p>'; }
+                } catch (e) { lessonList.innerHTML = renderErrorState('Error loading reviews for this lesson.', 'loadReviews()'); }
             }
 
             // Load Course Reviews
@@ -522,7 +527,7 @@
                 } else {
                     courseList.innerHTML = '<p class="text-slate-400 italic">No general reviews yet for this course.</p>';
                 }
-            } catch (e) { courseList.innerHTML = '<p class="text-red-400">Error loading course reviews.</p>'; }
+            } catch (e) { courseList.innerHTML = renderErrorState('Error loading general course reviews.', 'loadReviews()'); }
         }
 
         async function reportReview(reviewId, type) {
@@ -561,7 +566,7 @@
         }
 
         // ── currentUserId từ JWT ────────────────────────────────────────────────────
-        const currentUserId = parseInt('@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0")') || 0;
+        const currentUserId = parseInt('@(Context.Request.Cookies["UserId"] ?? "0")') || 0;
 
         function renderReviewItem(r) {
             const isOwn = currentUserId > 0 && r.userId === currentUserId;
@@ -586,7 +591,7 @@
                                     ${(isEdited && !isRemoved) ? '<span class="text-[10px] text-slate-400 italic">(edited)</span>' : ''}
                                     ${!isRemoved ? `
                                     <div class="relative opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onclick="toggleLearnMenu(this)" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors" title="More options">
+                                        <button onclick="toggleLearnMenu(event, this)" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors" title="More options">
                                             <span class="material-symbols-outlined text-[18px]">more_vert</span>
                                         </button>
                                         <div class="learn-review-menu hidden absolute right-0 top-8 z-30 min-w-[160px] bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5">
@@ -649,15 +654,42 @@
             `;
         }
 
+        function renderErrorState(message, retryFuncStr) {
+            return `
+                <div class="flex flex-col items-center justify-center py-8 px-4 text-center max-w-sm mx-auto">
+                    <div class="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-3">
+                        <span class="material-symbols-outlined text-[24px]">error_outline</span>
+                    </div>
+                    <h4 class="text-slate-800 font-bold text-sm mb-1">Failed to load content</h4>
+                    <p class="text-slate-400 text-xs mb-4 leading-relaxed">${message}</p>
+                    ${retryFuncStr ? `
+                    <button onclick="${retryFuncStr}" class="px-4 py-1.5 bg-[#006a62] hover:bg-[#00544e] text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm">
+                        <span class="material-symbols-outlined text-[14px]">refresh</span> Retry
+                    </button>
+                    ` : ''}
+                </div>
+            `;
+        }
+
         // ── Menu helpers ─────────────────────────────────────────────────
-        function toggleLearnMenu(btn) {
+        function toggleLearnMenu(event, btn) {
+            event.stopPropagation();
+            const menu = btn.nextElementSibling;
+            const isHidden = menu.classList.contains('hidden');
             closeAllLearnMenus();
-            btn.nextElementSibling.classList.toggle('hidden');
-            setTimeout(() => document.addEventListener('click', closeAllLearnMenus, { once: true }), 0);
+            if (isHidden) {
+                menu.classList.remove('hidden');
+            }
         }
         function closeAllLearnMenus() {
             document.querySelectorAll('.learn-review-menu').forEach(m => m.classList.add('hidden'));
         }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.learn-review-menu')) {
+                closeAllLearnMenus();
+            }
+        });
 
         // ── Edit helpers ────────────────────────────────────────────────
         function editLearnReview(reviewId, type, currentRating, currentComment) {
@@ -692,6 +724,7 @@
                 if (result.success) {
                     Swal.fire({ icon: 'success', title: 'Updated!', timer: 1500, showConfirmButton: false });
                     loadReviews();
+                    loadLearnStats();
                     loadLessonRatings();
                 } else {
                     Swal.fire('Error', result.message || 'Could not update review.', 'error');
@@ -711,6 +744,7 @@
                 const result = await res.json();
             if (result.success) {
                 loadReviews();
+                loadLearnStats();
                 loadLessonRatings();
                 Swal.fire({ icon: 'success', title: 'Deleted', timer: 1200, showConfirmButton: false });
             } else {
@@ -871,6 +905,13 @@
                         docDownloadBtn.onclick = () => markAsCompleted(materialId); // Mark when downloaded
                     }
                 }
+            }
+            // If reviews tab is active, reload reviews and stats for the new lesson
+            const reviewsTab = document.getElementById('tab-reviews');
+            if (reviewsTab && !reviewsTab.classList.contains('hidden')) {
+                loadReviews();
+                loadLearnStats();
+                loadLearnEligibility();
             }
         }
 

@@ -314,6 +314,20 @@ namespace CourseMarketplaceFE.Controllers
             return Json(new { success = false });
         }
 
+        /// <summary>Thống kê phân bổ sao của lesson (dynamic từ DB)</summary>
+        [HttpGet]
+        public async Task<IActionResult> GetLessonReviewStats(int id)
+        {
+            var response = await _apiClient.GetAsync($"review/lesson-stats/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(content);
+                return Json(new { success = true, data = json.RootElement.GetProperty("data") });
+            }
+            return Json(new { success = false });
+        }
+
         /// <summary>Kiểm tra quyền review của user cho khóa học</summary>
         [HttpGet]
         public async Task<IActionResult> GetReviewEligibility(int id)

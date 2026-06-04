@@ -61,13 +61,13 @@
                 <div class="aspect-video relative group cursor-pointer" onclick="openPreviewModal()">
                     @{
                         var thumbUrl = string.IsNullOrEmpty(Model.CourseThumbnailUrl) 
-                            ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
+                            ? "/img/default-course.png" 
                             : Model.CourseThumbnailUrl;
                         if (thumbUrl.Contains("cloudinary.com")) {
                             thumbUrl = thumbUrl.Replace("/image/upload/", "/image/upload/f_auto,q_auto,w_600/");
                         }
                     }
-                    <img src="@thumbUrl" class="w-full h-full object-cover" />
+                    <img src="@thumbUrl" onerror="this.onerror=null; this.src='/img/default-course.png';" class="w-full h-full object-cover" />
                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
                         <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                             <span class="material-symbols-outlined text-4xl text-slate-900">play_arrow</span>
@@ -800,9 +800,15 @@
                         </div>
                     </div>
                 `).join('');
+                } else {
+                    document.getElementById('stats-bars').innerHTML = renderErrorState('Failed to load rating statistics.', 'loadReviewStats()');
+                }
             }
-        } catch(e) { console.warn('Stats load failed', e); }
-    }
+        } catch(e) {
+            console.warn('Stats load failed', e);
+            document.getElementById('stats-bars').innerHTML = renderErrorState('Failed to load rating statistics.', 'loadReviewStats()');
+        }
+    
 
     async function loadReviewEligibility() {
         try {
@@ -877,7 +883,7 @@
     }
 
     // ── currentUserId từ JWT trong cookie (dùng để nhận biết review của mình) ──
-    const currentUserId = parseInt('@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0")') || 0;
+    const currentUserId = parseInt('@(Context.Request.Cookies["UserId"] ?? "0")') || 0;
 
     let currentReviewPage = 1;
     const REVIEW_PAGE_SIZE = 5;
@@ -918,7 +924,7 @@
                                         <!-- ⋮ dropdown -->
                                         ${!isRemoved ? `
                                         <div class="relative opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onclick="toggleReviewMenu(this)" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors" title="More options">
+                                            <button onclick="toggleReviewMenu(event, this)" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors" title="More options">
                                                 <span class="material-symbols-outlined text-[18px]">more_vert</span>
                                             </button>
                                             <div class="review-menu hidden absolute right-0 top-8 z-30 min-w-[160px] bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5">
@@ -997,22 +1003,46 @@
                     : `<p class="text-slate-400 italic text-center py-10">No reviews yet for this course.</p>`;
             }
         } catch (e) {
-            list.innerHTML = '<p class="text-red-400 italic text-center py-10">Could not load reviews.</p>';
+            list.innerHTML = renderErrorState('Could not load reviews.', `loadReviews(${page})`);
         }
     }
 
-    // ── Toggle / close dropdown menus ─────────────────────────────────
-    function toggleReviewMenu(btn) {
-        closeAllMenus();
-        const menu = btn.nextElementSibling;
-        menu.classList.toggle('hidden');
-        // Đóng khi click ra ngoài
-        setTimeout(() => document.addEventListener('click', closeAllMenusOnce, { once: true }), 0);
+    function renderErrorState(message, retryFuncStr) {
+        return `
+            <div class="flex flex-col items-center justify-center py-8 px-4 text-center max-w-sm mx-auto">
+                <div class="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-3">
+                    <span class="material-symbols-outlined text-[24px]">error_outline</span>
+                </div>
+                <h4 class="text-slate-800 font-bold text-sm mb-1">Failed to load content</h4>
+                <p class="text-slate-400 text-xs mb-4 leading-relaxed">${message}</p>
+                ${retryFuncStr ? `
+                <button onclick="${retryFuncStr}" class="px-4 py-1.5 bg-[#a435f0] hover:bg-[#8710d8] text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm">
+                    <span class="material-symbols-outlined text-[14px]">refresh</span> Retry
+                </button>
+                ` : ''}
+            </div>
+        `;
     }
-    function closeAllMenusOnce() { closeAllMenus(); }
+
+    // ── Toggle / close dropdown menus ─────────────────────────────────
+    function toggleReviewMenu(event, btn) {
+        event.stopPropagation();
+        const menu = btn.nextElementSibling;
+        const isHidden = menu.classList.contains('hidden');
+        closeAllMenus();
+        if (isHidden) {
+            menu.classList.remove('hidden');
+        }
+    }
     function closeAllMenus() {
         document.querySelectorAll('.review-menu').forEach(m => m.classList.add('hidden'));
     }
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.review-menu')) {
+            closeAllMenus();
+        }
+    });
 
     // ── Edit review ───────────────────────────────────────────────────
     function editReview(reviewId, type, currentRating, currentComment) {

@@ -133,16 +133,9 @@
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-4">
                                     <div class="w-14 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-100 shadow-sm">
-                                        @if (!string.IsNullOrEmpty(item.CourseThumbnailUrl))
-                                        {
-                                            <img src="@item.CourseThumbnailUrl" class="w-full h-full object-cover" alt="Thumbnail" />
-                                        }
-                                        else
-                                        {
-                                            <div class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
-                                                <span class="material-symbols-outlined text-[20px]">image</span>
-                                            </div>
-                                        }
+                                        <img src="@(string.IsNullOrEmpty(item.CourseThumbnailUrl) ? "/img/default-course.png" : item.CourseThumbnailUrl)" 
+                                             onerror="this.onerror=null; this.src='/img/default-course.png';"
+                                             class="w-full h-full object-cover" alt="Thumbnail" />
                                     </div>
                                     <div>
                                         <a href="/Course/Details/@item.CourseId" target="_blank" class="font-display font-extrabold text-slate-900 leading-tight hover:text-primary transition-colors block">
