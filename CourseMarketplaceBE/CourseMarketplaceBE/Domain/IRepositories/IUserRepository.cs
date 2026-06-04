@@ -41,8 +41,10 @@ public interface IUserRepository
 
     // Migrated from INotificationRepository
     Task<List<int>> GetAllUserIdsAsync();
+    Task<List<int>> GetUserIdsForStaffSenderAsync();
+    Task<List<int>> GetUserIdsForAdminSenderAsync();
     Task<int?> GetUserIdByEmailAsync(string email);
-    Task<List<string>> SearchEmailsByQueryAsync(string query, int take = 5);
+    Task<List<string>> SearchEmailsByQueryAsync(string query, int senderId, string senderRole, int take = 5);
 
     // Migrated from ICheckoutRepository
     Task<string?> GetUserEmailAsync(int userId);

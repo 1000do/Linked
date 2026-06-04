@@ -105,7 +105,13 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             if (string.IsNullOrWhiteSpace(query)) return Ok(new List<string>());
 
-            var emails = await _notiService.SearchEmailsAsync(query);
+            var senderIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var senderRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (string.IsNullOrEmpty(senderIdClaim) || string.IsNullOrEmpty(senderRole))
+                return Unauthorized();
+
+            var senderId = int.Parse(senderIdClaim);
+            var emails = await _notiService.SearchEmailsAsync(query, senderId, senderRole);
             return Ok(emails);
         }
         [Authorize(Roles = "admin,staff")]
@@ -126,19 +132,25 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         [HttpPost("send-advanced")]
         public async Task<IActionResult> SendAdvanced([FromBody] NotificationAdvancedDto dto)
         {
-            // Validation cơ bản để chống tràn dữ liệu ngay từ Backend
             if (dto.Title.Length > 100 || dto.Content.Length > 100)
                 return BadRequest("Title maximum 100 characters, content maximum 100 characters.");
 
+            var senderIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var senderRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (string.IsNullOrEmpty(senderIdClaim) || string.IsNullOrEmpty(senderRole))
+                return Unauthorized();
+
+            var senderId = int.Parse(senderIdClaim);
+
             try
             {
-                var count = await _notiService.SendAdvancedAsync(dto);
+                var count = await _notiService.SendAdvancedAsync(dto, senderId, senderRole);
                 if (count < 0) return BadRequest("Invalid data.");
                 return Ok(new { message = "Sent successfully.", count });
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to send advanced notifications"));
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
             }
         }
 
