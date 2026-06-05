@@ -514,11 +514,6 @@ namespace CourseMarketplaceBE.Application.Services
         {
             try
             {
-                await _courseCommandService.UpdateCourseStatusAsync(
-                    request.CourseId,
-                    CourseStatus.Pending.ToValue(),
-                    request.InstructorId);
-
                 return await HandleCourseModerationWithAIAsync(request);
             }
             catch (Exception ex)
