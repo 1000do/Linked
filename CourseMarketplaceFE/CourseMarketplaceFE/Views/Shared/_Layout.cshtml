@@ -673,7 +673,10 @@
                 const notiConn = new signalR.HubConnectionBuilder()
                     .withUrl("http://localhost:5207/notificationHub", { accessTokenFactory: () => currentToken })
                     .withAutomaticReconnect().build();
-                notiConn.on("ReceiveNotification", () => loadTopNotifications());
+                notiConn.on("ReceiveNotification", () => {
+                    loadTopNotifications();
+                    document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
+                });
                 notiConn.on("UpdateWishlistCount", () => {
                     if (typeof updateWishlistBadge === 'function') {
                         updateWishlistBadge();

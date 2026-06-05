@@ -1,0 +1,124 @@
+@startuml VerifyEmail_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "AccountController" as AccountControllerFE #FFE6E6 {
+    + SendVerifyOtp() : Task<IActionResult>
+    + VerifyOtp() : IActionResult
+    + VerifyOtp(otp: string) : Task<IActionResult>
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "AuthController" as AuthControllerBE #FFE6E6 {
+    - _authService : IAuthService
+    + SendOtp(email: string) : Task<IActionResult>
+    + VerifyEmail(request: VerifyOtpRequest) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class VerifyOtpRequest #E6CCFF {
+    + Email : string
+    + Otp : string
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Account #CCFFE6 {
+    + AccountId : int <<PK>>
+    + Email : string
+    + IsVerified : bool
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IAuthService #FFE6CC {
+    //+ SendOtpAsync(email: string) : Task<bool>//
+    //+ VerifyEmailAsync(email: string, otp: string) : Task<bool>//
+}
+
+interface IOtpService #FFE6CC {
+    //+ GenerateOtp(email: string, purpose: string) : string//
+    //+ ConsumeOtp(email: string, otp: string, purpose: string) : bool//
+}
+
+interface IEmailService #FFE6CC {
+    //+ SendEmailAsync(to: string, subject: string, body: string) : Task//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IUserRepository #FFE6CC {
+    //+ GetAccountByEmailAsync(email: string) : Task<Account?>//
+    //+ UpdateEmailVerifiedAsync(email: string) : Task<bool>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AuthService #CCE5FF {
+    - _userRepo : IUserRepository
+    - _otpService : IOtpService
+    - _emailService : IEmailService
+    + SendOtpAsync(email: string) : Task<bool>
+    + VerifyEmailAsync(email: string, otp: string) : Task<bool>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetAccountByEmailAsync(email: string) : Task<Account?>
+    + UpdateEmailVerifiedAsync(email: string) : Task<bool>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Accounts : DbSet<Account>
+    + SaveChangesAsync(cancellationToken: CancellationToken) : Task<int>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+AuthControllerBE --> IAuthService
+AuthService --> IUserRepository
+AuthService --> IOtpService
+AuthService --> IEmailService
+UserRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+AuthService ..|> IAuthService
+UserRepository ..|> IUserRepository
+
+' === DEPENDENCY ===
+AccountControllerFE ..> AuthControllerBE : calls via HTTP
+AuthControllerBE ..> VerifyOtpRequest : uses
+AuthService ..> VerifyOtpRequest : uses
+AuthService ..> Account : uses
+UserRepository ..> Account : uses
+
+@enduml

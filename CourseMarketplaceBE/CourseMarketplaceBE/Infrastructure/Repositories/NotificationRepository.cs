@@ -16,23 +16,27 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();
 
-
         public async Task<List<Notification>> GetAllAsync() =>
             await _context.Notifications
-                .Include(n => n.Receiver) // Kết nối bảng Account
-                    .ThenInclude(a => a.User) // Kết nối bảng User từ Account
+                .Include(n => n.Receiver)
+                    .ThenInclude(a => a.User)
+                        .ThenInclude(u => u.Instructor)
+                .Include(n => n.Receiver)
+                    .ThenInclude(a => a.Manager)
+                .Include(n => n.Sender)
+                    .ThenInclude(a => a.User)
+                        .ThenInclude(u => u.Instructor)
+                .Include(n => n.Sender)
+                    .ThenInclude(a => a.Manager)
                 .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();
 
         public async Task<Notification?> GetByIdAsync(int id) =>
-    await _context.Notifications
-        .FirstOrDefaultAsync(n => n.NotificationId == id);
-        // Lưu ý: Nếu bạn đã cấu hình HasQueryFilter trong DbContext, 
-        // nó sẽ tự động thêm điều kiện "AND is_removed = false" vào đây.
+            await _context.Notifications
+                .FirstOrDefaultAsync(n => n.NotificationId == id);
 
         public void Delete(Notification notification)
         {
-            // Cập nhật trạng thái IsRemoved thay vì xóa vật lý
             notification.IsRemoved = true;
             _context.Notifications.Update(notification);
         }
@@ -53,6 +57,23 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
             if (notification == null) return false;
 
             notification.IsRead = true;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> MarkAllAsReadAsync(int userId)
+        {
+            var unreadNotifications = await _context.Notifications
+                .Where(n => n.ReceiverId == userId && (n.IsRead == false || n.IsRead == null))
+                .ToListAsync();
+
+            if (!unreadNotifications.Any()) return true;
+
+            foreach (var notification in unreadNotifications)
+            {
+                notification.IsRead = true;
+            }
+
             await _context.SaveChangesAsync();
             return true;
         }

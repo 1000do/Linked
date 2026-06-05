@@ -1,0 +1,101 @@
+@startuml DeleteCartItem_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "CartController" as CartControllerFE #FFE6E6 {
+    + RemoveFromCart(courseId: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "CartController" as CartControllerBE #FFE6E6 {
+    - _cartService : ICartService
+    + RemoveFromCart(courseId: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class CartItem #CCFFE6 {
+    + Id : int <<PK>>
+    + UserId : int? <<FK>>
+    + CourseId : int? <<FK>>
+    + AddedDate : DateTime?
+    + Price : decimal?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface ICartService #FFE6CC {
+    //+ RemoveFromCartAsync(userId: int, courseId: int) : Task//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface ICartRepository #FFE6CC {
+    //+ GetCartItemAsync(userId: int, courseId: int) : Task<CartItem?>//
+    //+ RemoveCartItem(item: CartItem) : void//
+    //+ SaveChangesAsync() : Task<int>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CartService #CCE5FF {
+    - _repo : ICartRepository
+    + RemoveFromCartAsync(userId: int, courseId: int) : Task
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CartRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetCartItemAsync(userId: int, courseId: int) : Task<CartItem?>
+    + RemoveCartItem(item: CartItem) : void
+    + SaveChangesAsync() : Task<int>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + CartItems : DbSet<CartItem>
+    + SaveChangesAsync(cancellationToken: CancellationToken) : Task<int>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+CartControllerBE --> ICartService
+CartService --> ICartRepository
+CartRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+CartService ..|> ICartService
+CartRepository ..|> ICartRepository
+
+' === DEPENDENCY ===
+CartControllerFE ..> CartControllerBE : calls via HTTP
+CartService ..> CartItem : uses
+CartRepository ..> CartItem : uses
+
+@enduml
