@@ -28,7 +28,10 @@ public class ReviewRepository : IReviewRepository
                 .ThenInclude(e => e!.User)
                     .ThenInclude(u => u!.UserNavigation)
             .Where(r => r.Enrollment != null
-                     && r.Enrollment.CourseId == courseId);
+                     && r.Enrollment.CourseId == courseId
+                     // Exclude reviews the user themselves deleted (status="removed")
+                     // but keep admin-removed ones (status="violating") to show placeholder
+                     && !(r.IsRemoved == true && r.CourseReviewStatus == "removed"));
 
         // Server-side star filter (làm tròn rating đến số nguyên gần nhất)
         if (starFilter.HasValue)
@@ -56,7 +59,10 @@ public class ReviewRepository : IReviewRepository
                     .ThenInclude(u => u!.UserNavigation)
             .Include(r => r.Lesson)
                 .ThenInclude(l => l!.Course)
-            .Where(r => r.LessonId == lessonId);
+            .Where(r => r.LessonId == lessonId
+                     // Exclude reviews the user themselves deleted (status="removed")
+                     // but keep admin-removed ones (status="violating") to show placeholder
+                     && !(r.IsRemoved == true && r.LessonReviewStatus == "removed"));
 
         var totalCount = await query.CountAsync();
         var items = await query
@@ -66,6 +72,24 @@ public class ReviewRepository : IReviewRepository
             .ToListAsync();
 
         return (items, totalCount);
+    }
+
+    // ── Check pending moderation reports ────────────────────────────────
+
+    /// <summary>Returns true if a course review has any report that is pending or under_review.</summary>
+    public async Task<bool> HasPendingCourseReviewReportsAsync(int reviewId)
+    {
+        return await _context.CourseReviewReports
+            .AnyAsync(rp => rp.CourseReviewId == reviewId
+                         && (rp.UserReportsStatus == "pending" || rp.UserReportsStatus == "under_review"));
+    }
+
+    /// <summary>Returns true if a lesson review has any report that is pending or under_review.</summary>
+    public async Task<bool> HasPendingLessonReviewReportsAsync(int reviewId)
+    {
+        return await _context.LessonReviewReports
+            .AnyAsync(rp => rp.LessonReviewId == reviewId
+                         && (rp.UserReportsStatus == "pending" || rp.UserReportsStatus == "under_review"));
     }
 
     // ── Thống kê sao ─────────────────────────────────────────────────────

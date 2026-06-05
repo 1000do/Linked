@@ -330,9 +330,12 @@
             return;
         }
 
+        if (!window.courseReportsMap) window.courseReportsMap = {};
         reports.forEach(r => {
+            window.courseReportsMap[r.reportId] = r;
             const tr = document.createElement('tr');
-            tr.className = `group hover:bg-slate-50/80 transition-colors ${r.status === 'pending' ? 'bg-amber-50/20' : ''}`;
+            tr.className = `group hover:bg-slate-50/80 transition-colors cursor-pointer ${r.status === 'pending' ? 'bg-amber-50/20' : ''}`;
+            tr.setAttribute('onclick', `handleCourseRowClick(event, ${r.reportId})`);
             
             // Format date
             const dateObj = new Date(r.createdAt);
@@ -463,9 +466,12 @@
             return;
         }
 
+        if (!window.reviewReportsMap) window.reviewReportsMap = {};
         reports.forEach(r => {
+            window.reviewReportsMap[r.reportId] = r;
             const tr = document.createElement('tr');
-            tr.className = `group hover:bg-slate-50/80 transition-colors ${r.status === 'pending' ? 'bg-amber-50/20' : ''}`;
+            tr.className = `group hover:bg-slate-50/80 transition-colors cursor-pointer ${r.status === 'pending' ? 'bg-amber-50/20' : ''}`;
+            tr.setAttribute('onclick', `handleReviewRowClick(event, ${r.reportId})`);
             
             // Format date
             const dateObj = new Date(r.createdAt);
@@ -552,9 +558,9 @@
     }
 
     // ── Moderate Course Report modal ──
-    async function moderateCourseReport(reportId, courseTitle, courseId) {
+    async function moderateCourseReport(reportId, courseTitle, courseId, initialValues = null) {
         // Build SweetAlert modal content dynamically
-
+        const showEscalate = !currentRole.includes('admin');
 
         const { value: formValues } = await Swal.fire({
             title: 'Moderate Course Report',
@@ -570,7 +576,7 @@
                             <option value="resolved">Accept Report (Valid / Policy Violation)</option>
                             <option value="rejected">Dismiss Report (Invalid / Discard)</option>
                             <option value="under_review">Under Review</option>
-                            <option value="escalated">Escalate to Senior Admin</option>
+                            ${showEscalate ? '<option value="escalated">Escalate to Senior Admin</option>' : ''}
                         </select>
                     </div>
                     <div class="flex items-center gap-2 py-1">
@@ -597,6 +603,14 @@
             didOpen: () => {
                 const statusSelect = document.getElementById('swal-status');
                 const removeCheck = document.getElementById('swal-remove-content');
+                const noteTextarea = document.getElementById('swal-note');
+
+                if (initialValues) {
+                    statusSelect.value = initialValues.status;
+                    removeCheck.checked = initialValues.removeContent;
+                    noteTextarea.value = initialValues.resolutionNote;
+                }
+
                 statusSelect.addEventListener('change', (e) => {
                     if (e.target.value === 'rejected') {
                         removeCheck.checked = false;
@@ -605,12 +619,37 @@
                         removeCheck.disabled = false;
                     }
                 });
-                removeCheck.addEventListener('change', (e) => {
+                removeCheck.addEventListener('change', async (e) => {
                     if (e.target.checked) {
                         e.target.checked = false;
-                        if (confirm("Are you sure you want to soft-delete this content? This action will hide it from the marketplace.")) {
-                            e.target.checked = true;
+                        
+                        const currentValues = {
+                            status: statusSelect.value,
+                            removeContent: false,
+                            resolutionNote: noteTextarea.value
+                        };
+
+                        const confirmVal = await Swal.fire({
+                            title: 'Are you sure?',
+                            text: "Are you sure you want to soft-delete this content? This action will hide it from the marketplace.",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Yes, soft-delete',
+                            cancelButtonText: 'Cancel',
+                            confirmButtonColor: '#ef4444',
+                            customClass: {
+                                popup: 'rounded-[32px] p-8',
+                                title: 'font-display font-extrabold text-slate-900 mb-2',
+                                confirmButton: 'rounded-xl font-bold px-6 py-3 text-xs',
+                                cancelButton: 'rounded-xl font-bold px-6 py-3 text-xs bg-slate-100 text-slate-700'
+                            }
+                        });
+
+                        if (confirmVal.isConfirmed) {
+                            currentValues.removeContent = true;
                         }
+                        
+                        moderateCourseReport(reportId, courseTitle, courseId, currentValues);
                     }
                 });
             },
@@ -663,7 +702,9 @@
     }
 
     // ── Moderate Review Report modal ──
-    async function moderateReviewReport(reportId, reviewComment, reviewType) {
+    async function moderateReviewReport(reportId, reviewComment, reviewType, initialValues = null) {
+        const showEscalate = !currentRole.includes('admin');
+
         const { value: formValues } = await Swal.fire({
             title: 'Moderate Review Report',
             html:
@@ -678,7 +719,7 @@
                             <option value="resolved">Accept Report (Valid / Policy Violation)</option>
                             <option value="rejected">Dismiss Report (Invalid / Discard)</option>
                             <option value="under_review">Under Review</option>
-                            <option value="escalated">Escalate to Senior Admin</option>
+                            ${showEscalate ? '<option value="escalated">Escalate to Senior Admin</option>' : ''}
                         </select>
                     </div>
                     <div class="flex items-center gap-2 py-1">
@@ -704,6 +745,14 @@
             didOpen: () => {
                 const statusSelect = document.getElementById('swal-status');
                 const removeCheck = document.getElementById('swal-remove-content');
+                const noteTextarea = document.getElementById('swal-note');
+
+                if (initialValues) {
+                    statusSelect.value = initialValues.status;
+                    removeCheck.checked = initialValues.removeContent;
+                    noteTextarea.value = initialValues.resolutionNote;
+                }
+
                 statusSelect.addEventListener('change', (e) => {
                     if (e.target.value === 'rejected') {
                         removeCheck.checked = false;
@@ -712,12 +761,37 @@
                         removeCheck.disabled = false;
                     }
                 });
-                removeCheck.addEventListener('change', (e) => {
+                removeCheck.addEventListener('change', async (e) => {
                     if (e.target.checked) {
                         e.target.checked = false;
-                        if (confirm("Are you sure you want to soft-delete this content?")) {
-                            e.target.checked = true;
+
+                        const currentValues = {
+                            status: statusSelect.value,
+                            removeContent: false,
+                            resolutionNote: noteTextarea.value
+                        };
+
+                        const confirmVal = await Swal.fire({
+                            title: 'Are you sure?',
+                            text: "Are you sure you want to soft-delete this content?",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Yes, soft-delete',
+                            cancelButtonText: 'Cancel',
+                            confirmButtonColor: '#ef4444',
+                            customClass: {
+                                popup: 'rounded-[32px] p-8',
+                                title: 'font-display font-extrabold text-slate-900 mb-2',
+                                confirmButton: 'rounded-xl font-bold px-6 py-3 text-xs',
+                                cancelButton: 'rounded-xl font-bold px-6 py-3 text-xs bg-slate-100 text-slate-700'
+                            }
+                        });
+
+                        if (confirmVal.isConfirmed) {
+                            currentValues.removeContent = true;
                         }
+
+                        moderateReviewReport(reportId, reviewComment, reviewType, currentValues);
                     }
                 });
             },
@@ -831,7 +905,196 @@
         }
     }
 
-    // ── Show Resolved info modal ──
+    // ── Details Click Handlers ──
+    function handleCourseRowClick(event, reportId) {
+        const interactiveTags = ['BUTTON', 'A', 'SELECT', 'INPUT', 'TEXTAREA', 'LABEL', 'SPAN'];
+        let target = event.target;
+        while (target && target !== event.currentTarget) {
+            if (interactiveTags.includes(target.tagName) || target.onclick || target.classList.contains('cursor-pointer')) {
+                return;
+            }
+            target = target.parentNode;
+        }
+        
+        const r = window.courseReportsMap[reportId];
+        if (r) {
+            showCourseReportDetail(r);
+        }
+    }
+
+    function handleReviewRowClick(event, reportId) {
+        const interactiveTags = ['BUTTON', 'A', 'SELECT', 'INPUT', 'TEXTAREA', 'LABEL', 'SPAN'];
+        let target = event.target;
+        while (target && target !== event.currentTarget) {
+            if (interactiveTags.includes(target.tagName) || target.onclick || target.classList.contains('cursor-pointer')) {
+                return;
+            }
+            target = target.parentNode;
+        }
+        
+        const r = window.reviewReportsMap[reportId];
+        if (r) {
+            showReviewReportDetail(r);
+        }
+    }
+
+    function showCourseReportDetail(r) {
+        const dStr = r.createdAt ? new Date(r.createdAt).toLocaleString('en-GB') : 'N/A';
+        const resDateStr = r.resolvedAt ? new Date(r.resolvedAt).toLocaleString('en-GB') : 'N/A';
+        
+        let resolutionHtml = '';
+        if (r.status === 'resolved' || r.status === 'rejected') {
+            resolutionHtml = `
+                <div class="mt-4 pt-4 border-t border-slate-100">
+                    <h5 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Resolution Details</h5>
+                    <div class="grid grid-cols-2 gap-4 mb-3">
+                        <div>
+                            <span class="text-slate-400 block text-[10px] uppercase">Moderator</span>
+                            <span class="text-slate-800 font-bold text-xs">${escapeHtml(r.resolverEmail || 'N/A')}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block text-[10px] uppercase">Resolved At</span>
+                            <span class="text-slate-800 font-bold text-xs">${resDateStr}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase mb-1">Resolution Note</span>
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-slate-850 text-xs leading-relaxed whitespace-pre-wrap">${escapeHtml(r.resolutionNote || 'No resolution note provided.')}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        Swal.fire({
+            title: 'Course Report Detail',
+            html: `
+            <div class="text-left space-y-4 px-1 text-slate-700">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Reporter</span>
+                        <span class="text-slate-800 font-bold text-xs block">${escapeHtml(r.reporterName || 'Unknown')}</span>
+                        <span class="text-slate-400 text-[10px] block">${escapeHtml(r.reporterEmail || 'N/A')}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Submitted At</span>
+                        <span class="text-slate-800 font-bold text-xs block">${dStr}</span>
+                        <span class="text-slate-400 text-[10px] block">Status: <span class="font-extrabold uppercase text-primary">${r.status}</span></span>
+                    </div>
+                </div>
+                
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs font-bold">
+                    <span class="text-slate-400 block uppercase tracking-wider text-[10px] mb-1">Reported Course</span>
+                    <a href="/Course/Detail/${r.courseId}" target="_blank" class="text-primary hover:underline">${escapeHtml(r.courseTitle)}</a>
+                    <div class="flex items-center gap-2 mt-1.5 text-[10px] text-slate-500">
+                        <span>Instructor: ${escapeHtml(r.instructorName)}</span>
+                        <span>•</span>
+                        <span class="text-red-500">${r.courseFlagCount} flags</span>
+                    </div>
+                </div>
+
+                <div>
+                    <span class="text-slate-400 block text-[10px] uppercase tracking-wider mb-1">Reason</span>
+                    <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[10px] font-black uppercase tracking-wider">${escapeHtml(r.reason)}</span>
+                </div>
+
+                <div>
+                    <span class="text-slate-400 block text-[10px] uppercase tracking-wider mb-1">Description</span>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-slate-800 text-xs leading-relaxed whitespace-pre-wrap">${escapeHtml(r.description || 'No description provided.')}</div>
+                </div>
+
+                ${resolutionHtml}
+            </div>`,
+            showCancelButton: false,
+            confirmButtonText: 'Close',
+            confirmButtonColor: '#10b981',
+            customClass: {
+                popup: 'rounded-[32px] p-8',
+                title: 'font-display font-extrabold text-slate-900 mb-4',
+                confirmButton: 'rounded-xl font-bold px-8 py-3 text-xs w-full'
+            }
+        });
+    }
+
+    function showReviewReportDetail(r) {
+        const dStr = r.createdAt ? new Date(r.createdAt).toLocaleString('en-GB') : 'N/A';
+        const resDateStr = r.resolvedAt ? new Date(r.resolvedAt).toLocaleString('en-GB') : 'N/A';
+        const isLesson = r.reviewType === 'lesson_review';
+        const title = isLesson ? 'Lesson Review Report Detail' : 'Course Review Report Detail';
+
+        let resolutionHtml = '';
+        if (r.status === 'resolved' || r.status === 'rejected') {
+            resolutionHtml = `
+                <div class="mt-4 pt-4 border-t border-slate-100">
+                    <h5 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Resolution Details</h5>
+                    <div class="grid grid-cols-2 gap-4 mb-3">
+                        <div>
+                            <span class="text-slate-400 block text-[10px] uppercase">Moderator</span>
+                            <span class="text-slate-800 font-bold text-xs">${escapeHtml(r.resolverEmail || 'N/A')}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block text-[10px] uppercase">Resolved At</span>
+                            <span class="text-slate-800 font-bold text-xs">${resDateStr}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase mb-1">Resolution Note</span>
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-slate-800 text-xs leading-relaxed whitespace-pre-wrap">${escapeHtml(r.resolutionNote || 'No resolution note provided.')}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        Swal.fire({
+            title: title,
+            html: `
+            <div class="text-left space-y-4 px-1 text-slate-700">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Reporter</span>
+                        <span class="text-slate-800 font-bold text-xs block">${escapeHtml(r.reporterName || 'Unknown')}</span>
+                        <span class="text-slate-400 text-[10px] block">${escapeHtml(r.reporterEmail || 'N/A')}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Submitted At</span>
+                        <span class="text-slate-800 font-bold text-xs block">${dStr}</span>
+                        <span class="text-slate-400 text-[10px] block">Status: <span class="font-extrabold uppercase text-primary">${r.status}</span></span>
+                    </div>
+                </div>
+                
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs">
+                    <span class="text-slate-400 block uppercase tracking-wider text-[10px] font-bold mb-1">Reported Review</span>
+                    <p class="text-slate-800 italic font-semibold">"${escapeHtml(r.reviewComment || 'No comments')}"</p>
+                    <div class="flex flex-col gap-0.5 mt-2 text-[10px] text-slate-500">
+                        <div>Author: <span class="font-bold text-slate-750">${escapeHtml(r.reviewAuthorName || 'Unknown User')}</span> ${r.reviewRating ? `• Rating: <span class="font-bold text-amber-500">${r.reviewRating}⭐</span>` : ''}</div>
+                        ${r.courseTitle ? `<div class="mt-1">Course: <a href="/Course/Detail/${r.courseId}" target="_blank" class="font-bold text-primary hover:underline">${escapeHtml(r.courseTitle)}</a></div>` : ''}
+                        ${r.lessonTitle ? `<div>Lesson: <span class="font-bold text-slate-600">${escapeHtml(r.lessonTitle)}</span></div>` : ''}
+                    </div>
+                </div>
+
+                <div>
+                    <span class="text-slate-400 block text-[10px] uppercase tracking-wider mb-1">Reason</span>
+                    <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[10px] font-black uppercase tracking-wider">${escapeHtml(r.reason)}</span>
+                </div>
+
+                <div>
+                    <span class="text-slate-400 block text-[10px] uppercase tracking-wider mb-1">Description</span>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-slate-800 text-xs leading-relaxed whitespace-pre-wrap">${escapeHtml(r.description || 'No description provided.')}</div>
+                </div>
+
+                ${resolutionHtml}
+            </div>`,
+            showCancelButton: false,
+            confirmButtonText: 'Close',
+            confirmButtonColor: '#10b981',
+            customClass: {
+                popup: 'rounded-[32px] p-8',
+                title: 'font-display font-extrabold text-slate-900 mb-4',
+                confirmButton: 'rounded-xl font-bold px-8 py-3 text-xs w-full'
+            }
+        });
+    }
+
+    // ── Helper escaping ──
     function showResolutionDetails(resolverEmail, note, resolvedAt) {
         const dStr = resolvedAt ? new Date(resolvedAt).toLocaleString('en-GB') : 'N/A';
         Swal.fire({

@@ -367,11 +367,24 @@ namespace CourseMarketplaceFE.Controllers
         public async Task<IActionResult> ReportReview([FromBody] JsonElement body)
         {
             var response = await _apiClient.PostJsonAsync("review/report", body);
+            var content = await response.Content.ReadAsStringAsync();
+            
+            string? message = null;
+            try
+            {
+                using var doc = JsonDocument.Parse(content);
+                if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                {
+                    message = msgEl.GetString();
+                }
+            }
+            catch { }
+
             if (response.IsSuccessStatusCode)
             {
-                return Json(new { success = true });
+                return Json(new { success = true, message = message ?? "Report submitted successfully." });
             }
-            return Json(new { success = false });
+            return Json(new { success = false, message = message ?? "Could not send report at this time." });
         }
 
         /// <summary>Avg rating cho tất cả lesson của 1 course (dùng cho sidebar Learn)</summary>

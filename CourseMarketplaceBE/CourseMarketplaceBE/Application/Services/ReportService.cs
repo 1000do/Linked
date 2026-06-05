@@ -68,13 +68,13 @@ public class ReportService : IReportService
                 throw new InvalidOperationException("You must be enrolled in the course before reporting it.");
         }
 
-        // Kiểm tra duplicate pending report
-        var existing = await _reportRepo.GetPendingCourseReportAsync(reporterId, request.CourseId);
-        if (existing != null)
-            throw new InvalidOperationException("You already have a pending report for this course.");
-
         if (string.IsNullOrWhiteSpace(request.Reason))
             throw new InvalidOperationException("Report reason cannot be empty.");
+
+        // Kiểm tra duplicate pending report cùng lý do
+        var existing = await _reportRepo.GetPendingCourseReportAsync(reporterId, request.CourseId, request.Reason);
+        if (existing != null)
+            throw new InvalidOperationException("You already have a pending report with this reason for this course.");
 
         var report = new CourseReport
         {
@@ -102,9 +102,9 @@ public class ReportService : IReportService
         if (string.IsNullOrWhiteSpace(request.Reason))
             throw new InvalidOperationException("Report reason cannot be empty.");
 
-        var existing = await _reportRepo.GetPendingCourseReviewReportAsync(reporterId, request.CourseReviewId);
+        var existing = await _reportRepo.GetPendingCourseReviewReportAsync(reporterId, request.CourseReviewId, request.Reason);
         if (existing != null)
-            throw new InvalidOperationException("You already have a pending report for this review.");
+            throw new InvalidOperationException("You already have a pending report with this reason for this review.");
 
         var report = new CourseReviewReport
         {
@@ -132,9 +132,9 @@ public class ReportService : IReportService
         if (string.IsNullOrWhiteSpace(request.Reason))
             throw new InvalidOperationException("Report reason cannot be empty.");
 
-        var existing = await _reportRepo.GetPendingLessonReviewReportAsync(reporterId, request.LessonReviewId);
+        var existing = await _reportRepo.GetPendingLessonReviewReportAsync(reporterId, request.LessonReviewId, request.Reason);
         if (existing != null)
-            throw new InvalidOperationException("You already have a pending report for this review.");
+            throw new InvalidOperationException("You already have a pending report with this reason for this review.");
 
         var report = new LessonReviewReport
         {
