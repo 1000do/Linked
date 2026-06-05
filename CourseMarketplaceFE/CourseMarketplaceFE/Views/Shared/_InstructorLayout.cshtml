@@ -282,6 +282,9 @@
             // 2. Cập nhật danh sách nhỏ ở chuông
             if (typeof loadTopNotifications === "function") loadTopNotifications();
 
+            // Dispatch event for child views
+            document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
+
             // 3. KIỂM TRA: Nếu trang hiện tại có hàm prependNotification thì gọi nó ngay
             if (typeof prependNotification === "function") {
                 prependNotification(noti);

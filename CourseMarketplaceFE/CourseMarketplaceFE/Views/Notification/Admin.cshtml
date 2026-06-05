@@ -15,6 +15,26 @@
 }
 
 <div class="bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col h-[calc(100vh-8rem)]">
+    <!-- Tabs Bar -->
+    <div class="flex border-b border-slate-200 overflow-x-auto gap-2 bg-slate-50/30 p-3 shrink-0">
+        <button type="button" onclick="switchRoleTab('all')" id="tab-all" 
+                class="tab-btn px-4 py-2 text-xs md:text-sm font-semibold rounded-xl transition-all whitespace-nowrap bg-slate-900 text-white shadow-sm" data-role="all">
+            All Notifications
+        </button>
+        <button type="button" onclick="switchRoleTab('student')" id="tab-student" 
+                class="tab-btn px-4 py-2 text-xs md:text-sm font-semibold rounded-xl transition-all whitespace-nowrap text-slate-600 hover:bg-slate-100 hover:text-slate-900" data-role="student">
+            Students
+        </button>
+        <button type="button" onclick="switchRoleTab('instructor')" id="tab-instructor" 
+                class="tab-btn px-4 py-2 text-xs md:text-sm font-semibold rounded-xl transition-all whitespace-nowrap text-slate-600 hover:bg-slate-100 hover:text-slate-900" data-role="instructor">
+            Instructors
+        </button>
+        <button type="button" onclick="switchRoleTab('staff-admin')" id="tab-staff-admin" 
+                class="tab-btn px-4 py-2 text-xs md:text-sm font-semibold rounded-xl transition-all whitespace-nowrap text-slate-600 hover:bg-slate-100 hover:text-slate-900" data-role="staff-admin">
+            Staff & Admin
+        </button>
+    </div>
+
     <!-- Controls Bar -->
     <div class="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row items-center gap-4 shrink-0">
         <!-- Search Input -->
@@ -25,15 +45,6 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-3 w-full md:w-auto md:ml-auto">
-            <!-- Filter Group Select -->
-            <div class="relative w-full sm:w-48">
-                <select id="filter-group" class="w-full appearance-none pl-3.5 pr-10 py-2 border border-slate-200 rounded-xl text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-slate-700 cursor-pointer shadow-sm">
-                    <option value="all">All Groups</option>
-                    <option value="broadcast">Broadcast (All Users)</option>
-                    <option value="specific">Specific User</option>
-                </select>
-                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">arrow_drop_down</span>
-            </div>
 
             <!-- Filter Status Select -->
             <div class="relative w-full sm:w-40">
@@ -138,6 +149,47 @@
     </div>
 </div>
 
+<!-- Modal View Notification Detail -->
+<div id="modal-detail" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity" onclick="closeDetailModal()"></div>
+    <div class="bg-white w-full max-w-lg rounded-xl shadow-xl relative z-10 flex flex-col overflow-hidden border border-slate-200">
+        <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <div class="flex items-center gap-2 text-teal-700">
+                <span class="material-symbols-outlined text-[20px]">info</span>
+                <span class="font-bold uppercase text-[11px] tracking-widest text-teal-700">Notification Details</span>
+            </div>
+            <button type="button" onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        <div class="p-6 space-y-4 text-left">
+            <div>
+                <label class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Recipient</label>
+                <div id="detail-recipient" class="text-sm font-medium text-slate-800 break-all"></div>
+            </div>
+            <div>
+                <label class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Title</label>
+                <h3 id="detail-title" class="text-base font-bold text-slate-900 leading-tight break-all"></h3>
+            </div>
+            <div>
+                <label class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Content</label>
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 mt-1">
+                    <p id="detail-content" class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap break-words"></p>
+                </div>
+            </div>
+            <div class="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-100">
+                <span id="detail-time"></span>
+                <span id="detail-status" class="font-semibold"></span>
+            </div>
+        </div>
+        <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <button type="button" onclick="closeDetailModal()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-semibold rounded-lg hover:bg-slate-100 transition-all text-xs">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         const API_URL = "http://localhost:5207/api/Notification";
@@ -148,6 +200,7 @@
         let allNotifications = [];
         let filteredNotifications = [];
         let selectedEmails = [];
+        let activeRoleTab = 'all';
 
         function formatDateTime(dateString) {
             const date = new Date(dateString);
@@ -172,15 +225,41 @@
             } catch (err) { console.error(err); }
         }
 
+        function switchRoleTab(role) {
+            activeRoleTab = role;
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if (btn.getAttribute('data-role') === role) {
+                    btn.classList.add('bg-slate-900', 'text-white', 'shadow-sm');
+                    btn.classList.remove('text-slate-600', 'hover:bg-slate-100', 'hover:text-slate-900');
+                } else {
+                    btn.classList.remove('bg-slate-900', 'text-white', 'shadow-sm');
+                    btn.classList.add('text-slate-600', 'hover:bg-slate-100', 'hover:text-slate-900');
+                }
+            });
+
+            applyFilters();
+        }
+
         function applyFilters() {
             const searchVal = document.getElementById('search-input').value.toLowerCase().trim();
-            const groupVal = document.getElementById('filter-group').value;
             const statusVal = document.getElementById('filter-status').value;
             const sortVal = document.getElementById('sort-select').value;
 
             filteredNotifications = [...allNotifications];
 
-            // 1. Search
+            // 1. Filter Role Tab
+            if (activeRoleTab === 'broadcast') {
+                filteredNotifications = filteredNotifications.filter(n => n.receiverRole === 'broadcast');
+            } else if (activeRoleTab === 'student') {
+                filteredNotifications = filteredNotifications.filter(n => n.receiverRole === 'student');
+            } else if (activeRoleTab === 'instructor') {
+                filteredNotifications = filteredNotifications.filter(n => n.receiverRole === 'instructor');
+            } else if (activeRoleTab === 'staff-admin') {
+                filteredNotifications = filteredNotifications.filter(n => n.receiverRole === 'staff' || n.receiverRole === 'admin');
+            }
+
+            // 2. Search
             if (searchVal) {
                 filteredNotifications = filteredNotifications.filter(n =>
                     (n.receiverFullName && n.receiverFullName.toLowerCase().includes(searchVal)) ||
@@ -188,13 +267,6 @@
                     (n.title && n.title.toLowerCase().includes(searchVal)) ||
                     (n.content && n.content.toLowerCase().includes(searchVal))
                 );
-            }
-
-            // 2. Filter Group
-            if (groupVal === 'broadcast') {
-                filteredNotifications = filteredNotifications.filter(n => !n.receiverEmail);
-            } else if (groupVal === 'specific') {
-                filteredNotifications = filteredNotifications.filter(n => n.receiverEmail);
             }
 
             // 3. Filter Status
@@ -250,7 +322,7 @@
             }
 
             tbody.innerHTML = pagedData.map(n => `
-                <tr class="hover:bg-slate-50/50 transition-colors">
+                <tr class="hover:bg-slate-50/50 cursor-pointer transition-colors" onclick="showDetail(${n.notificationId})">
                     <td class="px-5 py-3 align-top">
                         <div class="font-medium text-slate-900 truncate">${n.receiverFullName || 'System Broadcast'}</div>
                         <div class="text-xs text-slate-500 truncate mt-0.5">${n.receiverEmail || 'all-users@system.com'}</div>
@@ -351,7 +423,74 @@
             setTimeout(() => emailInput.focus(), 100);
         }
 
+        function decodeToken(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                console.log("Decoded token: " + jsonPayload);
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                console.error("Failed to decode token", e);
+                return null;
+            }
+        }
+
         function closeModal() { document.getElementById('modal-send').classList.add('hidden'); }
+
+        async function showDetail(id) {
+            const noti = allNotifications.find(n => n.notificationId === id);
+            if (!noti) return;
+
+            document.getElementById('detail-recipient').innerText = `${noti.receiverFullName || 'System Broadcast'} (${noti.receiverEmail || 'all-users@system.com'})`;
+            document.getElementById('detail-title').innerText = noti.title;
+            document.getElementById('detail-content').innerText = noti.content;
+            document.getElementById('detail-time').innerText = `Created at: ${formatDateTime(noti.createdAt)}`;
+            document.getElementById('detail-status').innerHTML = noti.isRead 
+                ? `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Read</span>` 
+                : `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Unread</span>`;
+
+            document.getElementById('modal-detail').classList.remove('hidden');
+
+            const decoded = decodeToken(TOKEN);
+            const currentUserId = decoded ? parseInt(decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || decoded["nameid"]) : null;
+            const currentUserRole = decoded ? (decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || decoded["role"]) : null;
+            console.log("Current User ID: " + currentUserId);
+            console.log("Current User Role: " + currentUserRole);
+            console.log("Notification Receiver ID: " + noti.receiverId);
+            console.log("Notification Receiver Role: " + noti.receiverRole);
+            console.log("Notification Sender ID: " + noti.senderId);
+            console.log("Notification Sender Role: " + noti.senderRole);
+            console.log("Notification Is Read: " + noti.isRead);
+
+            // Staff viewing a notification addressed to them → mark as read
+            if (currentUserRole === 'staff' && 
+                noti.receiverId === currentUserId && 
+                !noti.isRead) {
+                
+                try {
+                    const res = await fetch(`${API_URL}/mark-as-read/${id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${TOKEN}`
+                        }
+                    });
+                    if (res.ok) {
+                        noti.isRead = true;
+                        document.getElementById('detail-status').innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Read</span>`;
+                        applyFilters();
+                    }
+                } catch (err) {
+                    console.error("Failed to sync read state for staff", err);
+                }
+            }
+        }
+
+        function closeDetailModal() {
+            document.getElementById('modal-detail').classList.add('hidden');
+        }
 
         document.getElementById('form-advanced').onsubmit = async (e) => {
             e.preventDefault();
@@ -360,6 +499,21 @@
                 Swal.fire({
                     title: 'Missing Field',
                     text: "Please select at least one recipient email.",
+                    icon: 'warning',
+                    confirmButtonColor: '#10b981',
+                    background: '#ffffff',
+                    customClass: { popup: 'rounded-2xl shadow-xl' }
+                });
+                return;
+            }
+
+            const decoded = decodeToken(TOKEN);
+            const senderEmail = decoded ? (decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] || decoded["email"]) : null;
+
+            if (type === 'SINGLE' && senderEmail && selectedEmails.includes(senderEmail)) {
+                Swal.fire({
+                    title: 'Invalid Recipient',
+                    text: "You cannot send a notification to yourself.",
                     icon: 'warning',
                     confirmButtonColor: '#10b981',
                     background: '#ffffff',
@@ -397,9 +551,20 @@
                     closeModal();
                     loadHistory();
                 } else {
+                    let errMsg = "An error occurred while sending.";
+                    try {
+                        const errData = await res.json();
+                        if (errData && errData.message) errMsg = errData.message;
+                        else if (errData && typeof errData === 'string') errMsg = errData;
+                    } catch (e) {
+                        try {
+                            const errText = await res.text();
+                            if (errText) errMsg = errText;
+                        } catch (e2) {}
+                    }
                     Swal.fire({
                         title: 'Send Error',
-                        text: "An internal server error occurred while sending.",
+                        text: errMsg,
                         icon: 'error',
                         confirmButtonColor: '#10b981',
                         background: '#ffffff',
@@ -427,15 +592,13 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('search-input').addEventListener('input', applyFilters);
-            document.getElementById('filter-group').addEventListener('change', applyFilters);
             document.getElementById('filter-status').addEventListener('change', applyFilters);
             document.getElementById('sort-select').addEventListener('change', applyFilters);
             document.getElementById('btn-reset').addEventListener('click', () => {
                 document.getElementById('search-input').value = '';
-                document.getElementById('filter-group').value = 'all';
                 document.getElementById('filter-status').value = 'all';
                 document.getElementById('sort-select').value = 'newest';
-                applyFilters();
+                switchRoleTab('all');
             });
 
             loadHistory();

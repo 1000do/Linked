@@ -509,6 +509,15 @@ public class InstructorController : Controller
 
     [HttpPost]
     [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> MarkAllAsRead()
+    {
+        var response = await _api.PutAsync("notification/mark-all-as-read", null!);
+        if (response.IsSuccessStatusCode) return Ok();
+        return BadRequest();
+    }
+
+    [HttpPost]
+    [IgnoreAntiforgeryToken]
     public async Task<IActionResult> DeleteNotification(int id)
     {
         var response = await _api.DeleteAsync($"notification/{id}");

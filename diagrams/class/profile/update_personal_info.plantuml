@@ -1,0 +1,172 @@
+@startuml UpdatePersonalInfo_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "AccountController" as AccountControllerFE #FFE6E6 {
+    + EditProfile() : Task<IActionResult>
+    + EditProfile(model: UpdateProfileViewModel) : Task<IActionResult>
+}
+
+class UpdateProfileViewModel #E6CCFF {
+    + FirstName : string
+    + LastName : string
+    + Email : string?
+    + Username : string?
+    + AuthProvider : string?
+    + Bio : string?
+    + DateOfBirth : string?
+    + PhoneNumber : string?
+    + AvatarFile : IFormFile?
+    + AvatarUrl : string?
+    + IsInstructor : bool
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "ProfileController" as ProfileControllerBE #FFE6E6 {
+    - _profileService : IUserProfileService
+    + UpdateProfile(request: UpdateProfileRequest) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class UpdateProfileRequest #E6CCFF {
+    + FirstName : string
+    + LastName : string
+    + Email : string?
+    + Bio : string?
+    + DateOfBirth : string?
+    + PhoneNumber : string?
+    + AvatarFile : IFormFile?
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class User #CCFFE6 {
+    + UserId : int <<PK>>
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+    + Instructor : Instructor?
+    + UserNavigation : Account
+}
+
+class Account #CCFFE6 {
+    + AccountId : int <<PK>>
+    + Email : string
+    + Username : string?
+    + PhoneNumber : string?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + IsVerified : bool
+}
+
+class Instructor #CCFFE6 {
+    + InstructorId : int <<PK>>
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + ApprovalStatus : string?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IUserProfileService #FFE6CC {
+    //+ UpdateProfileAsync(userId: int, request: UpdateProfileRequest) : Task<bool>//
+}
+
+interface IFileUploadService #FFE6CC {
+    //+ UploadImageAsync(file: IFormFile) : Task<string?>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IUserRepository #FFE6CC {
+    //+ GetUserByIdAsync(userId: int) : Task<User?>//
+    //+ UpdateUserProfileAsync(userId: int, fullName: string, bio: string?, dob: DateOnly?, avatarUrl: string?, phoneNumber: string?, professionalTitle: string?, expertiseCategories: string?, linkedinUrl: string?, youtubeUrl: string?, facebookUrl: string?, email: string?) : Task<bool>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class UserProfileService #CCE5FF {
+    - _userRepo : IUserRepository
+    - _uploadService : IFileUploadService
+    + UpdateProfileAsync(userId: int, request: UpdateProfileRequest) : Task<bool>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetUserByIdAsync(userId: int) : Task<User?>
+    + UpdateUserProfileAsync(userId: int, fullName: string, bio: string?, dob: DateOnly?, avatarUrl: string?, phoneNumber: string?, professionalTitle: string?, expertiseCategories: string?, linkedinUrl: string?, youtubeUrl: string?, facebookUrl: string?, email: string?) : Task<bool>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Users : DbSet<User>
+    + Accounts : DbSet<Account>
+    + Instructors : DbSet<Instructor>
+    + SaveChangesAsync(cancellationToken: CancellationToken) : Task<int>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === COMPOSITION ===
+User *-- Account
+User *-- Instructor
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+ProfileControllerBE --> IUserProfileService
+UserProfileService --> IUserRepository
+UserProfileService --> IFileUploadService
+UserRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+UserProfileService ..|> IUserProfileService
+UserRepository ..|> IUserRepository
+
+' === DEPENDENCY ===
+AccountControllerFE ..> ProfileControllerBE : calls via HTTP
+AccountControllerFE ..> UpdateProfileViewModel : uses
+ProfileControllerBE ..> UpdateProfileRequest : uses
+UserProfileService ..> UpdateProfileRequest : uses
+UserProfileService ..> User : uses
+UserRepository ..> User : uses
+
+@enduml
