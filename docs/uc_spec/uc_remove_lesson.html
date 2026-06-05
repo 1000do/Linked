@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-RemoveLesson</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            background-color: transparent;
+            color: black;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-RemoveLesson - Remove Lesson</strong></p>
+
+    <p><strong>Primary Actor:</strong><br>Instructor</p>
+    
+    <p><strong>Secondary Actors:</strong><br>Cloud Storage Service</p>
+    
+    <p><strong>Trigger:</strong><br>Instructor clicks the "Remove Lesson" icon button on a specific lesson in the course syllabus sidebar.</p>
+    
+    <p><strong>Description:</strong><br>Allows an instructor to remove an existing lesson and all of its associated materials from a course. The system ensures the instructor has ownership and the course is not currently pending review. It soft-deletes the records and moves associated material files to a cloud trash folder.</p>
+
+    <p><strong>Preconditions:</strong></p>
+    <p><b>PRE-1.</b> User must be successfully authenticated as an approved instructor.</p>
+    <p><b>PRE-2.</b> The lesson must exist and belong to a course owned by the active instructor.</p>
+
+    <p><strong>Post-conditions:</strong></p>
+    <p><b>POST-1.</b> The lesson and its materials are marked as removed in the database.</p>
+    <p><b>POST-2.</b> The material files are moved to the cloud trash folder.</p>
+    <p><b>POST-3.</b> If the course was previously published, its status is reverted to draft and moderation feedback is cleared.</p>
+
+    <hr>
+
+    <p><strong>Normal Flow</strong></p>
+
+    <p><strong>A. Remove Lesson Successfully</strong></p>
+    <ol>
+        <li>Instructor accesses the course edit page.</li>
+        <li>Instructor clicks the "Remove Lesson" icon button.</li>
+        <li>The system displays a confirmation modal.</li>
+        <li>Instructor clicks the "Delete" button.</li>
+        <li>The system validates the instructor's permission.</li>
+        <li>The system validates the instructor's lockout status.</li>
+        <li>The system validates the course status.</li>
+        <li>The system requests the Cloud Storage Service to move all lesson materials to the trash.</li>
+        <li>The system updates the lesson and its materials to removed status in the database.</li>
+        <li>The system updates the course status to draft and clears moderation feedback in the database.</li>
+        <li>The system invalidates cached course data.</li>
+        <li>The system removes the lesson from the curriculum list.</li>
+        <li>The system hides the active lesson editor and displays the empty state.</li>
+        <li>The system displays a success confirmation message.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Alternative Flows</strong></p>
+
+    <p><strong>A.4 Instructor cancels removal</strong></p>
+    <ol>
+        <li>Instructor clicks the "Cancel" button on the confirmation modal.</li>
+        <li>The system closes the modal without making any changes.</li>
+        <li>Back to step 2.</li>
+    </ol>
+
+    <p><strong>A.8 No materials with URLs</strong></p>
+    <ol>
+        <li>The system skips requesting the Cloud Storage Service.</li>
+        <li>Back to step 9.</li>
+    </ol>
+
+    <p><strong>A.10 Course is not published</strong></p>
+    <ol>
+        <li>The system skips updating the course status and moderation feedback.</li>
+        <li>Back to step 11.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Exceptions</strong></p>
+
+    <p><strong>EX-1 Session Invalid (Not Logged In)</strong></p>
+    <ol>
+        <li>The system displays an authentication error message.</li>
+        <li>The system redirects the user to the login page.</li>
+    </ol>
+
+    <p><strong>EX-5 Lesson Not Found</strong></p>
+    <ol>
+        <li>The system halts execution and displays a lesson not found error message.</li>
+        <li>Back to step 2.</li>
+    </ol>
+
+    <p><strong>EX-5.1 Permission Denied</strong></p>
+    <ol>
+        <li>The system halts execution and displays a permission denied error message.</li>
+        <li>Back to step 2.</li>
+    </ol>
+
+    <p><strong>EX-6 Instructor Account Locked</strong></p>
+    <ol>
+        <li>The system halts execution and displays an account locked error message.</li>
+        <li>Back to step 2.</li>
+    </ol>
+
+    <p><strong>EX-7 Course Pending Review</strong></p>
+    <ol>
+        <li>The system halts execution and displays a course pending review error message.</li>
+        <li>Back to step 2.</li>
+    </ol>
+
+    <p><strong>EX-8 Cloud Storage Service failure</strong></p>
+    <ol>
+        <li>The system fails to move the materials to the trash.</li>
+        <li>The system halts execution and displays a server error message.</li>
+        <li>Back to step 2.</li>
+    </ol>
+
+    <p><strong>EX-9 Database update failed</strong></p>
+    <ol>
+        <li>The system fails to save the lesson changes.</li>
+        <li>The system displays a database transaction failure message.</li>
+        <li>Back to step 2.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Business Rules</strong></p>
+    <ol>
+        <li><strong>Pending Restriction:</strong> Lessons cannot be deleted while the course is currently in 'Pending' review status.</li>
+        <li><strong>Status Reversion:</strong> Deleting a lesson from a 'Published' course automatically changes its status back to 'Draft' and clears any existing moderation feedback.</li>
+        <li><strong>Soft Deletion:</strong> Removing a lesson only marks it and its materials as "removed" (soft delete) in the database. Physical files are moved to the cloud trash folder rather than being permanently destroyed immediately.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Assumptions</strong></p>
+    <p>Instructor has stable internet connection.<br>Cloud Storage Service is working properly.</p>
+</body>
+</html>
