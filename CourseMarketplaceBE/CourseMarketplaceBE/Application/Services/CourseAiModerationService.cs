@@ -7,6 +7,7 @@ using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Enums;
 using CourseMarketplaceBE.Domain.IRepositories;
 using Microsoft.Extensions.Logging;
 
@@ -52,8 +53,8 @@ namespace CourseMarketplaceBE.Application.Services
             _logger = logger;
         }
 
-     
-        public async Task<ExactDuplicationResult> GetExactDuplicationResult(ExactDuplicationCommand command)
+
+        private async Task<ExactDuplicationResult> GetExactDuplicationResult(ExactDuplicationCommand command)
         {
             var res = new ExactDuplicationResult { CourseId = command.CourseExt.CourseId, IsDup = false };
             foreach (var ext in command.ExistingCourseExts)
@@ -69,16 +70,16 @@ namespace CourseMarketplaceBE.Application.Services
             return res;
         }
 
-     
-        public async Task<ExactDuplicationResult> CheckExactDuplication(int courseId)
+
+        private async Task<ExactDuplicationResult> CheckExactDuplication(int courseId)
         {
             var current = await _contentHashService.GetCourseHashesAsync(courseId);
             var others = await _contentHashService.GetAllCourseHashesAsync();
             return await GetExactDuplicationResult(new ExactDuplicationCommand { CourseExt = current, ExistingCourseExts = others });
         }
 
-       
-        public async Task PrepareMaterialEmbeddingsAsync()
+
+        private async Task PrepareMaterialEmbeddingsAsync()
         {
             var isInitialized = await _redisService.GetCacheAsync<bool>(CacheKeys.MaterialEmbeddingInitialized.GetKey());
             if (isInitialized) return;
@@ -97,7 +98,7 @@ namespace CourseMarketplaceBE.Application.Services
             await _redisService.SetCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey(), true, CacheTtl.Medium.GetTtl());
         }
 
-         public async Task<AssignAIModeratorsToCourseResult> AssignAIModeratorsToCourseAsync(int courseId, List<AiModelDto> models)
+        private async Task<AssignAIModeratorsToCourseResult> AssignAIModeratorsToCourseAsync(int courseId, List<AiModelDto> models)
         {
             var thresholds = await _aiModerationService.GetScoreThresholdConfigAsync(SystemConfigKeys.ModerationThreshold);
             var modelIds = models.Select(m => m.ModelId).ToList();
@@ -127,95 +128,20 @@ namespace CourseMarketplaceBE.Application.Services
             };
         }
 
-        
 
-        public async Task<PrepareForCourseAIModerationResult> PrepareForCourseAIModeration(int courseId)
+
+        private async Task<PrepareForCourseAIModerationResult> PrepareForCourseAIModeration(int courseId)
         {
             try
             {
-                // Query system configs for configured model paths
-                var classifierPath = await _systemConfigRepository.GetValueAsync(SystemConfigKeys.CourseHarmfulTextClassifier);
-                var textGeneratorPath = await _systemConfigRepository.GetValueAsync(SystemConfigKeys.CourseTextEmbeddingGenerator);
-                var mediaGeneratorPath = await _systemConfigRepository.GetValueAsync(SystemConfigKeys.CourseMediaEmbeddingGenerator);
-
-
-                var classifiers = new List<AiModelDto>();
-                var emb_generators = new List<AiModelDto>();
-
-                if (!string.IsNullOrEmpty(classifierPath))
-                {
-                    var model = await _aiModelRepository.GetByModelPathAsync(classifierPath);
-                    if (model != null) classifiers.Add(model);
-                }
-                if (!string.IsNullOrEmpty(textGeneratorPath))
-                {
-                    var model = await _aiModelRepository.GetByModelPathAsync(textGeneratorPath);
-                    if (model != null) emb_generators.Add(model);
-                }
-                if (!string.IsNullOrEmpty(mediaGeneratorPath))
-                {
-                    var model = await _aiModelRepository.GetByModelPathAsync(mediaGeneratorPath);
-                    if (model != null) emb_generators.Add(model);
-                }
-
-                // If models are not configured in system configs, fetch active ones by type as fallback
-                if (classifiers.Count == 0) classifiers = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.Classifier);
-                if (emb_generators.Count == 0) emb_generators = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.EmbeddingGenerator);
-
-                var models = classifiers.Concat(emb_generators).ToList();
+                var (classifiers, emb_generators) = await GetCourseModerationModelsAsync();
 
                 // Get existing course integrations
-                var integrations = await _aiIntegrationRepository.GetByCourseIdAsync(courseId);
                 var thresholds = await _aiModerationService.GetScoreThresholdConfigAsync(SystemConfigKeys.ModerationThreshold);
 
-                if (integrations == null || !integrations.Any())
-                {
+                await UpdateCourseAIIntegrationsAsync(courseId, classifiers, emb_generators, thresholds);
 
-                    await AssignAIModeratorsToCourseAsync(courseId, models);
-                }
-                else
-                {
-                    int updateCount = 0;
-                    foreach (var integration in integrations)
-                    {
-                        bool isUpdated = false;
-                        var role = integration.Role?.ToLower() ?? "";
-                        var integratedModelId = integration.ModelId;
-
-                        foreach (var model in models)
-                        {
-                            var modelType = model.ModelType?.ToLower() ?? "";
-                            var processType = model.ProcessType?.ToLower() ?? "";
-
-                            if (role.Contains(processType) && role.Contains(modelType))
-                            {
-                                if (model.ModelId != integratedModelId)
-                                {
-                                    updateCount++;
-                                    isUpdated = true;
-                                    integration.ModelId = model.ModelId;
-                                    integration.AssignedAt = DateTime.UtcNow;
-                                }
-                                break;
-                            }
-                        }
-
-                        if (isUpdated)
-                        {
-                            _aiIntegrationRepository.Update(integration);
-                        }
-                    }
-
-                    if (updateCount > 0)
-                    {
-                        await _aiIntegrationRepository.SaveChangesAsync();
-                    }
-                }
-
-                var course = await _courseQueryService.GetCourseWithDetailsAsync(courseId, 0); // Cache course
-                var materialIds = course?.Lessons?
-                    .SelectMany(lesson => lesson.LearningMaterials?.Select(material => material.MaterialId) ?? [])
-                    .ToList() ?? [];
+                var materialIds = await GetCourseMaterialIdsAsync(courseId);
 
                 await PrepareMaterialEmbeddingsAsync();
 
@@ -235,146 +161,221 @@ namespace CourseMarketplaceBE.Application.Services
             }
         }
 
-
-        public async Task ResolveCourseAIModerationResult(CourseModerationResult result)
+        private async Task<(List<AiModelDto> classifiers, List<AiModelDto> emb_generators)> GetCourseModerationModelsAsync()
         {
-            _logger.LogInformation("Resolving AI moderation result for course {CourseId}", result.CourseId);
-            var courseId = result.CourseId;
-            var course = await _courseQueryService.GetCourseWithDetailsAsync(courseId, 0);
+            // Query system configs for configured model paths
+            var (classifierPath, textGeneratorPath, mediaGeneratorPath) = await GetModelConfigPathsAsync();
 
-            if (course == null)
+            var classifiers = new List<AiModelDto>();
+            var emb_generators = new List<AiModelDto>();
+
+            if (!string.IsNullOrEmpty(classifierPath))
             {
-                _logger.LogError("Course not found for courseId {id}", courseId);
+                var model = await _aiModelRepository.GetByModelPathAsync(classifierPath);
+                if (model != null) classifiers.Add(model);
+            }
+            if (!string.IsNullOrEmpty(textGeneratorPath))
+            {
+                var model = await _aiModelRepository.GetByModelPathAsync(textGeneratorPath);
+                if (model != null) emb_generators.Add(model);
+            }
+            if (!string.IsNullOrEmpty(mediaGeneratorPath))
+            {
+                var model = await _aiModelRepository.GetByModelPathAsync(mediaGeneratorPath);
+                if (model != null) emb_generators.Add(model);
+            }
+
+            // If models are not configured in system configs, fetch active ones by type as fallback
+            if (classifiers.Count == 0) classifiers = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.Classifier);
+            if (emb_generators.Count == 0) emb_generators = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.EmbeddingGenerator);
+
+            return (classifiers, emb_generators);
+        }
+
+        private async Task<(string? classifierPath, string? textGeneratorPath, string? mediaGeneratorPath)> GetModelConfigPathsAsync()
+        {
+            var classifierPath = await _systemConfigRepository.GetValueAsync(SystemConfigKeys.CourseHarmfulTextClassifier);
+            var textGeneratorPath = await _systemConfigRepository.GetValueAsync(SystemConfigKeys.CourseTextEmbeddingGenerator);
+            var mediaGeneratorPath = await _systemConfigRepository.GetValueAsync(SystemConfigKeys.CourseMediaEmbeddingGenerator);
+
+            return (classifierPath, textGeneratorPath, mediaGeneratorPath);
+        }
+
+        private async Task UpdateCourseAIIntegrationsAsync(
+            int courseId,
+            List<AiModelDto> classifiers,
+            List<AiModelDto> emb_generators,
+            Dictionary<string, float> thresholds)
+        {
+            var integrations = await _aiIntegrationRepository.GetByCourseIdAsync(courseId);
+            var models = classifiers.Concat(emb_generators).ToList();
+            if (integrations == null || !integrations.Any())
+            {
+                await AssignAIModeratorsToCourseAsync(courseId, models);
                 return;
             }
 
-            // Save material embeddings from Redis cache to database
-            var materialIds = course.Lessons?
-                .SelectMany(l => l.LearningMaterials?.Select(m => m.MaterialId) ?? [])
+            int updateCount = 0;
+            foreach (var integration in integrations)
+            {
+                var role = integration.Role?.ToLower() ?? "";
+                var integratedModelId = integration.ModelId;
+
+                var match = models.FirstOrDefault(
+                    model => 
+                    role.Contains(model.ProcessType?.ToLower() ?? "") &&
+                    role.Contains(model.ModelType?.ToLower() ?? "")
+                    );
+
+                if(match != null && match.ModelId != integratedModelId){
+                    integration.ModelId = match.ModelId;
+                    integration.ConfigJson = JsonSerializer.Serialize(thresholds);
+                    integration.AssignedAt = DateTime.UtcNow;
+
+                    _aiIntegrationRepository.Update(integration);
+                    updateCount++;
+
+                }
+
+            }
+
+            if (updateCount > 0) await _aiIntegrationRepository.SaveChangesAsync();
+        }
+
+        private async Task<List<int>> GetCourseMaterialIdsAsync(int courseId)
+        {
+            var course = await _courseQueryService.GetCourseWithDetailsAsync(courseId, 0); // Cache course
+            var materialIds = course?.Lessons?
+                .SelectMany(lesson => lesson.LearningMaterials?.Select(material => material.MaterialId) ?? [])
                 .ToList() ?? [];
-            _logger.LogInformation("Materials count: {n}", materialIds.Count);
-
-            foreach (var matId in materialIds)
-            {
-                string cacheKey = CacheKeys.MaterialEmbedding.GetKey(matId);
-                _logger.LogInformation("Retrieving MaterialEmbeddingResponse from cache key {cacheKey}", cacheKey);
-                var cachedResponse = await _redisService.GetCacheAsync<MaterialEmbeddingResponse>(cacheKey);
-
-                if (cachedResponse == null)
-                {
-                    _logger.LogWarning("MaterialEmbeddingResponse for material {matId} is not found in cache", matId);
-
-                }
-
-
-                else if (cachedResponse.Embedding == null)
-                {
-                    _logger.LogWarning("Embedding is not provided for material {matId}", matId);
-
-                }
-                else if (!cachedResponse.Embedding.Any())
-                {
-                    _logger.LogWarning("Embedding contains no coordinate values for material {matId}", matId);
-
-                }
-
-                else
-                {
-                    _logger.LogInformation("Successfully retrieved MaterialEmbeddingResponse from cache key {cacheKey}\n{embedding}", cacheKey, JsonSerializer.Serialize(cachedResponse));
-                    string embeddingType = cachedResponse.EmbeddingType ?? "";
-                    if (embeddingType != "text" && embeddingType != "media")
-                    {
-                        embeddingType = cachedResponse.Embedding.Count == 512 ? "media" : "text";
-                    }
-
-                    await _lessonService.SaveMaterialEmbeddingsAsync(matId, cachedResponse.Embedding, embeddingType);
-                }
-            }
-            //APPROVED
-            if (result.ModerationStatus == ModerationStatus.Approved.ToValue())
-            {
-                await _courseModerationService.ApproveCourseAsync(courseId, "AI moderation passed.");
-            }
-            //REJECTED
-            else if (result.ModerationStatus == ModerationStatus.Rejected.ToValue())
-            {
-                var items = new List<RejectCourseItemDto>();
-                foreach (var log in result.StageLogs)
-                {
-                    if (log.Result == StageLogResult.Flagged.ToValue() || log.Result == StageLogResult.MatchFound.ToValue())
-                    {
-                        foreach (var field in log.FlaggedFields)
-                        {
-                            items.Add(new RejectCourseItemDto
-                            {
-                                Target = field,
-                                Reason = log.Reason ?? "AI moderation flag"
-                            });
-                        }
-                    }
-                }
-
-                if (!items.Any())
-                {
-                    items.Add(new RejectCourseItemDto
-                    {
-                        Target = "course.description",
-                        Reason = "Course content violates the moderation policy."
-                    });
-                }
-
-                await _courseModerationService.RejectCourseDetailedAsync(new RejectCourseDetailedRequest
-                {
-                    CourseId = courseId,
-                    Items = items
-                });
-            }
-
-            //FLAGGED
-            else if (result.ModerationStatus == ModerationStatus.Flagged.ToValue())
-            {
-                var items = new List<RejectCourseItemDto>();
-                foreach (var log in result.StageLogs)
-                {
-                    if (log.Result == StageLogResult.Flagged.ToValue() || log.Result == StageLogResult.MatchFound.ToValue())
-                    {
-                        foreach (var field in log.FlaggedFields)
-                        {
-                            items.Add(new RejectCourseItemDto
-                            {
-                                Target = field,
-                                Reason = log.Reason ?? "AI moderation flag"
-                            });
-                        }
-                    }
-                }
-
-                if (!items.Any())
-                {
-                    items.Add(new RejectCourseItemDto
-                    {
-                        Target = "course.description",
-                        Reason = "Course content violates the moderation policy."
-                    });
-                }
-
-                await _courseModerationService.FlagCourseDetailedAsync(new RejectCourseDetailedRequest
-                {
-                    CourseId = courseId,
-                    Items = items
-                });
-            }
-
-            //MANUAL_AUDIT
-            else if (result.ModerationStatus == ModerationStatus.ManualAudit.ToValue())
-            {
-                await _courseCommandService.UpdateCourseStatusAndFeedbackAsync(courseId, CourseStatus.Pending.ToValue(), "AI suggested manual audit.");
-                await _courseModerationService.NotifyAdminAsync("Manual Audit Required", $"Course {courseId} requires manual review by AI.", UrlConst.AdminCourseModerationURL);
-            }
+            return materialIds;
         }
 
 
-        public async Task LogCourseAiModeration(LogCourseAiModerationCommand command)
+        private async Task ResolveCourseAIModerationResult(CourseModerationResult result)
+        {
+            _logger.LogInformation("Resolving AI moderation result for course {CourseId}", result.CourseId);
+            
+            await PersistMaterialEmbeddingsAsync(result.CourseId);
+
+            var (threatLevel, feedback) = EvaluateModerationFeedback(result);
+
+            await _courseCommandService.UpdateCourseStatusAndFeedbackAsync(
+                result.CourseId, 
+                CourseStatus.Pending.ToValue(), 
+                feedback, 
+                threatLevel);
+            
+            var notificationContent = $"Course {result.CourseId} requires manual review following AI Moderation. Threat Level: {threatLevel}.\n\nDetails:\n{feedback}";
+            await _courseModerationService.NotifyAdminAsync("Manual Audit Required", notificationContent, UrlConst.AdminCourseModerationURL);
+        }
+
+        private async Task PersistMaterialEmbeddingsAsync(int courseId)
+        {
+            var materialIds = await GetCourseMaterialIdsAsync(courseId);
+
+            if (!materialIds.Any())
+            {
+                _logger.LogWarning("No learning materials found for courseId {id}. Skipping embedding persistence.", courseId);
+                return;
+            }
+
+            _logger.LogInformation("Persisting embeddings for {n} materials.", materialIds.Count);
+
+            foreach (var matId in materialIds)
+            {
+                await TryPersistSingleMaterialEmbeddingAsync(matId);
+            }
+        }
+
+        private async Task TryPersistSingleMaterialEmbeddingAsync(int matId)
+        {
+            string cacheKey = CacheKeys.MaterialEmbedding.GetKey(matId);
+            _logger.LogInformation("Retrieving MaterialEmbeddingResponse from cache key {cacheKey}", cacheKey);
+            var cachedResponse = await _redisService.GetCacheAsync<MaterialEmbeddingResponse>(cacheKey);
+
+            if (cachedResponse == null)
+            {
+                _logger.LogWarning("MaterialEmbeddingResponse for material {matId} is not found in cache", matId);
+                return;
+            }
+            
+            if (cachedResponse.Embedding == null)
+            {
+                _logger.LogWarning("Embedding is not provided for material {matId}", matId);
+                return;
+            }
+            
+            if (!cachedResponse.Embedding.Any())
+            {
+                _logger.LogWarning("Embedding contains no coordinate values for material {matId}", matId);
+                return;
+            }
+
+            _logger.LogInformation("Successfully retrieved MaterialEmbeddingResponse from cache key {cacheKey}\n{embedding}", cacheKey, JsonSerializer.Serialize(cachedResponse));
+            
+
+            await _lessonService.SaveMaterialEmbeddingsAsync(
+                matId,
+                cachedResponse.Embedding, 
+                GetEmbeddingType(cachedResponse));
+        }
+
+        private string GetEmbeddingType(MaterialEmbeddingResponse cachedResponse){
+            string embeddingType = cachedResponse.EmbeddingType ?? "";
+            if (embeddingType != "text" && embeddingType != "media")
+            {
+                embeddingType = cachedResponse.Embedding.Count == 512 ? "media" : "text";
+            }
+            return embeddingType;
+        }
+
+        private (AiThreatLevel ThreatLevel, string Feedback) EvaluateModerationFeedback(CourseModerationResult result)
+        {
+            string statusStr = result.ModerationStatus;
+            AiThreatLevel threatLevel = AiThreatLevel.None;
+            string feedback = "";
+
+            if (statusStr == ModerationStatus.Approved.ToValue())
+            {
+                threatLevel = AiThreatLevel.Approved;
+                feedback = "AI moderation passed. Awaiting manual review.";
+            }
+            else if (statusStr == ModerationStatus.Rejected.ToValue() || statusStr == ModerationStatus.Flagged.ToValue())
+            {
+                threatLevel = AiThreatLevel.FlaggedOrRejected;
+                
+                var flaggedReasons = new List<string>();
+                foreach (var log in result.StageLogs)
+                {
+                    if (log.Result == StageLogResult.Flagged.ToValue() || log.Result == StageLogResult.MatchFound.ToValue())
+                    {
+                        var fields = string.Join(", ", log.FlaggedFields);
+                        var reasonText = log.Reason ?? "AI moderation flag";
+                        flaggedReasons.Add($"[{fields}] {reasonText}");
+                    }
+                }
+                
+                if (flaggedReasons.Any())
+                {
+                    feedback = "AI flagged the following issues:\n- " + string.Join("\n- ", flaggedReasons);
+                }
+                else
+                {
+                    feedback = "Course content violates the moderation policy according to AI.";
+                }
+            }
+            else if (statusStr == ModerationStatus.ManualAudit.ToValue())
+            {
+                threatLevel = AiThreatLevel.ManualAudit;
+                feedback = "AI suggested manual audit.";
+            }
+
+            return (threatLevel, feedback);
+        }
+
+
+        private async Task LogCourseAiModeration(LogCourseAiModerationCommand command)
         {
             _logger.LogInformation("Logging course AI moderation for course {CourseId}", command.CourseModerationResult.CourseId);
             var result = command.CourseModerationResult;
@@ -428,9 +429,9 @@ namespace CourseMarketplaceBE.Application.Services
             }
         }
 
-        
 
-        public async Task<CourseModerationResult> HandleCourseModerationWithAIAsync(CouresModerationRequest request)
+
+        private async Task<CourseModerationResult> HandleCourseModerationWithAIAsync(CouresModerationRequest request)
         {
             try
             {
@@ -443,34 +444,7 @@ namespace CourseMarketplaceBE.Application.Services
 
                 var prep = await PrepareForCourseAIModeration(request.CourseId);
 
-                var thresholds = prep.Thresholds;
-                var materialIds = prep.MaterialIds;
-                var semDupModels = prep.SemanticDeDuplicationModels;
-                var courseHarmModels = prep.CourseHarmfulDetectionModels;
-
-
-                var semanticReq = new SemanticDuplicationRequest
-                {
-                    CourseId = request.CourseId,
-                    MaterialIds = materialIds,
-                    SimilarityScoreThreshold = thresholds.GetValueOrDefault(AiModelConst.Similarity,
-                                                                            AiModelConst.DefaultSimilarityScoreThreshold),
-                    Models = semDupModels
-                };
-
-                var harmfulReq = new CourseHarmfulRequest
-                {
-                    CourseId = request.CourseId,
-                    SpamScoreThreshold = thresholds.GetValueOrDefault(
-                                                                    AiModelConst.Spam,
-                                                                    AiModelConst.DefaultSpamScoreThreshold
-                                                                     ),
-                    ToxicScoreThreshold = thresholds.GetValueOrDefault(
-                                                                    AiModelConst.Toxic,
-                                                                    AiModelConst.DefaultToxicScoreThreshold
-                                                                     ),
-                    Models = courseHarmModels
-                };
+                var (semanticReq, harmfulReq) = CreateModerationRequests(request.CourseId, prep);
 
                 var result = await _aiModerationService.ModerateCourseFullPipelineAsync(semanticReq, harmfulReq);
 
@@ -502,39 +476,48 @@ namespace CourseMarketplaceBE.Application.Services
             }
         }
 
+        private (SemanticDuplicationRequest SemanticReq, CourseHarmfulRequest HarmfulReq) CreateModerationRequests(
+            int courseId,
+            PrepareForCourseAIModerationResult prep)
+        {
+            var thresholds = prep.Thresholds;
+            var materialIds = prep.MaterialIds;
+            var semDupModels = prep.SemanticDeDuplicationModels;
+            var courseHarmModels = prep.CourseHarmfulDetectionModels;
+
+            var semanticReq = new SemanticDuplicationRequest
+            {
+                CourseId = courseId,
+                MaterialIds = materialIds,
+                SimilarityScoreThreshold = thresholds.GetValueOrDefault(
+                    AiModelConst.Similarity,
+                    AiModelConst.DefaultSimilarityScoreThreshold),
+                Models = semDupModels
+            };
+
+            var harmfulReq = new CourseHarmfulRequest
+            {
+                CourseId = courseId,
+                SpamScoreThreshold = thresholds.GetValueOrDefault(
+                    AiModelConst.Spam,
+                    AiModelConst.DefaultSpamScoreThreshold),
+                ToxicScoreThreshold = thresholds.GetValueOrDefault(
+                    AiModelConst.Toxic,
+                    AiModelConst.DefaultToxicScoreThreshold),
+                Models = courseHarmModels
+            };
+
+            return (semanticReq, harmfulReq);
+        }
+
         public async Task<CourseModerationResult> HandleCourseModerationAsync(CouresModerationRequest request)
         {
             try
             {
-                await _courseCommandService.UpdateCourseStatusAsync(request.CourseId, CourseStatus.Pending.ToValue(), request.InstructorId);
-
-
-                var dupResult = await CheckExactDuplication(request.CourseId);
-                if (dupResult.IsDup)
-                {
-                    var items = dupResult.DupFields.Select(f => new RejectCourseItemDto
-                    {
-                        Target = $"course.{f}",
-                        Reason = "Exact duplication with an existing course found."
-                    }).ToList();
-
-                    await _courseModerationService.RejectCourseDetailedAsync(new RejectCourseDetailedRequest
-                    {
-                        CourseId = request.CourseId,
-                        Items = items
-                    });
-
-
-                    return new CourseModerationResult
-                    {
-                        CourseId = request.CourseId,
-                        ModerationStatus = ModerationStatus.Rejected.ToValue(),
-                        FlaggedFields = dupResult.DupFields,
-                        OverallConfidenceScore = 1.0f,
-                        TotalLatencyMs = 0,
-                        StageLogs = []
-                    };
-                }
+                await _courseCommandService.UpdateCourseStatusAsync(
+                    request.CourseId,
+                    CourseStatus.Pending.ToValue(),
+                    request.InstructorId);
 
                 return await HandleCourseModerationWithAIAsync(request);
             }
@@ -543,6 +526,44 @@ namespace CourseMarketplaceBE.Application.Services
                 _logger.LogError(ex, "Error in HandleCourseModerationAsync for course {CourseId}", request.CourseId);
                 throw;
             }
+        }
+
+        // Legacy hash dedup logic in HandleCourseModerationAsync: 
+        //      var exactDeDupRes = await HandleExactDeDuplication(request.CourseId);
+        //      if(exactDeDupRes != null){
+        //          return exactDeDupRes;
+        //      }
+        private async Task<CourseModerationResult?> HandleExactDeDuplication(int courseId)
+        {
+            var dupResult = await CheckExactDuplication(courseId);
+            if (dupResult.IsDup)
+            {
+                var items = dupResult.DupFields.Select(f => new RejectCourseItemDto
+                {
+                    Target = $"course.{f}",
+                    Reason = "Exact duplication with an existing course found."
+                }).ToList();
+
+                await _courseModerationService.RejectCourseDetailedAsync(
+                    new RejectCourseDetailedRequest
+                    {
+                        CourseId = courseId,
+                        Items = items
+                    }
+                );
+
+
+                return new CourseModerationResult
+                {
+                    CourseId = courseId,
+                    ModerationStatus = ModerationStatus.Rejected.ToValue(),
+                    FlaggedFields = dupResult.DupFields,
+                    OverallConfidenceScore = 1.0f,
+                    TotalLatencyMs = 0,
+                    StageLogs = []
+                };
+            }
+            return null;
         }
     }
 }

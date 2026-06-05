@@ -200,7 +200,8 @@ CREATE TABLE courses (
     requirements TEXT,
     moderation_feedback TEXT,
     last_approved_at TIMESTAMP,
-    is_removed BOOLEAN DEFAULT FALSE
+    is_removed BOOLEAN DEFAULT FALSE,
+    threat_level INT DEFAULT 1
 );
 
 CREATE TABLE lessons (

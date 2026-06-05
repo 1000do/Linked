@@ -22,7 +22,7 @@ namespace CourseMarketplaceFE.Controllers
             ViewBag.Search = search;
             ViewBag.Category = category;
             ViewBag.Status = status ?? "all";
-            ViewBag.SortBy = sortBy ?? "oldest";
+            ViewBag.SortBy = sortBy ?? "threat_desc";
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
 

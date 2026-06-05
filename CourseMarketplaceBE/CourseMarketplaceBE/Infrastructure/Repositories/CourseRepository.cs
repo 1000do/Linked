@@ -353,15 +353,23 @@ public class CourseRepository : ICourseRepository
             query = query.Where(c => c.Category!.CategoriesName == filter.Category || c.CategoryId.ToString() == filter.Category);
         }
 
-        // 4. Sorting (Urgency: oldest first)
+        // 4. Sorting (Urgency/Threat Level)
         if (filter.SortBy == "newest")
         {
             query = query.OrderByDescending(c => c.CreatedAt);
         }
+        else if (filter.SortBy == "threat_asc")
+        {
+            query = query.OrderBy(c => c.ThreatLevel).ThenBy(c => c.CreatedAt);
+        }
+        else if (filter.SortBy == "oldest")
+        {
+            query = query.OrderBy(c => c.CreatedAt);
+        }
         else
         {
-            // default: oldest first (more urgent)
-            query = query.OrderBy(c => c.CreatedAt);
+            // default (threat_desc): Threat Level descending
+            query = query.OrderByDescending(c => c.ThreatLevel).ThenBy(c => c.CreatedAt);
         }
 
         var totalCount = await query.CountAsync();
@@ -385,7 +393,8 @@ public class CourseRepository : ICourseRepository
                 CourseStatus = c.CourseStatus,
                 CourseThumbnailUrl = c.CourseThumbnailUrl,
                 FlagCount = c.CourseFlagCount ?? 0,
-                IsRemoved = c.IsRemoved
+                IsRemoved = c.IsRemoved,
+                ThreatLevel = c.ThreatLevel
             };
 
             // Calculate Urgency

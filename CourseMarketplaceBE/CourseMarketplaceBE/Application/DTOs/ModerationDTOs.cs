@@ -2,6 +2,7 @@ using System;
 using System.Text.Json.Serialization;
 using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Domain.Constants;
+using CourseMarketplaceBE.Domain.Enums;
 
 
 namespace CourseMarketplaceBE.Application.DTOs
@@ -25,6 +26,9 @@ namespace CourseMarketplaceBE.Application.DTOs
         // NEW: Flagging tracking
         public int FlagCount { get; set; }
         public bool IsRemoved { get; set; }
+        
+        // NEW: Threat Level for AI Moderation
+        public AiThreatLevel ThreatLevel { get; set; } = AiThreatLevel.None;
     }
 
     public class ModerationFilterDto : PagedRequestDto

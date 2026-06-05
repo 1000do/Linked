@@ -142,11 +142,12 @@ class DuplicationService(BaseService):
                     
                     similar = self.similarity_search(new_emb, existing_embeddings, threshold)
                     if similar:
-                        matched_material_ids.append(similar["material_id"])
+                        match_id = similar["material_id"]
+                        matched_material_ids.append(match_id)
                         score = similar["similarity_score"]
                         similarity_scores.append(score)
                         result = "MATCH_FOUND"
-                        reason = f"Found a semantically similar for material_{new_emb.material_id} (cosine similarity: {score} > {threshold})"
+                        reason = f"Found a semantic duplication for material_{new_emb.material_id} on material_{match_id} (cosine similarity: {score} > {threshold})"
                         flagged_content = [candidate]
                         
                     

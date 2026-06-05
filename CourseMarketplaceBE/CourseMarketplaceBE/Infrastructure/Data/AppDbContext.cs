@@ -1,4 +1,5 @@
 using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Pgvector;
 
@@ -468,6 +469,9 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.IsRemoved)
                 .HasDefaultValue(false)
                 .HasColumnName("is_removed");
+            entity.Property(e => e.ThreatLevel)
+                .HasDefaultValue(AiThreatLevel.None)
+                .HasColumnName("threat_level");
 
             entity.HasQueryFilter(c => !c.IsRemoved);
             // ★ total_lessons, rating_average, total_students ĐÃ BỊ XÓA → dùng view_course_stats

@@ -14,6 +14,7 @@ using CourseMarketplaceBE.Domain.Exceptions;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Share.Helpers;
 using Microsoft.Extensions.Logging;
+using CourseMarketplaceBE.Domain.Enums;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -504,7 +505,7 @@ public class CourseCommandService : ICourseCommandService
             ModelId = command.ModelId,
             Role = command.Role,
             IsEnabled = command.IsEnabled,
-            ConfigJson = System.Text.Json.JsonSerializer.Serialize(command.ConfigJson)
+            ConfigJson = JsonSerializer.Serialize(command.ConfigJson)
         };
 
         await _aiIntegrationRepository.AddAsync(integration);
@@ -526,13 +527,17 @@ public class CourseCommandService : ICourseCommandService
         };
     }
 
-    public async Task UpdateCourseStatusAndFeedbackAsync(int courseId, string status, string? feedback)
+    public async Task UpdateCourseStatusAndFeedbackAsync(int courseId, string status, string? feedback, AiThreatLevel? threatLevel = null)
     {
         var course = await _courseRepository.GetByIdAsync(courseId);
         if (course != null)
         {
             course.CourseStatus = status.ToLower();
             course.ModerationFeedback = feedback;
+            if (threatLevel.HasValue)
+            {
+                course.ThreatLevel = threatLevel.Value;
+            }
             course.UpdatedAt = DateTime.UtcNow;
             _courseRepository.Update(course);
             int rowsFeedback = await _courseRepository.SaveChangesAsync();
