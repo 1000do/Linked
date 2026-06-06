@@ -2,6 +2,7 @@ using System;
 using System.Text.Json.Serialization;
 using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Domain.Constants;
+using CourseMarketplaceBE.Domain.Enums;
 
 
 namespace CourseMarketplaceBE.Application.DTOs
@@ -25,6 +26,9 @@ namespace CourseMarketplaceBE.Application.DTOs
         // NEW: Flagging tracking
         public int FlagCount { get; set; }
         public bool IsRemoved { get; set; }
+        
+        // NEW: Threat Level for AI Moderation
+        public AiThreatLevel ThreatLevel { get; set; } = AiThreatLevel.None;
     }
 
     public class ModerationFilterDto : PagedRequestDto
@@ -115,6 +119,9 @@ namespace CourseMarketplaceBE.Application.DTOs
 
         [JsonPropertyName("similarity_score_threshold")]
         public float SimilarityScoreThreshold { get; set; } = 0.8f;
+
+        [JsonPropertyName("models")]
+        public List<AiModelDto> Models { get; set; } = [];
     }
 
     /// <summary>
@@ -130,6 +137,9 @@ namespace CourseMarketplaceBE.Application.DTOs
 
         [JsonPropertyName("toxic_score_threshold")]
         public float ToxicScoreThreshold { get; set; } = 0.7f;
+
+        [JsonPropertyName("models")]
+        public List<AiModelDto> Models { get; set; } = [];
     }
 
     /// <summary>
@@ -236,7 +246,7 @@ namespace CourseMarketplaceBE.Application.DTOs
 
 
 
-    public class AiModelResponse
+    public class AiModelDto
     {
         public int ModelId { get; set; }
         public string ModelName { get; set; } = null!;
@@ -246,6 +256,19 @@ namespace CourseMarketplaceBE.Application.DTOs
         public string? ModelStatus { get; set; }
         public string? Description { get; set; }
         public string? ModelPath { get; set; }
+        public string? ProcessType { get; set; }
+    }
+
+    public class MaterialEmbeddingResponse
+    {
+        [JsonPropertyName("embedding_id")]
+        public int EmbeddingId { get; set; }
+        [JsonPropertyName("material_id")]
+        public int? MaterialId { get; set; }
+        [JsonPropertyName("embedding")]
+        public List<float>? Embedding { get; set; }
+        [JsonPropertyName("embedding_type")]
+        public string? EmbeddingType { get; set; }
     }
 
     public class LogCourseAiModerationCommand
@@ -296,15 +319,35 @@ namespace CourseMarketplaceBE.Application.DTOs
 
 
     /// <summary>
-    /// DTO for course hashes (used internally)
+    /// DTO for course hashes (used internally). All hash fields have UNIQUE constraints in the database.
     /// </summary>
     public class CourseExtDto
     {
         public int CourseId { get; set; } = 0;
+
+        /// <summary>
+        /// Gets or sets the title hash. Must be unique across all courses.
+        /// </summary>
         public string TitleHash { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the description hash. Must be unique across all courses.
+        /// </summary>
         public string DescriptionHash { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the what-you-will-learn hash. Must be unique across all courses.
+        /// </summary>
         public string WhatYouWillLearnHash { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the requirements hash. Must be unique across all courses.
+        /// </summary>
         public string RequirementsHash { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the thumbnail hash. Must be unique across all courses.
+        /// </summary>
         public string ThumbnailHash { get; set; } = string.Empty;
     }
 
@@ -331,8 +374,11 @@ namespace CourseMarketplaceBE.Application.DTOs
     {
         public int CourseId { get; set; }
         public List<int> MaterialIds { get; set; } = [];
-        public List<int> ModelIds { get; set; } = [];
+        
         public Dictionary<string, float> Thresholds { get; set; } = new();
+        public List<AiModelDto> SemanticDeDuplicationModels { get; set; } = [];
+        public List<AiModelDto> CourseHarmfulDetectionModels { get; set; } = [];
+        
     }
 
     public class CourseAiIntegrationResponse

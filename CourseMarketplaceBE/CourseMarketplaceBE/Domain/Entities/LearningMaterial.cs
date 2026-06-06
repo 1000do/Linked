@@ -30,7 +30,9 @@ public partial class LearningMaterial
 
     public virtual Lesson? Lesson { get; set; }
 
-    public virtual ICollection<MaterialEmbedding> MaterialEmbeddings { get; set; } = new List<MaterialEmbedding>();
+    public virtual ICollection<TextEmbedding> TextEmbeddings { get; set; } = new List<TextEmbedding>();
+
+    public virtual ICollection<MediaEmbedding> MediaEmbeddings { get; set; } = new List<MediaEmbedding>();
 
     public virtual ICollection<MaterialCompletion> MaterialCompletions { get; set; } = new List<MaterialCompletion>();
 }

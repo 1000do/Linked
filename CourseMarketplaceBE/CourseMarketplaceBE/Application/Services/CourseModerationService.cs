@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.IRepositories;
@@ -41,11 +42,13 @@ namespace CourseMarketplaceBE.Application.Services
         public async Task<CourseModerationStatsDto> GetCourseModerationStatsAsync()
         {
             return await _courseRepository.GetCourseModerationStatsAsync();
+            // return new CourseModerationStatsDto();
         }
 
-        public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseModerationDto>> GetPendingCoursesAsync(ModerationFilterDto filter)
+        public async Task<PagedResult<CourseModerationDto>> GetPendingCoursesAsync(ModerationFilterDto filter)
         {
             return await _courseRepository.GetPendingCoursesModerationAsync(filter);
+            // return new PagedResult<CourseModerationDto>();
         }
 
         public async Task<bool> ApproveCourseAsync(int courseId, string? feedback)
@@ -94,6 +97,7 @@ namespace CourseMarketplaceBE.Application.Services
                 );
 
                 var enrolledUserIds = await _enrollmentRepository.GetEnrolledUserIdsAsync(courseId);
+                // var enrolledUserIds = new List<int>();
                 if (enrolledUserIds.Any())
                 {
                     var studentNotifications = enrolledUserIds.Select(studentId => new NotificationBulkDto
@@ -145,9 +149,10 @@ namespace CourseMarketplaceBE.Application.Services
             var course = await _courseRepository.GetByIdAsync(courseId);
             if (course == null) return false;
 
+            if ((course.CourseFlagCount ?? 0) >= 3) return false;
+
             var currentFlags = (course.CourseFlagCount ?? 0) + 1;
             course.CourseFlagCount = currentFlags;
-            course.CourseStatus = CourseStatus.Flagged.ToValue();
 
             course.ModerationFeedback = $"[VIOLATION FLAG #{currentFlags}] {reason}";
             course.UpdatedAt = DateTime.Now;
@@ -193,6 +198,45 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
+            return true;
+        }
+
+        public async Task<bool> UnflagCourseAsync(int courseId)
+        {
+            var course = await _courseRepository.GetByIdAsync(courseId);
+            if (course == null) return false;
+
+            int currentFlags = course.CourseFlagCount ?? 0;
+            if (currentFlags <= 0) return false;
+
+            if (currentFlags > 0)
+            {
+                int newFlags = currentFlags - 1;
+                course.CourseFlagCount = newFlags;
+
+                if (currentFlags == 3 && newFlags == 2 && string.Equals(course.CourseStatus, CourseStatus.Archived.ToValue(), StringComparison.OrdinalIgnoreCase))
+                {
+                    course.CourseStatus = CourseStatus.Rejected.ToValue();
+                }
+
+                course.UpdatedAt = DateTime.Now;
+                _courseRepository.Update(course);
+                int rows = await _courseRepository.SaveChangesAsync();
+                if (rows <= 0)
+                    throw new InvalidOperationException("Failed to save changes when unflagging course.");
+
+                if (course.InstructorId.HasValue)
+                {
+                    await _notificationService.SendNotificationAsync(
+                        course.InstructorId.Value,
+                        "Course Unflagged",
+                        $"Your course '{course.Title}' has had a violation flag removed. Current flags: {newFlags}.",
+                        $"/InstructorCourse/Editor/{courseId}"
+                    );
+                }
+
+                await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
+            }
             return true;
         }
 
@@ -305,6 +349,8 @@ namespace CourseMarketplaceBE.Application.Services
             var course = await _courseRepository.GetByIdAsync(request.CourseId);
             if (course == null) return false;
 
+            if ((course.CourseFlagCount ?? 0) >= 3) return false;
+
             var courseFeedbackParts = new List<string>();
             var flaggedLessonIds = new HashSet<int>();
 
@@ -381,7 +427,6 @@ namespace CourseMarketplaceBE.Application.Services
 
             var currentFlags = (course.CourseFlagCount ?? 0) + 1;
             course.CourseFlagCount = currentFlags;
-            course.CourseStatus = CourseStatus.Flagged.ToValue();
 
             var detailedReason = courseFeedbackParts.Count > 0
                 ? string.Join("\n", courseFeedbackParts)

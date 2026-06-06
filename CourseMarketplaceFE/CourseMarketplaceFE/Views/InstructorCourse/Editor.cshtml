@@ -120,7 +120,8 @@
                         <div class="flex items-center justify-between mb-2">
                             <h2 class="text-3xl font-headline font-extrabold text-slate-900">Course Landing Page</h2>
                             <div id="landing-autosave-status" class="hidden text-xs font-semibold text-slate-400 flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[14px] animate-spin">sync</span> Saving...
+                                <span class="material-symbols-outlined text-[14px] animate-spin">sync</span>
+                                <span id="landing-autosave-text">Saving...</span>
                             </div>
                         </div>
 
@@ -1077,7 +1078,7 @@
             if (catId == "0") return;
 
             // Stop if there are no actual changes
-            if (typeof hasLandingChanges === 'function' && !hasLandingChanges()) {
+            if (window.checkUnsavedChanges && !window.checkUnsavedChanges()) {
                 return;
             }
 
@@ -1085,7 +1086,7 @@
             const req = window.courseReqQuill ? window.courseReqQuill.root.innerHTML : '';
 
             const autoSaveEl = document.getElementById('landing-autosave-status');
-            const autoSaveText = autoSaveEl?.querySelector('span:last-child') || { textContent: '' };
+            const autoSaveText = document.getElementById('landing-autosave-text');
             
             if (autoSaveEl) {
                 autoSaveEl.classList.remove('hidden');
@@ -1131,12 +1132,43 @@
                         }
                         return true;
                     } else {
-                        if (autoSaveEl) autoSaveEl.classList.add('hidden');
+                        if (autoSaveEl) {
+                            autoSaveEl.querySelector('.material-symbols-outlined').textContent = 'error';
+                            autoSaveEl.querySelector('.material-symbols-outlined').classList.remove('animate-spin');
+                            autoSaveEl.className = "text-xs font-semibold text-rose-600 flex items-center gap-1";
+                            if (autoSaveText) autoSaveText.textContent = 'Failed to save changes';
+                            // if (autoSaveText) autoSaveText.textContent = json.message || 'Failed to save changes';
+                            setTimeout(() => autoSaveEl.classList.add('hidden'), 8000);
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error Saving Changes',
+                            text: json.message || 'Failed to save changes',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            // confirmButtonText: 'Dismiss',
+                            // confirmButtonColor: '#e11d48',
+                            timer: 5000,
+                            timerProgressBar: true,
+                            background: '#fff1f2',
+                            color: '#9f1239',
+                            iconColor: '#e11d48',
+                            customClass: {
+                                popup: 'border-2 border-rose-300 rounded-2xl shadow-xl'
+                            }
+                        });
                         return false;
                     }
                 })
                 .catch(e => {
-                    if (autoSaveEl) autoSaveEl.classList.add('hidden');
+                    if (autoSaveEl) {
+                        autoSaveEl.querySelector('.material-symbols-outlined').textContent = 'error';
+                        autoSaveEl.querySelector('.material-symbols-outlined').classList.remove('animate-spin');
+                        autoSaveEl.className = "text-xs font-semibold text-rose-600 flex items-center gap-1";
+                        if (autoSaveText) autoSaveText.textContent = 'System error occurred';
+                        setTimeout(() => autoSaveEl.classList.add('hidden'), 8000);
+                    }
                 });
         };
 
@@ -1207,7 +1239,17 @@
                     if (data.secure_url) {
                         thumbUrlInput.value = data.secure_url;
                         thumbPreview.src = data.secure_url;
-                        Swal.fire({ icon: 'success', title: 'Image Uploaded', text: 'Thumbnail updated successfully.', timer: 1500, showConfirmButton: false });
+                        saveCourseDetails().then(isSaved => {
+                            if (isSaved) {
+                                Swal.fire({ 
+                                    icon: 'success', 
+                                    title: 'Image Uploaded', 
+                                    text: 'Thumbnail updated successfully.', 
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+                            }
+                        });
                     }
                 })
                 .catch(err => {
@@ -2779,11 +2821,11 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         isSubmitting = true;
-                        // fetch('/InstructorCourse/ModerateCourse', {  
-                        //     method: 'POST', 
-                        //     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        //     body: new URLSearchParams({ courseId: courseId })
-                        // })
+                        //fetch('/InstructorCourse/ModerateCourse', {  
+                        //    method: 'POST', 
+                        //    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        //    body: new URLSearchParams({ courseId: courseId })
+                        //})
                         fetch('/InstructorCourse/UpdateCourseStatus', { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

@@ -1,3 +1,4 @@
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
@@ -34,7 +35,7 @@ public class CartService : ICartService
     {
         // Kiểm tra khóa học có tồn tại và đang được published không
         var course = await _courseRepo.GetByIdAsync(courseId);
-        if (course == null || course.CourseStatus != "published")
+        if (course == null || course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
             throw new InvalidOperationException("Course does not exist or is not published.");
 
         // Kiểm tra user đã enrolled chưa (không cần mua lại)
@@ -232,3 +233,4 @@ public class CartService : ICartService
         return response;
     }
 }
+

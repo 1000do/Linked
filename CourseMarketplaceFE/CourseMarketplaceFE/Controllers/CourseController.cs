@@ -182,6 +182,10 @@ namespace CourseMarketplaceFE.Controllers
 
                 return View(course);
             }
+            else if ((int)response.StatusCode == 403)
+            {
+                return RedirectToAction("Error", "Home");
+            }
             return NotFound();
         }
 
@@ -195,6 +199,10 @@ namespace CourseMarketplaceFE.Controllers
                 var data = json.RootElement.GetProperty("data").ToString();
                 var course = JsonSerializer.Deserialize<CourseDetailViewModel>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 return View(course);
+            }
+            else if ((int)response.StatusCode == 403)
+            {
+                return RedirectToAction("Error", "Home");
             }
             return NotFound();
         }

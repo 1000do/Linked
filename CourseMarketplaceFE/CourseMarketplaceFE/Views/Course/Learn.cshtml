@@ -54,6 +54,12 @@
 </head>
 <body class="bg-[#f0fcfb] text-[#191c1b] h-screen flex flex-col overflow-hidden">
 
+    @if (!Model.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+    {
+        <div class="w-full bg-amber-500 text-amber-950 font-bold text-center py-2 shadow-md shrink-0 z-[60]">
+            WARNING: This course is currently in @Model.CourseStatus.ToUpper() state.
+        </div>
+    }
     <!-- Header -->
     <header class="h-14 bg-[#006a62] text-white flex items-center justify-between px-6 shrink-0 z-50 shadow-md">
         <div class="flex items-center gap-4">
@@ -283,6 +289,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+
         const videoPlayer = document.getElementById('main-video');
         const videoSource = document.getElementById('video-source');
         const videoLoader = document.getElementById('video-loader');
@@ -512,7 +519,26 @@
         }
 
         // ── currentUserId từ JWT ────────────────────────────────────────────────────
-        const currentUserId = parseInt('@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Context.Request.Cookies["UserId"] ?? "0")') || 0;
+        const currentToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`.trim();
+        console.log("currentToken",currentToken);
+        
+        function decodeToken(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                console.log("Decoded token: " + jsonPayload);
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                console.error("Failed to decode token", e);
+                return null;
+            }
+        }
+        const decoded = decodeToken(currentToken);
+        const currentUserId = decoded ? parseInt(decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || decoded["nameid"]) : null;
+        const currentUserRole = decoded ? (decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || decoded["role"]) : null;
 
         function renderReviewItem(r) {
             const isOwn = currentUserId > 0 && (r.userId == currentUserId || r.UserId == currentUserId);
@@ -527,6 +553,15 @@
                             <span class="material-symbols-outlined text-[16px] text-slate-400">gavel</span>
                         </div>
                         <p class="text-sm text-slate-400 italic pt-1">${r.comment}</p>
+                    </div>
+                </div>
+            ` : r.isRemoved ? `
+                <div class="border-t border-slate-100 pt-6" id="review-card-${r.reviewId}">
+                    <div class="flex gap-3 items-start">
+                        <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-[16px] text-slate-400">delete</span>
+                        </div>
+                        <p class="text-sm text-slate-400 italic pt-1">This review was removed by the author.</p>
                     </div>
                 </div>
             ` : `

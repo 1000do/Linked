@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Exceptions;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using CourseMarketplaceBE.Share.Helpers;
+using Npgsql;
 
 namespace CourseMarketplaceBE.Infrastructure.Repositories
 {
@@ -15,10 +19,12 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
     public class CourseExtRepository : ICourseExtRepository
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<CourseExtRepository> _logger;
 
-        public CourseExtRepository(AppDbContext context)
+        public CourseExtRepository(AppDbContext context, ILogger<CourseExtRepository> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task AddAsync(CourseExt courseExt)
@@ -38,7 +44,27 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
 
         public async Task<int> SaveChangesAsync()
         {
-            return await _context.SaveChangesAsync();
+            try
+            {
+
+                return await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is PostgresException pgEx && pgEx.SqlState == "23505")
+            {
+
+                var jsonString = JsonSerializer.Serialize(
+                   new Dictionary<string, object?>
+                    {
+                        { "constraint", pgEx.ConstraintName },
+                        { "table", pgEx.TableName },
+                        { "message", pgEx.MessageText }
+                    }
+                );
+                
+                _logger.LogError(ex, jsonString);
+                throw new CourseExtException(jsonString);
+            }
+
         }
 
         public async Task<CourseExt?> GetByIdAsync(int courseId)
