@@ -72,6 +72,46 @@ public class ChatService : IChatService
         return result;
     }
 
+    public async Task<List<ChatListDto>> SearchChatsAsync(int accountId, string query)
+    {
+        var participants = await _chatRepository.SearchParticipantsByAccountIdAsync(accountId, query);
+
+        var result = new List<ChatListDto>();
+        foreach (var p in participants)
+        {
+            // Bỏ qua nếu tin nhắn cuối cùng nhỏ hơn hoặc bằng ClearedAt (đã xóa)
+            if (p.ClearedAt.HasValue && p.Chat.LastMessageAt.HasValue && p.Chat.LastMessageAt.Value <= p.ClearedAt.Value)
+            {
+                continue;
+            }
+
+            var unreadFromRedis = await _redisService.GetUnreadCountAsync(accountId, p.ChatId);
+            
+            var partner = p.Chat.ChatParticipants.FirstOrDefault(cp => cp.AccountId != accountId);
+            var partnerId = partner?.AccountId;
+            var isOnline = partnerId.HasValue ? await _redisService.IsUserOnlineAsync(partnerId.Value) : false;
+
+            result.Add(new ChatListDto
+            {
+                ChatId = p.ChatId,
+                ChatName = p.Chat.ChatName,
+                ChatType = p.Chat.ChatType,
+                LastMessage = p.Chat.Messages
+                    .Where(m => m.Content != null && !m.Content.StartsWith("__ADMIN_"))
+                    .FirstOrDefault()?.Content,
+                LastMessageAt = p.Chat.LastMessageAt,
+                ContextType = p.Chat.ContextType,
+                ContextId = p.Chat.ContextId,
+                UnreadCount = unreadFromRedis > 0 ? unreadFromRedis : p.UnreadCount,
+                PartnerName = partner?.Account.User?.FullName ?? partner?.Account.Manager?.DisplayName ?? partner?.Account.Email,
+                PartnerAvatar = partner?.Account.AvatarUrl,
+                PartnerId = partnerId,
+                IsOnline = isOnline
+            });
+        }
+        return result;
+    }
+
     public async Task<List<MessageDto>> GetChatHistoryAsync(int chatId, int accountId)
     {
         if (!await HasAccessToChatAsync(accountId, chatId))

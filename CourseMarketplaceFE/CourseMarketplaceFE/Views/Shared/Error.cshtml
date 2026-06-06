@@ -1,25 +1,118 @@
-﻿@model ErrorViewModel
+@model CourseMarketplaceFE.Models.ErrorViewModel
 @{
-    ViewData["Title"] = "Error";
+    ViewData["Title"] = "Error " + Model.StatusCode;
+    
+    string errorTitle = "An Error Occurred";
+    string errorSubtitle = "System Error";
+    string errorDescription = "An unexpected error occurred. Please try again later or contact our support team.";
+    string errorIcon = "warning";
+    string iconBgColor = "bg-rose-50 text-rose-600";
+    string gradientText = "from-rose-600 to-orange-500";
+
+    switch (Model.StatusCode)
+    {
+        case 404:
+            errorTitle = "Page Not Found";
+            errorSubtitle = "404 - Page Not Found";
+            errorDescription = "The page you are looking for doesn't exist, has been removed, or has been relocated.";
+            errorIcon = "explore_off";
+            iconBgColor = "bg-teal-50 text-teal-600";
+            gradientText = "from-teal-600 to-emerald-500";
+            break;
+        case 403:
+        case 401:
+            errorTitle = "Access Denied";
+            errorSubtitle = Model.StatusCode + " - Unauthorized / Forbidden";
+            errorDescription = "You don't have permission to access this resource. Please verify your credentials or log in with an authorized account.";
+            errorIcon = "gpp_bad";
+            iconBgColor = "bg-amber-50 text-amber-600";
+            gradientText = "from-amber-600 to-yellow-500";
+            break;
+        case 405:
+            errorTitle = "Method Not Allowed";
+            errorSubtitle = "405 - Method Not Allowed";
+            errorDescription = "The HTTP method used for this request is not supported for this page.";
+            errorIcon = "block";
+            iconBgColor = "bg-orange-50 text-orange-600";
+            gradientText = "from-orange-600 to-amber-500";
+            break;
+        case 500:
+            errorTitle = "Internal Server Error";
+            errorSubtitle = "500 - Internal Server Error";
+            errorDescription = "Our server encountered an unexpected error while processing your request. We are actively working to resolve it.";
+            errorIcon = "dns";
+            iconBgColor = "bg-rose-50 text-rose-600";
+            gradientText = "from-rose-600 to-pink-500";
+            break;
+        case 502:
+        case 503:
+        case 504:
+            errorTitle = "Service Unavailable";
+            errorSubtitle = Model.StatusCode + " - Bad Gateway / Timeout";
+            errorDescription = "The server received an invalid response or timed out waiting for the upstream backend services.";
+            errorIcon = "wifi_off";
+            iconBgColor = "bg-slate-100 text-slate-600";
+            gradientText = "from-slate-600 to-slate-500";
+            break;
+    }
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<div class="min-h-[75vh] flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8 bg-gradient-to-b from-surface to-white relative overflow-hidden">
+    <!-- Decorative Background Shapes -->
+    <div class="absolute top-1/4 left-1/10 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute bottom-1/4 right-1/10 w-96 h-96 bg-primary-container/10 rounded-full blur-3xl pointer-events-none"></div>
 
-@if (Model.ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong> <code>@Model.RequestId</code>
-    </p>
-}
+    <div class="max-w-xl w-full text-center relative z-10">
+        <!-- Error Status Code Large Gradient Display -->
+        <div class="mb-4 select-none">
+            <span class="text-8xl md:text-9xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r @gradientText drop-shadow-sm font-headline">
+                @Model.StatusCode
+            </span>
+        </div>
 
-<h3>Development Mode</h3>
-<p>
-    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
-</p>
-<p>
-    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
-    It can result in displaying sensitive information from exceptions to end users.
-    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
-    and restarting the app.
-</p>
+        <!-- Error Card -->
+        <div class="bg-white rounded-3xl border border-slate-100 p-8 md:p-12 shadow-[0_20px_50px_rgba(0,106,98,0.06)] backdrop-blur-sm">
+            <!-- Icon Container -->
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full @iconBgColor mb-6 shadow-inner animate-[pulse_3s_infinite_ease-in-out]">
+                <span class="material-symbols-outlined text-[40px] fill-1">@errorIcon</span>
+            </div>
+
+            <!-- Error Messages -->
+            <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 font-headline leading-tight mb-2">
+                @errorTitle
+            </h1>
+            <p class="text-sm font-semibold uppercase tracking-wider text-slate-400 font-body mb-4">
+                @errorSubtitle
+            </p>
+            <p class="text-slate-600 font-body leading-relaxed max-w-md mx-auto">
+                @errorDescription
+            </p>
+
+            <!-- Request ID for debug info -->
+            @if (Model.ShowRequestId)
+            {
+                <div class="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-100 text-xs text-slate-500 font-body">
+                    <span class="material-symbols-outlined text-[15px]">terminal</span>
+                    <span>Request ID: <code class="font-mono text-slate-700 bg-slate-200/60 px-1.5 py-0.5 rounded text-[11px]">@Model.RequestId</code></span>
+                </div>
+            }
+
+            <!-- Action Buttons -->
+            <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="/" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-primary text-white font-semibold rounded-2xl shadow-lg shadow-primary/20 hover:bg-primary/90 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
+                    <span class="material-symbols-outlined text-[20px]">home</span>
+                    <span>Go to Home</span>
+                </a>
+                <button onclick="window.history.back()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white border border-slate-200 text-slate-700 font-semibold rounded-2xl hover:bg-slate-50 hover:border-slate-300 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
+                    <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                    <span>Go Back</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Help Link -->
+        <p class="mt-8 text-xs text-slate-400 font-body">
+            Having trouble? Contact us via our <a href="/" class="text-primary hover:underline font-semibold">Support Center</a>.
+        </p>
+    </div>
+</div>

@@ -28,5 +28,10 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         /// Get models by type.
         /// </summary>
         Task<List<AiModel>> GetModelsByTypeAsync(string modelType);
+
+        /// <summary>
+        /// Retrieve AI model metadata mapped as DTO using model path.
+        /// </summary>
+        Task<CourseMarketplaceBE.Application.DTOs.AiModelDto?> GetByModelPathAsync(string modelPath);
     }
 }

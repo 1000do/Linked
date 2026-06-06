@@ -120,7 +120,8 @@
                         <div class="flex items-center justify-between mb-2">
                             <h2 class="text-3xl font-headline font-extrabold text-slate-900">Course Landing Page</h2>
                             <div id="landing-autosave-status" class="hidden text-xs font-semibold text-slate-400 flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[14px] animate-spin">sync</span> Saving...
+                                <span class="material-symbols-outlined text-[14px] animate-spin">sync</span>
+                                <span id="landing-autosave-text">Saving...</span>
                             </div>
                         </div>
 
@@ -615,14 +616,10 @@
                             value="Select a Lesson" 
                             onblur="updateLessonTitleInline(this.value)" 
                             onkeydown="if(event.key === 'Enter') this.blur();" />
-                        <span class="material-symbols-outlined text-[18px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">edit</span>
+                        <span class="material-symbols-outlined text-[18px] text-slate-400 pointer-events-none ml-2">edit</span>
                     </div>
                     <div class="flex items-center gap-4 mt-2 text-xs font-semibold text-slate-500">
                         <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">schedule</span> <span id="editing-lesson-duration">0 mins</span></span>
-                        <span id="editing-lesson-status-badge" class="flex items-center gap-1 text-slate-400">
-                            <span class="material-symbols-outlined text-[16px]">pending_actions</span> 
-                            <span id="editing-lesson-status-text">Draft</span>
-                        </span>
                     </div>
                 </div>
                 <div class="flex gap-3">
@@ -639,67 +636,105 @@
 
                 <!-- Tab: Video Content -->
                 <div id="tab-video" class="tab-content">
-                    <div class="grid grid-cols-3 gap-8">
-                        <div class="col-span-2">
-                            <div class="max-w-2xl mx-auto mb-12">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- LEFT COLUMN: Video Preview & Upload -->
+                        <div class="lg:col-span-2 space-y-6">
+                            <!-- Video upload / success status card -->
+                            <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Video Status & Upload</h4>
                                 <input type="hidden" id="MaterialUrl" name="MaterialUrl" />
-                                <div id="video-drop-area" class="border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center hover:bg-slate-50 transition-colors cursor-pointer group">
-                                    <div class="w-20 h-20 bg-primary-container/30 text-primary rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                                        <span class="material-symbols-outlined text-[40px]">movie</span>
+                                
+                                <!-- Drop area -->
+                                <div id="video-drop-area" class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:bg-slate-50 transition-colors cursor-pointer group">
+                                    <div class="w-12 h-12 bg-primary-container/30 text-primary rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform">
+                                        <span class="material-symbols-outlined text-[24px]">movie</span>
                                     </div>
-                                    <h3 class="text-lg font-bold text-slate-900 mb-2">Upload Lesson Video</h3>
-                                    <p class="text-sm text-slate-500 mb-4">MP4, WebM or OGG up to 2GB</p>
-                                    <span class="px-6 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 font-bold text-sm hover:bg-slate-50 inline-block">Browse Files</span>
+                                    <h5 class="text-sm font-bold text-slate-800 mb-1">Upload Video</h5>
+                                    <p class="text-[11px] text-slate-500 mb-3">MP4, WebM up to 2GB</p>
+                                    <span class="px-4 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 font-bold text-xs hover:bg-slate-50 inline-block">Browse</span>
                                     <input type="file" id="video-input" accept="video/*" class="hidden" />
                                 </div>
-                                <div id="video-upload-progress" class="hidden text-center py-8">
-                                    <div class="w-16 h-16 bg-primary-container/30 text-primary rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                        <span class="material-symbols-outlined text-[32px]">cloud_upload</span>
+
+                                <!-- Progress area -->
+                                <div id="video-upload-progress" class="hidden text-center py-4">
+                                    <div class="w-10 h-10 bg-primary-container/30 text-primary rounded-xl flex items-center justify-center mx-auto mb-3">
+                                        <span class="material-symbols-outlined text-[20px] animate-bounce">cloud_upload</span>
                                     </div>
-                                    <h3 id="upload-filename-display" class="text-xl font-bold text-slate-900 mb-2"></h3>
-                                    <p class="text-sm text-slate-500 mb-6">Processing <span id="progress-text">0</span>% • Do not close this tab during upload.</p>
-                                    <div class="h-2 bg-slate-100 rounded-full w-full max-w-md mx-auto mb-8 overflow-hidden">
+                                    <h5 id="upload-filename-display" class="text-xs font-bold text-slate-800 mb-1 truncate px-2"></h5>
+                                    <p class="text-[10px] text-slate-500 mb-3">Processing <span id="progress-text">0</span>%</p>
+                                    <div class="h-1.5 bg-slate-100 rounded-full w-full mb-4 overflow-hidden">
                                         <div id="progress-bar-fill" class="h-full bg-primary-container transition-all duration-300" style="width: 0%"></div>
                                     </div>
-                                    <div class="flex justify-center gap-4">
-                                        <button type="button" id="cancel-upload" class="px-6 py-2.5 bg-red-50 text-red-600 font-bold rounded-lg flex items-center gap-2 hover:bg-red-100 transition-colors">
-                                            <span class="material-symbols-outlined text-[18px]">cancel</span> Cancel Upload
-                                        </button>
-                                    </div>
+                                    <button type="button" id="cancel-upload" class="px-4 py-1.5 bg-red-50 text-red-600 font-bold text-xs rounded-lg flex items-center gap-1 hover:bg-red-100 transition-colors mx-auto">
+                                        <span class="material-symbols-outlined text-[14px]">cancel</span> Cancel
+                                    </button>
                                 </div>
-                                <div id="video-success" class="hidden border border-slate-200 rounded-2xl p-6 flex items-center justify-between bg-surface-container-low">
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-12 h-12 bg-primary text-white rounded-lg flex items-center justify-center">
+
+                                <!-- Success state card -->
+                                <div id="video-success" class="hidden border border-slate-200 rounded-xl p-3 bg-surface-container-low flex flex-col gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-primary text-white rounded-lg flex items-center justify-center shrink-0">
                                             <span class="material-symbols-outlined" style='font-variation-settings: "FILL" 1;'>play_circle</span>
                                         </div>
-                                        <div>
-                                            <div class="flex items-center gap-2 group w-64">
-                                                <input type="text" id="uploaded-filename" class="font-bold text-slate-900 bg-transparent border-none p-0 focus:ring-0 focus:outline-none hover:bg-slate-100 rounded transition-colors w-full cursor-pointer truncate" value="Lesson Video Content" onblur="updateVideoTitleInline(this.value)" onkeydown="if(event.key === 'Enter') this.blur();" />
-                                                <span class="material-symbols-outlined text-[16px] text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">edit</span>
-                                            </div>
-                                            <p class="text-xs text-slate-500" id="video-save-status">Video successfully processed</p>
+                                        <div class="overflow-hidden">
+                                            <p id="uploaded-filename-display" class="font-bold text-slate-900 text-xs truncate">Lesson Video Content</p>
+                                            <p class="text-[10px] text-emerald-600 font-semibold" id="video-save-status">Processed successfully</p>
                                         </div>
                                     </div>
-                                    <button class="text-slate-400 hover:text-primary transition-colors" title="Replace video" onclick="document.getElementById('video-input').click()">
-                                        <span class="material-symbols-outlined">edit</span>
+                                    <button type="button" id="replace-video-btn" class="w-full text-slate-500 hover:text-primary transition-colors flex items-center justify-center gap-1.5 text-xs font-bold py-2 bg-slate-100 rounded-lg hover:bg-slate-200 border border-slate-200" title="Replace video" onclick="document.getElementById('video-input').click()">
+                                        <span class="material-symbols-outlined text-[16px]">cloud_upload</span> Replace Video
                                     </button>
                                 </div>
                             </div>
-                            
-                            <div class="mt-8">
-                                <label class="text-sm font-bold text-slate-900 mb-2 block">Video Description</label>
-                                <div class="bg-white rounded-xl">
-                                    <div id="video-editor"></div>
+
+                            <!-- Video Preview Player Container -->
+                            <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm" id="video-preview-container">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Video Preview</h4>
+                                
+                                <!-- No Video Placeholder -->
+                                <div id="video-preview-placeholder" class="aspect-video bg-slate-50 border border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-center p-4">
+                                    <span class="material-symbols-outlined text-[32px] text-slate-300 mb-2">videocam_off</span>
+                                    <p class="text-xs font-bold text-slate-400">No Video Available</p>
+                                    <p class="text-[10px] text-slate-400 mt-1">Upload a video to preview it here</p>
+                                </div>
+
+                                <!-- Actual Video Player (Hidden by default) -->
+                                <div id="video-preview-player-wrapper" class="hidden aspect-video rounded-xl overflow-hidden bg-black relative shadow-inner">
+                                    <video id="video-preview-player" class="w-full h-full object-contain" controls preload="metadata" controlsList="nodownload">
+                                        Your browser does not support the video tag.
+                                    </video>
                                 </div>
                             </div>
-                        </div>
-                        <div class="space-y-6">
+
                             <!-- Auto-save status indicator -->
                             <div id="video-autosave-status" class="hidden text-xs text-center font-semibold text-slate-400 flex items-center justify-center gap-1">
                                 <span class="material-symbols-outlined text-[14px] animate-spin">sync</span> Saving...
                             </div>
-                            
+                        </div>
 
+                        <!-- RIGHT COLUMN: Edit Video Details Form -->
+                        <div class="space-y-6">
+                            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm" id="video-details-form-container">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="font-bold text-slate-900">Edit Video Details</h4>
+                                </div>
+                                
+                                <div class="mb-4" id="video-title-container">
+                                    <label class="text-sm font-bold text-slate-700 block mb-2">Video Title</label>
+                                    <input type="text" id="video-title-input" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-primary focus:border-primary font-medium text-slate-900" placeholder="Enter video title..." />
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="text-sm font-bold text-slate-700 block mb-2">Video Description</label>
+                                    <div class="bg-white rounded-xl">
+                                        <div id="video-editor"></div>
+                                    </div>
+                                </div>
+
+                                <button id="update-video-details-btn" class="w-full mt-2 px-4 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors shadow-sm flex justify-center" onclick="submitVideoEdit()">
+                                    Save Changes
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -871,6 +906,13 @@
         backdrop-filter: blur(8px);
         border: 1px solid rgba(255, 255, 255, 0.5);
     }
+
+    #video-editor {
+        height: 180px;
+    }
+    #resource-editor {
+        height: 120px;
+    }
 </style>
 
 @if (courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase))
@@ -889,6 +931,39 @@
 @section Scripts {
     <script>
         // --- GLOBAL FUNCTIONS AT THE TOP ---
+        function formatDuration(totalSeconds) {
+            totalSeconds = Math.round(totalSeconds || 0);
+            if (totalSeconds <= 0) {
+                return "0 mins";
+            }
+            if (totalSeconds < 60) {
+                return totalSeconds === 1 ? "1 sec" : totalSeconds + " secs";
+            }
+            if (totalSeconds < 3600) {
+                const mins = Math.round(totalSeconds / 60);
+                if (mins === 60) {
+                    return "1 hr";
+                }
+                return mins === 1 ? "1 min" : mins + " mins";
+            }
+            const hrs = Math.floor(totalSeconds / 3600);
+            const remainingMins = Math.round((totalSeconds % 3600) / 60);
+            let displayHrs = hrs;
+            let displayMins = remainingMins;
+            if (displayMins === 60) {
+                displayHrs += 1;
+                displayMins = 0;
+            }
+            const hrText = displayHrs === 1 ? "1 hr" : displayHrs + " hrs";
+            if (displayMins === 0) {
+                return hrText;
+            }
+            const minText = displayMins === 1 ? "1 min" : displayMins + " mins";
+            return `${hrText} ${minText}`;
+        }
+
+        const currentStatus = '@(ViewBag.CourseStatus as string ?? "Draft")';
+        const isPendingGlobal = currentStatus.toLowerCase() === 'pending';
         let initialVideoDesc = "";
         let isResourceUploading = false;
         let isSubmitting = false;
@@ -930,12 +1005,7 @@
         window.videoQuill = new Quill('#video-editor', { ...quillConfig, placeholder: 'Describe the video content...' });
         window.resourceQuill = new Quill('#resource-editor', { ...quillConfig, placeholder: 'Describe this resource...' });
         
-        // Auto-save listeners for Video description
-        const debouncedSaveVideo = debounce(() => {
-            saveVideoMaterial(true);
-        }, 1500);
 
-        window.videoQuill.on('text-change', debouncedSaveVideo);
 
         // Course Landing Page Quills
         window.courseDescQuill = new Quill('#course-description-editor', { ...quillConfig, placeholder: 'Detailed course description...' });
@@ -1008,7 +1078,7 @@
             if (catId == "0") return;
 
             // Stop if there are no actual changes
-            if (typeof hasLandingChanges === 'function' && !hasLandingChanges()) {
+            if (window.checkUnsavedChanges && !window.checkUnsavedChanges()) {
                 return;
             }
 
@@ -1016,7 +1086,7 @@
             const req = window.courseReqQuill ? window.courseReqQuill.root.innerHTML : '';
 
             const autoSaveEl = document.getElementById('landing-autosave-status');
-            const autoSaveText = autoSaveEl?.querySelector('span:last-child') || { textContent: '' };
+            const autoSaveText = document.getElementById('landing-autosave-text');
             
             if (autoSaveEl) {
                 autoSaveEl.classList.remove('hidden');
@@ -1062,12 +1132,43 @@
                         }
                         return true;
                     } else {
-                        if (autoSaveEl) autoSaveEl.classList.add('hidden');
+                        if (autoSaveEl) {
+                            autoSaveEl.querySelector('.material-symbols-outlined').textContent = 'error';
+                            autoSaveEl.querySelector('.material-symbols-outlined').classList.remove('animate-spin');
+                            autoSaveEl.className = "text-xs font-semibold text-rose-600 flex items-center gap-1";
+                            if (autoSaveText) autoSaveText.textContent = 'Failed to save changes';
+                            // if (autoSaveText) autoSaveText.textContent = json.message || 'Failed to save changes';
+                            setTimeout(() => autoSaveEl.classList.add('hidden'), 8000);
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error Saving Changes',
+                            text: json.message || 'Failed to save changes',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            // confirmButtonText: 'Dismiss',
+                            // confirmButtonColor: '#e11d48',
+                            timer: 5000,
+                            timerProgressBar: true,
+                            background: '#fff1f2',
+                            color: '#9f1239',
+                            iconColor: '#e11d48',
+                            customClass: {
+                                popup: 'border-2 border-rose-300 rounded-2xl shadow-xl'
+                            }
+                        });
                         return false;
                     }
                 })
                 .catch(e => {
-                    if (autoSaveEl) autoSaveEl.classList.add('hidden');
+                    if (autoSaveEl) {
+                        autoSaveEl.querySelector('.material-symbols-outlined').textContent = 'error';
+                        autoSaveEl.querySelector('.material-symbols-outlined').classList.remove('animate-spin');
+                        autoSaveEl.className = "text-xs font-semibold text-rose-600 flex items-center gap-1";
+                        if (autoSaveText) autoSaveText.textContent = 'System error occurred';
+                        setTimeout(() => autoSaveEl.classList.add('hidden'), 8000);
+                    }
                 });
         };
 
@@ -1138,7 +1239,17 @@
                     if (data.secure_url) {
                         thumbUrlInput.value = data.secure_url;
                         thumbPreview.src = data.secure_url;
-                        Swal.fire({ icon: 'success', title: 'Image Uploaded', text: 'Thumbnail updated successfully.', timer: 1500, showConfirmButton: false });
+                        saveCourseDetails().then(isSaved => {
+                            if (isSaved) {
+                                Swal.fire({ 
+                                    icon: 'success', 
+                                    title: 'Image Uploaded', 
+                                    text: 'Thumbnail updated successfully.', 
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+                            }
+                        });
                     }
                 })
                 .catch(err => {
@@ -1282,7 +1393,7 @@
         const uiSuccess = document.getElementById('video-success');
         const progressBarFill = document.getElementById('progress-bar-fill');
         const progressText = document.getElementById('progress-text');
-        const uploadedFilename = document.getElementById('uploaded-filename');
+        const uploadedFilenameDisplay = document.getElementById('uploaded-filename-display');
         const materialUrlInput = document.getElementById('MaterialUrl');
         let currentXHR = null;
 
@@ -1324,8 +1435,9 @@
                     if (typeof metadata === 'string') {
                         try { metadata = JSON.parse(metadata); } catch(e) { metadata = {}; }
                     }
-                    if (metadata?.file_type === 'video' && (m.learningStatus || m.LearningStatus || '').toLowerCase() !== 'removed') {
-                        totalDurationSeconds += (metadata?.duration || 0);
+                    const type = (metadata?.file_type || metadata?.FileType || metadata?.fileType || 'video').toLowerCase();
+                    if (type === 'video' && (m.learningStatus || m.LearningStatus || '').toLowerCase() !== 'removed') {
+                        totalDurationSeconds += (metadata?.duration || metadata?.Duration || 0);
                     }
                 });
 
@@ -1468,20 +1580,22 @@
             // Update Status Badge
             const statusBadge = document.getElementById('editing-lesson-status-badge');
             const statusText = document.getElementById('editing-lesson-status-text');
-            const lStatus = (lesson?.lessonStatus || lesson?.LessonStatus || 'draft').toLowerCase();
-            
-            if (lStatus === 'published') {
-                statusBadge.className = "flex items-center gap-1 text-primary";
-                statusBadge.querySelector('.material-symbols-outlined').textContent = "check_circle";
-                statusText.textContent = "Published";
-            } else if (lStatus === 'rejected') {
-                statusBadge.className = "flex items-center gap-1 text-red-500";
-                statusBadge.querySelector('.material-symbols-outlined').textContent = "cancel";
-                statusText.textContent = "Rejected";
-            } else {
-                statusBadge.className = "flex items-center gap-1 text-slate-400";
-                statusBadge.querySelector('.material-symbols-outlined').textContent = "pending_actions";
-                statusText.textContent = "Draft";
+            if (statusBadge && statusText) {
+                const lStatus = (lesson?.lessonStatus || lesson?.LessonStatus || 'draft').toLowerCase();
+                
+                if (lStatus === 'published') {
+                    statusBadge.className = "flex items-center gap-1 text-primary";
+                    statusBadge.querySelector('.material-symbols-outlined').textContent = "check_circle";
+                    statusText.textContent = "Published";
+                } else if (lStatus === 'rejected') {
+                    statusBadge.className = "flex items-center gap-1 text-red-500";
+                    statusBadge.querySelector('.material-symbols-outlined').textContent = "cancel";
+                    statusText.textContent = "Rejected";
+                } else {
+                    statusBadge.className = "flex items-center gap-1 text-slate-400";
+                    statusBadge.querySelector('.material-symbols-outlined').textContent = "pending_actions";
+                    statusText.textContent = "Draft";
+                }
             }
             
             // Clear current form
@@ -1510,7 +1624,7 @@
                             try { metadata = JSON.parse(metadata); } catch(e) { metadata = {}; }
                         }
                         
-                        const type = (metadata?.file_type || 'video').toLowerCase();
+                        const type = (metadata?.file_type || metadata?.FileType || metadata?.fileType || 'video').toLowerCase();
                         const mUrl = material.materialUrl || material.MaterialUrl;
                         const mDesc = material.description || material.Description;
                         const mTitle = material.title || material.Title;
@@ -1527,11 +1641,24 @@
                                 document.getElementById('MaterialUrl').value = mUrl;
                                 document.getElementById('video-drop-area').classList.add('hidden');
                                 document.getElementById('video-success').classList.remove('hidden');
-                                document.getElementById('uploaded-filename').value = mTitle || "Lesson Video Content";
+                                const displayEl = document.getElementById('uploaded-filename-display');
+                                if (displayEl) displayEl.textContent = mTitle || "Lesson Video Content";
+                                const inputEl = document.getElementById('video-title-input');
+                                if (inputEl) inputEl.value = mTitle || "Lesson Video Content";
                                 
-                                const totalSeconds = metadata?.duration || 0;
-                                const mins = Math.floor(totalSeconds / 60);
-                                durationDisplay = (mins > 0 ? mins : 0) + " mins";
+                                const totalSeconds = metadata?.duration || metadata?.Duration || 0;
+                                durationDisplay = formatDuration(totalSeconds);
+
+                                // Load into preview player
+                                const previewPlayer = document.getElementById('video-preview-player');
+                                const playerWrapper = document.getElementById('video-preview-player-wrapper');
+                                const placeholder = document.getElementById('video-preview-placeholder');
+                                if (previewPlayer && playerWrapper && placeholder) {
+                                    previewPlayer.src = mUrl;
+                                    previewPlayer.load();
+                                    placeholder.classList.add('hidden');
+                                    playerWrapper.classList.remove('hidden');
+                                }
                             }
                             // Show moderation feedback for rejected video
                             if (mLearningStatus === 'rejected' && mModerationFeedback) {
@@ -1569,8 +1696,20 @@
                                         </div>
                                     </div>` : '';
                                 
+                                const cardOnclick = isPendingGlobal ? "" : `onclick="loadResourceForEdit(${mId}, event)"`;
+                                const editBtnHtml = isPendingGlobal ? "" : `
+                                    <button onclick="loadResourceForEdit(${mId}, event)" class="edit-resource-btn text-slate-400 hover:text-primary transition-colors p-2 rounded-full hover:bg-slate-100" title="Edit Resource">
+                                        <span class="material-symbols-outlined text-[20px]">edit</span>
+                                    </button>
+                                `;
+                                const removeBtnHtml = isPendingGlobal ? "" : `
+                                    <button onclick="removeMaterial(${mId}, this)" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Remove">
+                                        <span class="material-symbols-outlined text-[20px]">delete</span>
+                                    </button>
+                                `;
+
                                 resourcesList.innerHTML += `
-                                    <div class="p-3 ${bgColor} border ${borderColor} rounded-lg shadow-sm cursor-pointer hover:bg-slate-50 transition-colors" data-material-id="${mId}" onclick="loadResourceForEdit(${mId}, event)">
+                                    <div class="p-3 ${bgColor} border ${borderColor} rounded-lg shadow-sm cursor-pointer hover:bg-slate-50 transition-colors" data-material-id="${mId}" ${cardOnclick}>
                                         <div class="flex items-center justify-between">
                                             <div class="flex items-center gap-3">
                                                 <div class="w-10 h-10 ${iconBg} rounded flex items-center justify-center">
@@ -1582,10 +1721,9 @@
                                                 </div>
                                             </div>
                                             <div class="flex items-center gap-2">
+                                                ${editBtnHtml}
                                                 <a href="${mUrl}" target="_blank" class="text-[#006a62] hover:bg-[#006a62]/10 p-2 rounded-full transition-colors"><span class="material-symbols-outlined text-[20px]">open_in_new</span></a>
-                                                <button onclick="removeMaterial(${mId}, this)" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Remove">
-                                                    <span class="material-symbols-outlined text-[20px]">delete</span>
-                                                </button>
+                                                ${removeBtnHtml}
                                             </div>
                                         </div>
                                         ${rejectedHint}
@@ -1705,7 +1843,7 @@
             });
         };
 
-        window.updateVideoTitleInline = function(newTitle) {
+        window.submitVideoEdit = function() {
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
             const lessonId = lessonIdEl.dataset.lessonId;
@@ -1716,42 +1854,59 @@
             let videoMat = materials.find(m => {
                 let meta = m.materialMetadata || m.MaterialMetadata;
                 if (typeof meta === 'string') { try { meta = JSON.parse(meta); } catch(e){meta={};} }
-                const type = (meta?.file_type || 'video').toLowerCase();
+                const type = (meta?.file_type || meta?.FileType || meta?.fileType || 'video').toLowerCase();
                 const mStatus = (m.learningStatus || m.LearningStatus || '').toLowerCase();
                 return type === 'video' && mStatus !== 'removed';
             });
             
-            if (!videoMat) return; // Cannot update if no active video
+            if (!videoMat) {
+                Swal.fire('No Video', 'Please upload a video before saving details.', 'warning');
+                return;
+            }
             const matId = videoMat.materialId || videoMat.MaterialId;
-            const currentTitle = videoMat.title || videoMat.Title;
+            const newTitle = document.getElementById('video-title-input').value.trim();
+            const newDesc = window.videoQuill.root.innerHTML;
             
-            if (newTitle === currentTitle || !newTitle.trim()) {
-                document.getElementById('uploaded-filename').value = currentTitle;
+            if (!newTitle) {
+                Swal.fire('Title Required', 'Video title cannot be empty.', 'warning');
                 return;
             }
             
+            const btn = document.getElementById('update-video-details-btn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Saving...';
+            btn.disabled = true;
+
             fetch(`/InstructorCourse/UpdateMaterialDetails?materialId=${matId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: newTitle.trim(), description: videoMat.description || videoMat.Description || window.videoQuill.root.innerHTML })
+                body: JSON.stringify({ title: newTitle, description: newDesc })
             })
             .then(res => res.json())
             .then(json => {
+                btn.textContent = originalText;
+                btn.disabled = false;
                 if(json.success) {
                     const data = JSON.parse(json.data);
                     if (data && data.data) {
-                        const updatedTitle = data.data.title;
-                        document.getElementById('uploaded-filename').value = updatedTitle;
-                        if (videoMat.title !== undefined) videoMat.title = updatedTitle;
-                        else videoMat.Title = updatedTitle;
+                        if (videoMat.title !== undefined) videoMat.title = data.data.title;
+                        else videoMat.Title = data.data.title;
+                        
+                        if (videoMat.description !== undefined) videoMat.description = data.data.description;
+                        else videoMat.Description = data.data.description;
+                        
+                        const displayEl = document.getElementById('uploaded-filename-display');
+                        if (displayEl) displayEl.textContent = data.data.title;
+                        
+                        Swal.fire({ icon: 'success', title: 'Updated!', text: 'Video details updated successfully.', timer: 1500, showConfirmButton: false });
                     }
                 } else {
-                    document.getElementById('uploaded-filename').value = currentTitle;
-                    Swal.fire('Error', json.message || 'Failed to update video title', 'error');
+                    Swal.fire('Error', json.message || 'Failed to update video details', 'error');
                 }
             })
             .catch(err => {
-                document.getElementById('uploaded-filename').value = currentTitle;
+                btn.textContent = originalText;
+                btn.disabled = false;
                 Swal.fire('Error', 'An error occurred', 'error');
             });
         };
@@ -1810,9 +1965,15 @@
         };
 
         window.loadResourceForEdit = function(mId, event) {
-            // Ignore if clicked on input, button, or link inside the card
-            if (event && event.target && (event.target.closest('button') || event.target.closest('a') || event.target.closest('input'))) {
-                return;
+            if (event) {
+                event.stopPropagation();
+                // Ignore if clicked on other buttons/links inside the card
+                const isDeleteBtn = event.target.closest('button') && !event.target.closest('.edit-resource-btn');
+                const isLink = event.target.closest('a');
+                const isInput = event.target.closest('input');
+                if (isDeleteBtn || isLink || isInput) {
+                    return;
+                }
             }
 
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
@@ -2140,7 +2301,9 @@
                         setTimeout(() => {
                             uiProgress.classList.add('hidden');
                             uiSuccess.classList.remove('hidden');
-                            uploadedFilename.textContent = file.name;
+                            if (uploadedFilenameDisplay) uploadedFilenameDisplay.textContent = file.name;
+                            const titleInput = document.getElementById('video-title-input');
+                            if (titleInput) titleInput.value = file.name.split('.').slice(0, -1).join('.') || file.name;
                             materialUrlInput.value = result.secure_url;
                             // Capture metadata for the database
                             materialUrlInput.dataset.duration = Math.round(result.duration || 0);
@@ -2161,7 +2324,28 @@
             Swal.fire('Upload Failed', msg, 'error');
             resetVideoUpload(); 
         }
-        function resetVideoUpload() { videoDropArea.classList.remove('hidden'); uiProgress.classList.add('hidden'); uiSuccess.classList.add('hidden'); videoInput.value=''; materialUrlInput.value=''; document.querySelectorAll('#tab-video .bg-red-50.border-red-200').forEach(el => el.remove()); }
+        function resetVideoUpload() { 
+            videoDropArea.classList.remove('hidden'); 
+            uiProgress.classList.add('hidden'); 
+            uiSuccess.classList.add('hidden'); 
+            videoInput.value=''; 
+            materialUrlInput.value=''; 
+            document.querySelectorAll('#tab-video .bg-red-50.border-red-200').forEach(el => el.remove()); 
+            const titleInput = document.getElementById('video-title-input');
+            if (titleInput) titleInput.value = '';
+            const displayEl = document.getElementById('uploaded-filename-display');
+            if (displayEl) displayEl.textContent = 'Lesson Video Content';
+            
+            // Reset preview player
+            const previewPlayer = document.getElementById('video-preview-player');
+            const playerWrapper = document.getElementById('video-preview-player-wrapper');
+            const placeholder = document.getElementById('video-preview-placeholder');
+            if (previewPlayer && playerWrapper && placeholder) {
+                previewPlayer.src = '';
+                placeholder.classList.remove('hidden');
+                playerWrapper.classList.add('hidden');
+            }
+        }
         window.resetVideoUpload = resetVideoUpload;
 
         // ─── Auto-Save Video Material ───
@@ -2213,7 +2397,32 @@
                 .then(json => {
                     if(json.success) {
                         if (statusEl) statusEl.textContent = '✓ Saved automatically';
-                        if (json.data) updateLocalMaterials(lessonId, json.data, 'video');
+                        if (json.data) {
+                            updateLocalMaterials(lessonId, json.data, 'video');
+                            // Update dynamic duration display
+                            let metadata = json.data.materialMetadata || json.data.MaterialMetadata;
+                            if (typeof metadata === 'string') {
+                                try { metadata = JSON.parse(metadata); } catch(e) { metadata = {}; }
+                            }
+                            const totalSeconds = metadata?.duration || metadata?.Duration || 0;
+                            const durationEl = document.getElementById('editing-lesson-duration');
+                            if (durationEl) durationEl.textContent = formatDuration(totalSeconds);
+                            
+                            // Re-render course structure to update the total duration counter
+                            renderCourseStructure();
+
+                            // Load new video url into preview player
+                            const previewPlayer = document.getElementById('video-preview-player');
+                            const playerWrapper = document.getElementById('video-preview-player-wrapper');
+                            const placeholder = document.getElementById('video-preview-placeholder');
+                            const mUrl = json.data.materialUrl || json.data.MaterialUrl;
+                            if (previewPlayer && playerWrapper && placeholder && mUrl) {
+                                previewPlayer.src = mUrl;
+                                previewPlayer.load();
+                                placeholder.classList.add('hidden');
+                                playerWrapper.classList.remove('hidden');
+                            }
+                        }
                         // Update initial video description so subsequent changes check works
                         initialVideoDesc = window.videoQuill ? window.videoQuill.root.innerHTML : "";
                     } else {
@@ -2316,8 +2525,24 @@
                                 const lesson = lessonsData.find(l => (l.lessonId || l.LessonId) == lessonId);
                                 if (lesson && lesson.learningMaterials) {
                                     const mat = lesson.learningMaterials.find(m => (m.materialId || m.MaterialId) == materialId);
-                                    if (mat) mat.learningStatus = 'removed';
+                                    if (mat) {
+                                        mat.learningStatus = 'removed';
+                                        
+                                        // If this was the video, reset the duration display and video form UI
+                                        let metadata = mat.materialMetadata || mat.MaterialMetadata;
+                                        if (typeof metadata === 'string') {
+                                            try { metadata = JSON.parse(metadata); } catch(e) { metadata = {}; }
+                                        }
+                                        const type = (metadata?.file_type || 'video').toLowerCase();
+                                        if (type === 'video') {
+                                            const durationEl = document.getElementById('editing-lesson-duration');
+                                            if (durationEl) durationEl.textContent = '0 mins';
+                                            resetVideoUpload();
+                                        }
+                                    }
                                 }
+                                // Re-render course structure to update total duration counter
+                                renderCourseStructure();
                             }
                             Swal.fire({
                                 title: 'Removed!',
@@ -2362,8 +2587,20 @@
                     </div>
                 </div>` : '';
             
+            const cardOnclick = isPendingGlobal ? "" : `onclick="loadResourceForEdit(${mId}, event)"`;
+            const editBtnHtml = isPendingGlobal ? "" : `
+                <button onclick="loadResourceForEdit(${mId}, event)" class="edit-resource-btn text-slate-400 hover:text-primary transition-colors p-2 rounded-full hover:bg-slate-100" title="Edit Resource">
+                    <span class="material-symbols-outlined text-[20px]">edit</span>
+                </button>
+            `;
+            const removeBtnHtml = isPendingGlobal ? "" : `
+                <button onclick="removeMaterial(${mId}, this)" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Remove">
+                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                </button>
+            `;
+
             const html = `
-                <div class="p-3 ${bgColor} border ${borderColor} rounded-lg shadow-sm cursor-pointer hover:bg-slate-50 transition-colors" data-material-id="${mId}" onclick="loadResourceForEdit(${mId}, event)">
+                <div class="p-3 ${bgColor} border ${borderColor} rounded-lg shadow-sm cursor-pointer hover:bg-slate-50 transition-colors" data-material-id="${mId}" ${cardOnclick}>
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 ${iconBg} rounded flex items-center justify-center">
@@ -2375,10 +2612,9 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
+                            ${editBtnHtml}
                             <a href="${mUrl}" target="_blank" class="text-[#006a62] hover:bg-[#006a62]/10 p-2 rounded-full transition-colors"><span class="material-symbols-outlined text-[20px]">open_in_new</span></a>
-                            <button onclick="removeMaterial(${mId}, this)" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Remove">
-                                <span class="material-symbols-outlined text-[20px]">delete</span>
-                            </button>
+                            ${removeBtnHtml}
                         </div>
                     </div>
                     ${rejectedHint}
@@ -2396,7 +2632,9 @@
                     if (type === 'document') appendResourceToUI(newMat);
                 } else {
                     const existingIdx = lesson.learningMaterials.findIndex(m => {
-                        const mType = m.materialMetadata?.file_type || 'video';
+                        let meta = m.materialMetadata || m.MaterialMetadata;
+                        if (typeof meta === 'string') { try { meta = JSON.parse(meta); } catch(e){meta={};} }
+                        const mType = (meta?.file_type || meta?.FileType || meta?.fileType || 'video').toLowerCase();
                         return mType === type;
                     });
                     if (existingIdx !== -1) lesson.learningMaterials[existingIdx] = newMat;
@@ -2424,6 +2662,61 @@
                 Swal.fire({
                     title: 'Incomplete Information',
                     text: 'Please complete the Course Title, Description, and Category on the Course Landing Page tab before submitting.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+                return;
+            }
+
+            // Check what you will learn & requirements
+            const learnText = window.courseLearnQuill ? window.courseLearnQuill.getText().trim() : '';
+            const reqText = window.courseReqQuill ? window.courseReqQuill.getText().trim() : '';
+
+            if (!learnText || learnText === '') {
+                switchMainTab('landing');
+                Swal.fire({
+                    title: 'Incomplete Information',
+                    text: 'Please fill in "What you will learn" on the Course Landing Page tab before submitting.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+                return;
+            } else if (learnText.length < 20) {
+                switchMainTab('landing');
+                Swal.fire({
+                    title: 'Information Too Short',
+                    text: '"What you will learn" must be at least 20 characters long.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+                return;
+            }
+
+            if (!reqText || reqText === '') {
+                switchMainTab('landing');
+                Swal.fire({
+                    title: 'Incomplete Information',
+                    text: 'Please fill in "Requirements" on the Course Landing Page tab before submitting.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+                return;
+            } else if (reqText.length < 20) {
+                switchMainTab('landing');
+                Swal.fire({
+                    title: 'Information Too Short',
+                    text: '"Requirements" must be at least 20 characters long.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+                return;
+            }
+
+            if (!thumb || thumb.trim() === '') {
+                switchMainTab('landing');
+                Swal.fire({
+                    title: 'Incomplete Information',
+                    text: 'Please upload a Course Thumbnail on the Course Landing Page tab before submitting.',
                     icon: 'warning',
                     confirmButtonColor: '#006a62'
                 });
@@ -2497,10 +2790,10 @@
                     
                     return !materials.some(m => {
                         let metadata = m.materialMetadata || m.MaterialMetadata;
-                        if (typeof m.metadata === 'string') {
-                            try { metadata = JSON.parse(m.metadata); } catch(e) {}
+                        if (typeof metadata === 'string') {
+                            try { metadata = JSON.parse(metadata); } catch(e) {}
                         }
-                        const fileType = metadata?.file_type || metadata?.FileType || (m.materialType === 1 || m.MaterialType === 1 ? 'video' : 'document');
+                        const fileType = metadata?.file_type || metadata?.FileType || metadata?.fileType || (m.materialType === 1 || m.MaterialType === 1 ? 'video' : 'document');
                         const status = (m.learningStatus || m.LearningStatus || '').toLowerCase();
                         return fileType.toLowerCase() === 'video' && status !== 'removed';
                     });
@@ -2528,11 +2821,11 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         isSubmitting = true;
-                        // fetch('/InstructorCourse/ModerateCourse', {  
-                        //     method: 'POST', 
-                        //     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        //     body: new URLSearchParams({ courseId: courseId })
-                        // })
+                        //fetch('/InstructorCourse/ModerateCourse', {  
+                        //    method: 'POST', 
+                        //    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        //    body: new URLSearchParams({ courseId: courseId })
+                        //})
                         fetch('/InstructorCourse/UpdateCourseStatus', { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -2706,8 +2999,9 @@
                         if (lesson && lesson.learningMaterials) {
                             const resources = lesson.learningMaterials.filter(m => {
                                 const mStatus = (m.learningStatus || m.LearningStatus || '').toLowerCase();
-                                const mMetadata = m.materialMetadata || m.MaterialMetadata;
-                                let fType = mMetadata?.file_type || mMetadata?.FileType || 'video';
+                                let meta = m.materialMetadata || m.MaterialMetadata;
+                                if (typeof meta === 'string') { try { meta = JSON.parse(meta); } catch(e){meta={};} }
+                                let fType = (meta?.file_type || meta?.FileType || meta?.fileType || 'video').toLowerCase();
                                 return mStatus !== 'removed' && (fType === 'document' || fType === 'file' || fType === 'raw');
                             });
                             if (resources.length >= 1) {
@@ -2781,8 +3075,7 @@
         });
         
         // ─── Disable editing if Pending Review ───
-        const currentStatus = '@(ViewBag.CourseStatus as string ?? "Draft")';
-        if (currentStatus.toLowerCase() === 'pending') {
+        if (isPendingGlobal) {
             // Disable all inputs, selects and textareas
             document.querySelectorAll('input, select, textarea').forEach(el => {
                 if (el.name !== '__RequestVerificationToken') {
@@ -2796,7 +3089,7 @@
                  const text = el.textContent.trim().toLowerCase();
                  const onclick = el.getAttribute('onclick') || '';
                  
-                 // Keep navigation and close buttons functional
+                 // Keep navigation, close buttons, and tab switch buttons functional
                  if (onclick.includes('switchMainTab') || 
                      onclick.includes('selectLesson') || 
                      onclick.includes('closeModal') || 
@@ -2804,7 +3097,8 @@
                      onclick.includes('closeVideoModal') ||
                      onclick.includes('closeResourceModal') ||
                      text === 'logout' ||
-                     el.classList.contains('text-slate-400')) { // Like back button or close icons
+                     el.classList.contains('text-slate-400') ||
+                     el.classList.contains('tab-btn')) { // Exclude tab buttons!
                      return;
                  }
                  
@@ -2824,8 +3118,8 @@
                 disableQuill(window.courseReqQuill);
             }, 500); // Small delay to ensure they are initialized
             
-            // Hide specific upload buttons that might not be caught
-            const hideEls = ['upload-resource-btn', 'save-course-details-btn', 'save-video-btn', 'save-resource-btn'];
+            // Hide specific upload/save buttons and forms in read-only mode
+            const hideEls = ['upload-resource-btn', 'save-course-details-btn', 'save-video-btn', 'save-resource-btn', 'update-video-details-btn', 'resource-form-container', 'replace-video-btn'];
             hideEls.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.classList.add('hidden');

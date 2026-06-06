@@ -287,11 +287,10 @@
                 <a href="/Course/Details/${item.courseId}"
                    class="flex items-center gap-3 px-4 py-3 hover:bg-emerald-50/50 transition-colors border-b border-slate-50 last:border-0">
                     ${ item.thumbnailUrl
-                        ? `<img src="${item.thumbnailUrl}" alt="${item.title}"
+                        ? `<img src="${item.thumbnailUrl}" onerror="this.onerror=null; this.src='/img/default-course.png';" alt="${item.title}"
                                class="w-14 h-10 object-cover rounded-lg shrink-0 bg-slate-100" loading="lazy" />`
-                        : `<div class="w-14 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shrink-0">
-                               <span class="material-symbols-outlined text-primary text-lg">school</span>
-                           </div>`
+                        : `<img src="/img/default-course.png" alt="${item.title}"
+                               class="w-14 h-10 object-cover rounded-lg shrink-0 bg-slate-100" loading="lazy" />`
                     }
                     <div class="flex-1 min-w-0">
                         <p class="text-xs font-semibold text-slate-800 line-clamp-2 leading-snug">${item.title}</p>
@@ -398,7 +397,8 @@
                             return `
                                 <a href="/Course/Details/${c.courseId}" 
                                    class="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50/80 hover:pl-6 transition-all duration-300 group">
-                                    <img src="${c.courseThumbnailUrl || 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800&auto=format&fit=crop'}" 
+                                    <img src="${c.courseThumbnailUrl || '/img/default-course.png'}" 
+                                         onerror="this.onerror=null; this.src='/img/default-course.png';"
                                          class="w-14 h-10 object-cover rounded-lg border border-slate-100 group-hover:scale-105 transition-all duration-300 shrink-0" />
                                     <div class="flex-1 min-w-0">
                                         <h4 class="text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-[#a435f0] transition-colors leading-snug">${highlightedTitle}</h4>

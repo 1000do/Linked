@@ -1,8 +1,37 @@
  @model CourseMarketplaceFE.Models.CourseDetailViewModel
+@functions {
+    public static string FormatDuration(int totalSeconds)
+    {
+        if (totalSeconds <= 0) return "0 mins";
+        if (totalSeconds < 60) return totalSeconds == 1 ? "1 sec" : $"{totalSeconds} secs";
+        
+        if (totalSeconds < 3600)
+        {
+            var mins = (int)Math.Round(totalSeconds / 60.0);
+            if (mins == 60) return "1 hr";
+            return mins == 1 ? "1 min" : $"{mins} mins";
+        }
+        
+        var hrs = totalSeconds / 3600;
+        var remainingMins = (int)Math.Round((totalSeconds % 3600) / 60.0);
+        if (remainingMins == 60)
+        {
+            hrs += 1;
+            remainingMins = 0;
+        }
+        
+        var hrText = hrs == 1 ? "1 hr" : $"{hrs} hrs";
+        if (remainingMins == 0) return hrText;
+        
+        var minText = remainingMins == 1 ? "1 min" : $"{remainingMins} mins";
+        return $"{hrText} {minText}";
+    }
+}
 @{
     ViewData["Title"] = Model.Title;
     var userRole = Context.Request.Cookies["UserRole"]?.ToLower();
     var isManager = userRole == "admin" || userRole == "staff";
+    
 }
 
 <style>
@@ -11,7 +40,18 @@
         top: 24px;
         transition: all 0.3s ease;
     }
+    .review-menu-container.menu-open {
+        opacity: 1 !important;
+    }
 </style>
+
+<!-- Status Banner -->
+@if (!Model.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+{
+    <div class="bg-amber-500 text-amber-950 font-bold text-center py-2 shadow-md w-full sticky top-20 z-[60]">
+        WARNING: This course is currently in @Model.CourseStatus.ToUpper() state.
+    </div>
+}
 
 <!-- Hero Section -->
 <div class="bg-[#1c1d1f] text-white py-12 px-8 border-b border-slate-700">
@@ -61,17 +101,36 @@
                 <div class="aspect-video relative group cursor-pointer" onclick="openPreviewModal()">
                     @{
                         var thumbUrl = string.IsNullOrEmpty(Model.CourseThumbnailUrl) 
-                            ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
+                            ? "/img/default-course.png" 
                             : Model.CourseThumbnailUrl;
                         if (thumbUrl.Contains("cloudinary.com")) {
                             thumbUrl = thumbUrl.Replace("/image/upload/", "/image/upload/f_auto,q_auto,w_600/");
                         }
                     }
-                    <img src="@thumbUrl" class="w-full h-full object-cover" />
+                    <img src="@thumbUrl" onerror="this.onerror=null; this.src='/img/default-course.png';" class="w-full h-full object-cover" />
                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
                         <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                             <span class="material-symbols-outlined text-4xl text-slate-900">play_arrow</span>
                         </div>
+                    </div>
+                    
+                    <!-- Report button container -->
+                    <div id="course-report-container">
+                        @if (Model.IsEnrolled && !Model.IsOwner && !isManager)
+                        {
+                            var hideReportBtn = (Model.CourseStatus?.Equals("pending", StringComparison.OrdinalIgnoreCase) == true) || 
+                                                (Model.CourseStatus?.Equals("draft", StringComparison.OrdinalIgnoreCase) == true) || 
+                                                (Model.CourseStatus?.Equals("archived", StringComparison.OrdinalIgnoreCase) == true);
+                            if (!hideReportBtn)
+                            {
+                                <button type="button" 
+                                        onclick="event.stopPropagation(); reportCourse(@Model.CourseId);"
+                                        class="absolute top-3 right-3 z-30 w-9 h-9 flex items-center justify-center rounded-lg bg-black/40 text-white/80 hover:bg-white hover:text-red-600 transition-all shadow-md backdrop-blur-sm"
+                                        title="Report this course">
+                                    <span class="material-symbols-outlined text-[20px]">flag</span>
+                                </button>
+                            }
+                        }
                     </div>
                 </div>
                 
@@ -125,26 +184,12 @@
                                 <span class="wishlist-text">@(Model.IsInWishlist ? "Saved to Wishlist" : "Add to Wishlist")</span>
                             </button>
 
-                            @if (Model.IsEnrolled)
-                            {
-                                var hideReportBtn = (Model.CourseStatus?.Equals("pending", StringComparison.OrdinalIgnoreCase) == true) || 
-                                                    (Model.CourseStatus?.Equals("draft", StringComparison.OrdinalIgnoreCase) == true) || 
-                                                    (Model.CourseStatus?.Equals("archived", StringComparison.OrdinalIgnoreCase) == true);
-                                if (!hideReportBtn)
-                                {
-                                    <button type="button" 
-                                            onclick="reportCourse(@Model.CourseId);"
-                                            class="w-full border border-slate-200 text-slate-700 font-bold py-3 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all flex items-center justify-center gap-2 mt-2">
-                                        <span class="material-symbols-outlined text-slate-400">flag</span>
-                                        <span>Report this course</span>
-                                    </button>
-                                }
-                            }
+
                         }
                     </div>
                     @if (!Model.IsOwner && !isManager)
                     {
-                        <p class="text-[11px] text-slate-500 text-center mt-4">30-Day Money-Back Guarantee</p>
+                        <p class="text-[11px] text-slate-500 text-center mt-4">14-Day Money-Back Guarantee</p>
                     }
                     
                     <div class="mt-6">
@@ -169,10 +214,6 @@
                             <li class="flex items-center gap-3 text-slate-600">
                                 <span class="material-symbols-outlined text-[18px]">all_inclusive</span>
                                 <span>Full lifetime access</span>
-                            </li>
-                            <li class="flex items-center gap-3 text-slate-600">
-                                <span class="material-symbols-outlined text-[18px]">devices</span>
-                                <span>Access on mobile and TV</span>
                             </li>
                         </ul>
                     </div>
@@ -204,23 +245,7 @@
             <h2 class="text-2xl font-bold text-slate-900 mb-4">Course content</h2>
             @{
                 var totalSeconds = Model.Lessons.SelectMany(l => l.LearningMaterials).Sum(m => m.MaterialMetadata?.Duration ?? 0);
-                var totalHours = totalSeconds / 3600;
-                var totalMinutes = (totalSeconds % 3600) / 60;
-                var remainingSeconds = totalSeconds % 60;
-                
-                string totalDurationDisplay;
-                if (totalHours > 0)
-                {
-                    totalDurationDisplay = $"{totalHours}h {totalMinutes}m {remainingSeconds}s";
-                }
-                else if (totalMinutes > 0)
-                {
-                    totalDurationDisplay = $"{totalMinutes}m {remainingSeconds}s";
-                }
-                else
-                {
-                    totalDurationDisplay = $"{remainingSeconds}s";
-                }
+                string totalDurationDisplay = FormatDuration(totalSeconds);
             }
             <div class="flex justify-between items-center text-sm text-slate-600 mb-2">
                 <span>@Model.Lessons.Count sections • @Model.Lessons.SelectMany(l => l.LearningMaterials).Count() lectures • @totalDurationDisplay total length</span>
@@ -234,23 +259,7 @@
                 @foreach (var lesson in Model.Lessons)
                 {
                     var lessonSeconds = lesson.LearningMaterials.Sum(m => m.MaterialMetadata?.Duration ?? 0);
-                    var lessonHours = lessonSeconds / 3600;
-                    var lessonMins = (lessonSeconds % 3600) / 60;
-                    var lessonSecs = lessonSeconds % 60;
-                    
-                    string lessonDurationDisplay;
-                    if (lessonHours > 0)
-                    {
-                        lessonDurationDisplay = $"{lessonHours}h {lessonMins}m {lessonSecs}s";
-                    }
-                    else if (lessonMins > 0)
-                    {
-                        lessonDurationDisplay = $"{lessonMins}m {lessonSecs}s";
-                    }
-                    else
-                    {
-                        lessonDurationDisplay = $"{lessonSecs}s";
-                    }
+                    string lessonDurationDisplay = FormatDuration(lessonSeconds);
 
                     <div class="border-b border-slate-200 last:border-0">
                         <button class="w-full px-6 py-4 flex items-center justify-between bg-slate-50/50 hover:bg-slate-50 transition-colors text-left" onclick="this.nextElementSibling.classList.toggle('hidden')">
@@ -442,7 +451,7 @@
             <!-- Review Form (conditionally shown by JS) -->
             <div id="detail-review-form" class="hidden mb-10">
                 <div class="bg-gradient-to-r from-[#a435f0]/5 to-[#a435f0]/10 p-6 rounded-2xl border border-[#a435f0]/20">
-                    <h4 class="font-bold text-sm mb-1 text-[#a435f0]">✍️ Write your review</h4>
+                    <h4 class="font-bold text-sm mb-1 text-[#a435f0]">Write your review</h4>
                     <p class="text-xs text-slate-500 mb-4">Share your learning experience with the community</p>
                     <div class="flex gap-1 mb-4" id="detail-rating-input">
                         @for (int ri = 1; ri <= 5; ri++) {
@@ -530,7 +539,25 @@
 
 <script>
     const currentToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`.trim();
+    console.log("currentToken",currentToken);
     let allExpanded = false;
+    
+    function decodeToken(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            console.log("Decoded token: " + jsonPayload);
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            console.error("Failed to decode token", e);
+            return null;
+        }
+    }
+   
+    
 
     function toggleAllSections() {
         allExpanded = !allExpanded;
@@ -627,6 +654,19 @@
                         <button type="button" onclick="toggleWishlist(this, ${courseId});" class="w-full border border-slate-200 font-bold py-3 rounded-lg hover:bg-slate-50 transition-all flex items-center justify-center gap-2 text-slate-700">
                             <span class="material-symbols-outlined text-slate-400">favorite</span>
                             <span class="wishlist-text">Add to Wishlist</span>
+                        </button>
+                    `;
+                }
+
+                // Update Report Button container dynamically
+                const reportContainer = document.getElementById('course-report-container');
+                if (reportContainer) {
+                    reportContainer.innerHTML = `
+                        <button type="button" 
+                                onclick="event.stopPropagation(); reportCourse(${courseId});"
+                                class="absolute top-3 right-3 z-30 w-9 h-9 flex items-center justify-center rounded-lg bg-black/40 text-white/80 hover:bg-white hover:text-red-600 transition-all shadow-md backdrop-blur-sm"
+                                title="Report this course">
+                            <span class="material-symbols-outlined text-[20px]">flag</span>
                         </button>
                     `;
                 }
@@ -800,9 +840,15 @@
                         </div>
                     </div>
                 `).join('');
-            }
-        } catch(e) { console.warn('Stats load failed', e); }
+                } else {
+                    document.getElementById('stats-bars').innerHTML = renderErrorState('Failed to load rating statistics.', 'loadReviewStats()');
+                }
+        } catch(e) {
+            console.warn('Stats load failed', e);
+            document.getElementById('stats-bars').innerHTML = renderErrorState('Failed to load rating statistics.', 'loadReviewStats()');
+        }
     }
+    
 
     async function loadReviewEligibility() {
         try {
@@ -876,13 +922,17 @@
         }
     }
 
-    // ── currentUserId từ JWT trong cookie (dùng để nhận biết review của mình) ──
-    const currentUserId = parseInt('@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0")') || 0;
-
+    
+    const decoded = decodeToken(currentToken);
+    const currentUserId = decoded ? parseInt(decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || decoded["nameid"]) : null;
+    const currentUserRole = decoded ? (decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || decoded["role"]) : null;
+    
     let currentReviewPage = 1;
     const REVIEW_PAGE_SIZE = 5;
 
+    
     async function loadReviews(page = 1) {
+        
         currentReviewPage = page;
         const list = document.getElementById('reviews-list');
         const filter = document.getElementById('review-star-filter').value;
@@ -895,12 +945,33 @@
                 const data = result.data.items;
 
                 list.innerHTML = data.map(r => {
-                    const isOwn = currentUserId > 0 && r.userId === currentUserId;
+                    console.log("r.userId: ",r.userId);
+                    console.log("r.UserId : ",r.UserId);
+                    const isOwn = currentUserId > 0 && (r.userId == currentUserId || r.UserId == currentUserId);
                     const createdTime = r.createdAt ? new Date(r.createdAt).getTime() : 0;
                     const updatedTime = r.updatedAt ? new Date(r.updatedAt).getTime() : 0;
                     const isEdited = updatedTime && updatedTime > (createdTime + 60000);
                     const isRemoved = r.isRemoved;
                     return `
+                    ${(r.isRemoved && r.reviewStatus === 'violating') ? `
+                    <div class="border-t border-slate-100 pt-6" id="review-card-${r.reviewId}">
+                        <div class="flex gap-3 items-start">
+                            <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[16px] text-slate-400">gavel</span>
+                            </div>
+                            <p class="text-sm text-slate-400 italic pt-1">${r.comment}</p>
+                        </div>
+                    </div>
+                    ` : r.isRemoved ? `
+                    <div class="border-t border-slate-100 pt-6" id="review-card-${r.reviewId}">
+                        <div class="flex gap-3 items-start">
+                            <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[16px] text-slate-400">delete</span>
+                            </div>
+                            <p class="text-sm text-slate-400 italic pt-1">This review was removed by the author.</p>
+                        </div>
+                    </div>
+                    ` : `
                     <div class="border-t border-slate-100 pt-6 group" id="review-card-${r.reviewId}">
                         <div class="flex gap-4 mb-3">
                             <div class="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
@@ -913,27 +984,18 @@
                                         ${r.isInstructor ? '<span class="ml-2 bg-[#a435f0]/10 text-[#a435f0] text-[10px] px-2 py-0.5 rounded-full border border-[#a435f0]/20">Instructor</span>' : ''}
                                     </h4>
                                     <div class="relative flex items-center gap-2">
-                                        <span class="text-[11px] text-slate-400 font-medium">${new Date(r.createdAt).toLocaleDateString('vi-VN')}</span>
+                                        <span class="text-[11px] text-slate-400 font-medium">${new Date(r.createdAt).toLocaleDateString('en-US')}</span>
                                         ${(isEdited && !isRemoved) ? '<span class="text-[10px] text-slate-400 italic">(edited)</span>' : ''}
-                                        <!-- ⋮ dropdown -->
-                                        ${!isRemoved ? `
-                                        <div class="relative opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onclick="toggleReviewMenu(this)" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors" title="More options">
+                                        <!-- ⋮ dropdown - only for others -->
+                                        ${(!isRemoved && !isOwn) ? `
+                                        <div class="relative opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity review-menu-container">
+                                            <button onclick="toggleReviewMenu(event, this)" class="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors" title="More options">
                                                 <span class="material-symbols-outlined text-[18px]">more_vert</span>
                                             </button>
                                             <div class="review-menu hidden absolute right-0 top-8 z-30 min-w-[160px] bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5">
-                                                ${isOwn ? `
-                                                <button onclick="editReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}', ${r.rating}, ${JSON.stringify(r.comment).replace(/"/g, '&quot;')}); closeAllMenus()" class="w-full text-left px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                                                    <span class="material-symbols-outlined text-[16px] text-blue-500">edit</span> Edit
-                                                </button>
-                                                <button onclick="deleteReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}'); closeAllMenus()" class="w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2">
-                                                    <span class="material-symbols-outlined text-[16px]">delete</span> Delete
-                                                </button>
-                                                ` : `
                                                 <button onclick="reportReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}'); closeAllMenus()" class="w-full text-left px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-2">
                                                     <span class="material-symbols-outlined text-[16px] text-orange-500">flag</span> Report
                                                 </button>
-                                                `}
                                             </div>
                                         </div>` : ''}
                                     </div>
@@ -958,6 +1020,15 @@
                                     `}
                                 </div>
                                 <p class="text-sm ${isRemoved ? 'text-slate-400 italic' : 'text-slate-700'} leading-relaxed" id="review-text-${r.reviewId}">${r.comment}</p>
+                                ${(isOwn && !isRemoved) ? `
+                                <div class="flex items-center gap-3 mt-2">
+                                    <button onclick="editReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}', ${r.rating}, ${JSON.stringify(r.comment).replace(/"/g, '&quot;')})" class="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors">
+                                        <span class="material-symbols-outlined text-[14px]">edit</span> Edit
+                                    </button>
+                                    <button onclick="deleteReview(${r.reviewId}, '${r.lessonId ? 'lesson' : 'course'}')" class="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-red-600 transition-colors">
+                                        <span class="material-symbols-outlined text-[14px]">delete</span> Delete
+                                    </button>
+                                </div>` : ''}
                                 <!-- Edit form (hidden by default) -->
                                 ${!isRemoved ? `
                                 <div id="edit-form-${r.reviewId}" class="hidden mt-3 p-3 bg-slate-50 rounded-2xl border border-slate-200">
@@ -977,7 +1048,7 @@
                                 </div>` : ''}
                             </div>
                         </div>
-                    </div>
+                    </div>`}
                 `}).join('');
 
                 const totalPages = Math.ceil(result.data.totalCount / REVIEW_PAGE_SIZE);
@@ -997,22 +1068,49 @@
                     : `<p class="text-slate-400 italic text-center py-10">No reviews yet for this course.</p>`;
             }
         } catch (e) {
-            list.innerHTML = '<p class="text-red-400 italic text-center py-10">Could not load reviews.</p>';
+            list.innerHTML = renderErrorState('Could not load reviews.', `loadReviews(${page})`);
         }
     }
 
-    // ── Toggle / close dropdown menus ─────────────────────────────────
-    function toggleReviewMenu(btn) {
-        closeAllMenus();
-        const menu = btn.nextElementSibling;
-        menu.classList.toggle('hidden');
-        // Đóng khi click ra ngoài
-        setTimeout(() => document.addEventListener('click', closeAllMenusOnce, { once: true }), 0);
+    function renderErrorState(message, retryFuncStr) {
+        return `
+            <div class="flex flex-col items-center justify-center py-8 px-4 text-center max-w-sm mx-auto">
+                <div class="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-3">
+                    <span class="material-symbols-outlined text-[24px]">error_outline</span>
+                </div>
+                <h4 class="text-slate-800 font-bold text-sm mb-1">Failed to load content</h4>
+                <p class="text-slate-400 text-xs mb-4 leading-relaxed">${message}</p>
+                ${retryFuncStr ? `
+                <button onclick="${retryFuncStr}" class="px-4 py-1.5 bg-[#a435f0] hover:bg-[#8710d8] text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm">
+                    <span class="material-symbols-outlined text-[14px]">refresh</span> Retry
+                </button>
+                ` : ''}
+            </div>
+        `;
     }
-    function closeAllMenusOnce() { closeAllMenus(); }
+
+    // ── Toggle / close dropdown menus ─────────────────────────────────
+    function toggleReviewMenu(event, btn) {
+        event.stopPropagation();
+        const menu = btn.nextElementSibling;
+        const container = btn.parentElement;
+        const isHidden = menu.classList.contains('hidden');
+        closeAllMenus();
+        if (isHidden) {
+            menu.classList.remove('hidden');
+            if (container) container.classList.add('menu-open');
+        }
+    }
     function closeAllMenus() {
         document.querySelectorAll('.review-menu').forEach(m => m.classList.add('hidden'));
+        document.querySelectorAll('.review-menu-container').forEach(c => c.classList.remove('menu-open'));
     }
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.review-menu')) {
+            closeAllMenus();
+        }
+    });
 
     // ── Edit review ───────────────────────────────────────────────────
     function editReview(reviewId, type, currentRating, currentComment) {
@@ -1076,6 +1174,14 @@
                 loadReviews(currentReviewPage);
                 loadReviewStats();
                 Swal.fire({ icon: 'success', title: 'Deleted', timer: 1200, showConfirmButton: false });
+            } else if (res.status === 400 && result.message && result.message.includes('moderation')) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Under Moderation',
+                    text: 'This review is currently under review by our moderation team and cannot be deleted at this time.',
+                    confirmButtonText: 'OK',
+                    customClass: { popup: 'rounded-3xl' }
+                });
             } else {
                 Swal.fire('Error', result.message || 'Could not delete review.', 'error');
             }
@@ -1152,6 +1258,7 @@
             preConfirm: () => {
                 const items = document.querySelectorAll('.report-item');
                 const reports = [];
+                const selectedReasons = new Set();
                 for (let i = 0; i < items.length; i++) {
                     const reason = items[i].querySelector('.report-reason').value;
                     const desc = items[i].querySelector('.report-desc').value.trim();
@@ -1159,6 +1266,11 @@
                         Swal.showValidationMessage(`Please provide a description of at least 20 characters for Reason ${i + 1}.`);
                         return false;
                     }
+                    if (selectedReasons.has(reason)) {
+                        Swal.showValidationMessage(`You cannot select the same reason "${reason}" multiple times.`);
+                        return false;
+                    }
+                    selectedReasons.add(reason);
                     reports.push({ reason, description: desc });
                 }
                 return reports;

@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Enums;
 
 namespace CourseMarketplaceBE.Application.IServices;
 
@@ -11,5 +12,5 @@ public interface ICourseCommandService
     Task UpdateCourseStatusAsync(int courseId, string status, int instructorId);
     Task DeleteCourseAsync(int courseId, int instructorId);
     Task<CourseAIIntegrationResult> IntegrateAItoCourseAsync(CourseAIIntegrationCommand command);
-    Task UpdateCourseStatusAndFeedbackAsync(int courseId, string status, string? feedback);
+    Task UpdateCourseStatusAndFeedbackAsync(int courseId, string status, string? feedback, AiThreatLevel? threatLevel = null);
 }

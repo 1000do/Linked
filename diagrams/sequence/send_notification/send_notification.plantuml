@@ -1,0 +1,126 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Send Notification
+
+actor "Admin / Staff" as act
+participant "NotificationSendForm" as view
+participant "NotificationController" as be_ctrl
+participant ":NotificationService" as sv
+participant ":Notification" as ett
+participant ":NotificationRepository" as repo
+participant ":AppDbContext" as ctx
+participant Database as db
+participant "NotificationHub" as hub
+
+act++
+act->view++: Access advanced notification form
+act->view: Enter Title, Content, TargetType, and Emails
+act->view: Click the "Send Notification" button
+
+view->view++: Validate input (Fields not empty)
+view--
+group opt [Invalid input]
+    view-->>act: Display error message
+end
+
+view->be_ctrl++: Send POST request to /api/Notification/send-advanced
+be_ctrl->be_ctrl++: Validate DTO (Title & Content length <= 100)
+be_ctrl--
+
+group opt [Invalid DTO (Length > 100)]
+    be_ctrl-->>view: Return status code 400 (BadRequest)
+    view-->>act: Display error message
+end
+
+be_ctrl->sv++: Call SendAdvancedAsync(dto)
+
+sv->sv++: Determine target user IDs by TargetType
+sv--
+
+alt dto.TargetType == "ALL"
+    sv->repo++: Call GetAllUserIdsAsync()
+    repo->ctx++: Call GetAllUserIdsAsync()
+    ctx->db++: Retrieve all active user IDs
+    db-->>ctx--: Return user IDs list
+    ctx-->>repo--: Return user IDs list
+    repo-->>sv--: Return user IDs list
+else dto.TargetType == "CUSTOM" (Emails exist)
+    loop for each email in dto.Emails
+        sv->repo++: Call GetUserIdByEmailAsync(email)
+        repo->ctx++: Call GetUserIdByEmailAsync(email)
+        ctx->db++: Retrieve user ID matching email
+        db-->>ctx--: Return userId
+        ctx-->>repo--: Return userId
+        repo-->>sv--: Return userId
+    end
+end
+
+sv->sv++: Check targetUserIds.Any()
+sv--
+
+alt targetUserIds is empty
+    sv-->>be_ctrl: Return 0
+    be_ctrl-->>view: Return status code 200 (Ok, count = 0)
+    view-->>act: Display "No target users found" message
+else targetUserIds is not empty
+    sv->ett++: Call Notification() (for each receiver)
+    ett-->>sv--: Return list of Notification objects
+    
+    sv->repo++: Call AddRangeAsync(notifications)
+    repo->ctx++: Call AddRangeAsync(notifications)
+    ctx-->>repo--: Return
+    repo-->>sv--: Return
+    
+    sv->repo++: Call SaveChangesAsync()
+    repo->ctx++: Call SaveChangesAsync()
+    ctx->db++: Save notifications to Database
+    db-->>ctx--: Return numberOfRowsAffected
+    ctx-->>repo--: Return numberOfRowsAffected
+    repo-->>sv--: Return numberOfRowsAffected
+    
+    sv->sv++: Check numberOfRowsAffected > 0
+    sv--
+    
+    alt numberOfRowsAffected > 0
+        loop for each userId in targetUserIds
+            sv->hub++: Call Clients.User(userId).SendAsync("ReceiveNotification", payload)
+            hub-->>sv: Broadcast notification via SignalR
+            hub--
+        end
+        sv-->>be_ctrl: Return targetUserIds.Count
+        be_ctrl-->>view: Return status code 200 (Ok)
+        view-->>act: Display "Sent Successfully" message
+    else numberOfRowsAffected == 0
+        sv-->>be_ctrl--: throw InvalidOperationException
+        be_ctrl-->>view--: Return status code 400 (BadRequest)
+        view-->>act--: Display "Send failed" message
+    end
+end
+act--
+@enduml

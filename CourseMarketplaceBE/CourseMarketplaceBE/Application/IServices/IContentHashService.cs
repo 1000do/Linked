@@ -1,5 +1,6 @@
-using CourseMarketplaceBE.Application.DTOs;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using CourseMarketplaceBE.Application.DTOs;
 
 namespace CourseMarketplaceBE.Application.IServices
 {
@@ -9,12 +10,17 @@ namespace CourseMarketplaceBE.Application.IServices
     /// </summary>
     public interface IContentHashService
     {
+        string NormalizeText(string text);
+        Task<string> ComputeCourseHashAsync(string text);
+        Task<string> ComputeFileHashAsync(byte[] fileBytes);
+        Task<CourseExtDto> GetCourseHashesAsync(int courseId);
+        Task<List<CourseExtDto>> GetAllCourseHashesAsync();
+        Task<int> SaveCourseHashesAsync(SaveCourseHashesCommand command);
         /// <summary>
         /// Normalize text content for hashing (lowercase, trim, normalize whitespace).
         /// </summary>
         /// <param name="text">Text to normalize</param>
         /// <returns>Normalized text</returns>
-        string NormalizeText(string text);
 
         /// <summary>
         /// Compute MD5 hash of text content.
@@ -43,32 +49,24 @@ namespace CourseMarketplaceBE.Application.IServices
         /// </summary>
         /// <param name="text">Course text to hash</param>
         /// <returns>32-character hex MD5 hash</returns>
-        Task<string> ComputeCourseHashAsync(string text);
 
         /// <summary>
         /// Compute MD5 hash of file bytes (for thumbnails, etc).
         /// </summary>
         /// <param name="fileBytes">File content as bytes</param>
         /// <returns>32-character hex MD5 hash</returns>
-        Task<string> ComputeFileHashAsync(byte[] fileBytes);
 
-        /// <summary>
-        /// Save course hashes to database.
-        /// </summary>
-        /// <param name="command">Command containing hashes to save</param>
-        Task SaveCourseHashesAsync(SaveCourseHashesCommand command);
+        
 
         /// <summary>
         /// Get course hashes from database.
         /// </summary>
         /// <param name="courseId">Course ID</param>
         /// <returns>CourseExtDto with hashes</returns>
-        Task<CourseExtDto> GetCourseHashesAsync(int courseId);
 
         /// <summary>
         /// Get all course hashes from database.
         /// </summary>
         /// <returns>List of CourseExtDto</returns>
-        Task<System.Collections.Generic.List<CourseExtDto>> GetAllCourseHashesAsync();
     }
 }

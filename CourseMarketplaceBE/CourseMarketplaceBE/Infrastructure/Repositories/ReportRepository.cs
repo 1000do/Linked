@@ -59,10 +59,11 @@ public class ReportRepository : IReportRepository
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
 
-    public async Task<CourseReport?> GetPendingCourseReportAsync(int reporterId, int courseId)
+    public async Task<CourseReport?> GetPendingCourseReportAsync(int reporterId, int courseId, string reason)
         => await _context.CourseReports
             .FirstOrDefaultAsync(r => r.ReporterId == reporterId
                                    && r.CourseId == courseId
+                                   && r.Reason == reason
                                    && r.CourseReportsStatus == ReportStatus.Pending.ToValue());
 
     public async Task AddCourseReportAsync(CourseReport report)
@@ -110,10 +111,11 @@ public class ReportRepository : IReportRepository
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
 
-    public async Task<CourseReviewReport?> GetPendingCourseReviewReportAsync(int reporterId, int reviewId)
+    public async Task<CourseReviewReport?> GetPendingCourseReviewReportAsync(int reporterId, int reviewId, string reason)
         => await _context.CourseReviewReports
             .FirstOrDefaultAsync(r => r.ReporterId == reporterId
                                    && r.CourseReviewId == reviewId
+                                   && r.Reason == reason
                                    && r.UserReportsStatus == ReportStatus.Pending.ToValue());
 
     public async Task AddCourseReviewReportAsync(CourseReviewReport report)
@@ -161,10 +163,11 @@ public class ReportRepository : IReportRepository
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
 
-    public async Task<LessonReviewReport?> GetPendingLessonReviewReportAsync(int reporterId, int reviewId)
+    public async Task<LessonReviewReport?> GetPendingLessonReviewReportAsync(int reporterId, int reviewId, string reason)
         => await _context.LessonReviewReports
             .FirstOrDefaultAsync(r => r.ReporterId == reporterId
                                    && r.LessonReviewId == reviewId
+                                   && r.Reason == reason
                                    && r.UserReportsStatus == ReportStatus.Pending.ToValue());
 
     public async Task AddLessonReviewReportAsync(LessonReviewReport report)

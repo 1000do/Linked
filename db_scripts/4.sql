@@ -605,33 +605,25 @@ GROUP BY l.lesson_id, l.course_id;
 CREATE OR REPLACE VIEW view_course_stats AS
 SELECT 
     c.course_id,
-
     COALESCE(AVG(cr.rating), 0) AS rating_average,
-
     COUNT(DISTINCT e.enrollment_id) AS total_students,
-
     COUNT(DISTINCT cr.course_review_id) AS total_reviews,
-
-    COUNT(DISTINCT l.lesson_id) AS total_lessons,
-
-    COALESCE(SUM(vls.material_count), 0) AS total_materials,
-
-    COALESCE(SUM(vls.lesson_duration), 0) AS total_duration
-
+    COALESCE(cs.total_lessons, 0) AS total_lessons,
+    COALESCE(cs.total_materials, 0) AS total_materials,
+    COALESCE(cs.total_duration, 0) AS total_duration
 FROM courses c
-
-LEFT JOIN enrollments e 
-    ON e.course_id = c.course_id
-
+LEFT JOIN enrollments e ON e.course_id = c.course_id
 LEFT JOIN course_reviews cr ON cr.enrollment_id = e.enrollment_id AND cr.is_removed = FALSE
-
-LEFT JOIN lessons l 
-    ON l.course_id = c.course_id
-
-LEFT JOIN view_lesson_stats vls 
-    ON vls.course_id = c.course_id
-
-GROUP BY c.course_id;
+LEFT JOIN (
+    SELECT 
+        course_id,
+        COUNT(lesson_id) AS total_lessons,
+        SUM(material_count) AS total_materials,
+        SUM(lesson_duration) AS total_duration
+    FROM view_lesson_stats
+    GROUP BY course_id
+) cs ON cs.course_id = c.course_id
+GROUP BY c.course_id, cs.total_lessons, cs.total_materials, cs.total_duration;
 
 
 -- View for User Stats

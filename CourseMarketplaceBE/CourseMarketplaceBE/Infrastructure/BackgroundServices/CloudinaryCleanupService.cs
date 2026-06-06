@@ -1,3 +1,4 @@
+using CourseMarketplaceBE.Domain.Constants;
 using System;
 using System.Linq;
 using System.Threading;
@@ -55,7 +56,7 @@ public class CloudinaryCleanupService : BackgroundService
         
         // Find materials marked as removed more than 30 days ago
         var oldMaterials = context.LearningMaterials
-            .Where(m => m.LearningStatus == "removed" && m.UpdatedAt < cutoffDate)
+            .Where(m => m.LearningStatus == CourseMarketplaceBE.Domain.Constants.LearningStatus.Removed.ToValue() && m.UpdatedAt < cutoffDate)
             .ToList();
 
         if (!oldMaterials.Any())
@@ -90,3 +91,4 @@ public class CloudinaryCleanupService : BackgroundService
         _logger.LogInformation("Cleanup completed. Deleted {count} materials.", oldMaterials.Count);
     }
 }
+

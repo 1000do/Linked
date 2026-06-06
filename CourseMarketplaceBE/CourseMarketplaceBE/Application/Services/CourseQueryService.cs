@@ -18,6 +18,7 @@ public class CourseQueryService : ICourseQueryService
     private readonly ICourseAiIntegrationRepository _aiIntegrationRepository;
     private readonly IMapper _mapper;
     private readonly ICartRepository _cartRepository;
+    private readonly ILogger<CourseQueryService> _logger;
 
     public CourseQueryService(
         ICourseRepository courseRepository,
@@ -25,7 +26,8 @@ public class CourseQueryService : ICourseQueryService
         IRedisService redisService,
         ICourseAiIntegrationRepository aiIntegrationRepository,
         IMapper mapper,
-        ICartRepository cartRepository)
+        ICartRepository cartRepository,
+        ILogger<CourseQueryService> logger)
     {
         _courseRepository = courseRepository;
         _instructorRepository = instructorRepository;
@@ -33,6 +35,7 @@ public class CourseQueryService : ICourseQueryService
         _aiIntegrationRepository = aiIntegrationRepository;
         _mapper = mapper;
         _cartRepository = cartRepository;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<CourseResponse>> GetAllPublishedCoursesAsync(int? userId = null)
@@ -180,11 +183,13 @@ public class CourseQueryService : ICourseQueryService
     public async Task<CourseDetailResponse?> GetCourseWithDetailsAsync(int courseId, int instructorId, int? userId = null)
     {
         string cacheKey = CacheKeys.CourseDetail.GetKey(courseId);
+        _logger.LogInformation("GetCourseWithDetailsAsync: {CacheKey}", cacheKey);
         var response = await _redisService.GetCacheAsync<CourseDetailResponse>(cacheKey);
-
+        _logger.LogInformation("GetCourseWithDetailsAsync: {Response}", response);
         if (response == null)
         {
             var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
+            _logger.LogInformation("GetCourseWithDetailsAsync: {Course}", course);
             if (course == null) return null;
 
             var courseStats = await _courseRepository.GetCourseStatsAsync(courseId);
@@ -198,8 +203,10 @@ public class CourseQueryService : ICourseQueryService
             response.TotalStudents = courseStats?.TotalStudents ?? 0;
             response.TotalReviews = courseStats?.TotalReviews ?? 0;
             response.RatingAverage = (decimal)(courseStats?.RatingAverage ?? 0);
+            _logger.LogInformation("GetCourseWithDetailsAsync: {Response}", response);
 
             await _redisService.SetCacheAsync(cacheKey, response, CacheTtl.Short.GetTtl());
+            _logger.LogInformation("Cached course {CourseId} with key {CacheKey} : {CacheValue}", courseId, cacheKey, await _redisService.GetCacheAsync<CourseDetailResponse>(cacheKey));
         }
 
         response.IsInAnyCart = await _cartRepository.IsCourseInAnyCartAsync(courseId);

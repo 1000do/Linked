@@ -182,6 +182,10 @@ namespace CourseMarketplaceFE.Controllers
 
                 return View(course);
             }
+            else if ((int)response.StatusCode == 403)
+            {
+                return RedirectToAction("Error", "Home");
+            }
             return NotFound();
         }
 
@@ -195,6 +199,10 @@ namespace CourseMarketplaceFE.Controllers
                 var data = json.RootElement.GetProperty("data").ToString();
                 var course = JsonSerializer.Deserialize<CourseDetailViewModel>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 return View(course);
+            }
+            else if ((int)response.StatusCode == 403)
+            {
+                return RedirectToAction("Error", "Home");
             }
             return NotFound();
         }
@@ -314,6 +322,20 @@ namespace CourseMarketplaceFE.Controllers
             return Json(new { success = false });
         }
 
+        /// <summary>Thống kê phân bổ sao của lesson (dynamic từ DB)</summary>
+        [HttpGet]
+        public async Task<IActionResult> GetLessonReviewStats(int id)
+        {
+            var response = await _apiClient.GetAsync($"review/lesson-stats/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(content);
+                return Json(new { success = true, data = json.RootElement.GetProperty("data") });
+            }
+            return Json(new { success = false });
+        }
+
         /// <summary>Kiểm tra quyền review của user cho khóa học</summary>
         [HttpGet]
         public async Task<IActionResult> GetReviewEligibility(int id)
@@ -353,11 +375,24 @@ namespace CourseMarketplaceFE.Controllers
         public async Task<IActionResult> ReportReview([FromBody] JsonElement body)
         {
             var response = await _apiClient.PostJsonAsync("review/report", body);
+            var content = await response.Content.ReadAsStringAsync();
+            
+            string? message = null;
+            try
+            {
+                using var doc = JsonDocument.Parse(content);
+                if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                {
+                    message = msgEl.GetString();
+                }
+            }
+            catch { }
+
             if (response.IsSuccessStatusCode)
             {
-                return Json(new { success = true });
+                return Json(new { success = true, message = message ?? "Report submitted successfully." });
             }
-            return Json(new { success = false });
+            return Json(new { success = false, message = message ?? "Could not send report at this time." });
         }
 
         /// <summary>Avg rating cho tất cả lesson của 1 course (dùng cho sidebar Learn)</summary>
