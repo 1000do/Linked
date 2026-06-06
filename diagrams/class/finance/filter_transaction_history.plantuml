@@ -1,0 +1,104 @@
+@startuml FilterTransactionHistory_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class TransactionControllerFE #FFE6E6 {
+    - _api : ApiClient
+    + Instructor(keyword: string?, status: string?, year: int?, month: int?) : Task<IActionResult>
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class TransactionControllerBE #FFE6E6 {
+    - _transactionService : ITransactionService
+    + GetInstructorTransactions(keyword: string?, status: string?, year: int?, month: int?) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class TransactionListDto #E6CCFF {
+    + TransactionId : int
+    + Date : DateTime?
+    + Amount : decimal
+    + Status : string?
+    + BuyerName : string
+    + CourseTitle : string
+}
+
+class PagedResult #E6CCFF {
+    + Items : List<T>
+    + TotalCount : int
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface ITransactionService #FFE6CC {
+    //+ GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<PagedResult<TransactionListDto>>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface ITransactionRepository #FFE6CC {
+    //+ GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<(IEnumerable<TransactionListDto>, int)>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class TransactionService #CCE5FF {
+    - _repo : ITransactionRepository
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<PagedResult<TransactionListDto>>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class TransactionRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<(IEnumerable<TransactionListDto>, int)>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+TransactionControllerFE --> TransactionControllerBE : calls via HTTP with filter parameters
+TransactionControllerBE --> ITransactionService
+TransactionService --> ITransactionRepository
+TransactionRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+TransactionService ..|> ITransactionService
+TransactionRepository ..|> ITransactionRepository
+
+' === DEPENDENCY ===
+TransactionControllerBE ..> PagedResult : uses
+ITransactionService ..> PagedResult : returns
+ITransactionService ..> TransactionListDto : uses
+TransactionService ..> TransactionListDto : creates
+TransactionRepository ..> TransactionListDto : filters and projects
+
+@enduml
