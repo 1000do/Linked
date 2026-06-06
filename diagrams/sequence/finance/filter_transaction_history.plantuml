@@ -1,0 +1,72 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Filter Instructor's Transaction History
+actor Instructor as act
+
+participant "Instructor.cshtml" as view
+participant "TransactionControllerFE" as fe_ctrl
+participant "TransactionControllerBE" as be_ctrl
+participant ":TransactionService" as sv
+participant ":TransactionRepository" as repo
+database Database as db
+
+act++
+act->view++: Enter search keyword (e.g. "John") and select status (e.g. "Completed")\nand click "Filter" button
+view->fe_ctrl++: Send GET /Transaction/Instructor?tab=tx&keyword=John&status=succeeded&page=1
+
+fe_ctrl->be_ctrl++: Send GET /api/transactions/instructor?page=1&pageSize=20&keyword=John&status=succeeded&year=... (with Bearer Token)
+
+be_ctrl->sv++: Call GetInstructorTransactionsAsync(..., keyword: "John", status: "succeeded", ...)
+sv->repo++: Call GetInstructorTransactionsAsync(..., keyword: "John", status: "succeeded", ...)
+
+repo->repo++: Construct EF Core IQueryable for Transactions
+repo--
+
+alt [keyword is not null or empty]
+    repo->repo++: Apply .Where(t => t.BuyerName.Contains(keyword) || t.CourseTitle.Contains(keyword))
+    repo--
+end
+
+alt [status is not null or empty]
+    repo->repo++: Apply .Where(t => t.Status == status)
+    repo--
+end
+
+repo->db++: Execute filtered query with Skip() and Take()
+db-->>repo--: Return filtered transactions list and total count
+
+repo-->>sv--: Return (filteredList, totalCount)
+sv-->>be_ctrl--: Return PagedResult<TransactionListDto>
+be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with filtered Transactions JSON
+
+fe_ctrl-->>view--: Return View(vm) with filtered list
+view->view++: Re-render purchases table with filtered rows
+view--
+view-->>act--: Display transaction list matching criteria
+@enduml

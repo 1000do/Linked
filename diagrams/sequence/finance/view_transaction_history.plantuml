@@ -1,0 +1,62 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Instructor's Transaction History
+actor Instructor as act
+
+participant "Instructor.cshtml" as view
+participant "TransactionControllerFE" as fe_ctrl
+participant "TransactionControllerBE" as be_ctrl
+participant ":TransactionService" as sv
+participant ":TransactionRepository" as repo
+database Database as db
+
+act++
+act->view++: Click "Learner Purchases" tab
+view->fe_ctrl++: Send GET /Transaction/Instructor?tab=tx&page=1&pageSize=20
+
+fe_ctrl->be_ctrl++: Send GET /api/transactions/instructor?page=1&pageSize=20&year=... (with Bearer Token)
+
+be_ctrl->be_ctrl++: Extract instructorId from claims
+be_ctrl--
+
+be_ctrl->sv++: Call GetInstructorTransactionsAsync(instructorId, page, pageSize, ...)
+sv->repo++: Call GetInstructorTransactionsAsync(instructorId, page, pageSize, ...)
+
+repo->db++: Query Transactions joined with course and buyer details\nwhere InstructorId = instructorId
+db-->>repo--: Return list of matching transactions and total count
+
+repo-->>sv--: Return (transactionsList, totalCount)
+sv-->>be_ctrl--: Return PagedResult<TransactionListDto>
+be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with Transactions JSON
+
+fe_ctrl-->>view--: Return View(vm) with Transactions list data
+view->view++: Render table of Learner Purchases:\nDate, Course Title, Purchaser, Net Amount, Status
+view--
+view-->>act--: Display transaction history list with pagination
+@enduml
