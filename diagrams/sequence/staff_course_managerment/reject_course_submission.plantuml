@@ -1,0 +1,192 @@
+@startuml RejectCourseSubmission
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Reject Course Submission
+actor Staff as act
+
+participant "AdminModerationCoursesView" as view
+participant "AdminModerationController" as be_ctrl
+participant ":CourseModerationService" as sv
+participant ":CourseRepository" as repo
+participant ":MaterialRepository" as mat_repo
+participant ":LessonRepository" as less_repo
+participant ":AppDbContext" as ctx
+participant ":NotificationService" as notif_sv
+participant ":RedisService" as redis_sv
+database Database as db
+
+act++
+act -> view++: Click "Reject" button on a course row
+view -> view++: Open Reject Modal
+view -> view++: Swal.showLoading()
+view--
+
+view -> be_ctrl++: Send GET request to /AdminModeration/GetCourseDetails?id={id}
+be_ctrl -> sv++: Call GetCourseDetails (from course retrieval)
+
+sv -->> be_ctrl--: Return Course details DTO
+be_ctrl -->> view--: Return JSON course metadata (lessons & materials)
+
+view -> view++: Build targets dropdown, display Modal inputs and hide loading
+view--
+view--
+
+act -> view++: Click "Add Rejection Item" and specify violating elements & reasons
+view -> view++: Add new rejection row in UI
+view--
+
+act -> view++: Click "Submit Rejection"
+view -> view++: Validate items (each row has target and reason)
+view--
+
+alt Invalid Items
+    view -->> act: Display warning (Swal warning)
+else Valid Items
+    view -> view++: Disable submit button & show processing spinner
+    view--
+    
+    view -> be_ctrl++: Send POST request to /AdminModeration/RejectCourseDetailed with body: { courseId, items }
+    
+    be_ctrl -> sv++: Call RejectCourseDetailedAsync(request)
+    
+    sv -> repo++: Call GetByIdAsync(courseId)
+    repo -> ctx++: Get course by ID
+    ctx -> db++: Select Course
+    db -->> ctx--: Return Course
+    ctx -->> repo--: Return Course
+    repo -->> sv--: Return Course
+    
+    alt Course not found
+        sv -->> be_ctrl: Return false
+        be_ctrl -->> view: Return JSON { success = false }
+        view -->> act: Display error notification
+    else Course found
+        sv -> mat_repo++: Call GetByCourseIdAsync(courseId)
+        mat_repo -> ctx++: Query materials for course
+        ctx -> db++: Select materials
+        db -->> ctx--: Return materials
+        ctx -->> mat_repo--: Return materials
+        mat_repo -->> sv--: Return materials
+        
+        opt Materials exist
+            loop Each material
+                sv -> mat_repo: Call Update(material) resetting status & feedback
+            end
+        end
+        
+        sv -> less_repo++: Call GetByCourseIdAsync(courseId)
+        less_repo -> ctx++: Query lessons for course
+        ctx -> db++: Select lessons
+        db -->> ctx--: Return lessons
+        ctx -->> less_repo--: Return lessons
+        less_repo -->> sv--: Return lessons
+        
+        opt Lessons exist
+            loop Each lesson
+                sv -> less_repo: Call Update(lesson) resetting status to active
+            end
+        end
+        
+        loop Each item in request.Items
+            alt item.Target == "file"
+                sv -> mat_repo++: Call GetByIdAsync(materialId)
+                mat_repo -> ctx++: Get material by ID
+                ctx -> db++: Select material
+                db -->> ctx--: Return material
+                ctx -->> mat_repo--: Return material
+                mat_repo -->> sv--: Return material
+                
+                opt Material exists
+                    sv -> sv++: Set material status to "rejected" & assign feedback reason
+                    sv--
+                    sv -> mat_repo: Call Update(material)
+                end
+            else item.Target == "lesson.title"
+                sv -> sv++: Add lessonId to rejectedLessonIds set & format lesson feedback
+                sv--
+            else item.Target starts with "course."
+                sv -> sv++: Format course field feedback (title, description, etc.)
+                sv--
+            end
+        end
+        
+        loop Each lessonId in rejectedLessonIds
+            sv -> less_repo++: Call GetByIdAsync(lessonId)
+            less_repo -> ctx++: Get lesson by ID
+            ctx -> db++: Select lesson
+            db -->> ctx--: Return lesson
+            ctx -->> less_repo--: Return lesson
+            less_repo -->> sv--: Return lesson
+            
+            opt Lesson exists
+                sv -> sv++: Set lesson status to "rejected"
+                sv--
+                sv -> less_repo: Call Update(lesson)
+            end
+        end
+        
+        sv -> sv++: Set course status to "rejected" & join feedback texts
+        sv--
+        sv -> repo: Call Update(course)
+        
+        sv -> repo++: Call SaveChangesAsync()
+        repo -> ctx++: Call SaveChangesAsync()
+        ctx -> db++: Save updates (Course, Materials, Lessons)
+        db -->> ctx--: Return rows affected (rowsRejectDetailed)
+        ctx -->> repo--: Return rows affected
+        repo -->> sv--: Return rows affected
+        
+        alt rowsRejectDetailed <= 0
+            sv -->> be_ctrl: Throw InvalidOperationException
+            be_ctrl -->> view: Return JSON { success = false }
+            view -->> act: Display error notification
+        else rowsRejectDetailed > 0
+            opt course.InstructorId is present
+                sv -> notif_sv++: Call SendNotificationAsync(instructorId, title, content, link)
+                notif_sv--
+            end
+            
+            sv -> redis_sv++: Call RemoveCacheAsync(courseDetailCacheKey)
+            redis_sv--
+            
+            sv -->> be_ctrl--: Return true
+            be_ctrl -->> view--: Return JSON { success = true }
+            
+            view -> view++: closeRejectModal()
+            view -> view++: dimCourseRowInDOM(id) (make row transparent)
+            view -> view++: triggerAjaxFetch() to update table & stats in background
+            view--
+            view--
+            
+            view -->> act--: Display success notification ("Rejection Submitted")
+        end
+    end
+end
+deactivate view
+
+@enduml
