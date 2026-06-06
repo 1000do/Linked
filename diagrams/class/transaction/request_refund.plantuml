@@ -1,0 +1,149 @@
+@startuml RequestRefund_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "TransactionController" as TransactionControllerFE #FFE6E6 {
+    + RequestRefund(transactionId: int, reason: string) : Task<IActionResult>
+}
+
+class "ApiResp<T>" as ApiResp #E6CCFF {
+    + Success : bool
+    + Data : T?
+    + Message : string?
+}
+
+class RefundResultDto #E6CCFF {
+    + IsAutoRejected : bool
+    + RejectReason : string?
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "TransactionController" as TransactionControllerBE #FFE6E6 {
+    - _financeService : IAdminFinanceService
+    + RequestRefund(transactionId: int, request: StudentRefundRequest) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class StudentRefundRequest #E6CCFF {
+    + Reason : string
+}
+
+class RefundEligibilityMetrics #E6CCFF {
+    + AccountFlagCount : int
+    + RefundRequestsLast14DaysCount : int
+    + PastRefundedCountForCourse : int
+    + CourseTotalDurationHours : double
+    + StudentProgressPercentage : double
+    + CompletedVideoDurationHours : double
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Transaction #CCFFE6 {
+    + TransactionId : int <<PK>>
+    + OrderItemId : int? <<FK>>
+    + AccountFrom : int? <<FK>>
+    + Amount : decimal
+    + TransactionsStatus : string?
+    + TransactionCreatedAt : DateTime?
+}
+
+class TransactionExt #CCFFE6 {
+    + TransactionId : int <<PK, FK>>
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+}
+
+class OrderItem #CCFFE6 {
+    + Id : int <<PK>>
+    + CourseId : int? <<FK>>
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IAdminFinanceService #FFE6CC {
+    //+ RequestRefundAsync(transactionId: int, studentId: int, reason: string) : Task<RefundResultDto>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IAdminFinanceRepository #FFE6CC {
+    //+ GetTransactionWithFullGraphAsync(transactionId: int) : Task<Transaction?>//
+    //+ GetRefundEligibilityMetricsAsync(transactionId: int, studentId: int, courseId: int) : Task<RefundEligibilityMetrics>//
+    //+ SaveChangesAsync() : Task<int>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AdminFinanceService #CCE5FF {
+    - _repo : IAdminFinanceRepository
+    - _notiService : INotificationService
+    + RequestRefundAsync(transactionId: int, studentId: int, reason: string) : Task<RefundResultDto>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class AdminFinanceRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetTransactionWithFullGraphAsync(transactionId: int) : Task<Transaction?>
+    + GetRefundEligibilityMetricsAsync(transactionId: int, studentId: int, courseId: int) : Task<RefundEligibilityMetrics>
+    + SaveChangesAsync() : Task<int>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Transactions : DbSet<Transaction>
+    + TransactionExts : DbSet<TransactionExt>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+TransactionControllerBE --> IAdminFinanceService
+AdminFinanceService --> IAdminFinanceRepository
+AdminFinanceRepository --> AppDbContext
+Transaction --> TransactionExt
+Transaction --> OrderItem
+
+' === INTERFACE REALIZATION ===
+AdminFinanceService ..|> IAdminFinanceService
+AdminFinanceRepository ..|> IAdminFinanceRepository
+
+' === DEPENDENCY ===
+TransactionControllerFE ..> TransactionControllerBE
+TransactionControllerFE ..> ApiResp
+ApiResp *-- RefundResultDto
+TransactionControllerBE ..> StudentRefundRequest
+TransactionControllerBE ..> RefundResultDto
+AdminFinanceService ..> RefundResultDto
+AdminFinanceService ..> RefundEligibilityMetrics
+AdminFinanceRepository ..> RefundEligibilityMetrics
+AdminFinanceRepository ..> Transaction
+
+@enduml

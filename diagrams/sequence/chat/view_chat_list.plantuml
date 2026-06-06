@@ -1,0 +1,88 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Chat List
+
+actor User as act
+
+participant "ChatIndexView" as view
+participant "ChatController" as fe_ctrl
+participant "ChatController" as be_ctrl
+participant ":ChatService" as sv
+participant ":RedisService" as redis
+participant ":ChatRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Access chat page
+view->fe_ctrl++: Send GET request to /Chat/Index
+fe_ctrl->fe_ctrl++: GetActorFromCookie()
+fe_ctrl--
+fe_ctrl-->>view--: Return Index View
+fe_ctrl--
+
+act->view++: DOMContentLoaded
+view->view++: loadChats()
+view--
+view->be_ctrl++: Send GET request to /api/chat/list (with AccessToken)
+
+be_ctrl->be_ctrl++: Get accountId from Claims
+be_ctrl--
+
+alt Token is invalid or expired (Unauthorized)
+    be_ctrl-->>view: Return statusCode 401 (Unauthorized)
+    view->view++: Redirect to /Account/Login
+    view--
+    view-->>act--: Display login page
+else Token is valid
+    be_ctrl->sv++: Call GetMyChatsAsync(accountId)
+    sv->repo++: Call GetParticipantsByAccountIdAsync(accountId)
+    repo->ctx++: Query ChatParticipants by AccountId
+    ctx->db++: SELECT ChatParticipants, Chats
+    db-->>ctx--: Return database records
+    ctx-->>repo--: Return List<ChatParticipant>
+    repo-->>sv--: Return List<ChatParticipant>
+    
+    loop for each ChatParticipant in participants
+        sv->redis++: Call GetUnreadCountAsync(accountId, chatId)
+        redis-->>sv--: Return unreadCount
+        
+        sv->redis++: Call IsUserOnlineAsync(partnerId)
+        redis-->>sv--: Return isOnline
+    end
+    
+    sv->sv++: Map to List<ChatListDto>
+    sv--
+    sv-->>be_ctrl--: Return List<ChatListDto>
+    be_ctrl-->>view--: Return statusCode 200 (OK) with JSON data
+    view->view++: renderChatList(chats)
+    view--
+    view-->>act--: Display Chat List with partners and unread counts
+end
+@enduml

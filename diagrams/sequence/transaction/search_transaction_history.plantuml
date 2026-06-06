@@ -1,0 +1,70 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Search Transaction History
+actor User as act
+
+participant "History.cshtml" as view
+participant "TransactionController (FE)" as fe_ctrl
+participant "TransactionController (BE)" as be_ctrl
+participant ":TransactionService" as sv
+participant ":TransactionRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Enter keyword / select status / select sortBy
+act->view: Click "Apply" button
+view->fe_ctrl++: Submit form to GET /Transaction/History
+
+fe_ctrl->be_ctrl++: Send GET /api/transactions/my?keyword=...&status=...&sortBy=...
+
+be_ctrl->sv++: Call GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
+sv->repo++: Call GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
+
+repo->ctx++: Apply search on CourseTitle, filter by status, and order by sortBy
+ctx->db++: Execute SELECT query with filters
+db-->>ctx--: Return filtered transactions & totalCount
+ctx-->>repo--: Return filtered transactions & totalCount
+repo-->>sv--: Return filtered transactions & totalCount
+
+sv->sv++: Map to PagedResult<TransactionListDto>
+sv--
+sv-->>be_ctrl--: Return PagedResult<TransactionListDto>
+be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with JSON data
+
+fe_ctrl->fe_ctrl++: Deserialize to ApiResp<TransactionPagedVM>
+fe_ctrl--
+fe_ctrl-->>view--: Return View(vm)
+
+alt [No transactions match filters]
+    view-->>act: Display "No transactions found" empty state
+else [Matching transactions found]
+    view-->>act--: Display filtered and sorted purchase history list
+end
+@enduml

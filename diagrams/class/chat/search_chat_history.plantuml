@@ -1,0 +1,63 @@
+@startuml SearchChatHistory_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND - VIEWS & STYLES ====================
+
+class ChatIndexView #FFE6E6 {
+    + searchInput : HTMLInputElement
+    + filterStatusSelect : HTMLSelectElement
+    + sortSelect : HTMLSelectElement
+    + chatListContainer : HTMLDivElement
+    + BindEvents() : void
+}
+
+' ==================== FRONTEND - JAVASCRIPT CONTROLLERS ====================
+
+class ChatJSController #CCE5FF {
+    - allChats : List<ChatListDto>
+    - activeChatId : int?
+    + loadChats() : Promise<void>
+    + applyChatFilters() : void
+    + renderChatList(chats: List<ChatListDto>) : void
+    + selectChat(chatId: int, name: string, avatar: string, isOnline: bool) : void
+}
+
+' ==================== FRONTEND - DATA MODELS ====================
+
+class ChatListDto #E6CCFF {
+    + chatId : int
+    + partnerName : string
+    + partnerAvatar : string?
+    + lastMessage : string?
+    + lastMessageAt : Date?
+    + unreadCount : int
+    + isOnline : bool
+}
+
+' ==================== RELATIONSHIPS ====================
+
+ChatIndexView ..> ChatJSController : triggers filters & rendering
+ChatJSController o-- ChatListDto : manages list of
+
+@enduml

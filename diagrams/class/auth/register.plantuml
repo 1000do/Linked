@@ -1,0 +1,138 @@
+@startuml Register_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class AccountControllerFE #FFE6E6 {
+    - _httpClientFactory : IHttpClientFactory
+    + Register() : IActionResult
+    + Register(model: RegisterViewModel) : Task<IActionResult>
+}
+
+class RegisterViewModel #E6CCFF {
+    + FullName : string
+    + Email : string
+    + Username : string
+    + Password : string
+    + ConfirmPassword : string
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class AuthControllerBE #FFE6E6 {
+    - _authService : IAuthService
+    + Register(request: RegisterRequest) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class RegisterRequest #E6CCFF {
+    + Email : string
+    + Username : string
+    + Password : string
+    + ConfirmPassword : string
+    + FullName : string
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Account #CCFFE6 {
+    + AccountId : int <<PK>>
+    + Email : string
+    + Username : string
+    + PasswordHash : string
+    + AccountStatus : string
+    + AuthProvider : string
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime
+    + AccountUpdatedAt : DateTime
+}
+
+class User #CCFFE6 {
+    + UserId : int <<PK>> <<FK>>
+    + FullName : string
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IAuthService #FFE6CC {
+    //+ RegisterAsync(r: RegisterRequest) : Task<string>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IUserRepository #FFE6CC {
+    //+ IsEmailExistsAsync(email: string) : Task<bool>//
+    //+ IsUsernameExistsAsync(username: string) : Task<bool>//
+    //+ RegisterUserAsync(acc: Account, user: User) : Task<bool>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AuthService #CCE5FF {
+    - _userRepo : IUserRepository
+    + RegisterAsync(r: RegisterRequest) : Task<string>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository #FFFFCC {
+    - _context : AppDbContext
+    + IsEmailExistsAsync(email: string) : Task<bool>
+    + IsUsernameExistsAsync(username: string) : Task<bool>
+    + RegisterUserAsync(acc: Account, user: User) : Task<bool>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Accounts : DbSet<Account>
+    + Users : DbSet<User>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === COMPOSITION / AGGREGATION ===
+Account *-- User
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+AccountControllerFE --> AuthControllerBE : calls via HTTP
+AuthControllerBE --> IAuthService
+AuthService --> IUserRepository
+UserRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+AuthService ..|> IAuthService
+UserRepository ..|> IUserRepository
+
+' === DEPENDENCY ===
+AccountControllerFE ..> RegisterViewModel : uses
+AuthControllerBE ..> RegisterRequest : uses
+IAuthService ..> RegisterRequest : uses
+AuthService ..> Account : creates
+AuthService ..> User : creates
+UserRepository ..> Account : persists
+UserRepository ..> User : persists
+
+@enduml

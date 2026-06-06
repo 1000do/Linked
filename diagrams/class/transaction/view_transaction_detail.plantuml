@@ -1,0 +1,195 @@
+@startuml ViewTransactionDetail_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "TransactionController" as TransactionControllerFE #FFE6E6 {
+    + Detail(id: int) : Task<IActionResult>
+    + InstructorDetail(id: int) : Task<IActionResult>
+    + HistoryDetail(id: int) : Task<IActionResult>
+}
+
+class TransactionDetailVM #E6CCFF {
+    + TransactionId : int
+    + StripeSessionId : string?
+    + StripePaymentIntentId : string?
+    + Date : DateTime?
+    + Status : string?
+    + Currency : string?
+    + BuyerName : string
+    + BuyerEmail : string
+    + CourseTitle : string
+    + CourseThumbnail : string?
+    + InstructorName : string
+    + InstructorEmail : string
+    + GrossAmount : decimal
+    + OriginalPrice : decimal
+    + DiscountAmount : decimal
+    + CouponUsed : bool
+    + CouponCode : string?
+    + CouponType : string?
+    + CouponDiscountValue : decimal?
+    + TransferRate : decimal
+    + InstructorPayout : decimal
+    + PlatformProfit : decimal
+    + IsPaid : bool
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "TransactionController" as TransactionControllerBE #FFE6E6 {
+    - _transactionService : ITransactionService
+    + GetTransactionDetail(id: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class TransactionDetailDto #E6CCFF {
+    + TransactionId : int
+    + StripeSessionId : string?
+    + StripePaymentIntentId : string?
+    + Date : DateTime?
+    + Status : string?
+    + Currency : string?
+    + BuyerName : string
+    + BuyerEmail : string
+    + CourseTitle : string
+    + CourseThumbnail : string?
+    + InstructorName : string
+    + InstructorEmail : string
+    + GrossAmount : decimal
+    + OriginalPrice : decimal
+    + DiscountAmount : decimal
+    + CouponUsed : bool
+    + CouponCode : string?
+    + CouponType : string?
+    + CouponDiscountValue : decimal?
+    + TransferRate : decimal
+    + InstructorPayout : decimal
+    + PlatformProfit : decimal
+    + IsPaid : bool
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Transaction #CCFFE6 {
+    + TransactionId : int <<PK>>
+    + OrderItemId : int? <<FK>>
+    + AccountFrom : int? <<FK>>
+    + AccountTo : int? <<FK>>
+    + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionCreatedAt : DateTime?
+}
+
+class TransactionExt #CCFFE6 {
+    + TransactionId : int <<PK, FK>>
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+}
+
+class OrderItem #CCFFE6 {
+    + Id : int <<PK>>
+    + OrderId : int? <<FK>>
+    + CourseId : int? <<FK>>
+    + PurchasePrice : decimal
+    + OriginalPrice : decimal?
+    + CouponCode : string?
+    + CouponType : string?
+    + DiscountAmount : decimal
+}
+
+class InstructorPayout #CCFFE6 {
+    + PayoutId : int <<PK>>
+    + TransactionId : int? <<FK>>
+    + PayoutAmount : decimal
+    + IsPaid : bool
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface ITransactionService #FFE6CC {
+    //+ GetTransactionDetailAsync(transactionId: int) : Task<TransactionDetailDto?>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface ITransactionRepository #FFE6CC {
+    //+ GetTransactionDetailAsync(transactionId: int) : Task<TransactionDetailDto?>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class TransactionService #CCE5FF {
+    - _repo : ITransactionRepository
+    + GetTransactionDetailAsync(transactionId: int) : Task<TransactionDetailDto?>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class TransactionRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetTransactionDetailAsync(transactionId: int) : Task<TransactionDetailDto?>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Transactions : DbSet<Transaction>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+TransactionControllerBE --> ITransactionService
+TransactionService --> ITransactionRepository
+TransactionRepository --> AppDbContext
+Transaction --> TransactionExt
+Transaction --> OrderItem
+Transaction "1" *-- "*" InstructorPayout
+
+' === INTERFACE REALIZATION ===
+TransactionService ..|> ITransactionService
+TransactionRepository ..|> ITransactionRepository
+
+' === DEPENDENCY ===
+TransactionControllerFE ..> TransactionControllerBE
+TransactionControllerFE ..> TransactionDetailVM
+TransactionControllerBE ..> TransactionDetailDto
+TransactionService ..> TransactionDetailDto
+TransactionRepository ..> TransactionDetailDto
+TransactionRepository ..> Transaction
+
+@enduml
