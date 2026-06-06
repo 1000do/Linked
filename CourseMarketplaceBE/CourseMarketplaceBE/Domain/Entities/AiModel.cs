@@ -23,6 +23,7 @@ public partial class AiModel
 
     public DateTime? ModelUpdatedAt { get; set; }
     public string? ModelPath { get; set; }
+    public string? ProcessType { get; set; }
 
     public virtual ICollection<CourseAiIntegration> CourseAiIntegrations { get; set; } = new List<CourseAiIntegration>();
     

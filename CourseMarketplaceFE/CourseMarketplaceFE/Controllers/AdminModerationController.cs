@@ -22,7 +22,7 @@ namespace CourseMarketplaceFE.Controllers
             ViewBag.Search = search;
             ViewBag.Category = category;
             ViewBag.Status = status ?? "all";
-            ViewBag.SortBy = sortBy ?? "oldest";
+            ViewBag.SortBy = sortBy ?? "threat_desc";
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
 
@@ -80,6 +80,13 @@ namespace CourseMarketplaceFE.Controllers
         public async Task<IActionResult> FlagCourse(int id, string reason)
         {
             var response = await _apiClient.PostJsonAsync($"/api/admin/moderation/courses/flag/{id}", reason);
+            return Json(new { success = response.IsSuccessStatusCode });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UnflagCourse(int id)
+        {
+            var response = await _apiClient.PostJsonAsync($"/api/admin/moderation/courses/unflag/{id}", new { });
             return Json(new { success = response.IsSuccessStatusCode });
         }
 

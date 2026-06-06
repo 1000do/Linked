@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-EditMaterialDetails</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            background-color: transparent;
+            color: black;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-EditMaterialDetails - Edit Learning Materials Details</strong></p>
+
+    <p><strong>Primary Actor:</strong><br>Instructor</p>
+    
+    <p><strong>Secondary Actors:</strong><br>None</p>
+    
+    <p><strong>Trigger:</strong><br>Instructor modifies the details of a video or resource file and clicks outside the input field (onblur) or triggers an auto-save.</p>
+    
+    <p><strong>Description:</strong><br>Allows an instructor to edit the details of an existing learning material (video or resource). The system updates the details inline and automatically saves the changes to the database. Modifying these details automatically resets the course status to draft if it was previously published.</p>
+
+    <p><strong>Preconditions:</strong></p>
+    <p><b>PRE-1.</b> User must be successfully authenticated as an approved instructor.</p>
+    <p><b>PRE-2.</b> The material must exist and belong to a lesson in a course owned by the active instructor.</p>
+
+    <p><strong>Post-conditions:</strong></p>
+    <p><b>POST-1.</b> The material's details are updated in the database.</p>
+    <p><b>POST-2.</b> If the course was previously published, its status is reverted to draft and moderation feedback is cleared.</p>
+    <p><b>POST-3.</b> Stale cache data is cleared.</p>
+
+    <hr>
+
+    <p><strong>Normal Flow</strong></p>
+
+    <p><strong>A. Edit Material Details Successfully</strong></p>
+    <ol>
+        <li>Instructor accesses the course edit page.</li>
+        <li>Instructor modifies the details of a video or resource file in the active lesson editor.</li>
+        <li>Instructor triggers the save action (by clicking outside the input field, pressing Enter, or waiting for auto-save).</li>
+        <li>The system validates the instructor's permission.</li>
+        <li>The system validates the instructor's lockout status.</li>
+        <li>The system validates the course status.</li>
+        <li>The system updates the learning material's details in the database.</li>
+        <li>The system updates the course status to draft and clears moderation feedback in the database.</li>
+        <li>The system invalidates cached course data.</li>
+        <li>The system updates the UI to reflect the updated details.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Alternative Flows</strong></p>
+
+    <p><strong>A.3 No Changes Made</strong></p>
+    <ol>
+        <li>Instructor triggers the save action.</li>
+        <li>The system detects the new details are identical to the current values.</li>
+        <li>The system halts the update process.</li>
+        <li>Back to step 2.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Exceptions</strong></p>
+
+    <p><strong>EX-1 Session Invalid (Not Logged In)</strong></p>
+    <ol>
+        <li>The system displays an authentication error message.</li>
+        <li>The system redirects the user to the login page.</li>
+    </ol>
+
+    <p><strong>EX-4 Instructor Unauthorized</strong></p>
+    <ol>
+        <li>The system detects the instructor does not own the course.</li>
+        <li>The system displays an authorization error message.</li>
+        <li>Back to step 1.</li>
+    </ol>
+
+    <p><strong>EX-5 Instructor Locked Out</strong></p>
+    <ol>
+        <li>The system detects the instructor is currently locked out.</li>
+        <li>The system displays a lockout error message.</li>
+        <li>Back to step 1.</li>
+    </ol>
+
+    <p><strong>EX-6 Course Pending Review</strong></p>
+    <ol>
+        <li>The system detects the course is currently pending review.</li>
+        <li>The system displays a restriction error message.</li>
+        <li>Back to step 1.</li>
+    </ol>
+
+    <p><strong>EX-7 Database update failed</strong></p>
+    <ol>
+        <li>The system fails to save the material changes.</li>
+        <li>The system displays a save failure error message.</li>
+        <li>Back to step 1.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Business Rules</strong></p>
+    <ol>
+        <li><strong>Course Status Reversion:</strong> Modifying the details of materials in a previously published course automatically forces the course back to draft status, requiring a re-publish and moderation cycle.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Assumptions</strong></p>
+    <p>Instructor has stable internet connection.</p>
+</body>
+</html>

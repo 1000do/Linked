@@ -25,6 +25,7 @@ node_modules/
 
 # Misc
 private/
+diagrams/out/
 private_ngoc/
 
 # python

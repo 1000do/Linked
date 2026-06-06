@@ -6,7 +6,9 @@ DROP TABLE IF EXISTS ai_activity_logs CASCADE;
 DROP TABLE IF EXISTS courses_ai_integrations CASCADE;
 DROP TABLE IF EXISTS ai_models CASCADE;
 DROP TABLE IF EXISTS system_configs CASCADE;
-DROP TABLE IF EXISTS user_reports CASCADE;
+DROP TABLE IF EXISTS course_reports CASCADE;
+DROP TABLE IF EXISTS course_review_reports CASCADE;
+DROP TABLE IF EXISTS lesson_review_reports CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS messages CASCADE;
 DROP TABLE IF EXISTS chats CASCADE;
@@ -29,7 +31,8 @@ DROP TABLE IF EXISTS instructors CASCADE;
 DROP TABLE IF EXISTS managers CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS accounts CASCADE;
-DROP TABLE IF EXISTS material_embeddings CASCADE;
+DROP TABLE IF EXISTS text_embeddings CASCADE;
+DROP TABLE IF EXISTS media_embeddings CASCADE;
 DROP TABLE IF EXISTS course_exts CASCADE;
 DROP TABLE IF EXISTS lesson_reviews CASCADE;
 DROP TABLE IF EXISTS course_ai_usage_logs CASCADE;
@@ -107,6 +110,8 @@ CREATE TABLE users (
     date_of_birth DATE
 );
 
+
+
 CREATE TABLE managers (
     manager_id INT PRIMARY KEY REFERENCES accounts(account_id) ON DELETE CASCADE,
     role VARCHAR(50),
@@ -149,6 +154,8 @@ CREATE TABLE instructors (
     stripe_country VARCHAR(2),
     rejection_reason TEXT
 );
+
+
 
 -- ==============================================================================
 -- 2. NHÓM QUẢN LÝ KHÓA HỌC (Course Management)
@@ -194,7 +201,8 @@ CREATE TABLE courses (
     requirements TEXT,
     moderation_feedback TEXT,
     last_approved_at TIMESTAMP,
-    is_removed BOOLEAN DEFAULT FALSE
+    is_removed BOOLEAN DEFAULT FALSE,
+    threat_level INT DEFAULT 1
 );
 
 CREATE TABLE lessons (
@@ -223,19 +231,42 @@ CREATE TABLE learning_materials (
     cloud_public_id TEXT
 );
 
+-- CREATE TABLE course_exts (
+--     course_id INT PRIMARY KEY REFERENCES courses(course_id) ON DELETE CASCADE,
+--     title_hash CHAR(32) UNIQUE,
+--     description_hash CHAR(32) UNIQUE,
+--     what_you_will_learn_hash CHAR(32) UNIQUE,
+--     requirements_hash CHAR(32) UNIQUE,
+--     thumbnail_hash CHAR(32) UNIQUE
+-- );
+
 CREATE TABLE course_exts (
     course_id INT PRIMARY KEY REFERENCES courses(course_id) ON DELETE CASCADE,
     title_hash CHAR(32),
     description_hash CHAR(32),
     what_you_will_learn_hash CHAR(32),
     requirements_hash CHAR(32),
-    thumbnail_hash CHAR(32)
+    thumbnail_hash CHAR(32),
+    
+    CONSTRAINT uq_title_hash UNIQUE (title_hash),
+    CONSTRAINT uq_description_hash UNIQUE (description_hash),
+    CONSTRAINT uq_what_you_will_learn_hash UNIQUE (what_you_will_learn_hash),
+    CONSTRAINT uq_requirements_hash UNIQUE (requirements_hash),
+    CONSTRAINT uq_thumbnail_hash UNIQUE (thumbnail_hash)
 );
 
-CREATE TABLE material_embeddings (
-    embedding_id SERIAL PRIMARY KEY,
+
+CREATE TABLE text_embeddings (
+    text_embedding_id SERIAL PRIMARY KEY,
     material_id INT REFERENCES learning_materials(material_id) ON DELETE CASCADE,
-    embedding vector(768),
+    text_embedding vector(768),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE media_embeddings (
+    media_embedding_id SERIAL PRIMARY KEY,
+    material_id INT REFERENCES learning_materials(material_id) ON DELETE CASCADE,
+    media_embedding vector(512),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -332,6 +363,8 @@ CREATE TABLE order_items (
     coupon_type VARCHAR(50),                -- Loại coupon: 'percentage' hoặc 'fixed_amount'
     discount_amount NUMERIC(10, 2) DEFAULT 0 -- Số tiền giảm = original_price - purchase_price
 );
+
+
 
 CREATE TABLE transactions (
     transaction_id SERIAL PRIMARY KEY,
@@ -525,7 +558,8 @@ CREATE TABLE ai_models (
     description TEXT,
     model_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     model_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	model_path VARCHAR(255)
+	model_path VARCHAR(255),
+	process_type VARCHAR(255)
 );
 
 CREATE TABLE courses_ai_integrations (
@@ -558,7 +592,6 @@ CREATE TABLE message_moderation_logs (
     input_json JSONB,
     output_json JSONB,
     latency_ms REAL,
-    log_status VARCHAR(50),
     error_message TEXT,
     log_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -570,7 +603,6 @@ CREATE TABLE course_review_moderation_logs (
     input_json JSONB,
     output_json JSONB,
     latency_ms REAL,
-    log_status VARCHAR(50),
     error_message TEXT,
     log_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -582,7 +614,6 @@ CREATE TABLE lesson_review_moderation_logs (
     input_json JSONB,
     output_json JSONB,
     latency_ms REAL,
-    log_status VARCHAR(50),
     error_message TEXT,
     log_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -812,11 +843,22 @@ END $$;
 
 
 
-	INSERT INTO 
-	ai_models (model_name,model_type,model_provider,model_version, model_path, model_status,description)
-	VALUES
-	('spam_text_classifier','moderator','local','1','/app/models/spam_1/','active','a spam text classifier that was fine-tuned from distilbert multilingual cased'),
-	('toxic_text_classifier','moderator','local','3','/app/models/toxic_3/','active','a toxic text classifier that was fine-tuned from distilbert multilingual cased'),
-	('clip','generator','openai','1','openai/clip-vit-base-patch32','active','a multimodal model that was used to generate embeddings'),
-	('distilbert','generator','hugging_face','1','distilbert-base-multilingual-cased','active','a language model that was used to generate embeddings')
-	
+INSERT INTO 
+ai_models (model_name,model_type,model_provider,model_version, model_path, model_status,description, process_type)
+VALUES
+('harmful_text_classifier','classifier','local','1','/app/models/spam_1/,/app/models/toxic_3/','active','an ensemble of spam and toxic text classifier that was fine-tuned from distilbert multilingual cased','text'),
+('clip','embedding_generator','openai','1','openai/clip-vit-base-patch32','active','a multimodal model that was used to generate embeddings','media'),
+('distilbert','embedding_generator','hugging_face','1','distilbert-base-multilingual-cased','active','a language model that was used to generate embeddings','text');
+
+INSERT INTO
+system_configs(config_key,config_value,description)
+VALUES
+('course_harmful_text_classifier','/app/models/spam_1/,/app/models/toxic_3/','system config of course_harmful_text_classifier'),
+('course_text_embedding_generator', 'distilbert-base-multilingual-cased','system config of course_text_embedding_generator'),
+('course_media_embedding_generator','openai/clip-vit-base-patch32','system config of course_media_embedding_generator'),
+('review_harmful_text_classifier','/app/models/spam_1/,/app/models/toxic_3/','system config of review_harmful_text_classifier');
+
+   
+
+
+         

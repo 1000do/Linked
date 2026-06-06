@@ -3,7 +3,7 @@ using System;
 namespace CourseMarketplaceBE.Domain.Entities;
 
 public partial class CourseExt
-{
+{   
     public int CourseId { get; set; }
 
     public string? TitleHash { get; set; }

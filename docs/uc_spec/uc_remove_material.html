@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-RemoveMaterial</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            background-color: transparent;
+            color: black;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-RemoveMaterial - Remove Learning Materials</strong></p>
+
+    <p><strong>Primary Actor:</strong><br>Instructor</p>
+    
+    <p><strong>Secondary Actors:</strong><br>Cloud Storage Service</p>
+    
+    <p><strong>Trigger:</strong><br>Instructor clicks the "Remove" icon button on a resource material OR clicks the "Replace video" icon button for the video material in the active lesson editor.</p>
+    
+    <p><strong>Description:</strong><br>Allows an instructor to remove an existing learning material (resource) or replace an existing video. The system handles soft-deleting the removed material (or replacing it), invalidating caches, and reverting the course status if published.</p>
+
+    <p><strong>Preconditions:</strong></p>
+    <p><b>PRE-1.</b> User must be successfully authenticated as an approved instructor.</p>
+    <p><b>PRE-2.</b> The material must exist and belong to a lesson in a course owned by the active instructor.</p>
+
+    <p><strong>Post-conditions:</strong></p>
+    <p><b>POST-1.</b> The removed (or replaced) learning material is marked as removed (soft-deleted) in the database.</p>
+    <p><b>POST-2.</b> If the course was previously published, its status is reverted to draft and moderation feedback is cleared.</p>
+    <p><b>POST-3.</b> Stale cache data is cleared.</p>
+
+    <hr>
+
+    <p><strong>Normal Flow</strong></p>
+
+    <p><strong>A. Remove Learning Materials Successfully</strong></p>
+    <ol>
+        <li>Instructor clicks the "Remove" icon button on a specific resource material.</li>
+        <li>The system prompts the instructor to confirm the removal.</li>
+        <li>Instructor confirms the removal by clicking "Remove".</li>
+        <li>The system validates the instructor's permission.</li>
+        <li>The system validates the instructor's lockout status.</li>
+        <li>The system validates the course status.</li>
+        <li>The system updates the learning material record's status to 'removed' in the database.</li>
+        <li>The system updates the course status to draft and clears moderation feedback in the database.</li>
+        <li>The system invalidates cached course data.</li>
+        <li>The system updates the UI to reflect the removed resource.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Alternative Flows</strong></p>
+
+    <p><strong>A.1 Replace Video Material</strong></p>
+    <ol>
+        <li>Instructor clicks the "Replace video" icon button for the video material.</li>
+        <li>The system opens the file selection dialog.</li>
+        <li>Instructor selects a new video file to upload.</li>
+        <li>The system executes <strong>UC-AddMaterial - Add Learning Materials</strong> to handle the file validation and upload process.</li>
+        <li>The system soft-deletes the old video record and links the newly uploaded video material to the lesson.</li>
+        <li>Continue to step 8.</li>
+    </ol>
+
+    <p><strong>A.2 Cancel Removal</strong></p>
+    <ol>
+        <li>The system prompts for confirmation.</li>
+        <li>Instructor clicks "Cancel".</li>
+        <li>The system halts the removal process.</li>
+        <li>Back to step 1.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Exceptions</strong></p>
+
+    <p><strong>EX-1 Session Invalid (Not Logged In)</strong></p>
+    <ol>
+        <li>The system displays an authentication error message.</li>
+        <li>The system redirects the user to the login page.</li>
+    </ol>
+
+    <p><strong>EX-4 Instructor Unauthorized</strong></p>
+    <ol>
+        <li>The system detects the instructor does not own the course.</li>
+        <li>The system displays an authorization error message.</li>
+        <li>Back to step 1.</li>
+    </ol>
+
+    <p><strong>EX-5 Instructor Locked Out</strong></p>
+    <ol>
+        <li>The system detects the instructor is currently locked out.</li>
+        <li>The system displays a lockout error message.</li>
+        <li>Back to step 1.</li>
+    </ol>
+
+    <p><strong>EX-6 Course Pending Review</strong></p>
+    <ol>
+        <li>The system detects the course is currently pending review.</li>
+        <li>The system displays a restriction error message.</li>
+        <li>Back to step 1.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Business Rules</strong></p>
+    <ol>
+        <li><strong>Soft Deletion:</strong> Removed materials are not permanently deleted immediately but are marked as 'removed' and sent to the instructor's trash bin.</li>
+        <li><strong>Course Status Reversion:</strong> Modifying or removing materials from a previously published course automatically forces the course back to draft status, requiring a re-publish and moderation cycle.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Assumptions</strong></p>
+    <p>Instructor has stable internet connection.<br>Cloud Storage Service is working properly.</p>
+</body>
+</html>

@@ -12,6 +12,7 @@ namespace CourseMarketplaceFE.Models
         public string ThumbnailUrl { get; set; } = null!;
         public DateTime UpdatedAt { get; set; }
         public bool IsRemoved { get; set; }
+        public int FlagCount { get; set; }
     }
 
     public class CreateCourseViewModel

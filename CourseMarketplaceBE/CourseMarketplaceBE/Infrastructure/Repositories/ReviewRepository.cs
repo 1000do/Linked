@@ -1,3 +1,4 @@
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
@@ -31,7 +32,7 @@ public class ReviewRepository : IReviewRepository
                      && r.Enrollment.CourseId == courseId
                      // Exclude reviews the user themselves deleted (status="removed")
                      // but keep admin-removed ones (status="violating") to show placeholder
-                     && !(r.IsRemoved == true && r.CourseReviewStatus == "removed"));
+                     && !(r.IsRemoved == true && r.CourseReviewStatus == CourseMarketplaceBE.Domain.Constants.ReviewStatus.Removed.ToValue()));
 
         // Server-side star filter (làm tròn rating đến số nguyên gần nhất)
         if (starFilter.HasValue)
@@ -62,7 +63,7 @@ public class ReviewRepository : IReviewRepository
             .Where(r => r.LessonId == lessonId
                      // Exclude reviews the user themselves deleted (status="removed")
                      // but keep admin-removed ones (status="violating") to show placeholder
-                     && !(r.IsRemoved == true && r.LessonReviewStatus == "removed"));
+                     && !(r.IsRemoved == true && r.LessonReviewStatus == CourseMarketplaceBE.Domain.Constants.ReviewStatus.Removed.ToValue()));
 
         var totalCount = await query.CountAsync();
         var items = await query
@@ -81,7 +82,7 @@ public class ReviewRepository : IReviewRepository
     {
         return await _context.CourseReviewReports
             .AnyAsync(rp => rp.CourseReviewId == reviewId
-                         && (rp.UserReportsStatus == "pending" || rp.UserReportsStatus == "under_review"));
+                         && (rp.UserReportsStatus == CourseMarketplaceBE.Domain.Constants.ReportStatus.Pending.ToValue() || rp.UserReportsStatus == CourseMarketplaceBE.Domain.Constants.ReportStatus.UnderReview.ToValue()));
     }
 
     /// <summary>Returns true if a lesson review has any report that is pending or under_review.</summary>
@@ -89,7 +90,7 @@ public class ReviewRepository : IReviewRepository
     {
         return await _context.LessonReviewReports
             .AnyAsync(rp => rp.LessonReviewId == reviewId
-                         && (rp.UserReportsStatus == "pending" || rp.UserReportsStatus == "under_review"));
+                         && (rp.UserReportsStatus == CourseMarketplaceBE.Domain.Constants.ReportStatus.Pending.ToValue() || rp.UserReportsStatus == CourseMarketplaceBE.Domain.Constants.ReportStatus.UnderReview.ToValue()));
     }
 
     // ── Thống kê sao ─────────────────────────────────────────────────────
@@ -218,4 +219,5 @@ public class ReviewRepository : IReviewRepository
         return await _context.SaveChangesAsync();
     }
 }
+
 

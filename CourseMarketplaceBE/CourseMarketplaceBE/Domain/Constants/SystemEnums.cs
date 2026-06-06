@@ -57,9 +57,10 @@ namespace CourseMarketplaceBE.Domain.Constants
         Draft,
         Pending,
         Published,
+        Removed,
         Rejected,
-        Flagged,
-        Archived
+        Archived,
+        PermanentlyLocked
     }
 
     public static class CourseStatusExtensions
@@ -71,9 +72,10 @@ namespace CourseMarketplaceBE.Domain.Constants
                 CourseStatus.Draft => "draft",
                 CourseStatus.Pending => "pending",
                 CourseStatus.Published => "published",
+                CourseStatus.Removed => "removed",
                 CourseStatus.Rejected => "rejected",
-                CourseStatus.Flagged => "flagged",
                 CourseStatus.Archived => "archived",
+                CourseStatus.PermanentlyLocked => "permanently_locked",
                 _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid course status")
             };
         }
@@ -328,7 +330,8 @@ namespace CourseMarketplaceBE.Domain.Constants
         Processing,
         Escalated,
         Resolved,
-        Rejected
+        Rejected,
+        UnderReview
     }
 
     public static class ReportStatusExtensions
@@ -342,6 +345,7 @@ namespace CourseMarketplaceBE.Domain.Constants
                 ReportStatus.Escalated => "escalated",
                 ReportStatus.Resolved => "resolved",
                 ReportStatus.Rejected => "rejected",
+                ReportStatus.UnderReview => "under_review",
                 _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid report status")
             };
         }

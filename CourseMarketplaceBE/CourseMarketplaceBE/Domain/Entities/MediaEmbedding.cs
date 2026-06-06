@@ -1,14 +1,15 @@
 using System;
+using System.Collections.Generic;
 
 namespace CourseMarketplaceBE.Domain.Entities;
 
-public partial class MaterialEmbedding
+public partial class MediaEmbedding
 {
-    public int EmbeddingId { get; set; }
+    public int MediaEmbeddingId { get; set; }
 
     public int? MaterialId { get; set; }
 
-    public string? Embedding { get; set; }
+    public List<float>? Embedding { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
