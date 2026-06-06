@@ -581,7 +581,7 @@
                     </div>
                     <div class="flex items-center gap-2 py-1">
                         <input type="checkbox" id="swal-remove-content" class="rounded text-primary focus:ring-primary border-slate-200 w-4.5 h-4.5" />
-                        <label for="swal-remove-content" class="text-xs font-bold text-slate-700 cursor-pointer">Remove content (Soft-delete course)</label>
+                        <label for="swal-remove-content" class="text-xs font-bold text-slate-700 cursor-pointer">Flag Course (Hide from marketplace)</label>
                     </div>
                     <div>
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Moderator Note</label>
@@ -612,7 +612,7 @@
                 }
 
                 statusSelect.addEventListener('change', (e) => {
-                    if (e.target.value === 'rejected') {
+                    if (e.target.value !== 'resolved') {
                         removeCheck.checked = false;
                         removeCheck.disabled = true;
                     } else {
@@ -631,10 +631,10 @@
 
                         const confirmVal = await Swal.fire({
                             title: 'Are you sure?',
-                            text: "Are you sure you want to soft-delete this content? This action will hide it from the marketplace.",
+                            text: "Are you sure you want to flag this course? This action will hide it from the marketplace and give the instructor a strike.",
                             icon: 'warning',
                             showCancelButton: true,
-                            confirmButtonText: 'Yes, soft-delete',
+                            confirmButtonText: 'Yes, flag course',
                             cancelButtonText: 'Cancel',
                             confirmButtonColor: '#ef4444',
                             customClass: {
@@ -754,7 +754,7 @@
                 }
 
                 statusSelect.addEventListener('change', (e) => {
-                    if (e.target.value === 'rejected') {
+                    if (e.target.value !== 'resolved') {
                         removeCheck.checked = false;
                         removeCheck.disabled = true;
                     } else {

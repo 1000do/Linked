@@ -6,12 +6,12 @@ from typing import List, Optional
 import json
 
 from core.models import (
-    SemanticDuplicationRequest, CourseHarmfulRequest, CourseModerationResponse, HealthResponse,
+    SemanticDuplicationRequest, HarmfulCourseRequest, CourseModerationResponse, HealthResponse,
     EmbeddingGenerationRequest, EmbeddingGenerationResponse, FullModerationPipelineRequest,
 )
 from core.exceptions import ModerationException
-from services.duplication_service import DuplicationService
-from services.toxicity_service import ToxicityService
+from handlers.duplication_handler import DuplicationHandler
+from handlers.harmful_handler import HarmfulHandler
 from services.embedding_service import EmbeddingService
 from repositories.cache_repository import CacheRepository
 from config.settings import get_settings
@@ -21,23 +21,16 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/moderation", tags=["moderation"])
 
 # ============================================================================
-# DEPENDENCY INJECTION
+# DEPENDENCY INJECTION / HANDLER CONTEXTS
 # ============================================================================
 
-def get_cache_repository() -> CacheRepository:
-    """Get cache repository instance."""
-    return CacheRepository()
+def get_duplication_handler() -> DuplicationHandler:
+    return DuplicationHandler()
 
-def get_duplication_service(cache_repo: CacheRepository = Depends(get_cache_repository)) -> DuplicationService:
-    """Get duplication service instance."""
-    return DuplicationService(cache_repository=cache_repo)
-
-def get_toxicity_service(cache_repo: CacheRepository = Depends(get_cache_repository)) -> ToxicityService:
-    """Get toxicity service instance."""
-    return ToxicityService(cache_repository=cache_repo)
+def get_harmful_handler() -> HarmfulHandler:
+    return HarmfulHandler()
 
 def get_embedding_service() -> EmbeddingService:
-    """Get embedding service instance."""
     return EmbeddingService()
 
 # ============================================================================
@@ -47,23 +40,14 @@ def get_embedding_service() -> EmbeddingService:
 @router.post("/stage1", response_model=CourseModerationResponse)
 async def moderation_stage1(
     request: SemanticDuplicationRequest,
-    service: DuplicationService = Depends(get_duplication_service),
+    handler: DuplicationHandler = Depends(get_duplication_handler),
 ):
     """
-    Stage 1: Check for exact and semantic duplication.
-    
-    Returns CourseModerationResponse with full stage logs (Step 1 & Step 2).
+    Stage 1: Check for semantic duplication.
     """
     try:
-        logger.info(f"Processing Stage 1 for course {request.course_id}")
-        
-        response = await service.orchestrate_stage1(
-            course_id=request.course_id,
-            material_ids=request.material_ids,
-        )
-        
-        return response
-    
+        logger.info(f"Processing Stage 1 via DuplicationHandler for course {request.course_id}")
+        return await handler.orchestrate_stage1(request)
     except ModerationException as e:
         logger.error(f"Moderation error in Stage 1: {e.message}")
         raise HTTPException(
@@ -85,28 +69,20 @@ async def moderation_stage1(
         )
 
 # ============================================================================
-# STAGE 2: TOXICITY & SPAM DETECTION
+# STAGE 2: HARMFUL CONTENT DETECTION (TOXICITY & SPAM)
 # ============================================================================
 
 @router.post("/stage2", response_model=CourseModerationResponse)
 async def moderation_stage2(
-    request: CourseHarmfulRequest,
-    service: ToxicityService = Depends(get_toxicity_service),
+    request: HarmfulCourseRequest,
+    handler: HarmfulHandler = Depends(get_harmful_handler),
 ):
     """
-    Stage 2: Check for toxicity and spam in text and media.
-    
-    Returns CourseModerationResponse with full stage logs (Step 1, Step 2, Step 3).
+    Stage 2: Check for harmful content in text and media.
     """
     try:
-        logger.info(f"Processing Stage 2 for course {request.course_id}")
-        
-        response = await service.orchestrate_stage2(
-            course_id=request.course_id,
-        )
-        
-        return response
-    
+        logger.info(f"Processing Stage 2 via HarmfulHandler for course {request.course_id}")
+        return await handler.orchestrate_stage2(request)
     except ModerationException as e:
         logger.error(f"Moderation error in Stage 2: {e.message}")
         raise HTTPException(
@@ -128,76 +104,30 @@ async def moderation_stage2(
         )
 
 # ============================================================================
-# EMBEDDING GENERATION
-# ============================================================================
-
-@router.post("/embeddings/generate", response_model=EmbeddingGenerationResponse)
-async def generate_embedding(
-    request: EmbeddingGenerationRequest,
-    service: EmbeddingService = Depends(get_embedding_service),
-):
-    """
-    Generate embedding for material.
-    
-    Used by C# backend during course creation to pre-compute embeddings
-    for semantic deduplication checks.
-    
-    Supports:
-    - text: Direct text embedding
-    - image: CLIP vision embedding
-    - video: CLIP embedding of sampled frames
-    - pdf: DistilBert embedding of extracted text
-    - word: DistilBert embedding of extracted text
-    """
-    try:
-        logger.info(f"Generating embedding for material {request.material_id} ({request.material_type})")
-        
-        embedding = await service.embed_generic(
-            content=request.content,
-            material_type=request.material_type,
-        )
-        
-        return EmbeddingGenerationResponse(
-            material_id=request.material_id,
-            embedding=embedding,
-            success=True,
-        )
-    
-    except Exception as e:
-        logger.error(f"Embedding generation failed for material {request.material_id}: {e}")
-        raise HTTPException(
-            status_code=422,
-            detail={
-                "error": "embedding_generation_error",
-                "message": str(e),
-                "material_id": request.material_id,
-            }
-        )
-
-# ============================================================================
 # FULL PIPELINE (Stages 1 + 2)
 # ============================================================================
+
+def _get_log_attr(log, attr, default=None):
+    """Retrieve attribute from stage log safely regardless of dict or Pydantic model."""
+    if isinstance(log, dict):
+        return log.get(attr, default)
+    return getattr(log, attr, default)
 
 @router.post("/full-pipeline", response_model=CourseModerationResponse)
 async def full_moderation_pipeline(
     request: FullModerationPipelineRequest,
-    dup_service: DuplicationService = Depends(get_duplication_service),
-    tox_service: ToxicityService = Depends(get_toxicity_service),
+    dup_handler: DuplicationHandler = Depends(get_duplication_handler),
+    harmful_handler: HarmfulHandler = Depends(get_harmful_handler),
 ):
     """
     Run full moderation pipeline (Stage 1 + Stage 2).
-    
-    Returns combined CourseModerationResponse with all logs.
     """
     try:
         course_id = request.semantic.course_id
         logger.info(f"Processing full pipeline for course {course_id}")
         
         # Stage 1
-        stage1_response = await dup_service.orchestrate_stage1(
-            course_id=request.semantic.course_id,
-            material_ids=request.semantic.material_ids,
-        )
+        stage1_response = await dup_handler.orchestrate_stage1(request.semantic)
         
         # If Stage 1 flags, return immediately
         if stage1_response.moderation_status == "FLAGGED":
@@ -205,9 +135,7 @@ async def full_moderation_pipeline(
             return stage1_response
         
         # Stage 2
-        stage2_response = await tox_service.orchestrate_stage2(
-            course_id=request.harmful.course_id,
-        )
+        stage2_response = await harmful_handler.orchestrate_stage2(request.harmful)
         
         # Combine logs from both stages
         combined_logs = stage1_response.stage_logs + stage2_response.stage_logs
@@ -217,16 +145,28 @@ async def full_moderation_pipeline(
         if stage1_response.moderation_status == "FLAGGED" or stage2_response.moderation_status == "FLAGGED":
             final_status = "FLAGGED"
         
-        # Final confidence: use flagging step confidence if flagged, else average all steps
+        # Final confidence
         if final_status == "FLAGGED":
-            # Find confidence of flagging step
-            final_confidence = next(
-                (log.confidence_score for log in combined_logs if log.result == "FLAGGED"),
-                max([log.confidence_score for log in combined_logs]) if combined_logs else 0.9
-            )
+            confidences = [
+                _get_log_attr(log, "confidence_score", 0.9669)
+                for log in combined_logs
+                if _get_log_attr(log, "result") == 'FLAGGED'
+            ] if combined_logs else [0.9669]
+            if not confidences:
+                confidences = [0.9669]
         else:
-            confidences = [log.confidence_score for log in combined_logs if log.result not in ["ERROR", "PENDING_MODEL"]]
-            final_confidence = sum(confidences) / len(confidences) if confidences else 1.0
+            confidences = [
+                _get_log_attr(log, "confidence_score", 1.0)
+                for log in combined_logs
+                if _get_log_attr(log, "result") not in ["ERROR", "PENDING_MODEL"]
+            ] if combined_logs else [1.0]
+            if not confidences:
+                confidences = [1.0]
+            
+        final_confidence = sum(confidences) / len(confidences)
+  
+  
+        
         
         combined_flagged_content = stage1_response.flagged_fields + stage2_response.flagged_fields
         

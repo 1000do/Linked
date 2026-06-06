@@ -78,6 +78,7 @@ class BaseService:
         flagged_content: list = None,
         details: dict = None,
         latency_ms: float = 0.0,
+        model_id: int = 0
     ) -> Dict[str, Any]:
         """
         Build a stage log entry.
@@ -105,4 +106,5 @@ class BaseService:
             "details": details or {},
             "confidence_score": float(confidence_score),
             "latency_ms": float(latency_ms),
+            "model_id": model_id
         }

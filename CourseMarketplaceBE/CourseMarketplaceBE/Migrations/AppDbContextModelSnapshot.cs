@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using Pgvector;
 
 #nullable disable
 
@@ -21,6 +22,7 @@ namespace CourseMarketplaceBE.Migrations
                 .HasAnnotation("ProductVersion", "8.0.25")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Account", b =>
@@ -97,10 +99,18 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("refresh_token_expiry_time");
 
+                    b.Property<string>("Username")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("username");
+
                     b.HasKey("AccountId")
                         .HasName("accounts_pkey");
 
                     b.HasIndex(new[] { "Email" }, "accounts_email_key")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "Username" }, "accounts_username_key")
                         .IsUnique();
 
                     b.ToTable("accounts", (string)null);
@@ -160,6 +170,11 @@ namespace CourseMarketplaceBE.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("model_version");
+
+                    b.Property<string>("ProcessType")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("process_type");
 
                     b.HasKey("ModelId")
                         .HasName("ai_models_pkey");
@@ -587,6 +602,9 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnType("text")
                         .HasColumnName("requirements");
 
+                    b.Property<int>("ThreatLevel")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -754,6 +772,21 @@ namespace CourseMarketplaceBE.Migrations
 
                     b.HasKey("CourseId")
                         .HasName("course_exts_pkey");
+
+                    b.HasIndex(new[] { "DescriptionHash" }, "course_exts_description_hash_key")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "RequirementsHash" }, "course_exts_requirements_hash_key")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "ThumbnailHash" }, "course_exts_thumbnail_hash_key")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "TitleHash" }, "course_exts_title_hash_key")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "WhatYouWillLearnHash" }, "course_exts_what_you_will_learn_hash_key")
+                        .IsUnique();
 
                     b.ToTable("course_exts", (string)null);
                 });
@@ -1641,14 +1674,14 @@ namespace CourseMarketplaceBE.Migrations
                     b.ToTable("material_completions", (string)null);
                 });
 
-            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.MaterialEmbedding", b =>
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.MediaEmbedding", b =>
                 {
-                    b.Property<int>("EmbeddingId")
+                    b.Property<int>("MediaEmbeddingId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("embedding_id");
+                        .HasColumnName("media_embedding_id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("EmbeddingId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("MediaEmbeddingId"));
 
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -1656,20 +1689,20 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<string>("Embedding")
-                        .HasColumnType("vector(768)")
-                        .HasColumnName("embedding");
+                    b.Property<Vector>("Embedding")
+                        .HasColumnType("vector(512)")
+                        .HasColumnName("media_embedding");
 
                     b.Property<int?>("MaterialId")
                         .HasColumnType("integer")
                         .HasColumnName("material_id");
 
-                    b.HasKey("EmbeddingId")
-                        .HasName("material_embeddings_pkey");
+                    b.HasKey("MediaEmbeddingId")
+                        .HasName("media_embeddings_pkey");
 
                     b.HasIndex("MaterialId");
 
-                    b.ToTable("material_embeddings", (string)null);
+                    b.ToTable("media_embeddings", (string)null);
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Message", b =>
@@ -2075,6 +2108,37 @@ namespace CourseMarketplaceBE.Migrations
                         .IsUnique();
 
                     b.ToTable("system_configs", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.TextEmbedding", b =>
+                {
+                    b.Property<int>("TextEmbeddingId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("text_embedding_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TextEmbeddingId"));
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<Vector>("Embedding")
+                        .HasColumnType("vector(768)")
+                        .HasColumnName("text_embedding");
+
+                    b.Property<int?>("MaterialId")
+                        .HasColumnType("integer")
+                        .HasColumnName("material_id");
+
+                    b.HasKey("TextEmbeddingId")
+                        .HasName("text_embeddings_pkey");
+
+                    b.HasIndex("MaterialId");
+
+                    b.ToTable("text_embeddings", (string)null);
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Transaction", b =>
@@ -2740,13 +2804,13 @@ namespace CourseMarketplaceBE.Migrations
                     b.Navigation("Material");
                 });
 
-            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.MaterialEmbedding", b =>
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.MediaEmbedding", b =>
                 {
                     b.HasOne("CourseMarketplaceBE.Domain.Entities.LearningMaterial", "Material")
-                        .WithMany("MaterialEmbeddings")
+                        .WithMany("MediaEmbeddings")
                         .HasForeignKey("MaterialId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("material_embeddings_material_id_fkey");
+                        .HasConstraintName("media_embeddings_material_id_fkey");
 
                     b.Navigation("Material");
                 });
@@ -2871,6 +2935,17 @@ namespace CourseMarketplaceBE.Migrations
                         .HasConstraintName("system_configs_manager_id_fkey");
 
                     b.Navigation("Manager");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.TextEmbedding", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.LearningMaterial", "Material")
+                        .WithMany("TextEmbeddings")
+                        .HasForeignKey("MaterialId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("text_embeddings_material_id_fkey");
+
+                    b.Navigation("Material");
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Transaction", b =>
@@ -3089,7 +3164,9 @@ namespace CourseMarketplaceBE.Migrations
                 {
                     b.Navigation("MaterialCompletions");
 
-                    b.Navigation("MaterialEmbeddings");
+                    b.Navigation("MediaEmbeddings");
+
+                    b.Navigation("TextEmbeddings");
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Lesson", b =>

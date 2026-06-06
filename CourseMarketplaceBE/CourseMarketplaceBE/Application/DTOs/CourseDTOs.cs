@@ -63,6 +63,7 @@ public class CourseResponse
     public decimal? AppliedCouponValue { get; set; }
     public bool IsRemoved { get; set; }
     public bool IsInAnyCart { get; set; }
+    public int FlagCount { get; set; }
 }
 
 public class CourseDetailResponse : CourseResponse

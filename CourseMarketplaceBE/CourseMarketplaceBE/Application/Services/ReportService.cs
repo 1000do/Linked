@@ -22,6 +22,7 @@ public class ReportService : IReportService
     private readonly IInstructorRepository _instructorRepo;
     private readonly IMapper _mapper;
     private readonly ILockoutRepository _lockoutRepo;
+    private readonly IRedisService _redisService;
 
     public ReportService(
         IReportRepository reportRepo,
@@ -32,7 +33,8 @@ public class ReportService : IReportService
         IUserRepository userRepo,
         IInstructorRepository instructorRepo,
         IMapper mapper,
-        ILockoutRepository lockoutRepo)
+        ILockoutRepository lockoutRepo,
+        IRedisService redisService)
     {
         _reportRepo = reportRepo;
         _enrollmentRepo = enrollmentRepo;
@@ -43,6 +45,7 @@ public class ReportService : IReportService
         _instructorRepo = instructorRepo;
         _mapper = mapper;
         _lockoutRepo = lockoutRepo;
+        _redisService = redisService;
     }
 
     // ── User / Instructor: Tạo report khóa học ─────────────────────────────
@@ -268,111 +271,97 @@ public class ReportService : IReportService
 
         if (course != null)
         {
-            if (request.Status == "resolved")
+            if (request.Status == ReportStatus.Resolved.ToValue())
             {
-                // Chỉ tăng cờ vi phạm khi báo cáo được xác nhận là vi phạm (resolved)
-                var currentFlags = (course.CourseFlagCount ?? 0) + 1;
-                course.CourseFlagCount = currentFlags;
-
-                // Áp dụng hình phạt theo cờ vi phạm
-                if (currentFlags == 1)
-                {
-                    course.CourseStatus = CourseStatus.Rejected.ToValue();
-                    if (course.InstructorId.HasValue)
-                    {
-                        await _notificationService.SendNotificationAsync(
-                            course.InstructorId.Value,
-                            "Course Violation Reminder (1st Time)",
-                            $"Your course '{course.Title}' has received a policy violation warning and has been rejected. Reason: {request.ResolutionNote}. Please review and correct the content.",
-                            "/instructor/courses"
-                        );
-                    }
-                }
-                else if (currentFlags == 2)
-                {
-                    // Cờ 2: Chuyển về rejected, vẫn giữ flag count
-                    course.CourseStatus = CourseStatus.Rejected.ToValue();
-                    if (course.InstructorId.HasValue)
-                    {
-                        await _notificationService.SendNotificationAsync(
-                            course.InstructorId.Value,
-                            "Severe Violation Warning (2nd Time)",
-                            $"Your course '{course.Title}' has been flagged for violation (2nd time) and rejected from Marketplace. Reason: {request.ResolutionNote}. Please comply with platform policies.",
-                            "/instructor/courses"
-                        );
-                    }
-                }
-                else if (currentFlags >= 3)
-                {
-                    // Cờ 3: Khóa vĩnh viễn khóa học, khóa instructor 30 ngày
-                    course.CourseStatus = CourseStatus.Archived.ToValue();
-                    if (course.InstructorId.HasValue)
-                    {
-                        var instructor = await _instructorRepo.GetByIdAsync(course.InstructorId.Value);
-                          if (instructor != null)
-                          {
-                              await _lockoutRepo.AddAsync(new Lockout
-                              {
-                                  AccountId = instructor.InstructorId,
-                                  LockoutType = "instructor",
-                                  LockoutLevel = "severe",
-                                  LockoutEnd = DateTime.Now.AddDays(30)
-                              });
-                              await NotifyStudentsAboutInstructorSuspensionAsync(course.InstructorId.Value);
-                          }
-                        
-                        // Reset course flags sau khi đã khóa instructor (thi hành xong án)
-                        course.CourseFlagCount = 0;
-
-                        await _notificationService.SendNotificationAsync(
-                            course.InstructorId.Value,
-                            "Permanent Course Discontinuation Notice (3rd Time)",
-                            $"Your course '{course.Title}' has violated our policies for the 3rd time. It has been permanently discontinued and archived. New enrollments are disabled.",
-                            "/instructor/courses"
-                        );
-                    }
-                }
-
-                // Nếu yêu cầu gỡ nội dung
                 if (request.RemoveContent)
                 {
-                    course.IsRemoved = true;
-                    course.CourseStatus = LearningStatus.Removed.ToValue();
+                    var currentFlags = (course.CourseFlagCount ?? 0) + 1;
+                    course.CourseFlagCount = currentFlags;
+
+                    if (currentFlags < 3)
+                    {
+                        if (course.InstructorId.HasValue)
+                        {
+                            await _notificationService.SendNotificationAsync(
+                                course.InstructorId.Value,
+                                "Course Violation Warning",
+                                $"Your course '{course.Title}' has received a policy violation warning. This is Strike {currentFlags}. Reason: {request.ResolutionNote}. Please review and correct the content.",
+                                $"/InstructorCourse/Editor/{course.CourseId}"
+                            );
+                        }
+                    }
+                    else if (currentFlags >= 3)
+                    {
+                        course.CourseStatus = CourseStatus.Archived.ToValue();
+                        if (course.InstructorId.HasValue)
+                        {
+                            var instructor = await _instructorRepo.GetByIdAsync(course.InstructorId.Value);
+                            if (instructor != null)
+                            {
+                                await _lockoutRepo.AddAsync(new Lockout
+                                {
+                                    AccountId = instructor.InstructorId,
+                                    LockoutType = "instructor",
+                                    LockoutLevel = "severe",
+                                    LockoutEnd = DateTime.Now.AddDays(30)
+                                });
+                                await NotifyStudentsAboutInstructorSuspensionAsync(course.InstructorId.Value);
+                            }
+                            
+                            await _notificationService.SendNotificationAsync(
+                                course.InstructorId.Value,
+                                "Permanent Course Discontinuation Notice",
+                                $"Your course '{course.Title}' has violated our policies. It has been permanently discontinued and archived (Strike {currentFlags}). New enrollments are disabled. Furthermore, your instructor account is locked for 30 days.",
+                                $"/Course/Details/{course.CourseId}"
+                            );
+                        }
+                    }
+                }
+                else
+                {
+                    // Accept report without removing content
+                    if (course.InstructorId.HasValue)
+                    {
+                        await _notificationService.SendNotificationAsync(
+                            course.InstructorId.Value,
+                            "Course Policy Warning",
+                            $"Your course '{course.Title}' received a report regarding a policy violation. Please review and ensure your content complies with our guidelines.",
+                            $"/InstructorCourse/Editor/{course.CourseId}"
+                        );
+                    }
                 }
             }
         }
 
         _reportRepo.UpdateCourseReport(report);
-        int numRowsAffected = await _reportRepo.SaveChangesAsync();
-        if (numRowsAffected == 0)
-            throw new InvalidOperationException("Failed to save changes");
+        await _reportRepo.SaveChangesAsync();
+
+        if (course != null && request.Status == ReportStatus.Resolved.ToValue() && request.RemoveContent)
+        {
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(course.CourseId));
+        }
 
         // Notify reporter of outcome
         if (report.ReporterId.HasValue)
         {
-            var message = request.Status == ReportStatus.Resolved.ToValue()
-                ? "Your report has been accepted and the violating content has been actioned."
-                : "Your report has been reviewed and dismissed.";
+            string message = "Your report has been updated.";
+            if (request.Status == ReportStatus.Resolved.ToValue()) message = "Your report has been accepted and appropriate action has been taken.";
+            else if (request.Status == ReportStatus.Rejected.ToValue()) message = "Your report has been reviewed and dismissed.";
+            else if (request.Status == ReportStatus.UnderReview.ToValue()) message = "Your report is currently under review.";
+            else if (request.Status == ReportStatus.Escalated.ToValue()) message = "Your report has been escalated to senior administrators.";
+
             await _notificationService.SendNotificationAsync(
                 report.ReporterId.Value,
                 "Report Resolution Update",
                 message,
-                $"/courses/{report.CourseId}"
+                $"/Course/Details/{report.CourseId}"
             );
         }
 
-        // Notify instructor if content was removed
-        if (request.RemoveContent && request.Status == ReportStatus.Resolved.ToValue() && course != null)
+        if (request.Status == ReportStatus.Escalated.ToValue())
         {
-            if (course.InstructorId.HasValue)
-            {
-                await _notificationService.SendNotificationAsync(
-                    course.InstructorId.Value,
-                    "Course Content Removed",
-                    $"Your course '{course.Title}' has been removed from the platform due to a policy violation. Reason: {request.ResolutionNote}",
-                    "/instructor/courses"
-                );
-            }
+            var adminId = await _userRepo.GetAdminIdAsync();
+            if (adminId.HasValue) await _notificationService.SendNotificationAsync(adminId.Value, "Report Escalated", $"A course report has been escalated to you. Report ID: {reportId}", $"/AdminModeration/Reports");
         }
 
         return true;
@@ -393,39 +382,56 @@ public class ReportService : IReportService
         report.ResolvedAt = DateTime.Now;
 
         // Nếu approve: soft-remove review và gán trạng thái vi phạm (giữ nguyên nội dung comment gốc)
-        if (request.RemoveContent && request.Status == ReportStatus.Resolved.ToValue() && report.CourseReviewId.HasValue)
+        if (request.Status == ReportStatus.Resolved.ToValue() && report.CourseReviewId.HasValue)
         {
             var review = await _reviewRepo.GetCourseReviewByIdAsync(report.CourseReviewId.Value);
             if (review != null)
             {
-                review.IsRemoved = true;
-                review.CourseReviewStatus = ReviewStatus.Violating.ToValue();
-                review.UpdatedAt = DateTime.Now;
-                _reviewRepo.UpdateCourseReview(review);
-                
-                hasSaved = await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote);
+                if (request.RemoveContent)
+                {
+                    review.IsRemoved = true;
+                    review.CourseReviewStatus = ReviewStatus.Violating.ToValue();
+                    review.UpdatedAt = DateTime.Now;
+                    _reviewRepo.UpdateCourseReview(review);
+                    
+                    hasSaved = await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote);
+                }
+                else
+                {
+                    await _notificationService.SendNotificationAsync(
+                        review.Enrollment?.UserId ?? 0,
+                        "Review Policy Warning",
+                        $"Your course review has received a policy violation warning. Reason: {request.ResolutionNote}. Please ensure your content complies with our guidelines.",
+                        $"/Course/Details/{review.Enrollment?.CourseId}#reviews"
+                    );
+                }
             }
         }
 
-        if (!hasSaved)
-        {
-            int numRowsAffected = await _reportRepo.SaveChangesAsync();
-            if (numRowsAffected == 0)
-                throw new InvalidOperationException("Failed to save changes");
-        }
+        _reportRepo.UpdateCourseReviewReport(report);
+        await _reportRepo.SaveChangesAsync();
 
         // Notify reporter of outcome
         if (report.ReporterId.HasValue)
         {
-            var message = request.Status == ReportStatus.Resolved.ToValue()
-                ? "Your report about the course review has been accepted."
-                : "Your report about the course review has been reviewed and dismissed.";
+            string message = "Your report about the course review has been updated.";
+            if (request.Status == ReportStatus.Resolved.ToValue()) message = "Your report about the course review has been accepted.";
+            else if (request.Status == ReportStatus.Rejected.ToValue()) message = "Your report about the course review has been reviewed and dismissed.";
+            else if (request.Status == ReportStatus.UnderReview.ToValue()) message = "Your report about the course review is currently under review.";
+            else if (request.Status == ReportStatus.Escalated.ToValue()) message = "Your report about the course review has been escalated to senior administrators.";
+
             await _notificationService.SendNotificationAsync(
                 report.ReporterId.Value,
                 "Report Resolution Update",
                 message,
                 null!
             );
+        }
+
+        if (request.Status == ReportStatus.Escalated.ToValue())
+        {
+            var adminId = await _userRepo.GetAdminIdAsync();
+            if (adminId.HasValue) await _notificationService.SendNotificationAsync(adminId.Value, "Report Escalated", $"A course review report has been escalated to you. Report ID: {reportId}", $"/AdminModeration/Reports");
         }
 
         return true;
@@ -446,39 +452,56 @@ public class ReportService : IReportService
         report.ResolvedAt = DateTime.Now;
 
         // Nếu approve: soft-remove review và gán trạng thái vi phạm (giữ nguyên nội dung comment gốc)
-        if (request.RemoveContent && request.Status == ReportStatus.Resolved.ToValue() && report.LessonReviewId.HasValue)
+        if (request.Status == ReportStatus.Resolved.ToValue() && report.LessonReviewId.HasValue)
         {
             var review = await _reviewRepo.GetLessonReviewByIdAsync(report.LessonReviewId.Value);
             if (review != null)
             {
-                review.IsRemoved = true;
-                review.LessonReviewStatus = ReviewStatus.Violating.ToValue();
-                review.UpdatedAt = DateTime.Now;
-                _reviewRepo.UpdateLessonReview(review);
+                if (request.RemoveContent)
+                {
+                    review.IsRemoved = true;
+                    review.LessonReviewStatus = ReviewStatus.Violating.ToValue();
+                    review.UpdatedAt = DateTime.Now;
+                    _reviewRepo.UpdateLessonReview(review);
 
-                hasSaved = await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote);
+                    hasSaved = await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote);
+                }
+                else
+                {
+                    await _notificationService.SendNotificationAsync(
+                        review.Enrollment?.UserId ?? 0,
+                        "Review Policy Warning",
+                        $"Your lesson review has received a policy violation warning. Reason: {request.ResolutionNote}. Please ensure your content complies with our guidelines.",
+                        null!
+                    );
+                }
             }
         }
 
-        if (!hasSaved)
-        {
-            int numRowsAffected = await _reportRepo.SaveChangesAsync();
-            if (numRowsAffected == 0)
-                throw new InvalidOperationException("Failed to save changes");
-        }
+        _reportRepo.UpdateLessonReviewReport(report);
+        await _reportRepo.SaveChangesAsync();
 
         // Notify reporter of outcome
         if (report.ReporterId.HasValue)
         {
-            var message = request.Status == ReportStatus.Resolved.ToValue()
-                ? "Your report about the lesson review has been accepted."
-                : "Your report about the lesson review has been reviewed and dismissed.";
+            string message = "Your report about the lesson review has been updated.";
+            if (request.Status == ReportStatus.Resolved.ToValue()) message = "Your report about the lesson review has been accepted.";
+            else if (request.Status == ReportStatus.Rejected.ToValue()) message = "Your report about the lesson review has been reviewed and dismissed.";
+            else if (request.Status == ReportStatus.UnderReview.ToValue()) message = "Your report about the lesson review is currently under review.";
+            else if (request.Status == ReportStatus.Escalated.ToValue()) message = "Your report about the lesson review has been escalated to senior administrators.";
+
             await _notificationService.SendNotificationAsync(
                 report.ReporterId.Value,
                 "Report Resolution Update",
                 message,
                 null!
             );
+        }
+
+        if (request.Status == ReportStatus.Escalated.ToValue())
+        {
+            var adminId = await _userRepo.GetAdminIdAsync();
+            if (adminId.HasValue) await _notificationService.SendNotificationAsync(adminId.Value, "Report Escalated", $"A lesson review report has been escalated to you. Report ID: {reportId}", $"/AdminModeration/Reports");
         }
 
         return true;
@@ -495,9 +518,9 @@ public class ReportService : IReportService
         course.CourseStatus = CourseStatus.Archived.ToValue();
         course.UpdatedAt = DateTime.Now;
 
-        int numRowsAffected = await _reportRepo.SaveChangesAsync();
-        if (numRowsAffected == 0)
-            throw new InvalidOperationException("Failed to save changes");
+        await _reportRepo.SaveChangesAsync();
+        
+        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
         return true;
     }
 

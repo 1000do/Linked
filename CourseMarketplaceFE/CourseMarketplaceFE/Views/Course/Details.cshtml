@@ -31,6 +31,7 @@
     ViewData["Title"] = Model.Title;
     var userRole = Context.Request.Cookies["UserRole"]?.ToLower();
     var isManager = userRole == "admin" || userRole == "staff";
+    
 }
 
 <style>
@@ -43,6 +44,14 @@
         opacity: 1 !important;
     }
 </style>
+
+<!-- Status Banner -->
+@if (!Model.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+{
+    <div class="bg-amber-500 text-amber-950 font-bold text-center py-2 shadow-md w-full sticky top-20 z-[60]">
+        WARNING: This course is currently in @Model.CourseStatus.ToUpper() state.
+    </div>
+}
 
 <!-- Hero Section -->
 <div class="bg-[#1c1d1f] text-white py-12 px-8 border-b border-slate-700">
@@ -530,7 +539,25 @@
 
 <script>
     const currentToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`.trim();
+    console.log("currentToken",currentToken);
     let allExpanded = false;
+    
+    function decodeToken(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            console.log("Decoded token: " + jsonPayload);
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            console.error("Failed to decode token", e);
+            return null;
+        }
+    }
+   
+    
 
     function toggleAllSections() {
         allExpanded = !allExpanded;
@@ -895,13 +922,17 @@
         }
     }
 
-    // ── currentUserId từ JWT trong cookie (dùng để nhận biết review của mình) ──
-    const currentUserId = parseInt('@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Context.Request.Cookies["UserId"] ?? "0")') || 0;
-
+    
+    const decoded = decodeToken(currentToken);
+    const currentUserId = decoded ? parseInt(decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || decoded["nameid"]) : null;
+    const currentUserRole = decoded ? (decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || decoded["role"]) : null;
+    
     let currentReviewPage = 1;
     const REVIEW_PAGE_SIZE = 5;
 
+    
     async function loadReviews(page = 1) {
+        
         currentReviewPage = page;
         const list = document.getElementById('reviews-list');
         const filter = document.getElementById('review-star-filter').value;
@@ -914,6 +945,8 @@
                 const data = result.data.items;
 
                 list.innerHTML = data.map(r => {
+                    console.log("r.userId: ",r.userId);
+                    console.log("r.UserId : ",r.UserId);
                     const isOwn = currentUserId > 0 && (r.userId == currentUserId || r.UserId == currentUserId);
                     const createdTime = r.createdAt ? new Date(r.createdAt).getTime() : 0;
                     const updatedTime = r.updatedAt ? new Date(r.updatedAt).getTime() : 0;
@@ -927,6 +960,15 @@
                                 <span class="material-symbols-outlined text-[16px] text-slate-400">gavel</span>
                             </div>
                             <p class="text-sm text-slate-400 italic pt-1">${r.comment}</p>
+                        </div>
+                    </div>
+                    ` : r.isRemoved ? `
+                    <div class="border-t border-slate-100 pt-6" id="review-card-${r.reviewId}">
+                        <div class="flex gap-3 items-start">
+                            <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[16px] text-slate-400">delete</span>
+                            </div>
+                            <p class="text-sm text-slate-400 italic pt-1">This review was removed by the author.</p>
                         </div>
                     </div>
                     ` : `

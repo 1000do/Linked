@@ -47,6 +47,7 @@ namespace CourseMarketplaceBE.Application.Services
             int numberOfRowsAffected = await _repo.SaveChangesAsync();
             if (numberOfRowsAffected > 0)
             {
+
                 await _hubContext.Clients.User(receiverId.ToString())
                     .SendAsync("ReceiveNotification", new
                     {
@@ -61,7 +62,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
             else
             {
-                throw new InvalidOperationException("Failed to save changes");
+                throw new InvalidOperationException("Falied to send notification!");
             }
         }
 
@@ -71,10 +72,19 @@ namespace CourseMarketplaceBE.Application.Services
             if (noti == null || noti.ReceiverId != userId) return false;
 
             _repo.Delete(noti);
-            int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
+            int n = await _repo.SaveChangesAsync();
+
+            if (n > 0)
             {
-                throw new InvalidOperationException("Failed to save changes");
+
+                // Bổ sung dòng này: Báo cho Admin biết để xóa dòng đó khỏi bảng lịch sử
+                await _hubContext.Clients.All.SendAsync("ReceiveNotification");
+
+                return true;
+            }
+            else
+            {
+                throw new InvalidOperationException("Failed to delete notification");
             }
 
             await _hubContext.Clients.All.SendAsync("ReceiveNotification");

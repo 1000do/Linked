@@ -1,0 +1,206 @@
+"""Service for Stage 2: Toxicity & Spam Detection (Harmful)."""
+
+import logging
+import time
+import numpy as np
+from typing import Dict, List, Optional, Any, Tuple
+from core.models import StageLog, CourseModerationResponse, ModerationStatus, CourseDetailDto
+from core.exceptions import ModerationException, FileProcessingException
+from services.base_service import BaseService
+from services.text_classifier_service import TextClassifierService
+from services.text_extraction_service import TextExtractionService
+from repositories.cache_repository import CacheRepository
+
+logger = logging.getLogger(__name__)
+
+
+class HarmfulService(BaseService):
+    """Handle Stage 2: Toxicity & Spam detection in text and media."""
+    
+    STAGE = 2
+    
+    def __init__(
+        self,
+        text_classifier: TextClassifierService = None,
+        text_extractor: TextExtractionService = None,
+        cache_repository: CacheRepository = None,
+    ):
+        """
+        Initialize harmful service.
+        """
+        super().__init__("HarmfulService")
+        self.text_classifier = text_classifier or TextClassifierService()
+        self.text_extractor = text_extractor or TextExtractionService()
+        self.cache_repo = cache_repository or CacheRepository()
+
+    async def check_text_harmful(
+        self,
+        course: CourseDetailDto,
+        model_id: int,
+        spam_threshold: float,
+        toxic_threshold: float
+    ) -> Tuple[bool, List[str], List[StageLog]]:
+        """
+        Step 1: Check course.title, course.description, course.what_you_will_learn, course.requirements,
+        lesson.title, learning_material.title, learning_material.description.
+        """
+        step = 1
+        start_time = time.time()
+        stage_logs = []
+        flagged_fields = []
+        aggregate_scores = []
+        overall_details = {}
+
+        async def check_field(field_name: str, val: Optional[str]):
+            if not val or not val.strip():
+                return
+            try:
+                res_action, conf_score, details = self.text_classifier.classify_text(
+                    val,
+                    spam_threshold=spam_threshold,
+                    toxic_threshold=toxic_threshold
+                )
+                overall_details[field_name] = details
+                if res_action == ModerationStatus.FLAGGED.value:
+                    flagged_fields.append(field_name)
+                    aggregate_scores.append(conf_score)
+            except Exception as e:
+                self.logger.warning(f"Failed to classify field {field_name}: {e}")
+
+        # Course Level Fields
+        await check_field("course.title", course.title)
+        await check_field("course.description", course.description)
+        await check_field("course.what_you_will_learn", course.what_you_will_learn)
+        await check_field("course.requirements", course.requirements)
+
+        # Lesson and Material Level Fields
+        for idx_l, lesson in enumerate(course.lessons):
+            await check_field(f"lesson_{lesson.lesson_id}.title", lesson.title)
+            for idx_m, mat in enumerate(lesson.materials):
+                await check_field(f"material_{mat.material_id}.title", mat.material_title)
+                await check_field(f"material_{mat.material_id}.description", mat.material_description)
+
+        is_flagged = len(flagged_fields) > 0
+        latency_ms = (time.time() - start_time) * 1000
+        confidence_score = float(np.mean(aggregate_scores)) if aggregate_scores else 1.0
+
+        reason = (
+            f"Harmful content detected in fields: {', '.join(flagged_fields)}"
+            if is_flagged
+            else f"No harmful content detected in text fields (spam_threshold: {spam_threshold}, toxic_threshold: {toxic_threshold})"
+        )
+        overall_details['flagged_count'] = len(flagged_fields)
+        result_status = ModerationStatus.FLAGGED.value if is_flagged else ModerationStatus.APPROVED.value
+
+        log_entry = self.build_stage_log(
+            stage=self.STAGE,
+            step=step,
+            result=result_status,
+            reason=reason,
+            confidence_score=confidence_score,
+            flagged_content=flagged_fields if is_flagged else None,
+            details=overall_details,
+            latency_ms=latency_ms,
+            model_id=model_id
+        )
+        stage_logs.append(log_entry)
+        return is_flagged, flagged_fields, stage_logs
+
+    async def check_media_text_harmful(
+        self,
+        candidates: Dict[str, Any],
+        model_id: int,
+        spam_threshold: float,
+        toxic_threshold: float
+    ) -> Tuple[bool, List[str], List[StageLog]]:
+        """
+        Step 2: Extract text from course media / resources and perform harmful classification.
+        """
+        step = 2
+        start_time = time.time()
+        stage_logs = []
+
+        if not candidates:
+            latency_ms = (time.time() - start_time) * 1000
+            log_entry = self.build_stage_log(
+                stage=self.STAGE,
+                step=step,
+                result="SKIPPED",
+                reason="No media candidates provided for extraction",
+                confidence_score=1.0,
+                latency_ms=latency_ms,
+                model_id=model_id
+            )
+            stage_logs.append(log_entry)
+            return False, [], stage_logs
+
+        flagged_content = []
+        aggregate_scores = []
+        overall_details = {}
+        candidates_checked = 0
+        candidates_pending = 0
+
+        for alias, value in candidates.items():
+            file_type = value.get('file_type')
+            file_bytes = value.get('file_bytes')
+
+            if not file_bytes:
+                continue
+
+            if file_type in ["pptx", "ppt", "xlsx", "xls"]:
+                candidates_pending += 1
+                overall_details[alias] = {"status": "PENDING_MODEL", "reason": "PPT/Excel extraction not supported"}
+                continue
+
+            try:
+                extracted_text, extraction_conf, extraction_log = await self.text_extractor.extract_generic(
+                    content=file_bytes,
+                    material_type=file_type
+                )
+                
+                if not extracted_text or not extracted_text.strip():
+                    overall_details[alias] = {"status": "SKIPPED", "reason": "No text extracted"}
+                    continue
+
+                candidates_checked += 1
+                result_action, conf, details = self.text_classifier.classify_text(
+                    extracted_text,
+                    spam_threshold=spam_threshold,
+                    toxic_threshold=toxic_threshold
+                )
+                overall_details[alias] = details
+                
+                if result_action == ModerationStatus.FLAGGED.value:
+                    flagged_content.append(alias)
+                    aggregate_scores.append(conf)
+
+            except Exception as e:
+                self.logger.warning(f"Error extracting/classifying media {alias}: {e}")
+                overall_details[alias] = {"status": "ERROR", "reason": str(e)}
+                continue
+
+        is_flagged = len(flagged_content) > 0
+        latency_ms = (time.time() - start_time) * 1000
+        confidence_score = float(np.mean(aggregate_scores)) if aggregate_scores else 1.0
+
+        reason = (
+            f"Harmful content detected in: {', '.join(flagged_content)}"
+            if is_flagged
+            else f"No harmful content detected in course media and resources (spam_threshold: {spam_threshold}, toxic_threshold: {toxic_threshold})"
+        )
+        overall_details['flagged_count'] = len(flagged_content)
+        result_status = ModerationStatus.FLAGGED.value if is_flagged else ModerationStatus.APPROVED.value
+
+        log_entry = self.build_stage_log(
+            stage=self.STAGE,
+            step=step,
+            result=result_status,
+            reason=reason,
+            confidence_score=confidence_score,
+            flagged_content=flagged_content if is_flagged else None,
+            details=overall_details,
+            latency_ms=latency_ms,
+            model_id=model_id
+        )
+        stage_logs.append(log_entry)
+        return is_flagged, flagged_content, stage_logs
