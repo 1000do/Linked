@@ -36,6 +36,19 @@ public class ChatController : ControllerBase
         return Ok(chats);
     }
 
+    [HttpGet("search")]
+    public async Task<IActionResult> SearchChats([FromQuery] string q)
+    {
+        var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        if (string.IsNullOrWhiteSpace(q))
+        {
+            var chats = await _chatService.GetMyChatsAsync(accountId);
+            return Ok(chats);
+        }
+        var searchResults = await _chatService.SearchChatsAsync(accountId, q);
+        return Ok(searchResults);
+    }
+
     [HttpGet("history")]
     public async Task<IActionResult> GetChatHistory([FromQuery] int roomId)
     {

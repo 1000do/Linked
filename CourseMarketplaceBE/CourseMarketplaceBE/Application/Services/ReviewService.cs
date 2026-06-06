@@ -98,14 +98,11 @@ public class ReviewService : IReviewService
             if (isRemoved)
             {
                 rating = 0;
-                if (status == "removed" || status == "violating")
-                {
-                    comment = "This comment has been removed for violating community standards";
-                }
-                else
-                {
-                    comment = "This review has been deleted by the author.";
-                }
+                // Only admin-removed (status="violating") reviews should reach here.
+                // Self-deleted (status="removed") reviews are excluded at the repo query level.
+                comment = status == "violating"
+                    ? "This review was removed by a moderator for violating community standards."
+                    : "[deleted]"; // fallback
             }
 
             responses.Add(new ReviewResponse
@@ -148,14 +145,11 @@ public class ReviewService : IReviewService
             if (isRemoved)
             {
                 rating = 0;
-                if (status == "removed" || status == "violating")
-                {
-                    comment = "This comment has been removed for violating community standards";
-                }
-                else
-                {
-                    comment = "This review has been deleted by the author.";
-                }
+                // Only admin-removed (status="violating") reviews should reach here.
+                // Self-deleted (status="removed") reviews are excluded at the repo query level.
+                comment = status == "violating"
+                    ? "This review was removed by a moderator for violating community standards."
+                    : "[deleted]"; // fallback
             }
 
             return new ReviewResponse
@@ -433,7 +427,17 @@ public class ReviewService : IReviewService
                 ?? throw new InvalidOperationException("Review not found.");
             if (review.Enrollment?.UserId != userId)
                 throw new UnauthorizedAccessException("You can only delete your own reviews.");
-            _reviewRepo.SoftDeleteLessonReview(review);
+
+            // Block deletion if there is an active moderation report
+            var hasPending = await _reviewRepo.HasPendingLessonReviewReportsAsync(request.ReviewId);
+            if (hasPending)
+                throw new InvalidOperationException(
+                    "This review is currently under moderation review and cannot be deleted.");
+
+            review.IsRemoved = true;
+            review.LessonReviewStatus = "removed"; // distinguishes user self-delete from admin removal ("violating")
+            review.UpdatedAt = DateTime.Now;
+            _reviewRepo.UpdateLessonReview(review);
         }
         else
         {
@@ -441,7 +445,17 @@ public class ReviewService : IReviewService
                 ?? throw new InvalidOperationException("Review not found.");
             if (review.Enrollment?.UserId != userId)
                 throw new UnauthorizedAccessException("You can only delete your own reviews.");
-            _reviewRepo.SoftDeleteCourseReview(review);
+
+            // Block deletion if there is an active moderation report
+            var hasPending = await _reviewRepo.HasPendingCourseReviewReportsAsync(request.ReviewId);
+            if (hasPending)
+                throw new InvalidOperationException(
+                    "This review is currently under moderation review and cannot be deleted.");
+
+            review.IsRemoved = true;
+            review.CourseReviewStatus = "removed"; // distinguishes user self-delete from admin removal ("violating")
+            review.UpdatedAt = DateTime.Now;
+            _reviewRepo.UpdateCourseReview(review);
         }
 
         int rows = await _reviewRepo.SaveChangesAsync();

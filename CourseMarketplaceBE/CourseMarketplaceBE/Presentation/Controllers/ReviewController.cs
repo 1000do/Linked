@@ -213,7 +213,7 @@ public class ReviewController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to report review"));
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {

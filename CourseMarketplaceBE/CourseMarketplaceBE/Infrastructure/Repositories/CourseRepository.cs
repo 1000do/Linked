@@ -23,6 +23,7 @@ public class CourseRepository : ICourseRepository
     public async Task<IEnumerable<Course>> GetInstructorCoursesAsync(int instructorId)
     {
         return await _context.Courses
+            .IgnoreQueryFilters()
             .Where(c => c.InstructorId == instructorId)
             .AsNoTracking()
             .ToListAsync();
@@ -36,6 +37,7 @@ public class CourseRepository : ICourseRepository
         int? pageSize = null)
     {
         var queryable = _context.Courses
+            .IgnoreQueryFilters()
             .Where(c => c.InstructorId == instructorId)
             .AsNoTracking();
 

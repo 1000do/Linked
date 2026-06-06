@@ -268,6 +268,22 @@ public class CourseCommandService : ICourseCommandService
 
         if (status.Equals(CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
+            // Validate required landing page fields
+            if (string.IsNullOrWhiteSpace(course.WhatYouWillLearn) || StripHtml(course.WhatYouWillLearn).Length < 20)
+            {
+                throw new BadRequestException("What you will learn is required and must be at least 20 characters long.");
+            }
+
+            if (string.IsNullOrWhiteSpace(course.Requirements) || StripHtml(course.Requirements).Length < 20)
+            {
+                throw new BadRequestException("Requirements are required and must be at least 20 characters long.");
+            }
+
+            if (string.IsNullOrWhiteSpace(course.CourseThumbnailUrl))
+            {
+                throw new BadRequestException("Course thumbnail is required.");
+            }
+
             var instructor = await _instructorRepository.GetByIdAsync(instructorId);
             var isStripeActive = instructor != null
                 && !string.IsNullOrEmpty(instructor.StripeAccountId)
@@ -428,5 +444,11 @@ public class CourseCommandService : ICourseCommandService
 
             await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
         }
+    }
+
+    private string StripHtml(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return string.Empty;
+        return System.Text.RegularExpressions.Regex.Replace(input, "<.*?>", string.Empty).Trim();
     }
 }

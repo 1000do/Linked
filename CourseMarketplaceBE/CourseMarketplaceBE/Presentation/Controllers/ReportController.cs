@@ -55,7 +55,7 @@ public class ReportController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to report course"));
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
@@ -79,7 +79,7 @@ public class ReportController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to report course review"));
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
@@ -103,7 +103,7 @@ public class ReportController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to report lesson review"));
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {

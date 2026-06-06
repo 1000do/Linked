@@ -254,17 +254,38 @@
                 let hideBtn = '';
                 if (status === 'archived' || status === 'hidden') {
                     hideBtn = `<button onclick="toggleHide(${course.Id}, 'published')" title="Unhide course" class="w-8 h-8 flex items-center justify-center text-emerald-500 hover:bg-emerald-50 rounded-full transition-colors">
-                        <span class="material-symbols-outlined text-[18px]">visibility</span>
+                        <span class="material-symbols-outlined text-[18px]">unarchive</span>
                     </button>`;
                 } else if (status === 'published') {
                     hideBtn = `<button onclick="toggleHide(${course.Id}, 'archived')" title="Hide course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors">
-                        <span class="material-symbols-outlined text-[18px]">visibility_off</span>
+                        <span class="material-symbols-outlined text-[18px]">archive</span>
                     </button>`;
                 }
 
                 const titleSafe = course.Title.replace(/'/g, "\\'");
                 const isHidden = status === 'archived' || status === 'hidden';
-                const rowClass = isHidden ? "hover:bg-slate-50/50 transition-colors group opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0" : "hover:bg-slate-50/50 transition-colors group";
+                const isRemoved = course.IsRemoved;
+                const rowClass = (isHidden || isRemoved) ? "hover:bg-slate-50/50 transition-colors group opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0" : "hover:bg-slate-50/50 transition-colors group";
+
+                let actionsHtml = '';
+                if (isRemoved) {
+                    actionsHtml = `
+                        <a href="/InstructorCourse/Editor/${course.Id}" title="View course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">visibility</span>
+                        </a>
+                    `;
+                } else {
+                    const isReadOnly = status === 'pending';
+                    actionsHtml = `
+                        <a href="/InstructorCourse/Editor/${course.Id}" title="${isReadOnly ? 'View course' : 'Edit course'}" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">${isReadOnly ? 'visibility' : 'edit'}</span>
+                        </a>
+                        ${hideBtn}
+                        <button title="Delete course" onclick="confirmDelete(${course.Id}, '${titleSafe}', ${course.Students})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
+                    `;
+                }
 
                 return `<tr class="${rowClass}">
                     <td class="px-6 py-4">
@@ -293,13 +314,7 @@
                     </td>
                     <td class="px-6 py-4 text-right">
                         <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <a href="/InstructorCourse/Editor/${course.Id}" title="${isHidden ? 'View course' : 'Edit course'}" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
-                                <span class="material-symbols-outlined text-[18px]">${isHidden ? 'visibility' : 'edit'}</span>
-                            </a>
-                            ${hideBtn}
-                            <button title="Delete course" onclick="confirmDelete(${course.Id}, '${titleSafe}', ${course.Students})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
-                                <span class="material-symbols-outlined text-[18px]">delete</span>
-                            </button>
+                            ${actionsHtml}
                         </div>
                     </td>
                 </tr>`;
@@ -379,7 +394,7 @@
                 const matchSearch = !searchTerm || c.Title.toLowerCase().includes(searchTerm);
                 let matchStatus = false;
                 if (status === 'All') {
-                    matchStatus = !c.IsRemoved;
+                    matchStatus = true;
                 } else if (status === 'Removed') {
                     matchStatus = c.IsRemoved;
                 } else {
