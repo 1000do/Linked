@@ -1,0 +1,91 @@
+@startuml DeleteChats_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "ChatController" as ChatControllerBE #FFE6E6 {
+    - _chatService : IChatService
+    + ClearChatHistory(chatId: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class ChatParticipant #CCFFE6 {
+    + ChatId : int <<PK, FK>>
+    + AccountId : int <<PK, FK>>
+    + ClearedAt : DateTime?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IChatService #FFE6CC {
+    //+ ClearChatHistoryAsync(chatId: int, accountId: int) : Task<bool>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IChatRepository #FFE6CC {
+    //+ GetParticipantAsync(chatId: int, accountId: int) : Task<ChatParticipant?>//
+    //+ UpdateParticipantAsync(participant: ChatParticipant) : Task//
+    //+ SaveChangesAsync() : Task<int>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ChatService #CCE5FF {
+    - _chatRepository : IChatRepository
+    + ClearChatHistoryAsync(chatId: int, accountId: int) : Task<bool>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ChatRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetParticipantAsync(chatId: int, accountId: int) : Task<ChatParticipant?>
+    + UpdateParticipantAsync(participant: ChatParticipant) : Task
+    + SaveChangesAsync() : Task<int>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + ChatParticipants : DbSet<ChatParticipant>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+ChatControllerBE --> IChatService
+ChatService --> IChatRepository
+ChatRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+ChatService ..|> IChatService
+ChatRepository ..|> IChatRepository
+
+' === DEPENDENCY ===
+ChatService ..> ChatParticipant : uses
+ChatRepository ..> ChatParticipant : uses
+
+@enduml
