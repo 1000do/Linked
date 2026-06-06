@@ -1,0 +1,83 @@
+@startuml filter_reports
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Filter Reports
+actor Staff as act
+
+participant "Reports" as view
+participant "AdminModerationController" as be_ctrl
+participant ":ReportService" as sv
+participant ":ReportRepository" as repo
+participant ":AppDbContext" as ctx
+
+database Database as db
+
+act++
+act->view++: Select status from filter dropdown\n(e.g. "pending", "resolved", "rejected", "escalated")
+view->view++: Trigger onchange -> loadCourseReports() / loadReviewReports()
+view--
+
+group alt [Filter Course Reports]
+    view->be_ctrl++: GET /api/admin/moderation/reports/courses?status={status}
+    be_ctrl->sv++: GetAllCourseReportsAsync(status, page, pageSize)
+    sv->repo++: GetAllCourseReportsAsync(status, page, pageSize)
+    repo->ctx++: Query CourseReport filtered by status
+    ctx->db++: Execute SQL query
+    db-->>ctx: Return result set
+    ctx-->>repo: (reports, totalCount)
+    repo-->>sv: (reports, totalCount)
+    sv-->>be_ctrl--: PagedResult<CourseReportDetailResponse>
+    be_ctrl-->>view--: Return JSON payload
+    view-->>act: Re-render course report table
+else [Filter Course Review Reports]
+    view->be_ctrl++: GET /api/admin/moderation/reports/course-reviews?status={status}
+    be_ctrl->sv++: GetAllCourseReviewReportsAsync(status, page, pageSize)
+    sv->repo++: GetAllCourseReviewReportsAsync(status, page, pageSize)
+    repo->ctx++: Query CourseReviewReport filtered by status
+    ctx->db++: Execute SQL query
+    db-->>ctx: Return result set
+    ctx-->>repo: (reports, totalCount)
+    repo-->>sv: (reports, totalCount)
+    sv-->>be_ctrl--: PagedResult<ReviewReportDetailResponse>
+    be_ctrl-->>view--: Return JSON payload
+    view-->>act: Re-render course review report table
+else [Filter Lesson Review Reports]
+    view->be_ctrl++: GET /api/admin/moderation/reports/lesson-reviews?status={status}
+    be_ctrl->sv++: GetAllLessonReviewReportsAsync(status, page, pageSize)
+    sv->repo++: GetAllLessonReviewReportsAsync(status, page, pageSize)
+    repo->ctx++: Query LessonReviewReport filtered by status
+    ctx->db++: Execute SQL query
+    db-->>ctx: Return result set
+    ctx-->>repo: (reports, totalCount)
+    repo-->>sv: (reports, totalCount)
+    sv-->>be_ctrl--: PagedResult<ReviewReportDetailResponse>
+    be_ctrl-->>view--: Return JSON payload
+    view-->>act: Re-render lesson review report table
+end
+act--
+@enduml
