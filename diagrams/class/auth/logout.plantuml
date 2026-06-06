@@ -1,0 +1,96 @@
+@startuml Logout_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class AccountControllerFE #FFE6E6 {
+    - _api : ApiClient
+    + Logout() : Task<IActionResult>
+    + LogoutGet() : Task<IActionResult>
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class AuthControllerBE #FFE6E6 {
+    - _authService : IAuthService
+    + Logout() : Task<IActionResult>
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Account #CCFFE6 {
+    + AccountId : int <<PK>>
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IAuthService #FFE6CC {
+    //+ LogoutAsync(accountId: int) : Task<bool>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IUserRepository #FFE6CC {
+    //+ RevokeRefreshTokenAsync(accountId: int) : Task//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AuthService #CCE5FF {
+    - _userRepo : IUserRepository
+    + LogoutAsync(accountId: int) : Task<bool>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository #FFFFCC {
+    - _context : AppDbContext
+    + RevokeRefreshTokenAsync(accountId: int) : Task
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Accounts : DbSet<Account>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+AccountControllerFE --> AuthControllerBE : calls via HTTP
+AuthControllerBE --> IAuthService
+AuthService --> IUserRepository
+UserRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+AuthService ..|> IAuthService
+UserRepository ..|> IUserRepository
+
+' === DEPENDENCY ===
+AuthService ..> Account : updates
+UserRepository ..> Account : queries/saves
+
+@enduml

@@ -1,0 +1,132 @@
+@startuml SetupPayout_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class InstructorControllerFE #FFE6E6 {
+    - _api : ApiClient
+    + SetupPayout() : Task<IActionResult>
+    + StripeReturn(instructorId: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class InstructorControllerBE #FFE6E6 {
+    - _instructorService : IInstructorService
+    + SetupPayout() : Task<IActionResult>
+    + StripeReturn(instructorId: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class StripeSetupResponse #E6CCFF {
+    + OnboardingUrl : string
+    + StripeAccountId : string
+}
+
+class StripeAccountStatus #E6CCFF {
+    + DetailsSubmitted : bool
+    + PayoutsEnabled : bool
+    + ChargesEnabled : bool
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Instructor #CCFFE6 {
+    + InstructorId : int <<PK, FK>>
+    + StripeAccountId : string?
+    + StripeCountry : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool
+    + ChargesEnabled : bool
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IInstructorService #FFE6CC {
+    //+ SetupStripePayoutAsync(userId: int) : Task<StripeSetupResponse>//
+    //+ VerifyStripeOnboardingAsync(instructorId: int) : Task<string>//
+}
+
+interface IStripeConnectService #FFE6CC {
+    //+ SetupExpressAccountAsync(userId: int, email: string, country: string, title: string, category: string, currentAccountId: string?) : Task<StripeSetupResponse>//
+    //+ GetAccountStatusAsync(stripeAccountId: string) : Task<StripeAccountStatus>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IInstructorRepository #FFE6CC {
+    //+ GetByIdAsync(id: int) : Task<Instructor?>//
+    //+ GetByIdWithNavigationAsync(id: int) : Task<Instructor?>//
+    //+ SaveChangesAsync() : Task<int>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class InstructorService #CCE5FF {
+    - _repo : IInstructorRepository
+    - _stripeConnect : IStripeConnectService
+    + SetupStripePayoutAsync(userId: int) : Task<StripeSetupResponse>
+    + VerifyStripeOnboardingAsync(instructorId: int) : Task<string>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class InstructorRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetByIdAsync(id: int) : Task<Instructor?>
+    + GetByIdWithNavigationAsync(id: int) : Task<Instructor?>
+    + SaveChangesAsync() : Task<int>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Instructors : DbSet<Instructor>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+InstructorControllerFE --> InstructorControllerBE : calls via HTTP
+InstructorControllerBE --> IInstructorService
+InstructorService --> IInstructorRepository
+InstructorService --> IStripeConnectService
+InstructorRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+InstructorService ..|> IInstructorService
+InstructorRepository ..|> IInstructorRepository
+
+' === DEPENDENCY ===
+InstructorControllerBE ..> StripeSetupResponse : uses
+IInstructorService ..> StripeSetupResponse : returns
+InstructorService ..> StripeSetupResponse : creates
+InstructorService ..> StripeAccountStatus : uses
+IStripeConnectService ..> StripeSetupResponse : returns
+IStripeConnectService ..> StripeAccountStatus : returns
+InstructorService ..> Instructor : updates
+InstructorRepository ..> Instructor : queries/saves
+
+@enduml

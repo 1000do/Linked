@@ -1,0 +1,162 @@
+@startuml LoginGoogle_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class AccountControllerFE #FFE6E6 {
+    - _httpClientFactory : IHttpClientFactory
+    + Login() : IActionResult
+    + GoogleLogin(request: GoogleLoginRequest) : Task<IActionResult>
+}
+
+class GoogleLoginRequestFE #E6CCFF {
+    + IdToken : string
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class AuthControllerBE #FFE6E6 {
+    - _authService : IAuthService
+    + GoogleLogin(request: GoogleLoginRequest) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class GoogleLoginRequest #E6CCFF {
+    + IdToken : string
+}
+
+class LoginResponse #E6CCFF {
+    + AccessToken : string
+    + RefreshToken : string
+    + AccountId : int
+    + FullName : string
+    + Role : string
+    + AvatarUrl : string
+    + IsVerified : bool
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Account #CCFFE6 {
+    + AccountId : int <<PK>>
+    + Email : string
+    + Username : string
+    + PasswordHash : string?
+    + AuthProvider : string
+    + AccountStatus : string
+    + IsVerified : bool
+    + AvatarUrl : string?
+    + RefreshTokenExpiryTime : DateTime?
+}
+
+class User #CCFFE6 {
+    + UserId : int <<PK, FK>>
+    + FullName : string
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IAuthService #FFE6CC {
+    //+ GoogleLoginAsync(idToken: string) : Task<LoginResponse?>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IUserRepository #FFE6CC {
+    //+ GetAccountByEmailAsync(email: string) : Task<Account?>//
+    //+ GetAccountByIdAsync(id: int) : Task<Account?>//
+    //+ IsUsernameExistsAsync(username: string) : Task<bool>//
+    //+ RegisterUserAsync(acc: Account, user: User) : Task<bool>//
+    //+ GetRoleByAccountIdAsync(accountId: int) : Task<string>//
+    //+ SaveRefreshTokenAsync(accountId: int, token: string, expiry: DateTime) : Task//
+    //+ UpdateLastLoginAsync(accountId: int) : Task//
+}
+
+interface ILockoutRepository #FFE6CC {
+    //+ GetActiveLockoutAsync(accountId: int, type: string) : Task<Lockout?>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AuthService #CCE5FF {
+    - _userRepo : IUserRepository
+    - _lockoutRepo : ILockoutRepository
+    - _jwtSettings : JwtSettings
+    + GoogleLoginAsync(idToken: string) : Task<LoginResponse?>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetAccountByEmailAsync(email: string) : Task<Account?>
+    + GetAccountByIdAsync(id: int) : Task<Account?>
+    + IsUsernameExistsAsync(username: string) : Task<bool>
+    + RegisterUserAsync(acc: Account, user: User) : Task<bool>
+    + GetRoleByAccountIdAsync(accountId: int) : Task<string>
+    + SaveRefreshTokenAsync(accountId: int, token: string, expiry: DateTime) : Task
+    + UpdateLastLoginAsync(accountId: int) : Task
+}
+
+class LockoutRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetActiveLockoutAsync(accountId: int, type: string) : Task<Lockout?>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Accounts : DbSet<Account>
+    + Users : DbSet<User>
+    + Lockouts : DbSet<Lockout>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+AccountControllerFE --> ApiClient
+AuthControllerBE --> IAuthService
+AuthService --> IUserRepository
+AuthService --> ILockoutRepository
+UserRepository --> AppDbContext
+LockoutRepository --> AppDbContext
+Account *-- User
+
+' === INTERFACE REALIZATION ===
+AuthService ..|> IAuthService
+UserRepository ..|> IUserRepository
+LockoutRepository ..|> ILockoutRepository
+
+' === DEPENDENCY ===
+AccountControllerFE ..> GoogleLoginRequestFE : uses
+AccountControllerFE ..> AuthControllerBE : calls via HTTP
+AuthControllerBE ..> GoogleLoginRequest : uses
+AuthControllerBE ..> LoginResponse : uses
+IAuthService ..> LoginResponse : returns
+AuthService ..> Account : creates/updates
+UserRepository ..> Account : queries/saves
+LockoutRepository ..> Lockout : queries
+
+@enduml
