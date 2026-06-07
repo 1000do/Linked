@@ -77,10 +77,9 @@ class AppDbContext #E6F3FF {
     + Accounts : DbSet<Account>
 }
 
-' ==================== RELATIONSHIPS ====================
+' === RELATIONSHIPS ====================
 
 ' === UNIDIRECTIONAL ASSOCIATION ===
-AccountControllerFE --> AuthControllerBE : calls via HTTP
 AuthControllerBE --> IAuthService
 AuthService --> IUserRepository
 UserRepository --> AppDbContext
@@ -90,7 +89,7 @@ AuthService ..|> IAuthService
 UserRepository ..|> IUserRepository
 
 ' === DEPENDENCY ===
-AuthService ..> Account : updates
+AccountControllerFE ..> AuthControllerBE : calls via HTTP
 UserRepository ..> Account : queries/saves
 
 @enduml

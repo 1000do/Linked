@@ -76,6 +76,15 @@ class User #CCFFE6 {
     + FullName : string
 }
 
+class Lockout #CCFFE6 {
+    + LockoutId : int <<PK>>
+    + AccountId : int? <<FK>>
+    + LockoutType : string?
+    + LockoutLevel : string?
+    + LockoutStart : DateTime?
+    + LockoutEnd : DateTime?
+}
+
 ' ==================== BACKEND - SERVICE INTERFACES ====================
 
 interface IAuthService #FFE6CC {
@@ -133,16 +142,18 @@ class AppDbContext #E6F3FF {
     + Lockouts : DbSet<Lockout>
 }
 
-' ==================== RELATIONSHIPS ====================
+' === RELATIONSHIPS ====================
 
 ' === UNIDIRECTIONAL ASSOCIATION ===
-AccountControllerFE --> ApiClient
 AuthControllerBE --> IAuthService
 AuthService --> IUserRepository
 AuthService --> ILockoutRepository
 UserRepository --> AppDbContext
 LockoutRepository --> AppDbContext
+
+' === COMPOSITION / BIDIRECTIONAL ASSOCIATION ===
 Account *-- User
+Account -- Lockout
 
 ' === INTERFACE REALIZATION ===
 AuthService ..|> IAuthService
@@ -155,7 +166,8 @@ AccountControllerFE ..> AuthControllerBE : calls via HTTP
 AuthControllerBE ..> GoogleLoginRequest : uses
 AuthControllerBE ..> LoginResponse : uses
 IAuthService ..> LoginResponse : returns
-AuthService ..> Account : creates/updates
+AuthService ..> Account : instantiates
+AuthService ..> User : instantiates
 UserRepository ..> Account : queries/saves
 LockoutRepository ..> Lockout : queries
 

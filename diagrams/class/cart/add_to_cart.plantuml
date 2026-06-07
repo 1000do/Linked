@@ -43,15 +43,41 @@ class CartItem #CCFFE6 {
     + Id : int <<PK>>
     + UserId : int? <<FK>>
     + CourseId : int? <<FK>>
-    + Price : decimal?
     + AddedDate : DateTime?
+    + Price : decimal?
+    + Course : Course?
+    + User : User?
 }
 
 class Course #CCFFE6 {
     + CourseId : int <<PK>>
+    + InstructorId : int? <<FK>>
+    + CategoryId : int? <<FK>>
+    + CouponId : int? <<FK>>
     + Title : string
+    + Description : string?
     + Price : decimal
-    + CourseStatus : string
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + CourseAiIntegrations : ICollection<CourseAiIntegration>
+    + CartItems : ICollection<CartItem>
+    + Category : Category?
+    + Coupon : Coupon?
+    + Enrollments : ICollection<Enrollment>
+    + Instructor : Instructor?
+    + Lessons : ICollection<Lesson>
+    + OrderItems : ICollection<OrderItem>
+    + WishlistItems : ICollection<WishlistItem>
+    + CourseExt : CourseExt?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -117,7 +143,8 @@ CartService --> ICartRepository
 CartService --> ICourseRepository
 CartRepository --> AppDbContext
 CourseRepository --> AppDbContext
-CartItem --> Course
+' === COMPOSITION / BIDIRECTIONAL ASSOCIATION ===
+Course -- CartItem
 
 ' === INTERFACE REALIZATION ===
 CartService ..|> ICartService
@@ -126,9 +153,8 @@ CourseRepository ..|> ICourseRepository
 
 ' === DEPENDENCY ===
 CartControllerFE ..> CartControllerBE : calls via HTTP
-CartService ..> CartItem : uses
-CartService ..> Course : uses
+CartService ..> CartItem : instantiates
 CartRepository ..> CartItem : uses
-CourseRepository ..> Course : uses
+CourseRepository ..> Course : queries
 
 @enduml

@@ -35,14 +35,14 @@ class "CartController" as CartControllerBE #FFE6E6 {
     + RemoveFromCart(courseId: int) : Task<IActionResult>
 }
 
-' ==================== BACKEND - DOMAIN ENTITIES ====================
-
 class CartItem #CCFFE6 {
     + Id : int <<PK>>
     + UserId : int? <<FK>>
     + CourseId : int? <<FK>>
     + AddedDate : DateTime?
     + Price : decimal?
+    + Course : Course?
+    + User : User?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -95,7 +95,6 @@ CartRepository ..|> ICartRepository
 
 ' === DEPENDENCY ===
 CartControllerFE ..> CartControllerBE : calls via HTTP
-CartService ..> CartItem : uses
-CartRepository ..> CartItem : uses
+CartRepository ..> CartItem : queries/updates
 
 @enduml

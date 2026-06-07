@@ -76,6 +76,15 @@ class User #CCFFE6 {
     + FullName : string
 }
 
+class Lockout #CCFFE6 {
+    + LockoutId : int <<PK>>
+    + AccountId : int? <<FK>>
+    + LockoutType : string?
+    + LockoutLevel : string?
+    + LockoutStart : DateTime?
+    + LockoutEnd : DateTime?
+}
+
 ' ==================== BACKEND - SERVICE INTERFACES ====================
 
 interface IAuthService #FFE6CC {
@@ -135,7 +144,10 @@ AuthService --> IUserRepository
 AuthService --> ILockoutRepository
 UserRepository --> AppDbContext
 LockoutRepository --> AppDbContext
+
+' === COMPOSITION / BIDIRECTIONAL ASSOCIATION ===
 Account *-- User
+Account -- Lockout
 
 ' === INTERFACE REALIZATION ===
 AuthService ..|> IAuthService
@@ -149,7 +161,7 @@ AuthControllerBE ..> LoginRequest : uses
 AuthControllerBE ..> LoginResponse : uses
 IAuthService ..> LoginRequest : uses
 IAuthService ..> LoginResponse : returns
-AuthService ..> Account : validates
 UserRepository ..> Account : queries
+LockoutRepository ..> Lockout : queries
 
 @enduml
