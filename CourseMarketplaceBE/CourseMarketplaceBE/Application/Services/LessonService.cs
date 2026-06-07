@@ -60,7 +60,7 @@ public class LessonService : ILessonService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot create lessons.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot create lessons.");
         }
 
         if (CourseStatus.Pending.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
@@ -155,7 +155,7 @@ public class LessonService : ILessonService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update lessons.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update lessons.");
         }
 
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
@@ -215,7 +215,7 @@ public class LessonService : ILessonService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot add materials.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot add materials.");
         }
 
         if (CourseStatus.Pending.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
@@ -381,7 +381,7 @@ public class LessonService : ILessonService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update materials.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update materials.");
         }
 
         if (CourseStatus.Pending.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
@@ -437,7 +437,7 @@ public class LessonService : ILessonService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot remove materials.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot remove materials.");
         }
 
         if (CourseStatus.Pending.ToValue().Equals(lesson.Course?.CourseStatus, StringComparison.OrdinalIgnoreCase))
@@ -494,7 +494,7 @@ public class LessonService : ILessonService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot delete lessons.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot delete lessons.");
         }
 
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
@@ -576,7 +576,7 @@ public class LessonService : ILessonService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot permanently delete materials.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot permanently delete materials.");
         }
 
         // Get course status to prevent deletion if pending
@@ -620,7 +620,7 @@ public class LessonService : ILessonService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot restore materials.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot restore materials.");
         }
 
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))

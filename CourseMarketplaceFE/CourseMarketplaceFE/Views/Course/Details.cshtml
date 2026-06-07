@@ -48,7 +48,7 @@
 <!-- Status Banner -->
 @if (!Model.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
 {
-    <div class="bg-amber-500 text-amber-950 font-bold text-center py-2 shadow-md w-full sticky top-20 z-[60]">
+    <div class="bg-amber-500 text-amber-950 font-bold text-center py-2 shadow-md w-full sticky top-20 z-[40]">
         WARNING: This course is currently in @Model.CourseStatus.ToUpper() state.
     </div>
 }
@@ -118,9 +118,10 @@
                     <div id="course-report-container">
                         @if (Model.IsEnrolled && !Model.IsOwner && !isManager)
                         {
+                            var isPermanentlyLocked = Model.CourseStatus?.Equals("archived", StringComparison.OrdinalIgnoreCase) == true && Model.FlagCount >= 3;
                             var hideReportBtn = (Model.CourseStatus?.Equals("pending", StringComparison.OrdinalIgnoreCase) == true) || 
                                                 (Model.CourseStatus?.Equals("draft", StringComparison.OrdinalIgnoreCase) == true) || 
-                                                (Model.CourseStatus?.Equals("archived", StringComparison.OrdinalIgnoreCase) == true);
+                                                isPermanentlyLocked;
                             if (!hideReportBtn)
                             {
                                 <button type="button" 
@@ -538,8 +539,8 @@
 </div>
 
 <script>
-    const currentToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`.trim();
-    console.log("currentToken",currentToken);
+    const localDetailsToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`.trim();
+    console.log("localDetailsToken",localDetailsToken);
     let allExpanded = false;
     
     function decodeToken(token) {
@@ -923,8 +924,8 @@
     }
 
     
-    const decoded = decodeToken(currentToken);
-    const currentUserId = decoded ? parseInt(decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || decoded["nameid"]) : null;
+    const decoded = decodeToken(localDetailsToken);
+    const localCurrentUserId = decoded ? parseInt(decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || decoded["nameid"]) : null;
     const currentUserRole = decoded ? (decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || decoded["role"]) : null;
     
     let currentReviewPage = 1;
@@ -947,7 +948,7 @@
                 list.innerHTML = data.map(r => {
                     console.log("r.userId: ",r.userId);
                     console.log("r.UserId : ",r.UserId);
-                    const isOwn = currentUserId > 0 && (r.userId == currentUserId || r.UserId == currentUserId);
+                    const isOwn = localCurrentUserId > 0 && (r.userId == localCurrentUserId || r.UserId == localCurrentUserId);
                     const createdTime = r.createdAt ? new Date(r.createdAt).getTime() : 0;
                     const updatedTime = r.updatedAt ? new Date(r.updatedAt).getTime() : 0;
                     const isEdited = updatedTime && updatedTime > (createdTime + 60000);
@@ -1067,6 +1068,19 @@
                     ? `<p class="text-slate-400 italic text-center py-10">No ${filter}-star reviews found.</p>`
                     : `<p class="text-slate-400 italic text-center py-10">No reviews yet for this course.</p>`;
             }
+
+            setTimeout(() => {
+                if (window.location.hash && window.location.hash.startsWith('#review-card-')) {
+                    const el = document.querySelector(window.location.hash);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.classList.add('bg-yellow-100', 'transition-colors', 'duration-1000');
+                        setTimeout(() => el.classList.remove('bg-yellow-100'), 3000);
+                        history.replaceState(null, null, ' ');
+                    }
+                }
+            }, 100);
+
         } catch (e) {
             list.innerHTML = renderErrorState('Could not load reviews.', `loadReviews(${page})`);
         }
