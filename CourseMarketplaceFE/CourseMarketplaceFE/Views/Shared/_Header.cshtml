@@ -181,7 +181,7 @@
                     <div class="hidden sm:flex flex-col items-end">
                         <span class="text-xs font-bold text-slate-700">Hi, @userName</span>
                         @* POST logout to revoke refresh token on BE (more secure than GET) *@
-                        <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
+                        <form id="global-logout-form" asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
                             @Html.AntiForgeryToken()
                             <button type="submit" class="text-[10px] text-red-500 hover:underline font-medium bg-transparent border-none p-0 cursor-pointer">Logout</button>
                         </form>

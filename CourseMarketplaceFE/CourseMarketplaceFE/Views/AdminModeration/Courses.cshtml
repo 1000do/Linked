@@ -243,7 +243,7 @@
                                         _ => "bg-slate-100 text-slate-600"
                                     };
                                 }
-                                <span class="px-3 py-1 @statusColor rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
+                                <span class="inline-block whitespace-nowrap px-3 py-1 @statusColor rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
                                     @statusLabel
                                 </span>
                             </td>
@@ -257,44 +257,50 @@
                                 </a>
                             </td>
                             <td class="px-8 py-6 text-center">
-                                <div class="flex items-center justify-center gap-2">
+                                <div class="flex items-stretch gap-2">
                                     @{
                                         var statusStr = item.CourseStatus?.ToLower() ?? "";
                                     }
 
-                                    @if (statusStr == "pending")
-                                    {
-                                        <button onclick="approveCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
-                                            <span class="material-symbols-outlined text-[18px]">done</span> Approve
-                                        </button>
-                                    }
-                                    else if (statusStr == "rejected" || statusStr == "archived" || statusStr == "permanently_locked")
-                                    {
-                                        <button onclick="approveCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
-                                            <span class="material-symbols-outlined text-[18px]">settings_backup_restore</span> Re-approve
-                                        </button>
-                                    }
+                                    <!-- Column 1: Approve / Reject -->
+                                    <div class="flex flex-col justify-center gap-2 w-[125px]">
+                                        @if (statusStr == "pending")
+                                        {
+                                            <button onclick="approveCourse(@item.CourseId)" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
+                                                <span class="material-symbols-outlined text-[18px]">done</span> Approve
+                                            </button>
+                                        }
+                                        else if (statusStr == "rejected" || statusStr == "archived" || statusStr == "permanently_locked")
+                                        {
+                                            <button onclick="approveCourse(@item.CourseId)" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
+                                                <span class="material-symbols-outlined text-[18px]">settings_backup_restore</span> Re-approve
+                                            </button>
+                                        }
 
-                                    @if (statusStr == "pending" || statusStr == "published")
-                                    {
-                                        <button onclick="rejectCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-bold transition-all active:scale-95">
-                                            <span class="material-symbols-outlined text-[18px]">close</span> Reject
-                                        </button>
-                                    }
+                                        @if (statusStr == "pending" || statusStr == "published")
+                                        {
+                                            <button onclick="rejectCourse(@item.CourseId)" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-bold transition-all active:scale-95">
+                                                <span class="material-symbols-outlined text-[18px]">close</span> Reject
+                                            </button>
+                                        }
+                                    </div>
 
-                                    @if ((statusStr == "pending" || statusStr == "published" || statusStr == "rejected" || statusStr == "archived") && item.FlagCount < 3)
-                                    {
-                                        <button onclick="flagCourse(@item.CourseId)" class="flex items-center justify-center gap-2 px-4 py-2 bg-accent text-white rounded-xl hover:bg-red-600 transition-all shadow-lg shadow-red-900/20 active:scale-95 text-xs font-bold" title="Flag for violation">
-                                            <span class="material-symbols-outlined text-[18px]">flag</span> Flag
-                                        </button>
-                                    }
+                                    <!-- Column 2: Flag / Unflag -->
+                                    <div class="flex flex-col justify-center gap-2 w-[95px]">
+                                        @if ((statusStr == "pending" || statusStr == "published" || statusStr == "rejected" || statusStr == "archived") && item.FlagCount < 3)
+                                        {
+                                            <button onclick="flagCourse(@item.CourseId)" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-accent text-white rounded-xl hover:bg-red-600 transition-all shadow-lg shadow-red-900/20 active:scale-95 text-xs font-bold" title="Flag for violation">
+                                                <span class="material-symbols-outlined text-[18px]">flag</span> Flag
+                                            </button>
+                                        }
 
-                                    @if ((statusStr == "pending" || statusStr == "published" || statusStr == "rejected" || statusStr == "archived" || statusStr == "permanently_locked") && item.FlagCount > 0)
-                                    {
-                                        <button onclick="unflagCourse(@item.CourseId)" class="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95" title="Unflag course">
-                                            <span class="material-symbols-outlined text-[18px]">undo</span> Unflag
-                                        </button>
-                                    }
+                                        @if ((statusStr == "pending" || statusStr == "published" || statusStr == "rejected" || statusStr == "archived" || statusStr == "permanently_locked") && item.FlagCount > 0)
+                                        {
+                                            <button onclick="unflagCourse(@item.CourseId)" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95" title="Unflag course">
+                                                <span class="material-symbols-outlined text-[18px]">undo</span> Unflag
+                                            </button>
+                                        }
+                                    </div>
                                 </div>
                             </td>
                         </tr>

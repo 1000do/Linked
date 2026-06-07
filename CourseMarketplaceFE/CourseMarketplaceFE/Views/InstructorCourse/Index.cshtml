@@ -583,6 +583,18 @@
         // Initial render
         document.addEventListener("DOMContentLoaded", () => {
             renderAll();
+
+            @if (TempData["Error"] != null)
+            {
+                <text>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Access Denied',
+                    text: '@Html.Raw(TempData["Error"]?.ToString()?.Replace("'", "\\'"))',
+                    confirmButtonColor: '#d33'
+                });
+                </text>
+            }
         });
     </script>
 }

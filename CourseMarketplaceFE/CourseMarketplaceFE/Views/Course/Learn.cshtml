@@ -30,6 +30,8 @@
 @{
     ViewData["Title"] = "Learning: " + Model.Title;
     Layout = null; // No layout for full-screen player experience
+    var tokenForLayout = Context.Request.Cookies["AccessToken"]
+                         ?? Context.Request.Cookies[".AspNetCore.Identity.Application"] ?? "";
     var firstMaterial = Model.Lessons.SelectMany(l => l.LearningMaterials).FirstOrDefault();
 }
 <!DOCTYPE html>
@@ -38,6 +40,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <link rel="icon" type="image/png" href="~/img/default-avatar.png" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -56,7 +59,7 @@
 
     @if (!Model.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
     {
-        <div class="w-full bg-amber-500 text-amber-950 font-bold text-center py-2 shadow-md shrink-0 z-[60]">
+        <div class="w-full bg-amber-500 text-amber-950 font-bold text-center py-2 shadow-md shrink-0 z-[40]">
             WARNING: This course is currently in @Model.CourseStatus.ToUpper() state.
         </div>
     }
@@ -288,6 +291,11 @@
 
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Global Logout Form -->
+    <form id="global-logout-form" asp-controller="Account" asp-action="Logout" method="post" style="display:none;">
+        @Html.AntiForgeryToken()
+    </form>
+
     <script>
 
         const videoPlayer = document.getElementById('main-video');
@@ -479,38 +487,98 @@
                     } else {
                         lessonList.innerHTML = '<p class="text-slate-400 italic">No reviews yet for this lesson.</p>';
                     }
+                    setTimeout(() => {
+                        if (window.location.hash && window.location.hash.startsWith('#review-card-')) {
+                            const el = document.querySelector(window.location.hash);
+                            if (el) {
+                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                el.classList.add('bg-yellow-100', 'transition-colors', 'duration-1000');
+                                setTimeout(() => el.classList.remove('bg-yellow-100'), 3000);
+                                history.replaceState(null, null, ' ');
+                            }
+                        }
+                    }, 100);
                 } catch (e) { lessonList.innerHTML = renderErrorState('Error loading reviews for this lesson.', 'loadReviews()'); }
             }
         }
 
         async function reportReview(reviewId, type) {
-            const { value: reason } = await Swal.fire({
+            if (!currentToken) {
+                Swal.fire({
+                    title: 'Login Required',
+                    text: 'You need to log in to report a review.',
+                    icon: 'info',
+                    confirmButtonText: 'Log In Now'
+                }).then(() => { window.location.href = '/Account/Login'; });
+                return;
+            }
+
+            const { value: formValues } = await Swal.fire({
                 title: 'Report Review',
-                input: 'select',
-                inputOptions: {
-                    'spam': 'Spam content',
-                    'offensive': 'Offensive/Harassment',
-                    'fake': 'Fake review',
-                    'other': 'Other reason'
-                },
-                inputPlaceholder: 'Select report reason',
+                html:
+                    '<div class="text-left space-y-4 px-1">' +
+                    '<div>' +
+                    '<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Reason</label>' +
+                    '<select id="swal-review-reason" class="w-full rounded-xl border-slate-200 focus:ring-[#a435f0] text-sm font-semibold">' +
+                    '<option value="spam">Spam content</option>' +
+                    '<option value="offensive">Offensive / Harassment</option>' +
+                    '<option value="fake">Fake review</option>' +
+                    '<option value="other">Other reason</option>' +
+                    '</select>' +
+                    '</div>' +
+                    '<div>' +
+                    '<label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description (optional)</label>' +
+                    '<textarea id="swal-review-desc" class="w-full rounded-xl border-slate-200 focus:ring-[#a435f0] text-sm h-24" placeholder="Briefly describe the violation..."></textarea>' +
+                    '</div>' +
+                    '</div>',
+                focusConfirm: false,
                 showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Submit Report'
+                confirmButtonText: 'Submit Report',
+                confirmButtonColor: '#ef4444',
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    popup: 'rounded-[32px] p-8',
+                    title: 'font-display font-extrabold text-slate-900 mb-6',
+                    confirmButton: 'rounded-xl font-bold px-8 py-3 text-xs',
+                    cancelButton: 'rounded-xl font-bold px-8 py-3 text-xs bg-slate-100 text-slate-700'
+                },
+                preConfirm: () => {
+                    return {
+                        reason: document.getElementById('swal-review-reason').value,
+                        description: document.getElementById('swal-review-desc').value
+                    }
+                }
             });
 
-            if (reason) {
+            if (formValues) {
+                Swal.showLoading();
                 try {
-                    const response = await fetch('/Course/ReportReview', {
+                    const endpoint = type === 'lesson' ? '/Report/ReportLessonReview' : '/Report/ReportCourseReview';
+                    const response = await fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ reviewId, type, reason })
+                        body: JSON.stringify({ reviewId, reason: formValues.reason, description: formValues.description })
                     });
                     const result = await response.json();
                     if (result.success) {
-                        Swal.fire('Reported', result.message || 'Thank you for your feedback, a moderator will review this.', 'success');
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Report Submitted',
+                            text: result.message || 'Thank you for your feedback, a moderator will review this.',
+                            confirmButtonText: 'Got it',
+                            confirmButtonColor: '#a435f0',
+                            customClass: {
+                                popup: 'rounded-[32px] p-8',
+                                confirmButton: 'rounded-xl font-bold px-8 py-3 text-xs',
+                            }
+                        });
                     } else {
-                        Swal.fire('Error', result.message || 'Could not send report at this time.', 'error');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: result.message || 'Could not submit report at this time.',
+                            confirmButtonColor: '#a435f0'
+                        });
                     }
                 } catch (e) {
                     Swal.fire('Error', 'Server connection error.', 'error');
@@ -925,9 +993,45 @@
                 firstItem.classList.remove('active-material');
                 firstItem.click();
             }
+            if (window.location.hash && window.location.hash.startsWith('#review-card-')) {
+                const reviewsBtn = document.querySelector('button[onclick="switchTab(\\\'reviews\\\', this)"]');
+                if (reviewsBtn) reviewsBtn.click();
+            }
             loadProgress();
             loadLessonRatings();
         });
+
+        // Forced logout SignalR logic
+        var localTokenForLayout = "@tokenForLayout";
+        console.log("Token for layout:", localTokenForLayout);
+        if (currentToken) {
+            if (localStorage.getItem("AccountLocked") === "true") {
+                localStorage.removeItem("AccountLocked");
+                const form = document.getElementById('global-logout-form');
+                if(form) { form.submit(); }
+            }
+
+            const notiConn = new signalR.HubConnectionBuilder()
+                .withUrl("http://localhost:5207/notificationHub", { accessTokenFactory: () => currentToken })
+                .withAutomaticReconnect().build();
+
+            notiConn.on("AccountLockedOut", () => {
+                localStorage.setItem("AccountLocked", "true");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Account Locked',
+                    text: 'Your account has been locked due to a policy violation. You will be logged out automatically.',
+                    timer: 5000,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false
+                }).then(() => {
+                    document.getElementById('global-logout-form').submit();
+                });
+            });
+            notiConn.start().catch(err => console.error("Noti Hub Error", err));
+        }
     </script>
 </body>
 </html>

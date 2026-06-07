@@ -8,6 +8,8 @@ using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Domain.Constants;
+using Microsoft.AspNetCore.SignalR;
+using CourseMarketplaceBE.Hubs;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -23,6 +25,7 @@ public class ReportService : IReportService
     private readonly IMapper _mapper;
     private readonly ILockoutRepository _lockoutRepo;
     private readonly IRedisService _redisService;
+    private readonly IHubContext<NotificationHub> _hubContext;
 
     public ReportService(
         IReportRepository reportRepo,
@@ -34,7 +37,8 @@ public class ReportService : IReportService
         IInstructorRepository instructorRepo,
         IMapper mapper,
         ILockoutRepository lockoutRepo,
-        IRedisService redisService)
+        IRedisService redisService,
+        IHubContext<NotificationHub> hubContext)
     {
         _reportRepo = reportRepo;
         _enrollmentRepo = enrollmentRepo;
@@ -46,6 +50,7 @@ public class ReportService : IReportService
         _mapper = mapper;
         _lockoutRepo = lockoutRepo;
         _redisService = redisService;
+        _hubContext = hubContext;
     }
 
     // ── User / Instructor: Tạo report khóa học ─────────────────────────────
@@ -58,6 +63,9 @@ public class ReportService : IReportService
         if (course.CourseStatus.Equals(CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase) || 
             course.CourseStatus.Equals("under_review", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("This course is currently under review and cannot be reported.");
+
+        if (course.CourseStatus.Equals(CourseStatus.Archived.ToValue(), StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
+            throw new InvalidOperationException("This course is permanently locked and cannot be reported.");
 
         // Cannot report your own course
         if (course.InstructorId == reporterId)
@@ -311,7 +319,7 @@ public class ReportService : IReportService
                             await _notificationService.SendNotificationAsync(
                                 course.InstructorId.Value,
                                 "Permanent Course Discontinuation Notice",
-                                $"Your course '{course.Title}' has violated our policies. It has been permanently discontinued and archived (Strike {currentFlags}). New enrollments are disabled. Furthermore, your instructor account is locked for 30 days.",
+                                $"Your course '{course.Title}' has violated our policies. It has been permanently discontinued and archived (Strike {currentFlags}). New enrollments are disabled. Furthermore, your instructor rights are locked for 30 days (you cannot create, update, or delete courses, lessons, and materials).",
                                 $"/Course/Details/{course.CourseId}"
                             );
                         }
@@ -346,7 +354,7 @@ public class ReportService : IReportService
         {
             string message = "Your report has been updated.";
             if (request.Status == ReportStatus.Resolved.ToValue()) message = "Your report has been accepted and appropriate action has been taken.";
-            else if (request.Status == ReportStatus.Rejected.ToValue()) message = "Your report has been reviewed and dismissed.";
+            else if (request.Status == ReportStatus.Rejected.ToValue()) message = "No issues found on course, your report has been dismissed.";
             else if (request.Status == ReportStatus.UnderReview.ToValue()) message = "Your report is currently under review.";
             else if (request.Status == ReportStatus.Escalated.ToValue()) message = "Your report has been escalated to senior administrators.";
 
@@ -394,7 +402,7 @@ public class ReportService : IReportService
                     review.UpdatedAt = DateTime.Now;
                     _reviewRepo.UpdateCourseReview(review);
                     
-                    hasSaved = await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote);
+                    hasSaved = await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote, $"/Course/Details/{review.Enrollment?.CourseId}#review-card-{review.CourseReviewId}");
                 }
                 else
                 {
@@ -402,7 +410,7 @@ public class ReportService : IReportService
                         review.Enrollment?.UserId ?? 0,
                         "Review Policy Warning",
                         $"Your course review has received a policy violation warning. Reason: {request.ResolutionNote}. Please ensure your content complies with our guidelines.",
-                        $"/Course/Details/{review.Enrollment?.CourseId}#reviews"
+                        $"/Course/Details/{review.Enrollment?.CourseId}#review-card-{review.CourseReviewId}"
                     );
                 }
             }
@@ -416,15 +424,25 @@ public class ReportService : IReportService
         {
             string message = "Your report about the course review has been updated.";
             if (request.Status == ReportStatus.Resolved.ToValue()) message = "Your report about the course review has been accepted.";
-            else if (request.Status == ReportStatus.Rejected.ToValue()) message = "Your report about the course review has been reviewed and dismissed.";
+            else if (request.Status == ReportStatus.Rejected.ToValue()) message = "No issues found on course review, your report has been dismissed.";
             else if (request.Status == ReportStatus.UnderReview.ToValue()) message = "Your report about the course review is currently under review.";
             else if (request.Status == ReportStatus.Escalated.ToValue()) message = "Your report about the course review has been escalated to senior administrators.";
+
+            string? linkAction = null;
+            if (report.CourseReviewId.HasValue)
+            {
+                var r = await _reviewRepo.GetCourseReviewByIdAsync(report.CourseReviewId.Value);
+                if (r != null)
+                {
+                    linkAction = $"/Course/Details/{r.Enrollment?.CourseId}#review-card-{r.CourseReviewId}";
+                }
+            }
 
             await _notificationService.SendNotificationAsync(
                 report.ReporterId.Value,
                 "Report Resolution Update",
                 message,
-                null!
+                linkAction!
             );
         }
 
@@ -464,7 +482,7 @@ public class ReportService : IReportService
                     review.UpdatedAt = DateTime.Now;
                     _reviewRepo.UpdateLessonReview(review);
 
-                    hasSaved = await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote);
+                    hasSaved = await HandleReviewRemovalPenaltyAsync(review.Enrollment, request.ResolutionNote, $"/Course/Learn?id={review.Enrollment?.CourseId}&lessonId={review.LessonId}#review-card-{review.LessonReviewId}");
                 }
                 else
                 {
@@ -472,7 +490,7 @@ public class ReportService : IReportService
                         review.Enrollment?.UserId ?? 0,
                         "Review Policy Warning",
                         $"Your lesson review has received a policy violation warning. Reason: {request.ResolutionNote}. Please ensure your content complies with our guidelines.",
-                        null!
+                        $"/Course/Learn?id={review.Enrollment?.CourseId}&lessonId={review.LessonId}#review-card-{review.LessonReviewId}"
                     );
                 }
             }
@@ -486,15 +504,25 @@ public class ReportService : IReportService
         {
             string message = "Your report about the lesson review has been updated.";
             if (request.Status == ReportStatus.Resolved.ToValue()) message = "Your report about the lesson review has been accepted.";
-            else if (request.Status == ReportStatus.Rejected.ToValue()) message = "Your report about the lesson review has been reviewed and dismissed.";
+            else if (request.Status == ReportStatus.Rejected.ToValue()) message = "No issues found on lesson review, your report has been dismissed.";
             else if (request.Status == ReportStatus.UnderReview.ToValue()) message = "Your report about the lesson review is currently under review.";
             else if (request.Status == ReportStatus.Escalated.ToValue()) message = "Your report about the lesson review has been escalated to senior administrators.";
+
+            string? linkAction = null;
+            if (report.LessonReviewId.HasValue)
+            {
+                var r = await _reviewRepo.GetLessonReviewByIdAsync(report.LessonReviewId.Value);
+                if (r != null)
+                {
+                    linkAction = $"/Course/Learn?id={r.Enrollment?.CourseId}&lessonId={r.LessonId}#review-card-{r.LessonReviewId}";
+                }
+            }
 
             await _notificationService.SendNotificationAsync(
                 report.ReporterId.Value,
                 "Report Resolution Update",
                 message,
-                null!
+                linkAction!
             );
         }
 
@@ -549,7 +577,7 @@ public class ReportService : IReportService
         }
     }
 
-    private async Task<bool> ProcessReviewStrikeAsync(int userId, string resolutionNote)
+    private async Task<bool> ProcessReviewStrikeAsync(int userId, string resolutionNote, string? linkAction)
     {
         var account = await _userRepo.GetAccountByIdAsync(userId);
         if (account == null) return false;
@@ -558,7 +586,7 @@ public class ReportService : IReportService
 
         if (account.AccountFlagCount == 1)
         {
-            await _notificationService.SendNotificationAsync(userId, "Community Standards Violation (1st Warning)", "Your comment has been removed for violating community standards. This is your first warning.", null!);
+            await _notificationService.SendNotificationAsync(userId, "Community Standards Violation (1st Warning)", "Your comment has been removed for violating community standards. This is your first warning.", linkAction!);
         }
         else if (account.AccountFlagCount == 2)
         {
@@ -569,7 +597,7 @@ public class ReportService : IReportService
                 LockoutLevel = "moderate",
                 LockoutEnd = DateTime.Now.AddDays(7)
             });
-            await _notificationService.SendNotificationAsync(userId, "Commenting Restricted (2nd Violation)", "Due to repeated violations, you are restricted from posting comments or reviews for 7 days.", null!);
+            await _notificationService.SendNotificationAsync(userId, "Commenting Restricted (2nd Violation)", "Due to repeated violations, you are restricted from posting comments or reviews for 7 days.", linkAction!);
         }
         else if (account.AccountFlagCount >= 3)
         {
@@ -581,8 +609,8 @@ public class ReportService : IReportService
                 LockoutEnd = DateTime.Now.AddDays(30)
             });
             account.AccountStatus = AccountStatus.Banned.ToValue();
-            await _notificationService.SendNotificationAsync(userId, "Account Suspended (3rd Violation)", "Your account has been suspended for 30 days due to repeated and severe community standards violations.", null!);
-
+            await _notificationService.SendNotificationAsync(userId, "Account Suspended (3rd Violation)", "Your account has been suspended for 30 days due to repeated and severe community standards violations.", linkAction!);
+            await _hubContext.Clients.User(userId.ToString()).SendAsync("AccountLockedOut");
             var inst = await _instructorRepo.GetByIdAsync(userId);
             if (inst != null && string.Equals(inst.ApprovalStatus, InstructorApprovalStatus.Approved.ToValue(), StringComparison.OrdinalIgnoreCase))
             {
@@ -592,11 +620,11 @@ public class ReportService : IReportService
         return await _userRepo.UpdateAccountAsync(account);
     }
 
-    private async Task<bool> HandleReviewRemovalPenaltyAsync(Enrollment? enrollment, string? resolutionNote)
+    private async Task<bool> HandleReviewRemovalPenaltyAsync(Enrollment? enrollment, string? resolutionNote, string? linkAction)
     {
         if (enrollment != null && enrollment.UserId != 0)
         {
-            return await ProcessReviewStrikeAsync((int)enrollment.UserId, resolutionNote ?? "Review violation");
+            return await ProcessReviewStrikeAsync((int)enrollment.UserId, resolutionNote ?? "Review violation", linkAction);
         }
         return false;
     }
