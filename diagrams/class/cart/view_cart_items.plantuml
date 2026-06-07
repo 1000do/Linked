@@ -115,17 +115,43 @@ class CartItem #CCFFE6 {
     + AddedDate : DateTime?
     + Price : decimal?
     + Course : Course?
+    + User : User?
 }
 
 class Course #CCFFE6 {
     + CourseId : int <<PK>>
+    + InstructorId : int? <<FK>>
+    + CategoryId : int? <<FK>>
+    + CouponId : int? <<FK>>
     + Title : string
+    + Description : string?
     + Price : decimal
     + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + CourseAiIntegrations : ICollection<CourseAiIntegration>
+    + CartItems : ICollection<CartItem>
+    + Category : Category?
+    + Coupon : Coupon?
+    + Enrollments : ICollection<Enrollment>
+    + Instructor : Instructor?
+    + Lessons : ICollection<Lesson>
+    + OrderItems : ICollection<OrderItem>
+    + WishlistItems : ICollection<WishlistItem>
+    + CourseExt : CourseExt?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
 }
 
 class Coupon #CCFFE6 {
     + CouponId : int <<PK>>
+    + ManagerId : int? <<FK>>
     + CouponCode : string
     + CouponType : string?
     + DiscountValue : decimal
@@ -135,6 +161,8 @@ class Coupon #CCFFE6 {
     + UsageLimit : int?
     + UsedCount : int?
     + IsActive : bool?
+    + Courses : ICollection<Course>
+    + Manager : Manager?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -190,7 +218,13 @@ CartService --> ICartRepository
 CartService --> ICourseRepository
 CartService --> ICouponRepository
 CartRepository --> AppDbContext
-CartItem --> Course
+' === COMPOSITION / BIDIRECTIONAL ASSOCIATION ===
+Coupon -- Course
+Course -- CartItem
+CartViewModel *-- CartItemViewModel : contains
+CartViewModel *-- AvailableCouponViewModel : contains
+CartSummaryResponse *-- CartItemDto : contains
+CartSummaryResponse *-- AvailableCouponDto : contains
 
 ' === INTERFACE REALIZATION ===
 CartService ..|> ICartService
@@ -198,18 +232,11 @@ CartRepository ..|> ICartRepository
 
 ' === DEPENDENCY ===
 CartControllerFE ..> CartControllerBE : calls via HTTP
-CartControllerFE ..> CartViewModel : uses
-CartViewModel *-- CartItemViewModel : contains
-CartViewModel *-- AvailableCouponViewModel : contains
+CartControllerFE ..> CartViewModel : instantiates
 CartControllerBE ..> CartSummaryResponse : uses
-CartSummaryResponse *-- CartItemDto : contains
-CartSummaryResponse *-- AvailableCouponDto : contains
-CartService ..> CartSummaryResponse : uses
-CartService ..> CartItemDto : uses
-CartService ..> AvailableCouponDto : uses
-CartService ..> CartItem : uses
-CartService ..> Course : uses
-CartService ..> Coupon : uses
-CartRepository ..> CartItem : uses
+CartService ..> CartSummaryResponse : returns
+CartService ..> CartItemDto : instantiates
+CartService ..> AvailableCouponDto : instantiates
+CartRepository ..> CartItem : queries
 
 @enduml

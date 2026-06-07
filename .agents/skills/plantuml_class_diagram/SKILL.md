@@ -56,9 +56,14 @@ To maintain consistency across diagrams, assign relationships strictly according
 - **Fallbacks**: If composition/aggregation is not appropriate for these types, use **Unidirectional** (`-->`) or **Bidirectional** (`--`) Association.
 
 ### B. Dependency (`..>`)
-- Use a **Dependency** arrow pointing *towards* the **ViewModel / DTO / Entity** for any references originating from controllers, services, or repositories.
-- *Triggers*: Method arguments, local variable declarations, or return values where a controller, service, or repository utilizes a ViewModel, DTO, or Entity.
-- *Example*: `CourseService ..> CourseDto` (Service returns or accepts the DTO).
+- A **Dependency** relationship (`ClassA ..> ClassB`) indicates that Class A relies on Class B, but **Class B CANNOT be a field attribute of Class A (and vice versa)**. If it is a field, it must be mapped as an Association (`-->`).
+- **Strict 3-Case Rule**: Class A ONLY has a dependency relationship to Class B if one of these 3 conditions is met:
+  1. Class A **instantiates** an object of Class B inside its methods.
+  2. Class A **accepts** an object of Class B as an argument in its methods.
+  3. Class A **returns** an object of Class B to its callers.
+- **Service-to-Entity Constraints based on Use Case Type**:
+  - **INSERT (Create) Use Cases**: A Service has a direct **Dependency** on an Entity (e.g., `Service ..> Entity : creates`) because the service instantiates the entity.
+  - **UPDATE / DELETE / SELECT (Read) Use Cases**: A Service **DOES NOT** have a direct dependency on an Entity. Entities are queried, updated, or deleted by the Repository layer. The Repository returns the Entity (or DTO) to the Service. Therefore, for these use cases, the Service only depends on the DTO (`Service ..> DTO`), and the Repository depends on the Entity (`Repository ..> Entity : queries`).
 - Additionally, use a **Dependency** arrow from Frontend Controller to Backend Controller if Frontend Controller participates in the use case.
 
 ### C. Unidirectional Association (`-->`)
@@ -91,7 +96,8 @@ To maintain consistency across diagrams, assign relationships strictly according
   - **Field Attributes**: Include private field attributes related to the functionalities, formatted as `visibility attributeName : Interface/Class/Data Type` (e.g., `- _courseRepository : ICourseRepository`).
   - **Full Method Signatures**: Provide complete signatures for methods, specifying visibility (`+` for public, `-` for private, `#` for protected), arguments with their types, and the return type (e.g., `+ CreateCourseAsync(request: CourseCreateRequest, instructorId: int): Task<CourseResponse>`).
   - **Interface Content Styling**: For interfaces, write all internal contents (methods, properties, attributes) entirely in italics. In PlantUML, format them with double slashes (e.g., `//+ CreateCourseAsync(request: CourseCreateRequest, instructorId: int): Task<CourseResponse>//`).
-  - **Relevance**: Keep attributes and methods clean and relevant to the specific usecase/functionality to avoid clutter.
+  - **Relevance**: For Controllers, Services, and Repositories, keep attributes and methods clean and relevant to the specific use case to avoid clutter.
+  - **Data Models (ViewModels, DTOs, Entities)**: If a participant is a ViewModel, DTO, or Entity, you **MUST include ALL of its fields and properties** in the class block. Furthermore, if any of those properties map to another ViewModel, DTO, or Entity that is ALSO present in the diagram, you **MUST explicitly connect them** in the Relationships section using an appropriate relationship (e.g., `Account -- Lockout`).
 - **Standard Colors**:
   - Abstract/Interface: `ABSTRACT_COLOR` `#FFE6CC`
   - Service Implementation: `SERVICE_COLOR` `#CCE5FF`
@@ -443,7 +449,8 @@ InstructorCourseController ..> CreateCourseViewModel : uses
 CourseController ..> CourseCreateRequest : uses
 CourseCommandService ..> CourseCreateRequest : uses
 CourseCommandService ..> CourseResponse : creates
-CourseRepository ..> Course : creates
+CourseCommandService ..> Course : instantiates
+CourseRepository ..> Course : saves
 
 @enduml
 ```

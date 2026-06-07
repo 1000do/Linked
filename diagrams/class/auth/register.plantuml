@@ -111,13 +111,12 @@ class AppDbContext #E6F3FF {
     + Users : DbSet<User>
 }
 
-' ==================== RELATIONSHIPS ====================
+' === RELATIONSHIPS ====================
 
 ' === COMPOSITION / AGGREGATION ===
 Account *-- User
 
 ' === UNIDIRECTIONAL ASSOCIATION ===
-AccountControllerFE --> AuthControllerBE : calls via HTTP
 AuthControllerBE --> IAuthService
 AuthService --> IUserRepository
 UserRepository --> AppDbContext
@@ -128,10 +127,11 @@ UserRepository ..|> IUserRepository
 
 ' === DEPENDENCY ===
 AccountControllerFE ..> RegisterViewModel : uses
+AccountControllerFE ..> AuthControllerBE : calls via HTTP
 AuthControllerBE ..> RegisterRequest : uses
 IAuthService ..> RegisterRequest : uses
-AuthService ..> Account : creates
-AuthService ..> User : creates
+AuthService ..> Account : instantiates
+AuthService ..> User : instantiates
 UserRepository ..> Account : persists
 UserRepository ..> User : persists
 

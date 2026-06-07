@@ -15,49 +15,182 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
 skinparam classBorderColor #333333
 skinparam arrowColor #333333
 
-' ==================== FRONTEND - VIEWS & STYLES ====================
+' ==================== FRONTEND ====================
 
-class ChatIndexView #FFE6E6 {
-    + searchInput : HTMLInputElement
-    + filterStatusSelect : HTMLSelectElement
-    + sortSelect : HTMLSelectElement
-    + chatListContainer : HTMLDivElement
-    + BindEvents() : void
+class "ChatController (Frontend)" as FrontendChatController #FFE6E6 {
+    + Index() : IActionResult
+    + Learner() : IActionResult
+    + Instructor() : IActionResult
+    + Admin() : IActionResult
+    - GetActorFromCookie() : string
 }
 
-' ==================== FRONTEND - JAVASCRIPT CONTROLLERS ====================
+' ==================== BACKEND - CONTROLLER ====================
 
-class ChatJSController #CCE5FF {
-    - allChats : List<ChatListDto>
-    - activeChatId : int?
-    + loadChats() : Promise<void>
-    + applyChatFilters() : void
-    + renderChatList(chats: List<ChatListDto>) : void
-    + selectChat(chatId: int, name: string, avatar: string, isOnline: bool) : void
+class "ChatController (Backend)" as BackendChatController #FFE6E6 {
+    - _chatService : IChatService
+    
+    + SearchChats(q: string) : Task<IActionResult>
 }
 
-' ==================== FRONTEND - DATA MODELS ====================
+' ==================== BACKEND - DTOs ====================
 
 class ChatListDto #E6CCFF {
-    + chatId : int
-    + partnerName : string
-    + partnerAvatar : string?
-    + lastMessage : string?
-    + lastMessageAt : Date?
-    + unreadCount : int
-    + isOnline : bool
+    + ChatId : int
+    + ChatName : string?
+    + ChatType : string?
+    + LastMessage : string?
+    + LastMessageAt : DateTime?
+    + ContextType : string?
+    + ContextId : int?
+    + UnreadCount : int
+    + PartnerName : string?
+    + PartnerAvatar : string?
+    + PartnerId : int?
+    + IsOnline : bool
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Chat #CCFFE6 {
+    + ChatId : int <<PK>>
+    + ChatType : string?
+    + ContextType : string?
+    + ContextId : int?
+    + CreatedAt : DateTime?
+    + LastMessageAt : DateTime?
+    + ChatName : string?
+}
+
+class ChatParticipant #CCFFE6 {
+    + ChatId : int <<FK>>
+    + AccountId : int <<FK>>
+    + Role : string?
+    + JoinedAt : DateTime?
+    + ClearedAt : DateTime?
+    + UnreadCount : int
+    + LastReadAt : DateTime?
+}
+
+class Message #CCFFE6 {
+    + MessageId : int <<PK>>
+    + ChatId : int <<FK>>
+    + SenderId : int <<FK>>
+    + Content : string?
+    + SentAt : DateTime?
+    + IsSeen : bool?
+    + MessageStatus : string?
+}
+
+class Account #CCFFE6 {
+    + AccountId : int <<PK>>
+    + Username : string?
+    + Email : string
+    + AvatarUrl : string?
+}
+
+class User #CCFFE6 {
+    + UserId : int <<PK>>
+    + AccountId : int? <<FK>>
+    + FullName : string?
+}
+
+class Manager #CCFFE6 {
+    + ManagerId : int <<PK>>
+    + AccountId : int? <<FK>>
+    + DisplayName : string?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IChatService #FFE6CC {
+    //+ SearchChatsAsync(accountId: int, query: string) : Task<List<ChatListDto>>//
+}
+
+interface IRedisService #FFE6CC {
+    //+ GetUnreadCountAsync(accountId: int, chatId: int) : Task<int>//
+    //+ IsUserOnlineAsync(accountId: int) : Task<bool>//
+}
+
+interface IChatRepository #FFE6CC {
+    //+ SearchParticipantsByAccountIdAsync(accountId: int, query: string) : Task<List<ChatParticipant>>//
+}
+
+interface IUserRepository #FFE6CC {
+}
+
+interface ICourseRepository #FFE6CC {
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ChatService #CCE5FF {
+    - _chatRepository : IChatRepository
+    - _redisService : IRedisService
+    - _userRepository : IUserRepository
+    - _courseRepository : ICourseRepository
+    - _configuration : IConfiguration
+    
+    + SearchChatsAsync(accountId: int, query: string) : Task<List<ChatListDto>>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ChatRepository #FFFFCC {
+    - _context : AppDbContext
+    
+    + SearchParticipantsByAccountIdAsync(accountId: int, query: string) : Task<List<ChatParticipant>>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Chats : DbSet<Chat>
+    + ChatParticipants : DbSet<ChatParticipant>
+    + Messages : DbSet<Message>
+    + Accounts : DbSet<Account>
+    + Users : DbSet<User>
+    + Managers : DbSet<Manager>
+    ---
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) : void
+    # OnModelCreating(modelBuilder: ModelBuilder) : void
 }
 
 ' ==================== RELATIONSHIPS ====================
 
-ChatIndexView ..> ChatJSController : triggers filters & rendering
-ChatJSController o-- ChatListDto : manages list of
+' === COMPOSITION (filled diamond) ===
+Chat *-- ChatParticipant
+Chat *-- Message
+
+' === AGGREGATION (hollow diamond) ===
+Account o-- User
+Account o-- Manager
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+BackendChatController --> IChatService
+ChatService --> IChatRepository
+ChatService --> IRedisService
+ChatService --> IUserRepository
+ChatService --> ICourseRepository
+ChatRepository --> AppDbContext
+
+ChatParticipant --> Account
+
+' === INTERFACE REALIZATION ===
+ChatService ..|> IChatService
+ChatRepository ..|> IChatRepository
+
+' === DEPENDENCY (dashed arrows) ===
+FrontendChatController ..> BackendChatController : calls
+BackendChatController ..> ChatListDto : uses
+ChatService ..> ChatListDto : creates
+ChatService ..> ChatParticipant : uses
+ChatRepository ..> ChatParticipant : queries
 
 @enduml

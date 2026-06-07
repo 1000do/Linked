@@ -46,21 +46,37 @@ class CartSummaryResponse #E6CCFF {
     + Total : decimal
     + AppliedCouponCode : string?
     + CouponMessage : string?
+    + AvailableCoupons : List<AvailableCouponDto>
 }
 
 class CartItemDto #E6CCFF {
     + CourseId : int
     + Title : string
+    + ThumbnailUrl : string?
+    + InstructorName : string?
+    + Price : decimal
     + OriginalPrice : decimal
     + DiscountedPrice : decimal
     + AppliedCouponCode : string?
     + DiscountAmount : decimal
 }
 
+class AvailableCouponDto #E6CCFF {
+    + CouponCode : string
+    + CouponType : string
+    + DiscountValue : decimal
+    + MinOrderValue : decimal
+    + EndDate : DateTime?
+    + IsEligible : bool
+    + ConditionMessage : string
+    + CourseId : int?
+}
+
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Coupon #CCFFE6 {
     + CouponId : int <<PK>>
+    + ManagerId : int? <<FK>>
     + CouponCode : string
     + CouponType : string?
     + DiscountValue : decimal
@@ -70,20 +86,49 @@ class Coupon #CCFFE6 {
     + UsageLimit : int?
     + UsedCount : int?
     + IsActive : bool?
+    + Courses : ICollection<Course>
+    + Manager : Manager?
 }
 
 class Course #CCFFE6 {
     + CourseId : int <<PK>>
-    + Title : string
-    + Price : decimal
+    + InstructorId : int? <<FK>>
+    + CategoryId : int? <<FK>>
     + CouponId : int? <<FK>>
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + CourseAiIntegrations : ICollection<CourseAiIntegration>
+    + CartItems : ICollection<CartItem>
+    + Category : Category?
+    + Coupon : Coupon?
+    + Enrollments : ICollection<Enrollment>
+    + Instructor : Instructor?
+    + Lessons : ICollection<Lesson>
+    + OrderItems : ICollection<OrderItem>
+    + WishlistItems : ICollection<WishlistItem>
+    + CourseExt : CourseExt?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
 }
 
 class CartItem #CCFFE6 {
     + Id : int <<PK>>
     + UserId : int? <<FK>>
     + CourseId : int? <<FK>>
+    + AddedDate : DateTime?
     + Price : decimal?
+    + Course : Course?
+    + User : User?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -137,8 +182,11 @@ CartService --> ICartRepository
 CartService --> ICouponRepository
 CartRepository --> AppDbContext
 CouponRepository --> AppDbContext
-Course --> Coupon
-CartItem --> Course
+' === COMPOSITION / BIDIRECTIONAL ASSOCIATION ===
+Coupon -- Course
+Course -- CartItem
+CartSummaryResponse *-- CartItemDto : contains
+CartSummaryResponse *-- AvailableCouponDto : contains
 
 ' === INTERFACE REALIZATION ===
 CartService ..|> ICartService
@@ -148,13 +196,10 @@ CouponRepository ..|> ICouponRepository
 ' === DEPENDENCY ===
 CartControllerFE ..> CartControllerBE : calls via HTTP
 CartControllerBE ..> CartSummaryResponse : uses
-CartSummaryResponse *-- CartItemDto : contains
-CartService ..> CartSummaryResponse : uses
-CartService ..> CartItemDto : uses
-CartService ..> Coupon : uses
-CartService ..> Course : uses
-CartService ..> CartItem : uses
-CartRepository ..> CartItem : uses
-CouponRepository ..> Coupon : uses
+CartService ..> CartSummaryResponse : returns
+CartService ..> CartItemDto : instantiates
+CartService ..> AvailableCouponDto : instantiates
+CartRepository ..> CartItem : queries
+CouponRepository ..> Coupon : queries
 
 @enduml

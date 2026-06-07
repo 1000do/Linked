@@ -77,6 +77,8 @@ class OrderInfo #CCFFE6 {
     + OrderDate : DateTime?
     + OrderStatus : string?
     + PaymentMethod : string?
+    + OrderItems : ICollection<OrderItem>
+    + User : User?
 }
 
 class OrderItem #CCFFE6 {
@@ -89,6 +91,9 @@ class OrderItem #CCFFE6 {
     + CouponCode : string?
     + CouponType : string?
     + DiscountAmount : decimal
+    + Course : Course?
+    + Order : OrderInfo?
+    + Transactions : ICollection<Transaction>
 }
 
 class Transaction #CCFFE6 {
@@ -104,6 +109,11 @@ class Transaction #CCFFE6 {
     + TransactionsStatus : string?
     + TransactionType : string?
     + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
+    + InstructorPayouts : ICollection<InstructorPayout>
 }
 
 class InstructorPayout #CCFFE6 {
@@ -116,6 +126,9 @@ class InstructorPayout #CCFFE6 {
     + PayoutStatus : string
     + StripeTransferId : string?
     + StripePayoutId : string?
+    + PaidToBankAt : DateTime?
+    + Transaction : Transaction?
+    + Instructor : Instructor?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -210,20 +223,20 @@ CheckoutRepository ..|> ICheckoutRepository
 
 ' === DEPENDENCY ===
 CartControllerFE ..> CheckoutControllerBE : calls via HTTP
-CartControllerFE ..> CheckoutViewModel : uses
+CartControllerFE ..> CheckoutViewModel : instantiates
 CheckoutControllerBE ..> CheckoutRequest : uses
 CheckoutControllerBE ..> DirectCheckoutRequest : uses
 CheckoutControllerBE ..> CheckoutResponse : uses
 CheckoutService ..> CheckoutRequest : uses
 CheckoutService ..> DirectCheckoutRequest : uses
-CheckoutService ..> CheckoutResponse : uses
-CheckoutService ..> OrderInfo : uses
-CheckoutService ..> OrderItem : uses
-CheckoutService ..> Transaction : uses
-CheckoutService ..> InstructorPayout : uses
-CheckoutRepository ..> OrderInfo : uses
-CheckoutRepository ..> OrderItem : uses
-CheckoutRepository ..> Transaction : uses
-CheckoutRepository ..> InstructorPayout : uses
+CheckoutService ..> CheckoutResponse : instantiates
+CheckoutService ..> OrderInfo : instantiates
+CheckoutService ..> OrderItem : instantiates
+CheckoutService ..> Transaction : instantiates
+CheckoutService ..> InstructorPayout : instantiates
+CheckoutRepository ..> OrderInfo : inserts
+CheckoutRepository ..> OrderItem : inserts
+CheckoutRepository ..> Transaction : inserts
+CheckoutRepository ..> InstructorPayout : inserts
 
 @enduml

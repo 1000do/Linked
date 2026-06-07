@@ -1,155 +1,114 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>UC-AddMaterial</title>
-    <style>
-        body {
-            font-family: 'Times New Roman', serif;
-            font-size: 12pt;
-            background-color: transparent;
-            color: black;
-            line-height: 1.5;
-            margin: 0;
-            padding: 20px;
-        }
-        p { margin: 8px 0; }
-        strong { font-weight: bold; }
-        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
-        ul, ol { margin: 8px 0; padding-left: 20px; }
-        li { margin-bottom: 4px; }
-    </style>
-</head>
-<body>
-    <p><strong>UC-AddMaterial - Add Learning Materials</strong></p>
-
+<div style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <p><strong>UC-AddMaterials - Add Learning Materials</strong></p>
+    
     <p><strong>Primary Actor:</strong><br>Instructor</p>
     
     <p><strong>Secondary Actors:</strong><br>Cloud Storage Service</p>
     
-    <p><strong>Trigger:</strong><br>Instructor clicks the upload area (for Video) or "Choose File" button (for Resource) in the active lesson editor.</p>
+    <p><strong>Trigger:</strong><br>Instructor clicks the "Upload Video" area for video content, or clicks the "Choose File" button for supplementary files in the lesson editor.</p>
     
-    <p><strong>Description:</strong><br>Allows an instructor to add learning materials (videos or documents) to a specific lesson. The system handles direct-to-cloud file uploads, extracts file metadata, and enforces limits for instructors without an active Stripe account.</p>
-
+    <p><strong>Description:</strong><br>Allows an instructor to add new learning materials (such as videos or document files) to an empty lesson. The system enforces business rules including Stripe account limits, handles file uploads to the cloud, and updates the course status to draft if it was previously published.</p>
+    
     <p><strong>Preconditions:</strong></p>
     <p><b>PRE-1.</b> User must be successfully authenticated as an approved instructor.</p>
     <p><b>PRE-2.</b> The lesson must exist and belong to a course owned by the active instructor.</p>
-
+    
     <p><strong>Post-conditions:</strong></p>
-    <p><b>POST-1.</b> The new learning material record is saved in the database and linked to the lesson.</p>
+    <p><b>POST-1.</b> The new material is uploaded and linked to the lesson.</p>
     <p><b>POST-2.</b> The physical file is stored in the Cloud Storage Service.</p>
     <p><b>POST-3.</b> If the course was previously published, its status is reverted to draft and moderation feedback is cleared.</p>
-
+    <p><b>POST-4.</b> Stale cache data is cleared.</p>
+    
     <hr>
-
+    
     <p><strong>Normal Flow</strong></p>
-
     <p><strong>A. Add Material Successfully</strong></p>
     <ol>
         <li>Instructor accesses the course edit page.</li>
         <li>Instructor selects a specific lesson from the curriculum list.</li>
-        <li>Instructor selects a file (video or document) to upload.</li>
-        <li>The system validates the file format.</li>
-        <li>The system uploads the file to the Cloud Storage Service.</li>
-        <li>The system sends the uploaded file URL and metadata to the backend.</li>
-        <li>The system validates the instructor's permission.</li>
-        <li>The system validates the instructor's lockout status.</li>
+        <li>Instructor clicks the "Upload Video" area for video content, or clicks the "Choose File" button for supplementary files.</li>
+        <li>The frontend system directly uploads the file to the Cloud Storage Service and submits the resulting URL to the backend.</li>
+        <li>The system validates the instructor's rights.</li>
         <li>The system validates the course status.</li>
-        <li>The system validates the maximum material limits for unlinked Stripe accounts.</li>
-        <li>The system creates or updates the learning material record in the database.</li>
-        <li>The system updates the course status to draft and clears moderation feedback in the database.</li>
-        <li>The system invalidates cached course data.</li>
-        <li>The system updates the UI to display the new material.</li>
+        <li>The system validates the document limits.</li>
+        <li>The system creates the new material record in the database.</li>
+        <li>The system updates the course status to draft and clears previous moderation feedback (if previously published).</li>
+        <li>The system invalidates the cached course data.</li>
+        <li>The system displays a success message.</li>
     </ol>
-
+    
     <hr>
-
+    
     <p><strong>Alternative Flows</strong></p>
-
-    <p><strong>A.4.1 Invalid File Format</strong></p>
+    
+    <p><strong>A.4 Upload cancelled or failed</strong></p>
     <ol>
-        <li>The system detects an invalid file format (e.g., video in the document section).</li>
-        <li>The system halts the upload process and displays an invalid format error message.</li>
+        <li>The system displays an upload failure message.</li>
         <li>Back to step 3.</li>
     </ol>
-
-    <p><strong>A.4.2 File is too large (Video) - Continue</strong></p>
+    
+    <p><strong>A.9 Course is not published</strong></p>
     <ol>
-        <li>The system detects a video larger than 50MB and displays a warning prompt recommending compression.</li>
-        <li>Instructor clicks "Yes, upload anyway".</li>
-        <li>Back to step 5.</li>
+        <li>The system skips updating the course status and moderation feedback.</li>
+        <li>Back to step 10.</li>
     </ol>
-
-    <p><strong>A.4.3 File is too large (Video) - Cancelled</strong></p>
-    <ol>
-        <li>The system detects a video larger than 50MB and displays a warning prompt recommending compression.</li>
-        <li>Instructor clicks "I will compress it first".</li>
-        <li>The system halts the upload process and clears the file selection.</li>
-        <li>Back to step 3.</li>
-    </ol>
-
+    
     <hr>
-
+    
     <p><strong>Exceptions</strong></p>
-
-    <p><strong>EX-1 Session Invalid (Not Logged In)</strong></p>
+    
+    <p><strong>EX-1.1 Session Invalid (Not Logged In)</strong></p>
     <ol>
         <li>The system displays an authentication error message.</li>
         <li>The system redirects the user to the login page.</li>
     </ol>
-
-    <p><strong>EX-5 Cloud Storage Service Upload Failure</strong></p>
+    
+    <p><strong>EX-2 Lesson Not Found</strong></p>
     <ol>
-        <li>The system fails to upload the file to the Cloud Storage Service.</li>
-        <li>The system displays an upload failure error message.</li>
-        <li>Back to step 2.</li>
+        <li>The system halts execution and displays a lesson not found error message.</li>
     </ol>
-
-    <p><strong>EX-7 Permission Denied</strong></p>
+    
+    <p><strong>EX-5 Invalid Instructor Rights</strong></p>
     <ol>
-        <li>The system halts execution and displays a permission denied error message.</li>
-        <li>Back to step 2.</li>
+        <li>The system detects the instructor is unauthorized to add material to this lesson or has an active lockout status.</li>
+        <li>The system displays an error message regarding invalid instructor rights.</li>
+        <li>Back to step 3.</li>
     </ol>
-
-    <p><strong>EX-8 Instructor Account Locked</strong></p>
+    
+    <p><strong>EX-6 Invalid Course Status</strong></p>
     <ol>
-        <li>The system halts execution and displays an account locked error message.</li>
-        <li>Back to step 2.</li>
+        <li>The system detects the course is pending review or is permanently archived due to policy violations.</li>
+        <li>The system displays an error message regarding invalid course status.</li>
+        <li>Back to step 3.</li>
     </ol>
-
-    <p><strong>EX-9 Course Pending Review</strong></p>
+    
+    <p><strong>EX-7 Document Limit Exceeded</strong></p>
     <ol>
-        <li>The system halts execution and displays a course pending review error message.</li>
-        <li>Back to step 2.</li>
+        <li>The system detects the instructor has not linked an active Stripe Connect profile and already reached the maximum of 2 documents for the lesson.</li>
+        <li>The system displays an error message regarding the document limit.</li>
+        <li>Back to step 3.</li>
     </ol>
-
-    <p><strong>EX-10 Stripe Limit Exceeded</strong></p>
+    
+    <p><strong>EX-8 Database Save Failed</strong></p>
     <ol>
-        <li>The system detects the instructor has no active Stripe account and has reached the document limit.</li>
-        <li>The system halts execution and displays a limit exceeded error message.</li>
-        <li>Back to step 2.</li>
-    </ol>
-
-    <p><strong>EX-11 Database update failed</strong></p>
-    <ol>
-        <li>The system fails to save the material changes.</li>
+        <li>The system fails to save the material changes to the database.</li>
         <li>The system displays a database transaction failure message.</li>
-        <li>Back to step 2.</li>
+        <li>Back to step 3.</li>
     </ol>
-
+    
     <hr>
-
+    
     <p><strong>Business Rules</strong></p>
     <ol>
-        <li><strong>Material Limits for Unlinked Stripe Accounts:</strong> Instructors who have not linked an active Stripe account are only allowed to attach up to 1 document (resource) per lesson.</li>
+        <li><strong>Locked Out Instructor Rights:</strong> Instructors with an active lockout status are prohibited from adding materials.</li>
         <li><strong>Pending Restriction:</strong> Materials cannot be added to a course while it is currently in 'Pending' review status.</li>
-        <li><strong>Status Reversion:</strong> Adding material to a 'Published' course automatically changes its status back to 'Draft' and clears any existing moderation feedback.</li>
-        <li><strong>File Format Constraints:</strong> The document/resource section strictly blocks video files from being uploaded.</li>
+        <li><strong>Archived Course Restriction:</strong> Courses that are permanently archived due to policy violations (flag count >= 3) cannot be modified.</li>
+        <li><strong>Document Limit for Unlinked Stripe Accounts:</strong> Instructors who have not linked an active Stripe Connect profile are only allowed to attach up to 2 documents per lesson.</li>
+        <li><strong>Status Reversion:</strong> Adding a material to a 'Published' course automatically changes its status back to 'Draft' and clears any existing moderation feedback.</li>
     </ol>
-
+    
     <hr>
-
+    
     <p><strong>Assumptions</strong></p>
     <p>Instructor has stable internet connection.<br>Cloud Storage Service is working properly.</p>
-</body>
-</html>
+</div>
