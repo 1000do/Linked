@@ -15,7 +15,6 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -24,7 +23,7 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class "TransactionController" as TransactionControllerFE #FFE6E6 {
+class TransactionControllerFE #FFE6E6 {
     + Detail(id: int) : Task<IActionResult>
     + InstructorDetail(id: int) : Task<IActionResult>
     + HistoryDetail(id: int) : Task<IActionResult>
@@ -61,7 +60,7 @@ class TransactionDetailVM #E6CCFF {
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class "TransactionController" as TransactionControllerBE #FFE6E6 {
+class TransactionControllerBE #FFE6E6 {
     - _transactionService : ITransactionService
     + GetTransactionDetail(id: int) : Task<IActionResult>
 }
@@ -110,7 +109,12 @@ class Transaction #CCFFE6 {
     + StripePaymentintentId : string?
     + Currency : string?
     + TransactionsStatus : string?
+    + TransactionType : string?
     + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
 }
 
 class TransactionExt #CCFFE6 {
@@ -118,6 +122,7 @@ class TransactionExt #CCFFE6 {
     + RefundReason : string?
     + RefundAdminNote : string?
     + RefundRequestedAt : DateTime?
+    + Transaction : Transaction
 }
 
 class OrderItem #CCFFE6 {
@@ -125,10 +130,13 @@ class OrderItem #CCFFE6 {
     + OrderId : int? <<FK>>
     + CourseId : int? <<FK>>
     + PurchasePrice : decimal
+    + CouponUsed : bool?
     + OriginalPrice : decimal?
     + CouponCode : string?
     + CouponType : string?
     + DiscountAmount : decimal
+    + Course : Course?
+    + Order : OrderInfo?
 }
 
 class InstructorPayout #CCFFE6 {
@@ -168,28 +176,33 @@ class TransactionRepository #FFFFCC {
 
 class AppDbContext #E6F3FF {
     + Transactions : DbSet<Transaction>
+    + TransactionExts : DbSet<TransactionExt>
+    + OrderItems : DbSet<OrderItem>
+    + InstructorPayouts : DbSet<InstructorPayout>
 }
 
 ' ==================== RELATIONSHIPS ====================
 
-' === UNIDIRECTIONAL ASSOCIATION ===
+' === COMPOSITION (filled diamond) ===
+OrderItem *-- Transaction
+Transaction *-- TransactionExt
+Transaction *-- InstructorPayout
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+TransactionControllerFE ..> TransactionControllerBE : calls
 TransactionControllerBE --> ITransactionService
 TransactionService --> ITransactionRepository
 TransactionRepository --> AppDbContext
-Transaction --> TransactionExt
-Transaction --> OrderItem
-Transaction "1" *-- "*" InstructorPayout
 
 ' === INTERFACE REALIZATION ===
 TransactionService ..|> ITransactionService
 TransactionRepository ..|> ITransactionRepository
 
-' === DEPENDENCY ===
-TransactionControllerFE ..> TransactionControllerBE
-TransactionControllerFE ..> TransactionDetailVM
-TransactionControllerBE ..> TransactionDetailDto
-TransactionService ..> TransactionDetailDto
-TransactionRepository ..> TransactionDetailDto
-TransactionRepository ..> Transaction
+' === DEPENDENCY (dashed arrows) ===
+TransactionControllerFE ..> TransactionDetailVM : uses
+TransactionControllerBE ..> TransactionDetailDto : uses
+TransactionService ..> TransactionDetailDto : uses
+TransactionRepository ..> TransactionDetailDto : uses
+TransactionRepository ..> Transaction : queries
 
 @enduml
