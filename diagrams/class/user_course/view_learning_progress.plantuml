@@ -15,7 +15,6 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -24,13 +23,13 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class "CourseController" as CourseControllerFE #FFE6E6 {
+class CourseControllerFE #FFE6E6 {
     + GetProgress(id: int) : Task<IActionResult>
 }
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class "EnrollmentController" as EnrollmentControllerBE #FFE6E6 {
+class EnrollmentControllerBE #FFE6E6 {
     - _enrollmentService : IEnrollmentService
     + GetProgress(courseId: int) : Task<IActionResult>
 }
@@ -51,22 +50,46 @@ class Enrollment #CCFFE6 {
     + EnrollmentId : int <<PK>>
     + UserId : int? <<FK>>
     + CourseId : int? <<FK>>
-    + IsCompleted : bool?
+    + Title : string?
+    + Description : string?
     + CompletedDate : DateOnly?
+    + IsCompleted : bool?
     + EnrollDate : DateOnly?
     + LastAccessedAt : DateTime?
     + EnrollmentStatus : string?
+    + Course : Course?
+    + User : User?
 }
 
 class Course #CCFFE6 {
     + CourseId : int <<PK>>
-    + Title : string
     + InstructorId : int? <<FK>>
+    + CategoryId : int? <<FK>>
+    + CouponId : int? <<FK>>
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
 }
 
 class CourseStats #CCFFE6 {
     + CourseId : int
+    + RatingAverage : double
+    + TotalStudents : int
+    + TotalReviews : int
+    + TotalLessons : int
     + TotalMaterials : int
+    + TotalDuration : int
 }
 
 class MaterialCompletion #CCFFE6 {
@@ -74,6 +97,8 @@ class MaterialCompletion #CCFFE6 {
     + EnrollmentId : int <<FK>>
     + MaterialId : int <<FK>>
     + CompletedAt : DateTime?
+    + Enrollment : Enrollment
+    + Material : LearningMaterial
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -129,29 +154,29 @@ class AppDbContext #E6F3FF {
 
 ' ==================== RELATIONSHIPS ====================
 
-' === UNIDIRECTIONAL ASSOCIATION ===
+' === COMPOSITION (filled diamond) ===
+Enrollment *-- MaterialCompletion
+Course *-- CourseStats
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+CourseControllerFE ..> EnrollmentControllerBE : calls
 EnrollmentControllerBE --> IEnrollmentService
 EnrollmentService --> IEnrollmentRepository
 EnrollmentService --> ICourseRepository
 EnrollmentRepository --> AppDbContext
 CourseRepository --> AppDbContext
 Enrollment --> Course
-Enrollment "1" *-- "*" MaterialCompletion
 
 ' === INTERFACE REALIZATION ===
 EnrollmentService ..|> IEnrollmentService
 EnrollmentRepository ..|> IEnrollmentRepository
 CourseRepository ..|> ICourseRepository
 
-' === DEPENDENCY ===
-CourseControllerFE ..> EnrollmentControllerBE : calls via HTTP
+' === DEPENDENCY (dashed arrows) ===
 EnrollmentControllerBE ..> ProgressResponse : uses
 EnrollmentService ..> ProgressResponse : uses
-EnrollmentService ..> Enrollment : uses
-EnrollmentService ..> Course : uses
-EnrollmentService ..> CourseStats : uses
-EnrollmentRepository ..> Enrollment : uses
-CourseRepository ..> Course : uses
-CourseRepository ..> CourseStats : uses
+EnrollmentRepository ..> Enrollment : queries
+CourseRepository ..> Course : queries
+CourseRepository ..> CourseStats : queries
 
 @enduml
