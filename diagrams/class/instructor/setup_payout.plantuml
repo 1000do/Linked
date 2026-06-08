@@ -15,7 +15,6 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -25,7 +24,6 @@ skinparam arrowColor #333333
 ' ==================== FRONTEND ====================
 
 class InstructorControllerFE #FFE6E6 {
-    - _api : ApiClient
     + SetupPayout() : Task<IActionResult>
     + StripeReturn(instructorId: int) : Task<IActionResult>
 }
@@ -55,11 +53,19 @@ class StripeAccountStatus #E6CCFF {
 
 class Instructor #CCFFE6 {
     + InstructorId : int <<PK, FK>>
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string?
+    + ApprovalStatus : string?
+    + RejectionReason : string?
     + StripeAccountId : string?
-    + StripeCountry : string?
     + StripeOnboardingStatus : string?
-    + PayoutsEnabled : bool
-    + ChargesEnabled : bool
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -108,8 +114,8 @@ class AppDbContext #E6F3FF {
 
 ' ==================== RELATIONSHIPS ====================
 
-' === UNIDIRECTIONAL ASSOCIATION ===
-InstructorControllerFE --> InstructorControllerBE : calls via HTTP
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+InstructorControllerFE ..> InstructorControllerBE : calls
 InstructorControllerBE --> IInstructorService
 InstructorService --> IInstructorRepository
 InstructorService --> IStripeConnectService
@@ -119,14 +125,11 @@ InstructorRepository --> AppDbContext
 InstructorService ..|> IInstructorService
 InstructorRepository ..|> IInstructorRepository
 
-' === DEPENDENCY ===
+' === DEPENDENCY (dashed arrows) ===
 InstructorControllerBE ..> StripeSetupResponse : uses
-IInstructorService ..> StripeSetupResponse : returns
 InstructorService ..> StripeSetupResponse : creates
 InstructorService ..> StripeAccountStatus : uses
-IStripeConnectService ..> StripeSetupResponse : returns
-IStripeConnectService ..> StripeAccountStatus : returns
-InstructorService ..> Instructor : updates
-InstructorRepository ..> Instructor : queries/saves
+' InstructorRepository ..> Instructor : queries
+InstructorRepository ..> Instructor : saves
 
 @enduml

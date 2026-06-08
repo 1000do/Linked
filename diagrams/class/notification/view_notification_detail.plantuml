@@ -23,9 +23,8 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class "NotificationController" as FENotificationController #FFE6E6 {
+class NotificationControllerFE #FFE6E6 {
     - _client : HttpClient
-    
     + Details(id: int) : Task<IActionResult>
 }
 
@@ -39,14 +38,29 @@ class NotificationViewModel #E6CCFF {
     + LinkAction : string?
     + IsRead : bool
     + CreatedAt : DateTime?
+    + ReceiverRole : string?
+    + SenderId : int?
+    + SenderRole : string?
 }
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class "NotificationController" as BENotificationController #FFE6E6 {
+class BENotificationController #FFE6E6 {
     - _notiService : INotificationService
-    
     + GetNotificationDetail(id: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class NotificationDto #E6CCFF {
+    + NotificationId : int
+    + SenderId : int?
+    + ReceiverId : int?
+    + Title : string?
+    + Content : string?
+    + LinkAction : string?
+    + IsRead : bool?
+    + CreatedAt : DateTime?
 }
 
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -69,18 +83,32 @@ class Account #CCFFE6 {
     + AccountId : int <<PK>>
     + Email : string
     + Username : string?
+    + PasswordHash : string?
+    + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
     + User : User?
 }
 
 class User #CCFFE6 {
     + UserId : int <<PK>>
     + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
 
 interface INotificationService #FFE6CC {
-    //+ GetNotificationDetailAsync(id: int, userId: int) : Task<Notification?>//
+    //+ GetNotificationDetailAsync(id: int, userId: int) : Task<NotificationDto?>//
     //+ MarkAsReadAsync(notificationId: int, userId: int) : Task<bool>//
 }
 
@@ -95,8 +123,7 @@ interface INotificationRepository #FFE6CC {
 
 class NotificationService #CCE5FF {
     - _repo : INotificationRepository
-    
-    + GetNotificationDetailAsync(id: int, userId: int) : Task<Notification?>
+    + GetNotificationDetailAsync(id: int, userId: int) : Task<NotificationDto?>
     + MarkAsReadAsync(notificationId: int, userId: int) : Task<bool>
 }
 
@@ -104,7 +131,6 @@ class NotificationService #CCE5FF {
 
 class NotificationRepository #FFFFCC {
     - _context : AppDbContext
-    
     + GetByIdAsync(id: int) : Task<Notification?>
     + SaveChangesAsync() : Task<int>
 }
@@ -127,6 +153,7 @@ Account *-- User
 Account *-- Notification
 
 ' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+NotificationControllerFE ..> BENotificationController : calls
 BENotificationController --> INotificationService
 NotificationService --> INotificationRepository
 NotificationRepository --> AppDbContext
@@ -136,10 +163,9 @@ NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
 
 ' === DEPENDENCY (dashed arrows) ===
-FENotificationController ..> BENotificationController : calls
-FENotificationController ..> NotificationViewModel : uses
-BENotificationController ..> Notification : uses
-NotificationService ..> Notification : uses
+NotificationControllerFE ..> NotificationViewModel : uses
+BENotificationController ..> NotificationDto : uses
+NotificationService ..> NotificationDto : uses
 NotificationRepository ..> Notification : queries
 
 @enduml

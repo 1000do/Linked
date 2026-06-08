@@ -15,7 +15,6 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -25,7 +24,6 @@ skinparam arrowColor #333333
 ' ==================== FRONTEND ====================
 
 class InstructorControllerFE #FFE6E6 {
-    - _api : ApiClient
     + Profile(id: int) : Task<IActionResult>
 }
 
@@ -93,28 +91,45 @@ class InstructorCourseDto #E6CCFF {
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Instructor #CCFFE6 {
-    + InstructorId : int <<PK>>
+    + InstructorId : int <<PK, FK>>
     + ProfessionalTitle : string?
     + ExpertiseCategories : string?
     + LinkedinUrl : string?
     + YoutubeUrl : string?
     + FacebookUrl : string?
+    + DocumentUrl : string?
     + ApprovalStatus : string?
+    + RejectionReason : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
+    + InstructorNavigation : User
 }
 
 class User #CCFFE6 {
     + UserId : int <<PK>> <<FK>>
     + FullName : string
     + Bio : string?
+    + DateOfBirth : DateOnly?
+    + Instructor : Instructor?
+    + UserNavigation : Account
 }
 
 class Course #CCFFE6 {
     + CourseId : int <<PK>>
     + InstructorId : int? <<FK>>
+    + CategoryId : int? <<FK>>
+    + CouponId : int? <<FK>>
     + Title : string
-    + CourseThumbnailUrl : string?
+    + Description : string?
     + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
     + CourseStatus : string?
+    + CourseFlagCount : int?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -161,22 +176,23 @@ class AppDbContext #E6F3FF {
 InstructorPublicProfileViewModel *-- InstructorCourseViewModel
 InstructorPublicProfileDto *-- InstructorCourseDto
 
-' === UNIDIRECTIONAL ASSOCIATION ===
-InstructorControllerFE --> InstructorControllerBE : calls via HTTP
+' === COMPOSITION (filled diamond) ===
+User *-- Instructor
+Instructor *-- Course
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+InstructorControllerFE ..> InstructorControllerBE : calls
 InstructorControllerBE --> IInstructorService
 InstructorService --> IInstructorRepository
 InstructorRepository --> AppDbContext
-Instructor -- User
-Instructor *-- Course
 
 ' === INTERFACE REALIZATION ===
 InstructorService ..|> IInstructorService
 InstructorRepository ..|> IInstructorRepository
 
-' === DEPENDENCY ===
+' === DEPENDENCY (dashed arrows) ===
 InstructorControllerFE ..> InstructorPublicProfileViewModel : uses
 InstructorControllerBE ..> InstructorPublicProfileDto : uses
-IInstructorService ..> InstructorPublicProfileDto : returns
 InstructorService ..> InstructorPublicProfileDto : creates
 InstructorRepository ..> Instructor : queries
 InstructorRepository ..> User : queries

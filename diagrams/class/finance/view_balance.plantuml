@@ -15,7 +15,6 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -33,6 +32,23 @@ class InstructorFinancePageVM #E6CCFF {
     + Transactions : TransactionPagedVM
     + Payouts : InstructorPayoutPagedViewModel
     + CourseRevenues : List<InstructorCourseRevenueResponse>
+}
+
+class InstructorPayoutPagedViewModel #E6CCFF {
+    + Items : List<InstructorPayoutViewModel>
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+}
+
+class InstructorPayoutViewModel #E6CCFF {
+    + PayoutId : int
+    + TransactionId : int?
+    + PayoutAmount : decimal
+    + PayoutDate : DateTime
+    + IsPaid : bool
+    + PayoutStatus : string?
 }
 
 ' ==================== BACKEND - CONTROLLER ====================
@@ -61,6 +77,14 @@ class InstructorDashboardDto #E6CCFF {
 
 class Instructor #CCFFE6 {
     + InstructorId : int <<PK>>
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string?
+    + ApprovalStatus : string?
+    + RejectionReason : string?
     + StripeAccountId : string?
     + StripeOnboardingStatus : string?
     + PayoutsEnabled : bool
@@ -75,12 +99,30 @@ class InstructorPayout #CCFFE6 {
     + PayoutDate : DateTime
     + IsPaid : bool
     + PayoutStatus : string
+    + StripeTransferId : string?
+    + StripePayoutId : string?
+    + PaidToBankAt : DateTime?
+    + Transaction : Transaction?
+    + Instructor : Instructor?
 }
 
 class Transaction #CCFFE6 {
     + TransactionId : int <<PK>>
-    + GrossAmount : decimal
-    + Status : string
+    + OrderItemId : int? <<FK>>
+    + AccountFrom : int? <<FK>>
+    + AccountTo : int? <<FK>>
+    + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -123,14 +165,15 @@ class AppDbContext #E6F3FF {
 
 ' === COMPOSITION / AGGREGATION ===
 InstructorFinancePageVM o-- InstructorPayoutPagedViewModel
+InstructorPayoutPagedViewModel *-- InstructorPayoutViewModel
+Instructor *-- InstructorPayout
+Transaction *-- InstructorPayout
 
 ' === UNIDIRECTIONAL ASSOCIATION ===
-TransactionControllerFE --> InstructorControllerBE : calls via HTTP
+TransactionControllerFE ..> InstructorControllerBE : calls
 InstructorControllerBE --> IInstructorService
 InstructorService --> IInstructorRepository
 InstructorRepository --> AppDbContext
-Instructor *-- InstructorPayout
-Transaction -- InstructorPayout
 
 ' === INTERFACE REALIZATION ===
 InstructorService ..|> IInstructorService

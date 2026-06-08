@@ -15,6 +15,7 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -23,32 +24,33 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class "NotificationController" as FENotificationController #FFE6E6 {
-    - _client : HttpClient
-    
-    + Index() : Task<IActionResult>
-    + GetListTiny() : Task<IActionResult>
-    + Admin() : IActionResult
-}
+' class "NotificationController" as FENotificationController #FFE6E6 {
+'     - _client : HttpClient
+'     + Index() : Task<IActionResult>
+'     + GetListTiny() : Task<IActionResult>
+'     + Admin() : IActionResult
+' }
 
-class NotificationViewModel #E6CCFF {
-    + NotificationId : int
-    + ReceiverId : int
-    + ReceiverFullName : string?
-    + ReceiverEmail : string?
-    + Title : string
-    + Content : string
-    + LinkAction : string?
-    + IsRead : bool
-    + CreatedAt : DateTime?
-}
+' class NotificationViewModel #E6CCFF {
+'     + NotificationId : int
+'     + ReceiverId : int
+'     + ReceiverFullName : string?
+'     + ReceiverEmail : string?
+'     + Title : string
+'     + Content : string
+'     + LinkAction : string?
+'     + IsRead : bool
+'     + CreatedAt : DateTime?
+'     + ReceiverRole : string?
+'     + SenderId : int?
+'     + SenderRole : string?
+' }
 
 ' ==================== BACKEND - CONTROLLER ====================
 
 class "NotificationController" as BENotificationController #FFE6E6 {
     - _notiService : INotificationService
     - _chatService : IChatService
-    
     + GetMyNotifications() : Task<IActionResult>
     + GetAllNotifications() : Task<IActionResult>
     + MarkAsRead(id: int) : Task<IActionResult>
@@ -116,10 +118,13 @@ class Account #CCFFE6 {
     + AccountStatus : string?
     + AccountFlagCount : int?
     + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
     + AvatarUrl : string?
     + RefreshToken : string?
     + RefreshTokenExpiryTime : DateTime?
-    + NotificationSenders : ICollection<Notification>
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
     + User : User?
 }
 
@@ -174,7 +179,6 @@ class NotificationService #CCE5FF {
     - _repo : INotificationRepository
     - _userRepo : IUserRepository
     - _hubContext : IHubContext<NotificationHub>
-    
     + GetNotificationsForUserAsync(userId: int) : Task<List<Notification>>
     + GetAllNotificationsAsync() : Task<List<Notification>>
     + SendNotificationAsync(receiverId: int, title: string, content: string, linkAction: string?) : Task<void>
@@ -191,7 +195,6 @@ class NotificationService #CCE5FF {
 
 class NotificationRepository #FFFFCC {
     - _context : AppDbContext
-    
     + GetByReceiverIdAsync(userId: int) : Task<List<Notification>>
     + GetAllAsync() : Task<List<Notification>>
     + GetByIdAsync(id: int) : Task<Notification?>
@@ -227,14 +230,15 @@ BENotificationController --> IChatService
 NotificationService --> INotificationRepository
 NotificationService --> IUserRepository
 NotificationRepository --> AppDbContext
+' Notification -- Account
 
 ' === INTERFACE REALIZATION ===
 NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
 
 ' === DEPENDENCY (dashed arrows) ===
-FENotificationController ..> BENotificationController : calls
-FENotificationController ..> NotificationViewModel : uses
+' FENotificationController ..> BENotificationController : calls
+' FENotificationController ..> NotificationViewModel : uses
 BENotificationController ..> NotificationSendDto : uses
 BENotificationController ..> NotificationAdvancedDto : uses
 BENotificationController ..> NotificationAdminResponseDto : uses
@@ -242,8 +246,7 @@ NotificationService ..> NotificationAdvancedDto : uses
 NotificationService ..> NotificationSendDto : uses
 NotificationService ..> NotificationAdminResponseDto : uses
 NotificationService ..> NotificationBulkDto : uses
-NotificationService ..> Notification : uses
-NotificationService ..> Account : uses
-NotificationRepository ..> Notification : uses
+' NotificationService ..> Notification : instantiates
+NotificationRepository ..> Notification : queries
 
 @enduml

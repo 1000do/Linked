@@ -15,7 +15,6 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -25,7 +24,6 @@ skinparam arrowColor #333333
 ' ==================== FRONTEND ====================
 
 class InstructorControllerFE #FFE6E6 {
-    - _api : ApiClient
     + Apply() : Task<IActionResult>
     + Apply(model: InstructorApplyViewModel) : Task<IActionResult>
 }
@@ -67,6 +65,34 @@ class InstructorApplicationRequest #E6CCFF {
 
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
+class Account #CCFFE6 {
+    + AccountId : int <<PK>>
+    + Email : string
+    + Username : string?
+    + PasswordHash : string?
+    + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
+    + User : User?
+}
+
+class User #CCFFE6 {
+    + UserId : int <<PK>> <<FK>>
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+    + Instructor : Instructor?
+    + UserNavigation : Account
+}
+
 class Instructor #CCFFE6 {
     + InstructorId : int <<PK, FK>>
     + ProfessionalTitle : string?
@@ -76,7 +102,13 @@ class Instructor #CCFFE6 {
     + FacebookUrl : string?
     + DocumentUrl : string?
     + ApprovalStatus : string?
+    + RejectionReason : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
     + StripeCountry : string?
+    + InstructorNavigation : User
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -127,14 +159,19 @@ class UserRepository #FFFFCC {
 ' ==================== BACKEND - DbContext ====================
 
 class AppDbContext #E6F3FF {
-    + Instructors : DbSet<Instructor>
     + Accounts : DbSet<Account>
+    + Users : DbSet<User>
+    + Instructors : DbSet<Instructor>
+    + SaveChangesAsync(cancellationToken: CancellationToken) : Task<int>
 }
 
 ' ==================== RELATIONSHIPS ====================
 
-' === UNIDIRECTIONAL ASSOCIATION ===
-InstructorControllerFE --> ApiClient
+' === COMPOSITION (filled diamond) ===
+Account *-- User
+User *-- Instructor
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 InstructorControllerBE --> IInstructorService
 InstructorService --> IInstructorRepository
 InstructorService --> IFileUploadService
@@ -147,12 +184,14 @@ InstructorService ..|> IInstructorService
 InstructorRepository ..|> IInstructorRepository
 UserRepository ..|> IUserRepository
 
-' === DEPENDENCY ===
+' === DEPENDENCY (dashed arrows) ===
 InstructorControllerFE ..> InstructorApplyViewModel : uses
-InstructorControllerFE ..> InstructorControllerBE : calls via HTTP
+InstructorControllerFE ..> InstructorControllerBE : calls
 InstructorControllerBE ..> InstructorApplicationRequest : uses
-IInstructorService ..> InstructorApplicationRequest : uses
-InstructorService ..> Instructor : creates/updates
-InstructorRepository ..> Instructor : queries/saves
+InstructorService ..> InstructorApplicationRequest : uses
+' InstructorService ..> Instructor : creates
+' InstructorRepository ..> Instructor : queries
+InstructorRepository ..> Instructor : saves
+UserRepository ..> Account : queries
 
 @enduml
