@@ -15,7 +15,6 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -70,14 +69,42 @@ class InstructorCourseRevenueResponse #E6CCFF {
 
 class Course #CCFFE6 {
     + CourseId : int <<PK>>
+    + InstructorId : int? <<FK>>
+    + CategoryId : int? <<FK>>
+    + CouponId : int? <<FK>>
     + Title : string
+    + Description : string?
     + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
 }
 
 class Transaction #CCFFE6 {
     + TransactionId : int <<PK>>
-    + GrossAmount : decimal
-    + CreatedAt : DateTime?
+    + OrderItemId : int? <<FK>>
+    + AccountFrom : int? <<FK>>
+    + AccountTo : int? <<FK>>
+    + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -119,7 +146,7 @@ class AppDbContext #E6F3FF {
 InstructorFinancePageVM o-- InstructorCourseRevenueResponseFE
 
 ' === UNIDIRECTIONAL ASSOCIATION ===
-TransactionControllerFE --> TransactionControllerBE : calls via HTTP
+TransactionControllerFE ..> TransactionControllerBE : calls
 TransactionControllerBE --> IAdminFinanceService
 AdminFinanceService --> IAdminFinanceRepository
 AdminFinanceRepository --> AppDbContext

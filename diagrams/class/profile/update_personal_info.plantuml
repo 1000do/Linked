@@ -15,7 +15,6 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -87,10 +86,19 @@ class Account #CCFFE6 {
     + AccountId : int <<PK>>
     + Email : string
     + Username : string?
+    + PasswordHash : string?
     + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
     + AuthProvider : string?
     + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
     + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
+    + User : User?
 }
 
 class Instructor #CCFFE6 {
@@ -100,7 +108,15 @@ class Instructor #CCFFE6 {
     + LinkedinUrl : string?
     + YoutubeUrl : string?
     + FacebookUrl : string?
+    + DocumentUrl : string?
     + ApprovalStatus : string?
+    + RejectionReason : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
+    + InstructorNavigation : User
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -147,11 +163,11 @@ class AppDbContext #E6F3FF {
 
 ' ==================== RELATIONSHIPS ====================
 
-' === COMPOSITION ===
+' === COMPOSITION (filled diamond) ===
 User *-- Account
 User *-- Instructor
 
-' === UNIDIRECTIONAL ASSOCIATION ===
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 ProfileControllerBE --> IUserProfileService
 UserProfileService --> IUserRepository
 UserProfileService --> IFileUploadService
@@ -161,12 +177,13 @@ UserRepository --> AppDbContext
 UserProfileService ..|> IUserProfileService
 UserRepository ..|> IUserRepository
 
-' === DEPENDENCY ===
-AccountControllerFE ..> ProfileControllerBE : calls via HTTP
+' === DEPENDENCY (dashed arrows) ===
+AccountControllerFE ..> ProfileControllerBE : calls
 AccountControllerFE ..> UpdateProfileViewModel : uses
 ProfileControllerBE ..> UpdateProfileRequest : uses
 UserProfileService ..> UpdateProfileRequest : uses
-UserProfileService ..> User : uses
-UserRepository ..> User : uses
+UserRepository ..> User : queries
+UserRepository ..> Account : updates
+UserRepository ..> Instructor : updates
 
 @enduml

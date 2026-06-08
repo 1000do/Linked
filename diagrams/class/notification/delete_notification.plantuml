@@ -41,6 +41,9 @@ class NotificationViewModel #E6CCFF {
     + LinkAction : string?
     + IsRead : bool
     + CreatedAt : DateTime?
+    + ReceiverRole : string?
+    + SenderId : int?
+    + SenderRole : string?
 }
 
 ' ==================== BACKEND - CONTROLLER ====================
@@ -116,7 +119,6 @@ NotificationRepository ..|> INotificationRepository
 ' === DEPENDENCY ===
 NotificationControllerFE ..> NotificationControllerBE : calls via HTTP
 NotificationControllerFE ..> NotificationViewModel : uses
-NotificationService ..> Notification : uses
-NotificationRepository ..> Notification : uses
+NotificationRepository ..> Notification : queries
 
 @enduml
