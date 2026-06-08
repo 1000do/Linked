@@ -1,0 +1,190 @@
+@startuml SendMessageManager
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Send Messages (For Manager)
+actor Staff as act
+
+participant "ChatIndexView" as view
+participant "ChatAttachmentController" as att_ctrl
+participant "ChatHub" as hub
+participant ":ChatService" as sv
+participant ":CloudinaryUploadService" as upload_sv
+participant ":ChatRepository" as repo
+participant ":UserRepository" as user_repo
+participant ":RedisService" as redis
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act -> view++: Enter message text
+act -> view: Select files (Optional)
+act -> view: Click the "Send" button (or press Enter)
+
+opt With Attachments
+    loop for each selected file f
+        view -> att_ctrl++: Send POST request to /api/ChatAttachment/upload with file
+        att_ctrl -> att_ctrl++: Check ChatSettings:EnableAttachments configuration
+        att_ctrl--
+        
+        alt EnableAttachments = true
+            alt file size <= 10MB
+                att_ctrl -> upload_sv++: Call UploadImageAsync() / UploadVideoAsync() / UploadFileAsync()
+                upload_sv -> upload_sv++: Upload to Cloudinary service
+                upload_sv--
+                upload_sv -->> att_ctrl--: Return SecureUrl
+                att_ctrl -->> view: Return HTTP 200 (Ok) with attachment metadata (FileUrl, FileName, FileType, FileSize)
+            else file size > 10MB
+                att_ctrl -->> view: Return HTTP 400 (BadRequest)
+                view -->> act: Display file size validation error
+            end
+        else EnableAttachments = false
+            att_ctrl -->> view: Return HTTP 400 (BadRequest)
+            deactivate att_ctrl
+            view -->> act: Display feature disabled warning
+        end
+    end
+end
+
+view -> view++: sendMsg()
+view--
+
+view -> hub++: Invoke SendMessage(dto) via SignalR
+hub -> hub++: GetAccountId()
+hub--
+
+hub -> sv++: Call SaveMessageAsync(senderId, dto)
+sv -> repo++: Call IsParticipantAsync(chatId, senderId)
+repo -> ctx++: Call IsParticipantAsync(chatId, senderId)
+ctx -> db++: Query ChatParticipants to check association
+db -->> ctx--: Return isParticipant
+ctx -->> repo--: Return isParticipant
+repo -->> sv--: Return isParticipant
+
+alt isParticipant = false
+    sv -> repo++: Call HasActiveReportForChatAsync(chatId)
+    repo -> ctx++: Call HasActiveReportForChatAsync(chatId)
+    ctx -> db++: Query active reports for chat
+    db -->> ctx--: Return hasActiveReport
+    ctx -->> repo--: Return hasActiveReport
+    repo -->> sv--: Return hasActiveReport
+    
+    alt hasActiveReport = false
+        sv -->> hub: Throw UnauthorizedAccessException("You do not have permission...")
+        hub -> hub++: Send error message to Caller
+        hub--
+        hub -->> view: Send error event via SignalR
+        deactivate hub
+        view -->> act: Display permission error message
+    end
+end
+
+alt isParticipant = true || hasActiveReport = true
+    sv -> sv++: Create Message object
+    sv--
+    
+    opt EnableAttachments = true && dto.Attachments is not empty
+        sv -> sv++: Map Attachments to MessageAttachments
+        sv--
+    end
+    
+    sv -> repo++: Call AddMessageAsync(message)
+    repo -> ctx++: Call AddAsync(message)
+    ctx -->> repo--: Return success
+    repo -->> sv--: Return success
+    
+    sv -> repo++: Call GetChatByIdAsync(chatId)
+    repo -> ctx++: Call GetChatByIdAsync(chatId)
+    ctx -> db++: Query chat details
+    db -->> ctx--: Return Chat
+    ctx -->> repo--: Return Chat
+    repo -->> sv--: Return Chat
+    
+    sv -> sv++: Update chat.LastMessageAt = message.SentAt
+    sv--
+    sv -> repo++: Call UpdateChatAsync(chat)
+    repo -> ctx++: Call UpdateChatAsync(chat)
+    ctx -->> repo--: Return success
+    repo -->> sv--: Return success
+    
+    sv -> repo++: Call GetParticipantIdsAsync(chatId)
+    repo -> ctx++: Call GetParticipantIdsAsync(chatId)
+    ctx -> db++: Query participant account IDs
+    db -->> ctx--: Return accountIds
+    ctx -->> repo--: Return accountIds
+    repo -->> sv--: Return accountIds
+    
+    loop for each accountId in participantIds
+        alt accountId != senderId
+            sv -> redis++: Call IncrementUnreadCountAsync(accountId, chatId)
+            redis -->> sv--: Return success
+        end
+    end
+    
+    sv -> repo++: Call SaveChangesAsync()
+    repo -> ctx++: Call SaveChangesAsync()
+    ctx -> db++: Save changes to Database
+    db -->> ctx--: Return numberOfRowsAffected
+    ctx -->> repo--: Return numberOfRowsAffected
+    repo -->> sv--: Return numberOfRowsAffected
+    
+    alt numberOfRowsAffected > 0
+        sv -> user_repo++: Call GetAccountByIdAsync(senderId)
+        user_repo -> ctx++: Call GetAccountByIdAsync(senderId)
+        ctx -> db++: Query Account with User and Manager details
+        db -->> ctx--: Return Account
+        ctx -->> user_repo--: Return Account
+        user_repo -->> sv--: Return Account
+        
+        sv -> sv++: Create and populate MessageDto
+        sv--
+        sv -->> hub: Return MessageDto
+        
+        hub -> hub++: Broadcast ReceiveMessage to Group Chat ("Chat_{chatId}")
+        hub--
+        hub -->> view: Broadcast message via SignalR Group
+        deactivate hub
+        
+        view -> view++: appendMessage(msg)
+        view--
+        view -> view++: scrollToBottom()
+        view--
+        view -->> act: Display sent message on UI
+        deactivate view
+    else numberOfRowsAffected = 0
+        sv -->> hub: Throw InvalidOperationException("Failed to save message")
+        hub -> hub++: Send error message to Caller
+        hub--
+        hub -->> view: Send error event via SignalR
+        deactivate hub
+        view -->> act: Display database error message
+        deactivate view
+    end
+end
+
+deactivate sv
+@enduml

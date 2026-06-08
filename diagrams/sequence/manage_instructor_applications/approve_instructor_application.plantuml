@@ -1,0 +1,96 @@
+@startuml ApproveInstructorApplication
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Approve Instructor Application
+actor Staff as act
+
+participant "AdminApprovalIndexView" as view
+participant "AdminApprovalController" as be_ctrl
+participant ":InstructorApprovalService" as sv
+participant ":InstructorRepository" as repo
+participant ":AppDbContext" as ctx
+participant ":NotificationService" as notif_sv
+database Database as db
+
+act++
+act -> view++: Click "Approve" on an instructor application row
+
+view -> view++: Prompt confirmation dialog
+view--
+
+act -> view++: Confirm approval
+
+view -> be_ctrl++: Send POST request to AdminApproval/Process (id, status="Approved", reason=null)
+
+be_ctrl -> sv++: Call ApproveOrRejectAsync(dto)
+
+sv -> repo++: Call GetByIdAsync(instructorId)
+repo -> ctx++: Query instructor by ID
+ctx -> db++: Select Instructor
+db -->> ctx--: Return Instructor
+ctx -->> repo--: Return Instructor
+repo -->> sv--: Return Instructor
+
+alt Instructor not found
+    sv -->> be_ctrl: Return false
+    be_ctrl -->> view: Return JSON { success = false, message = "Instructor not found..." }
+    view -->> act: Display error message
+else Instructor exists
+    sv -> sv++: Set ApprovalStatus = "Approved"
+    sv -> sv++: Set RejectionReason = null
+    sv--
+    sv--
+    
+    sv -> repo: Call Update(instructor)
+    
+    sv -> repo++: Call SaveChangesAsync()
+    repo -> ctx++: Call SaveChangesAsync()
+    ctx -> db++: Save changes (ApprovalStatus & RejectionReason)
+    db -->> ctx--: Return numberOfRowsAffected
+    ctx -->> repo--: Return numberOfRowsAffected
+    repo -->> sv--: Return numberOfRowsAffected
+    
+    alt numberOfRowsAffected <= 0
+        sv -->> be_ctrl: Throw InvalidOperationException
+        be_ctrl -->> view: Return JSON { success = false } (via exception handler)
+        view -->> act: Display error message
+    else numberOfRowsAffected > 0
+        sv -> notif_sv++: Call SendNotificationAsync(instructorId, title, message, link)
+        notif_sv -->> sv--: Return success notification
+        
+        sv -->> be_ctrl--: Return true
+        be_ctrl -->> view--: Return JSON { success = true }
+        
+        view -> view++: Update row status / Remove row from pending queue in DOM
+        view--
+        view -->> act--: Display success notification
+    end
+end
+deactivate view
+
+@enduml

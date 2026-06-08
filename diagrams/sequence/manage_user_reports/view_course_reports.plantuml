@@ -1,0 +1,54 @@
+@startuml view_course_reports
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View List of Course Reports
+actor Staff as act
+
+participant "CourseReportListView" as view
+participant "AdminModerationController" as be_ctrl
+participant ":ReportService" as sv
+participant ":ReportRepository" as repo
+participant ":AppDbContext" as ctx
+
+database Database as db
+
+act++
+act->view++: Access "Course Reports" page
+view->be_ctrl++: GET /admin/moderation/reports/courses?page={page}&pageSize={size}
+be_ctrl->sv++: GetAllCourseReportsAsync(status, page, pageSize)
+sv->repo++: GetAllCourseReportsAsync(status, page, pageSize)
+repo->ctx++: Query CourseReport entities
+ctx->db++: Execute SQL query
+db-->>ctx: Return result set
+ctx-->>repo: (reports, totalCount)
+repo-->>sv: (reports, totalCount)
+sv-->>be_ctrl: PagedResult<CourseReportDetailResponse>
+be_ctrl-->>view: JSON payload
+view-->>act: Render list UI
+act--
+@enduml

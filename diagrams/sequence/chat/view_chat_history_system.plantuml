@@ -1,0 +1,150 @@
+@startuml ViewChatHistorySystem
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Chat History (For System)
+actor Staff as act
+
+participant "ChatIndexView" as view
+participant "ApiChatController" as be_ctrl
+participant ":ChatService" as sv
+participant ":UserRepository" as user_repo
+participant ":ChatRepository" as repo
+participant ":RedisService" as redis
+participant ":AppDbContext" as ctx
+participant "ChatHub" as hub
+database Database as db
+
+act++
+act -> view++: Click on a chat room card
+view -> view++: selectChat(chatId, name, avatar, isOnline)
+view -> view++: loadChats()
+view--
+
+view -> be_ctrl++: Send GET request to /api/Chat/history?roomId={chatId} (with JWT Bearer token)
+
+be_ctrl -> be_ctrl++: Extract accountId from NameIdentifier claim
+be_ctrl--
+
+be_ctrl -> sv++: Call GetChatHistoryAsync(chatId, accountId)
+
+sv -> sv++: Call HasAccessToChatAsync(accountId, chatId)
+
+sv -> repo++: Call IsParticipantAsync(chatId, accountId)
+repo -> ctx++: Call IsParticipantAsync(chatId, accountId)
+ctx -> db++: Query ChatParticipants to check association
+db -->> ctx--: Return isParticipant
+ctx -->> repo--: Return isParticipant
+repo -->> sv--: Return isParticipant
+
+alt isParticipant = false
+    sv -> user_repo++: Call GetRoleByAccountIdAsync(accountId)
+    user_repo -> ctx++: Call GetRoleByAccountIdAsync(accountId)
+    ctx -> db++: Query account role
+    db -->> ctx--: Return role
+    ctx -->> user_repo--: Return role
+    user_repo -->> sv--: Return role
+    
+    alt role == "admin" || role == "staff"
+        sv -> repo++: Call HasActiveReportForChatAsync(chatId)
+        repo -> ctx++: Call HasActiveReportForChatAsync(chatId)
+        ctx -> db++: Query active reports for chat
+        db -->> ctx--: Return hasActiveReport
+        ctx -->> repo--: Return hasActiveReport
+        repo -->> sv--: Return hasActiveReport
+    end
+end
+sv-->>sv--: Return hasAccess (boolean)
+
+alt hasAccess = true
+    sv -> sv++: Call MarkChatAsReadAsync(chatId, accountId)
+    
+    sv -> repo++: Call MarkAsReadAsync(chatId, accountId)
+    repo -> ctx++: Call MarkAsReadAsync(chatId, accountId)
+    ctx -->> repo--: Return success
+    repo -->> sv--: Return success
+    
+    sv -> repo++: Call SaveChangesAsync()
+    repo -> ctx++: Call SaveChangesAsync()
+    ctx -> db++: Save changes to Database
+    db -->> ctx--: Return numberOfRowsAffected
+    ctx -->> repo--: Return numberOfRowsAffected
+    repo -->> sv--: Return numberOfRowsAffected
+    
+    alt numberOfRowsAffected > 0
+        sv -> redis++: Call ClearUnreadCountAsync(accountId, chatId)
+        redis -->> sv--: Return success
+        sv -->> sv--: Return true
+        
+        sv -> repo++: Call GetParticipantAsync(chatId, accountId)
+        repo -> ctx++: Call GetParticipantAsync(chatId, accountId)
+        ctx -> db++: Query ChatParticipant details
+        db -->> ctx--: Return ChatParticipant
+        ctx -->> repo--: Return ChatParticipant
+        repo -->> sv--: Return ChatParticipant
+        
+        sv -> repo++: Call GetMessagesByChatIdAsync(chatId)
+        repo -> ctx++: Call GetMessagesByChatIdAsync(chatId)
+        ctx -> db++: Query Messages, Senders, and Attachments
+        db -->> ctx--: Return messages list
+        ctx -->> repo--: Return messages list
+        repo -->> sv--: Return messages list
+        
+        sv -> sv++: Filter messages sent after ClearedAt (if cleared)
+        sv--
+        
+        sv -->> be_ctrl--: Return MessageDto list
+        be_ctrl -->> view--: Return HTTP 200 (Ok) with messages JSON data
+        
+        loop for each message m in messages
+            view -> view++: appendMessage(m)
+            view--
+        end
+        view -> view++: scrollToBottom()
+        view--
+        
+        view -> hub++: Invoke MarkAsRead(chatId) via SignalR
+        hub -->> view: Broadcast read receipt via Hub
+        hub--
+        
+        view--
+        view -->> act--: Display chat messages in panel
+    else numberOfRowsAffected = 0
+        sv -->> sv--: Throw InvalidOperationException("Failed to mark chat as read")
+        sv -->> be_ctrl--: Throw InvalidOperationException
+        be_ctrl -->> view--: Return HTTP 400 (BadRequest)
+        view--
+        view -->> act--: Display database error message
+    end
+else hasAccess = false
+    sv -->> be_ctrl--: Throw UnauthorizedAccessException("You do not have permission...")
+    be_ctrl -->> view--: Return HTTP 403 (Forbidden)
+    view--
+    view -->> act--: Display permission error message
+end
+
+@enduml
