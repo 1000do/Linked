@@ -12,9 +12,9 @@ skinparam class {
 !define ABSTRACT_COLOR #FFE6CC
 !define SERVICE_COLOR #CCE5FF
 !define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -23,14 +23,14 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class TransactionControllerFE #FFE6E6 {
+class TransactionController #FFE6E6 {
     - _api : ApiClient
     + Instructor(payoutKeyword: string?, payoutStatus: string?, year: int?, month: int?) : Task<IActionResult>
 }
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class InstructorControllerBE #FFE6E6 {
+class InstructorController #FFE6E6 {
     - _instructorService : IInstructorService
     + GetPayouts(keyword: string?, status: string?, year: int?, month: int?) : Task<IActionResult>
 }
@@ -46,46 +46,59 @@ class InstructorPayoutDto #E6CCFF {
     + PayoutStatus : string?
 }
 
-class PagedResult #E6CCFF {
-    + Items : List<T>
-    + TotalCount : int
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class InstructorPayout #CCFFE6 {
+    + PayoutId : int <<PK>>
+    + TransactionId : int? <<FK>>
+    + InstructorId : int? <<FK>>
+    + PayoutAmount : decimal
+    + PayoutDate : DateTime
+    + IsPaid : bool
+    + PayoutStatus : string
+    + StripeTransferId : string?
+    + StripePayoutId : string?
+    + PaidToBankAt : DateTime?
+    + Transaction : Transaction?
+    + Instructor : Instructor?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
 
 interface IInstructorService #FFE6CC {
-    //+ GetPayoutsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<PagedResult<InstructorPayoutDto>>//
+    //+ GetPayoutsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<List<InstructorPayoutDto>>//
 }
 
 ' ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 interface IInstructorRepository #FFE6CC {
-    //+ GetPayoutsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<PagedResult<InstructorPayoutDto>>//
+    //+ GetPayoutsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<(List<InstructorPayoutDto> Items, int TotalCount)>//
 }
 
 ' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class InstructorService #CCE5FF {
     - _repo : IInstructorRepository
-    + GetPayoutsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<PagedResult<InstructorPayoutDto>>
+    + GetPayoutsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<List<InstructorPayoutDto>>
 }
 
 ' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class InstructorRepository #FFFFCC {
     - _context : AppDbContext
-    + GetPayoutsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<PagedResult<InstructorPayoutDto>>
+    + GetPayoutsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<(List<InstructorPayoutDto> Items, int TotalCount)>
 }
 
 ' ==================== BACKEND - DbContext ====================
 
 class AppDbContext #E6F3FF {
+    + InstructorPayouts : DbSet<InstructorPayout>
 }
 
 ' ==================== RELATIONSHIPS ====================
 
 ' === UNIDIRECTIONAL ASSOCIATION ===
-TransactionControllerFE --> InstructorControllerBE : calls via HTTP with filter parameters
+TransactionControllerFE ..> InstructorControllerBE : calls
 InstructorControllerBE --> IInstructorService
 InstructorService --> IInstructorRepository
 InstructorRepository --> AppDbContext
@@ -95,10 +108,9 @@ InstructorService ..|> IInstructorService
 InstructorRepository ..|> IInstructorRepository
 
 ' === DEPENDENCY ===
-InstructorControllerBE ..> PagedResult : uses
-IInstructorService ..> PagedResult : returns
-IInstructorService ..> InstructorPayoutDto : uses
-InstructorService ..> InstructorPayoutDto : creates
-InstructorRepository ..> InstructorPayoutDto : filters and projects
+InstructorControllerBE ..> InstructorPayoutDto : uses
+InstructorService ..> InstructorPayoutDto : uses
+InstructorRepository ..> InstructorPayoutDto : projects
+InstructorRepository ..> InstructorPayout : queries
 
 @enduml

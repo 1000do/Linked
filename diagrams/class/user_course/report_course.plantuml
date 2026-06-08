@@ -15,7 +15,6 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -24,7 +23,7 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class "ReportController" as ReportControllerFE #FFE6E6 {
+class ReportControllerFE #FFE6E6 {
     + ReportCourse(model: CreateCourseReportViewModel) : Task<IActionResult>
 }
 
@@ -36,7 +35,7 @@ class CreateCourseReportViewModel #E6CCFF {
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class "ReportController" as ReportControllerBE #FFE6E6 {
+class ReportControllerBE #FFE6E6 {
     - _reportService : IReportService
     + ReportCourse(request: CreateCourseReportRequest) : Task<IActionResult>
 }
@@ -55,23 +54,53 @@ class CourseReport #CCFFE6 {
     + CourseReportId : int <<PK>>
     + ReporterId : int? <<FK>>
     + CourseId : int? <<FK>>
+    + ResolverId : int? <<FK>>
     + Reason : string?
     + Description : string?
     + CourseReportsStatus : string?
+    + ResolutionNote : string?
+    + ResolvedAt : DateTime?
+    + AccessGrantedUntil : DateTime?
     + CreatedAt : DateTime?
+    + Reporter : Account?
+    + Resolver : Account?
+    + Course : Course?
 }
 
 class Course #CCFFE6 {
     + CourseId : int <<PK>>
-    + Title : string
     + InstructorId : int? <<FK>>
-    + CourseStatus : string
+    + CategoryId : int? <<FK>>
+    + CouponId : int? <<FK>>
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
 }
 
 class Enrollment #CCFFE6 {
     + EnrollmentId : int <<PK>>
     + UserId : int? <<FK>>
     + CourseId : int? <<FK>>
+    + Title : string?
+    + Description : string?
+    + CompletedDate : DateOnly?
+    + IsCompleted : bool?
+    + EnrollDate : DateOnly?
+    + LastAccessedAt : DateTime?
+    + EnrollmentStatus : string?
+    + Course : Course?
+    + User : User?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -135,7 +164,8 @@ class AppDbContext #E6F3FF {
 
 ' ==================== RELATIONSHIPS ====================
 
-' === UNIDIRECTIONAL ASSOCIATION ===
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+ReportControllerFE ..> ReportControllerBE : calls
 ReportControllerBE --> IReportService
 ReportService --> IReportRepository
 ReportService --> ICourseRepository
@@ -143,7 +173,8 @@ ReportService --> IEnrollmentRepository
 ReportRepository --> AppDbContext
 CourseRepository --> AppDbContext
 EnrollmentRepository --> AppDbContext
-CourseReport --> Course
+Course o-- CourseReport
+Enrollment --> Course
 
 ' === INTERFACE REALIZATION ===
 ReportService ..|> IReportService
@@ -151,16 +182,14 @@ ReportRepository ..|> IReportRepository
 CourseRepository ..|> ICourseRepository
 EnrollmentRepository ..|> IEnrollmentRepository
 
-' === DEPENDENCY ===
-ReportControllerFE ..> ReportControllerBE : calls via HTTP
+' === DEPENDENCY (dashed arrows) ===
 ReportControllerFE ..> CreateCourseReportViewModel : uses
 ReportControllerBE ..> CreateCourseReportRequest : uses
 ReportService ..> CreateCourseReportRequest : uses
-ReportService ..> CourseReport : uses
-ReportService ..> Course : uses
-ReportService ..> Enrollment : uses
-ReportRepository ..> CourseReport : uses
-CourseRepository ..> Course : uses
-EnrollmentRepository ..> Enrollment : uses
+ReportService ..> CourseReport : creates
+' ReportRepository ..> CourseReport : queries
+ReportRepository ..> CourseReport : saves
+CourseRepository ..> Course : queries
+EnrollmentRepository ..> Enrollment : queries
 
 @enduml

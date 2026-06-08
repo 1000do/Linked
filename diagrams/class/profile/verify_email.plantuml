@@ -15,7 +15,6 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -50,7 +49,20 @@ class VerifyOtpRequest #E6CCFF {
 class Account #CCFFE6 {
     + AccountId : int <<PK>>
     + Email : string
+    + Username : string?
+    + PasswordHash : string?
+    + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
     + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
+    + User : User?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -103,7 +115,7 @@ class AppDbContext #E6F3FF {
 
 ' ==================== RELATIONSHIPS ====================
 
-' === UNIDIRECTIONAL ASSOCIATION ===
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 AuthControllerBE --> IAuthService
 AuthService --> IUserRepository
 AuthService --> IOtpService
@@ -114,11 +126,10 @@ UserRepository --> AppDbContext
 AuthService ..|> IAuthService
 UserRepository ..|> IUserRepository
 
-' === DEPENDENCY ===
-AccountControllerFE ..> AuthControllerBE : calls via HTTP
+' === DEPENDENCY (dashed arrows) ===
+AccountControllerFE ..> AuthControllerBE : calls
 AuthControllerBE ..> VerifyOtpRequest : uses
 AuthService ..> VerifyOtpRequest : uses
-AuthService ..> Account : uses
-UserRepository ..> Account : uses
+UserRepository ..> Account : queries
 
 @enduml

@@ -15,7 +15,6 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -24,7 +23,7 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class "WishlistController" as WishlistControllerFE #FFE6E6 {
+class WishlistControllerFE #FFE6E6 {
     + Remove(courseId: int) : Task<IActionResult>
     + Toggle(courseId: int, returnUrl: string) : Task<IActionResult>
     + ToggleAjax(courseId: int) : Task<IActionResult>
@@ -33,7 +32,7 @@ class "WishlistController" as WishlistControllerFE #FFE6E6 {
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class "WishlistController" as WishlistControllerBE #FFE6E6 {
+class WishlistControllerBE #FFE6E6 {
     - _wishlistService : IWishlistService
     + RemoveFromWishlist(courseId: int) : Task<IActionResult>
 }
@@ -45,6 +44,8 @@ class WishlistItem #CCFFE6 {
     + UserId : int? <<FK>>
     + CourseId : int? <<FK>>
     + AddedDate : DateTime?
+    + Course : Course?
+    + User : User?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -86,7 +87,8 @@ class AppDbContext #E6F3FF {
 
 ' ==================== RELATIONSHIPS ====================
 
-' === UNIDIRECTIONAL ASSOCIATION ===
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+WishlistControllerFE ..> WishlistControllerBE : calls
 WishlistControllerBE --> IWishlistService
 WishlistService --> IWishlistRepository
 WishlistRepository --> AppDbContext
@@ -95,9 +97,8 @@ WishlistRepository --> AppDbContext
 WishlistService ..|> IWishlistService
 WishlistRepository ..|> IWishlistRepository
 
-' === DEPENDENCY ===
-WishlistControllerFE ..> WishlistControllerBE : calls via HTTP
-WishlistService ..> WishlistItem : uses
-WishlistRepository ..> WishlistItem : uses
+' === DEPENDENCY (dashed arrows) ===
+' WishlistRepository ..> WishlistItem : queries
+WishlistRepository ..> WishlistItem : deletes
 
 @enduml
