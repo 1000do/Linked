@@ -24,27 +24,27 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class "NotificationController" as FENotificationController #FFE6E6 {
-    - _client : HttpClient
-    + Index() : Task<IActionResult>
-    + GetListTiny() : Task<IActionResult>
-    + Admin() : IActionResult
-}
+' class "NotificationController" as FENotificationController #FFE6E6 {
+'     - _client : HttpClient
+'     + Index() : Task<IActionResult>
+'     + GetListTiny() : Task<IActionResult>
+'     + Admin() : IActionResult
+' }
 
-class NotificationViewModel #E6CCFF {
-    + NotificationId : int
-    + ReceiverId : int
-    + ReceiverFullName : string?
-    + ReceiverEmail : string?
-    + Title : string
-    + Content : string
-    + LinkAction : string?
-    + IsRead : bool
-    + CreatedAt : DateTime?
-    + ReceiverRole : string?
-    + SenderId : int?
-    + SenderRole : string?
-}
+' class NotificationViewModel #E6CCFF {
+'     + NotificationId : int
+'     + ReceiverId : int
+'     + ReceiverFullName : string?
+'     + ReceiverEmail : string?
+'     + Title : string
+'     + Content : string
+'     + LinkAction : string?
+'     + IsRead : bool
+'     + CreatedAt : DateTime?
+'     + ReceiverRole : string?
+'     + SenderId : int?
+'     + SenderRole : string?
+' }
 
 ' ==================== BACKEND - CONTROLLER ====================
 
@@ -237,8 +237,8 @@ NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
 
 ' === DEPENDENCY (dashed arrows) ===
-FENotificationController ..> BENotificationController : calls
-FENotificationController ..> NotificationViewModel : uses
+' FENotificationController ..> BENotificationController : calls
+' FENotificationController ..> NotificationViewModel : uses
 BENotificationController ..> NotificationSendDto : uses
 BENotificationController ..> NotificationAdvancedDto : uses
 BENotificationController ..> NotificationAdminResponseDto : uses
