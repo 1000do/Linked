@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-53 - Edit Courses</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            background-color: transparent;
+            color: black;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-53 - Edit Courses</strong></p>
+
+    <p><strong>Primary Actor:</strong><br>Instructor</p>
+
+    <p><strong>Secondary Actors:</strong><br>Cloud Storage Service</p>
+
+    <p><strong>Trigger:</strong><br>Instructor clicks the "edit" icon of a course from his/her course list.</p>
+
+    <p><strong>Description:</strong><br>Allows instructors to modify details of their courses (title, description, category, price, requirements, and promotional thumbnails) with integrated automatic debounced saving and content security hashing.</p>
+
+    <p><strong>Preconditions:</strong></p>
+    <p><b>PRE-1.</b> User must be successfully authenticated as an approved Instructor.</p>
+    <p><b>PRE-2.</b> The course must exist in the database and belong to the active Instructor's Account ID.</p>
+
+    <p><strong>Post-conditions:</strong></p>
+    <p><b>POST-1.</b> Course details are updated in the primary course tables.</p>
+    <p><b>POST-2.</b> Content hashes are computed and updated in the secondary table.</p>
+    <p><b>POST-3.</b> The stale Redis cache for this course is invalidated.</p>
+
+    <hr>
+
+    <p><strong>Normal Flow</strong></p>
+
+    <p><strong>A. Edit Course Details Successfully</strong></p>
+    <ol>
+        <li>Instructor accesses the course editor.</li>
+        <li>Instructor modifies the course details.</li>
+        <li>The system triggers a brief debounce delay.</li>
+        <li>The system validates the form inputs.</li>
+        <li>The system validates the instructor's rights.</li>
+        <li>The system validates the course status.</li>
+        <li>The system retrieves the thumbnail from the Cloud Storage Service and computes the course fingerprint hashes.</li>
+        <li>The system updates the course details and fingerprint hashes in the database.</li>
+        <li>The system invalidates the cached course data.</li>
+        <li>The system displays a success message.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Alternative Flows</strong></p>
+
+    <p><strong>A.4 Invalid Form Input</strong></p>
+    <ol>
+        <li>The system detects one or more form inputs are invalid.</li>
+        <li>The system displays a validation error message.</li>
+        <li>Back to step 2.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Exceptions</strong></p>
+
+    <p><strong>EX-1.1 Session Invalid (Not Logged In)</strong></p>
+    <ol>
+        <li>The system displays an authentication error message.</li>
+        <li>The system redirects the user to the login page.</li>
+    </ol>
+
+    <p><strong>EX-1.2 Course Not Found</strong></p>
+    <ol>
+        <li>The system displays a course not found error message.</li>
+        <li>The system redirects the user back to the course list page.</li>
+    </ol>
+
+    <p><strong>EX-2 File Upload Failed</strong></p>
+    <ol>
+        <li>The system fails to upload the thumbnail file to the Cloud Storage Service.</li>
+        <li>The system displays a file upload error message.</li>
+        <li>Back to step 2.</li>
+    </ol>
+
+    <p><strong>EX-5 Invalid Instructor Rights</strong></p>
+    <ol>
+        <li>The system detects the instructor is unauthorized to edit this course or has an active lockout status.</li>
+        <li>The system displays an error message regarding invalid instructor rights.</li>
+        <li>Back to step 1.</li>
+    </ol>
+
+    <p><strong>EX-6 Invalid Course Status</strong></p>
+    <ol>
+        <li>The system detects the course is pending review or is permanently discontinued due to policy violations.</li>
+        <li>The system displays an error message regarding invalid course status.</li>
+        <li>Back to step 1.</li>
+    </ol>
+
+    <p><strong>EX-8.1 Duplicate Course Content Detected</strong></p>
+    <ol>
+        <li>The system detects a duplication in course content using the computed fingerprint.</li>
+        <li>The system displays an error message regarding content duplication.</li>
+        <li>Back to step 2.</li>
+    </ol>
+
+    <p><strong>EX-8.2 Database Save Failed</strong></p>
+    <ol>
+        <li>The system fails to save the course updates or fingerprint hashes to the database.</li>
+        <li>The system displays a database transaction failure message.</li>
+        <li>Back to step 2.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Business Rules</strong></p>
+    <ol>
+        <li><strong>Debounce Optimization:</strong> Auto-saving uses a 1.5-second debounce delay to prevent database spamming during rapid typing.</li>
+        <li><strong>Draft Reversion:</strong> To ensure content integrity, any edits made to an already "published" course will automatically degrade its status back to "draft", requiring a new moderation review submission and clearing previous moderation feedback.</li>
+        <li><strong>Price Enforcement for Unlinked Stripe:</strong> If the instructor has not linked an active Stripe account, the system automatically sets the course price to 0 regardless of the submitted value.</li>
+        <li><strong>Locked Out Instructor Rights:</strong> Instructors with an active lockout status are prohibited from updating courses.</li>
+        <li><strong>Content Integrity Hashing:</strong> Textual details and the thumbnail file are hashed using MD5 and stored as a unique fingerprint to prevent duplication and support anti-plagiarism tracking.</li>
+    </ol>
+
+    <hr>
+
+    <p><strong>Assumptions</strong></p>
+    <p>Instructor has stable internet connection.<br>Cloud Storage Service is working properly.</p>
+</body>
+</html>

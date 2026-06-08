@@ -1,0 +1,96 @@
+<div style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+
+<p><strong>UC-ViewCourseDetails - View Course Details</strong></p>
+
+<p><strong>Primary Actor:</strong><br>
+User, Guest, Instructor, Staff, Admin</p>
+
+<p><strong>Secondary Actors:</strong><br>
+None</p>
+
+<p><strong>Trigger:</strong><br>
+Actor clicks on a course from the public course list, category page, or search results.</p>
+
+<p><strong>Description:</strong><br>
+Allows an actor to view the detailed information of a course, including its description, curriculum, instructor profile, and student reviews. The system determines the visibility of course content and available actions (e.g., Add to cart, Enroll Now, Go to learning) based on the actor's authentication and enrollment status.</p>
+
+<p><strong>Preconditions:</strong></p>
+<p>None.</p>
+
+<p><strong>Post-conditions:</strong></p>
+<p>None.</p>
+
+<hr>
+
+<p><strong>Normal Flow</strong></p>
+
+<p><strong>A. View Course Details Successfully</strong></p>
+<ol>
+    <li>Actor accesses the course details page.</li>
+    <li>The system retrieves the course details.</li>
+    <li>The system validates the actor's permission to view the course.</li>
+    <li>The system checks the actor's wishlist status for the course.</li>
+    <li>The system retrieves the course review statistics and feedback.</li>
+    <li>The system displays the course details page with appropriate action buttons.</li>
+</ol>
+
+<hr>
+
+<p><strong>Alternative Flows</strong></p>
+
+<p><strong>A.3 View Unpublished Course (Instructor/Admin/Enrolled User)</strong></p>
+<ol>
+    <li>The system detects the course is not published.</li>
+    <li>The system detects the actor is the course owner, an administrator, or an already enrolled student.</li>
+    <li>The system displays a warning banner indicating the course's unpublished state.</li>
+    <li>Back to step 4.</li>
+</ol>
+
+<p><strong>A.6.1 View Free Course Actions</strong></p>
+<ol>
+    <li>The system detects the course price is zero and the actor is not enrolled.</li>
+    <li>The system displays the <code>Enroll Now</code> button.</li>
+    <li>Back to step 6.</li>
+</ol>
+
+<p><strong>A.6.2 View Enrolled Course Actions</strong></p>
+<ol>
+    <li>The system detects the actor is already enrolled in the course.</li>
+    <li>The system displays the <code>Go to learning</code> button.</li>
+    <li>Back to step 6.</li>
+</ol>
+
+<hr>
+
+<p><strong>Exceptions</strong></p>
+
+<p><strong>EX-2 Course Not Found</strong></p>
+<ol>
+    <li>The system detects the course does not exist.</li>
+    <li>The system redirects the actor to the Not Found page.</li>
+</ol>
+
+<p><strong>EX-3 Unauthorized Access (Unpublished Course)</strong></p>
+<ol>
+    <li>The system detects the course is not published.</li>
+    <li>The system detects the actor is not the instructor, an administrator, or an enrolled student.</li>
+    <li>The system redirects the actor to the Error page.</li>
+</ol>
+
+<hr>
+
+<p><strong>Business Rules</strong></p>
+<ol>
+    <li><strong>Curriculum Locking:</strong> Only the first material of the first lesson is available for preview to non-enrolled actors. All subsequent materials are visually locked and cannot be accessed from the details page.</li>
+    <li><strong>Unpublished Course Access Restrictions:</strong> Courses with statuses other than "published" (e.g., draft, pending, archived) are strictly hidden from the public and can only be viewed by the original instructor, system administrators, or students who were previously enrolled.</li>
+    <li><strong>Review Visibility:</strong> Course reviews and rating statistics are publicly visible to all actors.</li>
+    <li><strong>Wishlist State:</strong> The wishlist toggle option is only displayed to users. Instructors viewing their own course and system administrators cannot add courses to their wishlist.</li>
+    <li><strong>Course Reporting:</strong> The option to report a course is only visible to enrolled students. It is hidden from the course owner, administrators, and for courses that are pending or already permanently archived.</li>
+</ol>
+
+<hr>
+
+<p><strong>Assumptions</strong></p>
+<p>Actor has stable internet connection.</p>
+
+</div>
