@@ -1,0 +1,62 @@
+@startuml ViewInstructorApplications
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Instructor Applications
+actor Staff as act
+
+participant "AdminApprovalIndexView" as view
+participant "AdminApprovalController" as be_ctrl
+participant ":InstructorApprovalService" as sv
+participant ":InstructorRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act -> view++: Access instructor applications queue / page
+
+view -> be_ctrl++: Send GET request to AdminApproval/Index (page, pageSize)
+
+be_ctrl -> sv++: Call GetPendingListAsync(page, pageSize)
+sv -> repo++: Call GetPendingInstructorsAsync(page, pageSize)
+repo -> ctx++: Call GetPendingInstructorsAsync(page, pageSize)
+
+ctx -> db++: Query pending instructors, user/navigation info, & total count
+db -->> ctx--: Return instructors list & total count
+ctx -->> repo--: Return instructors list & total count
+repo -->> sv--: Return instructors list & total count
+
+sv -> sv++: Map to InstructorApprovalDto items
+sv--
+
+sv -->> be_ctrl--: Return PagedResult<InstructorApprovalDto>
+be_ctrl -->> view--: Return Index view with applications data
+
+view -->> act--: Display list of pending instructor applications
+deactivate view
+
+@enduml

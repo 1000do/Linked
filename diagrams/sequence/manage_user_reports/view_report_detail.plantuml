@@ -1,0 +1,74 @@
+@startuml view_report_detail
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Report Detail
+actor Staff as act
+
+participant "Reports" as view
+participant "AdminModerationController" as fe_ctrl
+participant "AdminModerationController" as be_ctrl
+participant ":ReportService" as sv
+participant ":ReportRepository" as repo
+participant ":AppDbContext" as ctx
+
+database Database as db
+
+act++
+act->view++: Access "Report Center" page
+view->fe_ctrl++: GET /AdminModeration/Reports
+fe_ctrl->be_ctrl++: GET /api/admin/moderation/reports/stats
+be_ctrl->sv++: GetReportStatsAsync()
+sv->repo++: GetAllCourseReportsAsync("pending", 1, 100000)
+repo->ctx++: Query CourseReport entities
+ctx->db++: Execute SQL query
+db-->>ctx: Return result set
+ctx-->>repo: Return reports
+repo-->>sv: Return reports
+sv->repo++: GetAllCourseReviewReportsAsync("pending", 1, 100000)
+repo->ctx++: Query CourseReviewReport entities
+ctx->db++: Execute SQL query
+db-->>ctx: Return result set
+ctx-->>repo: Return reports
+repo-->>sv: Return reports
+sv->repo++: GetAllLessonReviewReportsAsync("pending", 1, 100000)
+repo->ctx++: Query LessonReviewReport entities
+ctx->db++: Execute SQL query
+db-->>ctx: Return result set
+ctx-->>repo: Return reports
+repo-->>sv: Return reports
+sv-->>be_ctrl--: Return ReportStatsResponse
+be_ctrl-->>fe_ctrl--: Return JSON stats
+fe_ctrl-->>view--: Return ReportStatsViewModel
+view-->>act: Render Reports page with stats
+
+act->view++: Click "Moderate" button on a report row
+view->view++: Call moderateCourseReport(reportId, courseTitle, courseId)
+view--
+view-->>act: Display moderation modal with report detail
+act--
+@enduml

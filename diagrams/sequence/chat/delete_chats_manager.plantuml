@@ -1,0 +1,133 @@
+@startuml DeleteChatsManager
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Delete Chats (For Manager)
+actor Staff as act
+
+participant "ChatIndexView" as view
+participant "ApiChatController" as be_ctrl
+participant ":ChatService" as sv
+participant ":ChatRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act -> view++: Click the clear chat button
+view -> view++: Confirm deletion with dialog
+view--
+
+alt User cancels
+    view -->> act: Do nothing
+    deactivate view
+else User confirms
+    view -> be_ctrl++: Send DELETE request to /api/Chat/{chatId}/clear (with JWT Bearer token)
+    
+    be_ctrl -> be_ctrl++: Extract accountId from NameIdentifier claim
+    be_ctrl--
+    
+    be_ctrl -> sv++: Call ClearChatHistoryAsync(chatId, accountId)
+    
+    sv -> repo++: Call GetParticipantAsync(chatId, accountId)
+    repo -> ctx++: Call GetParticipantAsync(chatId, accountId)
+    ctx -> db++: Query ChatParticipant by chatId and accountId
+    db -->> ctx--: Return participant
+    ctx -->> repo--: Return participant
+    repo -->> sv--: Return participant
+    
+    alt participant = null
+        sv -->> be_ctrl: Return false
+        deactivate sv
+        be_ctrl -->> view: Return HTTP 400 (BadRequest) with message "Chat not found or access denied."
+        deactivate be_ctrl
+        view -->> act: Show alert "Failed to clear chat history."
+        deactivate view
+    else participant != null
+        sv -> sv++: Set participant.ClearedAt = DateTime.UtcNow
+        sv--
+        
+        sv -> repo++: Call UpdateParticipantAsync(participant)
+        repo -> ctx++: Call UpdateParticipantAsync(participant)
+        ctx -->> repo--: Return success
+        repo -->> sv--: Return success
+        
+        sv -> repo++: Call SaveChangesAsync()
+        repo -> ctx++: Call SaveChangesAsync()
+        ctx -> db++: Save changes to Database
+        db -->> ctx--: Return numberOfRowsAffected
+        ctx -->> repo--: Return numberOfRowsAffected
+        repo -->> sv--: Return numberOfRowsAffected
+        
+        alt numberOfRowsAffected > 0
+            sv -->> be_ctrl: Return true
+            deactivate sv
+            be_ctrl -->> view: Return HTTP 200 (Ok)
+            deactivate be_ctrl
+            
+            view -> view++: Clear message list UI
+            view--
+            view -> view++: Hide chat content panel
+            view--
+            view -> view++: Show empty state
+            view--
+            
+            view -> view++: loadChats()
+            view -> be_ctrl++: Send GET request to /api/Chat/list (with JWT Bearer token)
+            be_ctrl -> sv++: Call GetMyChatsAsync(accountId)
+            
+            sv -> repo++: Call GetParticipantsByAccountIdAsync(accountId)
+            repo -> ctx++: Call GetParticipantsByAccountIdAsync(accountId)
+            ctx -> db++: Query ChatParticipants for account
+            db -->> ctx--: Return ChatParticipants list
+            ctx -->> repo--: Return ChatParticipants list
+            repo -->> sv--: Return ChatParticipants list
+            
+            sv -->> be_ctrl: Return ChatListDto list
+            deactivate sv
+            be_ctrl -->> view: Return HTTP 200 (Ok) with chats JSON data
+            deactivate be_ctrl
+            
+            view -> view++: applyChatFilters()
+            view--
+            view -> view++: renderChatList(filteredChats)
+            view--
+            view--
+            
+            view -->> act: Display updated chat list and empty panel
+            deactivate view
+        else numberOfRowsAffected = 0
+            sv -->> be_ctrl: Throw InvalidOperationException("Failed to clear chat history")
+            deactivate sv
+            be_ctrl -->> view: Return HTTP 400 (BadRequest)
+            deactivate be_ctrl
+            view -->> act: Show alert "Failed to clear chat history."
+            deactivate view
+        end
+    end
+end
+
+@enduml
