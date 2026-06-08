@@ -15,6 +15,7 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -25,7 +26,6 @@ skinparam arrowColor #333333
 
 class "NotificationController" as FENotificationController #FFE6E6 {
     - _client : HttpClient
-    
     + Details(id: int) : Task<IActionResult>
 }
 
@@ -39,13 +39,15 @@ class NotificationViewModel #E6CCFF {
     + LinkAction : string?
     + IsRead : bool
     + CreatedAt : DateTime?
+    + ReceiverRole : string?
+    + SenderId : int?
+    + SenderRole : string?
 }
 
 ' ==================== BACKEND - CONTROLLER ====================
 
 class "NotificationController" as BENotificationController #FFE6E6 {
     - _notiService : INotificationService
-    
     + GetNotificationDetail(id: int) : Task<IActionResult>
 }
 
@@ -69,12 +71,26 @@ class Account #CCFFE6 {
     + AccountId : int <<PK>>
     + Email : string
     + Username : string?
+    + PasswordHash : string?
+    + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
     + User : User?
 }
 
 class User #CCFFE6 {
     + UserId : int <<PK>>
     + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -95,7 +111,6 @@ interface INotificationRepository #FFE6CC {
 
 class NotificationService #CCE5FF {
     - _repo : INotificationRepository
-    
     + GetNotificationDetailAsync(id: int, userId: int) : Task<Notification?>
     + MarkAsReadAsync(notificationId: int, userId: int) : Task<bool>
 }
@@ -104,7 +119,6 @@ class NotificationService #CCE5FF {
 
 class NotificationRepository #FFFFCC {
     - _context : AppDbContext
-    
     + GetByIdAsync(id: int) : Task<Notification?>
     + SaveChangesAsync() : Task<int>
 }
@@ -130,6 +144,7 @@ Account *-- Notification
 BENotificationController --> INotificationService
 NotificationService --> INotificationRepository
 NotificationRepository --> AppDbContext
+' Notification -- Account
 
 ' === INTERFACE REALIZATION ===
 NotificationService ..|> INotificationService
@@ -138,8 +153,6 @@ NotificationRepository ..|> INotificationRepository
 ' === DEPENDENCY (dashed arrows) ===
 FENotificationController ..> BENotificationController : calls
 FENotificationController ..> NotificationViewModel : uses
-BENotificationController ..> Notification : uses
-NotificationService ..> Notification : uses
 NotificationRepository ..> Notification : queries
 
 @enduml

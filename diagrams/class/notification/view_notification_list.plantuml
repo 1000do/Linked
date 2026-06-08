@@ -15,6 +15,7 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -25,7 +26,6 @@ skinparam arrowColor #333333
 
 class "NotificationController" as FENotificationController #FFE6E6 {
     - _client : HttpClient
-    
     + Index() : Task<IActionResult>
     + GetListTiny() : Task<IActionResult>
     + Admin() : IActionResult
@@ -41,6 +41,9 @@ class NotificationViewModel #E6CCFF {
     + LinkAction : string?
     + IsRead : bool
     + CreatedAt : DateTime?
+    + ReceiverRole : string?
+    + SenderId : int?
+    + SenderRole : string?
 }
 
 ' ==================== BACKEND - CONTROLLER ====================
@@ -48,7 +51,6 @@ class NotificationViewModel #E6CCFF {
 class "NotificationController" as BENotificationController #FFE6E6 {
     - _notiService : INotificationService
     - _chatService : IChatService
-    
     + GetMyNotifications() : Task<IActionResult>
     + GetAllNotifications() : Task<IActionResult>
     + GetUnreadSummary() : Task<IActionResult>
@@ -86,12 +88,26 @@ class Account #CCFFE6 {
     + AccountId : int <<PK>>
     + Email : string
     + Username : string?
+    + PasswordHash : string?
+    + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
     + User : User?
 }
 
 class User #CCFFE6 {
     + UserId : int <<PK>>
     + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -120,7 +136,6 @@ interface INotificationRepository #FFE6CC {
 
 class NotificationService #CCE5FF {
     - _repo : INotificationRepository
-    
     + GetNotificationsForUserAsync(userId: int) : Task<List<Notification>>
     + GetAllNotificationsAsync() : Task<List<Notification>>
     + GetAllNotificationsForAdminAsync() : Task<List<NotificationAdminResponseDto>>
@@ -131,7 +146,6 @@ class NotificationService #CCE5FF {
 
 class NotificationRepository #FFFFCC {
     - _context : AppDbContext
-    
     + GetByReceiverIdAsync(userId: int) : Task<List<Notification>>
     + GetAllAsync() : Task<List<Notification>>
     + GetUnreadCountAsync(userId: int) : Task<int>
@@ -159,7 +173,9 @@ Account *-- Notification
 BENotificationController --> INotificationService
 BENotificationController --> IChatService
 NotificationService --> INotificationRepository
+' RepositoryImplementation --> AppDbContext
 NotificationRepository --> AppDbContext
+' Notification -- Account
 
 ' === INTERFACE REALIZATION ===
 NotificationService ..|> INotificationService
@@ -170,7 +186,6 @@ FENotificationController ..> BENotificationController : calls
 FENotificationController ..> NotificationViewModel : uses
 BENotificationController ..> NotificationAdminResponseDto : uses
 NotificationService ..> NotificationAdminResponseDto : uses
-NotificationService ..> Notification : uses
-NotificationRepository ..> Notification : uses
+NotificationRepository ..> Notification : queries
 
 @enduml
