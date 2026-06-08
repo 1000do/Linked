@@ -31,8 +31,8 @@ actor Instructor as act
 
 participant "CourseCreationForm" as view
 participant "CloudStorageService" as cloud
-participant "InstructorCourseController" as fe_ctrl
-participant "CourseController" as be_ctrl
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
+participant "CourseController" as be_ctrl <<backend controller>>
 
 participant ":CourseCommandService" as sv
 participant ":CourseResponse" as res

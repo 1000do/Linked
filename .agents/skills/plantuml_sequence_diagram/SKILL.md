@@ -21,15 +21,24 @@ All sequence diagram files must follow the `sq_use_case_name.plantuml` naming co
 
 ## 2. Participant Naming and Aliasing
 
-To keep diagrams readable and consistent, participants should be defined at the top with standardized aliases:
+To keep diagrams readable and consistent, participants should be defined at the top with standardized aliases.
 
+### Standardized Primary Actors
+Do NOT invent custom actor names (like "Learner" or "Customer"). You must exclusively use one of the following exact standardized actors as the `act` participant depending on the use case context:
+- `Guest` (Unauthenticated actor)
+- `User` (Authenticated customer/learner)
+- `Instructor` (Originally a User but applied to become an Instructor. Can switch views flexibly)
+- `Staff` (Authorized manager)
+- `Admin` (Highest Authority manager)
+
+### Standardized Participant Aliases
 | Participant Type | PlantUML Definition Example | Alias | Role |
 |---|---|---|---|
-| Actor | `actor ActorName as act` | `act` | The human actor interacting with the system |
+| Actor | `actor User as act` | `act` | The human actor interacting with the system (choose from the standardized list above) |
 | View / UI | `participant "Form/ViewName" as view` | `view` | Razor views, frontend pages (`.cshtml`, HTML) |
 | Redirect Target | `participant "RedirectForm" as r_view` | `r_view` | Target view after redirection |
-| Frontend Controller | `participant "FrontendController" as fe_ctrl` | `fe_ctrl` | Standard MVC controller handling client requests |
-| Backend Controller | `participant "ApiController" as be_ctrl` | `be_ctrl` | API Controller exposing REST services |
+| Frontend Controller | `participant "ControllerName" as fe_ctrl <<frontend controller>>` | `fe_ctrl` | Standard MVC controller handling client requests |
+| Backend Controller | `participant "ControllerName" as be_ctrl <<backend controller>>` | `be_ctrl` | API Controller exposing REST services |
 | Service | `participant ":ServiceClass" as sv` | `sv` | Business logic service (e.g. `:CourseService`) |
 | Data Transfer / Response | `participant ":ResponseDto" as res` | `res` | Response or DTO class |
 | Entity | `participant ":EntityClass" as ett` | `ett` | Domain entity class |
@@ -38,6 +47,7 @@ To keep diagrams readable and consistent, participants should be defined at the 
 | Database | `database Database as db` | `db` | The physical database storage (cylinder) |
 
 ### Modeling Rules
+- **Controller Stereotypes:** Frontend controllers and Backend controllers MUST be explicitly distinguished using PlantUML stereotypes (`<<frontend controller>>` and `<<backend controller>>`) directly in their participant declarations.
 - **Implementations Only:** Do not model interfaces (e.g., use `:CourseRepository` rather than `ICourseRepository`).
 - **Instance Prefixing:** Prefix class instances with a colon (e.g., `:CourseService`, `:CourseRepository`). Do not prefix views, controllers, or actor aliases.
 - **Visuals:** All participants except actors (stick figure) and databases (cylinder figure) must be drawn as rectangles.
@@ -157,22 +167,29 @@ When dealing with nested `alt` fragments, clearly distinguish between "Local" an
 
 ### Conditional Branches (Alt/Opt)
 - `alt` branch conditions must be mutually exclusive. Always use clear, opposing labels (e.g., `numRows > 0` vs `numRows = 0`, `Valid` vs `Invalid`, `Duplicate` vs `No Duplicate`).
+- **Read vs Write Branching Conditions:** 
+  - For **Write/Mutate Operations** (Insert/Update/Delete), use `numberOfRowsAffected > 0` (or similar DB-level checks) as the core condition.
+  - For **Read/Select Operations**, `alt` blocks should trigger based on data presence (e.g., `Entity == null` vs `Entity found`) or authorization states (e.g., `Unauthenticated`, `Unauthorized Access`).
 - **Prefer Flat Structures:** Whenever possible, prefer a flat `alt/else` structure over deep nesting to improve diagram readability. You may reorder the logical flow in the diagram to make a flat structure work sensibly (e.g., grouping early validation failures as `else` branches, and placing the successful execution path in a final `else All checks pass` branch).
 - **Semantic Triggers for Flat Structures:** The conditional trigger (the self-call `sv->sv++`) immediately preceding a flat `alt` fragment must have a broad, semantic label covering *all* nested checks (e.g., `Validate course update request`). Furthermore, the final success branch of the `alt` block must explicitly pair with this trigger (e.g., `else Valid course update request`).
 - **Condensing Validation Logic:** Encourage condensing fine-grained, related validation checks into unified `else` branches. For example, combine a "course ownership check" and an "instructor lockout check" into a single `else Invalid Instructor Rights` branch to reduce visual noise.
 
-### Abstracting Auxiliary In-Line Logic
-- Verbose inline code blocks (like `foreach` loops) should be aggressively abstracted into descriptive self-calls, but **only** if they apply to *auxiliary* changes outside the primary context. For example, in an operation for Courses, modifying Lessons is auxiliary and should be abstracted. In an operation for Lessons, modifying Courses or Learning Materials would be auxiliary. These self-calls should use natural language (e.g., `sv->sv++: Remove lessons in course` instead of `RemoveLessonsInCourse()`).
+### Abstracting Auxiliary Logic & Fetches
+- Verbose inline code blocks (like `foreach` loops) or secondary read operations (like fetching overall category lists, wishlist statuses, or generic stats when the main focus is a course list) should be aggressively abstracted into descriptive self-calls, but **only** if they apply to *auxiliary* changes/fetches outside the primary context. For example, in an operation for Courses, fetching/modifying Lessons is auxiliary and should be abstracted. In an operation for Lessons, modifying Courses or Learning Materials would be auxiliary. These self-calls should use natural language (e.g., `sv->sv++: Remove lessons in course` or `fe_ctrl->fe_ctrl++: Fetch overall performance statistics`).
+
+### Frontend Authentication/Authorization Validation
+- Complex authentication and authorization checks (e.g., checking cookies, roles, or calling backend APIs via action filters to validate access) should be abstracted into a single self-call at the frontend controller level (e.g., `fe_ctrl -> fe_ctrl++: Validate Dashboard Access`), immediately followed by a flat `alt` block handling the rejection branches (Login redirect, Not Found redirect, etc.).
 
 ### Form Validation
 - Standard client-side UI input validations must be shown in the UI/view first.
 - Only show server-side controller `Validate ModelState` if it is explicitly written in the controller code.
 
 ### Controller Return Messages
-- Always return `statusCode` for interactions between the backend and frontend, and the frontend and view.
+- Always return `statusCode` for interactions between the backend and frontend, and the frontend and view. Keep the exact message template as `Return statusCode ...` (e.g., `fe_ctrl -->> view: Return statusCode 302`). Do not use custom phrases like `Redirect to /Cart` as a return message from a controller.
   - Example: `be_ctrl -->> fe_ctrl: Return statusCode 201`
   - Example: `fe_ctrl -->> view: Return statusCode 400`
-- Do not return generic `JSON (success=true/false)` messages for these steps.
+- **Nuance Rule (FE vs BE Status Codes):** Do not blindly assume that `fe_ctrl` always translates backend errors into a `302`. You MUST look at the exact implementation of the `fe_ctrl` method. Some methods return `RedirectToAction` (302), others might return JSON (for AJAX calls), and others might return a `View` (200). The `Return statusCode` in the diagram must reflect the actual code behavior.
+- Do not return generic `JSON (success=true/false)` messages for these steps unless explicitly returning `Json(...)` in code.
 
 ### Void and Task<void> Returns
 - Whenever modeling a call to a backend method that returns `Task<void>` or `void`, the return step in the sequence diagram must simply be modeled as `Return result` (e.g., `repo -->> sv--: Return result`).
@@ -180,7 +197,11 @@ When dealing with nested `alt` fragments, clearly distinguish between "Local" an
 ### UI Feedback and Redirections
 - Do not over-specify UI implementation details (e.g., "popup message", "toast", "simple p tag"). Use generic interaction descriptions like `Display success message` or `Display error message`.
 - If an action ends with displaying a success/error message and requires manual user intervention to proceed (e.g., clicking "Edit Now" to redirect), **do not model the subsequent manual click or redirect**. End the sequence path at the display of the initial message.
-- **Automatic Redirections Only**: Only include a redirection step when it occurs automatically without manual interaction from the actor. For example, if a controller method ends its execution flow by explicitly returning a redirect response (e.g., `return RedirectToAction(...)`), model the redirection to the target view.
+- **Automatic Redirections Only**: Only include a redirection step when it occurs automatically without manual interaction from the actor. Model redirects directly from the Controller to the target View using a solid arrow (`->`), followed by the target view displaying and returning to the actor.
+  ```plantuml
+  fe_ctrl -> login_view++: Redirect to Login page
+  login_view -->> act--: Display Login page
+  ```
 
 ### Layer and Component Omissions
 - Omit `fe_ctrl` if the frontend requests the backend directly (e.g. via direct AJAX/Fetch call without server-side MVC controller routing).

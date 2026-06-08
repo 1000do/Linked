@@ -30,8 +30,8 @@ mainframe Update Course Details
 
 actor Instructor as act
 participant "CourseEditForm" as view
-participant "InstructorCourseController" as fe_ctrl
-participant "CourseController" as be_ctrl
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
+participant "CourseController" as be_ctrl <<backend controller>>
 participant ":CourseCommandService" as sv
 participant ":CourseResponse" as res
 participant ":Course" as ett
