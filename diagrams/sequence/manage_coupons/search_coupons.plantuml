@@ -1,0 +1,54 @@
+@startuml search_coupons
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Search Coupons
+actor Admin as act
+
+participant "CouponListView" as view
+participant "CouponController" as be_ctrl
+participant ":CouponService" as sv
+participant ":CouponRepository" as repo
+participant ":AppDbContext" as ctx
+
+database Database as db
+
+act++
+act->view++: Enter search keyword in search input\n(Coupon Code or Coupon Id)
+view->be_ctrl++: GET /api/coupon?search={search}
+be_ctrl->sv++: GetAll(managerId, isActive=null, type=null, search, isAdmin=true)
+sv->repo++: GetAllAsync(managerId=null, isActive=null, type=null, search)
+repo->ctx++: Query Coupons matching search keyword\n(matches CouponCode or CouponId)
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return matched Coupon entities
+ctx-->>repo--: Return matched Coupon entities
+repo-->>sv--: Return matched Coupon entities
+sv->sv: Map list to List<CouponResponse>
+sv-->>be_ctrl--: Return List<CouponResponse>
+be_ctrl-->>view--: Return status 200 with ApiResponse<List<CouponResponse>>
+view-->>act--: Render and display filtered Coupon List table
+@enduml
