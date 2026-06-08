@@ -1,6 +1,7 @@
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Share.Helpers;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -124,8 +125,8 @@ public class AuthService : IAuthService
             Email = r.Email.ToLower(),
             Username = r.Username.ToLower(),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(r.Password),
-            AccountStatus = "active",
-            AuthProvider = "local",
+            AccountStatus = AccountStatus.Active.ToValue(),
+            AuthProvider = AuthProvider.Local.ToValue(),
             IsVerified = false,
             AccountCreatedAt = DateTime.Now,
             AccountUpdatedAt = DateTime.Now
@@ -202,7 +203,8 @@ public class AuthService : IAuthService
                 Email = email,
                 Username = username,
                 PasswordHash = null, // GOOGLE → NULL
-                AuthProvider = "google",
+                AuthProvider = AuthProvider.Google.ToValue(),
+                AccountStatus = AccountStatus.Active.ToValue(),
                 IsVerified = true, // AUTO VERIFIED
                 AvatarUrl = payload.Picture,
                 AccountCreatedAt = DateTime.Now,
@@ -290,7 +292,7 @@ public class AuthService : IAuthService
         if (acc == null)
             return "Email not found";
 
-        if (acc.AuthProvider == "google")
+        if (acc.AuthProvider == AuthProvider.Google.ToValue())
             return "This account uses Google login";
 
         if (!acc.IsVerified)
@@ -320,7 +322,7 @@ public class AuthService : IAuthService
 
         if (acc == null) return false;
 
-        if (acc.AuthProvider == "google") return false;
+        if (acc.AuthProvider == AuthProvider.Google.ToValue()) return false;
 
         acc.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
         acc.AccountUpdatedAt = DateTime.Now;

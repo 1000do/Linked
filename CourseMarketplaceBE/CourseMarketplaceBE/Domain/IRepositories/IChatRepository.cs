@@ -7,6 +7,7 @@ namespace CourseMarketplaceBE.Domain.IRepositories;
 public interface IChatRepository
 {
     Task<List<ChatParticipant>> GetParticipantsByAccountIdAsync(int accountId);
+    Task<List<ChatParticipant>> SearchParticipantsByAccountIdAsync(int accountId, string query);
     Task<List<Message>> GetMessagesByChatIdAsync(int chatId);
     Task AddMessageAsync(Message message);
     Task<Chat?> GetChatByIdAsync(int chatId);

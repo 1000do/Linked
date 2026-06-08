@@ -67,6 +67,7 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category != null ? src.Category.CategoriesName : null))
             .ForMember(dest => dest.InstructorName, opt => opt.MapFrom(src => src.Instructor != null && src.Instructor.InstructorNavigation != null ? src.Instructor.InstructorNavigation.FullName : "Unknown Instructor"))
             .ForMember(dest => dest.InstructorAvatarUrl, opt => opt.MapFrom(src => src.Instructor != null && src.Instructor.InstructorNavigation != null && src.Instructor.InstructorNavigation.UserNavigation != null ? src.Instructor.InstructorNavigation.UserNavigation.AvatarUrl : null))
+            .ForMember(dest => dest.FlagCount, opt => opt.MapFrom(src => src.CourseFlagCount ?? 0))
             .ForMember(dest => dest.TotalStudents, opt => opt.Ignore())
             .ForMember(dest => dest.RatingAverage, opt => opt.Ignore())
             .ForMember(dest => dest.TotalReviews, opt => opt.Ignore())

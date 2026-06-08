@@ -2,6 +2,7 @@ using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Infrastructure.Data;
+using CourseMarketplaceBE.Domain.Constants;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -96,7 +97,7 @@ namespace CourseMarketplaceBE.Application.Services
                     Email = a.Email,
                     FullName = fullName ?? "No Name",
                     Role = roleName,
-                    AccountStatus = a.AccountStatus ?? "Active",
+                    AccountStatus = a.AccountStatus ?? AccountStatus.Active.ToValue(),
                     AccountCreatedAt = a.AccountCreatedAt,
                     AccountLastLoginAt = a.AccountLastLoginAt,
                     PhoneNumber = a.PhoneNumber,
@@ -137,7 +138,7 @@ namespace CourseMarketplaceBE.Application.Services
                 Email = account.Email,
                 FullName = fullName ?? "No Name",
                 PhoneNumber = account.PhoneNumber,
-                AccountStatus = account.AccountStatus ?? "Active",
+                AccountStatus = account.AccountStatus ?? AccountStatus.Active.ToValue(),
                 AccountCreatedAt = account.AccountCreatedAt,
                 AccountLastLoginAt = account.AccountLastLoginAt,
                 AvatarUrl = account.AvatarUrl,
@@ -150,7 +151,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 // Tính tổng tiền chi tiêu mua khóa học (Chỉ lấy giao dịch Thành công của User này)
                 dto.TotalSpent = await _context.Transactions
-                    .Where(t => t.AccountFrom == account.AccountId && t.TransactionsStatus == "Success")
+                    .Where(t => t.AccountFrom == account.AccountId && t.TransactionsStatus == TransactionStatus.Succeeded.ToValue())
                     .SumAsync(t => t.Amount);
 
                 dto.EnrolledCoursesCount = await _context.Enrollments
@@ -171,12 +172,12 @@ namespace CourseMarketplaceBE.Application.Services
 
                     // Doanh thu giảng viên: Tổng tiền các Transactions thành công được chuyển cho giảng viên này
                     dto.TotalRevenue = await _context.Transactions
-                        .Where(t => t.AccountTo == account.AccountId && t.TransactionsStatus == "Success")
+                        .Where(t => t.AccountTo == account.AccountId && t.TransactionsStatus == TransactionStatus.Succeeded.ToValue())
                         .SumAsync(t => t.Amount);
 
                     // Số tiền đã rút (payout): Tổng tiền InstructorPayouts có PayoutStatus == "paid"
                     dto.TotalWithdrawn = await _context.InstructorPayouts
-                        .Where(p => p.InstructorId == account.AccountId && p.PayoutStatus == "paid")
+                        .Where(p => p.InstructorId == account.AccountId && p.PayoutStatus == PayoutStatus.Paid.ToValue())
                         .SumAsync(p => p.PayoutAmount);
 
                     dto.AvailableBalance = dto.TotalRevenue - dto.TotalWithdrawn;
@@ -266,7 +267,7 @@ namespace CourseMarketplaceBE.Application.Services
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 PhoneNumber = request.PhoneNumber,
-                AccountStatus = "Active",
+                AccountStatus = AccountStatus.Active.ToValue(),
                 AccountCreatedAt = DateTime.UtcNow,
                 IsVerified = true // Auto-verify admin-created staff
             };
@@ -333,13 +334,13 @@ namespace CourseMarketplaceBE.Application.Services
                 throw new InvalidOperationException("Cannot ban the Super Admin account.");
             }
 
-            if (account.AccountStatus == "Banned")
+            if (account.AccountStatus == AccountStatus.Banned.ToValue())
             {
-                account.AccountStatus = "Active";
+                account.AccountStatus = AccountStatus.Active.ToValue();
             }
             else
             {
-                account.AccountStatus = "Banned";
+                account.AccountStatus = AccountStatus.Banned.ToValue();
             }
 
             int rows4 = await _context.SaveChangesAsync();
@@ -357,7 +358,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             var currentFlags = account.AccountFlagCount ?? 0;
-            if (currentFlags >= 3 || account.AccountStatus == "Banned")
+            if (currentFlags >= 3 || account.AccountStatus == AccountStatus.Banned.ToValue())
             {
                 return (false, currentFlags, account.AccountStatus, "Account is already banned or has reached the maximum flag limit of 3.");
             }
@@ -367,15 +368,15 @@ namespace CourseMarketplaceBE.Application.Services
 
             if (newFlags == 1)
             {
-                account.AccountStatus = "Flagged_1";
+                account.AccountStatus = AccountStatus.Flagged1.ToValue();
             }
             else if (newFlags == 2)
             {
-                account.AccountStatus = "Flagged_2";
+                account.AccountStatus = AccountStatus.Flagged2.ToValue();
             }
             else if (newFlags >= 3)
             {
-                account.AccountStatus = "Banned";
+                account.AccountStatus = AccountStatus.Banned.ToValue();
             }
 
             int rows5 = await _context.SaveChangesAsync();

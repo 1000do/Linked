@@ -1,0 +1,117 @@
+<div style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <p><strong>UC-RemoveMaterial - Remove Learning Materials</strong></p>
+    
+    <p><strong>Primary Actor:</strong><br>Instructor</p>
+    
+    <p><strong>Secondary Actors:</strong><br>Cloud Storage Service</p>
+    
+    <p><strong>Trigger:</strong><br>Instructor clicks the "Remove" icon button next to a specific resource material, or clicks the "Replace Video" button for an existing active video.</p>
+    
+    <p><strong>Description:</strong><br>Allows an instructor to remove an existing learning material (such as a video or document) from a lesson. The system soft-deletes the material by moving the physical file to the cloud storage trash folder, updates the material's status to removed, and reverts the course status to draft if it was previously published. This use case also encompasses the automatic removal of an active video when a new video is uploaded to replace it.</p>
+    
+    <p><strong>Preconditions:</strong></p>
+    <p><b>PRE-1.</b> User must be successfully authenticated as an approved instructor.</p>
+    <p><b>PRE-2.</b> The material must exist and belong to a course owned by the active instructor.</p>
+    
+    <p><strong>Post-conditions:</strong></p>
+    <p><b>POST-1.</b> The physical file is moved to the Cloud Storage Service's trash folder.</p>
+    <p><b>POST-2.</b> The material record in the database is updated with a removed learning status.</p>
+    <p><b>POST-3.</b> If the course was previously published, its status is reverted to draft and moderation feedback is cleared.</p>
+    <p><b>POST-4.</b> Stale cache data is cleared.</p>
+    
+    <hr>
+    
+    <p><strong>Normal Flow</strong></p>
+    <p><strong>A. Remove Material Manually Successfully</strong></p>
+    <ol>
+        <li>Instructor accesses the course edit page.</li>
+        <li>Instructor selects a specific lesson from the curriculum list.</li>
+        <li>Instructor clicks the "Remove" icon button next to a specific resource material.</li>
+        <li>The system displays a removal confirmation dialog.</li>
+        <li>Instructor confirms the removal.</li>
+        <li>The system validates the instructor's rights.</li>
+        <li>The system validates the course status.</li>
+        <li>The system moves the physical file to the Cloud Storage Service's trash folder.</li>
+        <li>The system updates the material record's learning status to removed in the database.</li>
+        <li>The system updates the course status to draft and clears previous moderation feedback (if previously published).</li>
+        <li>The system invalidates the cached course data.</li>
+        <li>The system displays a success message.</li>
+    </ol>
+    
+    <hr>
+    
+    <p><strong>Alternative Flows</strong></p>
+    
+    <p><strong>A.3 Replace Existing Video Successfully</strong></p>
+    <ol>
+        <li>Instructor clicks the "Replace Video" button for an existing active video.</li>
+        <li>The system executes the flow defined in UC-AddMaterials to upload and save the new video.</li>
+        <li>The system soft-deletes the previously active video by moving its physical file to the Cloud Storage Service's trash folder and updating its learning status to removed in the database.</li>
+        <li>Use case ends.</li>
+    </ol>
+    
+    <p><strong>A.5 Removal Cancelled</strong></p>
+    <ol>
+        <li>Instructor clicks "Cancel" or dismisses the confirmation dialog.</li>
+        <li>Back to step 3.</li>
+    </ol>
+    
+    <p><strong>A.10 Course is not published</strong></p>
+    <ol>
+        <li>The system skips updating the course status and moderation feedback.</li>
+        <li>Back to step 11.</li>
+    </ol>
+    
+    <hr>
+    
+    <p><strong>Exceptions</strong></p>
+    
+    <p><strong>EX-1.1 Session Invalid (Not Logged In)</strong></p>
+    <ol>
+        <li>The system displays an authentication error message.</li>
+        <li>The system redirects the user to the login page.</li>
+    </ol>
+    
+    <p><strong>EX-1.2 Material Not Found</strong></p>
+    <ol>
+        <li>The system halts execution and displays a material not found error message.</li>
+    </ol>
+    
+    <p><strong>EX-6 Invalid Instructor Rights</strong></p>
+    <ol>
+        <li>The system detects the instructor is unauthorized to remove this material or has an active lockout status.</li>
+        <li>The system displays an error message regarding invalid instructor rights.</li>
+        <li>Back to step 3.</li>
+    </ol>
+    
+    <p><strong>EX-7 Invalid Course Status</strong></p>
+    <ol>
+        <li>The system detects the course is pending review or is permanently archived due to policy violations.</li>
+        <li>The system displays an error message regarding invalid course status.</li>
+        <li>Back to step 3.</li>
+    </ol>
+    
+    <p><strong>EX-9 Database Save Failed</strong></p>
+    <ol>
+        <li>The system fails to save the material changes to the database.</li>
+        <li>The system displays a database transaction failure message.</li>
+        <li>Back to step 3.</li>
+    </ol>
+    
+    <hr>
+    
+    <p><strong>Business Rules</strong></p>
+    <ol>
+        <li><strong>Locked Out Instructor Rights:</strong> Instructors with an active lockout status are prohibited from removing materials.</li>
+        <li><strong>Pending Restriction:</strong> Materials cannot be removed while the course is currently in 'Pending' review status.</li>
+        <li><strong>Archived Course Restriction:</strong> Courses that are permanently archived due to policy violations (flag count >= 3) cannot be modified.</li>
+        <li><strong>Soft Deletion:</strong> Removing a material does not permanently delete the file; the physical file is moved to the Cloud Storage Service's trash folder and its database status is updated to 'Removed'.</li>
+        <li><strong>Video Replacement:</strong> Each lesson can only have one active video. Uploading a new video automatically soft-deletes the previous active video by moving it to the trash and marking it as removed.</li>
+        <li><strong>Status Reversion:</strong> Removing a material from a 'Published' course automatically changes its status back to 'Draft' and clears any existing moderation feedback.</li>
+    </ol>
+    
+    <hr>
+    
+    <p><strong>Assumptions</strong></p>
+    <p>Instructor has stable internet connection.<br>Cloud Storage Service is working properly.</p>
+</div>

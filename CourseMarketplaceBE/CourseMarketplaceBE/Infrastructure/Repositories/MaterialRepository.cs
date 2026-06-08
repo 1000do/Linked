@@ -1,3 +1,4 @@
+using CourseMarketplaceBE.Domain.Constants;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
@@ -54,7 +55,7 @@ public class MaterialRepository : IMaterialRepository
             .IgnoreQueryFilters() // Important: fetch even if Lesson/Course is soft-deleted
             .Include(m => m.Lesson)
                 .ThenInclude(l => l!.Course)
-            .Where(m => m.LearningStatus == "removed" 
+            .Where(m => m.LearningStatus == CourseMarketplaceBE.Domain.Constants.LearningStatus.Removed.ToValue() 
                    && m.Lesson != null 
                    && m.Lesson.Course != null 
                    && m.Lesson.Course.InstructorId == instructorId)
@@ -66,3 +67,4 @@ public class MaterialRepository : IMaterialRepository
         return await _context.SaveChangesAsync();
     }
 }
+

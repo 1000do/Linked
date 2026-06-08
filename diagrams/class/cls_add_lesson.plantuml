@@ -1,0 +1,139 @@
+@startuml AddLesson
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+    HeaderBackgroundColor #E8F0FE
+}
+
+class InstructorCourseController <<Frontend Controller>> {
+    + AddLesson(courseId: int, title: string) : Task<IActionResult>
+}
+
+class LessonController <<Backend Controller>> {
+    - _lessonService : ILessonService
+    + CreateLesson(request: LessonCreateRequest) : Task<IActionResult>
+    - GetInstructorId() : int
+}
+
+class LessonCreateRequest <<DTO>> {
+    + CourseId : int
+    + Title : string
+    + Description : string
+    + ThumbnailUrl : string
+    + ThumbnailFile : IFormFile
+}
+
+class LessonResponse <<DTO>> {
+    + LessonId : int
+    + CourseId : int
+    + Title : string
+    + Description : string
+    + ThumbnailUrl : string
+    + CreatedAt : DateTime
+    + UpdatedAt : DateTime
+    + LessonStatus : string
+    + CourseStatus : string
+}
+
+interface ILessonService <<Service>> {
+    + CreateLessonAsync(request: LessonCreateRequest, instructorId: int) : Task<LessonResponse>
+}
+
+class LessonService <<Service>> {
+    - _lessonRepository : ILessonRepository
+    - _courseRepository : ICourseRepository
+    - _instructorRepository : IInstructorRepository
+    - _redisService : IRedisService
+    - _uploadService : IFileUploadService
+    + CreateLessonAsync(request: LessonCreateRequest, instructorId: int) : Task<LessonResponse>
+}
+
+class Instructor <<Entity>> {
+    + InstructorId : int
+    + StripeAccountId : string
+    + StripeOnboardingStatus : string
+}
+
+class Course <<Entity>> {
+    + CourseId : int
+    + Title : string
+    + InstructorId : int
+    + CourseStatus : string
+}
+
+class Lesson <<Entity>> {
+    + LessonId : int
+    + CourseId : int
+    + Title : string
+    + Description : string
+    + ThumbnailUrl : string
+    + CreatedAt : DateTime
+    + UpdatedAt : DateTime
+    + LessonStatus : string
+    + IsRemoved : bool
+}
+
+interface ILessonRepository <<Repository>> {
+    + AddAsync(lesson: Lesson) : Task
+    + GetByCourseIdAsync(courseId: int) : Task<List<Lesson>>
+    + SaveChangesAsync() : Task
+}
+
+interface ICourseRepository <<Repository>> {
+    + GetByIdAsync(id: int) : Task<Course>
+    + Update(course: Course) : void
+    + SaveChangesAsync() : Task
+}
+
+interface IInstructorRepository <<Repository>> {
+    + GetByIdAsync(id: int) : Task<Instructor>
+}
+
+class LessonRepository <<Repository>> {
+    - _context : AppDbContext
+    + AddAsync(lesson: Lesson) : Task
+    + GetByCourseIdAsync(courseId: int) : Task<List<Lesson>>
+    + SaveChangesAsync() : Task
+}
+
+class AppDbContext <<AppDbContext>> {
+    + Lessons : DbSet<Lesson>
+    + Courses : DbSet<Course>
+}
+
+' Relationships & Connections
+
+' Unidirectional Associations (Dependency Injection / field references)
+LessonController --> ILessonService
+LessonService --> ILessonRepository
+LessonService --> ICourseRepository
+LessonService --> IInstructorRepository
+LessonRepository --> AppDbContext
+
+' Realizations
+LessonService ..|> ILessonService
+LessonRepository ..|> ILessonRepository
+
+' Dependencies (method parameters / return values / local instantiations)
+InstructorCourseController ..> LessonController
+LessonController ..> LessonCreateRequest
+LessonController ..> LessonResponse
+ILessonService ..> LessonCreateRequest
+ILessonService ..> LessonResponse
+LessonService ..> LessonCreateRequest
+LessonService ..> LessonResponse
+LessonService ..> Lesson
+ILessonRepository ..> Lesson
+LessonRepository ..> Lesson
+ICourseRepository ..> Course
+IInstructorRepository ..> Instructor
+
+' Composition/Aggregation (Entity-to-Entity ONLY)
+Instructor *-- Course
+Course *-- Lesson
+
+@enduml

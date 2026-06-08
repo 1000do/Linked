@@ -1,0 +1,242 @@
+@startuml Checkout_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "CartController" as CartControllerFE #FFE6E6 {
+    + Checkout() : Task<IActionResult>
+    + DirectCheckout(id: int) : Task<IActionResult>
+    + CheckoutSuccess(sessionId: string?, paymentIntent: string?, paymentIntentId: string?) : Task<IActionResult>
+    + CheckoutCancel(orderId: int) : Task<IActionResult>
+}
+
+class CheckoutViewModel #E6CCFF {
+    + PublishableKey : string
+    + ClientSecret : string
+    + PaymentIntentId : string
+    + Email : string
+    + Cart : CartViewModel
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "CheckoutController" as CheckoutControllerBE #FFE6E6 {
+    - _checkoutService : ICheckoutService
+    - _authService : IAuthService
+    + Process(request: CheckoutRequest) : Task<IActionResult>
+    + CreateIntent(request: CheckoutRequest) : Task<IActionResult>
+    + DirectProcess(request: DirectCheckoutRequest) : Task<IActionResult>
+    + Success(sessionId: string) : Task<IActionResult>
+    + SuccessIntent(paymentIntentId: string) : Task<IActionResult>
+    + Cancel(orderId: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class CheckoutRequest #E6CCFF {
+    + CouponCode : string?
+    + SuccessUrl : string
+    + CancelUrl : string
+}
+
+class DirectCheckoutRequest #E6CCFF {
+    + CourseId : int
+}
+
+class CheckoutResponse #E6CCFF {
+    + SessionUrl : string
+    + SessionId : string
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class OrderInfo #CCFFE6 {
+    + OrderId : int <<PK>>
+    + UserId : int? <<FK>>
+    + OrderDate : DateTime?
+    + OrderStatus : string?
+    + PaymentMethod : string?
+    + OrderItems : ICollection<OrderItem>
+    + User : User?
+}
+
+class OrderItem #CCFFE6 {
+    + Id : int <<PK>>
+    + OrderId : int? <<FK>>
+    + CourseId : int? <<FK>>
+    + PurchasePrice : decimal
+    + CouponUsed : bool?
+    + OriginalPrice : decimal?
+    + CouponCode : string?
+    + CouponType : string?
+    + DiscountAmount : decimal
+    + Course : Course?
+    + Order : OrderInfo?
+    + Transactions : ICollection<Transaction>
+}
+
+class Transaction #CCFFE6 {
+    + TransactionId : int <<PK>>
+    + OrderItemId : int? <<FK>>
+    + AccountFrom : int? <<FK>>
+    + AccountTo : int? <<FK>>
+    + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
+    + InstructorPayouts : ICollection<InstructorPayout>
+}
+
+class InstructorPayout #CCFFE6 {
+    + PayoutId : int <<PK>>
+    + TransactionId : int? <<FK>>
+    + InstructorId : int? <<FK>>
+    + PayoutAmount : decimal
+    + PayoutDate : DateTime
+    + IsPaid : bool
+    + PayoutStatus : string
+    + StripeTransferId : string?
+    + StripePayoutId : string?
+    + PaidToBankAt : DateTime?
+    + Transaction : Transaction?
+    + Instructor : Instructor?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface ICheckoutService #FFE6CC {
+    //+ InitiateCheckoutAsync(...) : Task<CheckoutResponse>//
+    //+ InitiateDirectCheckoutAsync(...) : Task<CheckoutResponse>//
+    //+ InitiatePaymentIntentAsync(...) : Task<CheckoutResponse>//
+    //+ ProcessPaymentSuccessAsync(...) : Task//
+    //+ ProcessPaymentIntentSuccessAsync(...) : Task//
+    //+ ProcessPaymentCancelAsync(...) : Task//
+}
+
+interface IAuthService #FFE6CC {
+    //+ IsEmailVerifiedAsync(userId: int) : Task<bool>//
+}
+
+interface IPaymentGatewayService #FFE6CC {
+    //+ CreateCheckoutSessionAsync(...) : Task<PaymentSessionResult>//
+    //+ CreatePaymentIntentAsync(...) : Task<(string ClientSecret, string PaymentIntentId)>//
+    //+ GetPaymentReferenceAsync(sessionId: string) : Task<string?>//
+    //+ GetSessionMetadataAsync(sessionId: string) : Task<Dictionary<string, string>?>//
+    //+ GetPaymentIntentMetadataAsync(paymentIntentId: string) : Task<Dictionary<string, string>?>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface ICheckoutRepository #FFE6CC {
+    //+ GetCartItemsWithCourseAndInstructorAsync(userId: int) : Task<List<CartItem>>//
+    //+ GetTransactionsBySessionIdAsync(stripeSessionId: string) : Task<List<Transaction>>//
+    //+ AddOrderAsync(order: OrderInfo) : Task//
+    //+ AddOrderItemAsync(item: OrderItem) : Task//
+    //+ AddTransactionAsync(transaction: Transaction) : Task//
+    //+ AddInstructorPayoutAsync(payout: InstructorPayout) : Task//
+    //+ ClearCartAsync(userId: int) : Task//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CheckoutService #CCE5FF {
+    - _repo : ICheckoutRepository
+    - _enrollmentRepo : IEnrollmentRepository
+    - _paymentGateway : IPaymentGatewayService
+    - _courseRepo : ICourseRepository
+    - _couponRepo : ICouponRepository
+    - _userRepo : IUserRepository
+    + InitiateCheckoutAsync(...) : Task<CheckoutResponse>
+    + InitiateDirectCheckoutAsync(...) : Task<CheckoutResponse>
+    + InitiatePaymentIntentAsync(...) : Task<CheckoutResponse>
+    + ProcessPaymentSuccessAsync(...) : Task
+    + ProcessPaymentIntentSuccessAsync(...) : Task
+    + ProcessPaymentCancelAsync(...) : Task
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CheckoutRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetCartItemsWithCourseAndInstructorAsync(userId: int) : Task<List<CartItem>>
+    + GetTransactionsBySessionIdAsync(stripeSessionId: string) : Task<List<Transaction>>
+    + AddOrderAsync(order: OrderInfo) : Task
+    + AddOrderItemAsync(item: OrderItem) : Task
+    + AddTransactionAsync(transaction: Transaction) : Task
+    + AddInstructorPayoutAsync(payout: InstructorPayout) : Task
+    + ClearCartAsync(userId: int) : Task
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + OrderInfos : DbSet<OrderInfo>
+    + OrderItems : DbSet<OrderItem>
+    + Transactions : DbSet<Transaction>
+    + InstructorPayouts : DbSet<InstructorPayout>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+CheckoutControllerBE --> ICheckoutService
+CheckoutControllerBE --> IAuthService
+CheckoutService --> ICheckoutRepository
+CheckoutService --> IPaymentGatewayService
+CheckoutRepository --> AppDbContext
+OrderInfo "1" *-- "*" OrderItem
+OrderItem "1" *-- "*" Transaction
+Transaction "1" *-- "*" InstructorPayout
+
+' === INTERFACE REALIZATION ===
+CheckoutService ..|> ICheckoutService
+CheckoutRepository ..|> ICheckoutRepository
+
+' === DEPENDENCY ===
+CartControllerFE ..> CheckoutControllerBE : calls via HTTP
+CartControllerFE ..> CheckoutViewModel : instantiates
+CheckoutControllerBE ..> CheckoutRequest : uses
+CheckoutControllerBE ..> DirectCheckoutRequest : uses
+CheckoutControllerBE ..> CheckoutResponse : uses
+CheckoutService ..> CheckoutRequest : uses
+CheckoutService ..> DirectCheckoutRequest : uses
+CheckoutService ..> CheckoutResponse : instantiates
+CheckoutService ..> OrderInfo : instantiates
+CheckoutService ..> OrderItem : instantiates
+CheckoutService ..> Transaction : instantiates
+CheckoutService ..> InstructorPayout : instantiates
+CheckoutRepository ..> OrderInfo : inserts
+CheckoutRepository ..> OrderItem : inserts
+CheckoutRepository ..> Transaction : inserts
+CheckoutRepository ..> InstructorPayout : inserts
+
+@enduml

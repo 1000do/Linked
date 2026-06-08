@@ -1,0 +1,96 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Delete Chats (Clear Chat History)
+
+actor User as act
+participant "ChatIndexView" as view
+participant "ChatController" as be_ctrl
+participant ":ChatService" as sv
+participant ":ChatRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Click "Delete Chat" button
+view->view++: confirm()
+view--
+
+group opt [Confirmed]
+    view->be_ctrl++: Send DELETE request to /api/chat/{chatId}/clear (with AccessToken)
+    be_ctrl->be_ctrl++: Get accountId from Claims
+    be_ctrl--
+    
+    be_ctrl->sv++: Call ClearChatHistoryAsync(chatId, accountId)
+    sv->repo++: Call GetParticipantAsync(chatId, accountId)
+    repo->ctx++: Query ChatParticipant by ChatId and AccountId
+    ctx->db++: SELECT * FROM ChatParticipants WHERE ChatId = {chatId} AND AccountId = {accountId}
+    db-->>ctx--: Return record
+    ctx-->>repo--: Return ChatParticipant
+    repo-->>sv--: Return ChatParticipant
+    
+    alt participant is null
+        sv-->>be_ctrl: Return false
+        be_ctrl-->>view: Return statusCode 400 (BadRequest)
+        view-->>act: Display error message
+    else participant is not null
+        sv->sv++: Set participant.ClearedAt = DateTime.UtcNow
+        sv--
+        sv->repo++: Call UpdateParticipantAsync(participant)
+        repo->ctx++: Mark entity as Modified
+        ctx-->>repo--: Return
+        repo-->>sv--: Return
+        
+        sv->repo++: Call SaveChangesAsync()
+        repo->ctx++: Call SaveChangesAsync()
+        ctx->db++: Save changes (Update ClearedAt)
+        db-->>ctx--: Return numberOfRowsAffected
+        ctx-->>repo--: Return numberOfRowsAffected
+        repo-->>sv--: Return numberOfRowsAffected
+        
+        sv->sv++: Check numberOfRowsAffected > 0
+        sv--
+        
+        alt numberOfRowsAffected > 0
+            sv-->>be_ctrl: Return true
+            be_ctrl-->>view: Return statusCode 200 (OK)
+            view->view++: Clear message list UI & Hide panel
+            view--
+            view->view++: loadChats()
+            view--
+            view-->>act: Display chat cleared success message
+        else numberOfRowsAffected = 0
+            sv-->>be_ctrl--: throw InvalidOperationException
+            be_ctrl-->>view--: Return statusCode 400 (BadRequest)
+            view-->>act--: Display error message
+        end
+    end
+else Cancelled
+    view-->>act: Do nothing
+end
+@enduml

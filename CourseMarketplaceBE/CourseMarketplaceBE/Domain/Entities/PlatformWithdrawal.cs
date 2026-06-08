@@ -1,4 +1,5 @@
 using System;
+using CourseMarketplaceBE.Domain.Constants;
 
 namespace CourseMarketplaceBE.Domain.Entities;
 
@@ -25,7 +26,7 @@ public partial class PlatformWithdrawal
     /// Trạng thái rút tiền:
     /// pending | in_transit | paid | failed | canceled
     /// </summary>
-    public string Status { get; set; } = "pending";
+    public string Status { get; set; } = PlatformWithdrawalStatus.Pending.ToValue();
 
     /// <summary>Ghi chú từ Admin</summary>
     public string? Description { get; set; }

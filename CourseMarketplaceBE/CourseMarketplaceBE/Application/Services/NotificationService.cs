@@ -31,7 +31,6 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task SendNotificationAsync(int receiverId, string title, string content, string? linkAction)
         {
-            // SỬA TẠI ĐÂY: Ép kiểu DateTime về Unspecified để Npgsql không báo lỗi
             var now = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(7), DateTimeKind.Unspecified);
 
             var noti = new Notification
@@ -48,6 +47,7 @@ namespace CourseMarketplaceBE.Application.Services
             int numberOfRowsAffected = await _repo.SaveChangesAsync();
             if (numberOfRowsAffected > 0)
             {
+
                 await _hubContext.Clients.User(receiverId.ToString())
                     .SendAsync("ReceiveNotification", new
                     {
@@ -58,10 +58,11 @@ namespace CourseMarketplaceBE.Application.Services
                         isRead = false,
                         receiverId = noti.ReceiverId
                     });
+                await _hubContext.Clients.Group("managers").SendAsync("ReceiveNotification");
             }
             else
             {
-                throw new InvalidOperationException("Failed to save changes");
+                throw new InvalidOperationException("Falied to send notification!");
             }
         }
 
@@ -71,15 +72,22 @@ namespace CourseMarketplaceBE.Application.Services
             if (noti == null || noti.ReceiverId != userId) return false;
 
             _repo.Delete(noti);
-            int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
+            int n = await _repo.SaveChangesAsync();
+
+            if (n > 0)
             {
-                throw new InvalidOperationException("Failed to save changes");
+
+                // Bổ sung dòng này: Báo cho Admin biết để xóa dòng đó khỏi bảng lịch sử
+                await _hubContext.Clients.All.SendAsync("ReceiveNotification");
+
+                return true;
+            }
+            else
+            {
+                throw new InvalidOperationException("Failed to delete notification");
             }
 
-            // Bổ sung dòng này: Báo cho Admin biết để xóa dòng đó khỏi bảng lịch sử
             await _hubContext.Clients.All.SendAsync("ReceiveNotification");
-
             return true;
         }
 
@@ -88,64 +96,149 @@ namespace CourseMarketplaceBE.Application.Services
             var result = await _repo.MarkAsReadAsync(notificationId, userId);
             if (result)
             {
-                // Bổ sung dòng này: Gửi tín hiệu để trình duyệt Admin tự loadHistory()
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification");
             }
             return result;
         }
+
+        public async Task<bool> MarkAllAsReadAsync(int userId)
+        {
+            var result = await _repo.MarkAllAsReadAsync(userId);
+            if (result)
+            {
+                await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", null);
+                await _hubContext.Clients.All.SendAsync("ReceiveNotification");
+            }
+            return result;
+        }
+
         public async Task<List<NotificationAdminResponseDto>> GetAllNotificationsForAdminAsync()
         {
-            // Tự động dọn dẹp các thông báo đã đọc và cũ hơn 30 ngày
             await _repo.AutoCleanupAdminNotificationsAsync();
 
-            // Sử dụng Repository để lấy data đã bao gồm Include(n => n.Receiver).ThenInclude(u => u.User)
             var notifications = await _repo.GetAllAsync();
 
-            return notifications.Select(n => new NotificationAdminResponseDto
-            {
-                NotificationId = n.NotificationId,
-                Title = n.Title,
-                Content = n.Content,
-                IsRead = n.IsRead,
-                CreatedAt = n.CreatedAt,
-                // Chống null để tránh lỗi runtime
-                ReceiverEmail = n.Receiver?.Email ?? "all-users@system.com",
-                ReceiverFullName = n.Receiver?.User?.FullName ?? "System"
+            return notifications.Select(n => {
+                string role = "broadcast";
+                if (n.Receiver != null)
+                {
+                    if (n.Receiver.Manager != null)
+                    {
+                        role = n.Receiver.Manager.Role?.ToLower() ?? "staff";
+                    }
+                    else if (n.Receiver.User != null)
+                    {
+                        role = n.Receiver.User.Instructor != null ? "instructor" : "student";
+                    }
+                    else
+                    {
+                        role = "student";
+                    }
+                }
+
+                string senderRole = "system";
+                if (n.Sender != null)
+                {
+                    if (n.Sender.Manager != null)
+                    {
+                        senderRole = n.Sender.Manager.Role?.ToLower() ?? "staff";
+                    }
+                    else if (n.Sender.User != null)
+                    {
+                        senderRole = n.Sender.User.Instructor != null ? "instructor" : "student";
+                    }
+                    else
+                    {
+                        senderRole = "student";
+                    }
+                }
+
+                return new NotificationAdminResponseDto
+                {
+                    NotificationId = n.NotificationId,
+                    Title = n.Title,
+                    Content = n.Content,
+                    IsRead = n.IsRead,
+                    CreatedAt = n.CreatedAt,
+                    ReceiverEmail = n.Receiver?.Email ?? "all-users@system.com",
+                    ReceiverFullName = n.Receiver?.User?.FullName ?? "System",
+                    ReceiverRole = role,
+                    ReceiverId = n.ReceiverId,
+                    SenderId = n.SenderId,
+                    SenderRole = senderRole
+                };
             }).ToList();
         }
 
-        public async Task<List<string>> SearchEmailsAsync(string query)
-            => await _userRepo.SearchEmailsByQueryAsync(query);
+        public async Task<List<string>> SearchEmailsAsync(string query, int senderId, string senderRole)
+            => await _userRepo.SearchEmailsByQueryAsync(query, senderId, senderRole);
 
         public async Task<int> GetUnreadCountAsync(int userId)
         {
             return await _repo.GetUnreadCountAsync(userId);
         }
 
-        public async Task<int> SendAdvancedAsync(NotificationAdvancedDto dto)
+        public async Task<int> SendAdvancedAsync(NotificationAdvancedDto dto, int senderId, string senderRole)
         {
             var targetUserIds = new List<int>();
 
             if (dto.TargetType == "ALL")
             {
-                targetUserIds = await _userRepo.GetAllUserIdsAsync();
+                if (senderRole == "staff")
+                {
+                    targetUserIds = await _userRepo.GetUserIdsForStaffSenderAsync();
+                }
+                else if (senderRole == "admin")
+                {
+                    targetUserIds = await _userRepo.GetUserIdsForAdminSenderAsync();
+                }
+                else
+                {
+                    targetUserIds = await _userRepo.GetAllUserIdsAsync();
+                }
+
+                targetUserIds.Remove(senderId);
             }
             else if (dto.Emails != null && dto.Emails.Any())
             {
                 foreach (var email in dto.Emails)
                 {
-                    var userId = await _userRepo.GetUserIdByEmailAsync(email);
-                    if (userId.HasValue) targetUserIds.Add(userId.Value);
+                    var acc = await _userRepo.GetAccountByEmailAsync(email);
+                    if (acc != null)
+                    {
+                        if (acc.AccountId == senderId)
+                        {
+                            throw new InvalidOperationException("You cannot send a notification to yourself.");
+                        }
+
+                        var recipientRole = await _userRepo.GetRoleByAccountIdAsync(acc.AccountId);
+                        if (senderRole == "staff")
+                        {
+                            if (recipientRole == "staff" || recipientRole == "admin")
+                            {
+                                throw new InvalidOperationException("Staff cannot send notifications to staff or admin.");
+                            }
+                        }
+                        else if (senderRole == "admin")
+                        {
+                            if (recipientRole == "admin")
+                            {
+                                throw new InvalidOperationException("Admin cannot send notifications to other admins.");
+                            }
+                        }
+
+                        targetUserIds.Add(acc.AccountId);
+                    }
                 }
             }
 
             if (!targetUserIds.Any()) return 0;
 
-            // SỬA TẠI ĐÂY: Ép kiểu DateTime cho gửi hàng loạt
             var now = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(7), DateTimeKind.Unspecified);
 
             var notifications = targetUserIds.Select(uid => new Notification
             {
+                SenderId = senderId,
                 ReceiverId = uid,
                 Title = dto.Title,
                 Content = dto.Content,
@@ -160,19 +253,22 @@ namespace CourseMarketplaceBE.Application.Services
                 throw new InvalidOperationException("Failed to save changes");
             }
 
-            // Trong SendAdvancedAsync và SendNotificationAsync
             foreach (var uid in targetUserIds)
             {
                 await _hubContext.Clients.User(uid.ToString()).SendAsync("ReceiveNotification", new
                 {
-                    notificationId = 0, // Hoặc ID thật nếu bạn lưu từng cái
+                    notificationId = 0,
                     title = dto.Title,
                     content = dto.Content,
                     createdAt = now,
                     isRead = false,
-                    receiverId = uid
+                    receiverId = uid,
+                    senderId = senderId,
+                    senderRole = senderRole
                 });
             }
+
+            await _hubContext.Clients.Group("managers").SendAsync("ReceiveNotification");
 
             return targetUserIds.Count;
         }
@@ -213,6 +309,8 @@ namespace CourseMarketplaceBE.Application.Services
                         receiverId = noti.ReceiverId
                     });
             }
+
+            await _hubContext.Clients.Group("managers").SendAsync("ReceiveNotification");
         }
     }
 }

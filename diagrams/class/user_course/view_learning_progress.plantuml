@@ -1,0 +1,157 @@
+@startuml ViewLearningProgress_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "CourseController" as CourseControllerFE #FFE6E6 {
+    + GetProgress(id: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "EnrollmentController" as EnrollmentControllerBE #FFE6E6 {
+    - _enrollmentService : IEnrollmentService
+    + GetProgress(courseId: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class ProgressResponse #E6CCFF {
+    + EnrollmentId : int
+    + LearnedMaterialCount : int
+    + TotalMaterialCount : int
+    + CompletedMaterialIds : List<int>
+    + ProgressPercentage : double <<Get>>
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Enrollment #CCFFE6 {
+    + EnrollmentId : int <<PK>>
+    + UserId : int? <<FK>>
+    + CourseId : int? <<FK>>
+    + IsCompleted : bool?
+    + CompletedDate : DateOnly?
+    + EnrollDate : DateOnly?
+    + LastAccessedAt : DateTime?
+    + EnrollmentStatus : string?
+}
+
+class Course #CCFFE6 {
+    + CourseId : int <<PK>>
+    + Title : string
+    + InstructorId : int? <<FK>>
+}
+
+class CourseStats #CCFFE6 {
+    + CourseId : int
+    + TotalMaterials : int
+}
+
+class MaterialCompletion #CCFFE6 {
+    + Id : int <<PK>>
+    + EnrollmentId : int <<FK>>
+    + MaterialId : int <<FK>>
+    + CompletedAt : DateTime?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IEnrollmentService #FFE6CC {
+    //+ GetProgressAsync(userId: int, courseId: int) : Task<ProgressResponse>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IEnrollmentRepository #FFE6CC {
+    //+ GetEnrollmentAsync(userId: int, courseId: int) : Task<Enrollment?>//
+    //+ GetCompletedMaterialCountAsync(enrollmentId: int) : Task<int>//
+    //+ GetCompletedMaterialIdsAsync(enrollmentId: int) : Task<List<int>>//
+}
+
+interface ICourseRepository #FFE6CC {
+    //+ GetByIdAsync(courseId: int) : Task<Course?>//
+    //+ GetCourseStatsAsync(courseId: int) : Task<CourseStats?>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class EnrollmentService #CCE5FF {
+    - _repo : IEnrollmentRepository
+    - _courseRepo : ICourseRepository
+    + GetProgressAsync(userId: int, courseId: int) : Task<ProgressResponse>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class EnrollmentRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetEnrollmentAsync(userId: int, courseId: int) : Task<Enrollment?>
+    + GetCompletedMaterialCountAsync(enrollmentId: int) : Task<int>
+    + GetCompletedMaterialIdsAsync(enrollmentId: int) : Task<List<int>>
+}
+
+class CourseRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetByIdAsync(courseId: int) : Task<Course?>
+    + GetCourseStatsAsync(courseId: int) : Task<CourseStats?>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Enrollments : DbSet<Enrollment>
+    + Courses : DbSet<Course>
+    + CourseStats : DbSet<CourseStats>
+    + MaterialCompletions : DbSet<MaterialCompletion>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+EnrollmentControllerBE --> IEnrollmentService
+EnrollmentService --> IEnrollmentRepository
+EnrollmentService --> ICourseRepository
+EnrollmentRepository --> AppDbContext
+CourseRepository --> AppDbContext
+Enrollment --> Course
+Enrollment "1" *-- "*" MaterialCompletion
+
+' === INTERFACE REALIZATION ===
+EnrollmentService ..|> IEnrollmentService
+EnrollmentRepository ..|> IEnrollmentRepository
+CourseRepository ..|> ICourseRepository
+
+' === DEPENDENCY ===
+CourseControllerFE ..> EnrollmentControllerBE : calls via HTTP
+EnrollmentControllerBE ..> ProgressResponse : uses
+EnrollmentService ..> ProgressResponse : uses
+EnrollmentService ..> Enrollment : uses
+EnrollmentService ..> Course : uses
+EnrollmentService ..> CourseStats : uses
+EnrollmentRepository ..> Enrollment : uses
+CourseRepository ..> Course : uses
+CourseRepository ..> CourseStats : uses
+
+@enduml

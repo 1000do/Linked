@@ -11,13 +11,20 @@
             <h2 class="text-3xl font-headline font-extrabold text-slate-800">Notifications</h2>
             <p class="text-slate-500 text-sm mt-1">Stay updated with the latest alerts and announcements.</p>
         </div>
-        <span class="text-xs text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-full flex items-center gap-2">
-            <span class="relative flex h-2 w-2">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+        <div class="flex items-center gap-3 animate-fade-in">
+            <button id="mark-all-read-btn" onclick="handleMarkAllAsRead()"
+                    class="px-4 py-2 text-xs font-bold text-teal-700 bg-teal-50 border border-teal-200 rounded-xl hover:bg-teal-100 transition-all flex items-center gap-1.5 shadow-sm">
+                <span class="material-symbols-outlined text-[16px]">done_all</span>
+                Mark All as Read
+            </button>
+            <span class="text-xs text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-full flex items-center gap-2">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+                </span>
+                Online
             </span>
-            Online
-        </span>
+        </div>
     </div>
 
     @* ── Notification Search, Sort, Filter Bar ───────────────────── *@
@@ -361,8 +368,52 @@
             } catch (err) { console.error(err); }
         }
 
+        async function handleMarkAllAsRead() {
+            const unreadCount = allNotifications.filter(n => !n.isRead).length;
+
+            if (unreadCount === 0) {
+                Swal.fire({
+                    title: 'No Unread Notifications',
+                    text: 'You have read all notifications already!',
+                    icon: 'info',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    background: '#ffffff',
+                    customClass: { popup: 'rounded-2xl shadow-xl' }
+                });
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/mark-all-as-read`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${TOKEN_USER}` }
+                });
+
+                if (response.ok) {
+                    allNotifications.forEach(n => n.isRead = true);
+                    applyNotificationFilters();
+
+                    Swal.fire({
+                        title: 'Marked All as Read',
+                        text: 'All your notifications have been marked as read.',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl' }
+                    });
+                }
+            } catch (err) { console.error(err); }
+        }
+
         // Attach filter listeners
         document.addEventListener('DOMContentLoaded', () => {
+            document.addEventListener("ReceiveNotificationEvent", () => {
+                console.log("Real-time notification update received, reloading...");
+                loadNotifications();
+            });
+
             const searchInput = document.getElementById('notification-search');
             const readSelect = document.getElementById('notification-filter-read');
             const sortSelect = document.getElementById('notification-sort');

@@ -1,0 +1,166 @@
+@startuml ReportCourse_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "ReportController" as ReportControllerFE #FFE6E6 {
+    + ReportCourse(model: CreateCourseReportViewModel) : Task<IActionResult>
+}
+
+class CreateCourseReportViewModel #E6CCFF {
+    + CourseId : int
+    + Reason : string
+    + Description : string?
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "ReportController" as ReportControllerBE #FFE6E6 {
+    - _reportService : IReportService
+    + ReportCourse(request: CreateCourseReportRequest) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class CreateCourseReportRequest #E6CCFF {
+    + CourseId : int
+    + Reason : string
+    + Description : string?
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class CourseReport #CCFFE6 {
+    + CourseReportId : int <<PK>>
+    + ReporterId : int? <<FK>>
+    + CourseId : int? <<FK>>
+    + Reason : string?
+    + Description : string?
+    + CourseReportsStatus : string?
+    + CreatedAt : DateTime?
+}
+
+class Course #CCFFE6 {
+    + CourseId : int <<PK>>
+    + Title : string
+    + InstructorId : int? <<FK>>
+    + CourseStatus : string
+}
+
+class Enrollment #CCFFE6 {
+    + EnrollmentId : int <<PK>>
+    + UserId : int? <<FK>>
+    + CourseId : int? <<FK>>
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IReportService #FFE6CC {
+    //+ CreateCourseReportAsync(reporterId: int, request: CreateCourseReportRequest, isInstructor: bool) : Task//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IReportRepository #FFE6CC {
+    //+ GetPendingCourseReportAsync(reporterId: int, courseId: int) : Task<CourseReport?>//
+    //+ AddCourseReportAsync(report: CourseReport) : Task//
+    //+ SaveChangesAsync() : Task<int>//
+}
+
+interface ICourseRepository #FFE6CC {
+    //+ GetByIdAsync(id: int) : Task<Course?>//
+}
+
+interface IEnrollmentRepository #FFE6CC {
+    //+ GetEnrollmentWithProgressAsync(userId: int, courseId: int) : Task<Enrollment?>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ReportService #CCE5FF {
+    - _reportRepo : IReportRepository
+    - _courseRepo : ICourseRepository
+    - _enrollmentRepo : IEnrollmentRepository
+    + CreateCourseReportAsync(reporterId: int, request: CreateCourseReportRequest, isInstructor: bool) : Task
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ReportRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetPendingCourseReportAsync(reporterId: int, courseId: int) : Task<CourseReport?>
+    + AddCourseReportAsync(report: CourseReport) : Task
+    + SaveChangesAsync() : Task<int>
+}
+
+class CourseRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetByIdAsync(id: int) : Task<Course?>
+}
+
+class EnrollmentRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetEnrollmentWithProgressAsync(userId: int, courseId: int) : Task<Enrollment?>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + CourseReports : DbSet<CourseReport>
+    + Courses : DbSet<Course>
+    + Enrollments : DbSet<Enrollment>
+    + SaveChangesAsync(cancellationToken: CancellationToken) : Task<int>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+ReportControllerBE --> IReportService
+ReportService --> IReportRepository
+ReportService --> ICourseRepository
+ReportService --> IEnrollmentRepository
+ReportRepository --> AppDbContext
+CourseRepository --> AppDbContext
+EnrollmentRepository --> AppDbContext
+CourseReport --> Course
+
+' === INTERFACE REALIZATION ===
+ReportService ..|> IReportService
+ReportRepository ..|> IReportRepository
+CourseRepository ..|> ICourseRepository
+EnrollmentRepository ..|> IEnrollmentRepository
+
+' === DEPENDENCY ===
+ReportControllerFE ..> ReportControllerBE : calls via HTTP
+ReportControllerFE ..> CreateCourseReportViewModel : uses
+ReportControllerBE ..> CreateCourseReportRequest : uses
+ReportService ..> CreateCourseReportRequest : uses
+ReportService ..> CourseReport : uses
+ReportService ..> Course : uses
+ReportService ..> Enrollment : uses
+ReportRepository ..> CourseReport : uses
+CourseRepository ..> Course : uses
+EnrollmentRepository ..> Enrollment : uses
+
+@enduml

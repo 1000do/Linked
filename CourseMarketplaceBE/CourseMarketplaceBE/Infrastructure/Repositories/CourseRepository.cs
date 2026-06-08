@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CourseMarketplaceBE.Domain.Constants;
+using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
-using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,15 +14,18 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories;
 public class CourseRepository : ICourseRepository
 {
     private readonly AppDbContext _context;
+    private readonly ICourseExtRepository _courseExtRepository;
 
-    public CourseRepository(AppDbContext context)
+    public CourseRepository(AppDbContext context, ICourseExtRepository courseExtRepository)
     {
         _context = context;
+        _courseExtRepository = courseExtRepository;
     }
 
     public async Task<IEnumerable<Course>> GetInstructorCoursesAsync(int instructorId)
     {
         return await _context.Courses
+            .IgnoreQueryFilters()
             .Where(c => c.InstructorId == instructorId)
             .AsNoTracking()
             .ToListAsync();
@@ -34,6 +39,7 @@ public class CourseRepository : ICourseRepository
         int? pageSize = null)
     {
         var queryable = _context.Courses
+            .IgnoreQueryFilters()
             .Where(c => c.InstructorId == instructorId)
             .AsNoTracking();
 
@@ -45,9 +51,21 @@ public class CourseRepository : ICourseRepository
         }
 
         // 2. Filtering by status
-        if (!string.IsNullOrEmpty(status) && !string.Equals(status, "All", StringComparison.OrdinalIgnoreCase))
+        var statusFilter = string.IsNullOrEmpty(status) ? "all" : status.ToLower();
+        if (statusFilter != "all")
         {
-            queryable = queryable.Where(c => c.CourseStatus == status.ToLower());
+            if (statusFilter == CourseStatus.PermanentlyLocked.ToValue())
+            {
+                queryable = queryable.Where(c => c.CourseStatus == CourseStatus.Archived.ToValue() && c.CourseFlagCount >= 3);
+            }
+            else if (statusFilter == "archived")
+            {
+                queryable = queryable.Where(c => c.CourseStatus == CourseStatus.Archived.ToValue() && (c.CourseFlagCount == null || c.CourseFlagCount < 3));
+            }
+            else
+            {
+                queryable = queryable.Where(c => c.CourseStatus == statusFilter);
+            }
         }
 
         // 3. Sorting (default: newest update / modified)
@@ -71,26 +89,26 @@ public class CourseRepository : ICourseRepository
             .Include(c => c.Category)
             .Include(c => c.Instructor)
                 .ThenInclude(i => i!.InstructorNavigation)
-            .Where(c => c.CourseStatus == "published")
+            .Where(c => c.CourseStatus == CourseStatus.Published.ToValue())
             .OrderByDescending(c => c.CreatedAt)
             .AsNoTracking()
             .ToListAsync();
     }
 
     public async Task<(IEnumerable<Course> Courses, int TotalCount)> GetAllPublishedCoursesPagedAsync(
-        string? search = null, 
-        string? category = null, 
-        string? sort = null, 
+        string? search = null,
+        string? category = null,
+        string? sort = null,
         string? price = null,
         string? rating = null,
-        int? page = null, 
+        int? page = null,
         int? pageSize = null)
     {
         var queryable = _context.Courses
             .Include(c => c.Category)
             .Include(c => c.Instructor)
                 .ThenInclude(i => i!.InstructorNavigation)
-            .Where(c => c.CourseStatus == "published")
+            .Where(c => c.CourseStatus == CourseStatus.Published.ToValue())
             .AsNoTracking();
 
         // 0.1. Filtering by price
@@ -123,7 +141,7 @@ public class CourseRepository : ICourseRepository
         if (!string.IsNullOrEmpty(search))
         {
             var searchLower = search.ToLower();
-            queryable = queryable.Where(c => c.Title.ToLower().Contains(searchLower) || 
+            queryable = queryable.Where(c => c.Title.ToLower().Contains(searchLower) ||
                                              (c.Description != null && c.Description.ToLower().Contains(searchLower)));
         }
 
@@ -175,13 +193,13 @@ public class CourseRepository : ICourseRepository
     public async Task<bool> IsEnrolledAsync(int userId, int courseId)
     {
         return await _context.Enrollments
-            .AnyAsync(e => e.UserId == userId && e.CourseId == courseId && e.EnrollmentStatus != "revoked");
+            .AnyAsync(e => e.UserId == userId && e.CourseId == courseId && e.EnrollmentStatus != EnrollmentStatus.Revoked.ToValue());
     }
 
     public async Task<IEnumerable<Course>> GetEnrolledCoursesAsync(int userId)
     {
         return await _context.Enrollments
-            .Where(e => e.UserId == userId && e.EnrollmentStatus != "revoked")
+            .Where(e => e.UserId == userId && e.EnrollmentStatus != EnrollmentStatus.Revoked.ToValue())
             .Include(e => e.Course)
                 .ThenInclude(c => c!.Instructor)
                     .ThenInclude(i => i!.InstructorNavigation)
@@ -203,7 +221,7 @@ public class CourseRepository : ICourseRepository
                 .ThenInclude(i => i!.InstructorNavigation)
                     .ThenInclude(u => u.UserNavigation)
             .Include(c => c.Lessons.Where(l => !l.IsRemoved).OrderBy(l => l.LessonId))
-                .ThenInclude(l => l.LearningMaterials.Where(m => m.LearningStatus != "removed").OrderBy(m => m.MaterialId))
+                .ThenInclude(l => l.LearningMaterials.Where(m => m.LearningStatus != LearningStatus.Removed.ToValue()).OrderBy(m => m.MaterialId))
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.CourseId == courseId);
     }
@@ -267,6 +285,12 @@ public class CourseRepository : ICourseRepository
     public async Task AddAsync(Course course)
     {
         await _context.Courses.AddAsync(course);
+
+    }
+
+    public void Add(Course course)
+    {
+        _context.Courses.Add(course);
     }
 
     public void Update(Course course)
@@ -281,7 +305,7 @@ public class CourseRepository : ICourseRepository
 
     public async Task<int> GetTotalPublishedCoursesCountAsync()
     {
-        return await _context.Courses.CountAsync(c => c.CourseStatus == "published");
+        return await _context.Courses.CountAsync(c => c.CourseStatus == CourseStatus.Published.ToValue());
     }
 
     public async Task<decimal> GetAveragePlatformRatingAsync()
@@ -298,11 +322,11 @@ public class CourseRepository : ICourseRepository
         var today = DateTime.Today;
 
         var pendingCount = await _context.Courses
-            .Where(c => c.CourseStatus == "pending" && !c.IsRemoved)
+            .Where(c => c.CourseStatus == CourseStatus.Pending.ToValue() && !c.IsRemoved)
             .CountAsync();
 
         var resolvedTodayCount = await _context.Courses
-            .Where(c => (c.CourseStatus == "published" || c.CourseStatus == "rejected")
+            .Where(c => (c.CourseStatus == CourseStatus.Published.ToValue() || c.CourseStatus == CourseStatus.Rejected.ToValue())
                      && c.UpdatedAt >= today
                      && !c.IsRemoved)
             .CountAsync();
@@ -322,20 +346,31 @@ public class CourseRepository : ICourseRepository
             .AsQueryable();
 
         // Always exclude draft courses from moderation interface
-        query = query.Where(c => c.CourseStatus != "draft");
+        query = query.Where(c => c.CourseStatus != CourseStatus.Draft.ToValue());
 
         // 1. Filter by Status (Default is all)
         var statusFilter = string.IsNullOrEmpty(filter.Status) ? "all" : filter.Status;
         if (statusFilter != "all")
         {
-            query = query.Where(c => c.CourseStatus == statusFilter);
+            if (statusFilter == CourseStatus.PermanentlyLocked.ToValue())
+            {
+                query = query.Where(c => c.CourseStatus == CourseStatus.Archived.ToValue() && c.CourseFlagCount >= 3);
+            }
+            else if (statusFilter == "archived")
+            {
+                query = query.Where(c => c.CourseStatus == CourseStatus.Archived.ToValue() && (c.CourseFlagCount == null || c.CourseFlagCount < 3));
+            }
+            else
+            {
+                query = query.Where(c => c.CourseStatus == statusFilter);
+            }
         }
 
         // 2. Search (Title or Instructor)
         if (!string.IsNullOrEmpty(filter.Search))
         {
             var search = filter.Search.ToLower();
-            query = query.Where(c => c.Title.ToLower().Contains(search) || 
+            query = query.Where(c => c.Title.ToLower().Contains(search) ||
                                    c.Instructor!.InstructorNavigation!.FullName.ToLower().Contains(search));
         }
 
@@ -345,15 +380,23 @@ public class CourseRepository : ICourseRepository
             query = query.Where(c => c.Category!.CategoriesName == filter.Category || c.CategoryId.ToString() == filter.Category);
         }
 
-        // 4. Sorting (Urgency: oldest first)
+        // 4. Sorting (Urgency/Threat Level)
         if (filter.SortBy == "newest")
         {
             query = query.OrderByDescending(c => c.CreatedAt);
         }
+        else if (filter.SortBy == "threat_asc")
+        {
+            query = query.OrderBy(c => c.ThreatLevel).ThenBy(c => c.CreatedAt);
+        }
+        else if (filter.SortBy == "oldest")
+        {
+            query = query.OrderBy(c => c.CreatedAt);
+        }
         else
         {
-            // default: oldest first (more urgent)
-            query = query.OrderBy(c => c.CreatedAt);
+            // default (threat_desc): Threat Level descending
+            query = query.OrderByDescending(c => c.ThreatLevel).ThenBy(c => c.CreatedAt);
         }
 
         var totalCount = await query.CountAsync();
@@ -364,7 +407,8 @@ public class CourseRepository : ICourseRepository
             .ToListAsync();
         var now = DateTime.Now;
 
-        var items = courses.Select(c => {
+        var items = courses.Select(c =>
+        {
             var dto = new CourseModerationDto
             {
                 CourseId = c.CourseId,
@@ -373,14 +417,15 @@ public class CourseRepository : ICourseRepository
                 CategoryName = c.Category?.CategoriesName,
                 Price = c.Price,
                 CreatedAt = c.CreatedAt,
-                CourseStatus = c.CourseStatus,
+                CourseStatus = (c.CourseStatus == CourseStatus.Archived.ToValue() && c.CourseFlagCount >= 3) ? CourseStatus.PermanentlyLocked.ToValue() : c.CourseStatus,
                 CourseThumbnailUrl = c.CourseThumbnailUrl,
                 FlagCount = c.CourseFlagCount ?? 0,
-                IsRemoved = c.IsRemoved
+                IsRemoved = c.IsRemoved,
+                ThreatLevel = c.ThreatLevel
             };
 
             // Calculate Urgency
-            if (c.CreatedAt.HasValue && c.CourseStatus == "pending")
+            if (c.CreatedAt.HasValue && c.CourseStatus == CourseStatus.Pending.ToValue())
             {
                 var diff = now - c.CreatedAt.Value;
                 if (diff.TotalHours > 72)
@@ -424,11 +469,13 @@ public class CourseRepository : ICourseRepository
         return await _context.Enrollments
             .FirstOrDefaultAsync(e => e.UserId == userId
                                    && e.CourseId == courseId
-                                   && e.EnrollmentStatus == "active");
+                                   && e.EnrollmentStatus == EnrollmentStatus.Active.ToValue());
     }
 
     public async Task<int> SaveChangesAsync()
     {
         return await _context.SaveChangesAsync();
     }
+
+
 }

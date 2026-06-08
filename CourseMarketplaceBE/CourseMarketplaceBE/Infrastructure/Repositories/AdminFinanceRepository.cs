@@ -1,3 +1,4 @@
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
@@ -570,7 +571,7 @@ public class AdminFinanceRepository : IAdminFinanceRepository
             .Where(m => m.Lesson != null 
                         && m.Lesson.CourseId == courseId 
                         && !m.Lesson.IsRemoved 
-                        && m.LearningStatus != "removed")
+                        && m.LearningStatus != CourseMarketplaceBE.Domain.Constants.LearningStatus.Removed.ToValue())
             .Select(m => new {
                 m.MaterialId,
                 m.MaterialMetadata
@@ -626,3 +627,4 @@ public class AdminFinanceRepository : IAdminFinanceRepository
 
     public async Task<int> SaveChangesAsync() => await _context.SaveChangesAsync();
 }
+

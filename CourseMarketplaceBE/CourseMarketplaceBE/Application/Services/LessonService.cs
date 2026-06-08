@@ -3,11 +3,11 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
-using CourseMarketplaceBE.Application.Exceptions;
-using CourseMarketplaceBE.Domain.Constants;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -19,17 +19,21 @@ public class LessonService : ILessonService
     private readonly IFileUploadService _uploadService;
     private readonly IRedisService _redisService;
     private readonly IInstructorRepository _instructorRepository;
-    private readonly IMaterialEmbeddingRepository _materialEmbeddingRepository;
+    private readonly ITextEmbeddingRepository _textEmbeddingRepository;
+    private readonly IMediaEmbeddingRepository _mediaEmbeddingRepository;
+    private readonly ILogger<LessonService> _logger;
     private readonly ILockoutRepository _lockoutRepo;
 
     public LessonService(
-        ILessonRepository lessonRepository, 
+        ILessonRepository lessonRepository,
         ICourseRepository courseRepository,
         IMaterialRepository materialRepository,
         IFileUploadService uploadService,
         IRedisService redisService,
         IInstructorRepository instructorRepository,
-        IMaterialEmbeddingRepository materialEmbeddingRepository,
+        ITextEmbeddingRepository textEmbeddingRepository,
+        IMediaEmbeddingRepository mediaEmbeddingRepository,
+        ILogger<LessonService> logger,
         ILockoutRepository lockoutRepo)
     {
         _lessonRepository = lessonRepository;
@@ -38,7 +42,9 @@ public class LessonService : ILessonService
         _uploadService = uploadService;
         _redisService = redisService;
         _instructorRepository = instructorRepository;
-        _materialEmbeddingRepository = materialEmbeddingRepository;
+        _textEmbeddingRepository = textEmbeddingRepository;
+        _mediaEmbeddingRepository = mediaEmbeddingRepository;
+        _logger = logger;
         _lockoutRepo = lockoutRepo;
     }
 
@@ -54,17 +60,20 @@ public class LessonService : ILessonService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot create lessons.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot create lessons.");
         }
 
-        if ("pending".Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (CourseStatus.Pending.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot add lessons while the course is pending review.");
+
+        if (CourseStatus.Archived.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
+            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
 
         // ★ Limit: Max 5 lessons for unlinked Stripe
         var instructor = await _instructorRepository.GetByIdAsync(instructorId);
         var isStripeActive = instructor != null
             && !string.IsNullOrEmpty(instructor.StripeAccountId)
-            && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+            && string.Equals(instructor.StripeOnboardingStatus, StripeOnboardingStatus.Active.ToValue(), StringComparison.OrdinalIgnoreCase);
 
         if (!isStripeActive)
         {
@@ -102,11 +111,11 @@ public class LessonService : ILessonService
             ThumbnailUrl = thumbnailUrl,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            LessonStatus = "active"
+            LessonStatus = LessonStatus.Active.ToValue()
         };
 
         await _lessonRepository.AddAsync(lesson);
-        
+
         if (string.Equals(course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             course.CourseStatus = CourseStatus.Draft.ToValue();
@@ -146,11 +155,14 @@ public class LessonService : ILessonService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update lessons.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update lessons.");
         }
 
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot update lesson title while the course is pending review.");
+
+        if (CourseStatus.Archived.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase) && (lesson.Course.CourseFlagCount ?? 0) >= 3)
+            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
 
         // Duplicate Title Check
         var allLessons = await _lessonRepository.GetByCourseIdAsync(lesson.CourseId ?? 0);
@@ -203,25 +215,28 @@ public class LessonService : ILessonService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot add materials.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot add materials.");
         }
 
-        if ("pending".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (CourseStatus.Pending.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot add materials while the course is pending review.");
+
+        if (CourseStatus.Archived.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase) && (lesson.Course.CourseFlagCount ?? 0) >= 3)
+            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
 
         // ★ Limit: Max 1 resource for unlinked Stripe
         var instructor = await _instructorRepository.GetByIdAsync(instructorId);
         var isStripeActive = instructor != null
             && !string.IsNullOrEmpty(instructor.StripeAccountId)
-            && string.Equals(instructor.StripeOnboardingStatus, "Active", StringComparison.OrdinalIgnoreCase);
+            && string.Equals(instructor.StripeOnboardingStatus, StripeOnboardingStatus.Active.ToValue(), StringComparison.OrdinalIgnoreCase);
 
         var fileType = request.MaterialMetadata?.FileType ?? "video";
         if (!isStripeActive && (fileType == "document" || fileType == "file" || fileType == "raw"))
         {
             var existingMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
-            if (existingMaterials.Count(m => m.LearningStatus != "removed" && (m.MaterialMetadata?.FileType == "document" || m.MaterialMetadata?.FileType == "file" || m.MaterialMetadata?.FileType == "raw")) >= 1)
+            if (existingMaterials.Count(m => m.LearningStatus != LearningStatus.Removed.ToValue() && (m.MaterialMetadata?.FileType == "document" || m.MaterialMetadata?.FileType == "file" || m.MaterialMetadata?.FileType == "raw")) >= 2)
             {
-                throw new BadRequestException("Instructors who have not linked a Stripe account are only allowed to attach up to 1 document per lesson.");
+                throw new BadRequestException("Instructors who have not linked a Stripe account are only allowed to attach up to 2 document per lesson.");
             }
         }
 
@@ -231,7 +246,7 @@ public class LessonService : ILessonService
         if (request.MaterialFile != null)
         {
             var uploadedUrl = await _uploadService.UploadVideoAsync(request.MaterialFile);
-                if (uploadedUrl != null)
+            if (uploadedUrl != null)
             {
                 materialUrl = uploadedUrl;
             }
@@ -239,12 +254,12 @@ public class LessonService : ILessonService
 
         var allMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
         fileType = request.MaterialMetadata?.FileType ?? "video";
-        
+
         var existingActiveVideos = new List<LearningMaterial>();
         if (fileType == "video")
         {
             existingActiveVideos = allMaterials.Where(m => 
-                m.LearningStatus == "active" &&
+                m.LearningStatus == LearningStatus.Active.ToValue() &&
                 ((m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || (m.MaterialMetadata == null))).ToList();
         }
 
@@ -262,7 +277,7 @@ public class LessonService : ILessonService
                     activeVideo.MaterialUrl = trashUrl ?? activeVideo.MaterialUrl;
                     activeVideo.CloudPublicId = cloudId;
                 }
-                activeVideo.LearningStatus = "removed";
+                activeVideo.LearningStatus = LearningStatus.Removed.ToValue();
                 activeVideo.UpdatedAt = DateTime.UtcNow;
                 _materialRepository.Update(activeVideo);
             }
@@ -277,7 +292,7 @@ public class LessonService : ILessonService
                 MaterialMetadata = request.MaterialMetadata ?? new MaterialMetadata { FileType = "video" },
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                LearningStatus = "active"
+                LearningStatus = LearningStatus.Active.ToValue()
             };
             await _materialRepository.AddAsync(material);
         }
@@ -299,7 +314,7 @@ public class LessonService : ILessonService
             // Dọn dẹp dữ liệu lỗi nếu có nhiều hơn 1 video active
             foreach (var extraVideo in existingActiveVideos.Skip(1))
             {
-                extraVideo.LearningStatus = "removed";
+                extraVideo.LearningStatus = LearningStatus.Removed.ToValue();
                 extraVideo.UpdatedAt = DateTime.UtcNow;
                 _materialRepository.Update(extraVideo);
             }
@@ -316,7 +331,7 @@ public class LessonService : ILessonService
                 MaterialMetadata = request.MaterialMetadata ?? new MaterialMetadata { FileType = "video" },
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                LearningStatus = "active"
+                LearningStatus = LearningStatus.Active.ToValue()
             };
             await _materialRepository.AddAsync(material);
         }
@@ -366,11 +381,14 @@ public class LessonService : ILessonService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update materials.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update materials.");
         }
 
-        if ("pending".Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (CourseStatus.Pending.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot update materials while the course is pending review.");
+
+        if (CourseStatus.Archived.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase) && (lesson.Course.CourseFlagCount ?? 0) >= 3)
+            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
 
         material.Title = request.Title;
         material.Description = request.Description;
@@ -419,18 +437,21 @@ public class LessonService : ILessonService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot remove materials.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot remove materials.");
         }
 
-        if ("pending".Equals(lesson.Course?.CourseStatus, StringComparison.OrdinalIgnoreCase))
+        if (CourseStatus.Pending.ToValue().Equals(lesson.Course?.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot update material while the course is pending review.");
+
+        if (CourseStatus.Archived.ToValue().Equals(lesson.Course?.CourseStatus, StringComparison.OrdinalIgnoreCase) && (lesson.Course?.CourseFlagCount ?? 0) >= 3)
+            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
 
         // Move file to trash on Cloudinary instead of deleting
         if (!string.IsNullOrEmpty(material.MaterialUrl))
         {
             var cloudPublicId = _uploadService.GetPublicIdFromUrl(material.MaterialUrl);
             var trashUrl = await _uploadService.MoveToTrashAsync(material.MaterialUrl);
-            
+
             material.CloudPublicId = cloudPublicId;
             // Giữ lại URL (đã được đổi sang link trong thư mục trash/) để vẫn có thể xem được detail
             if (!string.IsNullOrEmpty(trashUrl))
@@ -439,7 +460,7 @@ public class LessonService : ILessonService
             }
         }
 
-        material.LearningStatus = "removed";
+        material.LearningStatus = LearningStatus.Removed.ToValue();
         material.UpdatedAt = DateTime.UtcNow;
         _materialRepository.Update(material);
         int rows4 = await _materialRepository.SaveChangesAsync();
@@ -473,11 +494,14 @@ public class LessonService : ILessonService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot delete lessons.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot delete lessons.");
         }
 
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot delete lessons while the course is pending review.");
+
+        if (CourseStatus.Archived.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase) && (lesson.Course.CourseFlagCount ?? 0) >= 3)
+            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
 
         // Soft delete all materials of this lesson
         var materials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
@@ -487,14 +511,14 @@ public class LessonService : ILessonService
             {
                 var cloudPublicId = _uploadService.GetPublicIdFromUrl(m.MaterialUrl);
                 var trashUrl = await _uploadService.MoveToTrashAsync(m.MaterialUrl);
-                
+
                 m.CloudPublicId = cloudPublicId;
                 if (!string.IsNullOrEmpty(trashUrl))
                 {
                     m.MaterialUrl = trashUrl;
                 }
             }
-            m.LearningStatus = "removed";
+            m.LearningStatus = LearningStatus.Removed.ToValue();
             m.UpdatedAt = DateTime.UtcNow;
             _materialRepository.Update(m);
         }
@@ -524,7 +548,7 @@ public class LessonService : ILessonService
     public async Task<IEnumerable<MaterialTrashResponse>> GetTrashMaterialsAsync(int instructorId)
     {
         var materials = await _materialRepository.GetTrashMaterialsAsync(instructorId);
-        
+
         return materials.Select(m => new MaterialTrashResponse
         {
             MaterialId = m.MaterialId,
@@ -546,26 +570,29 @@ public class LessonService : ILessonService
         var materials = await _materialRepository.GetTrashMaterialsAsync(instructorId);
         if (!materials.Any(m => m.MaterialId == materialId))
         {
-             throw new UnauthorizedAccessException("You do not have permission to permanently delete this material.");
+            throw new UnauthorizedAccessException("You do not have permission to permanently delete this material.");
         }
 
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot permanently delete materials.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot permanently delete materials.");
         }
 
         // Get course status to prevent deletion if pending
         var courseStatus = material.Lesson?.Course?.CourseStatus;
-        if (courseStatus != null && courseStatus.Equals("pending", StringComparison.OrdinalIgnoreCase))
+        if (courseStatus != null && courseStatus.Equals(CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot permanently delete materials while the course is pending review.");
+
+        if (courseStatus != null && CourseStatus.Archived.ToValue().Equals(courseStatus, StringComparison.OrdinalIgnoreCase) && (material.Lesson?.Course?.CourseFlagCount ?? 0) >= 3)
+            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
 
         // 1. Delete from Cloudinary if public ID exists
         if (!string.IsNullOrEmpty(material.CloudPublicId))
         {
             // Note: Since it was moved to trash/ prefix, we need to delete it using the trash prefix
             var resourceType = material.MaterialMetadata?.FileType ?? "image";
-            await _uploadService.DeleteFileByPublicIdAsync($"trash/{material.CloudPublicId}", resourceType); 
+            await _uploadService.DeleteFileByPublicIdAsync($"trash/{material.CloudPublicId}", resourceType);
         }
 
         // 2. Delete from DB
@@ -593,11 +620,14 @@ public class LessonService : ILessonService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new BadRequestException($"Your instructor account is locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot restore materials.");
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot restore materials.");
         }
 
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot restore materials while the course is pending review.");
+
+        if (CourseStatus.Archived.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase) && (lesson.Course.CourseFlagCount ?? 0) >= 3)
+            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
 
         var course = lesson.Course;
 
@@ -615,9 +645,9 @@ public class LessonService : ILessonService
         {
             var existingMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lesson.LessonId);
             var activeVideo = existingMaterials.FirstOrDefault(m => 
-                m.LearningStatus == "active" && 
+                m.LearningStatus == LearningStatus.Active.ToValue() && 
                 ((m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || m.MaterialMetadata == null));
-            
+
             if (activeVideo != null)
             {
                 // Thay vì throw lỗi, ta move video hiện tại vào trash để "tráo đổi"
@@ -628,7 +658,7 @@ public class LessonService : ILessonService
                     activeVideo.MaterialUrl = trashUrl ?? activeVideo.MaterialUrl;
                     activeVideo.CloudPublicId = cloudId;
                 }
-                activeVideo.LearningStatus = "removed";
+                activeVideo.LearningStatus = LearningStatus.Removed.ToValue();
                 activeVideo.UpdatedAt = DateTime.UtcNow;
                 _materialRepository.Update(activeVideo);
             }
@@ -657,7 +687,7 @@ public class LessonService : ILessonService
             }
         }
 
-        material.LearningStatus = "active";
+        material.LearningStatus = LearningStatus.Active.ToValue();
         material.UpdatedAt = DateTime.UtcNow;
         _materialRepository.Update(material);
         int rows9 = await _materialRepository.SaveChangesAsync();
@@ -670,23 +700,102 @@ public class LessonService : ILessonService
         }
     }
 
-    public async Task<List<MaterialEmbedding>> GetAllMaterialEmbeddingsAsync()
+    public async Task<List<MaterialEmbeddingResponse>> GetAllMaterialEmbeddingsAsync()
     {
-        return await _materialEmbeddingRepository.GetAllAsync();
+        var textList = await _textEmbeddingRepository.GetAllAsync();
+        var mediaList = await _mediaEmbeddingRepository.GetAllAsync();
+
+        var result = new List<MaterialEmbeddingResponse>();
+
+        result.AddRange(textList.Select(e => new MaterialEmbeddingResponse
+        {
+            EmbeddingId = e.TextEmbeddingId,
+            MaterialId = e.MaterialId,
+            Embedding = e.Embedding,
+            EmbeddingType = "text"
+        }));
+
+        result.AddRange(mediaList.Select(e => new MaterialEmbeddingResponse
+        {
+            EmbeddingId = e.MediaEmbeddingId,
+            MaterialId = e.MaterialId,
+            Embedding = e.Embedding,
+            EmbeddingType = "media"
+        }));
+
+        return result;
     }
 
-    public async Task SaveMaterialEmbeddingsAsync(int materialId, List<float> embedding)
+    public async Task SaveMaterialEmbeddingsAsync(int materialId, List<float> embedding, string embeddingType)
     {
-        var entity = new MaterialEmbedding
+        _logger.LogInformation("Saving new material embeddings for material {matId} with embedding type as {type}", materialId, embeddingType);
+        int rows = 0;
+        if (string.Equals(embeddingType, "media", StringComparison.OrdinalIgnoreCase))
         {
-            MaterialId = materialId,
-            Embedding = System.Text.Json.JsonSerializer.Serialize(embedding),
-            CreatedAt = DateTime.UtcNow
-        };
 
-        await _materialEmbeddingRepository.AddAsync(entity);
-        int rows10 = await _materialEmbeddingRepository.SaveChangesAsync();
-        if (rows10 <= 0) throw new InvalidOperationException("Failed to save changes");
+
+            _logger.LogInformation("Retrieving existing media embeddings for material {matId}", materialId);
+            var existingList = await _mediaEmbeddingRepository.GetByMaterialIdAsync(materialId);
+
+            var existing = existingList.FirstOrDefault();
+
+            if (existing == null)
+            {
+                _logger.LogInformation("No existing media embeddings found. Inserting new media embeddings for material {matId}", materialId);
+                var entity = new MediaEmbedding
+                {
+                    MaterialId = materialId,
+                    Embedding = embedding,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _mediaEmbeddingRepository.AddAsync(entity);
+            }
+            else
+            {
+                _logger.LogInformation("Existing media embeddings found. Updating media embeddings for material {matId}", materialId);
+                existing.Embedding = embedding;
+                _mediaEmbeddingRepository.Update(existing);
+            }
+
+            rows = await _mediaEmbeddingRepository.SaveChangesAsync();
+
+        }
+        else
+        {
+            _logger.LogInformation("Retrieving existing text embeddings for material {matId}", materialId);
+            var existingList = await _textEmbeddingRepository.GetByMaterialIdAsync(materialId);
+            var existing = existingList.FirstOrDefault();
+
+            if (existing == null)
+            {
+                _logger.LogInformation("No existing text embeddings found. Inserting new text embeddings for material {matId}", materialId);
+                var entity = new TextEmbedding
+                {
+                    MaterialId = materialId,
+                    Embedding = embedding,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _textEmbeddingRepository.AddAsync(entity);
+            }
+            else
+            {
+                _logger.LogInformation("Existing text embeddings found. Updating text embeddings for material {matId}", materialId);
+                existing.Embedding = embedding;
+                _textEmbeddingRepository.Update(existing);
+            }
+
+            rows = await _textEmbeddingRepository.SaveChangesAsync();
+
+        }
+
+        if (rows > 0)
+        {
+            _logger.LogInformation("Saved embeddings for material {matId} with embedding type as {type}", materialId, embeddingType);
+        }
+        else
+        {
+            _logger.LogError("Failed to save embeddings for material {matId} with embedding type as {type}", materialId, embeddingType);
+        }
 
         // Invalidate redis cache for material_embedding
         await _redisService.RemoveCacheAsync(CacheKeys.MaterialEmbedding.GetKey(materialId));

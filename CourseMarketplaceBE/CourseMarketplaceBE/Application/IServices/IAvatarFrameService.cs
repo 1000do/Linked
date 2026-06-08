@@ -1,6 +1,6 @@
 using CourseMarketplaceBE.Application.DTOs;
 
-namespace CourseMarketplaceBE.Application.Interfaces
+namespace CourseMarketplaceBE.Application.IServices
 {
     public interface IAvatarFrameService
     {

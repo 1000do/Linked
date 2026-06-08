@@ -11,19 +11,40 @@ public class ReviewRequest
     public int? LessonId { get; set; }
 }
 
+public class UpdateReviewRequest
+{
+    public int ReviewId { get; set; }
+    /// <summary>course | lesson</summary>
+    public string Type { get; set; } = "course";
+    public float Rating { get; set; }
+    public string Comment { get; set; } = null!;
+}
+
+public class DeleteReviewRequest
+{
+    public int ReviewId { get; set; }
+    /// <summary>course | lesson</summary>
+    public string Type { get; set; } = "course";
+}
+
 public class ReviewResponse
 {
     public int ReviewId { get; set; }
+    /// <summary>UserId của người viết review — dùng để FE xác định review của mình</summary>
+    public int UserId { get; set; }
     public string UserFullName { get; set; } = null!;
     public string? UserAvatarUrl { get; set; }
     public float Rating { get; set; }
     public string Comment { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
     /// <summary>Tên lesson nếu là review lesson cụ thể</summary>
     public string? LessonTitle { get; set; }
     public int? LessonId { get; set; }
     /// <summary>true nếu người viết là chủ khóa học</summary>
     public bool IsInstructor { get; set; }
+    public bool IsRemoved { get; set; }
+    public string ReviewStatus { get; set; } = "ok";
 }
 
 /// <summary>
@@ -60,4 +81,11 @@ public class ReviewStatsResponse
     public double Star3Pct => TotalReviews > 0 ? Math.Round((double)Star3Count / TotalReviews * 100, 1) : 0;
     public double Star2Pct => TotalReviews > 0 ? Math.Round((double)Star2Count / TotalReviews * 100, 1) : 0;
     public double Star1Pct => TotalReviews > 0 ? Math.Round((double)Star1Count / TotalReviews * 100, 1) : 0;
+}
+
+public class LessonRatingStatsResponse
+{
+    public int LessonId { get; set; }
+    public double AverageRating { get; set; }
+    public int TotalReviews { get; set; }
 }
