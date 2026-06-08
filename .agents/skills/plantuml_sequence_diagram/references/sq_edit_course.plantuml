@@ -1,0 +1,144 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Update Course Details
+
+actor Instructor as act
+participant "CourseEditForm" as view
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
+participant "CourseController" as be_ctrl <<backend controller>>
+participant ":CourseCommandService" as sv
+participant ":CourseResponse" as res
+participant ":Course" as ett
+
+participant ":CourseRepository" as repo
+participant ":CourseExtRepository" as ext_repo
+participant ":RedisService" as redis
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Edit course details
+view->view++: Debounce save action (1.5 seconds)
+view--
+
+view->view++: Validate input fields
+view--
+opt Invalid input fields
+    view-->>act: Silently cancel auto-save
+end
+
+view->fe_ctrl++: Send POST request to /InstructorCourse/UpdateDetails
+fe_ctrl->be_ctrl++: Send PUT request to /api/courses/{courseId}
+be_ctrl->sv++: Call UpdateCourseAsync()
+
+sv->repo++: Call GetByIdAsync(courseId)
+repo->ctx++: Call GetByIdAsync()
+ctx-->>repo--: Return Course entity
+repo-->>sv--: Return Course entity
+
+sv->sv++: Validate course update request
+sv--
+alt Course Not Found
+    sv -->> be_ctrl: throw Exception
+    be_ctrl -->> fe_ctrl: Return statusCode 404
+    fe_ctrl -->> view: Return statusCode 404
+    view -->> act: Display error message
+else Invalid Instructor Rights
+    sv -->> be_ctrl: throw UnauthorizedAccessException
+    be_ctrl -->> fe_ctrl: Return statusCode 403
+    fe_ctrl -->> view: Return statusCode 403
+    view -->> act: Display error message
+else Invalid Course Status
+    sv -->> be_ctrl: throw InvalidOperationException
+    be_ctrl -->> fe_ctrl: Return statusCode 400
+    fe_ctrl -->> view: Return statusCode 400
+    view -->> act: Display error message
+else Valid course update request
+    
+
+    sv->sv++: Update course fields
+    sv--
+    
+    sv->sv++: Check if course status is "published"
+    sv--
+    opt Status is "published"
+        sv->ett++: Set CourseStatus = "draft", ModerationFeedback = null
+        ett-->>sv--: Status and feedback updated
+    end
+    
+    sv->repo++: Call Update(course)
+    repo->ctx++: Call Update()
+    ctx-->>repo--: Return result
+    repo-->>sv--: Return result
+    
+    sv->sv++: Call UpdateCourseFingerprintAsync()
+    sv--
+    
+    sv -> sv++: Call SaveChangesWithFingerprintAsync()
+    sv -> ext_repo++: Call SaveChangesAsync()
+    ext_repo->ctx++: Call SaveChangesAsync()
+    ctx->db++: Save changes to Database
+    
+    alt Duplicate Content Detected
+        db-->>ctx: throw DbUpdateException
+        ctx-->>ext_repo: throw DbUpdateException
+        ext_repo -->> sv: throw CourseExtException
+        sv -->> be_ctrl: throw BadRequestException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return statusCode 400
+        view -->> act: Display error message
+    else No Duplicate Content Detected
+        db-->>ctx--: Return numberOfRowsAffected
+        ctx-->>ext_repo--: Return numberOfRowsAffected
+        ext_repo -->> sv--: Return numberOfRowsAffected
+        sv--
+        
+        sv->sv++: Check numberOfRowsAffected
+        sv--
+        alt numberOfRowsAffected > 0
+            sv->redis++: Call RemoveCacheAsync(courseId)
+            redis-->>sv--: Return result
+            
+            sv->res++: Call CourseResponse()
+            res-->>sv--: Return CourseResponse object
+            
+            sv-->>be_ctrl: Return CourseResponse object
+            be_ctrl-->>fe_ctrl: Return statusCode 200
+            fe_ctrl-->>view: Return statusCode 200
+            view-->>act: Display update success message
+        else numberOfRowsAffected = 0
+            sv-->>be_ctrl--: throw InvalidOperationException
+            be_ctrl-->>fe_ctrl--: Return statusCode 500
+            fe_ctrl-->>view--: Return statusCode 500
+            view-->>act--: Display error message
+        end
+    end
+end
+
+@enduml
