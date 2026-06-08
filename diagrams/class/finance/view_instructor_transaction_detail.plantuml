@@ -15,7 +15,6 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -94,15 +93,21 @@ class TransactionDetailDto #E6CCFF {
 
 class Transaction #CCFFE6 {
     + TransactionId : int <<PK>>
-    + StripeSessionId : string?
-    + StripePaymentIntentId : string?
-    + GrossAmount : decimal
-    + Status : string
-    + Currency : string
-    + CreatedAt : DateTime?
+    + OrderItemId : int? <<FK>>
+    + AccountFrom : int? <<FK>>
+    + AccountTo : int? <<FK>>
+    + Amount : decimal
     + TransferRate : decimal
-    + InstructorPayout : decimal
-    + PlatformProfit : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
 }
 
 class InstructorPayout #CCFFE6 {
@@ -110,8 +115,14 @@ class InstructorPayout #CCFFE6 {
     + TransactionId : int? <<FK>>
     + InstructorId : int? <<FK>>
     + PayoutAmount : decimal
+    + PayoutDate : DateTime
     + IsPaid : bool
     + PayoutStatus : string
+    + StripeTransferId : string?
+    + StripePayoutId : string?
+    + PaidToBankAt : DateTime?
+    + Transaction : Transaction?
+    + Instructor : Instructor?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -149,12 +160,14 @@ class AppDbContext #E6F3FF {
 
 ' ==================== RELATIONSHIPS ====================
 
+' === COMPOSITION ===
+Transaction *-- InstructorPayout
+
 ' === UNIDIRECTIONAL ASSOCIATION ===
-TransactionControllerFE --> TransactionControllerBE : calls via HTTP
+TransactionControllerFE ..> TransactionControllerBE : calls
 TransactionControllerBE --> ITransactionService
 TransactionService --> ITransactionRepository
 TransactionRepository --> AppDbContext
-Transaction -- InstructorPayout
 
 ' === INTERFACE REALIZATION ===
 TransactionService ..|> ITransactionService
@@ -163,8 +176,8 @@ TransactionRepository ..|> ITransactionRepository
 ' === DEPENDENCY ===
 TransactionControllerFE ..> TransactionDetailVM : uses
 TransactionControllerBE ..> TransactionDetailDto : uses
-ITransactionService ..> TransactionDetailDto : returns
-TransactionService ..> TransactionDetailDto : creates
+ITransactionService ..> TransactionDetailDto : uses
+TransactionService ..> TransactionDetailDto : uses
 TransactionRepository ..> TransactionDetailDto : projects
 TransactionRepository ..> Transaction : queries
 
