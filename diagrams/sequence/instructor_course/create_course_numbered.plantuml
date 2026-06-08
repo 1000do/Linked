@@ -1,0 +1,101 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Create Course
+actor Instructor as act
+
+participant "CourseCreationForm" as view
+
+participant "InstructorCourseController" as fe_ctrl
+participant "CourseController" as be_ctrl
+
+
+participant ":CourseService" as sv
+participant ":CourseResponse" as res
+participant ":Course" as ett
+
+participant ":CourseRepository" as repo
+participant ":AppDbContext" as ctx
+
+Database Database as db
+
+act++
+act->view++:1. Access course creation form
+act->view:2. Enter required data
+act->view:3. Click the "Create Course" button
+view->view++:4. Validate input
+view--
+group opt [Invalid input]
+    view-->>act:4.1. Display error message
+end
+
+view->fe_ctrl++:5. Send POST request to InstructorCourse/Create
+fe_ctrl->fe_ctrl++:6. Validate ModelState
+fe_ctrl--
+group opt [Invalid ModelState]
+    fe_ctrl-->>view:6.2. Return status code 400
+    view-->>act:6.2.1. Display error message
+end
+fe_ctrl->be_ctrl++:7. Send POST request to /courses
+be_ctrl -> sv++:8. Call CreateCourseAsync()
+sv -> sv++:9. Call CheckInstructorRights()
+sv--
+
+
+
+sv -> ett++:10. Call Course()
+ett -->>sv--:11. Return Course object
+sv -> repo++:12. Call AddAsync()
+repo->ctx++:13. Call AddAsync()
+ctx-->>repo--:14. Return result
+repo -->> sv--:15. Return result
+sv -> repo++:16. Call SaveChangesAsync()
+repo->ctx++:17. Call SaveChangesAsync()
+ctx->db++:18. Save changes to Database
+db-->>ctx--:19. Return numberOfRowsAffected
+ctx-->>repo--:20. Return numberOfRowsAffected
+repo -->> sv--:21. Return numberOfRowsAffected
+sv->sv++:22. Check numberOfRowsAffected
+sv--
+alt numberOfRowsAffected > 0
+    sv -> sv++:22.1. Call UpdateCourseHashesAsync()
+    sv--
+    sv -> res++:22.1.1. Call CourseResponse()
+    res -->> sv--:22.1.2. Return CourseResponse object
+    sv -->>  be_ctrl:22.1.3. Return CourseResponse object
+    be_ctrl -->> fe_ctrl:22.1.4. Return statusCode 201
+    fe_ctrl -->> view:22.1.5. Return statusCode 201
+    view -->> act:22.1.6. Display course creation success message
+else numberOfRowsAffected = 0
+    sv-->>be_ctrl--:22.2. throw InvalidOperationException
+    be_ctrl -->> fe_ctrl--:22.2.1. Return statusCode 400
+    fe_ctrl -->> view--:22.2.2. Return statusCode 400
+    view -->> act --:22.2.3. Display error message
+end
+
+@enduml

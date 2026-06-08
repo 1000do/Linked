@@ -2,6 +2,14 @@ using System;
 
 namespace CourseMarketplaceFE.Models
 {
+    public enum AiThreatLevel
+    {
+        None = 1,
+        Approved = 2,
+        ManualAudit = 3,
+        FlaggedOrRejected = 4
+    }
+
     public class CourseModerationViewModel
     {
         public int CourseId { get; set; }
@@ -17,6 +25,7 @@ namespace CourseMarketplaceFE.Models
         public string UrgencyColor { get; set; } = "slate";
         public int FlagCount { get; set; }
         public bool IsRemoved { get; set; }
+        public AiThreatLevel ThreatLevel { get; set; } = AiThreatLevel.None;
     }
 
     public class UserReportModerationViewModel

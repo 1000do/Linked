@@ -37,6 +37,9 @@ namespace CourseMarketplaceFE.Helpers
         public Task<HttpResponseMessage> PatchAsync(string url)
             => SendWithRetryAsync(() => BuildRequest(HttpMethod.Patch, url));
 
+        public Task<HttpResponseMessage> PutJsonAsync<T>(string url, T body)
+            => SendWithRetryAsync(() => BuildJsonRequest(HttpMethod.Put, url, body));
+
         public Task<HttpResponseMessage> PutAsync(string url, HttpContent content)
             => SendWithRetryAsync(() => BuildRawRequest(HttpMethod.Put, url, content));
 

@@ -7,6 +7,7 @@ namespace CourseMarketplaceBE.Application.IServices;
 public interface IChatService
 {
     Task<List<ChatListDto>> GetMyChatsAsync(int accountId);
+    Task<List<ChatListDto>> SearchChatsAsync(int accountId, string query);
     Task<List<MessageDto>> GetChatHistoryAsync(int chatId, int accountId);
     Task<MessageDto> SaveMessageAsync(int senderId, SendMessageDto dto);
     Task<int> GetOrCreateChatAsync(int senderId, CreateChatDto dto);

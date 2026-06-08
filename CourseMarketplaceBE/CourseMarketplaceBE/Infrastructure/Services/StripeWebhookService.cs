@@ -1,4 +1,5 @@
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Hubs;
@@ -43,7 +44,7 @@ namespace CourseMarketplaceBE.Infrastructure.Services
             // ★ Tiền đã về ngân hàng — cập nhật trạng thái cuối cùng cho tất cả
             foreach (var p in dbPayouts)
             {
-                p.PayoutStatus = "paid";
+                p.PayoutStatus = PayoutStatus.Paid.ToValue();
                 p.PaidToBankAt = DateTime.UtcNow;
             }
             await _financeRepo.SaveChangesAsync();
@@ -72,7 +73,7 @@ namespace CourseMarketplaceBE.Infrastructure.Services
 
             foreach (var p in dbPayouts)
             {
-                p.PayoutStatus = "failed";
+                p.PayoutStatus = PayoutStatus.Failed.ToValue();
             }
             await _financeRepo.SaveChangesAsync();
 
@@ -94,7 +95,7 @@ namespace CourseMarketplaceBE.Infrastructure.Services
             foreach (var p in dbPayouts)
             {
                 p.StripePayoutId = stripePayoutId;
-                p.PayoutStatus = "in_transit";
+                p.PayoutStatus = PayoutStatus.InTransit.ToValue();
             }
             await _financeRepo.SaveChangesAsync();
 
@@ -120,12 +121,12 @@ namespace CourseMarketplaceBE.Infrastructure.Services
             // 1. Tìm transaction theo PaymentIntentId (pi_xxx)
             var txn = await _financeRepo.GetTransactionByPaymentIntentIdAsync(paymentIntentId);
             
-            if (txn != null && txn.TransactionsStatus != "refunded")
+            if (txn != null && txn.TransactionsStatus != TransactionStatus.Refunded.ToValue())
             {
                 _logger.LogInformation("🔄 Syncing refund from Stripe Dashboard for TxnId={Id}", txn.TransactionId);
                 
                 // 2. Cập nhật trạng thái
-                txn.TransactionsStatus = "refunded";
+                txn.TransactionsStatus = TransactionStatus.Refunded.ToValue();
                 
                 // 3. Cập nhật payout liên quan
                 var payout = txn.InstructorPayouts.FirstOrDefault();
@@ -142,7 +143,7 @@ namespace CourseMarketplaceBE.Infrastructure.Services
                     var enrollment = await _courseRepo.GetActiveEnrollmentAsync(buyerUserId.Value, courseId.Value);
                     if (enrollment != null)
                     {
-                        enrollment.EnrollmentStatus = "revoked";
+                        enrollment.EnrollmentStatus = EnrollmentStatus.Revoked.ToValue();
                         _logger.LogInformation("🚫 Enrollment revoked via Webhook sync");
                     }
                 }
@@ -167,7 +168,7 @@ namespace CourseMarketplaceBE.Infrastructure.Services
 
             foreach (var p in dbPayouts)
             {
-                p.PayoutStatus = "paid";
+                p.PayoutStatus = PayoutStatus.Paid.ToValue();
                 p.PaidToBankAt = DateTime.UtcNow;
                 p.IsPaid = true;
             }

@@ -226,7 +226,7 @@
                 <div class="flex flex-col flex-1 overflow-hidden">
                     <span class="text-xs font-bold text-slate-800 truncate">@userName</span>
                     <span class="text-[10px] text-slate-400 font-medium truncate uppercase tracking-wider mt-0.5">Instructor</span>
-                    <form asp-controller="Account" asp-action="Logout" method="post" class="m-0 mt-1.5" onclick="event.stopPropagation();">
+                    <form id="global-logout-form" asp-controller="Account" asp-action="Logout" method="post" class="m-0 mt-1.5" onclick="event.stopPropagation();">
                         @Html.AntiForgeryToken()
                         <button type="submit" class="text-[11px] text-slate-400 hover:text-rose-500 font-semibold flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer text-left transition-colors duration-200">Logout</button>
                     </form>
@@ -254,18 +254,26 @@
     <script>
         function toggleNoti() {
             const box = document.getElementById('noti-box');
-            box.classList.toggle('hidden');
-            if (!box.classList.contains('hidden')) {
-                document.getElementById('noti-badge').classList.add('hidden');
+            box?.classList.toggle('hidden');
+            if (!box?.classList.contains('hidden')) {
+                document.getElementById('noti-badge')?.classList.add('hidden');
             }
         }
 
-        window.addEventListener('click', function(e) {
+        document.addEventListener('click', function(e) {
             const dropdown = document.getElementById('notification-dropdown');
             if (dropdown && !dropdown.contains(e.target)) {
-                document.getElementById('noti-box').classList.add('hidden');
+                document.getElementById('noti-box')?.classList.add('hidden');
             }
         });
+        
+        if (LAYOUT_TOKEN) {
+            if (localStorage.getItem("AccountLocked") === "true") {
+                localStorage.removeItem("AccountLocked");
+                const form = document.getElementById('global-logout-form');
+                if(form) { form.submit(); }
+            }
+        }
 
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("http://localhost:5207/notificationHub", {
@@ -281,6 +289,9 @@
 
             // 2. Cập nhật danh sách nhỏ ở chuông
             if (typeof loadTopNotifications === "function") loadTopNotifications();
+
+            // Dispatch event for child views
+            document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
 
             // 3. KIỂM TRA: Nếu trang hiện tại có hàm prependNotification thì gọi nó ngay
             if (typeof prependNotification === "function") {
@@ -309,6 +320,22 @@
 
         chatConnection.on("ReceiveMessage", function() {
             loadUnreadSummary();
+        });
+
+        connection.on("AccountLockedOut", () => {
+            localStorage.setItem("AccountLocked", "true");
+            Swal.fire({
+                icon: 'error',
+                title: 'Account Locked',
+                text: 'Your account has been locked due to a policy violation. You will be logged out automatically.',
+                timer: 5000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false
+            }).then(() => {
+                document.getElementById('global-logout-form').submit();
+            });
         });
 
         connection.start().catch(err => console.error("SignalR Error: ", err));

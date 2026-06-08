@@ -57,9 +57,10 @@ namespace CourseMarketplaceBE.Domain.Constants
         Draft,
         Pending,
         Published,
+        Removed,
         Rejected,
-        Flagged,
-        Archived
+        Archived,
+        PermanentlyLocked
     }
 
     public static class CourseStatusExtensions
@@ -71,9 +72,10 @@ namespace CourseMarketplaceBE.Domain.Constants
                 CourseStatus.Draft => "draft",
                 CourseStatus.Pending => "pending",
                 CourseStatus.Published => "published",
+                CourseStatus.Removed => "removed",
                 CourseStatus.Rejected => "rejected",
-                CourseStatus.Flagged => "flagged",
                 CourseStatus.Archived => "archived",
+                CourseStatus.PermanentlyLocked => "permanently_locked",
                 _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid course status")
             };
         }
@@ -140,6 +142,274 @@ namespace CourseMarketplaceBE.Domain.Constants
                 AIInteractionType.Moderation => "moderation",
                 AIInteractionType.Generation => "generation",
                 _ => throw new ArgumentOutOfRangeException(nameof(interactionType),interactionType, "Invalid AI interaction type")
+            };
+        }
+    }
+
+    public enum InstructorApprovalStatus
+    {
+        Pending,
+        Approved,
+        Rejected
+    }
+
+    public static class InstructorApprovalStatusExtensions
+    {
+        public static string ToValue(this InstructorApprovalStatus status)
+        {
+            return status switch
+            {
+                InstructorApprovalStatus.Pending => "Pending",
+                InstructorApprovalStatus.Approved => "Approved",
+                InstructorApprovalStatus.Rejected => "Rejected",
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid instructor approval status")
+            };
+        }
+    }
+
+    public enum StripeOnboardingStatus
+    {
+        Pending,
+        Active
+    }
+
+    public static class StripeOnboardingStatusExtensions
+    {
+        public static string ToValue(this StripeOnboardingStatus status)
+        {
+            return status switch
+            {
+                StripeOnboardingStatus.Pending => "Pending",
+                StripeOnboardingStatus.Active => "Active",
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid stripe onboarding status")
+            };
+        }
+    }
+
+    public enum LearningStatus
+    {
+        Active,
+        Removed,
+        Rejected,
+        Flagged
+    }
+
+    public static class LearningStatusExtensions
+    {
+        public static string ToValue(this LearningStatus status)
+        {
+            return status switch
+            {
+                LearningStatus.Active => "active",
+                LearningStatus.Removed => "removed",
+                LearningStatus.Rejected => "rejected",
+                LearningStatus.Flagged => "flagged",
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid learning status")
+            };
+        }
+    }
+
+    public enum LessonStatus
+    {
+        Active,
+        Rejected
+    }
+
+    public static class LessonStatusExtensions
+    {
+        public static string ToValue(this LessonStatus status)
+        {
+            return status switch
+            {
+                LessonStatus.Active => "active",
+                LessonStatus.Rejected => "rejected",
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid lesson status")
+            };
+        }
+    }
+
+    public enum EnrollmentStatus
+    {
+        Active,
+        Revoked
+    }
+
+    public static class EnrollmentStatusExtensions
+    {
+        public static string ToValue(this EnrollmentStatus status)
+        {
+            return status switch
+            {
+                EnrollmentStatus.Active => "active",
+                EnrollmentStatus.Revoked => "revoked",
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid enrollment status")
+            };
+        }
+    }
+
+    public enum PayoutStatus
+    {
+        Pending,
+        InTransit,
+        Paid,
+        Failed,
+        Transferred,
+        Refunded,
+        Canceled
+    }
+
+    public static class PayoutStatusExtensions
+    {
+        public static string ToValue(this PayoutStatus status)
+        {
+            return status switch
+            {
+                PayoutStatus.Pending => "pending",
+                PayoutStatus.InTransit => "in_transit",
+                PayoutStatus.Paid => "paid",
+                PayoutStatus.Failed => "failed",
+                PayoutStatus.Transferred => "transferred",
+                PayoutStatus.Refunded => "refunded",
+                PayoutStatus.Canceled => "canceled",
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid payout status")
+            };
+        }
+    }
+
+    public enum PlatformWithdrawalStatus
+    {
+        Pending,
+        InTransit,
+        Paid,
+        Failed,
+        Canceled
+    }
+
+    public static class PlatformWithdrawalStatusExtensions
+    {
+        public static string ToValue(this PlatformWithdrawalStatus status)
+        {
+            return status switch
+            {
+                PlatformWithdrawalStatus.Pending => "pending",
+                PlatformWithdrawalStatus.InTransit => "in_transit",
+                PlatformWithdrawalStatus.Paid => "paid",
+                PlatformWithdrawalStatus.Failed => "failed",
+                PlatformWithdrawalStatus.Canceled => "canceled",
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid platform withdrawal status")
+            };
+        }
+    }
+
+    public enum TransactionStatus
+    {
+        Pending,
+        Succeeded,
+        RefundPending,
+        Refunded
+    }
+
+    public static class TransactionStatusExtensions
+    {
+        public static string ToValue(this TransactionStatus status)
+        {
+            return status switch
+            {
+                TransactionStatus.Pending => "pending",
+                TransactionStatus.Succeeded => "succeeded",
+                TransactionStatus.RefundPending => "refund_pending",
+                TransactionStatus.Refunded => "refunded",
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid transaction status")
+            };
+        }
+    }
+
+    public enum ReportStatus
+    {
+        Pending,
+        Processing,
+        Escalated,
+        Resolved,
+        Rejected,
+        UnderReview
+    }
+
+    public static class ReportStatusExtensions
+    {
+        public static string ToValue(this ReportStatus status)
+        {
+            return status switch
+            {
+                ReportStatus.Pending => "pending",
+                ReportStatus.Processing => "processing",
+                ReportStatus.Escalated => "escalated",
+                ReportStatus.Resolved => "resolved",
+                ReportStatus.Rejected => "rejected",
+                ReportStatus.UnderReview => "under_review",
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid report status")
+            };
+        }
+    }
+
+    public enum ReviewStatus
+    {
+        Ok,
+        Removed,
+        Violating
+    }
+
+    public static class ReviewStatusExtensions
+    {
+        public static string ToValue(this ReviewStatus status)
+        {
+            return status switch
+            {
+                ReviewStatus.Ok => "ok",
+                ReviewStatus.Removed => "removed",
+                ReviewStatus.Violating => "violating",
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid review status")
+            };
+        }
+    }
+
+    public enum AccountStatus
+    {
+        Active,
+        Banned,
+        Flagged1,
+        Flagged2
+    }
+
+    public static class AccountStatusExtensions
+    {
+        public static string ToValue(this AccountStatus status)
+        {
+            return status switch
+            {
+                AccountStatus.Active => "Active",
+                AccountStatus.Banned => "Banned",
+                AccountStatus.Flagged1 => "Flagged_1",
+                AccountStatus.Flagged2 => "Flagged_2",
+                _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid account status")
+            };
+        }
+    }
+
+    public enum AuthProvider
+    {
+        Local,
+        Google
+    }
+
+    public static class AuthProviderExtensions
+    {
+        public static string ToValue(this AuthProvider provider)
+        {
+            return provider switch
+            {
+                AuthProvider.Local => "local",
+                AuthProvider.Google => "google",
+                _ => throw new ArgumentOutOfRangeException(nameof(provider), provider, "Invalid auth provider")
             };
         }
     }

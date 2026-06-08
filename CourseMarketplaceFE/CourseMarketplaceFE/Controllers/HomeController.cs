@@ -107,6 +107,22 @@ namespace CourseMarketplaceFE.Controllers
             return View(courses);
         }
 
+        [Route("Home/Error/{statusCode?}")]
+        public IActionResult Error(int? statusCode)
+        {
+            var model = new ErrorViewModel();
+            if (statusCode.HasValue)
+            {
+                model.StatusCode = statusCode.Value;
+            }
+            else
+            {
+                model.StatusCode = Response.StatusCode == 200 ? 500 : Response.StatusCode;
+            }
+            model.RequestId = System.Diagnostics.Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+            return View("Error", model);
+        }
+
         private class WishlistIdItem
         {
             public int CourseId { get; set; }

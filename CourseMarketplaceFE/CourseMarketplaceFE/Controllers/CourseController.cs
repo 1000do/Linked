@@ -182,6 +182,10 @@ namespace CourseMarketplaceFE.Controllers
 
                 return View(course);
             }
+            else if ((int)response.StatusCode == 403)
+            {
+                return RedirectToAction("Error", "Home");
+            }
             return NotFound();
         }
 
@@ -195,6 +199,10 @@ namespace CourseMarketplaceFE.Controllers
                 var data = json.RootElement.GetProperty("data").ToString();
                 var course = JsonSerializer.Deserialize<CourseDetailViewModel>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 return View(course);
+            }
+            else if ((int)response.StatusCode == 403)
+            {
+                return RedirectToAction("Error", "Home");
             }
             return NotFound();
         }
@@ -271,9 +279,13 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetReviews(int id, int page = 1, int pageSize = 5)
+        public async Task<IActionResult> GetReviews(int id, int page = 1, int pageSize = 5, int? starFilter = null)
         {
-            var response = await _apiClient.GetAsync($"review/course/{id}?page={page}&pageSize={pageSize}");
+            var url = $"review/course/{id}?page={page}&pageSize={pageSize}";
+            if (starFilter.HasValue)
+                url += $"&starFilter={starFilter.Value}";
+
+            var response = await _apiClient.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
@@ -301,6 +313,20 @@ namespace CourseMarketplaceFE.Controllers
         public async Task<IActionResult> GetReviewStats(int id)
         {
             var response = await _apiClient.GetAsync($"review/stats/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(content);
+                return Json(new { success = true, data = json.RootElement.GetProperty("data") });
+            }
+            return Json(new { success = false });
+        }
+
+        /// <summary>Thống kê phân bổ sao của lesson (dynamic từ DB)</summary>
+        [HttpGet]
+        public async Task<IActionResult> GetLessonReviewStats(int id)
+        {
+            var response = await _apiClient.GetAsync($"review/lesson-stats/{id}");
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
@@ -349,11 +375,76 @@ namespace CourseMarketplaceFE.Controllers
         public async Task<IActionResult> ReportReview([FromBody] JsonElement body)
         {
             var response = await _apiClient.PostJsonAsync("review/report", body);
+            var content = await response.Content.ReadAsStringAsync();
+            
+            string? message = null;
+            try
+            {
+                using var doc = JsonDocument.Parse(content);
+                if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                {
+                    message = msgEl.GetString();
+                }
+            }
+            catch { }
+
+            if (response.IsSuccessStatusCode)
+            {
+                return Json(new { success = true, message = message ?? "Report submitted successfully." });
+            }
+            return Json(new { success = false, message = message ?? "Could not send report at this time." });
+        }
+
+        /// <summary>Avg rating cho tất cả lesson của 1 course (dùng cho sidebar Learn)</summary>
+        [HttpGet]
+        public async Task<IActionResult> GetLessonRatings(int id)
+        {
+            var response = await _apiClient.GetAsync($"review/lesson-ratings/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(content);
+                return Json(new { success = true, data = json.RootElement.GetProperty("data") });
+            }
+            return Json(new { success = false, data = new List<object>() });
+        }
+
+        /// <summary>Chỉnh sửa review (chỉ chủ review)</summary>
+        [HttpPut]
+        public async Task<IActionResult> UpdateReview(int reviewId, string type, [FromBody] JsonElement body)
+        {
+            var response = await _apiClient.PutJsonAsync($"review/{reviewId}?type={type}", body);
             if (response.IsSuccessStatusCode)
             {
                 return Json(new { success = true });
             }
-            return Json(new { success = false });
+            var content = await response.Content.ReadAsStringAsync();
+            try
+            {
+                var json = JsonDocument.Parse(content);
+                var message = json.RootElement.TryGetProperty("message", out var msg) ? msg.GetString() : "Update error.";
+                return Json(new { success = false, message });
+            }
+            catch { return Json(new { success = false, message = "Update error." }); }
+        }
+
+        /// <summary>Xóa mềm review (chỉ chủ review)</summary>
+        [HttpDelete]
+        public async Task<IActionResult> DeleteReview(int reviewId, string type = "course")
+        {
+            var response = await _apiClient.DeleteAsync($"review/{reviewId}?type={type}");
+            if (response.IsSuccessStatusCode)
+            {
+                return Json(new { success = true });
+            }
+            var content = await response.Content.ReadAsStringAsync();
+            try
+            {
+                var json = JsonDocument.Parse(content);
+                var message = json.RootElement.TryGetProperty("message", out var msg) ? msg.GetString() : "Delete error.";
+                return Json(new { success = false, message });
+            }
+            catch { return Json(new { success = false, message = "Delete error." }); }
         }
     }
 }

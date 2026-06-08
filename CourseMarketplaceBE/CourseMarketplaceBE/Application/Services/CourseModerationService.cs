@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.IRepositories;
@@ -41,11 +42,13 @@ namespace CourseMarketplaceBE.Application.Services
         public async Task<CourseModerationStatsDto> GetCourseModerationStatsAsync()
         {
             return await _courseRepository.GetCourseModerationStatsAsync();
+            // return new CourseModerationStatsDto();
         }
 
-        public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseModerationDto>> GetPendingCoursesAsync(ModerationFilterDto filter)
+        public async Task<PagedResult<CourseModerationDto>> GetPendingCoursesAsync(ModerationFilterDto filter)
         {
             return await _courseRepository.GetPendingCoursesModerationAsync(filter);
+            // return new PagedResult<CourseModerationDto>();
         }
 
         public async Task<bool> ApproveCourseAsync(int courseId, string? feedback)
@@ -53,7 +56,7 @@ namespace CourseMarketplaceBE.Application.Services
             var course = await _courseRepository.GetByIdAsync(courseId);
             if (course == null) return false;
 
-            course.CourseStatus = "published";
+            course.CourseStatus = CourseStatus.Published.ToValue();
             course.ModerationFeedback = null;
             course.UpdatedAt = DateTime.Now;
             course.LastApprovedAt = DateTime.Now;
@@ -64,7 +67,7 @@ namespace CourseMarketplaceBE.Application.Services
                 foreach (var material in materials)
                 {
                     material.ModerationFeedback = null;
-                    material.LearningStatus = "active";
+                    material.LearningStatus = LearningStatus.Active.ToValue();
                     _materialRepository.Update(material);
                 }
             }
@@ -74,7 +77,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 foreach (var lesson in lessons)
                 {
-                    lesson.LessonStatus = "active";
+                    lesson.LessonStatus = LessonStatus.Active.ToValue();
                     _lessonRepository.Update(lesson);
                 }
             }
@@ -94,6 +97,7 @@ namespace CourseMarketplaceBE.Application.Services
                 );
 
                 var enrolledUserIds = await _enrollmentRepository.GetEnrolledUserIdsAsync(courseId);
+                // var enrolledUserIds = new List<int>();
                 if (enrolledUserIds.Any())
                 {
                     var studentNotifications = enrolledUserIds.Select(studentId => new NotificationBulkDto
@@ -145,9 +149,10 @@ namespace CourseMarketplaceBE.Application.Services
             var course = await _courseRepository.GetByIdAsync(courseId);
             if (course == null) return false;
 
+            if ((course.CourseFlagCount ?? 0) >= 3) return false;
+
             var currentFlags = (course.CourseFlagCount ?? 0) + 1;
             course.CourseFlagCount = currentFlags;
-            course.CourseStatus = CourseStatus.Flagged.ToValue();
 
             course.ModerationFeedback = $"[VIOLATION FLAG #{currentFlags}] {reason}";
             course.UpdatedAt = DateTime.Now;
@@ -177,7 +182,7 @@ namespace CourseMarketplaceBE.Application.Services
                     subject = "Permanent Course Discontinuation Notice (3rd Time)";
                     message = $"Your course '{course.Title}' has violated policies for the 3rd time. The platform has decided to permanently discontinue this course. You will not be able to edit the content or accept new students, but existing students can still access their purchased content.";
 
-                    course.CourseStatus = "archived";
+                    course.CourseStatus = CourseStatus.Archived.ToValue();
                     _courseRepository.Update(course);
                     int rowsArchive1 = await _courseRepository.SaveChangesAsync();
                     if (rowsArchive1 <= 0)
@@ -196,6 +201,45 @@ namespace CourseMarketplaceBE.Application.Services
             return true;
         }
 
+        public async Task<bool> UnflagCourseAsync(int courseId)
+        {
+            var course = await _courseRepository.GetByIdAsync(courseId);
+            if (course == null) return false;
+
+            int currentFlags = course.CourseFlagCount ?? 0;
+            if (currentFlags <= 0) return false;
+
+            if (currentFlags > 0)
+            {
+                int newFlags = currentFlags - 1;
+                course.CourseFlagCount = newFlags;
+
+                if (currentFlags == 3 && newFlags == 2 && string.Equals(course.CourseStatus, CourseStatus.Archived.ToValue(), StringComparison.OrdinalIgnoreCase))
+                {
+                    course.CourseStatus = CourseStatus.Rejected.ToValue();
+                }
+
+                course.UpdatedAt = DateTime.Now;
+                _courseRepository.Update(course);
+                int rows = await _courseRepository.SaveChangesAsync();
+                if (rows <= 0)
+                    throw new InvalidOperationException("Failed to save changes when unflagging course.");
+
+                if (course.InstructorId.HasValue)
+                {
+                    await _notificationService.SendNotificationAsync(
+                        course.InstructorId.Value,
+                        "Course Unflagged",
+                        $"Your course '{course.Title}' has had a violation flag removed. Current flags: {newFlags}.",
+                        $"/InstructorCourse/Editor/{courseId}"
+                    );
+                }
+
+                await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
+            }
+            return true;
+        }
+
         public async Task<bool> RejectCourseDetailedAsync(RejectCourseDetailedRequest request)
         {
             var course = await _courseRepository.GetByIdAsync(request.CourseId);
@@ -211,7 +255,7 @@ namespace CourseMarketplaceBE.Application.Services
                 foreach (var m in allMaterials)
                 {
                     m.ModerationFeedback = null;
-                    m.LearningStatus = "active";
+                    m.LearningStatus = LearningStatus.Active.ToValue();
                     _materialRepository.Update(m);
                 }
             }
@@ -221,7 +265,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 foreach (var l in lessons)
                 {
-                    l.LessonStatus = "active";
+                    l.LessonStatus = LessonStatus.Active.ToValue();
                     _lessonRepository.Update(l);
                 }
             }
@@ -233,7 +277,7 @@ namespace CourseMarketplaceBE.Application.Services
                     var material = await _materialRepository.GetByIdAsync(item.MaterialId.Value);
                     if (material != null)
                     {
-                        material.LearningStatus = "rejected";
+                        material.LearningStatus = LearningStatus.Rejected.ToValue();
                         material.ModerationFeedback = item.Reason;
                         material.UpdatedAt = DateTime.Now;
                         _materialRepository.Update(material);
@@ -269,7 +313,7 @@ namespace CourseMarketplaceBE.Application.Services
                 var lesson = await _lessonRepository.GetByIdAsync(lessonId);
                 if (lesson != null)
                 {
-                    lesson.LessonStatus = "rejected";
+                    lesson.LessonStatus = LessonStatus.Rejected.ToValue();
                     lesson.UpdatedAt = DateTime.Now;
                     _lessonRepository.Update(lesson);
                 }
@@ -305,6 +349,8 @@ namespace CourseMarketplaceBE.Application.Services
             var course = await _courseRepository.GetByIdAsync(request.CourseId);
             if (course == null) return false;
 
+            if ((course.CourseFlagCount ?? 0) >= 3) return false;
+
             var courseFeedbackParts = new List<string>();
             var flaggedLessonIds = new HashSet<int>();
 
@@ -315,7 +361,7 @@ namespace CourseMarketplaceBE.Application.Services
                 foreach (var m in allMaterials)
                 {
                     m.ModerationFeedback = null;
-                    m.LearningStatus = "active";
+                    m.LearningStatus = LearningStatus.Active.ToValue();
                     _materialRepository.Update(m);
                 }
             }
@@ -325,7 +371,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 foreach (var l in lessons)
                 {
-                    l.LessonStatus = "active";
+                    l.LessonStatus = LessonStatus.Active.ToValue();
                     _lessonRepository.Update(l);
                 }
             }
@@ -337,7 +383,7 @@ namespace CourseMarketplaceBE.Application.Services
                     var material = await _materialRepository.GetByIdAsync(item.MaterialId.Value);
                     if (material != null)
                     {
-                        material.LearningStatus = "flagged";
+                        material.LearningStatus = LearningStatus.Flagged.ToValue();
                         material.ModerationFeedback = item.Reason;
                         material.UpdatedAt = DateTime.Now;
                         _materialRepository.Update(material);
@@ -373,7 +419,7 @@ namespace CourseMarketplaceBE.Application.Services
                 var lesson = await _lessonRepository.GetByIdAsync(lessonId);
                 if (lesson != null)
                 {
-                    lesson.LessonStatus = "rejected";
+                    lesson.LessonStatus = LessonStatus.Rejected.ToValue();
                     lesson.UpdatedAt = DateTime.Now;
                     _lessonRepository.Update(lesson);
                 }
@@ -381,7 +427,6 @@ namespace CourseMarketplaceBE.Application.Services
 
             var currentFlags = (course.CourseFlagCount ?? 0) + 1;
             course.CourseFlagCount = currentFlags;
-            course.CourseStatus = CourseStatus.Flagged.ToValue();
 
             var detailedReason = courseFeedbackParts.Count > 0
                 ? string.Join("\n", courseFeedbackParts)

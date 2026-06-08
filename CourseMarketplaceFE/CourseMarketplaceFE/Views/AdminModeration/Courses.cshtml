@@ -1,4 +1,5 @@
 @model CourseMarketplaceFE.Models.PagedResult<CourseMarketplaceFE.Models.CourseModerationViewModel>
+@using CourseMarketplaceFE.Models
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Course Moderation Queue";
@@ -72,8 +73,8 @@
                     <option value="pending" selected="@(ViewBag.Status == "pending")">Pending</option>
                     <option value="published" selected="@(ViewBag.Status == "published")">Approved</option>
                     <option value="rejected" selected="@(ViewBag.Status == "rejected")">Rejected</option>
-                    <option value="flagged" selected="@(ViewBag.Status == "flagged")">Flagged</option>
                     <option value="archived" selected="@(ViewBag.Status == "archived")">Archived</option>
+                    <option value="permanently_locked" selected="@(ViewBag.Status == "permanently_locked")">Permanently Locked</option>
                 </select>
                 <span class="material-symbols-outlined absolute right-3 bottom-3 text-slate-400 pointer-events-none">arrow_drop_down</span>
             </div>
@@ -81,6 +82,8 @@
             <div class="w-48 relative">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Sort By</label>
                 <select name="sortBy" id="sort-select" class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer outline-none">
+                    <option value="threat_desc" selected="@(ViewBag.SortBy == "threat_desc")">Threat Level (High to Low)</option>
+                    <option value="threat_asc" selected="@(ViewBag.SortBy == "threat_asc")">Threat Level (Low to High)</option>
                     <option value="oldest" selected="@(ViewBag.SortBy == "oldest")">Oldest (Priority)</option>
                     <option value="newest" selected="@(ViewBag.SortBy == "newest")">Newest</option>
                 </select>
@@ -104,6 +107,7 @@
                         <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Category</th>
                         <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Price</th>
                         <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Priority Level</th>
+                        <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
                         <th class="px-6 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Submission Date</th>
                         <th class="px-6 py-5 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Preview</th>
                         <th class="px-8 py-5 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
@@ -113,7 +117,7 @@
                     @if (!Model.Items.Any())
                     {
                         <tr>
-                            <td colspan="8" class="px-8 py-20 text-center">
+                            <td colspan="9" class="px-8 py-20 text-center">
                                 <div class="flex flex-col items-center">
                                     <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                                         <span class="material-symbols-outlined text-slate-300 text-4xl">inventory_2</span>
@@ -127,22 +131,47 @@
                     @foreach (var item in Model.Items)
                     {
                         var isPending = item.CourseStatus?.Equals("pending", StringComparison.OrdinalIgnoreCase) ?? false;
-                        var rowOpacity = isPending ? "opacity-100" : "opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0";
                         
-                        <tr data-course-id="@item.CourseId" class="group hover:bg-slate-50/80 transition-all duration-300 @rowOpacity">
+                        string threatRowClass = "";
+                        string threatBadgeClass = "";
+                        string threatIcon = "";
+                        string threatLabel = "";
+
+                        switch (item.ThreatLevel)
+                        {
+                            case AiThreatLevel.FlaggedOrRejected:
+                                threatRowClass = "bg-red-50/30 border-l-4 border-l-red-500 hover:bg-red-50/50 opacity-100";
+                                threatBadgeClass = "bg-red-100 text-red-700 border-red-200 animate-pulse";
+                                threatIcon = "warning";
+                                threatLabel = "CRITICAL THREAT";
+                                break;
+                            case AiThreatLevel.ManualAudit:
+                                threatRowClass = "bg-amber-50/30 border-l-4 border-l-amber-500 hover:bg-amber-50/50 opacity-100";
+                                threatBadgeClass = "bg-amber-100 text-amber-700 border-amber-200";
+                                threatIcon = "error";
+                                threatLabel = "HIGH THREAT";
+                                break;
+                            case AiThreatLevel.Approved:
+                                threatRowClass = "bg-emerald-50/30 border-l-4 border-l-emerald-500 hover:bg-emerald-50/50 opacity-100";
+                                threatBadgeClass = "bg-emerald-100 text-emerald-700 border-emerald-200";
+                                threatIcon = "check_circle";
+                                threatLabel = "CLEAN";
+                                break;
+                            default:
+                                threatRowClass = isPending ? "opacity-100" : "opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0";
+                                threatBadgeClass = "bg-slate-100 text-slate-600 border-slate-200";
+                                threatIcon = "pending";
+                                threatLabel = "PENDING / NONE";
+                                break;
+                        }
+                        
+                        <tr data-course-id="@item.CourseId" class="group transition-all duration-300 @threatRowClass">
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-4">
                                     <div class="w-14 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-100 shadow-sm">
-                                        @if (!string.IsNullOrEmpty(item.CourseThumbnailUrl))
-                                        {
-                                            <img src="@item.CourseThumbnailUrl" class="w-full h-full object-cover" alt="Thumbnail" />
-                                        }
-                                        else
-                                        {
-                                            <div class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
-                                                <span class="material-symbols-outlined text-[20px]">image</span>
-                                            </div>
-                                        }
+                                        <img src="@(string.IsNullOrEmpty(item.CourseThumbnailUrl) ? "/img/default-course.png" : item.CourseThumbnailUrl)" 
+                                             onerror="this.onerror=null; this.src='/img/default-course.png';"
+                                             class="w-full h-full object-cover" alt="Thumbnail" />
                                     </div>
                                     <div>
                                         <a href="/Course/Details/@item.CourseId" target="_blank" class="font-display font-extrabold text-slate-900 leading-tight hover:text-primary transition-colors block">
@@ -190,39 +219,33 @@
                                 @item.Price.ToString("C2", new System.Globalization.CultureInfo("en-US"))
                             </td>
                             <td class="px-6 py-6">
-                                @if (isPending)
-                                {
-                                    var badgeColor = item.UrgencyColor == "red" ? "bg-red-50 text-red-600 border-red-100" :
-                                                     item.UrgencyColor == "amber" ? "bg-amber-50 text-amber-600 border-amber-100" :
-                                                     "bg-slate-50 text-slate-500 border-slate-100";
-                                    var urgencyText = item.UrgencyLevel == "High" ? "Urgent" :
-                                                      item.UrgencyLevel == "Medium" ? "Attention Required" : "Standard";
-                                    
-                                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border @badgeColor">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-                                        <span class="text-[10px] font-black uppercase tracking-wider">@urgencyText</span>
-                                    </div>
-                                }
-                                else
-                                {
+                                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border @threatBadgeClass shadow-sm">
+                                    <span class="material-symbols-outlined text-[14px]">@threatIcon</span>
+                                    <span class="text-[10px] font-black uppercase tracking-wider">@threatLabel</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-6">
+                                @{
                                     var statusLabel = item.CourseStatus?.ToLower() switch {
                                         "published" => "Approved",
                                         "rejected" => "Rejected",
-                                        "flagged" => "Flagged",
                                         "archived" => "Archived",
+                                        "pending" => "Pending",
+                                        "permanently_locked" => "Permanently Locked",
                                         _ => item.CourseStatus
                                     };
                                     var statusColor = item.CourseStatus?.ToLower() switch {
                                         "published" => "bg-emerald-500 text-white",
                                         "rejected" => "bg-red-500 text-white",
-                                        "flagged" => "bg-slate-900 text-white",
                                         "archived" => "bg-slate-500 text-white",
+                                        "pending" => "bg-amber-500 text-white",
+                                        "permanently_locked" => "bg-red-800 text-white shadow-lg shadow-red-900/20",
                                         _ => "bg-slate-100 text-slate-600"
                                     };
-                                    <span class="px-3 py-1 @statusColor rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
-                                        @statusLabel
-                                    </span>
                                 }
+                                <span class="inline-block whitespace-nowrap px-3 py-1 @statusColor rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
+                                    @statusLabel
+                                </span>
                             </td>
                             <td class="px-6 py-6">
                                 <p class="text-sm text-slate-500 font-medium">@item.CreatedAt?.ToString("dd/MM/yyyy")</p>
@@ -234,35 +257,50 @@
                                 </a>
                             </td>
                             <td class="px-8 py-6 text-center">
-                                <div class="flex items-center justify-center gap-2">
-                                    @if (isPending || item.CourseStatus?.ToLower() == "rejected")
-                                    {
-                                        <button onclick="approveCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
-                                            <span class="material-symbols-outlined text-[18px]">done</span> Approve
-                                        </button>
-                                        <button onclick="rejectCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-bold transition-all active:scale-95">
-                                            <span class="material-symbols-outlined text-[18px]">close</span> Reject
-                                        </button>
+                                <div class="flex items-stretch gap-2">
+                                    @{
+                                        var statusStr = item.CourseStatus?.ToLower() ?? "";
                                     }
-                                    
-                                    @if (item.CourseStatus?.ToLower() == "published" || item.CourseStatus?.ToLower() == "archived")
-                                    {
-                                        <button onclick="flagCourse(@item.CourseId)" class="flex items-center justify-center gap-2 px-4 py-2 bg-accent text-white rounded-xl hover:bg-red-600 transition-all shadow-lg shadow-red-900/20 active:scale-95" title="Flag for violation">
-                                            <span class="material-symbols-outlined text-[18px]">flag</span> Flag
-                                        </button>
-                                    }
-                                    else if (item.CourseStatus?.ToLower() == "flagged")
-                                    {
-                                         <button onclick="approveCourse(@item.CourseId)" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
-                                            <span class="material-symbols-outlined text-[18px]">settings_backup_restore</span> Re-approve
-                                        </button>
-                                    }
-                                    else if (isPending)
-                                    {
-                                        <button onclick="flagCourse(@item.CourseId)" class="flex items-center justify-center w-9 h-9 bg-slate-100 text-slate-400 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all active:scale-95" title="Flag for violation">
-                                            <span class="material-symbols-outlined text-[18px]">flag</span>
-                                        </button>
-                                    }
+
+                                    <!-- Column 1: Approve / Reject -->
+                                    <div class="flex flex-col justify-center gap-2 w-[125px]">
+                                        @if (statusStr == "pending")
+                                        {
+                                            <button onclick="approveCourse(@item.CourseId)" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 active:scale-95">
+                                                <span class="material-symbols-outlined text-[18px]">done</span> Approve
+                                            </button>
+                                        }
+                                        else if (statusStr == "rejected" || statusStr == "archived" || statusStr == "permanently_locked")
+                                        {
+                                            <button onclick="approveCourse(@item.CourseId)" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
+                                                <span class="material-symbols-outlined text-[18px]">settings_backup_restore</span> Re-approve
+                                            </button>
+                                        }
+
+                                        @if (statusStr == "pending" || statusStr == "published")
+                                        {
+                                            <button onclick="rejectCourse(@item.CourseId)" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-bold transition-all active:scale-95">
+                                                <span class="material-symbols-outlined text-[18px]">close</span> Reject
+                                            </button>
+                                        }
+                                    </div>
+
+                                    <!-- Column 2: Flag / Unflag -->
+                                    <div class="flex flex-col justify-center gap-2 w-[95px]">
+                                        @if ((statusStr == "pending" || statusStr == "published" || statusStr == "rejected" || statusStr == "archived") && item.FlagCount < 3)
+                                        {
+                                            <button onclick="flagCourse(@item.CourseId)" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-accent text-white rounded-xl hover:bg-red-600 transition-all shadow-lg shadow-red-900/20 active:scale-95 text-xs font-bold" title="Flag for violation">
+                                                <span class="material-symbols-outlined text-[18px]">flag</span> Flag
+                                            </button>
+                                        }
+
+                                        @if ((statusStr == "pending" || statusStr == "published" || statusStr == "rejected" || statusStr == "archived" || statusStr == "permanently_locked") && item.FlagCount > 0)
+                                        {
+                                            <button onclick="unflagCourse(@item.CourseId)" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95" title="Unflag course">
+                                                <span class="material-symbols-outlined text-[18px]">undo</span> Unflag
+                                            </button>
+                                        }
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -674,6 +712,35 @@
             }).then(() => dimCourseRowInDOM(id));
         } else {
             Swal.fire('Error', 'An error occurred while flagging this course.', 'error');
+        }
+    }
+
+    async function unflagCourse(id) {
+        const confirmVal = await Swal.fire({
+            title: 'Unflag Course?',
+            text: "Are you sure you want to remove 1 strike from this course? This action will restore its visibility if the strike count drops below the locking threshold.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, unflag',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#10b981'
+        });
+
+        if (!confirmVal.isConfirmed) return;
+
+        Swal.showLoading();
+        const response = await fetch(`/AdminModeration/UnflagCourse`, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `id=${id}`
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            Swal.fire('Success', 'The course has been unflagged.', 'success')
+                .then(() => location.reload());
+        } else {
+            Swal.fire('Error', 'An error occurred while unflagging this course.', 'error');
         }
     }
 

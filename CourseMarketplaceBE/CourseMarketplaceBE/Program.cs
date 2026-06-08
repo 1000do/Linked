@@ -13,10 +13,10 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using CourseMarketplaceBE.Infrastructure.BackgroundServices;
 using Microsoft.IdentityModel.Tokens;
-using CourseMarketplaceBE.Application.Interfaces;
 using Microsoft.OpenApi.Models;
 using Stripe;
 using StackExchange.Redis;
+using Npgsql;
 
 
 namespace CourseMarketplaceBE;
@@ -129,10 +129,11 @@ public class Program
 
         var dataSourceBuilder = new Npgsql.NpgsqlDataSourceBuilder(connectionString);
         dataSourceBuilder.EnableDynamicJson();
+        dataSourceBuilder.UseVector();
         var dataSource = dataSourceBuilder.Build();
 
         builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(dataSource));
+            options.UseNpgsql(dataSource, o => o.UseVector()));
 
         // 🔥 5. DI
         builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -167,8 +168,8 @@ public class Program
         builder.Services.AddScoped<ICouponRepository, CouponRepository>();
         builder.Services.AddScoped<ICouponService, CourseMarketplaceBE.Application.Services.CouponService>();
 
-        // builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-        builder.Services.AddAutoMapper(cfg => {}, typeof(Program).Assembly);
+        builder.Services.AddAutoMapper(config => {}, AppDomain.CurrentDomain.GetAssemblies());
+
         // Register file upload implementation conditionally.
         // If Cloudinary config is present, use CloudinaryUploadService; otherwise use a no-op fallback.
         var cloudName = configuration["CloudinarySettings:CloudName"];
@@ -220,7 +221,8 @@ public class Program
         builder.Services.AddScoped<ICourseAiIntegrationRepository, CourseAiIntegrationRepository>();
         builder.Services.AddScoped<IAiModerationService, AiModerationService>();
         builder.Services.AddScoped<ISystemConfigRepository, SystemConfigRepository>();
-        builder.Services.AddScoped<IMaterialEmbeddingRepository, MaterialEmbeddingRepository>();
+        builder.Services.AddScoped<ITextEmbeddingRepository, TextEmbeddingRepository>();
+        builder.Services.AddScoped<IMediaEmbeddingRepository, MediaEmbeddingRepository>();
         builder.Services.AddScoped<ICourseExtRepository, CourseExtRepository>();
         builder.Services.AddScoped<ICourseAiUsageLogRepository, CourseAiUsageLogRepository>();
         builder.Services.AddScoped<IContentHashService, ContentHashService>();

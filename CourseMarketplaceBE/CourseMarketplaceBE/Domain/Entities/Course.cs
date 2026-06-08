@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using CourseMarketplaceBE.Domain.Enums;
 
 namespace CourseMarketplaceBE.Domain.Entities;
 
@@ -62,4 +63,5 @@ public partial class Course
     public string? ModerationFeedback { get; set; }
     public DateTime? LastApprovedAt { get; set; }
     public bool IsRemoved { get; set; }
+    public AiThreatLevel ThreatLevel { get; set; } = AiThreatLevel.None;
 }

@@ -91,7 +91,8 @@
                         
                         @* Card Image *@
                         <div class="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 shrink-0">
-                            <img src="@(string.IsNullOrEmpty(item.CourseThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800&auto=format&fit=crop" : item.CourseThumbnailUrl)" 
+                            <img src="@(string.IsNullOrEmpty(item.CourseThumbnailUrl) ? "/img/default-course.png" : item.CourseThumbnailUrl)" 
+                                 onerror="this.onerror=null; this.src='/img/default-course.png';"
                                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out-expo" 
                                  alt="@item.Title" loading="lazy" />
                             <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
@@ -203,7 +204,7 @@
 
             grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8";
             grid.innerHTML = items.map(item => {
-                const thumbnailUrl = item.CourseThumbnailUrl || 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800&auto=format&fit=crop';
+                const thumbnailUrl = item.CourseThumbnailUrl || '/img/default-course.png';
                 const priceText = item.Price === 0 
                     ? `<span class="text-emerald-600 uppercase text-lg">Free</span>` 
                     : `<span>$${item.Price.toFixed(2)}</span>`;
@@ -238,6 +239,7 @@
                         
                         <div class="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 shrink-0">
                             <img src="${thumbnailUrl}" 
+                                 onerror="this.onerror=null; this.src='/img/default-course.png';"
                                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out-expo" 
                                  alt="${item.Title}" loading="lazy" />
                             <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>

@@ -31,6 +31,7 @@ actor Instructor as act
 
 participant "CourseCreationForm" as view
 
+
 participant "InstructorCourseController" as fe_ctrl
 participant "CourseController" as be_ctrl
 
@@ -43,7 +44,7 @@ participant ":Course" as ett
 participant ":CourseRepository" as repo
 participant ":AppDbContext" as ctx
 
-participant Database as db
+Database Database as db
 
 act++
 act->view++:Access course creation form
@@ -81,7 +82,7 @@ ctx->db++: Save changes to Database
 db-->>ctx--: Return numberOfRowsAffected
 ctx-->>repo--: Return numberOfRowsAffected
 repo -->> sv--: Return numberOfRowsAffected
-sv->sv++:Check numberOfRowsAffected > 0
+sv->sv++:Check numberOfRowsAffected
 sv--
 alt numberOfRowsAffected > 0
     sv -> sv++: Call UpdateCourseHashesAsync()

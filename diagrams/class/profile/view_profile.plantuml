@@ -1,0 +1,162 @@
+@startuml ViewProfile_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "AccountController" as AccountControllerFE #FFE6E6 {
+    + Profile() : Task<IActionResult>
+}
+
+class UserProfileViewModel #E6CCFF {
+    + FullName : string
+    + Email : string
+    + Username : string?
+    + AuthProvider : string?
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+    + AvatarUrl : string?
+    + PhoneNumber : string?
+    + IsVerified : bool
+    + IsInstructor : bool
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + ApprovalStatus : string?
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "ProfileController" as ProfileControllerBE #FFE6E6 {
+    - _profileService : IUserProfileService
+    + GetProfile() : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class UserProfileResponse #E6CCFF {
+    + FullName : string
+    + Email : string
+    + Username : string?
+    + AuthProvider : string?
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+    + AvatarUrl : string?
+    + PhoneNumber : string?
+    + IsVerified : bool
+    + IsInstructor : bool
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + ApprovalStatus : string?
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class User #CCFFE6 {
+    + UserId : int <<PK>>
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+    + Instructor : Instructor?
+    + UserNavigation : Account
+}
+
+class Account #CCFFE6 {
+    + AccountId : int <<PK>>
+    + Email : string
+    + Username : string?
+    + PhoneNumber : string?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + IsVerified : bool
+}
+
+class Instructor #CCFFE6 {
+    + InstructorId : int <<PK>>
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + ApprovalStatus : string?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IUserProfileService #FFE6CC {
+    //+ GetUserProfileAsync(userId: int) : Task<UserProfileResponse?>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IUserRepository #FFE6CC {
+    //+ GetUserByIdAsync(userId: int) : Task<User?>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class UserProfileService #CCE5FF {
+    - _userRepo : IUserRepository
+    + GetUserProfileAsync(userId: int) : Task<UserProfileResponse?>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetUserByIdAsync(userId: int) : Task<User?>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Users : DbSet<User>
+    + Accounts : DbSet<Account>
+    + Instructors : DbSet<Instructor>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === COMPOSITION ===
+User *-- Account
+User *-- Instructor
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+ProfileControllerBE --> IUserProfileService
+UserProfileService --> IUserRepository
+UserRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+UserProfileService ..|> IUserProfileService
+UserRepository ..|> IUserRepository
+
+' === DEPENDENCY ===
+AccountControllerFE ..> ProfileControllerBE : calls via HTTP
+AccountControllerFE ..> UserProfileViewModel : uses
+ProfileControllerBE ..> UserProfileResponse : uses
+UserProfileService ..> UserProfileResponse : creates
+UserProfileService ..> User : uses
+UserRepository ..> User : uses
+
+@enduml

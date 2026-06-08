@@ -1,77 +1,176 @@
-@startuml ViewSystemNotificationList
+@startuml ViewSystemNotificationList_ClassDiagram
 
-hide empty members
-
-class AdminNotificationController {
-    + Index()
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
 }
 
-class NotificationAdminViewModel {
-    ' Represents the data structure for the admin view
-    + Notifications
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "NotificationController" as FENotificationController #FFE6E6 {
+    - _client : HttpClient
+    
+    + Index() : Task<IActionResult>
+    + GetListTiny() : Task<IActionResult>
+    + Admin() : IActionResult
 }
 
-class NotificationController {
-    + GetAllNotificationsForAdmin()
+class NotificationViewModel #E6CCFF {
+    + NotificationId : int
+    + ReceiverId : int
+    + ReceiverFullName : string?
+    + ReceiverEmail : string?
+    + Title : string
+    + Content : string
+    + LinkAction : string?
+    + IsRead : bool
+    + CreatedAt : DateTime?
 }
 
-class NotificationAdminDto {
-    ' DTO with extra info for admins
-    + NotificationId
-    + Title
-    + Content
-    + RecipientName
-    + SentAt
+' ==================== BACKEND - CONTROLLER ====================
+
+class "NotificationController" as BENotificationController #FFE6E6 {
+    - _notiService : INotificationService
+    - _chatService : IChatService
+    
+    + GetMyNotifications() : Task<IActionResult>
+    + GetAllNotifications() : Task<IActionResult>
+    + GetUnreadSummary() : Task<IActionResult>
 }
 
-interface INotificationService {
-    + GetAllForAdminAsync()
+' ==================== BACKEND - DTOs ====================
+
+class NotificationAdminResponseDto #E6CCFF {
+    + NotificationId : int
+    + Title : string?
+    + Content : string?
+    + IsRead : bool?
+    + CreatedAt : DateTime?
+    + ReceiverEmail : string?
+    + ReceiverFullName : string?
 }
 
-class NotificationService {
-    + GetAllForAdminAsync()
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Notification #CCFFE6 {
+    + NotificationId : int <<PK>>
+    + SenderId : int? <<FK>>
+    + ReceiverId : int? <<FK>>
+    + Title : string?
+    + Content : string?
+    + LinkAction : string?
+    + IsRead : bool?
+    + IsRemoved : bool?
+    + CreatedAt : DateTime?
+    + Receiver : Account?
+    + Sender : Account?
 }
 
-interface INotificationRepository {
-    + GetAllWithRecipientInfoAsync()
+class Account #CCFFE6 {
+    + AccountId : int <<PK>>
+    + Email : string
+    + Username : string?
+    + User : User?
 }
 
-class NotificationRepository {
-    + GetAllWithRecipientInfoAsync()
+class User #CCFFE6 {
+    + UserId : int <<PK>>
+    + FullName : string
 }
 
-class Notification {
-    + NotificationId
-    + ReceiverId
-    + Title
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface INotificationService #FFE6CC {
+    //+ GetNotificationsForUserAsync(userId: int) : Task<List<Notification>>//
+    //+ GetAllNotificationsForAdminAsync() : Task<List<NotificationAdminResponseDto>>//
+    //+ GetAllNotificationsAsync() : Task<List<Notification>>//
+    //+ GetUnreadCountAsync(userId: int) : Task<int>//
 }
 
-class User {
-    + UserId
-    + UserName
+interface IChatService #FFE6CC {
+    //+ GetTotalUnreadCountAsync(accountId: int) : Task<int>//
 }
 
-class ApplicationDbContext
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
 
+interface INotificationRepository #FFE6CC {
+    //+ GetByReceiverIdAsync(userId: int) : Task<List<Notification>>//
+    //+ GetAllAsync() : Task<List<Notification>>//
+    //+ GetUnreadCountAsync(userId: int) : Task<int>//
+    //+ AutoCleanupAdminNotificationsAsync() : Task<void>//
+}
 
-' === RELATIONSHIPS ===
-AdminNotificationController ..> NotificationController
-AdminNotificationController ..> NotificationAdminViewModel
-NotificationController ..> NotificationAdminDto
-NotificationController --> INotificationService
-NotificationService ..|> INotificationService
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class NotificationService #CCE5FF {
+    - _repo : INotificationRepository
+    
+    + GetNotificationsForUserAsync(userId: int) : Task<List<Notification>>
+    + GetAllNotificationsAsync() : Task<List<Notification>>
+    + GetAllNotificationsForAdminAsync() : Task<List<NotificationAdminResponseDto>>
+    + GetUnreadCountAsync(userId: int) : Task<int>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class NotificationRepository #FFFFCC {
+    - _context : AppDbContext
+    
+    + GetByReceiverIdAsync(userId: int) : Task<List<Notification>>
+    + GetAllAsync() : Task<List<Notification>>
+    + GetUnreadCountAsync(userId: int) : Task<int>
+    + AutoCleanupAdminNotificationsAsync() : Task<void>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Accounts : DbSet<Account>
+    + Notifications : DbSet<Notification>
+    + Users : DbSet<User>
+    ---
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) : void
+    # OnModelCreating(modelBuilder: ModelBuilder) : void
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === COMPOSITION (filled diamond) ===
+Account *-- User
+Account *-- Notification
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+BENotificationController --> INotificationService
+BENotificationController --> IChatService
 NotificationService --> INotificationRepository
+NotificationRepository --> AppDbContext
 
-' Service maps from entities to the admin DTO
-NotificationService ..> Notification
-NotificationService ..> User
-NotificationService ..> NotificationAdminDto
-
+' === INTERFACE REALIZATION ===
+NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
-NotificationRepository --> ApplicationDbContext
 
-' Repository fetches Notification and joins with User
-NotificationRepository ..> Notification
-NotificationRepository ..> User
+' === DEPENDENCY (dashed arrows) ===
+FENotificationController ..> BENotificationController : calls
+FENotificationController ..> NotificationViewModel : uses
+BENotificationController ..> NotificationAdminResponseDto : uses
+NotificationService ..> NotificationAdminResponseDto : uses
+NotificationService ..> Notification : uses
+NotificationRepository ..> Notification : uses
 
 @enduml

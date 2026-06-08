@@ -22,8 +22,8 @@ public class ReviewService : IReviewService
     private readonly ILockoutRepository _lockoutRepo;
 
     public ReviewService(
-        IReviewRepository reviewRepo, 
-        IEnrollmentRepository enrollmentRepo, 
+        IReviewRepository reviewRepo,
+        IEnrollmentRepository enrollmentRepo,
         ICourseRepository courseRepo,
         INotificationService notificationService,
         IReportService reportService,
@@ -55,7 +55,6 @@ public class ReviewService : IReviewService
 
         if (enrollment == null)
         {
-            // Auto-enroll instructor vào khóa của chính mình
             var course = await _courseRepo.GetByIdAsync(courseId);
             enrollment = new Enrollment
             {
@@ -63,15 +62,14 @@ public class ReviewService : IReviewService
                 CourseId = courseId,
                 Title = course?.Title ?? "Owner Access",
                 EnrollDate = DateOnly.FromDateTime(DateTime.Now),
-                IsCompleted = true, // Owner mặc định completed
+                IsCompleted = true,
                 EnrollmentStatus = "active",
                 LastAccessedAt = DateTime.Now
             };
             await _enrollmentRepo.AddEnrollmentAsync(enrollment);
-            int numberOfRowsAffected = await _enrollmentRepo.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
+            int rows = await _enrollmentRepo.SaveChangesAsync();
+            if (rows <= 0)
                 throw new InvalidOperationException("Failed to save changes");
-
         }
 
         return enrollment;
@@ -79,52 +77,97 @@ public class ReviewService : IReviewService
 
     // ── Lấy danh sách reviews ──────────────────────────────────────────
 
-    public async Task<PagedResult<ReviewResponse>> GetCourseReviewsAsync(int courseId, int page = 1, int pageSize = 10)
+    public async Task<PagedResult<ReviewResponse>> GetCourseReviewsAsync(
+        int courseId, int page = 1, int pageSize = 10, int? starFilter = null)
     {
-        // Lấy instructor_id của khóa học
         var course = await _courseRepo.GetByIdAsync(courseId);
         var instructorId = course?.InstructorId;
 
-        var (courseReviews, totalCount) = await _reviewRepo.GetCourseReviewsWithDetailsAsync(courseId, page, pageSize);
+        var (courseReviews, totalCount) = await _reviewRepo.GetCourseReviewsWithDetailsAsync(
+            courseId, page, pageSize, starFilter);
 
         var responses = new List<ReviewResponse>();
         foreach (var r in courseReviews)
         {
             var isInstructor = instructorId.HasValue && r.Enrollment?.UserId == instructorId.Value;
+            var isRemoved = r.IsRemoved ?? false;
+            var status = r.CourseReviewStatus ?? "ok";
+            var comment = r.Comment ?? "";
+            var rating = r.Rating ?? 0;
+
+            if (isRemoved)
+            {
+                rating = 0;
+                // Only admin-removed (status="violating") reviews should reach here.
+                // Self-deleted (status="removed") reviews are excluded at the repo query level.
+                comment = status == "violating"
+                    ? "This review was removed by a moderator for violating community standards."
+                    : "[deleted]"; // fallback
+            }
+
             responses.Add(new ReviewResponse
             {
                 ReviewId = r.CourseReviewId,
+                UserId = r.Enrollment?.UserId ?? 0,
                 UserFullName = r.Enrollment?.User?.FullName ?? "Anonymous",
                 UserAvatarUrl = r.Enrollment?.User?.UserNavigation?.AvatarUrl,
-                Rating = r.Rating ?? 0,
-                Comment = r.Comment ?? "",
+                Rating = rating,
+                Comment = comment,
                 CreatedAt = r.CreatedAt ?? DateTime.Now,
+                UpdatedAt = r.UpdatedAt,
                 LessonTitle = null,
                 LessonId = null,
-                IsInstructor = isInstructor
+                IsInstructor = isInstructor,
+                IsRemoved = isRemoved,
+                ReviewStatus = status
             });
         }
-        
+
         return new PagedResult<ReviewResponse>(responses, totalCount, page, pageSize);
     }
 
-    public async Task<PagedResult<ReviewResponse>> GetLessonReviewsAsync(int lessonId, int page = 1, int pageSize = 10)
+    public async Task<PagedResult<ReviewResponse>> GetLessonReviewsAsync(
+        int lessonId, int page = 1, int pageSize = 10)
     {
-        var (lessonReviews, totalCount) = await _reviewRepo.GetLessonReviewsWithDetailsAsync(lessonId, page, pageSize);
+        var (lessonReviews, totalCount) = await _reviewRepo.GetLessonReviewsWithDetailsAsync(
+            lessonId, page, pageSize);
         var firstReview = lessonReviews.FirstOrDefault();
         var instructorId = firstReview?.Lesson?.Course?.InstructorId;
 
-        var responses = lessonReviews.Select(r => new ReviewResponse
+        var responses = lessonReviews.Select(r =>
         {
-            ReviewId = r.LessonReviewId,
-            UserFullName = r.Enrollment!.User!.FullName ?? "Anonymous",
-            UserAvatarUrl = r.Enrollment!.User!.UserNavigation.AvatarUrl,
-            Rating = r.Rating ?? 0,
-            Comment = r.Comment ?? "",
-            CreatedAt = r.CreatedAt ?? DateTime.Now,
-            LessonTitle = r.Lesson != null ? r.Lesson.Title : null,
-            LessonId = r.LessonId,
-            IsInstructor = instructorId.HasValue && r.Enrollment!.UserId == instructorId.Value
+            var isInstructor = instructorId.HasValue && r.Enrollment?.UserId == instructorId.Value;
+            var isRemoved = r.IsRemoved ?? false;
+            var status = r.LessonReviewStatus ?? "ok";
+            var comment = r.Comment ?? "";
+            var rating = r.Rating ?? 0;
+
+            if (isRemoved)
+            {
+                rating = 0;
+                // Only admin-removed (status="violating") reviews should reach here.
+                // Self-deleted (status="removed") reviews are excluded at the repo query level.
+                comment = status == "violating"
+                    ? "This review was removed by a moderator for violating community standards."
+                    : "[deleted]"; // fallback
+            }
+
+            return new ReviewResponse
+            {
+                ReviewId = r.LessonReviewId,
+                UserId = r.Enrollment?.UserId ?? 0,
+                UserFullName = r.Enrollment?.User?.FullName ?? "Anonymous",
+                UserAvatarUrl = r.Enrollment?.User?.UserNavigation?.AvatarUrl,
+                Rating = rating,
+                Comment = comment,
+                CreatedAt = r.CreatedAt ?? DateTime.Now,
+                UpdatedAt = r.UpdatedAt,
+                LessonTitle = r.Lesson != null ? r.Lesson.Title : null,
+                LessonId = r.LessonId,
+                IsInstructor = isInstructor,
+                IsRemoved = isRemoved,
+                ReviewStatus = status
+            };
         }).ToList();
 
         return new PagedResult<ReviewResponse>(responses, totalCount, page, pageSize);
@@ -135,7 +178,6 @@ public class ReviewService : IReviewService
     public async Task<ReviewStatsResponse> GetReviewStatsAsync(int courseId)
     {
         var ratings = await _reviewRepo.GetCourseReviewRatingsAsync(courseId);
-
         var total = ratings.Count;
         return new ReviewStatsResponse
         {
@@ -149,28 +191,55 @@ public class ReviewService : IReviewService
         };
     }
 
+    public async Task<ReviewStatsResponse> GetLessonReviewStatsAsync(int lessonId)
+    {
+        var ratings = await _reviewRepo.GetLessonReviewRatingsAsync(lessonId);
+        var total = ratings.Count;
+        return new ReviewStatsResponse
+        {
+            AverageRating = total > 0 ? Math.Round(ratings.Average(), 1) : 0,
+            TotalReviews = total,
+            Star5Count = ratings.Count(r => r >= 4.5f),
+            Star4Count = ratings.Count(r => r >= 3.5f && r < 4.5f),
+            Star3Count = ratings.Count(r => r >= 2.5f && r < 3.5f),
+            Star2Count = ratings.Count(r => r >= 1.5f && r < 2.5f),
+            Star1Count = ratings.Count(r => r < 1.5f)
+        };
+    }
+
+    public async Task<List<LessonRatingStatsResponse>> GetLessonRatingsForCourseAsync(int courseId)
+    {
+        var data = await _reviewRepo.GetLessonRatingsForCourseAsync(courseId);
+        return data.Select(x => new LessonRatingStatsResponse
+        {
+            LessonId = x.LessonId,
+            AverageRating = Math.Round(x.AvgRating, 1),
+            TotalReviews = x.Count
+        }).ToList();
+    }
+
     // ── Trạng thái enrollment + quyền review ───────────────────────────
 
     public async Task<EnrollmentStatusResponse> GetEnrollmentStatusAsync(int userId, int courseId)
     {
         bool isOwner = await IsOwnerAsync(userId, courseId);
 
-        // Nếu là chủ nhân → bypass, không tạo record DB khi chỉ xem status
         if (isOwner)
         {
             var courseStats = await _courseRepo.GetCourseStatsAsync(courseId);
             var totalMats = courseStats?.TotalMaterials ?? 0;
             var ownerEnrollment = await _enrollmentRepo.GetEnrollmentWithProgressAsync(userId, courseId);
-            bool hasReviewed = ownerEnrollment != null && (await _reviewRepo.GetCourseReviewByEnrollmentAsync(ownerEnrollment.EnrollmentId)) != null;
+            bool hasReviewed = ownerEnrollment != null
+                && (await _reviewRepo.GetCourseReviewByEnrollmentAsync(ownerEnrollment.EnrollmentId)) != null;
 
             return new EnrollmentStatusResponse
             {
-                IsEnrolled = true, // Bypass: Luôn coi như đã ghi danh
+                IsEnrolled = true,
                 IsCompleted = true,
                 ProgressPercentage = 100,
                 LearnedMaterialCount = totalMats,
                 TotalMaterialCount = totalMats,
-                CanReview = true, 
+                CanReview = true,
                 ReviewBlockedReason = null,
                 HasReviewed = hasReviewed,
                 IsOwner = true
@@ -195,7 +264,6 @@ public class ReviewService : IReviewService
         var learnedCount = await _enrollmentRepo.GetCompletedMaterialCountAsync(enrollment.EnrollmentId);
         var pct = totalMaterials > 0 ? (double)learnedCount / totalMaterials * 100 : 0;
         var isCompleted = enrollment.IsCompleted == true;
-
         var hasReviewedNormal = (await _reviewRepo.GetCourseReviewByEnrollmentAsync(enrollment.EnrollmentId)) != null;
 
         return new EnrollmentStatusResponse
@@ -206,139 +274,212 @@ public class ReviewService : IReviewService
             LearnedMaterialCount = learnedCount,
             TotalMaterialCount = totalMaterials,
             CanReview = learnedCount > 0,
-            ReviewBlockedReason = learnedCount == 0 ? "You need to complete at least 1 lesson before writing a review." : null,
+            ReviewBlockedReason = learnedCount == 0
+                ? "You need to complete at least 1 lesson before writing a review."
+                : null,
             HasReviewed = hasReviewedNormal,
             IsOwner = false
         };
     }
 
-    // ── Gửi review ─────────────────────────────────────────────────────
+    // ── Gửi review (luôn tạo record mới — không upsert) ───────────────
 
     public async Task SubmitReviewAsync(int userId, ReviewRequest request, bool requireCompletion)
     {
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(userId, "review");
         if (activeLockout != null)
-        {
-            throw new BadRequestException($"Your account has been restricted from posting comments and reviews until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to repeated community standards violations.");
-        }
+            throw new BadRequestException(
+                $"Your account has been restricted from posting comments and reviews until " +
+                $"{activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to repeated community standards violations.");
 
         bool isOwner = await IsOwnerAsync(userId, request.CourseId);
-
         Enrollment enrollment;
 
         if (isOwner)
         {
-            // Chủ nhân khóa học → auto-enroll + bypass mọi ràng buộc
             enrollment = await GetOrCreateOwnerEnrollmentAsync(userId, request.CourseId);
         }
         else
         {
-            // Người dùng bình thường → kiểm tra enrollment + ràng buộc
             enrollment = await _enrollmentRepo.GetEnrollmentWithProgressAsync(userId, request.CourseId)
                 ?? throw new InvalidOperationException("You need to enroll in the course before writing a review.");
 
             if (requireCompletion)
             {
                 if (enrollment.IsCompleted != true)
-                    throw new InvalidOperationException("You need to complete the course before writing a review on the detail page.");
+                    throw new InvalidOperationException(
+                        "You need to complete the course before writing a review on the detail page.");
             }
             else
             {
                 var learnedCount = await _enrollmentRepo.GetCompletedMaterialCountAsync(enrollment.EnrollmentId);
                 if (learnedCount <= 0)
-                    throw new InvalidOperationException("You need to complete at least 1 lesson before writing a review.");
+                    throw new InvalidOperationException(
+                        "You need to complete at least 1 lesson before writing a review.");
             }
         }
 
-        // ── Validate input ──
         if (request.Rating < 1 || request.Rating > 5)
             throw new InvalidOperationException("Rating must be between 1 and 5 stars.");
-
         if (string.IsNullOrWhiteSpace(request.Comment))
             throw new InvalidOperationException("Review content cannot be empty.");
 
-        // ── Upsert logic ──
+        // Luôn tạo record mới — không kiểm tra existing, không upsert
+        LessonReview newLessonReview = null;
+        CourseReview newCourseReview = null;
+
         if (request.LessonId.HasValue)
         {
-            // Review cho lesson cụ thể
-            var existingReview = await _reviewRepo.GetLessonReviewByEnrollmentAsync(enrollment.EnrollmentId, request.LessonId.Value);
-
-            if (existingReview != null)
+            newLessonReview = new LessonReview
             {
-                existingReview.Rating = request.Rating;
-                existingReview.Comment = request.Comment;
-                existingReview.UpdatedAt = DateTime.Now;
-                _reviewRepo.UpdateLessonReview(existingReview);
-            }
-            else
-            {
-                var review = new LessonReview
-                {
-                    EnrollmentId = enrollment.EnrollmentId,
-                    LessonId = request.LessonId.Value,
-                    Rating = request.Rating,
-                    Comment = request.Comment,
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now,
-                    IsRemoved = false
-                };
-                await _reviewRepo.AddLessonReviewAsync(review);
-            }
+                EnrollmentId = enrollment.EnrollmentId,
+                LessonId = request.LessonId.Value,
+                Rating = request.Rating,
+                Comment = request.Comment,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now,
+                IsRemoved = false
+            };
+            await _reviewRepo.AddLessonReviewAsync(newLessonReview);
         }
         else
         {
-            // Review cho khóa học
-            var existingReview = await _reviewRepo.GetCourseReviewByEnrollmentAsync(enrollment.EnrollmentId);
-
-            if (existingReview != null)
+            newCourseReview = new CourseReview
             {
-                existingReview.Rating = request.Rating;
-                existingReview.Comment = request.Comment;
-                existingReview.UpdatedAt = DateTime.Now;
-                _reviewRepo.UpdateCourseReview(existingReview);
-            }
-            else
-            {
-                var review = new CourseReview
-                {
-                    EnrollmentId = enrollment.EnrollmentId,
-                    Rating = request.Rating,
-                    Comment = request.Comment,
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now,
-                    IsRemoved = false
-                };
-                await _reviewRepo.AddCourseReviewAsync(review);
-            }
+                EnrollmentId = enrollment.EnrollmentId,
+                Rating = request.Rating,
+                Comment = request.Comment,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now,
+                IsRemoved = false
+            };
+            await _reviewRepo.AddCourseReviewAsync(newCourseReview);
         }
 
-        int numberOfRowsAffected = await _reviewRepo.SaveChangesAsync();
-        if (numberOfRowsAffected <= 0)
+        int saved = await _reviewRepo.SaveChangesAsync();
+        if (saved <= 0)
             throw new InvalidOperationException("Failed to save changes");
 
-        // ── Thông báo cho instructor (nếu không phải instructor tự đánh giá) ──
         if (!isOwner)
         {
             var course = await _courseRepo.GetByIdAsync(request.CourseId);
             if (course != null && course.InstructorId.HasValue)
             {
+                int reviewId = request.LessonId.HasValue ? newLessonReview.LessonReviewId : newCourseReview.CourseReviewId;
+                string linkAction = request.LessonId.HasValue 
+                    ? $"/Course/Learn/{request.CourseId}#review-card-{reviewId}" 
+                    : $"/Course/Details/{request.CourseId}#review-card-{reviewId}";
+
                 await _notificationService.SendNotificationAsync(
                     course.InstructorId.Value,
                     "New Review",
                     $"Your course '{course.Title}' just received a {request.Rating}-star review from a student.",
-                    $"/InstructorCourse/Editor?id={request.CourseId}"
+                    linkAction
                 );
             }
         }
     }
 
+    // ── Chỉnh sửa review (chỉ chủ review) ────────────────────────────
+
+    public async Task UpdateReviewAsync(int userId, UpdateReviewRequest request)
+    {
+        if (request.Rating < 1 || request.Rating > 5)
+            throw new InvalidOperationException("Rating must be between 1 and 5 stars.");
+        if (string.IsNullOrWhiteSpace(request.Comment))
+            throw new InvalidOperationException("Review content cannot be empty.");
+
+        var type = request.Type?.ToLower() ?? "course";
+
+        if (type == "lesson")
+        {
+            var review = await _reviewRepo.GetLessonReviewByIdAsync(request.ReviewId)
+                ?? throw new InvalidOperationException("Review not found.");
+            if (review.Enrollment?.UserId != userId)
+                throw new UnauthorizedAccessException("You can only edit your own reviews.");
+            if (review.IsRemoved == true)
+                throw new InvalidOperationException("This review has been removed and cannot be edited.");
+
+            review.Rating = request.Rating;
+            review.Comment = request.Comment;
+            review.UpdatedAt = DateTime.Now;
+            _reviewRepo.UpdateLessonReview(review);
+        }
+        else
+        {
+            var review = await _reviewRepo.GetCourseReviewByIdAsync(request.ReviewId)
+                ?? throw new InvalidOperationException("Review not found.");
+            if (review.Enrollment?.UserId != userId)
+                throw new UnauthorizedAccessException("You can only edit your own reviews.");
+            if (review.IsRemoved == true)
+                throw new InvalidOperationException("This review has been removed and cannot be edited.");
+
+            review.Rating = request.Rating;
+            review.Comment = request.Comment;
+            review.UpdatedAt = DateTime.Now;
+            _reviewRepo.UpdateCourseReview(review);
+        }
+
+        int rows = await _reviewRepo.SaveChangesAsync();
+        if (rows <= 0)
+            throw new InvalidOperationException("Failed to save changes.");
+    }
+
+    // ── Xóa mềm review (chỉ chủ review) ──────────────────────────────
+
+    public async Task DeleteReviewAsync(int userId, DeleteReviewRequest request)
+    {
+        var type = request.Type?.ToLower() ?? "course";
+
+        if (type == "lesson")
+        {
+            var review = await _reviewRepo.GetLessonReviewByIdAsync(request.ReviewId)
+                ?? throw new InvalidOperationException("Review not found.");
+            if (review.Enrollment?.UserId != userId)
+                throw new UnauthorizedAccessException("You can only delete your own reviews.");
+
+            // Block deletion if there is an active moderation report
+            var hasPending = await _reviewRepo.HasPendingLessonReviewReportsAsync(request.ReviewId);
+            if (hasPending)
+                throw new InvalidOperationException(
+                    "This review is currently under moderation review and cannot be deleted.");
+
+            review.IsRemoved = true;
+            review.LessonReviewStatus = "removed"; // distinguishes user self-delete from admin removal ("violating")
+            review.UpdatedAt = DateTime.Now;
+            _reviewRepo.UpdateLessonReview(review);
+        }
+        else
+        {
+            var review = await _reviewRepo.GetCourseReviewByIdAsync(request.ReviewId)
+                ?? throw new InvalidOperationException("Review not found.");
+            if (review.Enrollment?.UserId != userId)
+                throw new UnauthorizedAccessException("You can only delete your own reviews.");
+
+            // Block deletion if there is an active moderation report
+            var hasPending = await _reviewRepo.HasPendingCourseReviewReportsAsync(request.ReviewId);
+            if (hasPending)
+                throw new InvalidOperationException(
+                    "This review is currently under moderation review and cannot be deleted.");
+
+            review.IsRemoved = true;
+            review.CourseReviewStatus = "removed"; // distinguishes user self-delete from admin removal ("violating")
+            review.UpdatedAt = DateTime.Now;
+            _reviewRepo.UpdateCourseReview(review);
+        }
+
+        int rows = await _reviewRepo.SaveChangesAsync();
+        if (rows <= 0)
+            throw new InvalidOperationException("Failed to save changes.");
+    }
+
+    // ── Report review ──────────────────────────────────────────────────
+
     public async Task ReportReviewAsync(int userId, int reviewId, string type, string reason)
     {
-        // Delegate sang IReportService để tạo report record đúng chuẩn
-        // Giữ backward compatibility với ReviewController cũ
         if (type.ToLower() == "course")
         {
-            var request = new CourseMarketplaceBE.Application.DTOs.CreateCourseReviewReportRequest
+            var request = new CreateCourseReviewReportRequest
             {
                 CourseReviewId = reviewId,
                 Reason = string.IsNullOrWhiteSpace(reason) ? "Violates community standards" : reason
@@ -347,7 +488,7 @@ public class ReviewService : IReviewService
         }
         else
         {
-            var request = new CourseMarketplaceBE.Application.DTOs.CreateLessonReviewReportRequest
+            var request = new CreateLessonReviewReportRequest
             {
                 LessonReviewId = reviewId,
                 Reason = string.IsNullOrWhiteSpace(reason) ? "Violates community standards" : reason
@@ -356,4 +497,3 @@ public class ReviewService : IReviewService
         }
     }
 }
-

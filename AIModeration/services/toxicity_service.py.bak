@@ -68,6 +68,7 @@ class ToxicityService(BaseService):
             if title:
                 try:
                     result, conf, details = await self.text_classifier.classify_text(title)
+                    
                     if result == "FLAGGED":
                         flagged_fields.append("title")
                         max_confidence = max(max_confidence, conf)
@@ -79,6 +80,7 @@ class ToxicityService(BaseService):
             if description:
                 try:
                     result, conf, details = await self.text_classifier.classify_text(description)
+                    
                     if result == "FLAGGED":
                         flagged_fields.append("description")
                         max_confidence = max(max_confidence, conf)

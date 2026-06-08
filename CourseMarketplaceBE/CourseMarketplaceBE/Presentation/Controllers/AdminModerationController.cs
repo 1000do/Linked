@@ -75,6 +75,15 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             return result ? Ok() : NotFound();
         }
 
+        [HttpPost("courses/unflag/{id}")]
+        public async Task<IActionResult> UnflagCourse(int id)
+        {
+            var result = await _courseModerationService.UnflagCourseAsync(id);
+            return result 
+                ? Ok(ApiResponse<string>.SuccessResponse("Course unflagged successfully.")) 
+                : NotFound(ApiResponse<string>.ErrorResponse("Course not found or could not be unflagged."));
+        }
+
         // ── Legacy report endpoint (kept for backward compatibility) ────────
 
         [HttpGet("reports")]

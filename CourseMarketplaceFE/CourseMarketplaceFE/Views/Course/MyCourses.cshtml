@@ -70,7 +70,8 @@
                 <div class="group bg-white rounded-3xl p-5 border border-slate-100 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 flex flex-col md:flex-row items-center gap-6">
                     <!-- Thumbnail Container -->
                     <div class="relative w-full md:w-56 aspect-video rounded-2xl overflow-hidden bg-slate-100 flex-shrink-0">
-                        <img src="@(string.IsNullOrEmpty(item.CourseThumbnailUrl) ? "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800" : item.CourseThumbnailUrl)" 
+                        <img src="@(string.IsNullOrEmpty(item.CourseThumbnailUrl) ? "/img/default-course.png" : item.CourseThumbnailUrl)" 
+                             onerror="this.onerror=null; this.src='/img/default-course.png';"
                              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
                              alt="@item.Title">
                         
