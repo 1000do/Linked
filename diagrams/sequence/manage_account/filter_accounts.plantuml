@@ -1,0 +1,50 @@
+@startuml filter_accounts
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Filter Accounts
+actor Admin as act
+
+participant "AccountListView" as view
+participant "AdminAccountController" as be_ctrl
+participant ":AdminAccountService" as sv
+participant ":AppDbContext" as ctx
+
+database Database as db
+
+act++
+act->view++: Select Role filter dropdown or enter Search Keyword
+view->be_ctrl++: GET /api/admin/accounts?keyword={kw}&role={role}&page=1&pageSize=10
+be_ctrl->sv++: GetAccountsPagedAsync(keyword, role, page, pageSize)
+sv->ctx++: Query Accounts with filters (role, keyword)\n(using Include, Where, Skip, Take)
+ctx->db++: Execute SQL query
+db-->>ctx--: Return filtered results
+ctx-->>sv--: Return filtered items and count
+sv-->>be_ctrl--: Return PagedResult<AdminAccountListDto>
+be_ctrl-->>view--: Return status 200 with JSON payload (filtered accounts)
+view-->>act--: Render and display filtered Account List
+@enduml
