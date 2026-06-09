@@ -22,16 +22,33 @@ class TextExtractionService(BaseService):
     def __init__(self):
         """Initialize text extraction service."""
         super().__init__("TextExtractionService")
+
+    def get_file_type_for_text_extraction(self, file_extension: str) -> str:
+        """
+        Map file extension to appropriate generic text extraction file type.
+        """
+        if not file_extension:
+            return "text"
+        ext = file_extension.lower().replace(".", "").strip()
+        if ext in ["txt", "text"]:
+            return "text"
+        elif ext in ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp"]:
+            return "image"
+        elif ext in ["mp4", "avi", "mov", "mkv", "webm", "flv", "wmv", "3gp"]:
+            return "video"
+        elif ext in ["pdf"]:
+            return "pdf"
+        elif ext in ["docx", "doc", "odt", "rtf"]:
+            return "word"
+        elif ext in ["pptx", "ppt"]:
+            return "pptx"
+        elif ext in ["xlsx", "xls", "csv"]:
+            return "xlsx"
+        return "text"
     
     async def extract_from_image(self, image_bytes: bytes) -> Tuple[str, float, dict]:
         """
         Extract text from image using OCR.
-        
-        Args:
-            image_bytes: Image file bytes
-            
-        Returns:
-            (extracted_text, confidence, extraction_log)
         """
         if not image_bytes:
             raise FileProcessingException("image", "Empty image provided")
@@ -64,12 +81,6 @@ class TextExtractionService(BaseService):
     async def extract_from_pdf(self, pdf_bytes: bytes) -> Tuple[str, float, dict]:
         """
         Extract text from PDF using OCR on rendered images.
-        
-        Args:
-            pdf_bytes: PDF file bytes
-            
-        Returns:
-            (extracted_text, confidence, extraction_log)
         """
         if not pdf_bytes:
             raise FileProcessingException("pdf", "Empty PDF provided")
@@ -112,13 +123,6 @@ class TextExtractionService(BaseService):
     ) -> Tuple[str, float, dict]:
         """
         Extract text from video frames and audio using OCR and Whisper.
-        
-        Args:
-            video_bytes: Video file bytes
-            sample_every_n_frames: Sample every N frames for OCR
-            
-        Returns:
-            (extracted_text, confidence, extraction_log)
         """
         if not video_bytes:
             raise FileProcessingException("video", "Empty video provided")
@@ -205,12 +209,6 @@ class TextExtractionService(BaseService):
     async def extract_from_word(self, docx_bytes: bytes) -> Tuple[str, float, dict]:
         """
         Extract text from Word document.
-        
-        Args:
-            docx_bytes: DOCX file bytes
-            
-        Returns:
-            (extracted_text, confidence, extraction_log)
         """
         if not docx_bytes:
             raise FileProcessingException("word", "Empty DOCX provided")
@@ -248,12 +246,6 @@ class TextExtractionService(BaseService):
     async def extract_from_powerpoint(self, pptx_bytes: bytes) -> Tuple[str, float, dict]:
         """
         Extract text from PowerPoint presentation.
-        
-        Args:
-            pptx_bytes: PPTX file bytes
-            
-        Returns:
-            (extracted_text, status=PENDING_MODEL, extraction_log)
         """
         if not pptx_bytes:
             raise FileProcessingException("powerpoint", "Empty PPTX provided")
@@ -293,12 +285,6 @@ class TextExtractionService(BaseService):
     async def extract_from_excel(self, xlsx_bytes: bytes) -> Tuple[str, float, dict]:
         """
         Extract text from Excel spreadsheet.
-        
-        Args:
-            xlsx_bytes: XLSX file bytes
-            
-        Returns:
-            (extracted_text, status=PENDING_MODEL, extraction_log)
         """
         if not xlsx_bytes:
             raise FileProcessingException("excel", "Empty XLSX provided")
@@ -344,13 +330,6 @@ class TextExtractionService(BaseService):
     ) -> Tuple[str, float, dict]:
         """
         Extract text from generic material type.
-        
-        Args:
-            content: File content bytes
-            material_type: Type of material (text, image, video, pdf, word, pptx, xlsx)
-            
-        Returns:
-            (extracted_text, confidence, extraction_log)
         """
         material_type = material_type.lower().strip()
         

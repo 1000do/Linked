@@ -8,8 +8,11 @@ namespace CourseMarketplaceBE.Application.DTOs
         public bool? IsRead { get; set; }
         public DateTime? CreatedAt { get; set; }
 
-        // Hai tru?ng quan tr?ng manager c?n quan sát
         public string? ReceiverEmail { get; set; }
         public string? ReceiverFullName { get; set; }
+        public string? ReceiverRole { get; set; }
+        public int? ReceiverId { get; set; }
+        public int? SenderId { get; set; }
+        public string? SenderRole { get; set; }
     }
 }

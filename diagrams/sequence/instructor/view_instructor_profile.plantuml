@@ -1,0 +1,72 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Instructor Profile
+actor "Guest / User" as act
+
+participant "Profile.cshtml" as view
+participant "InstructorControllerFE" as fe_ctrl
+participant "InstructorControllerBE" as be_ctrl
+participant ":InstructorService" as sv
+participant ":InstructorRepository" as repo
+database Database as db
+
+act++
+act->view++: Click on instructor's name/profile link
+view->fe_ctrl++: Send GET /Instructor/Profile/{id}
+
+fe_ctrl->be_ctrl++: Send GET /api/instructor/public/{id}
+
+be_ctrl->sv++: Call GetPublicProfileAsync(id)
+
+sv->repo++: Call GetByIdWithNavigationAsync(id)
+repo->db++: Query Instructors joined with User table where InstructorId = id
+db-->>repo--: Return Instructor & User details
+repo-->>sv--: Return Instructor entity
+
+sv->repo++: Call GetStatsAsync(id)
+repo->db++: Aggregate Transactions and Reviews to get total students, ratings
+db-->>repo--: Return stats
+repo-->>sv--: Return stats DTO
+
+sv->repo++: Call CountActiveCoursesAsync(id)
+repo->db++: Count Courses where InstructorId = id and CourseStatus = "Published"
+db-->>repo--: Return count
+repo-->>sv--: Return count
+
+sv->sv++: Assemble InstructorPublicProfileDto\nincluding active courses list
+sv--
+
+sv-->>be_ctrl--: Return InstructorPublicProfileDto
+be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with Profile JSON
+
+fe_ctrl-->>view--: Return View(vm) with InstructorPublicProfileViewModel
+view->view++: Render profile details:\n- Avatar, Full Name, Title, Bio\n- Stats: Total Students, Courses, Average Rating\n- Active Courses list cards
+view--
+view-->>act--: Display Instructor Public Profile page
+@enduml

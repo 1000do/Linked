@@ -98,14 +98,11 @@ public class ReviewService : IReviewService
             if (isRemoved)
             {
                 rating = 0;
-                if (status == "removed" || status == "violating")
-                {
-                    comment = "This comment has been removed for violating community standards";
-                }
-                else
-                {
-                    comment = "This review has been deleted by the author.";
-                }
+                // Only admin-removed (status="violating") reviews should reach here.
+                // Self-deleted (status="removed") reviews are excluded at the repo query level.
+                comment = status == "violating"
+                    ? "This review was removed by a moderator for violating community standards."
+                    : "[deleted]"; // fallback
             }
 
             responses.Add(new ReviewResponse
@@ -148,14 +145,11 @@ public class ReviewService : IReviewService
             if (isRemoved)
             {
                 rating = 0;
-                if (status == "removed" || status == "violating")
-                {
-                    comment = "This comment has been removed for violating community standards";
-                }
-                else
-                {
-                    comment = "This review has been deleted by the author.";
-                }
+                // Only admin-removed (status="violating") reviews should reach here.
+                // Self-deleted (status="removed") reviews are excluded at the repo query level.
+                comment = status == "violating"
+                    ? "This review was removed by a moderator for violating community standards."
+                    : "[deleted]"; // fallback
             }
 
             return new ReviewResponse
@@ -331,9 +325,12 @@ public class ReviewService : IReviewService
             throw new InvalidOperationException("Review content cannot be empty.");
 
         // Luôn tạo record mới — không kiểm tra existing, không upsert
+        LessonReview newLessonReview = null;
+        CourseReview newCourseReview = null;
+
         if (request.LessonId.HasValue)
         {
-            await _reviewRepo.AddLessonReviewAsync(new LessonReview
+            newLessonReview = new LessonReview
             {
                 EnrollmentId = enrollment.EnrollmentId,
                 LessonId = request.LessonId.Value,
@@ -342,11 +339,12 @@ public class ReviewService : IReviewService
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
                 IsRemoved = false
-            });
+            };
+            await _reviewRepo.AddLessonReviewAsync(newLessonReview);
         }
         else
         {
-            await _reviewRepo.AddCourseReviewAsync(new CourseReview
+            newCourseReview = new CourseReview
             {
                 EnrollmentId = enrollment.EnrollmentId,
                 Rating = request.Rating,
@@ -354,7 +352,8 @@ public class ReviewService : IReviewService
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
                 IsRemoved = false
-            });
+            };
+            await _reviewRepo.AddCourseReviewAsync(newCourseReview);
         }
 
         int saved = await _reviewRepo.SaveChangesAsync();
@@ -366,11 +365,16 @@ public class ReviewService : IReviewService
             var course = await _courseRepo.GetByIdAsync(request.CourseId);
             if (course != null && course.InstructorId.HasValue)
             {
+                int reviewId = request.LessonId.HasValue ? newLessonReview.LessonReviewId : newCourseReview.CourseReviewId;
+                string linkAction = request.LessonId.HasValue 
+                    ? $"/Course/Learn/{request.CourseId}#review-card-{reviewId}" 
+                    : $"/Course/Details/{request.CourseId}#review-card-{reviewId}";
+
                 await _notificationService.SendNotificationAsync(
                     course.InstructorId.Value,
                     "New Review",
                     $"Your course '{course.Title}' just received a {request.Rating}-star review from a student.",
-                    $"/InstructorCourse/Editor?id={request.CourseId}"
+                    linkAction
                 );
             }
         }
@@ -433,7 +437,17 @@ public class ReviewService : IReviewService
                 ?? throw new InvalidOperationException("Review not found.");
             if (review.Enrollment?.UserId != userId)
                 throw new UnauthorizedAccessException("You can only delete your own reviews.");
-            _reviewRepo.SoftDeleteLessonReview(review);
+
+            // Block deletion if there is an active moderation report
+            var hasPending = await _reviewRepo.HasPendingLessonReviewReportsAsync(request.ReviewId);
+            if (hasPending)
+                throw new InvalidOperationException(
+                    "This review is currently under moderation review and cannot be deleted.");
+
+            review.IsRemoved = true;
+            review.LessonReviewStatus = "removed"; // distinguishes user self-delete from admin removal ("violating")
+            review.UpdatedAt = DateTime.Now;
+            _reviewRepo.UpdateLessonReview(review);
         }
         else
         {
@@ -441,7 +455,17 @@ public class ReviewService : IReviewService
                 ?? throw new InvalidOperationException("Review not found.");
             if (review.Enrollment?.UserId != userId)
                 throw new UnauthorizedAccessException("You can only delete your own reviews.");
-            _reviewRepo.SoftDeleteCourseReview(review);
+
+            // Block deletion if there is an active moderation report
+            var hasPending = await _reviewRepo.HasPendingCourseReviewReportsAsync(request.ReviewId);
+            if (hasPending)
+                throw new InvalidOperationException(
+                    "This review is currently under moderation review and cannot be deleted.");
+
+            review.IsRemoved = true;
+            review.CourseReviewStatus = "removed"; // distinguishes user self-delete from admin removal ("violating")
+            review.UpdatedAt = DateTime.Now;
+            _reviewRepo.UpdateCourseReview(review);
         }
 
         int rows = await _reviewRepo.SaveChangesAsync();

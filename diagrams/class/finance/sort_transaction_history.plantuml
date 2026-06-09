@@ -1,0 +1,120 @@
+@startuml SortTransactionHistory_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class TransactionControllerFE #FFE6E6 {
+    - _api : ApiClient
+    + Instructor(sortBy: string?) : Task<IActionResult>
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class TransactionControllerBE #FFE6E6 {
+    - _transactionService : ITransactionService
+    + GetInstructorTransactions(sortBy: string?) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class TransactionListDto #E6CCFF {
+    + TransactionId : int
+    + Date : DateTime?
+    + Amount : decimal
+    + Status : string?
+    + BuyerName : string
+    + CourseTitle : string
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Transaction #CCFFE6 {
+    + TransactionId : int <<PK>>
+    + OrderItemId : int? <<FK>>
+    + AccountFrom : int? <<FK>>
+    + AccountTo : int? <<FK>>
+    + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface ITransactionService #FFE6CC {
+    //+ GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<List<TransactionListDto>>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface ITransactionRepository #FFE6CC {
+    //+ GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<(IEnumerable<TransactionListDto>, int)>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class TransactionService #CCE5FF {
+    - _repo : ITransactionRepository
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<List<TransactionListDto>>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class TransactionRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<(IEnumerable<TransactionListDto>, int)>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Transactions : DbSet<Transaction>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+TransactionControllerFE ..> TransactionControllerBE : calls
+TransactionControllerBE --> ITransactionService
+TransactionService --> ITransactionRepository
+TransactionRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+TransactionService ..|> ITransactionService
+TransactionRepository ..|> ITransactionRepository
+
+' === DEPENDENCY ===
+TransactionControllerBE ..> TransactionListDto : uses
+ITransactionService ..> TransactionListDto : uses
+TransactionService ..> TransactionListDto : uses
+TransactionRepository ..> TransactionListDto : projects
+TransactionRepository ..> Transaction : queries
+
+@enduml

@@ -1,0 +1,197 @@
+@startuml BecomeInstructor_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class InstructorControllerFE #FFE6E6 {
+    + Apply() : Task<IActionResult>
+    + Apply(model: InstructorApplyViewModel) : Task<IActionResult>
+}
+
+class InstructorApplyViewModel #E6CCFF {
+    + ProfessionalTitle : string
+    + ExpertiseCategories : string
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + StripeCountry : string
+    + DocumentFiles : List<IFormFile>?
+    + DocumentFile : IFormFile?
+    + IsResubmit : bool
+    + ExistingDocumentUrl : string?
+    + RetainedDocumentUrls : List<string>?
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class InstructorControllerBE #FFE6E6 {
+    - _instructorService : IInstructorService
+    + Apply(request: InstructorApplicationRequest) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class InstructorApplicationRequest #E6CCFF {
+    + ProfessionalTitle : string
+    + ExpertiseCategories : string
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + StripeCountry : string
+    + DocumentFiles : List<IFormFile>?
+    + DocumentFile : IFormFile?
+    + RetainedDocumentUrls : List<string>?
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Account #CCFFE6 {
+    + AccountId : int <<PK>>
+    + Email : string
+    + Username : string?
+    + PasswordHash : string?
+    + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
+    + User : User?
+}
+
+class User #CCFFE6 {
+    + UserId : int <<PK>> <<FK>>
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+    + Instructor : Instructor?
+    + UserNavigation : Account
+}
+
+class Instructor #CCFFE6 {
+    + InstructorId : int <<PK, FK>>
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string?
+    + ApprovalStatus : string?
+    + RejectionReason : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
+    + InstructorNavigation : User
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IInstructorService #FFE6CC {
+    //+ SubmitApplicationAsync(userId: int, request: InstructorApplicationRequest) : Task<string>//
+}
+
+interface IFileUploadService #FFE6CC {
+    //+ UploadImageAsync(file: IFormFile) : Task<string?>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IInstructorRepository #FFE6CC {
+    //+ GetByIdAsync(id: int) : Task<Instructor?>//
+    //+ AddAsync(instructor: Instructor) : Task<void>//
+    //+ SaveChangesAsync() : Task<int>//
+}
+
+interface IUserRepository #FFE6CC {
+    //+ GetAccountByIdAsync(id: int) : Task<Account?>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class InstructorService #CCE5FF {
+    - _repo : IInstructorRepository
+    - _uploadService : IFileUploadService
+    - _userRepo : IUserRepository
+    + SubmitApplicationAsync(userId: int, request: InstructorApplicationRequest) : Task<string>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class InstructorRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetByIdAsync(id: int) : Task<Instructor?>
+    + AddAsync(instructor: Instructor) : Task<void>
+    + SaveChangesAsync() : Task<int>
+}
+
+class UserRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetAccountByIdAsync(id: int) : Task<Account?>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Accounts : DbSet<Account>
+    + Users : DbSet<User>
+    + Instructors : DbSet<Instructor>
+    + SaveChangesAsync(cancellationToken: CancellationToken) : Task<int>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === COMPOSITION (filled diamond) ===
+Account *-- User
+User *-- Instructor
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+InstructorControllerBE --> IInstructorService
+InstructorService --> IInstructorRepository
+InstructorService --> IFileUploadService
+InstructorService --> IUserRepository
+InstructorRepository --> AppDbContext
+UserRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+InstructorService ..|> IInstructorService
+InstructorRepository ..|> IInstructorRepository
+UserRepository ..|> IUserRepository
+
+' === DEPENDENCY (dashed arrows) ===
+InstructorControllerFE ..> InstructorApplyViewModel : uses
+InstructorControllerFE ..> InstructorControllerBE : calls
+InstructorControllerBE ..> InstructorApplicationRequest : uses
+InstructorService ..> InstructorApplicationRequest : uses
+' InstructorService ..> Instructor : creates
+' InstructorRepository ..> Instructor : queries
+InstructorRepository ..> Instructor : saves
+UserRepository ..> Account : queries
+
+@enduml

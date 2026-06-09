@@ -1,0 +1,81 @@
+@startuml SortInstructorApplications
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Sort Instructor Applications
+actor Staff as act
+
+participant "AdminApprovalIndexView" as view
+participant "AdminApprovalController" as be_ctrl
+participant ":InstructorApprovalService" as sv
+participant ":InstructorRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act -> view++: Select sorting option from "Sort By" dropdown (e.g., Newest, Oldest)
+view -> view++: EventListener: change
+view -> view++: triggerAjaxFetch() with 300ms debounce
+view--
+
+view -> view++: fetchInstructors(sortBy, status, category, search, page, pageSize)
+view -> view++: Set table-container opacity to 0.5
+view--
+
+view -> be_ctrl++: Send GET request to /AdminApproval/Index?sortBy=...&status=...&category=...&search=...&page=...&pageSize=...
+be_ctrl -> sv++: Call GetPendingListAsync(sortBy, status, category, search, page, pageSize)
+sv -> repo++: Call GetPendingInstructorsAsync(sortBy, status, category, search, page, pageSize)
+repo -> ctx++: Call GetPendingInstructorsAsync(sortBy, status, category, search, page, pageSize)
+
+ctx -> ctx++: Apply filters: status, category, and search (if specified)
+ctx--
+ctx -> ctx++: Apply sort: orderBy descending/ascending by application date or name
+ctx--
+
+ctx -> db++: Query sorted and filtered pending instructors & total count
+db -->> ctx--: Return instructors list & total count
+ctx -->> repo--: Return instructors list & total count
+repo -->> sv--: Return instructors list & total count
+
+sv -> sv++: Map to InstructorApprovalDto items
+sv--
+
+sv -->> be_ctrl--: Return PagedResult<InstructorApprovalDto>
+be_ctrl -->> view: Return Index view / HTML with sorted applications data
+deactivate be_ctrl
+
+view -> view++: Parse HTML response with DOMParser
+view -> view++: Replace table-container innerHTML with new content
+view--
+view -> view++: Restore table-container opacity to 1.0
+view--
+deactivate view
+
+view -->> act--: Display sorted list of pending instructor applications
+deactivate view
+
+@enduml

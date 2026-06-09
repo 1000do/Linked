@@ -1,0 +1,167 @@
+@startuml InstructorCourseRevenue_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class TransactionControllerFE #FFE6E6 {
+    - _api : ApiClient
+    + Instructor(year: int?, month: int?, courseSortBy: string?) : Task<IActionResult>
+}
+
+class InstructorCourseRevenueResponseFE #E6CCFF {
+    + CourseId : int
+    + CourseTitle : string
+    + InstructorId : int
+    + InstructorName : string
+    + SalesCount : int
+    + MonthlyRevenue : decimal
+    + PreviousMonthRevenue : decimal
+    + YearlyRevenue : decimal
+    + LifetimeRevenue : decimal
+}
+
+class InstructorFinancePageVM #E6CCFF {
+    + CourseRevenues : List<InstructorCourseRevenueResponseFE>
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class TransactionControllerBE #FFE6E6 {
+    - _financeService : IAdminFinanceService
+    + GetInstructorCourseRevenues(year: int, month: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class InstructorCourseRevenueResponse #E6CCFF {
+    + CourseId : int
+    + CourseTitle : string
+    + InstructorId : int
+    + InstructorName : string
+    + SalesCount : int
+    + MonthlyRevenue : decimal
+    + PreviousMonthRevenue : decimal
+    + YearlyRevenue : decimal
+    + LifetimeRevenue : decimal
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Course #CCFFE6 {
+    + CourseId : int <<PK>>
+    + InstructorId : int? <<FK>>
+    + CategoryId : int? <<FK>>
+    + CouponId : int? <<FK>>
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+class Transaction #CCFFE6 {
+    + TransactionId : int <<PK>>
+    + OrderItemId : int? <<FK>>
+    + AccountFrom : int? <<FK>>
+    + AccountTo : int? <<FK>>
+    + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IAdminFinanceService #FFE6CC {
+    //+ GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) : Task<List<InstructorCourseRevenueResponse>>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IAdminFinanceRepository #FFE6CC {
+    //+ GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) : Task<List<InstructorCourseRevenueResponse>>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AdminFinanceService #CCE5FF {
+    - _repo : IAdminFinanceRepository
+    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) : Task<List<InstructorCourseRevenueResponse>>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class AdminFinanceRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) : Task<List<InstructorCourseRevenueResponse>>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Courses : DbSet<Course>
+    + Transactions : DbSet<Transaction>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === COMPOSITION / AGGREGATION ===
+InstructorFinancePageVM o-- InstructorCourseRevenueResponseFE
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+TransactionControllerFE ..> TransactionControllerBE : calls
+TransactionControllerBE --> IAdminFinanceService
+AdminFinanceService --> IAdminFinanceRepository
+AdminFinanceRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+AdminFinanceService ..|> IAdminFinanceService
+AdminFinanceRepository ..|> IAdminFinanceRepository
+
+' === DEPENDENCY ===
+TransactionControllerFE ..> InstructorFinancePageVM : uses
+TransactionControllerBE ..> InstructorCourseRevenueResponse : uses
+IAdminFinanceService ..> InstructorCourseRevenueResponse : returns
+AdminFinanceService ..> InstructorCourseRevenueResponse : creates
+AdminFinanceRepository ..> InstructorCourseRevenueResponse : projects
+AdminFinanceRepository ..> Course : queries
+AdminFinanceRepository ..> Transaction : queries
+
+@enduml

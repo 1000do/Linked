@@ -1,0 +1,201 @@
+@startuml ViewInstructorProfile_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class InstructorControllerFE #FFE6E6 {
+    + Profile(id: int) : Task<IActionResult>
+}
+
+class InstructorPublicProfileViewModel #E6CCFF {
+    + InstructorId : int
+    + FullName : string?
+    + AvatarUrl : string?
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + Bio : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + TotalStudents : int
+    + TotalCourses : int
+    + AverageRating : decimal
+    + TotalReviews : int
+    + Courses : List<InstructorCourseViewModel>
+}
+
+class InstructorCourseViewModel #E6CCFF {
+    + CourseId : int
+    + Title : string?
+    + ThumbnailUrl : string?
+    + Price : decimal
+    + Rating : decimal
+    + TotalStudents : int
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class InstructorControllerBE #FFE6E6 {
+    - _instructorService : IInstructorService
+    + GetPublicProfile(id: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class InstructorPublicProfileDto #E6CCFF {
+    + InstructorId : int
+    + FullName : string?
+    + AvatarUrl : string?
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + Bio : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + TotalStudents : int
+    + TotalCourses : int
+    + AverageRating : decimal
+    + TotalReviews : int
+    + Courses : List<InstructorCourseDto>
+}
+
+class InstructorCourseDto #E6CCFF {
+    + CourseId : int
+    + Title : string?
+    + ThumbnailUrl : string?
+    + Price : decimal
+    + Rating : decimal
+    + TotalStudents : int
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Instructor #CCFFE6 {
+    + InstructorId : int <<PK, FK>>
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string?
+    + ApprovalStatus : string?
+    + RejectionReason : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
+    + InstructorNavigation : User
+}
+
+class User #CCFFE6 {
+    + UserId : int <<PK>> <<FK>>
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+    + Instructor : Instructor?
+    + UserNavigation : Account
+}
+
+class Course #CCFFE6 {
+    + CourseId : int <<PK>>
+    + InstructorId : int? <<FK>>
+    + CategoryId : int? <<FK>>
+    + CouponId : int? <<FK>>
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IInstructorService #FFE6CC {
+    //+ GetPublicProfileAsync(instructorId: int) : Task<InstructorPublicProfileDto?>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IInstructorRepository #FFE6CC {
+    //+ GetByIdWithNavigationAsync(instructorId: int) : Task<Instructor?>//
+    //+ GetStatsAsync(userId: int) : Task<InstructorStats?>//
+    //+ CountActiveCoursesAsync(instructorId: int) : Task<int>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class InstructorService #CCE5FF {
+    - _repo : IInstructorRepository
+    + GetPublicProfileAsync(instructorId: int) : Task<InstructorPublicProfileDto?>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class InstructorRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetByIdWithNavigationAsync(instructorId: int) : Task<Instructor?>
+    + GetStatsAsync(userId: int) : Task<InstructorStats?>
+    + CountActiveCoursesAsync(instructorId: int) : Task<int>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Instructors : DbSet<Instructor>
+    + Users : DbSet<User>
+    + Courses : DbSet<Course>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === COMPOSITION / AGGREGATION ===
+InstructorPublicProfileViewModel *-- InstructorCourseViewModel
+InstructorPublicProfileDto *-- InstructorCourseDto
+
+' === COMPOSITION (filled diamond) ===
+User *-- Instructor
+Instructor *-- Course
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+InstructorControllerFE ..> InstructorControllerBE : calls
+InstructorControllerBE --> IInstructorService
+InstructorService --> IInstructorRepository
+InstructorRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+InstructorService ..|> IInstructorService
+InstructorRepository ..|> IInstructorRepository
+
+' === DEPENDENCY (dashed arrows) ===
+InstructorControllerFE ..> InstructorPublicProfileViewModel : uses
+InstructorControllerBE ..> InstructorPublicProfileDto : uses
+InstructorService ..> InstructorPublicProfileDto : creates
+InstructorRepository ..> Instructor : queries
+InstructorRepository ..> User : queries
+InstructorRepository ..> Course : queries
+
+@enduml

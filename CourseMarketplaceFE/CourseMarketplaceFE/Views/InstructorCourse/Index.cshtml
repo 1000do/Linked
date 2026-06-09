@@ -71,7 +71,8 @@
                     <option value="Published">Published</option>
                     <option value="Rejected">Rejected</option>
                     <option value="Removed">Removed</option>
-                    <option value="Archived">Hidden</option>
+                    <option value="Archived">Archived</option>
+                    <option value="permanently_locked">Permanently Locked</option>
                 </select>
                 <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
             </div>
@@ -197,7 +198,8 @@
             Rating = c.Rating,
             Status = c.Status,
             UpdatedAt = c.UpdatedAt,
-            IsRemoved = c.IsRemoved
+            IsRemoved = c.IsRemoved,
+            FlagCount = c.FlagCount
         })));
 
         const ITEMS_PER_PAGE = 6;
@@ -221,7 +223,9 @@
                 const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
                 
                 let statusBadge = '';
-                const status = course.Status.toLowerCase();
+                const isPermanentlyLocked = (course.Status.toLowerCase() === 'archived' && course.FlagCount >= 3);
+                const status = isPermanentlyLocked ? 'permanently_locked' : course.Status.toLowerCase();
+                
                 if (course.IsRemoved) {
                     statusBadge = `<span class="px-3 py-1 bg-red-100 text-red-700 border border-red-300 rounded-full text-xs font-bold">Removed</span>`;
                 } else if (status === 'published') {
@@ -232,8 +236,10 @@
                     statusBadge = `<span class="px-3 py-1 bg-red-50 text-red-600 border border-red-200 rounded-full text-xs font-bold">Rejected</span>`;
                 } else if (status === 'draft') {
                     statusBadge = `<span class="px-3 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded-full text-xs font-bold">Draft</span>`;
+                } else if (status === 'permanently_locked') {
+                    statusBadge = `<span class="px-3 py-1 bg-red-800 text-white shadow-lg shadow-red-900/20 rounded-full text-xs font-bold">Permanently Locked</span>`;
                 } else if (status === 'archived' || status === 'hidden') {
-                    statusBadge = `<span class="px-3 py-1 bg-slate-200 text-slate-700 border border-slate-300 rounded-full text-xs font-bold">Hidden</span>`;
+                    statusBadge = `<span class="px-3 py-1 bg-slate-200 text-slate-700 border border-slate-300 rounded-full text-xs font-bold">Archived</span>`;
                 } else {
                     statusBadge = `<span class="px-3 py-1 bg-slate-100 text-slate-500 border border-slate-200 rounded-full text-xs font-bold">${course.Status}</span>`;
                 }
@@ -254,17 +260,44 @@
                 let hideBtn = '';
                 if (status === 'archived' || status === 'hidden') {
                     hideBtn = `<button onclick="toggleHide(${course.Id}, 'published')" title="Unhide course" class="w-8 h-8 flex items-center justify-center text-emerald-500 hover:bg-emerald-50 rounded-full transition-colors">
-                        <span class="material-symbols-outlined text-[18px]">visibility</span>
+                        <span class="material-symbols-outlined text-[18px]">unarchive</span>
                     </button>`;
                 } else if (status === 'published') {
                     hideBtn = `<button onclick="toggleHide(${course.Id}, 'archived')" title="Hide course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors">
-                        <span class="material-symbols-outlined text-[18px]">visibility_off</span>
+                        <span class="material-symbols-outlined text-[18px]">archive</span>
                     </button>`;
                 }
 
                 const titleSafe = course.Title.replace(/'/g, "\\'");
                 const isHidden = status === 'archived' || status === 'hidden';
-                const rowClass = isHidden ? "hover:bg-slate-50/50 transition-colors group opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0" : "hover:bg-slate-50/50 transition-colors group";
+                const isRemoved = course.IsRemoved;
+                const rowClass = (isHidden || isRemoved) ? "hover:bg-slate-50/50 transition-colors group opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0" : "hover:bg-slate-50/50 transition-colors group";
+
+                let actionsHtml = '';
+                if (isRemoved) {
+                    actionsHtml = `
+                        <a href="/InstructorCourse/Editor/${course.Id}" title="View course" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">visibility</span>
+                        </a>
+                    `;
+                } else if (status === 'permanently_locked') {
+                    actionsHtml = `
+                        <a href="/Course/Details/${course.Id}" title="View details" target="_blank" class="w-8 h-8 flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">visibility</span>
+                        </a>
+                    `;
+                } else {
+                    const isReadOnly = status === 'pending';
+                    actionsHtml = `
+                        <a href="/InstructorCourse/Editor/${course.Id}" title="${isReadOnly ? 'View course' : 'Edit course'}" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">${isReadOnly ? 'visibility' : 'edit'}</span>
+                        </a>
+                        ${hideBtn}
+                        <button title="Delete course" onclick="confirmDelete(${course.Id}, '${titleSafe}', ${course.Students})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
+                    `;
+                }
 
                 return `<tr class="${rowClass}">
                     <td class="px-6 py-4">
@@ -293,13 +326,7 @@
                     </td>
                     <td class="px-6 py-4 text-right">
                         <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <a href="/InstructorCourse/Editor/${course.Id}" title="${isHidden ? 'View course' : 'Edit course'}" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
-                                <span class="material-symbols-outlined text-[18px]">${isHidden ? 'visibility' : 'edit'}</span>
-                            </a>
-                            ${hideBtn}
-                            <button title="Delete course" onclick="confirmDelete(${course.Id}, '${titleSafe}', ${course.Students})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
-                                <span class="material-symbols-outlined text-[18px]">delete</span>
-                            </button>
+                            ${actionsHtml}
                         </div>
                     </td>
                 </tr>`;
@@ -323,7 +350,9 @@
                 const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
                 
                 let statusBadge = '';
-                const status = course.Status.toLowerCase();
+                const isPermanentlyLocked = (course.Status.toLowerCase() === 'archived' && course.FlagCount >= 3);
+                const status = isPermanentlyLocked ? 'permanently_locked' : course.Status.toLowerCase();
+
                 if (course.IsRemoved) {
                     statusBadge = `<span class="px-2 py-1 bg-red-100 text-red-700 rounded text-[10px] font-bold">Removed</span>`;
                 } else if (status === 'published') {
@@ -332,6 +361,8 @@
                     statusBadge = `<span class="px-2 py-1 bg-white/90 text-amber-600 rounded text-[10px] font-bold">Pending Review</span>`;
                 } else if (status === 'rejected') {
                     statusBadge = `<span class="px-2 py-1 bg-white/90 text-red-600 rounded text-[10px] font-bold">Rejected</span>`;
+                } else if (status === 'permanently_locked') {
+                    statusBadge = `<span class="px-2 py-1 bg-red-800 text-white rounded text-[10px] font-bold">Permanently Locked</span>`;
                 } else {
                     statusBadge = `<span class="px-2 py-1 bg-white/90 text-slate-600 rounded text-[10px] font-bold">${course.Status}</span>`;
                 }
@@ -346,9 +377,11 @@
 
                 const isHidden = status === 'archived' || status === 'hidden';
                 let cardClass = isHidden ? "bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0" : "bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block";
-                if (course.IsRemoved) cardClass += " opacity-50 grayscale hover:opacity-75";
+                if (course.IsRemoved || status === 'permanently_locked') cardClass += " opacity-50 grayscale hover:opacity-75";
 
-                return `<a href="/InstructorCourse/Editor/${course.Id}" class="${cardClass}">
+                const courseLink = status === 'permanently_locked' ? `/Course/Details/${course.Id}` : `/InstructorCourse/Editor/${course.Id}`;
+
+                return `<a href="${courseLink}" ${status === 'permanently_locked' ? 'target="_blank"' : ''} class="${cardClass}">
                     <div class="w-full h-40 bg-slate-200 relative overflow-hidden">
                         ${course.ThumbnailUrl
                             ? `<img src="${course.ThumbnailUrl}" alt="${course.Title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />`
@@ -378,12 +411,16 @@
             filteredCourses = allCourses.filter(c => {
                 const matchSearch = !searchTerm || c.Title.toLowerCase().includes(searchTerm);
                 let matchStatus = false;
+                
+                const isPermanentlyLocked = (c.Status.toLowerCase() === 'archived' && c.FlagCount >= 3);
+                const conceptualStatus = isPermanentlyLocked ? 'permanently_locked' : c.Status.toLowerCase();
+                
                 if (status === 'All') {
-                    matchStatus = !c.IsRemoved;
+                    matchStatus = true;
                 } else if (status === 'Removed') {
                     matchStatus = c.IsRemoved;
                 } else {
-                    matchStatus = !c.IsRemoved && c.Status.toLowerCase() === status.toLowerCase();
+                    matchStatus = !c.IsRemoved && conceptualStatus === status.toLowerCase();
                 }
                 return matchSearch && matchStatus;
             });
@@ -546,6 +583,18 @@
         // Initial render
         document.addEventListener("DOMContentLoaded", () => {
             renderAll();
+
+            @if (TempData["Error"] != null)
+            {
+                <text>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Access Denied',
+                    text: '@Html.Raw(TempData["Error"]?.ToString()?.Replace("'", "\\'"))',
+                    confirmButtonColor: '#d33'
+                });
+                </text>
+            }
         });
     </script>
 }

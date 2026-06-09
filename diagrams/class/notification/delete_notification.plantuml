@@ -1,0 +1,124 @@
+@startuml DeleteNotification_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "NotificationController" as NotificationControllerFE #FFE6E6 {
+    - _client : HttpClient
+    + Index() : Task<IActionResult>
+    + GetListTiny() : Task<IActionResult>
+    + Admin() : IActionResult
+}
+
+class NotificationViewModel #E6CCFF {
+    + NotificationId : int
+    + ReceiverId : int
+    + ReceiverFullName : string?
+    + ReceiverEmail : string?
+    + Title : string
+    + Content : string
+    + LinkAction : string?
+    + IsRead : bool
+    + CreatedAt : DateTime?
+    + ReceiverRole : string?
+    + SenderId : int?
+    + SenderRole : string?
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "NotificationController" as NotificationControllerBE #FFE6E6 {
+    - _notiService : INotificationService
+    + Delete(id: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Notification #CCFFE6 {
+    + NotificationId : int <<PK>>
+    + SenderId : int? <<FK>>
+    + ReceiverId : int? <<FK>>
+    + Title : string?
+    + Content : string?
+    + LinkAction : string?
+    + IsRead : bool?
+    + IsRemoved : bool?
+    + CreatedAt : DateTime?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface INotificationService #FFE6CC {
+    //+ DeleteNotificationAsync(notiId: int, userId: int) : Task<bool>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface INotificationRepository #FFE6CC {
+    //+ GetByIdAsync(id: int) : Task<Notification?>//
+    //+ Delete(notification: Notification) : void//
+    //+ SaveChangesAsync() : Task<int>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class NotificationService #CCE5FF {
+    - _repo : INotificationRepository
+    - _hubContext : IHubContext<NotificationHub>
+    + DeleteNotificationAsync(notiId: int, userId: int) : Task<bool>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class NotificationRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetByIdAsync(id: int) : Task<Notification?>
+    + Delete(notification: Notification) : void
+    + SaveChangesAsync() : Task<int>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Notifications : DbSet<Notification>
+    + SaveChangesAsync(cancellationToken: CancellationToken) : Task<int>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+NotificationControllerBE --> INotificationService
+NotificationService --> INotificationRepository
+NotificationRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+NotificationService ..|> INotificationService
+NotificationRepository ..|> INotificationRepository
+
+' === DEPENDENCY ===
+NotificationControllerFE ..> NotificationControllerBE : calls via HTTP
+NotificationControllerFE ..> NotificationViewModel : uses
+NotificationRepository ..> Notification : queries
+
+@enduml

@@ -1,0 +1,212 @@
+@startuml ReportReview_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class ReportControllerFE #FFE6E6 {
+    + ReportCourseReview(model: CreateReviewReportViewModel) : Task<IActionResult>
+    + ReportLessonReview(model: CreateReviewReportViewModel) : Task<IActionResult>
+}
+
+class CreateReviewReportViewModel #E6CCFF {
+    + ReviewId : int
+    + ReviewType : string
+    + Reason : string
+    + Description : string?
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class ReportControllerBE #FFE6E6 {
+    - _reportService : IReportService
+    + ReportCourseReview(request: CreateCourseReviewReportRequest) : Task<IActionResult>
+    + ReportLessonReview(request: CreateLessonReviewReportRequest) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class CreateCourseReviewReportRequest #E6CCFF {
+    + CourseReviewId : int
+    + Reason : string
+    + Description : string?
+}
+
+class CreateLessonReviewReportRequest #E6CCFF {
+    + LessonReviewId : int
+    + Reason : string
+    + Description : string?
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class CourseReviewReport #CCFFE6 {
+    + CourseReviewReportId : int <<PK>>
+    + ReporterId : int? <<FK>>
+    + CourseReviewId : int? <<FK>>
+    + ResolverId : int? <<FK>>
+    + Reason : string?
+    + Description : string?
+    + UserReportsStatus : string?
+    + ResolutionNote : string?
+    + ResolvedAt : DateTime?
+    + AccessGrantedUntil : DateTime?
+    + CreatedAt : DateTime?
+    + Reporter : Account?
+    + Resolver : Account?
+    + CourseReview : CourseReview?
+}
+
+class LessonReviewReport #CCFFE6 {
+    + LessonReviewReportId : int <<PK>>
+    + ReporterId : int? <<FK>>
+    + LessonReviewId : int? <<FK>>
+    + ResolverId : int? <<FK>>
+    + Reason : string?
+    + Description : string?
+    + UserReportsStatus : string?
+    + ResolutionNote : string?
+    + ResolvedAt : DateTime?
+    + AccessGrantedUntil : DateTime?
+    + CreatedAt : DateTime?
+    + Reporter : Account?
+    + Resolver : Account?
+    + LessonReview : LessonReview?
+}
+
+class CourseReview #CCFFE6 {
+    + CourseReviewId : int <<PK>>
+    + EnrollmentId : int <<FK>>
+    + Rating : float?
+    + Comment : string?
+    + CourseReviewStatus : string
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + IsRemoved : bool?
+    + Enrollment : Enrollment
+}
+
+class LessonReview #CCFFE6 {
+    + LessonReviewId : int <<PK>>
+    + EnrollmentId : int <<FK>>
+    + LessonId : int? <<FK>>
+    + Rating : float?
+    + Comment : string?
+    + LessonReviewStatus : string
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + IsRemoved : bool?
+    + Enrollment : Enrollment
+    + Lesson : Lesson?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IReportService #FFE6CC {
+    //+ CreateCourseReviewReportAsync(reporterId: int, request: CreateCourseReviewReportRequest) : Task//
+    //+ CreateLessonReviewReportAsync(reporterId: int, request: CreateLessonReviewReportRequest) : Task//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IReportRepository #FFE6CC {
+    //+ GetPendingCourseReviewReportAsync(reporterId: int, reviewId: int) : Task<CourseReviewReport?>//
+    //+ AddCourseReviewReportAsync(report: CourseReviewReport) : Task//
+    //+ GetPendingLessonReviewReportAsync(reporterId: int, reviewId: int) : Task<LessonReviewReport?>//
+    //+ AddLessonReviewReportAsync(report: LessonReviewReport) : Task//
+    //+ SaveChangesAsync() : Task<int>//
+}
+
+interface IReviewRepository #FFE6CC {
+    //+ GetCourseReviewByIdAsync(id: int) : Task<CourseReview?>//
+    //+ GetLessonReviewByIdAsync(id: int) : Task<LessonReview?>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ReportService #CCE5FF {
+    - _reportRepo : IReportRepository
+    - _reviewRepo : IReviewRepository
+    + CreateCourseReviewReportAsync(reporterId: int, request: CreateCourseReviewReportRequest) : Task
+    + CreateLessonReviewReportAsync(reporterId: int, request: CreateLessonReviewReportRequest) : Task
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ReportRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetPendingCourseReviewReportAsync(reporterId: int, reviewId: int) : Task<CourseReviewReport?>
+    + AddCourseReviewReportAsync(report: CourseReviewReport) : Task
+    + GetPendingLessonReviewReportAsync(reporterId: int, reviewId: int) : Task<LessonReviewReport?>
+    + AddLessonReviewReportAsync(report: LessonReviewReport) : Task
+    + SaveChangesAsync() : Task<int>
+}
+
+class ReviewRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetCourseReviewByIdAsync(id: int) : Task<CourseReview?>
+    + GetLessonReviewByIdAsync(id: int) : Task<LessonReview?>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + CourseReviewReports : DbSet<CourseReviewReport>
+    + LessonReviewReports : DbSet<LessonReviewReport>
+    + CourseReviews : DbSet<CourseReview>
+    + LessonReviews : DbSet<LessonReview>
+    + SaveChangesAsync(cancellationToken: CancellationToken) : Task<int>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+ReportControllerFE ..> ReportControllerBE : calls
+ReportControllerBE --> IReportService
+ReportService --> IReportRepository
+ReportService --> IReviewRepository
+ReportRepository --> AppDbContext
+ReviewRepository --> AppDbContext
+CourseReview o-- CourseReviewReport
+LessonReview o-- LessonReviewReport
+
+' === INTERFACE REALIZATION ===
+ReportService ..|> IReportService
+ReportRepository ..|> IReportRepository
+ReviewRepository ..|> IReviewRepository
+
+' === DEPENDENCY (dashed arrows) ===
+ReportControllerFE ..> CreateReviewReportViewModel : uses
+ReportControllerBE ..> CreateCourseReviewReportRequest : uses
+ReportControllerBE ..> CreateLessonReviewReportRequest : uses
+ReportService ..> CreateCourseReviewReportRequest : uses
+ReportService ..> CreateLessonReviewReportRequest : uses
+ReportService ..> CourseReviewReport : creates
+ReportService ..> LessonReviewReport : creates
+ReportRepository ..> CourseReviewReport : queries
+' ReportRepository ..> CourseReviewReport : saves
+' ReportRepository ..> LessonReviewReport : queries
+ReportRepository ..> LessonReviewReport : saves
+ReviewRepository ..> CourseReview : queries
+ReviewRepository ..> LessonReview : queries
+
+@enduml

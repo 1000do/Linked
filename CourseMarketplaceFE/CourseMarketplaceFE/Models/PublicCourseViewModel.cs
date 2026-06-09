@@ -35,6 +35,7 @@ namespace CourseMarketplaceFE.Models
     public class CourseDetailViewModel : PublicCourseViewModel
     {
         public List<LessonViewModel> Lessons { get; set; } = new List<LessonViewModel>();
+        public int FlagCount { get; set; }
     }
 
     public class LessonViewModel

@@ -32,6 +32,7 @@ public interface ICourseRepository
     Task<IEnumerable<CourseStats>> GetCourseStatsAsync(IEnumerable<int> courseIds);
     Task<CourseStats?> GetCourseStatsAsync(int courseId);
     Task AddAsync(Course course);
+    void Add(Course course);
     void Update(Course course);
     void Delete(Course course);
     Task<int> GetTotalPublishedCoursesCountAsync();
@@ -42,4 +43,5 @@ public interface ICourseRepository
     Task<Course?> GetCourseWithInstructorAsync(int courseId);
     Task<Enrollment?> GetActiveEnrollmentAsync(int userId, int courseId);
     Task<int> SaveChangesAsync();
+    
 }

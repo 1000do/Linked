@@ -238,6 +238,28 @@ public class UserRepository : IUserRepository
             .ToListAsync();
     }
 
+    public async Task<List<int>> GetUserIdsForStaffSenderAsync()
+    {
+        return await _context.Users
+            .Select(u => u.UserId)
+            .ToListAsync();
+    }
+
+    public async Task<List<int>> GetUserIdsForAdminSenderAsync()
+    {
+        return await GetUserIdsForStaffSenderAsync();
+        // var staffIds = await _context.Managers
+        //     .Where(m => m.Role == "staff")
+        //     .Select(m => m.ManagerId)
+        //     .ToListAsync();
+
+        // var userIds = await _context.Users
+        //     .Select(u => u.UserId)
+        //     .ToListAsync();
+
+        // return staffIds.Concat(userIds).Distinct().ToList();
+    }
+
     public async Task<int?> GetUserIdByEmailAsync(string email)
     {
         return await _context.Accounts
@@ -246,10 +268,21 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<string>> SearchEmailsByQueryAsync(string query, int take = 5)
+    public async Task<List<string>> SearchEmailsByQueryAsync(string query, int senderId, string senderRole, int take = 5)
     {
-        return await _context.Accounts
-            .Where(a => a.Email != null && a.Email.ToLower().Contains(query.ToLower()))
+        var dbQuery = _context.Accounts
+            .Where(a => a.Email != null && a.Email.ToLower().Contains(query.ToLower()) && a.AccountId != senderId);
+
+        if (senderRole == "staff")
+        {
+            dbQuery = dbQuery.Where(a => !_context.Managers.Any(m => m.ManagerId == a.AccountId));
+        }
+        else if (senderRole == "admin")
+        {
+            dbQuery = dbQuery.Where(a => !_context.Managers.Any(m => m.ManagerId == a.AccountId && m.Role == "admin"));
+        }
+
+        return await dbQuery
             .Select(a => a.Email!)
             .Take(take)
             .ToListAsync();

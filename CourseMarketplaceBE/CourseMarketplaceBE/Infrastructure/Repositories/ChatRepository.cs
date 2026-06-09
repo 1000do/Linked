@@ -36,6 +36,33 @@ public class ChatRepository : IChatRepository
             .ToListAsync();
     }
 
+    public async Task<List<ChatParticipant>> SearchParticipantsByAccountIdAsync(int accountId, string query)
+    {
+        var queryLower = query.ToLower();
+        return await _context.ChatParticipants
+            .Where(p => p.AccountId == accountId)
+            .Include(p => p.Chat)
+                .ThenInclude(c => c.Messages.OrderByDescending(m => m.SentAt).Take(1))
+            .Include(p => p.Chat)
+                .ThenInclude(c => c.ChatParticipants)
+                    .ThenInclude(cp => cp.Account)
+                        .ThenInclude(a => a.User)
+            .Include(p => p.Chat)
+                .ThenInclude(c => c.ChatParticipants)
+                    .ThenInclude(cp => cp.Account)
+                        .ThenInclude(a => a.Manager)
+            .Where(p => 
+                (p.Chat.ChatName != null && p.Chat.ChatName.ToLower().Contains(queryLower)) ||
+                p.Chat.ChatParticipants.Any(cp => cp.AccountId != accountId && 
+                    ((cp.Account.Username != null && cp.Account.Username.ToLower().Contains(queryLower)) ||
+                     (cp.Account.User != null && cp.Account.User.FullName != null && cp.Account.User.FullName.ToLower().Contains(queryLower)) ||
+                     (cp.Account.Manager != null && cp.Account.Manager.DisplayName != null && cp.Account.Manager.DisplayName.ToLower().Contains(queryLower)))) ||
+                p.Chat.Messages.Any(m => m.Content != null && m.Content.ToLower().Contains(queryLower))
+            )
+            .OrderByDescending(p => p.Chat.LastMessageAt)
+            .ToListAsync();
+    }
+
     public async Task<List<Message>> GetMessagesByChatIdAsync(int chatId)
     {
         return await _context.Messages

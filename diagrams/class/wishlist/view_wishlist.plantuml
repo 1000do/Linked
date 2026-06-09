@@ -1,0 +1,181 @@
+@startuml ViewWishlist_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class WishlistControllerFE #FFE6E6 {
+    + Index() : Task<IActionResult>
+}
+
+class WishlistResponseFE #E6CCFF {
+    + Id : int
+    + CourseId : int
+    + Title : string
+    + CourseThumbnailUrl : string?
+    + Price : decimal
+    + InstructorName : string?
+    + RatingAverage : decimal
+    + TotalStudents : int
+    + IsEnrolled : bool
+    + AddedDate : DateTime
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class WishlistControllerBE #FFE6E6 {
+    - _wishlistService : IWishlistService
+    + GetWishlist() : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class WishlistResponseBE #E6CCFF {
+    + Id : int
+    + CourseId : int
+    + Title : string
+    + CourseThumbnailUrl : string?
+    + Price : decimal
+    + InstructorName : string?
+    + RatingAverage : decimal
+    + TotalStudents : int
+    + IsEnrolled : bool
+    + AddedDate : DateTime
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class WishlistItem #CCFFE6 {
+    + Id : int <<PK>>
+    + UserId : int? <<FK>>
+    + CourseId : int? <<FK>>
+    + AddedDate : DateTime?
+    + Course : Course?
+    + User : User?
+}
+
+class Course #CCFFE6 {
+    + CourseId : int <<PK>>
+    + InstructorId : int? <<FK>>
+    + CategoryId : int? <<FK>>
+    + CouponId : int? <<FK>>
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+class CourseStats #CCFFE6 {
+    + CourseId : int
+    + RatingAverage : double
+    + TotalStudents : int
+    + TotalReviews : int
+    + TotalLessons : int
+    + TotalMaterials : int
+    + TotalDuration : int
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IWishlistService #FFE6CC {
+    //+ GetWishlistAsync(userId: int) : Task<List<WishlistResponse>>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IWishlistRepository #FFE6CC {
+    //+ GetByUserIdAsync(userId: int) : Task<List<WishlistItem>>//
+}
+
+interface ICourseRepository #FFE6CC {
+    //+ IsEnrolledAsync(userId: int, courseId: int) : Task<bool>//
+    //+ GetCourseStatsAsync(courseId: int) : Task<CourseStats?>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class WishlistService #CCE5FF {
+    - _wishlistRepository : IWishlistRepository
+    - _courseRepository : ICourseRepository
+    + GetWishlistAsync(userId: int) : Task<List<WishlistResponse>>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class WishlistRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetByUserIdAsync(userId: int) : Task<List<WishlistItem>>
+}
+
+class CourseRepository #FFFFCC {
+    - _context : AppDbContext
+    + IsEnrolledAsync(userId: int, courseId: int) : Task<bool>
+    + GetCourseStatsAsync(courseId: int) : Task<CourseStats?>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + WishlistItems : DbSet<WishlistItem>
+    + Courses : DbSet<Course>
+    + CourseStats : DbSet<CourseStats>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === COMPOSITION (filled diamond) ===
+Course *-- CourseStats
+
+' === AGGREGATION (hollow diamond) ===
+WishlistItem o-- Course
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+WishlistControllerFE ..> WishlistControllerBE : calls
+WishlistControllerBE --> IWishlistService
+WishlistService --> IWishlistRepository
+WishlistService --> ICourseRepository
+WishlistRepository --> AppDbContext
+CourseRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+WishlistService ..|> IWishlistService
+WishlistRepository ..|> IWishlistRepository
+CourseRepository ..|> ICourseRepository
+
+' === DEPENDENCY (dashed arrows) ===
+WishlistControllerFE ..> WishlistResponseFE : uses
+WishlistControllerBE ..> WishlistResponseBE : uses
+WishlistService ..> WishlistResponseBE : uses
+WishlistRepository ..> WishlistItem : queries
+CourseRepository ..> CourseStats : queries
+
+@enduml

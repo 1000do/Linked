@@ -53,5 +53,27 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .Where(am => am.ModelType == modelType)
                 .ToListAsync();
         }
+
+        public async Task<CourseMarketplaceBE.Application.DTOs.AiModelDto?> GetByModelPathAsync(string modelPath)
+        {
+            var m = await _context.AiModels
+                .AsNoTracking()
+                .FirstOrDefaultAsync(am => am.ModelPath == modelPath);
+
+            if (m == null) return null;
+
+            return new CourseMarketplaceBE.Application.DTOs.AiModelDto
+            {
+                ModelId = m.ModelId,
+                ModelName = m.ModelName,
+                ModelType = m.ModelType,
+                ModelProvider = m.ModelProvider,
+                ModelVersion = m.ModelVersion,
+                ModelStatus = m.ModelStatus,
+                Description = m.Description,
+                ModelPath = m.ModelPath,
+                ProcessType = m.ProcessType
+            };
+        }
     }
 }

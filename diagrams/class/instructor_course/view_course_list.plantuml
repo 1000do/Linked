@@ -1,0 +1,189 @@
+@startuml ViewInstructorCourseList_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class InstructorCourseController #FFE6E6 {
+    + Index() : Task<IActionResult>
+}
+
+class InstructorCourseIndexViewModel #E6CCFF {
+    + Courses : List<CourseResponse>
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class CourseController #FFE6E6 {
+    - _courseQueryService : ICourseQueryService
+    + GetMyCourses(search: string?, status: string?, page: int?, pageSize: int?) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class CourseResponse #E6CCFF {
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CourseStatus : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + InstructorName : string?
+    + TotalStudents : int
+    + RatingAverage : decimal
+    + CategoryName : string?
+    + InstructorAvatarUrl : string?
+    + InstructorBio : string?
+    + InstructorProfessionalTitle : string?
+    + InstructorReviewCount : int
+    + InstructorStudentsCount : int
+    + InstructorCoursesCount : int
+    + IsEnrolled : bool
+    + IsOwner : bool
+    + TotalReviews : int
+    + LastApprovedAt : DateTime?
+    + AppliedCouponCode : string?
+    + AppliedCouponType : string?
+    + AppliedCouponValue : decimal?
+    + IsRemoved : bool
+    + IsInAnyCart : bool
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Course #CCFFE6 {
+    + CourseId : int <<PK>>
+    + InstructorId : int? <<FK>>
+    + CategoryId : int? <<FK>>
+    + CouponId : int? <<FK>>
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+class CourseStats #CCFFE6 {
+    + CourseId : int
+    + RatingAverage : double
+    + TotalStudents : int
+    + TotalReviews : int
+    + TotalLessons : int
+    + TotalMaterials : int
+    + TotalDuration : int
+}
+
+class Instructor #CCFFE6 {
+    + InstructorId : int <<PK>>
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string?
+    + ApprovalStatus : string?
+    + RejectionReason : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface ICourseQueryService #FFE6CC {
+    //+ GetInstructorCoursesPagedAsync(instructorId: int, search: string?, status: string?, page: int?, pageSize: int?) : Task<PagedResult<CourseResponse>>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface ICourseRepository #FFE6CC {
+    //+ GetInstructorCoursesPagedAsync(instructorId: int, search: string?, status: string?, page: int?, pageSize: int?) : Task<(IEnumerable<Course>, int)>//
+    //+ GetCourseStatsAsync(courseIds: IEnumerable<int>) : Task<IEnumerable<CourseStats>>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CourseQueryService #CCE5FF {
+    - _courseRepository : ICourseRepository
+    + GetInstructorCoursesPagedAsync(instructorId: int, search: string?, status: string?, page: int?, pageSize: int?) : Task<PagedResult<CourseResponse>>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CourseRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetInstructorCoursesPagedAsync(instructorId: int, search: string?, status: string?, page: int?, pageSize: int?) : Task<(IEnumerable<Course>, int)>
+    + GetCourseStatsAsync(courseIds: IEnumerable<int>) : Task<IEnumerable<CourseStats>>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Courses : DbSet<Course>
+    + CourseStats : DbSet<CourseStats>
+    + Instructors : DbSet<Instructor>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === COMPOSITION (filled diamond) ===
+Instructor *-- Course
+Course *-- CourseStats
+
+' === AGGREGATION (hollow diamond) ===
+InstructorCourseIndexViewModel o-- CourseResponse
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+InstructorCourseController ..> CourseController : calls
+CourseController --> ICourseQueryService
+CourseQueryService --> ICourseRepository
+CourseRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+CourseQueryService ..|> ICourseQueryService
+CourseRepository ..|> ICourseRepository
+
+' === DEPENDENCY (dashed arrows) ===
+InstructorCourseController ..> InstructorCourseIndexViewModel : uses
+CourseController ..> CourseResponse : uses
+CourseQueryService ..> CourseResponse : uses
+CourseRepository ..> Course : queries
+CourseRepository ..> CourseStats : queries
+
+@enduml

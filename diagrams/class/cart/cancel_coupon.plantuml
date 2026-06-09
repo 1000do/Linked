@@ -1,0 +1,205 @@
+@startuml CancelCoupon_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "CartController" as CartControllerFE #FFE6E6 {
+    + RemoveCoupon(courseId: int) : IActionResult
+    - GetCouponMapFromCookie() : Dictionary<int, string>
+    - SaveCouponMapToCookie(map: Dictionary<int, string>) : void
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "CartController" as CartControllerBE #FFE6E6 {
+    - _cartService : ICartService
+    + GetSummary(couponCode: string?) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class CartSummaryResponse #E6CCFF {
+    + Items : List<CartItemDto>
+    + SubTotal : decimal
+    + DiscountAmount : decimal
+    + Total : decimal
+    + AppliedCouponCode : string?
+    + CouponMessage : string?
+    + AvailableCoupons : List<AvailableCouponDto>
+}
+
+class CartItemDto #E6CCFF {
+    + CourseId : int
+    + Title : string
+    + ThumbnailUrl : string?
+    + InstructorName : string?
+    + Price : decimal
+    + OriginalPrice : decimal
+    + DiscountedPrice : decimal
+    + AppliedCouponCode : string?
+    + DiscountAmount : decimal
+}
+
+class AvailableCouponDto #E6CCFF {
+    + CouponCode : string
+    + CouponType : string
+    + DiscountValue : decimal
+    + MinOrderValue : decimal
+    + EndDate : DateTime?
+    + IsEligible : bool
+    + ConditionMessage : string
+    + CourseId : int?
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Coupon #CCFFE6 {
+    + CouponId : int <<PK>>
+    + ManagerId : int? <<FK>>
+    + CouponCode : string
+    + CouponType : string?
+    + DiscountValue : decimal
+    + MinOrderValue : decimal
+    + StartDate : DateTime?
+    + EndDate : DateTime?
+    + UsageLimit : int?
+    + UsedCount : int?
+    + IsActive : bool?
+    + Courses : ICollection<Course>
+    + Manager : Manager?
+}
+
+class Course #CCFFE6 {
+    + CourseId : int <<PK>>
+    + InstructorId : int? <<FK>>
+    + CategoryId : int? <<FK>>
+    + CouponId : int? <<FK>>
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + CourseAiIntegrations : ICollection<CourseAiIntegration>
+    + CartItems : ICollection<CartItem>
+    + Category : Category?
+    + Coupon : Coupon?
+    + Enrollments : ICollection<Enrollment>
+    + Instructor : Instructor?
+    + Lessons : ICollection<Lesson>
+    + OrderItems : ICollection<OrderItem>
+    + WishlistItems : ICollection<WishlistItem>
+    + CourseExt : CourseExt?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+class CartItem #CCFFE6 {
+    + Id : int <<PK>>
+    + UserId : int? <<FK>>
+    + CourseId : int? <<FK>>
+    + AddedDate : DateTime?
+    + Price : decimal?
+    + Course : Course?
+    + User : User?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface ICartService #FFE6CC {
+    //+ GetCartSummaryAsync(userId: int, couponCode: string?) : Task<CartSummaryResponse>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface ICouponRepository #FFE6CC {
+    //+ GetByCodeAsync(code: string) : Task<Coupon?>//
+}
+
+interface ICartRepository #FFE6CC {
+    //+ GetCartItemsWithDetailsAsync(userId: int) : Task<List<CartItem>>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CartService #CCE5FF {
+    - _repo : ICartRepository
+    - _couponRepo : ICouponRepository
+    + GetCartSummaryAsync(userId: int, couponCode: string?) : Task<CartSummaryResponse>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CouponRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetByCodeAsync(code: string) : Task<Coupon?>
+}
+
+class CartRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetCartItemsWithDetailsAsync(userId: int) : Task<List<CartItem>>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Coupons : DbSet<Coupon>
+    + CartItems : DbSet<CartItem>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION ===
+CartControllerBE --> ICartService
+CartService --> ICartRepository
+CartService --> ICouponRepository
+CartRepository --> AppDbContext
+CouponRepository --> AppDbContext
+' === COMPOSITION / BIDIRECTIONAL ASSOCIATION ===
+Coupon -- Course
+Course -- CartItem
+CartSummaryResponse *-- CartItemDto : contains
+CartSummaryResponse *-- AvailableCouponDto : contains
+
+' === INTERFACE REALIZATION ===
+CartService ..|> ICartService
+CartRepository ..|> ICartRepository
+CouponRepository ..|> ICouponRepository
+
+' === DEPENDENCY ===
+CartControllerFE ..> CartControllerBE : calls via HTTP
+CartControllerBE ..> CartSummaryResponse : uses
+CartService ..> CartSummaryResponse : returns
+CartService ..> CartItemDto : instantiates
+CartService ..> AvailableCouponDto : instantiates
+CartRepository ..> CartItem : queries
+CouponRepository ..> Coupon : queries
+
+@enduml

@@ -1,0 +1,103 @@
+@startuml SortCoursesManager
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Sort Courses (For Manager)
+actor Staff as act
+
+participant "AdminModerationCoursesView" as view
+participant "AdminModerationController" as be_ctrl
+participant ":CourseModerationService" as sv
+participant ":CourseRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act -> view++: Select sorting option from "Sort By" dropdown (oldest / newest)
+
+view -> view++: EventListener: change
+view -> view++: triggerAjaxFetch() with 300ms debounce
+view--
+
+view -> view++: fetchCourses(search, category, status, sortBy)
+view -> view++: Set moderation-table-container opacity to 0.5
+view--
+
+view -> be_ctrl++: Send GET request to /AdminModeration/Courses?search=...&category=...&status=...&sortBy=oldest|newest
+
+be_ctrl -> sv++: Call GetPendingCoursesAsync(filter)
+sv -> repo++: Call GetPendingCoursesModerationAsync(filter)
+repo -> ctx++: Call GetPendingCoursesModerationAsync(filter)
+
+ctx -> ctx++: Apply filter: Exclude status = "draft"
+ctx--
+ctx -> ctx++: Apply filter: status == filter.Status (if not "all")
+ctx--
+ctx -> ctx++: Apply search: Title or InstructorName contains keyword (if specified)
+ctx--
+ctx -> ctx++: Apply category filter (if specified)
+ctx--
+ctx -> ctx++: Apply sort: oldest-first (default) or newest-first based on sortBy
+ctx--
+
+ctx -> db++: Query sorted and filtered Courses
+db -->> ctx--: Return sorted courses list
+ctx -->> repo--: Return sorted courses list
+repo -->> sv--: Return sorted courses list
+
+sv -> sv++: Calculate UrgencyLevel & UrgencyColor for each course
+sv--
+
+sv -->> be_ctrl: Return PagedResult<CourseModerationDto>
+
+be_ctrl -> be_ctrl++: Send GET request to /api/admin/moderation/courses/stats
+be_ctrl -> sv++: Call GetCourseModerationStatsAsync()
+sv -> repo++: Call GetCourseModerationStatsAsync()
+repo -> ctx++: Call GetCourseModerationStatsAsync()
+ctx -> db++: Query pending count and resolved-today count
+db -->> ctx--: Return counts
+ctx -->> repo--: Return counts
+repo -->> sv--: Return counts
+sv -->> be_ctrl--: Return CourseModerationStatsDto
+be_ctrl--
+
+be_ctrl -->> view: Return rendered HTML page with sorted results
+deactivate be_ctrl
+
+view -> view++: Parse HTML response with DOMParser
+view -> view++: Replace moderation-table-container innerHTML with new content
+view--
+view -> view++: Replace stats-container innerHTML with new counts
+view--
+view -> view++: Restore moderation-table-container opacity to 1.0
+view--
+deactivate view
+
+view -->> act--: Display course list in selected sorted order
+deactivate view
+
+@enduml

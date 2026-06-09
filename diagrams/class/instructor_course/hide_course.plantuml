@@ -1,0 +1,141 @@
+@startuml HideCourse_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class InstructorCourseController #FFE6E6 {
+    + Hide(courseId: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class CourseController #FFE6E6 {
+    - _courseCommandService : ICourseCommandService
+    + UpdateCourseStatus(id: int, request: UpdateStatusRequest) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class UpdateStatusRequest #E6CCFF {
+    + Status : string
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Course #CCFFE6 {
+    + CourseId : int <<PK>>
+    + InstructorId : int? <<FK>>
+    + CategoryId : int? <<FK>>
+    + CouponId : int? <<FK>>
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+class Instructor #CCFFE6 {
+    + InstructorId : int <<PK>>
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string?
+    + ApprovalStatus : string?
+    + RejectionReason : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface ICourseCommandService #FFE6CC {
+    //+ UpdateCourseStatusAsync(courseId: int, status: string, instructorId: int) : Task<void>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface ICourseRepository #FFE6CC {
+    //+ GetByIdAsync(courseId: int) : Task<Course?>//
+    //+ Update(course: Course) : void//
+    //+ SaveChangesAsync() : Task<int>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CourseCommandService #CCE5FF {
+    - _courseRepository : ICourseRepository
+    + UpdateCourseStatusAsync(courseId: int, status: string, instructorId: int) : Task<void>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CourseRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetByIdAsync(courseId: int) : Task<Course?>
+    + Update(course: Course) : void
+    + SaveChangesAsync() : Task<int>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Courses : DbSet<Course>
+    + Instructors : DbSet<Instructor>
+    + SaveChangesAsync(cancellationToken: CancellationToken) : Task<int>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === COMPOSITION (filled diamond) ===
+Instructor *-- Course
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+InstructorCourseController ..> CourseController : calls
+CourseController --> ICourseCommandService
+CourseCommandService --> ICourseRepository
+CourseRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+CourseCommandService ..|> ICourseCommandService
+CourseRepository ..|> ICourseRepository
+
+' === DEPENDENCY (dashed arrows) ===
+CourseController ..> UpdateStatusRequest : uses
+' CourseRepository ..> Course : queries
+CourseRepository ..> Course : saves
+
+@enduml

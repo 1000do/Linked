@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.IRepositories;
@@ -18,6 +19,7 @@ public class CourseQueryService : ICourseQueryService
     private readonly ICourseAiIntegrationRepository _aiIntegrationRepository;
     private readonly IMapper _mapper;
     private readonly ICartRepository _cartRepository;
+    private readonly ILogger<CourseQueryService> _logger;
 
     public CourseQueryService(
         ICourseRepository courseRepository,
@@ -25,7 +27,8 @@ public class CourseQueryService : ICourseQueryService
         IRedisService redisService,
         ICourseAiIntegrationRepository aiIntegrationRepository,
         IMapper mapper,
-        ICartRepository cartRepository)
+        ICartRepository cartRepository,
+        ILogger<CourseQueryService> logger)
     {
         _courseRepository = courseRepository;
         _instructorRepository = instructorRepository;
@@ -33,6 +36,7 @@ public class CourseQueryService : ICourseQueryService
         _aiIntegrationRepository = aiIntegrationRepository;
         _mapper = mapper;
         _cartRepository = cartRepository;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<CourseResponse>> GetAllPublishedCoursesAsync(int? userId = null)
@@ -68,7 +72,7 @@ public class CourseQueryService : ICourseQueryService
         return result;
     }
 
-    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.CourseResponse>> GetPublishedCoursesPagedAsync(
+    public async Task<PagedResult<CourseResponse>> GetPublishedCoursesPagedAsync(
         string? query = null,
         string? category = null,
         string? sort = null,
@@ -143,7 +147,7 @@ public class CourseQueryService : ICourseQueryService
         return result;
     }
 
-    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.CourseResponse>> GetInstructorCoursesPagedAsync(
+    public async Task<PagedResult<CourseResponse>> GetInstructorCoursesPagedAsync(
         int instructorId,
         string? search = null,
         string? status = null,
@@ -151,6 +155,21 @@ public class CourseQueryService : ICourseQueryService
         int? pageSize = null)
     {
         var (courses, totalCount) = await _courseRepository.GetInstructorCoursesPagedAsync(instructorId, search, status, page, pageSize);
+        
+        int finalPage = page ?? 1;
+        int finalPageSize = pageSize ?? 6;
+
+        if (totalCount == 0)
+        {
+            return new PagedResult<CourseResponse>
+            {
+                Items = new List<CourseResponse>(),
+                TotalCount = 0,
+                Page = finalPage,
+                PageSize = finalPageSize
+            };
+        }
+
         var courseIds = courses.Select(c => c.CourseId).ToList();
 
         var stats = await _courseRepository.GetCourseStatsAsync(courseIds);
@@ -163,8 +182,6 @@ public class CourseQueryService : ICourseQueryService
             r.RatingAverage = (decimal)(s?.RatingAverage ?? 0);
         }
 
-        int finalPage = page ?? 1;
-        int finalPageSize = pageSize ?? 6;
         int totalPages = (int)Math.Ceiling(totalCount / (double)finalPageSize);
 
         return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.CourseResponse>
@@ -180,11 +197,13 @@ public class CourseQueryService : ICourseQueryService
     public async Task<CourseDetailResponse?> GetCourseWithDetailsAsync(int courseId, int instructorId, int? userId = null)
     {
         string cacheKey = CacheKeys.CourseDetail.GetKey(courseId);
+        _logger.LogInformation("GetCourseWithDetailsAsync: {CacheKey}", cacheKey);
         var response = await _redisService.GetCacheAsync<CourseDetailResponse>(cacheKey);
-
+        _logger.LogInformation("GetCourseWithDetailsAsync: {Response}", response);
         if (response == null)
         {
             var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
+            _logger.LogInformation("GetCourseWithDetailsAsync: {Course}", course);
             if (course == null) return null;
 
             var courseStats = await _courseRepository.GetCourseStatsAsync(courseId);
@@ -198,8 +217,10 @@ public class CourseQueryService : ICourseQueryService
             response.TotalStudents = courseStats?.TotalStudents ?? 0;
             response.TotalReviews = courseStats?.TotalReviews ?? 0;
             response.RatingAverage = (decimal)(courseStats?.RatingAverage ?? 0);
+            _logger.LogInformation("GetCourseWithDetailsAsync: {Response}", response);
 
             await _redisService.SetCacheAsync(cacheKey, response, CacheTtl.Short.GetTtl());
+            _logger.LogInformation("Cached course {CourseId} with key {CacheKey} : {CacheValue}", courseId, cacheKey, await _redisService.GetCacheAsync<CourseDetailResponse>(cacheKey));
         }
 
         response.IsInAnyCart = await _cartRepository.IsCourseInAnyCartAsync(courseId);

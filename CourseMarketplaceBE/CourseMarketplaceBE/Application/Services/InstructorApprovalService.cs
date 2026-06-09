@@ -1,3 +1,4 @@
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.IRepositories;
@@ -42,11 +43,11 @@ namespace CourseMarketplaceBE.Application.Services
             if (instructor == null) return false;
 
             instructor.ApprovalStatus = dto.Status;
-            if (dto.Status == "Rejected")
+            if (dto.Status == CourseMarketplaceBE.Domain.Constants.InstructorApprovalStatus.Rejected.ToValue())
             {
                 instructor.RejectionReason = dto.Reason;
             }
-            else if (dto.Status == "Approved")
+            else if (dto.Status == CourseMarketplaceBE.Domain.Constants.InstructorApprovalStatus.Approved.ToValue())
             {
                 instructor.RejectionReason = null;
             }
@@ -57,11 +58,11 @@ namespace CourseMarketplaceBE.Application.Services
                 throw new InvalidOperationException("Failed to save changes");
 
             // Gửi thông báo cho người dùng (Sử dụng NotificationService bạn đã làm)
-            string message = dto.Status == "Approved"
+            string message = dto.Status == CourseMarketplaceBE.Domain.Constants.InstructorApprovalStatus.Approved.ToValue()
                 ? "Congratulations! Your instructor application has been approved."
                 : $"Unfortunately, your instructor application was not accepted. Reason: {dto.Reason}";
 
-            string link = dto.Status == "Approved" ? "/InstructorCourse/Create" : "/Instructor/Dashboard";
+            string link = dto.Status == CourseMarketplaceBE.Domain.Constants.InstructorApprovalStatus.Approved.ToValue() ? "/InstructorCourse/Create" : "/Instructor/Dashboard";
             await _notiService.SendNotificationAsync(instructor.InstructorId, "Application Result", message, link);
 
             return true;
@@ -89,3 +90,4 @@ namespace CourseMarketplaceBE.Application.Services
         }
     }
 }
+

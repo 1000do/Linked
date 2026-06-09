@@ -33,6 +33,12 @@ public interface IReviewRepository
     void SoftDeleteCourseReview(CourseReview review);
     void SoftDeleteLessonReview(LessonReview review);
 
+    // ── Pending moderation check ────────────────────────────────
+    /// <summary>Returns true if the course review has a pending or under-review report.</summary>
+    Task<bool> HasPendingCourseReviewReportsAsync(int reviewId);
+    /// <summary>Returns true if the lesson review has a pending or under-review report.</summary>
+    Task<bool> HasPendingLessonReviewReportsAsync(int reviewId);
+
     Task<int> SaveChangesAsync();
 }
 

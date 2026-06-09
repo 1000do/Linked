@@ -226,6 +226,8 @@
 
         // 2. Load danh sách chat
         let allChats = [];
+        let defaultChats = [];
+        let searchDebounceTimer;
 
         function renderChatList(chats) {
             const container = document.getElementById('chat-list');
@@ -262,26 +264,17 @@
         }
 
         function applyChatFilters() {
-            const query = document.getElementById('search-chats').value.toLowerCase().trim();
             const filterVal = document.getElementById('chat-filter-status').value;
             const sortVal = document.getElementById('chat-sort').value;
 
             let filtered = [...allChats];
 
-            // 1. Search
-            if (query) {
-                filtered = filtered.filter(c => 
-                    c.partnerName.toLowerCase().includes(query) || 
-                    (c.lastMessage && c.lastMessage.toLowerCase().includes(query))
-                );
-            }
-
-            // 2. Filter status
+            // 1. Filter status
             if (filterVal === 'unread') {
                 filtered = filtered.filter(c => c.unreadCount > 0);
             }
 
-            // 3. Sorting
+            // 2. Sorting
             if (sortVal === 'recent') {
                 filtered.sort((a, b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0));
             } else if (sortVal === 'name') {
@@ -298,11 +291,42 @@
                 const res = await fetch(`${API_URL}/api/chat/list`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                allChats = await res.json();
-                applyChatFilters();
+                defaultChats = await res.json();
+                
+                const query = document.getElementById('search-chats').value.trim();
+                if (!query) {
+                    allChats = [...defaultChats];
+                    applyChatFilters();
+                }
             } catch (err) {
                 console.error("Load chats error:", err);
             }
+        }
+
+        function handleSearchInput() {
+            const query = document.getElementById('search-chats').value.trim();
+            
+            if (!query) {
+                allChats = [...defaultChats];
+                applyChatFilters();
+                return;
+            }
+            
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(async () => {
+                const currentQuery = document.getElementById('search-chats').value.trim();
+                if (!currentQuery) return;
+                
+                try {
+                    const res = await fetch(`${API_URL}/api/chat/search?q=${encodeURIComponent(currentQuery)}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    allChats = await res.json();
+                    applyChatFilters();
+                } catch (err) {
+                    console.error("Search chats error:", err);
+                }
+            }, 300);
         }
 
         // 3. Chọn cuộc hội thoại
@@ -572,7 +596,7 @@
             const chatSort = document.getElementById('chat-sort');
 
             if (searchChats) {
-                searchChats.addEventListener('input', applyChatFilters);
+                searchChats.addEventListener('input', handleSearchInput);
                 chatFilter.addEventListener('change', applyChatFilters);
                 chatSort.addEventListener('change', applyChatFilters);
             }

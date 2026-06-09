@@ -51,6 +51,10 @@
     
 
     <style>
+        .fill-1 {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
         .glass-nav {
             backdrop-filter: blur(12px);
         }
@@ -669,15 +673,40 @@
             loadTopNotifications();
             
             if (currentToken) {
+                if (localStorage.getItem("AccountLocked") === "true") {
+                    localStorage.removeItem("AccountLocked");
+                    const form = document.getElementById('global-logout-form');
+                    if(form) { form.submit(); }
+                    return;
+                }
+
                 // SignalR Noti
                 const notiConn = new signalR.HubConnectionBuilder()
                     .withUrl("http://localhost:5207/notificationHub", { accessTokenFactory: () => currentToken })
                     .withAutomaticReconnect().build();
-                notiConn.on("ReceiveNotification", () => loadTopNotifications());
+                notiConn.on("ReceiveNotification", () => {
+                    loadTopNotifications();
+                    document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
+                });
                 notiConn.on("UpdateWishlistCount", () => {
                     if (typeof updateWishlistBadge === 'function') {
                         updateWishlistBadge();
                     }
+                });
+                notiConn.on("AccountLockedOut", () => {
+                    localStorage.setItem("AccountLocked", "true");
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Account Locked',
+                        text: 'Your account has been locked due to a policy violation. You will be logged out automatically.',
+                        timer: 5000,
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false
+                    }).then(() => {
+                        document.getElementById('global-logout-form').submit();
+                    });
                 });
                 notiConn.start().catch(err => console.error("Noti Hub Error", err));
 

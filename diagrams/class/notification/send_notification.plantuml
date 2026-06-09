@@ -1,78 +1,252 @@
-@startuml SendNotifications
+@startuml SendNotification_ClassDiagram
 
-hide empty members
-
-class AdminNotificationController {
-    + Send()
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
 }
 
-class SendNotificationViewModel {
-    + Title
-    + Content
-    + TargetUsers
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+' class "NotificationController" as FENotificationController #FFE6E6 {
+'     - _client : HttpClient
+'     + Index() : Task<IActionResult>
+'     + GetListTiny() : Task<IActionResult>
+'     + Admin() : IActionResult
+' }
+
+' class NotificationViewModel #E6CCFF {
+'     + NotificationId : int
+'     + ReceiverId : int
+'     + ReceiverFullName : string?
+'     + ReceiverEmail : string?
+'     + Title : string
+'     + Content : string
+'     + LinkAction : string?
+'     + IsRead : bool
+'     + CreatedAt : DateTime?
+'     + ReceiverRole : string?
+'     + SenderId : int?
+'     + SenderRole : string?
+' }
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "NotificationController" as BENotificationController #FFE6E6 {
+    - _notiService : INotificationService
+    - _chatService : IChatService
+    + GetMyNotifications() : Task<IActionResult>
+    + GetAllNotifications() : Task<IActionResult>
+    + MarkAsRead(id: int) : Task<IActionResult>
+    + Delete(id: int) : Task<IActionResult>
+    + SearchEmails(query: string) : Task<IActionResult>
+    + SendTest(dto: NotificationSendDto) : Task<IActionResult>
+    + SendAdvanced(dto: NotificationAdvancedDto) : Task<IActionResult>
+    + GetUnreadSummary() : Task<IActionResult>
 }
 
-class NotificationController {
-    + SendNotification()
+' ==================== BACKEND - DTOs ====================
+
+class NotificationSendDto #E6CCFF {
+    + ReceiverId : int
+    + Title : string
+    + Content : string
 }
 
-class NotificationSendRequestDto {
-    + Title
-    + Content
+class NotificationAdvancedDto #E6CCFF {
+    + TargetType : string
+    + Emails : List<string>?
+    + Title : string
+    + Content : string
 }
 
-interface INotificationService {
-    + SendNotificationAsync()
-    + SendAdvancedAsync()
+class NotificationAdminResponseDto #E6CCFF {
+    + NotificationId : int
+    + Title : string?
+    + Content : string?
+    + IsRead : bool?
+    + CreatedAt : DateTime?
+    + ReceiverEmail : string?
+    + ReceiverFullName : string?
 }
 
-class NotificationService {
-    + SendNotificationAsync()
-    + SendAdvancedAsync()
+class NotificationBulkDto #E6CCFF {
+    + ReceiverId : int
+    + Title : string
+    + Content : string
+    + LinkAction : string?
 }
 
-interface INotificationRepository {
-    + AddAsync()
-    + AddRangeAsync()
-    + SaveChangesAsync()
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Notification #CCFFE6 {
+    + NotificationId : int <<PK>>
+    + SenderId : int? <<FK>>
+    + ReceiverId : int? <<FK>>
+    + Title : string?
+    + Content : string?
+    + LinkAction : string?
+    + IsRead : bool?
+    + IsRemoved : bool?
+    + CreatedAt : DateTime?
+    + Receiver : Account?
+    + Sender : Account?
 }
 
-class NotificationRepository {
-    + AddAsync()
-    + AddRangeAsync()
-    + SaveChangesAsync()
+class Account #CCFFE6 {
+    + AccountId : int <<PK>>
+    + Email : string
+    + Username : string?
+    + PasswordHash : string?
+    + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
+    + User : User?
 }
 
-class Notification {
-    + NotificationId
-    + ReceiverId
-    + Title
-    + Content
-    + IsRead
+class User #CCFFE6 {
+    + UserId : int <<PK>>
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
 }
 
-' Represents the SignalR Hub for real-time communication
-class NotificationHub
+' ==================== BACKEND - SERVICE INTERFACES ====================
 
-class ApplicationDbContext
+interface INotificationService #FFE6CC {
+    //+ GetNotificationsForUserAsync(userId: int) : Task<List<Notification>>//
+    //+ GetAllNotificationsForAdminAsync() : Task<List<NotificationAdminResponseDto>>//
+    //+ SendNotificationAsync(receiverId: int, title: string, content: string, linkAction: string?) : Task<void>//
+    //+ SendBulkNotificationsAsync(dtos: IEnumerable<NotificationBulkDto>) : Task<void>//
+    //+ DeleteNotificationAsync(notiId: int, userId: int) : Task<bool>//
+    //+ GetAllNotificationsAsync() : Task<List<Notification>>//
+    //+ MarkAsReadAsync(notificationId: int, userId: int) : Task<bool>//
+    //+ SearchEmailsAsync(query: string) : Task<List<string>>//
+    //+ GetUnreadCountAsync(userId: int) : Task<int>//
+    //+ SendAdvancedAsync(dto: NotificationAdvancedDto) : Task<int>//
+}
 
+interface IChatService #FFE6CC {
+    //+ GetTotalUnreadCountAsync(accountId: int) : Task<int>//
+}
 
-' === RELATIONSHIPS ===
-AdminNotificationController ..> NotificationController
-AdminNotificationController ..> SendNotificationViewModel
-NotificationController ..> NotificationSendRequestDto
-NotificationController --> INotificationService
-NotificationService ..|> INotificationService
+interface INotificationRepository #FFE6CC {
+    //+ GetByReceiverIdAsync(userId: int) : Task<List<Notification>>//
+    //+ GetByIdAsync(id: int) : Task<Notification?>//
+    //+ AddAsync(notification: Notification) : Task<void>//
+    //+ AddRangeAsync(notifications: IEnumerable<Notification>) : Task<void>//
+    //+ Delete(notification: Notification) : void//
+    //+ SaveChangesAsync() : Task<int>//
+    //+ GetAllAsync() : Task<List<Notification>>//
+    //+ MarkAsReadAsync(notificationId: int, userId: int) : Task<bool>//
+    //+ GetUnreadCountAsync(userId: int) : Task<int>//
+    //+ AutoCleanupAdminNotificationsAsync() : Task<void>//
+}
+
+interface IUserRepository #FFE6CC {
+    //+ GetAllUserIdsAsync() : Task<List<int>>//
+    //+ GetUserIdByEmailAsync(email: string) : Task<int?>//
+    //+ SearchEmailsByQueryAsync(query: string, take: int) : Task<List<string>>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class NotificationService #CCE5FF {
+    - _repo : INotificationRepository
+    - _userRepo : IUserRepository
+    - _hubContext : IHubContext<NotificationHub>
+    + GetNotificationsForUserAsync(userId: int) : Task<List<Notification>>
+    + GetAllNotificationsAsync() : Task<List<Notification>>
+    + SendNotificationAsync(receiverId: int, title: string, content: string, linkAction: string?) : Task<void>
+    + DeleteNotificationAsync(notiId: int, userId: int) : Task<bool>
+    + MarkAsReadAsync(notificationId: int, userId: int) : Task<bool>
+    + GetAllNotificationsForAdminAsync() : Task<List<NotificationAdminResponseDto>>
+    + SearchEmailsAsync(query: string) : Task<List<string>>
+    + GetUnreadCountAsync(userId: int) : Task<int>
+    + SendAdvancedAsync(dto: NotificationAdvancedDto) : Task<int>
+    + SendBulkNotificationsAsync(dtos: IEnumerable<NotificationBulkDto>) : Task<void>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class NotificationRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetByReceiverIdAsync(userId: int) : Task<List<Notification>>
+    + GetAllAsync() : Task<List<Notification>>
+    + GetByIdAsync(id: int) : Task<Notification?>
+    + Delete(notification: Notification) : void
+    + AddAsync(notification: Notification) : Task<void>
+    + AddRangeAsync(notifications: IEnumerable<Notification>) : Task<void>
+    + SaveChangesAsync() : Task<int>
+    + MarkAsReadAsync(notificationId: int, userId: int) : Task<bool>
+    + GetUnreadCountAsync(userId: int) : Task<int>
+    + AutoCleanupAdminNotificationsAsync() : Task<void>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Accounts : DbSet<Account>
+    + Notifications : DbSet<Notification>
+    + Users : DbSet<User>
+    ---
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) : void
+    # OnModelCreating(modelBuilder: ModelBuilder) : void
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === COMPOSITION (filled diamond) ===
+Account *-- User
+Account *-- Notification
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+BENotificationController --> INotificationService
+BENotificationController --> IChatService
 NotificationService --> INotificationRepository
+NotificationService --> IUserRepository
+NotificationRepository --> AppDbContext
+' Notification -- Account
 
-' Service depends on the Hub to send real-time messages
-NotificationService --> NotificationHub
-
-' Service and Repo depend on the Notification entity
-NotificationService ..> Notification
-NotificationRepository ..> Notification
-
+' === INTERFACE REALIZATION ===
+NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
-NotificationRepository --> ApplicationDbContext
+
+' === DEPENDENCY (dashed arrows) ===
+' FENotificationController ..> BENotificationController : calls
+' FENotificationController ..> NotificationViewModel : uses
+BENotificationController ..> NotificationSendDto : uses
+BENotificationController ..> NotificationAdvancedDto : uses
+BENotificationController ..> NotificationAdminResponseDto : uses
+NotificationService ..> NotificationAdvancedDto : uses
+NotificationService ..> NotificationSendDto : uses
+NotificationService ..> NotificationAdminResponseDto : uses
+NotificationService ..> NotificationBulkDto : uses
+' NotificationService ..> Notification : instantiates
+NotificationRepository ..> Notification : queries
 
 @enduml

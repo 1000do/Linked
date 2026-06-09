@@ -1,0 +1,118 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Request Refund
+actor User as act
+
+participant "History.cshtml" as view
+participant "TransactionController (FE)" as fe_ctrl
+participant "TransactionController (BE)" as be_ctrl
+participant ":AdminFinanceService" as sv
+participant ":AdminFinanceRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Click "Refund Request" button
+view->view++: Open SweetAlert2 modal with textarea input
+view--
+
+act->view++: Enter reason and click "Submit Request"
+view->fe_ctrl++: Send POST /Transaction/RequestRefund (transactionId, reason)
+
+alt [Reason is empty]
+    fe_ctrl-->>view: Return JSON { success = false, message = "Refund reason cannot be empty." }
+    view-->>act: Display warning alert
+else [Reason is valid]
+    fe_ctrl->be_ctrl++: Send POST /api/transactions/{id}/request-refund (with Bearer Token & Reason DTO)
+    
+    be_ctrl->be_ctrl++: Retrieve studentId from Token Claims
+    be_ctrl--
+    
+    be_ctrl->sv++: Call RequestRefundAsync(transactionId, studentId, reason)
+    sv->repo++: Call GetTransactionWithFullGraphAsync(transactionId)
+    repo->ctx++: Query transaction with order items and course info
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return transaction entity
+    ctx-->>repo--: Return transaction entity
+    repo-->>sv--: Return transaction entity
+    
+    alt [Transaction not found / does not belong to student / not succeeded / purchase date > 14 days]
+        sv-->>be_ctrl: Throw BadRequestException / InvalidOperationException
+        be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+    else [Transaction is eligible for request validation]
+        sv->repo++: Call GetRefundEligibilityMetricsAsync(transactionId, studentId, courseId)
+        repo->ctx++: Query student progress, past refunds, and video completion
+        ctx->db++: Execute queries
+        db-->>ctx--: Return data
+        ctx-->>repo--: Return metrics
+        repo-->>sv--: Return RefundEligibilityMetrics
+        
+        sv->sv++: Evaluate eligibility metrics (Auto-Reject Rule Check)
+        sv--
+        
+        alt [Auto-reject criteria met (e.g. progress > 50% or past abuse)]
+            sv->repo++: Create/Update TransactionExt with Rejected status & reason
+            repo->ctx++: Set entity state to Modified
+            ctx-->>repo--: Return
+            repo-->>sv--: Return
+            sv->repo++: Call SaveChangesAsync()
+            repo->ctx++: Call SaveChangesAsync()
+            ctx->db++: Execute UPDATE/INSERT in Database
+            db-->>ctx--: Return rows affected
+            ctx-->>repo--: Return
+            repo-->>sv--: Return
+            sv-->>be_ctrl: Return RefundResultDto { IsAutoRejected = true, RejectReason = "..." }
+        else [Eligible for review]
+            sv->repo++: Create TransactionExt with Pending status & reason
+            repo->ctx++: Set entity state to Added
+            ctx-->>repo--: Return
+            repo-->>sv--: Return
+            sv->repo++: Call SaveChangesAsync()
+            repo->ctx++: Call SaveChangesAsync()
+            ctx->db++: Execute INSERT in Database
+            db-->>ctx--: Return rows affected
+            ctx-->>repo--: Return
+            repo-->>sv--: Return
+            sv-->>be_ctrl--: Return RefundResultDto { IsAutoRejected = false }
+        end
+    end
+    
+    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with RefundResultDto JSON
+    
+    fe_ctrl->fe_ctrl++: Deserialize to ApiResp<RefundResultDto>
+    fe_ctrl--
+    fe_ctrl-->>view--: Return JSON { success = true, autoRejected, message }
+    
+    alt [Request was auto-rejected]
+        view-->>act: Display "Refund Rejected" error alert
+    else [Request is pending review]
+        view-->>act--: Display "Request Submitted!" success alert & reload page
+    end
+end
+@enduml

@@ -1,0 +1,104 @@
+@startuml AddWishlistItem_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class WishlistControllerFE #FFE6E6 {
+    + Toggle(courseId: int, returnUrl: string) : Task<IActionResult>
+    + ToggleAjax(courseId: int) : Task<IActionResult>
+    - ToggleLogic(courseId: int) : Task<bool>
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class WishlistControllerBE #FFE6E6 {
+    - _wishlistService : IWishlistService
+    + AddToWishlist(courseId: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class WishlistItem #CCFFE6 {
+    + Id : int <<PK>>
+    + UserId : int? <<FK>>
+    + CourseId : int? <<FK>>
+    + AddedDate : DateTime?
+    + Course : Course?
+    + User : User?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IWishlistService #FFE6CC {
+    //+ AddToWishlistAsync(userId: int, courseId: int) : Task//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IWishlistRepository #FFE6CC {
+    //+ ExistsAsync(userId: int, courseId: int) : Task<bool>//
+    //+ AddAsync(item: WishlistItem) : Task//
+    //+ SaveChangesAsync() : Task<int>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class WishlistService #CCE5FF {
+    - _wishlistRepository : IWishlistRepository
+    + AddToWishlistAsync(userId: int, courseId: int) : Task
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class WishlistRepository #FFFFCC {
+    - _context : AppDbContext
+    + ExistsAsync(userId: int, courseId: int) : Task<bool>
+    + AddAsync(item: WishlistItem) : Task
+    + SaveChangesAsync() : Task<int>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + WishlistItems : DbSet<WishlistItem>
+    + SaveChangesAsync(cancellationToken: CancellationToken) : Task<int>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+WishlistControllerFE ..> WishlistControllerBE : calls
+WishlistControllerBE --> IWishlistService
+WishlistService --> IWishlistRepository
+WishlistRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+WishlistService ..|> IWishlistService
+WishlistRepository ..|> IWishlistRepository
+
+' === DEPENDENCY (dashed arrows) ===
+WishlistService ..> WishlistItem : creates
+' WishlistRepository ..> WishlistItem : queries
+WishlistRepository ..> WishlistItem : saves
+
+@enduml

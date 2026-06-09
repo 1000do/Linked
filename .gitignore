@@ -25,7 +25,9 @@ node_modules/
 
 # Misc
 private/
+diagrams/out/
 private_ngoc/
+private_an/
 
 # python
 ai_models/
@@ -33,3 +35,4 @@ ai_models/
 **/__pycache__
 
 
+/private_ngoc
