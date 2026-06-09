@@ -60,6 +60,7 @@ else Valid Dashboard Access
     fe_ctrl -> fe_ctrl++: Fetch overall performance statistics
     fe_ctrl--
     
+
     fe_ctrl -> be_course_ctrl++: Send GET request to /api/courses/my-courses
     be_course_ctrl -> course_sv++: Call GetInstructorCoursesPagedAsync(instructorId)
     
@@ -69,23 +70,33 @@ else Valid Dashboard Access
     db -->> ctx--: Return data
     ctx -->> course_repo--: Return data
     course_repo -->> course_sv--: Return courses, totalCount
-    
+    course_sv -> course_sv++: Check totalCount
+    course_sv--
+
+
+    alt totalCount = 0
+        course_sv -->> be_course_ctrl: Return empty list
+        be_course_ctrl -->> fe_ctrl: Return statusCode 404
+        fe_ctrl -->> view: Return statusCode 404
+        view -->> act: Display empty state message
+    else totalCount > 0
+
     course_sv -> course_repo++: Call GetCourseStatsAsync(courseIds)
     course_repo -> ctx++: Query course stats
     ctx -> db++: Execute query
+        
+
     db -->> ctx--: Return data
     ctx -->> course_repo--: Return data
     course_repo -->> course_sv--: Return course stats
     
     course_sv -->> be_course_ctrl--: Return PagedResult<CourseResponse>
-    be_course_ctrl -->> fe_ctrl--: Return statusCode 200
-    
-    alt Empty Course List
-        fe_ctrl -->> view: Return statusCode 200
-        view -->> act: Display empty state message
-    else Courses Found
+    be_course_ctrl -->> fe_ctrl--: Return PagedResult<CourseResponse>
+        
         fe_ctrl -->> view--: Return statusCode 200
         view -->> act--: Display performance statistics and course list
+    
+
     end
 end
 @enduml

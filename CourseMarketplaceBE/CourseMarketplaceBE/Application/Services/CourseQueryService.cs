@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.IRepositories;
@@ -71,7 +72,7 @@ public class CourseQueryService : ICourseQueryService
         return result;
     }
 
-    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.CourseResponse>> GetPublishedCoursesPagedAsync(
+    public async Task<PagedResult<CourseResponse>> GetPublishedCoursesPagedAsync(
         string? query = null,
         string? category = null,
         string? sort = null,
@@ -146,7 +147,7 @@ public class CourseQueryService : ICourseQueryService
         return result;
     }
 
-    public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.CourseResponse>> GetInstructorCoursesPagedAsync(
+    public async Task<PagedResult<CourseResponse>> GetInstructorCoursesPagedAsync(
         int instructorId,
         string? search = null,
         string? status = null,
@@ -154,6 +155,21 @@ public class CourseQueryService : ICourseQueryService
         int? pageSize = null)
     {
         var (courses, totalCount) = await _courseRepository.GetInstructorCoursesPagedAsync(instructorId, search, status, page, pageSize);
+        
+        int finalPage = page ?? 1;
+        int finalPageSize = pageSize ?? 6;
+
+        if (totalCount == 0)
+        {
+            return new PagedResult<CourseResponse>
+            {
+                Items = new List<CourseResponse>(),
+                TotalCount = 0,
+                Page = finalPage,
+                PageSize = finalPageSize
+            };
+        }
+
         var courseIds = courses.Select(c => c.CourseId).ToList();
 
         var stats = await _courseRepository.GetCourseStatsAsync(courseIds);
@@ -166,8 +182,6 @@ public class CourseQueryService : ICourseQueryService
             r.RatingAverage = (decimal)(s?.RatingAverage ?? 0);
         }
 
-        int finalPage = page ?? 1;
-        int finalPageSize = pageSize ?? 6;
         int totalPages = (int)Math.Ceiling(totalCount / (double)finalPageSize);
 
         return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.CourseResponse>

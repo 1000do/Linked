@@ -165,6 +165,13 @@ namespace CourseMarketplaceFE.Controllers
                         viewModel.Courses = allCourses;
                     }
                 }
+                else if (resp.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    Response.StatusCode = 404;
+                    viewModel.Courses = new List<CourseListViewModel>();
+                    viewModel.TotalItems = 0;
+                    viewModel.TotalPages = 1;
+                }
             }
             catch (Exception ex)
             {

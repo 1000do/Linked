@@ -56,6 +56,12 @@ public class CourseController : ControllerBase
         {
             var instructorId = GetInstructorId();
             var result = await _courseQueryService.GetInstructorCoursesPagedAsync(instructorId, search, status, page, pageSize);
+            
+            if (result.TotalCount == 0)
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse("No courses found."));
+            }
+
             return Ok(ApiResponse<object>.SuccessResponse(result, "Retrieved courses successfully."));
         }
         catch (UnauthorizedAccessException ex)

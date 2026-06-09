@@ -58,9 +58,11 @@ fe_ctrl->be_ctrl++: Send PUT request to /api/courses/{courseId}
 be_ctrl->sv++: Call UpdateCourseAsync()
 
 sv->repo++: Call GetByIdAsync(courseId)
-repo->ctx++: Call GetByIdAsync()
-ctx-->>repo--: Return Course entity
-repo-->>sv--: Return Course entity
+repo->ctx++: Call FindAsync()
+ctx->db++: Query Course by courseId
+db-->>ctx--: Return Course entity or null
+ctx-->>repo--: Return Course entity or null
+repo-->>sv--: Return Course entity or null
 
 sv->sv++: Validate course update request
 sv--
