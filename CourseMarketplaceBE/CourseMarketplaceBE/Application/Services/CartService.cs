@@ -127,10 +127,18 @@ public class CartService : ICartService
             foreach (var code in codes)
             {
                 var coupon = await _couponRepo.GetByCodeAsync(code);
-                if (coupon == null || coupon.IsActive != true) continue;
-                if (coupon.StartDate.HasValue && now < coupon.StartDate.Value) continue;
-                if (coupon.EndDate.HasValue && now > coupon.EndDate.Value) continue;
-                if (coupon.UsageLimit.HasValue && (coupon.UsedCount ?? 0) >= coupon.UsageLimit.Value) continue;
+                if (coupon == null)
+                {
+                    throw new InvalidOperationException("This coupon does not exist.");
+                }
+
+                if (coupon.IsActive != true ||
+                    (coupon.StartDate.HasValue && now < coupon.StartDate.Value) ||
+                    (coupon.EndDate.HasValue && now > coupon.EndDate.Value) ||
+                    (coupon.UsageLimit.HasValue && (coupon.UsedCount ?? 0) >= coupon.UsageLimit.Value))
+                {
+                    throw new InvalidOperationException("This coupon has expired or run out of usage.");
+                }
 
                 // Logic mới: Chỉ giảm cho khóa học khớp mã
                 decimal eligibleSubTotal = cartItems

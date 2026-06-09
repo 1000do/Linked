@@ -72,7 +72,7 @@ public class CheckoutController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to initiate checkout"));
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
@@ -139,7 +139,7 @@ public class CheckoutController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to initiate direct checkout"));
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {

@@ -95,17 +95,28 @@ public class CheckoutService : ICheckoutService
 
             foreach (var code in codes)
             {
-                var cp = await _couponRepo.GetValidCouponAsync(code, DateTime.Now);
-                if (cp != null)
+                var cp = await _couponRepo.GetByCodeAsync(code);
+                if (cp == null)
                 {
-                    decimal eligibleSubTotal = cartItems
-                        .Where(c => c.Course != null && c.Course.CouponId == cp.CouponId)
-                        .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
+                    throw new InvalidOperationException("This coupon does not exist.");
+                }
 
-                    if (eligibleSubTotal >= cp.MinOrderValue && eligibleSubTotal > 0)
-                    {
-                        appliedCoupons.Add(cp);
-                    }
+                var now = DateTime.Now;
+                if (cp.IsActive != true ||
+                    (cp.StartDate.HasValue && now < cp.StartDate.Value) ||
+                    (cp.EndDate.HasValue && now > cp.EndDate.Value) ||
+                    (cp.UsageLimit.HasValue && (cp.UsedCount ?? 0) >= cp.UsageLimit.Value))
+                {
+                    throw new InvalidOperationException("This coupon has expired or run out of usage.");
+                }
+
+                decimal eligibleSubTotal = cartItems
+                    .Where(c => c.Course != null && c.Course.CouponId == cp.CouponId)
+                    .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
+
+                if (eligibleSubTotal >= cp.MinOrderValue && eligibleSubTotal > 0)
+                {
+                    appliedCoupons.Add(cp);
                 }
             }
         }
@@ -207,28 +218,35 @@ public class CheckoutService : ICheckoutService
         
         if (!string.IsNullOrWhiteSpace(couponCode))
         {
-            coupon = await _couponRepo.GetValidCouponAsync(couponCode, DateTime.Now);
-            if (coupon != null)
+            coupon = await _couponRepo.GetByCodeAsync(couponCode);
+            if (coupon == null)
             {
-                if (course.CouponId != coupon.CouponId)
-                {
-                    throw new InvalidOperationException("This coupon is not applicable to this course.");
-                }
-
-                if (originalPrice < coupon.MinOrderValue)
-                {
-                    throw new InvalidOperationException($"This coupon requires a minimum course value of ${coupon.MinOrderValue:N2}.");
-                }
-
-                discountAmount = coupon.CouponType == "percentage"
-                    ? originalPrice * (coupon.DiscountValue / 100m)
-                    : coupon.DiscountValue;
-                discountAmount = Math.Round(Math.Min(discountAmount, originalPrice), 2);
+                throw new InvalidOperationException("This coupon does not exist.");
             }
-            else
+
+            var now = DateTime.Now;
+            if (coupon.IsActive != true ||
+                (coupon.StartDate.HasValue && now < coupon.StartDate.Value) ||
+                (coupon.EndDate.HasValue && now > coupon.EndDate.Value) ||
+                (coupon.UsageLimit.HasValue && (coupon.UsedCount ?? 0) >= coupon.UsageLimit.Value))
             {
-                throw new InvalidOperationException("Coupon does not exist or has expired.");
+                throw new InvalidOperationException("This coupon has expired or run out of usage.");
             }
+
+            if (course.CouponId != coupon.CouponId)
+            {
+                throw new InvalidOperationException("This coupon is not applicable to this course.");
+            }
+
+            if (originalPrice < coupon.MinOrderValue)
+            {
+                throw new InvalidOperationException($"This coupon requires a minimum course value of ${coupon.MinOrderValue:N2}.");
+            }
+
+            discountAmount = coupon.CouponType == "percentage"
+                ? originalPrice * (coupon.DiscountValue / 100m)
+                : coupon.DiscountValue;
+            discountAmount = Math.Round(Math.Min(discountAmount, originalPrice), 2);
         }
 
         var purchasePrice = Math.Max(originalPrice - discountAmount, 0m);
@@ -455,7 +473,7 @@ public class CheckoutService : ICheckoutService
                         TransactionId = transaction.TransactionId,
                         InstructorId = course.InstructorId ?? 0,
                         PayoutAmount = payoutAmount,
-                        PayoutDate = DateTime.Now.AddDays(14),
+                        PayoutDate = await CalculatePayoutDateAsync(DateTime.Now),
                         IsPaid = false,
                         PayoutStatus = "pending",
                         StripeTransferId = null
@@ -552,17 +570,28 @@ public class CheckoutService : ICheckoutService
 
             foreach (var code in codes)
             {
-                var cp = await _couponRepo.GetValidCouponAsync(code, DateTime.Now);
-                if (cp != null)
+                var cp = await _couponRepo.GetByCodeAsync(code);
+                if (cp == null)
                 {
-                    decimal eligibleSubTotal = cartItems
-                        .Where(c => c.Course != null && c.Course.CouponId == cp.CouponId)
-                        .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
+                    throw new InvalidOperationException("This coupon does not exist.");
+                }
 
-                    if (eligibleSubTotal >= cp.MinOrderValue && eligibleSubTotal > 0)
-                    {
-                        appliedCoupons.Add(cp);
-                    }
+                var now = DateTime.Now;
+                if (cp.IsActive != true ||
+                    (cp.StartDate.HasValue && now < cp.StartDate.Value) ||
+                    (cp.EndDate.HasValue && now > cp.EndDate.Value) ||
+                    (cp.UsageLimit.HasValue && (cp.UsedCount ?? 0) >= cp.UsageLimit.Value))
+                {
+                    throw new InvalidOperationException("This coupon has expired or run out of usage.");
+                }
+
+                decimal eligibleSubTotal = cartItems
+                    .Where(c => c.Course != null && c.Course.CouponId == cp.CouponId)
+                    .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
+
+                if (eligibleSubTotal >= cp.MinOrderValue && eligibleSubTotal > 0)
+                {
+                    appliedCoupons.Add(cp);
                 }
             }
         }
@@ -795,7 +824,7 @@ public class CheckoutService : ICheckoutService
                         TransactionId = transaction.TransactionId,
                         InstructorId = course.InstructorId ?? 0,
                         PayoutAmount = payoutAmount,
-                        PayoutDate = DateTime.Now.AddDays(14),
+                        PayoutDate = await CalculatePayoutDateAsync(DateTime.Now),
                         IsPaid = false,
                         PayoutStatus = "pending",
                         StripeTransferId = null
@@ -904,5 +933,28 @@ public class CheckoutService : ICheckoutService
             "VN" => "VND",
             _ => "USD"
         };
+    }
+
+    private async Task<DateTime> CalculatePayoutDateAsync(DateTime transactionDate)
+    {
+        var payoutDaysConfig = await _adminFinanceService.GetPayoutDaysConfigAsync();
+        int payoutDay = 15;
+        if (!string.IsNullOrWhiteSpace(payoutDaysConfig))
+        {
+            var firstConfigDay = payoutDaysConfig.Split(',')
+                .Select(s => int.TryParse(s.Trim(), out var d) ? d : 0)
+                .Where(d => d > 0)
+                .FirstOrDefault();
+            if (firstConfigDay > 0)
+            {
+                payoutDay = firstConfigDay;
+            }
+        }
+
+        var nextMonth = transactionDate.AddMonths(1);
+        int daysInNextMonth = DateTime.DaysInMonth(nextMonth.Year, nextMonth.Month);
+        int targetDay = Math.Min(payoutDay, daysInNextMonth);
+
+        return new DateTime(nextMonth.Year, nextMonth.Month, targetDay, 0, 0, 0, transactionDate.Kind);
     }
 }

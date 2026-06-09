@@ -27,6 +27,8 @@ namespace CourseMarketplaceBE.Application.Services
                 ProfessionalTitle = i.ProfessionalTitle,
                 DocumentUrl = i.DocumentUrl,
                 LinkedInUrl = i.LinkedinUrl,
+                YoutubeUrl = i.YoutubeUrl,
+                FacebookUrl = i.FacebookUrl,
                 ApprovalStatus = i.ApprovalStatus,
                 ExpertiseCategories = i.ExpertiseCategories
             }).ToList();
@@ -63,6 +65,27 @@ namespace CourseMarketplaceBE.Application.Services
             await _notiService.SendNotificationAsync(instructor.InstructorId, "Application Result", message, link);
 
             return true;
+        }
+
+        public async Task<InstructorApprovalDto?> GetDetailAsync(int id)
+        {
+            var i = await _repo.GetByIdAsync(id);
+            if (i == null) return null;
+
+            return new InstructorApprovalDto
+            {
+                InstructorId = i.InstructorId,
+                FullName = i.InstructorNavigation?.FullName ?? "N/A",
+                Email = i.InstructorNavigation?.UserNavigation?.Email ?? "N/A",
+                AvatarUrl = i.InstructorNavigation?.UserNavigation?.AvatarUrl,
+                ProfessionalTitle = i.ProfessionalTitle,
+                DocumentUrl = i.DocumentUrl,
+                LinkedInUrl = i.LinkedinUrl,
+                YoutubeUrl = i.YoutubeUrl,
+                FacebookUrl = i.FacebookUrl,
+                ApprovalStatus = i.ApprovalStatus,
+                ExpertiseCategories = i.ExpertiseCategories
+            };
         }
     }
 }

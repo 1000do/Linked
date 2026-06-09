@@ -22,6 +22,14 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             return Ok(list);
         }
 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetDetail(int id)
+        {
+            var item = await _service.GetDetailAsync(id);
+            if (item == null) return NotFound(new { status = 404, message = "Application not found" });
+            return Ok(item);
+        }
+
         [HttpPost("process")]
         public async Task<IActionResult> Process(UpdateApprovalStatusDto dto)
         {

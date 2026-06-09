@@ -32,6 +32,19 @@ namespace CourseMarketplaceFE.Controllers
             return View(new PagedResult<InstructorApprovalViewModel>());
         }
 
+        // Trang chi tiết
+        public async Task<IActionResult> Detail(int id)
+        {
+            var response = await _apiClient.GetAsync($"/api/AdminApproval/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var data = JsonSerializer.Deserialize<InstructorApprovalViewModel>(content, _jsonOptions);
+                return View(data);
+            }
+            return RedirectToAction("Index");
+        }
+
         // Action xử lý duyệt/từ chối
         [HttpPost]
         public async Task<IActionResult> Process(int id, string status, string? reason)
