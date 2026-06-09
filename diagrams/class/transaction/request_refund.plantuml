@@ -15,7 +15,6 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -24,14 +23,8 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class "TransactionController" as TransactionControllerFE #FFE6E6 {
+class TransactionControllerFE #FFE6E6 {
     + RequestRefund(transactionId: int, reason: string) : Task<IActionResult>
-}
-
-class "ApiResp<T>" as ApiResp #E6CCFF {
-    + Success : bool
-    + Data : T?
-    + Message : string?
 }
 
 class RefundResultDto #E6CCFF {
@@ -41,7 +34,7 @@ class RefundResultDto #E6CCFF {
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class "TransactionController" as TransactionControllerBE #FFE6E6 {
+class TransactionControllerBE #FFE6E6 {
     - _financeService : IAdminFinanceService
     + RequestRefund(transactionId: int, request: StudentRefundRequest) : Task<IActionResult>
 }
@@ -52,10 +45,10 @@ class StudentRefundRequest #E6CCFF {
     + Reason : string
 }
 
-class RefundEligibilityMetrics #E6CCFF {
+class RefundEligibilityDto #E6CCFF {
     + AccountFlagCount : int
-    + RefundRequestsLast14DaysCount : int
     + PastRefundedCountForCourse : int
+    + RefundRequestsLast14DaysCount : int
     + CourseTotalDurationHours : double
     + StudentProgressPercentage : double
     + CompletedVideoDurationHours : double
@@ -67,9 +60,19 @@ class Transaction #CCFFE6 {
     + TransactionId : int <<PK>>
     + OrderItemId : int? <<FK>>
     + AccountFrom : int? <<FK>>
+    + AccountTo : int? <<FK>>
     + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
     + TransactionsStatus : string?
+    + TransactionType : string?
     + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
 }
 
 class TransactionExt #CCFFE6 {
@@ -77,11 +80,21 @@ class TransactionExt #CCFFE6 {
     + RefundReason : string?
     + RefundAdminNote : string?
     + RefundRequestedAt : DateTime?
+    + Transaction : Transaction
 }
 
 class OrderItem #CCFFE6 {
     + Id : int <<PK>>
+    + OrderId : int? <<FK>>
     + CourseId : int? <<FK>>
+    + PurchasePrice : decimal
+    + CouponUsed : bool?
+    + OriginalPrice : decimal?
+    + CouponCode : string?
+    + CouponType : string?
+    + DiscountAmount : decimal
+    + Course : Course?
+    + Order : OrderInfo?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -94,7 +107,7 @@ interface IAdminFinanceService #FFE6CC {
 
 interface IAdminFinanceRepository #FFE6CC {
     //+ GetTransactionWithFullGraphAsync(transactionId: int) : Task<Transaction?>//
-    //+ GetRefundEligibilityMetricsAsync(transactionId: int, studentId: int, courseId: int) : Task<RefundEligibilityMetrics>//
+    //+ GetRefundEligibilityMetricsAsync(transactionId: int, studentId: int, courseId: int) : Task<RefundEligibilityDto>//
     //+ SaveChangesAsync() : Task<int>//
 }
 
@@ -111,7 +124,7 @@ class AdminFinanceService #CCE5FF {
 class AdminFinanceRepository #FFFFCC {
     - _context : AppDbContext
     + GetTransactionWithFullGraphAsync(transactionId: int) : Task<Transaction?>
-    + GetRefundEligibilityMetricsAsync(transactionId: int, studentId: int, courseId: int) : Task<RefundEligibilityMetrics>
+    + GetRefundEligibilityMetricsAsync(transactionId: int, studentId: int, courseId: int) : Task<RefundEligibilityDto>
     + SaveChangesAsync() : Task<int>
 }
 
@@ -120,30 +133,34 @@ class AdminFinanceRepository #FFFFCC {
 class AppDbContext #E6F3FF {
     + Transactions : DbSet<Transaction>
     + TransactionExts : DbSet<TransactionExt>
+    + OrderItems : DbSet<OrderItem>
+    + SaveChangesAsync(cancellationToken: CancellationToken) : Task<int>
 }
 
 ' ==================== RELATIONSHIPS ====================
 
-' === UNIDIRECTIONAL ASSOCIATION ===
+' === COMPOSITION (filled diamond) ===
+OrderItem *-- Transaction
+Transaction *-- TransactionExt
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+TransactionControllerFE ..> TransactionControllerBE : calls
 TransactionControllerBE --> IAdminFinanceService
 AdminFinanceService --> IAdminFinanceRepository
 AdminFinanceRepository --> AppDbContext
-Transaction --> TransactionExt
-Transaction --> OrderItem
 
 ' === INTERFACE REALIZATION ===
 AdminFinanceService ..|> IAdminFinanceService
 AdminFinanceRepository ..|> IAdminFinanceRepository
 
-' === DEPENDENCY ===
-TransactionControllerFE ..> TransactionControllerBE
-TransactionControllerFE ..> ApiResp
-ApiResp *-- RefundResultDto
-TransactionControllerBE ..> StudentRefundRequest
-TransactionControllerBE ..> RefundResultDto
-AdminFinanceService ..> RefundResultDto
-AdminFinanceService ..> RefundEligibilityMetrics
-AdminFinanceRepository ..> RefundEligibilityMetrics
-AdminFinanceRepository ..> Transaction
+' === DEPENDENCY (dashed arrows) ===
+TransactionControllerFE ..> RefundResultDto : uses
+TransactionControllerBE ..> StudentRefundRequest : uses
+TransactionControllerBE ..> RefundResultDto : uses
+AdminFinanceService ..> RefundResultDto : uses
+AdminFinanceService ..> RefundEligibilityDto : uses
+AdminFinanceService ..> TransactionExt : creates
+AdminFinanceRepository ..> RefundEligibilityDto : uses
+AdminFinanceRepository ..> Transaction : queries
 
 @enduml

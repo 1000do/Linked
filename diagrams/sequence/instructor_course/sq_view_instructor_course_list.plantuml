@@ -1,0 +1,102 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Instructor's Course List
+
+actor Instructor as act
+participant "InstructorDashboardPage" as view
+participant "LoginPage" as login_view
+participant "ApplicationFormPage" as apply_view
+participant "ApplicationStatusPage" as status_view
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
+participant "CourseController" as be_course_ctrl <<backend controller>>
+participant ":CourseQueryService" as course_sv
+participant ":CourseRepository" as course_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act -> view++: Access Instructor Dashboard page
+view -> fe_ctrl++: Send GET request to /InstructorCourse
+
+fe_ctrl -> fe_ctrl++: Validate Dashboard Access
+fe_ctrl--
+' redirection should use solid arrow with thick head, you basically request that page, am I right ?
+alt Unauthenticated Access
+    fe_ctrl -> login_view++: Redirect to Login page
+    login_view -->> act--: Display Login page
+else Instructor Profile Not Found
+    fe_ctrl -> apply_view++: Redirect to Application Form page
+    apply_view -->> act--: Display Application Form page
+else Application Pending or Rejected
+    fe_ctrl -> status_view++: Redirect to Application Status page
+    status_view -->> act--: Display Application Status page
+else Valid Dashboard Access
+    fe_ctrl -> fe_ctrl++: Fetch overall performance statistics
+    fe_ctrl--
+    
+
+    fe_ctrl -> be_course_ctrl++: Send GET request to /api/courses/my-courses
+    be_course_ctrl -> course_sv++: Call GetInstructorCoursesPagedAsync(instructorId)
+    
+    course_sv -> course_repo++: Call GetInstructorCoursesPagedAsync(instructorId)
+    course_repo -> ctx++: Query paginated courses
+    ctx -> db++: Execute query
+    db -->> ctx--: Return data
+    ctx -->> course_repo--: Return data
+    course_repo -->> course_sv--: Return courses, totalCount
+    course_sv -> course_sv++: Check totalCount
+    course_sv--
+
+
+    alt totalCount = 0
+        course_sv -->> be_course_ctrl: Return empty list
+        be_course_ctrl -->> fe_ctrl: Return statusCode 404
+        fe_ctrl -->> view: Return statusCode 404
+        view -->> act: Display empty state message
+    else totalCount > 0
+
+    course_sv -> course_repo++: Call GetCourseStatsAsync(courseIds)
+    course_repo -> ctx++: Query course stats
+    ctx -> db++: Execute query
+        
+
+    db -->> ctx--: Return data
+    ctx -->> course_repo--: Return data
+    course_repo -->> course_sv--: Return course stats
+    
+    course_sv -->> be_course_ctrl--: Return PagedResult<CourseResponse>
+    be_course_ctrl -->> fe_ctrl--: Return PagedResult<CourseResponse>
+        
+        fe_ctrl -->> view--: Return statusCode 200
+        view -->> act--: Display performance statistics and course list
+    
+
+    end
+end
+@enduml

@@ -15,7 +15,6 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
-!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -24,7 +23,7 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class "ReportController" as ReportControllerFE #FFE6E6 {
+class ReportControllerFE #FFE6E6 {
     + ReportCourseReview(model: CreateReviewReportViewModel) : Task<IActionResult>
     + ReportLessonReview(model: CreateReviewReportViewModel) : Task<IActionResult>
 }
@@ -38,7 +37,7 @@ class CreateReviewReportViewModel #E6CCFF {
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class "ReportController" as ReportControllerBE #FFE6E6 {
+class ReportControllerBE #FFE6E6 {
     - _reportService : IReportService
     + ReportCourseReview(request: CreateCourseReviewReportRequest) : Task<IActionResult>
     + ReportLessonReview(request: CreateLessonReviewReportRequest) : Task<IActionResult>
@@ -61,35 +60,63 @@ class CreateLessonReviewReportRequest #E6CCFF {
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class CourseReviewReport #CCFFE6 {
-    + ReportId : int <<PK>>
+    + CourseReviewReportId : int <<PK>>
     + ReporterId : int? <<FK>>
     + CourseReviewId : int? <<FK>>
+    + ResolverId : int? <<FK>>
     + Reason : string?
     + Description : string?
     + UserReportsStatus : string?
+    + ResolutionNote : string?
+    + ResolvedAt : DateTime?
+    + AccessGrantedUntil : DateTime?
     + CreatedAt : DateTime?
+    + Reporter : Account?
+    + Resolver : Account?
     + CourseReview : CourseReview?
 }
 
 class LessonReviewReport #CCFFE6 {
-    + ReportId : int <<PK>>
+    + LessonReviewReportId : int <<PK>>
     + ReporterId : int? <<FK>>
     + LessonReviewId : int? <<FK>>
+    + ResolverId : int? <<FK>>
     + Reason : string?
     + Description : string?
     + UserReportsStatus : string?
+    + ResolutionNote : string?
+    + ResolvedAt : DateTime?
+    + AccessGrantedUntil : DateTime?
     + CreatedAt : DateTime?
+    + Reporter : Account?
+    + Resolver : Account?
     + LessonReview : LessonReview?
 }
 
 class CourseReview #CCFFE6 {
     + CourseReviewId : int <<PK>>
+    + EnrollmentId : int <<FK>>
+    + Rating : float?
     + Comment : string?
+    + CourseReviewStatus : string
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + IsRemoved : bool?
+    + Enrollment : Enrollment
 }
 
 class LessonReview #CCFFE6 {
     + LessonReviewId : int <<PK>>
+    + EnrollmentId : int <<FK>>
+    + LessonId : int? <<FK>>
+    + Rating : float?
     + Comment : string?
+    + LessonReviewStatus : string
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + IsRemoved : bool?
+    + Enrollment : Enrollment
+    + Lesson : Lesson?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
@@ -152,34 +179,34 @@ class AppDbContext #E6F3FF {
 
 ' ==================== RELATIONSHIPS ====================
 
-' === UNIDIRECTIONAL ASSOCIATION ===
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+ReportControllerFE ..> ReportControllerBE : calls
 ReportControllerBE --> IReportService
 ReportService --> IReportRepository
 ReportService --> IReviewRepository
 ReportRepository --> AppDbContext
 ReviewRepository --> AppDbContext
-CourseReviewReport --> CourseReview
-LessonReviewReport --> LessonReview
+CourseReview o-- CourseReviewReport
+LessonReview o-- LessonReviewReport
 
 ' === INTERFACE REALIZATION ===
 ReportService ..|> IReportService
 ReportRepository ..|> IReportRepository
 ReviewRepository ..|> IReviewRepository
 
-' === DEPENDENCY ===
-ReportControllerFE ..> ReportControllerBE : calls via HTTP
+' === DEPENDENCY (dashed arrows) ===
 ReportControllerFE ..> CreateReviewReportViewModel : uses
 ReportControllerBE ..> CreateCourseReviewReportRequest : uses
 ReportControllerBE ..> CreateLessonReviewReportRequest : uses
 ReportService ..> CreateCourseReviewReportRequest : uses
 ReportService ..> CreateLessonReviewReportRequest : uses
-ReportService ..> CourseReviewReport : uses
-ReportService ..> LessonReviewReport : uses
-ReportService ..> CourseReview : uses
-ReportService ..> LessonReview : uses
-ReportRepository ..> CourseReviewReport : uses
-ReportRepository ..> LessonReviewReport : uses
-ReviewRepository ..> CourseReview : uses
-ReviewRepository ..> LessonReview : uses
+ReportService ..> CourseReviewReport : creates
+ReportService ..> LessonReviewReport : creates
+ReportRepository ..> CourseReviewReport : queries
+' ReportRepository ..> CourseReviewReport : saves
+' ReportRepository ..> LessonReviewReport : queries
+ReportRepository ..> LessonReviewReport : saves
+ReviewRepository ..> CourseReview : queries
+ReviewRepository ..> LessonReview : queries
 
 @enduml
