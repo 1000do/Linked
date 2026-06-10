@@ -113,10 +113,10 @@ class LessonResponse #E6CCFF {
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Course #CCFFE6 {
-    + CourseId : int <<PK>>
-    + InstructorId : int? <<FK>>
-    + CategoryId : int? <<FK>>
-    + CouponId : int? <<FK>>
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
     + Title : string
     + Description : string?
     + Price : decimal
@@ -128,14 +128,14 @@ class Course #CCFFE6 {
 }
 
 class Category #CCFFE6 {
-    + CategoryId : int <<PK>>
+    + CategoryId : int
     + CategoriesName : string
     + Description : string?
     + CreatedAt : DateTime?
 }
 
 class Instructor #CCFFE6 {
-    + InstructorId : int <<PK>>
+    + InstructorId : int
     + ProfessionalTitle : string?
     + ExpertiseCategories : string?
     + LinkedinUrl : string?
@@ -149,8 +149,8 @@ class Instructor #CCFFE6 {
 }
 
 class Coupon #CCFFE6 {
-    + CouponId : int <<PK>>
-    + ManagerId : int? <<FK>>
+    + CouponId : int
+    + ManagerId : int?
     + CouponCode : string
     + CouponType : string?
     + DiscountValue : decimal
@@ -163,8 +163,8 @@ class Coupon #CCFFE6 {
 }
 
 class Lesson #CCFFE6 {
-    + LessonId : int <<PK>>
-    + CourseId : int? <<FK>>
+    + LessonId : int
+    + CourseId : int?
     + Title : string
     + Description : string?
     + ThumbnailUrl : string?
@@ -365,14 +365,14 @@ CourseQueryService ..|> ICourseQueryService
 CourseRepository ..|> ICourseRepository
 
 ' === DEPENDENCY (dashed arrows) ===
-InstructorCourseController ..> CourseController : calls
-InstructorCourseController ..> CategoryViewModel : uses
-CourseController ..> CourseUpdateRequest : uses
-CourseController ..> CourseResponse : uses
-CourseController ..> CourseDetailResponse : uses
-CourseCommandService ..> CourseUpdateRequest : uses
-CourseCommandService ..> CourseResponse : creates
-CourseQueryService ..> CourseDetailResponse : creates
-CourseRepository ..> Course : creates
+InstructorCourseController ..> CourseController
+InstructorCourseController ..> CategoryViewModel
+CourseController ..> CourseUpdateRequest
+CourseController ..> CourseResponse
+CourseController ..> CourseDetailResponse
+CourseCommandService ..> CourseUpdateRequest
+CourseCommandService ..> CourseResponse
+CourseQueryService ..> CourseDetailResponse
+CourseRepository ..> Course
 
 @enduml
