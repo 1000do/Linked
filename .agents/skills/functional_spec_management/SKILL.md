@@ -1,54 +1,96 @@
 ---
 name: functional_spec_management
-description: Specializes in creating, formatting, and editing Functional Specification documents (also known as Function Details), adhering to a specific structure including Triggers, Descriptions, Screen Layouts, and detailed Process steps with Pre/Post conditions, Error Handling, and Security Measures.
+description: Specializes in creating, formatting, and editing Functional Specification documents in HTML format. Ensures the output uses Times New Roman 12pt font and normal text without any HTML heading tags (h1-h6).
 ---
 
 # Functional Specification Management Skill
 
-This skill provides comprehensive instructions for formatting, writing, and editing Functional Specification documents based on the provided standard format. This format is distinct from standard Use Case Management and focuses on detailed, user-centric functional documentation.
+This skill provides comprehensive instructions for formatting, writing, and editing Functional Specification documents based on the provided standard format. The output MUST be a valid HTML document using Times New Roman font, size 12pt.
 
-## 1. Document Structure
-Every functional specification MUST follow this exact structure and section naming in Markdown:
+## 1. Output Format and Styling
+*   **Format:** The final output MUST be an `.html` file. Do NOT output Markdown.
+*   **Font and Styling:** Use `font-family: 'Times New Roman', serif;` and `font-size: 12pt;`.
+*   **No Headings Allowed:** DO NOT use any HTML heading tags (`<h1>`, `<h2>`, `<h3>`, etc.). Instead of headings, use normal `<p>` tags with `<strong>` or `<b>` for emphasis.
+*   **Style Template:** Incorporate the following CSS in the `<head>` of the HTML:
+    ```html
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+    ```
 
-**[Identifier]. [Function Name]** (e.g., `a. View Course List`, `e. Forgot password`)
+## 2. Document Structure
+Every functional specification MUST follow this exact structure using valid HTML tags:
 
-**Function Trigger:** [Clear statement of the user action that initiates the function. e.g., "The user clicks the 'Forgot password' link on the Login page."]
+<p><strong>[Identifier]. [Function Name]</strong></p>
+(e.g., `<p><strong>a. View Course List</strong></p>`)
 
-**Function Description:** [High-level summary of the function's purpose, the user roles that can access it, and its main outcome.]
+<p><strong>Function Trigger:</strong> [Clear statement of the user action]</p>
 
-**Screen Layout:**
-[Placeholder for UI mockups or screenshots, usually an image embed or note]
+<p><strong>Function Description:</strong> [High-level summary]</p>
 
-**Function Details**
-*(Use a standard list format for the main categories below)*
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
 
-*   **Preconditions**
-    *   [Condition 1, e.g., "The user has a registered account with a valid email."]
-    *   [Condition 2, e.g., "The user is connected to the internet."]
-*   **Process**
-    *   [Step 1 Name/Title]:
-        *   [Action detail/User action]
-    *   [Step 2 Name/Title]:
-        *   [Action detail/System response]
-    *(Note: Process steps can also be formatted as a numbered list with descriptions below them, depending on the document flow)*
-*   **Alternative Flow [optional condition/name]**
-    *   [Description of the alternative flow, e.g., "If the email does not exist:"]
-        *   [Action 1, e.g., "Display error message."]
-        *   [Action 2, e.g., "Redirect back to the email input."]
-*   **Postconditions**
-    *   [Outcome 1, e.g., "The user's password is successfully reset."]
-*   **Error Handling**
-    *   **[Error Name/Type]:** [How the system responds, e.g., "Lost Connection: Display 'Lost Connection' screen and prompt reconnection."]
-*   **Security Measures**
-    *   [Security rule 1, e.g., "Password reset is sent only to the registered email."]
+<p><strong>Function Details</strong></p>
 
-## 2. Formatting Guidelines
-*   **Bold Text:** Use bold for the main field headers (`**Function Trigger:**`, `**Function Description:**`, `**Screen Layout:**`, `**Function Details**`).
-*   **Process Steps Format:** Use clear step titles (e.g., **Navigate to Forgot Password Page:**) followed by sub-bullets describing the exact interactions.
-*   **Error Handling Format:** Always bold the specific error name followed by a colon, then describe the system behavior.
-*   **Alternative Flow Labeling:** If the alternative flow is triggered by a specific condition, append it to the label (e.g., `* **Alternative Flow (Invalid Email or Password Format)**`).
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>[Condition 1]</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>[Step 1 Name/Title]:</strong>
+                <ul>
+                    <li>[Action detail/User action]</li>
+                    <li>[Action detail/System response]</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow [optional condition/name]</strong>
+        <ul>
+            <li>[Description of the alternative flow]:
+                <ul>
+                    <li>[Action 1]</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>[Outcome 1]</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>[Error Name/Type]:</strong> [How the system responds]</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>[Security rule 1]</li>
+        </ul>
+    </li>
+</ul>
 
-## 3. Tone and Style
+## 3. Formatting Guidelines
+*   **Bold Text:** Use `<strong>` for the main field headers (`<strong>Function Trigger:</strong>`, `<strong>Function Details</strong>`, etc.), process step titles, and error names.
+*   **No Markdown:** Since the output must be an HTML file, do not use Markdown syntax (like `**bold**` or `# heading`) in the generated result.
+*   **Alternative Flow Labeling:** If the alternative flow is triggered by a specific condition, append it to the label (e.g., `<strong>Alternative Flow (Invalid Email)</strong>`).
+
+## 4. Tone and Style
 *   **Action-Oriented:** Use active voice (e.g., "The system redirects...", "The user enters...").
 *   **Clear and Concise:** Keep descriptions direct and easy to follow.
 *   **Consistent Terminology:** Consistently use terms like "The system" and "The user" to describe actors.
