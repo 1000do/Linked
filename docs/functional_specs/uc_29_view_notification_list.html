@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-29 - View Notification list</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-29. View Notification list</strong></p>
+
+    <p><strong>Function Trigger:</strong> User or Instructor clicks on the notification icon or accesses the notifications page.</p>
+
+    <p><strong>Function Description:</strong> Allows users and instructors to view their list of notifications, search, sort, filter, view details, mark notifications as read, mark all notifications as read, or delete notifications.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>User or Instructor must be successfully authenticated.</li>
+                <li>Instructor must have an approved instructor status to access the instructor-specific notifications.</li>
+                <li>User or Instructor must have a stable internet connection.</li>
+                <li>SignalR Service must be working properly.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Access Page:</strong>
+                    <ul>
+                        <li>User or Instructor accesses the notifications page.</li>
+                        <li>The system sends a request to retrieve the notification list.</li>
+                    </ul>
+                </li>
+                <li><strong>Retrieve Notifications:</strong>
+                    <ul>
+                        <li>The system retrieves the notifications from the database.</li>
+                    </ul>
+                </li>
+                <li><strong>Display List:</strong>
+                    <ul>
+                        <li>The system displays the list of notifications.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Search notifications)</strong>
+            <ul>
+                <li>If the user searches notifications:
+                    <ul>
+                        <li>User or Instructor enters a keyword in the "Search by title or content..." input field.</li>
+                        <li>The system filters and displays notifications containing the keyword in the title or content.</li>
+                        <li>The process returns to displaying the list of notifications.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Filter notifications by status)</strong>
+            <ul>
+                <li>If the user filters by status:
+                    <ul>
+                        <li>User or Instructor selects a status option from the status filter dropdown.</li>
+                        <li>The system filters and displays notifications matching the selected status.</li>
+                        <li>The process returns to displaying the list of notifications.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Sort notifications)</strong>
+            <ul>
+                <li>If the user sorts notifications:
+                    <ul>
+                        <li>User or Instructor selects a sorting option from the sorting dropdown.</li>
+                        <li>The system sorts and displays notifications matching the selected sorting order.</li>
+                        <li>The process returns to displaying the list of notifications.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The read state of the notifications is updated in the database.</li>
+                <li>Deleted notifications are permanently removed from the database.</li>
+                <li>The frontend receives real-time updates when new notifications are sent.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+                <li><strong>Notification not found or access denied:</strong> The system displays an error message regarding missing notification or permission, and the process returns to displaying the list of notifications.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Instructor Access Restriction:</strong> Only instructors with an "Approved" approval status are permitted to access the instructor-specific notifications page (/Instructor/Notifications). If an instructor is not approved, they are redirected to the instructor application status page.</li>
+                <li><strong>Read Status Sync:</strong> Viewing a notification's details modal automatically marks it as read in the database and updates the UI state.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>
