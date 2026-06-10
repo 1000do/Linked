@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-30 - View Notification Detail</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-30. View Notification Detail</strong></p>
+
+    <p><strong>Function Trigger:</strong> User or Instructor clicks on a notification row in the notifications list.</p>
+
+    <p><strong>Function Description:</strong> Allows users and instructors to view the detailed content of a notification in a modal dialog. If the notification is unread, the system automatically marks it as read.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>User or Instructor must be successfully authenticated.</li>
+                <li>The notifications page must be successfully loaded and displaying notifications.</li>
+                <li>User or Instructor has a stable internet connection.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>View Details:</strong>
+                    <ul>
+                        <li>User or Instructor clicks on a notification row.</li>
+                        <li>The system retrieves the notification details from the client-side list.</li>
+                        <li>The system displays the notification details modal.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Auto-mark notification as read)</strong>
+            <ul>
+                <li>If the notification is unread:
+                    <ul>
+                        <li>The system detects the notification is unread.</li>
+                        <li>The system requests the backend to mark the notification as read.</li>
+                        <li>The system updates the notification status to read in the database.</li>
+                        <li>The system updates the list UI to display the notification as read.</li>
+                        <li>The process returns to displaying the notification details modal.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Redirect to action link)</strong>
+            <ul>
+                <li>If the notification has an action link:
+                    <ul>
+                        <li>The system detects the notification has an action link.</li>
+                        <li>The system displays the "View Details" button.</li>
+                        <li>User or Instructor clicks the "View Details" button.</li>
+                        <li>The system redirects the actor to the corresponding action URL.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Close details modal)</strong>
+            <ul>
+                <li>If the user closes the modal:
+                    <ul>
+                        <li>User or Instructor clicks the close icon, clicks the "Close" button, or clicks the backdrop area.</li>
+                        <li>The system closes the details modal.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The detailed content of the notification is displayed in the modal.</li>
+                <li>If the notification was unread, its status is updated to read in the database.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+                <li><strong>Database update failed (marking as read):</strong> The system fails to update the notification status in the database, displays a database transaction failure message, and returns to displaying the notification details modal.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Read Status Sync:</strong> Viewing a notification's details modal automatically marks it as read in the database and updates the UI state.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>
