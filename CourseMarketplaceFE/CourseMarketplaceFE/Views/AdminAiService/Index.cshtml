@@ -1,0 +1,863 @@
+@model CourseMarketplaceFE.Models.AdminAiServicePageViewModel
+@{
+    ViewData["Title"] = "AI Service Management";
+    ViewData["PageHeader"] = "AI Models & Integrations";
+    Layout = "_AdminLayout";
+    var activeTab = ViewBag.ActiveTab as string ?? "models";
+    var activeSubtab = ViewBag.ActiveSubtab as string ?? "course";
+}
+
+<div class="flex flex-col gap-6">
+    <!-- Header with Stats & Actions -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">AI Service Configuration</h1>
+            <p class="text-sm text-slate-500">Manage AI models, configure thresholds, and monitor moderation logs.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="openAddAiModelModal()" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-all">
+                <span class="material-symbols-outlined text-[20px]">add</span>
+                Add AI Model
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Settings / Config Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Confidence Thresholds -->
+        <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-5 flex flex-col gap-4">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <span class="material-symbols-outlined text-indigo-600 text-[18px]">tune</span>
+                AI Moderation Thresholds
+            </h3>
+            <form id="thresholdsForm" onsubmit="submitThresholds(event)" class="flex flex-col gap-3 flex-1">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-bold text-slate-700">Spam Confidence</label>
+                        <input type="number" step="0.01" min="0.01" max="1" id="spamThreshold" value="@Model.Config.SpamConfidenceThreshold" 
+                               class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-bold text-slate-700">Toxicity Confidence</label>
+                        <input type="number" step="0.01" min="0.01" max="1" id="toxicityThreshold" value="@Model.Config.ToxicityConfidenceThreshold" 
+                               class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-bold text-slate-700">Similarity Score</label>
+                        <input type="number" step="0.01" min="0.01" max="1" id="similarityThreshold" value="@Model.Config.SimilarityScoreThreshold" 
+                               class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+                    </div>
+                </div>
+                <div class="flex justify-end mt-4 lg:mt-auto">
+                    <button type="submit" class="px-4 py-2 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors shadow-sm">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- AI Integration Setup -->
+        <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-5 flex flex-col gap-4">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <span class="material-symbols-outlined text-emerald-600 text-[18px]">integration_instructions</span>
+                AI Integration Mapping
+            </h3>
+            <form id="integrationForm" onsubmit="submitIntegration(event)" class="flex flex-col gap-3 flex-1">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-bold text-slate-700">Course Harmful Text Classifier</label>
+                        <select id="courseHarmfulText" class="px-3.5 py-2 text-[13px] border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors">
+                            @foreach (var m in Model.AllActiveModels.Where(x => x.ModelType == "classifier" && x.ProcessType == "text")) {
+                                <option value="@m.ModelPath" selected="@(m.ModelPath == Model.Config.CourseHarmfulTextClassifierPath)">@m.ModelName (@m.ModelPath)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-bold text-slate-700">Course Text Embedding</label>
+                        <select id="courseTextEmbed" class="px-3.5 py-2 text-[13px] border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors">
+                            @foreach (var m in Model.AllActiveModels.Where(x => x.ModelType == "embedding_generator" && x.ProcessType == "text")) {
+                                <option value="@m.ModelPath" selected="@(m.ModelPath == Model.Config.CourseTextEmbeddingGeneratorPath)">@m.ModelName (@m.ModelPath)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-bold text-slate-700">Course Media Embedding</label>
+                        <select id="courseMediaEmbed" class="px-3.5 py-2 text-[13px] border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors">
+                            @foreach (var m in Model.AllActiveModels.Where(x => x.ModelType == "embedding_generator" && x.ProcessType == "media")) {
+                                <option value="@m.ModelPath" selected="@(m.ModelPath == Model.Config.CourseMediaEmbeddingGeneratorPath)">@m.ModelName (@m.ModelPath)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-bold text-slate-700">Review Harmful Text Classifier</label>
+                        <select id="reviewHarmfulText" class="px-3.5 py-2 text-[13px] border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors">
+                            @foreach (var m in Model.AllActiveModels.Where(x => x.ModelType == "classifier" && x.ProcessType == "text")) {
+                                <option value="@m.ModelPath" selected="@(m.ModelPath == Model.Config.ReviewHarmfulTextClassifierPath)">@m.ModelName (@m.ModelPath)</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end mt-4 lg:mt-auto">
+                    <button type="submit" class="px-4 py-2 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors shadow-sm">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Content Tabs -->
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+        <div class="px-6 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex overflow-x-auto gap-4 py-3">
+                <button onclick="switchMainTab('models')" id="main-tab-models" 
+                        class="px-3 py-2 text-sm font-semibold transition-colors whitespace-nowrap focus:outline-none @(activeTab == "models" ? "border-b-2 border-slate-900 text-slate-900" : "border-b-2 border-transparent text-slate-500 hover:text-slate-900")">
+                    All AI Models
+                </button>
+                <button onclick="switchMainTab('logs')" id="main-tab-logs" 
+                        class="px-3 py-2 text-sm font-semibold transition-colors whitespace-nowrap focus:outline-none @(activeTab == "logs" ? "border-b-2 border-slate-900 text-slate-900" : "border-b-2 border-transparent text-slate-500 hover:text-slate-900")">
+                    AI Activity Logs
+                </button>
+            </div>
+        </div>
+
+        <!-- ───────────────── TAB: ALL AI MODELS ───────────────── -->
+        <div id="content-models" class="tab-content overflow-x-auto @(activeTab == "models" ? "" : "hidden")">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200 bg-slate-50/50">
+                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Model</th>
+                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Type / Process</th>
+                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Last Modified</th>
+                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    @if(Model.AiModels.Any()) {
+                        @foreach(var item in Model.AiModels) {
+                            <tr class="hover:bg-slate-50/30 transition-colors">
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col">
+                                        <span class="font-semibold text-slate-900">@item.ModelName <span class="text-xs text-slate-400 font-normal ml-1">v@(item.ModelVersion)</span></span>
+                                        <span class="text-[11px] text-slate-500 font-mono mt-0.5">@item.ModelPath</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 align-middle">
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="text-slate-700 capitalize">@item.ModelType.Replace("_", " ")</span>
+                                        <span class="text-xs text-slate-400 capitalize">@item.ProcessType</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 align-middle">
+                                    <div class="flex items-center gap-2">
+                                        @if(item.ModelStatus == "active") {
+                                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                            <span class="font-medium text-emerald-600 text-xs">Active</span>
+                                        } else {
+                                            <span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                                            <span class="font-medium text-slate-500 text-xs">Inactive</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 align-middle text-slate-500 text-xs">
+                                    @item.ModelUpdatedAt?.ToString("MMM dd yyyy HH:mm:ss")
+                                </td>
+                                <td class="px-6 py-4 align-middle text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button type="button" onclick="openDetailsModal(this)"
+                                                data-id="@item.ModelId"
+                                                data-name="@item.ModelName"
+                                                data-version="@item.ModelVersion"
+                                                data-provider="@item.ModelProvider"
+                                                data-type="@item.ModelType"
+                                                data-process="@item.ProcessType"
+                                                data-path="@item.ModelPath"
+                                                data-desc="@item.Description"
+                                                data-updated="@item.ModelUpdatedAt?.ToString("MMM dd yyyy HH:mm:ss")"
+                                                class="p-1.5 text-slate-400 hover:text-indigo-600 transition-colors" title="View Details">
+                                            <span class="material-symbols-outlined text-[18px]">visibility</span>
+                                        </button>
+                                        <button onclick="openEditAiModelModal(@item.ModelId, '@item.ModelProvider', '@item.ModelVersion', '@item.ModelPath', '@item.Description')" class="p-1.5 text-slate-400 hover:text-slate-900 transition-colors" title="Edit Model">
+                                            <span class="material-symbols-outlined text-[18px]">edit</span>
+                                        </button>
+                                        <button onclick="toggleModelStatus(@item.ModelId)" class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-out focus:outline-none @(item.ModelStatus == "active" ? "bg-emerald-500" : "bg-slate-200")" title="Toggle Status">
+                                            <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition duration-300 ease-out @(item.ModelStatus == "active" ? "translate-x-4" : "translate-x-0")"></span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    } else {
+                        <tr>
+                            <td colspan="5" class="px-6 py-8 text-center text-slate-500">No AI Models found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        
+        @if(ViewBag.ModelTotalPages > 1) {
+            <div class="px-6 py-4 border-t border-slate-200 flex justify-between items-center bg-slate-50">
+                <a href="?tab=models&modelPage=@(ViewBag.ModelPage - 1)&coursePage=@ViewBag.CoursePage&cReviewPage=@ViewBag.CReviewPage&lReviewPage=@ViewBag.LReviewPage" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.ModelPage <= 1 ? "pointer-events-none opacity-50" : "")">Previous</a>
+                <span class="text-sm text-slate-500">Page @ViewBag.ModelPage of @ViewBag.ModelTotalPages</span>
+                <a href="?tab=models&modelPage=@(ViewBag.ModelPage + 1)&coursePage=@ViewBag.CoursePage&cReviewPage=@ViewBag.CReviewPage&lReviewPage=@ViewBag.LReviewPage" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.ModelPage >= ViewBag.ModelTotalPages ? "pointer-events-none opacity-50" : "")">Next</a>
+            </div>
+        }
+        </div>
+
+        <!-- ───────────────── TAB: AI ACTIVITY LOGS ───────────────── -->
+        <div id="content-logs" class="tab-content @(activeTab == "logs" ? "" : "hidden")">
+            <!-- Subtabs -->
+            <div class="px-6 border-b border-slate-100 bg-white flex overflow-x-auto gap-4">
+                <button onclick="switchSubTab('course')" id="sub-tab-course" 
+                        class="px-2 py-2.5 text-xs font-semibold transition-colors whitespace-nowrap focus:outline-none @(activeSubtab == "course" ? "border-b-2 border-indigo-600 text-indigo-600" : "border-b-2 border-transparent text-slate-500 hover:text-slate-800")">
+                    Course Moderation
+                </button>
+                <button onclick="switchSubTab('course_review')" id="sub-tab-course_review" 
+                        class="px-2 py-2.5 text-xs font-semibold transition-colors whitespace-nowrap focus:outline-none @(activeSubtab == "course_review" ? "border-b-2 border-indigo-600 text-indigo-600" : "border-b-2 border-transparent text-slate-500 hover:text-slate-800")">
+                    Course Review Moderation
+                </button>
+                <button onclick="switchSubTab('lesson_review')" id="sub-tab-lesson_review" 
+                        class="px-2 py-2.5 text-xs font-semibold transition-colors whitespace-nowrap focus:outline-none @(activeSubtab == "lesson_review" ? "border-b-2 border-indigo-600 text-indigo-600" : "border-b-2 border-transparent text-slate-500 hover:text-slate-800")">
+                    Lesson Review Moderation
+                </button>
+            </div>
+
+            <!-- Subtab Content: Course Moderation -->
+            <div id="sub-content-course" class="subtab-content overflow-x-auto @(activeSubtab == "course" ? "" : "hidden")">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-100 bg-slate-50/30">
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Course</th>
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Model</th>
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Result</th>
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Latency</th>
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tokens</th>
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Logged At</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                        @if(Model.CourseLogs.Any()) {
+                            @foreach(var log in Model.CourseLogs) {
+                                <tr onclick="window.location.href='/AdminAiService/CourseModerationLogDetail/@log.LogId'" class="hover:bg-slate-50/50 transition-colors cursor-pointer group">
+                                    <td class="px-6 py-3.5">
+                                        <div class="flex flex-col">
+                                            <span class="font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">@log.Title</span>
+                                            <span class="text-[10px] text-slate-400 font-mono">ID: @log.CourseId</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-3.5">
+                                        <span class="text-xs text-slate-600">@log.ModelName</span>
+                                    </td>
+                                    <td class="px-6 py-3.5">
+                                        @if(log.ResultStatus == "Flagged" || log.ResultStatus == "Match Found") {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-100">@log.ResultStatus</span>
+                                        } else if (log.ResultStatus == "ERROR") {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-red-50 text-red-700 border border-red-100">ERROR</span>
+                                        } else if (log.ResultStatus == "Manual Audit") {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-100">@log.ResultStatus</span>
+                                        } else {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">@log.ResultStatus</span>
+                                        }
+                                    </td>
+                                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.LatencyMs ms</td>
+                                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.TokenUsage</td>
+                                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.LogCreatedAt.ToString("MMM dd yyyy HH:mm:ss")</td>
+                                </tr>
+                            }
+                        } else {
+                            <tr>
+                                <td colspan="6" class="px-6 py-8 text-center text-slate-500">No logs found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if(ViewBag.CourseTotalPages > 1) {
+                    <div class="px-6 py-4 border-t border-slate-200 flex justify-between items-center bg-slate-50">
+                        <a href="?tab=logs&subtab=course&modelPage=@ViewBag.ModelPage&coursePage=@(ViewBag.CoursePage - 1)&cReviewPage=@ViewBag.CReviewPage&lReviewPage=@ViewBag.LReviewPage" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.CoursePage <= 1 ? "pointer-events-none opacity-50" : "")">Previous</a>
+                        <span class="text-sm text-slate-500">Page @ViewBag.CoursePage of @ViewBag.CourseTotalPages</span>
+                        <a href="?tab=logs&subtab=course&modelPage=@ViewBag.ModelPage&coursePage=@(ViewBag.CoursePage + 1)&cReviewPage=@ViewBag.CReviewPage&lReviewPage=@ViewBag.LReviewPage" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.CoursePage >= ViewBag.CourseTotalPages ? "pointer-events-none opacity-50" : "")">Next</a>
+                    </div>
+                }
+            </div>
+
+            <!-- Subtab Content: Course Review Moderation -->
+            <div id="sub-content-course_review" class="subtab-content overflow-x-auto @(activeSubtab == "course_review" ? "" : "hidden")">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-100 bg-slate-50/30">
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Review</th>
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Model</th>
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Result</th>
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Latency</th>
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Logged At</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                        @if(Model.CourseReviewLogs.Any()) {
+                            @foreach(var log in Model.CourseReviewLogs) {
+                                <tr onclick="window.location.href='/AdminAiService/ReviewModerationLogDetail/@log.LogId?type=course'" class="hover:bg-slate-50/50 transition-colors cursor-pointer group">
+                                    <td class="px-6 py-3.5">
+                                        <div class="flex flex-col">
+                                            <span class="font-medium text-slate-800 group-hover:text-indigo-600 transition-colors">
+                                                @(log.Comment.Length > 10 ? log.Comment.Substring(0, 10) + "..." : log.Comment)
+                                            </span>
+                                            <span class="text-[10px] text-slate-400 font-mono">ID: @log.ReviewId</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-3.5 text-xs text-slate-600">@log.ModelName</td>
+                                    <td class="px-6 py-3.5">
+                                        @if(log.ResultStatus == "Flagged" || log.ResultStatus == "Match Found") {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-100">@log.ResultStatus</span>
+                                        } else if (log.ResultStatus == "ERROR") {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-red-50 text-red-700 border border-red-100">ERROR</span>
+                                        } else if (log.ResultStatus == "Manual Audit") {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-100">@log.ResultStatus</span>
+                                        } else {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">@log.ResultStatus</span>
+                                        }
+                                    </td>
+                                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.LatencyMs ms</td>
+                                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.LogCreatedAt.ToString("MMM dd yyyy HH:mm:ss")</td>
+                                </tr>
+                            }
+                        } else {
+                            <tr>
+                                <td colspan="5" class="px-6 py-8 text-center text-slate-500">No logs found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if(ViewBag.CReviewTotalPages > 1) {
+                    <div class="px-6 py-4 border-t border-slate-200 flex justify-between items-center bg-slate-50">
+                        <a href="?tab=logs&subtab=course_review&modelPage=@ViewBag.ModelPage&coursePage=@ViewBag.CoursePage&cReviewPage=@(ViewBag.CReviewPage - 1)&lReviewPage=@ViewBag.LReviewPage" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.CReviewPage <= 1 ? "pointer-events-none opacity-50" : "")">Previous</a>
+                        <span class="text-sm text-slate-500">Page @ViewBag.CReviewPage of @ViewBag.CReviewTotalPages</span>
+                        <a href="?tab=logs&subtab=course_review&modelPage=@ViewBag.ModelPage&coursePage=@ViewBag.CoursePage&cReviewPage=@(ViewBag.CReviewPage + 1)&lReviewPage=@ViewBag.LReviewPage" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.CReviewPage >= ViewBag.CReviewTotalPages ? "pointer-events-none opacity-50" : "")">Next</a>
+                    </div>
+                }
+            </div>
+
+            <!-- Subtab Content: Lesson Review Moderation -->
+            <div id="sub-content-lesson_review" class="subtab-content overflow-x-auto @(activeSubtab == "lesson_review" ? "" : "hidden")">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-100 bg-slate-50/30">
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Review</th>
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Model</th>
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Result</th>
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Latency</th>
+                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Logged At</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                        @if(Model.LessonReviewLogs.Any()) {
+                            @foreach(var log in Model.LessonReviewLogs) {
+                                <tr onclick="window.location.href='/AdminAiService/ReviewModerationLogDetail/@log.LogId?type=lesson'" class="hover:bg-slate-50/50 transition-colors cursor-pointer group">
+                                    <td class="px-6 py-3.5">
+                                        <div class="flex flex-col">
+                                            <span class="font-medium text-slate-800 group-hover:text-indigo-600 transition-colors">
+                                                @(log.Comment.Length > 10 ? log.Comment.Substring(0, 10) + "..." : log.Comment)
+                                            </span>
+                                            <span class="text-[10px] text-slate-400 font-mono">ID: @log.ReviewId</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-3.5 text-xs text-slate-600">@log.ModelName</td>
+                                    <td class="px-6 py-3.5">
+                                        @if(log.ResultStatus == "Flagged" || log.ResultStatus == "Match Found") {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-100">@log.ResultStatus</span>
+                                        } else if (log.ResultStatus == "ERROR") {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-red-50 text-red-700 border border-red-100">ERROR</span>
+                                        } else if (log.ResultStatus == "Manual Audit") {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-100">@log.ResultStatus</span>
+                                        } else {
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">@log.ResultStatus</span>
+                                        }
+                                    </td>
+                                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.LatencyMs ms</td>
+                                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.LogCreatedAt.ToString("MMM dd yyyy HH:mm:ss")</td>
+                                </tr>
+                            }
+                        } else {
+                            <tr>
+                                <td colspan="5" class="px-6 py-8 text-center text-slate-500">No logs found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if(ViewBag.LReviewTotalPages > 1) {
+                    <div class="px-6 py-4 border-t border-slate-200 flex justify-between items-center bg-slate-50">
+                        <a href="?tab=logs&subtab=lesson_review&modelPage=@ViewBag.ModelPage&coursePage=@ViewBag.CoursePage&cReviewPage=@ViewBag.CReviewPage&lReviewPage=@(ViewBag.LReviewPage - 1)" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.LReviewPage <= 1 ? "pointer-events-none opacity-50" : "")">Previous</a>
+                        <span class="text-sm text-slate-500">Page @ViewBag.LReviewPage of @ViewBag.LReviewTotalPages</span>
+                        <a href="?tab=logs&subtab=lesson_review&modelPage=@ViewBag.ModelPage&coursePage=@ViewBag.CoursePage&cReviewPage=@ViewBag.CReviewPage&lReviewPage=@(ViewBag.LReviewPage + 1)" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.LReviewPage >= ViewBag.LReviewTotalPages ? "pointer-events-none opacity-50" : "")">Next</a>
+                    </div>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: ADD AI MODEL -->
+<!-- ========================================================================= -->
+<div id="addAiModelModal" class="fixed inset-0 z-50 hidden bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300 ease-out opacity-0">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-95 transition-all duration-300 ease-out">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="text-base font-bold text-slate-900">Register New AI Model</h3>
+            <button onclick="closeAddAiModelModal()" class="text-slate-400 hover:text-slate-600">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        <form id="addAiModelForm" onsubmit="submitAddAiModel(event)" class="p-6 flex flex-col gap-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
+                    <label class="text-xs font-bold text-slate-700">Model Name <span class="text-rose-500">*</span></label>
+                    <input type="text" id="addModelName" required minlength="3" maxlength="255" class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+                </div>
+                <div class="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
+                    <label class="text-xs font-bold text-slate-700">Model Version <span class="text-rose-500">*</span></label>
+                    <input type="text" id="addModelVersion" required pattern="^\d+\.\d+\.\d+$" maxlength="50" placeholder="e.g. 1.0.0" class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+                </div>
+                <div class="flex flex-col gap-1.5 col-span-2">
+                    <label class="text-xs font-bold text-slate-700">Model Path <span class="text-rose-500">*</span></label>
+                    <input type="text" id="addModelPath" required maxlength="255" class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+                </div>
+                <div class="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
+                    <label class="text-xs font-bold text-slate-700">Provider <span class="text-rose-500">*</span></label>
+                    <select id="addModelProvider" required class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors">
+                        <option value="meta">Meta</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="google">Google</option>
+                        <option value="hugging_face">Hugging Face</option>
+                        <option value="local">Local</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
+                    <label class="text-xs font-bold text-slate-700">Model Type <span class="text-rose-500">*</span></label>
+                    <select id="addModelType" class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors">
+                        <option value="classifier">Classifier</option>
+                        <option value="embedding_generator">Embedding Generator</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
+                    <label class="text-xs font-bold text-slate-700">Process Type <span class="text-rose-500">*</span></label>
+                    <select id="addProcessType" class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors">
+                        <option value="text">Text</option>
+                        <option value="media">Media</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-3 col-span-2 sm:col-span-1 mt-6">
+                    <span class="text-xs font-bold text-slate-700">Status Active</span>
+                    <button type="button" onclick="toggleAddStatus()" id="addModelStatusBtn" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-emerald-500 transition-colors duration-300 ease-out focus:outline-none">
+                        <span id="addModelStatusDot" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-300 ease-out translate-x-5"></span>
+                    </button>
+                    <input type="hidden" id="addModelStatus" value="active" />
+                </div>
+                <div class="flex flex-col gap-1.5 col-span-2">
+                    <label class="text-xs font-bold text-slate-700">Description <span class="text-rose-500">*</span></label>
+                    <textarea id="addDescription" required minlength="20" rows="3" placeholder="At least 20 characters..." class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors"></textarea>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 mt-4">
+                <button type="button" onclick="closeAddAiModelModal()" class="w-full py-2 text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">Cancel</button>
+                <button type="submit" class="w-full py-2 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors shadow-sm">Add Model</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: EDIT AI MODEL -->
+<!-- ========================================================================= -->
+<div id="editAiModelModal" class="fixed inset-0 z-50 hidden bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300 ease-out opacity-0">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-95 transition-all duration-300 ease-out">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="text-base font-bold text-slate-900">Edit AI Model</h3>
+            <button onclick="closeEditAiModelModal()" class="text-slate-400 hover:text-slate-600">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        <form id="editAiModelForm" onsubmit="submitEditAiModel(event)" class="p-6 flex flex-col gap-4">
+            <input type="hidden" id="editModelId" />
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-700">Provider <span class="text-rose-500">*</span></label>
+                <select id="editModelProvider" required class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors">
+                    <option value="meta">Meta</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="google">Google</option>
+                    <option value="hugging_face">Hugging Face</option>
+                    <option value="local">Local</option>
+                </select>
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-700">Model Version <span class="text-rose-500">*</span></label>
+                <input type="text" id="editModelVersion" required pattern="^\d+\.\d+\.\d+$" maxlength="50" placeholder="e.g. 1.0.0" class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-700">Model Path <span class="text-rose-500">*</span></label>
+                <input type="text" id="editModelPath" required maxlength="255" class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-700">Description <span class="text-rose-500">*</span></label>
+                <textarea id="editDescription" required minlength="20" rows="3" class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors"></textarea>
+            </div>
+            <div class="flex items-center gap-3 mt-4">
+                <button type="button" onclick="closeEditAiModelModal()" class="w-full py-2 text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">Cancel</button>
+                <button type="submit" class="w-full py-2 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors shadow-sm">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            @if(TempData["Error"] != null)
+            {
+                <text>
+                Swal.fire({ title: 'Error', text: '@TempData["Error"]', icon: 'error', customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' } });
+                </text>
+            }
+        });
+
+        function switchMainTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('[id^="main-tab-"]').forEach(btn => {
+                btn.classList.remove('border-slate-900', 'text-slate-900');
+                btn.classList.add('border-transparent', 'text-slate-500');
+            });
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+            const btn = document.getElementById(`main-tab-${tab}`);
+            btn.classList.remove('border-transparent', 'text-slate-500');
+            btn.classList.add('border-slate-900', 'text-slate-900');
+            
+            // Update URL without reload
+            const url = new URL(window.location);
+            url.searchParams.set('tab', tab);
+            window.history.pushState({}, '', url);
+        }
+
+        function switchSubTab(subtab) {
+            document.querySelectorAll('.subtab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('[id^="sub-tab-"]').forEach(btn => {
+                btn.classList.remove('border-indigo-600', 'text-indigo-600');
+                btn.classList.add('border-transparent', 'text-slate-500');
+            });
+            document.getElementById(`sub-content-${subtab}`).classList.remove('hidden');
+            const btn = document.getElementById(`sub-tab-${subtab}`);
+            btn.classList.remove('border-transparent', 'text-slate-500');
+            btn.classList.add('border-indigo-600', 'text-indigo-600');
+            
+            const url = new URL(window.location);
+            url.searchParams.set('subtab', subtab);
+            window.history.pushState({}, '', url);
+        }
+
+        function openAddAiModelModal() {
+            const modal = document.getElementById('addAiModelModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.firstElementChild.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeAddAiModelModal() {
+            const modal = document.getElementById('addAiModelModal');
+            modal.classList.add('opacity-0');
+            modal.firstElementChild.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.getElementById('addAiModelForm').reset();
+            }, 300);
+        }
+
+        function toggleAddStatus() {
+            const statusInput = document.getElementById('addModelStatus');
+            const btn = document.getElementById('addModelStatusBtn');
+            const dot = document.getElementById('addModelStatusDot');
+            
+            if(statusInput.value === 'active') {
+                statusInput.value = 'inactive';
+                btn.classList.replace('bg-emerald-500', 'bg-slate-200');
+                dot.classList.replace('translate-x-5', 'translate-x-0');
+            } else {
+                statusInput.value = 'active';
+                btn.classList.replace('bg-slate-200', 'bg-emerald-500');
+                dot.classList.replace('translate-x-0', 'translate-x-5');
+            }
+        }
+
+        function openEditAiModelModal(id, provider, version, path, desc) {
+            document.getElementById('editModelId').value = id;
+            document.getElementById('editModelProvider').value = provider;
+            document.getElementById('editModelVersion').value = version;
+            document.getElementById('editModelPath').value = path;
+            document.getElementById('editDescription').value = desc;
+
+            const modal = document.getElementById('editAiModelModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.firstElementChild.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeEditAiModelModal() {
+            const modal = document.getElementById('editAiModelModal');
+            modal.classList.add('opacity-0');
+            modal.firstElementChild.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.getElementById('editAiModelForm').reset();
+            }, 300);
+        }
+
+        async function submitAddAiModel(e) {
+            e.preventDefault();
+            
+            const body = {
+                ModelName: document.getElementById('addModelName').value,
+                ModelVersion: document.getElementById('addModelVersion').value,
+                ModelPath: document.getElementById('addModelPath').value,
+                ModelProvider: document.getElementById('addModelProvider').value,
+                ModelType: document.getElementById('addModelType').value,
+                ProcessType: document.getElementById('addProcessType').value,
+                Description: document.getElementById('addDescription').value,
+                ModelStatus: document.getElementById('addModelStatus').value
+            };
+
+            const confirm = await Swal.fire({
+                title: 'Are you sure?',
+                text: "Do you want to register this AI model?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#0f172a',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Yes, add it',
+                customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' }
+            });
+
+            if (!confirm.isConfirmed) return;
+
+            const res = await fetch('/AdminAiService/AddModel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) {
+                Swal.fire({ title: 'Success', text: 'Model added successfully', icon: 'success', customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' } }).then(() => window.location.reload());
+                closeAddAiModelModal();
+            } else {
+                const err = await res.json();
+                Swal.fire('Error', err.Message || 'Failed to add model', 'error');
+            }
+        }
+
+        async function submitEditAiModel(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('editModelId').value;
+            const body = {
+                ModelProvider: document.getElementById('editModelProvider').value,
+                ModelVersion: document.getElementById('editModelVersion').value,
+                ModelPath: document.getElementById('editModelPath').value,
+                Description: document.getElementById('editDescription').value
+            };
+
+            const confirm = await Swal.fire({
+                title: 'Are you sure?',
+                text: "Do you want to save changes to this model?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#0f172a',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Yes, save changes',
+                customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' }
+            });
+
+            if (!confirm.isConfirmed) return;
+
+            const res = await fetch(`/AdminAiService/EditModel?id=${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) {
+                Swal.fire({ title: 'Success', text: 'Model updated successfully', icon: 'success', customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' } }).then(() => window.location.reload());
+                closeEditAiModelModal();
+            } else {
+                const err = await res.json();
+                Swal.fire('Error', err.Message || 'Failed to edit model', 'error');
+            }
+        }
+
+        async function submitThresholds(e) {
+            e.preventDefault();
+            
+            const origSpam = '@Model.Config.SpamConfidenceThreshold';
+            const origTox = '@Model.Config.ToxicityConfidenceThreshold';
+            const origSim = '@Model.Config.SimilarityScoreThreshold';
+            
+            let spamInput = document.getElementById('spamThreshold');
+            let toxInput = document.getElementById('toxicityThreshold');
+            let simInput = document.getElementById('similarityThreshold');
+            
+            if (!spamInput.value) {
+                if (origSpam) spamInput.value = origSpam;
+                else return Swal.fire('Error', 'Spam threshold is required.', 'error');
+            }
+            if (!toxInput.value) {
+                if (origTox) toxInput.value = origTox;
+                else return Swal.fire('Error', 'Toxicity threshold is required.', 'error');
+            }
+            if (!simInput.value) {
+                if (origSim) simInput.value = origSim;
+                else return Swal.fire('Error', 'Similarity threshold is required.', 'error');
+            }
+
+            const body = {
+                SpamConfidenceThreshold: parseFloat(spamInput.value),
+                ToxicityConfidenceThreshold: parseFloat(toxInput.value),
+                SimilarityScoreThreshold: parseFloat(simInput.value)
+            };
+
+            const confirm = await Swal.fire({
+                title: 'Update Thresholds?',
+                text: "This will affect how strict the AI moderation is.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#0f172a',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Yes, update',
+                customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' }
+            });
+
+            if (!confirm.isConfirmed) return;
+
+            const res = await fetch('/AdminAiService/UpdateThresholds', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if(res.ok) {
+                Swal.fire({ title: 'Success', text: 'Thresholds updated successfully', icon: 'success', customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' } });
+            } else {
+                const err = await res.json();
+                Swal.fire('Error', err.Message || 'Failed to update', 'error');
+            }
+        }
+
+        async function submitIntegration(e) {
+            e.preventDefault();
+            
+            const selectIds = ['courseHarmfulText', 'courseTextEmbed', 'courseMediaEmbed', 'reviewHarmfulText'];
+            const keyMapping = {
+                'courseHarmfulText': 'course_harmful_text_classifier',
+                'courseTextEmbed': 'course_text_embedding_generator',
+                'courseMediaEmbed': 'course_media_embedding_generator',
+                'reviewHarmfulText': 'review_harmful_text_classifier'
+            };
+            
+            for (let id of selectIds) {
+                const el = document.getElementById(id);
+                if (!el.value) {
+                    return Swal.fire('Error', 'All integration configurations are required.', 'error');
+                }
+            }
+            
+            const confirm = await Swal.fire({
+                title: 'Update Integrations?',
+                text: "This will change which models handle specific features.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#0f172a',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Yes, update mappings',
+                customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' }
+            });
+
+            if (!confirm.isConfirmed) return;
+
+            let success = true;
+            for (let id of selectIds) {
+                const el = document.getElementById(id);
+                const res = await fetch('/AdminAiService/UpdateIntegration', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ConfigKey: keyMapping[id], ConfigValue: el.value })
+                });
+                if(!res.ok) success = false;
+            }
+
+            if (success) {
+                Swal.fire({ title: 'Success', text: 'Integration configs saved', icon: 'success', customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' } });
+            } else {
+                Swal.fire('Error', 'Failed to update some configurations', 'error');
+            }
+        }
+
+        async function toggleModelStatus(id) {
+            const confirm = await Swal.fire({
+                title: 'Toggle Status?',
+                text: "Are you sure you want to change this model's active status?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#0f172a',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Yes, toggle it',
+                customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' }
+            });
+
+            if (!confirm.isConfirmed) return;
+
+            const res = await fetch(`/AdminAiService/ToggleModelStatus?id=${id}`, {
+                method: 'PATCH'
+            });
+
+            if (res.ok) {
+                Swal.fire({ title: 'Status Toggled', text: 'Model status changed', icon: 'success', timer: 1500, showConfirmButton: false, customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' } }).then(() => window.location.reload());
+            } else {
+                const err = await res.json();
+                Swal.fire('Error', err.Message || 'Failed to toggle status', 'error');
+            }
+        }
+
+        function openDetailsModal(btn) {
+            const id = btn.getAttribute('data-id');
+            const name = btn.getAttribute('data-name');
+            const version = btn.getAttribute('data-version');
+            const provider = btn.getAttribute('data-provider');
+            const type = btn.getAttribute('data-type');
+            const process = btn.getAttribute('data-process');
+            const path = btn.getAttribute('data-path');
+            const desc = btn.getAttribute('data-desc');
+            const updated = btn.getAttribute('data-updated');
+
+            const html = `
+                <div class="text-left text-sm flex flex-col gap-3 text-slate-600">
+                    <div><span class="font-semibold text-slate-800">ID:</span> ${id}</div>
+                    <div><span class="font-semibold text-slate-800">Name:</span> ${name} v${version}</div>
+                    <div><span class="font-semibold text-slate-800">Provider:</span> <span class="capitalize">${provider}</span></div>
+                    <div><span class="font-semibold text-slate-800">Type:</span> <span class="capitalize">${type.replace('_', ' ')} / ${process}</span></div>
+                    <div><span class="font-semibold text-slate-800">Path:</span> <span class="font-mono text-xs bg-slate-50 px-1 py-0.5 rounded border border-slate-100 break-all">${path}</span></div>
+                    <div><span class="font-semibold text-slate-800">Description:</span><br/><p class="mt-1 p-2 bg-slate-50 rounded border border-slate-100 text-xs">${desc}</p></div>
+                    <div class="mt-2 pt-2 border-t border-slate-100 text-xs">
+                        <div><span class="font-semibold text-slate-800">Last Updated:</span> ${updated || '-'}</div>
+                    </div>
+                </div>
+            `;
+
+            Swal.fire({
+                title: 'Model Details',
+                html: html,
+                icon: 'info',
+                confirmButtonText: 'Close',
+                customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' }
+            });
+        }
+    </script>
+}
