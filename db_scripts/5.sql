@@ -3,6 +3,7 @@
 -- ==============================================================================
 DROP TABLE IF EXISTS platform_withdrawals CASCADE;
 DROP TABLE IF EXISTS ai_activity_logs CASCADE;
+DROP TABLE IF EXISTS gifts CASCADE;
 DROP TABLE IF EXISTS courses_ai_integrations CASCADE;
 DROP TABLE IF EXISTS ai_models CASCADE;
 DROP TABLE IF EXISTS system_configs CASCADE;
@@ -387,6 +388,27 @@ CREATE TABLE transaction_exts (
     refund_admin_note TEXT,
     refund_requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE gifts (
+    gift_id SERIAL PRIMARY KEY,
+    order_item_id INT NOT NULL REFERENCES order_items(id) ON DELETE CASCADE,
+    sender_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
+    recipient_email VARCHAR(255) NOT NULL,
+    recipient_name VARCHAR(255),
+    gift_message TEXT,
+    card_theme VARCHAR(50) DEFAULT 'classic',
+    redemption_token VARCHAR(255) UNIQUE NOT NULL,
+    is_claimed BOOLEAN DEFAULT FALSE,
+    claimed_by_user_id INT REFERENCES users(user_id) ON DELETE SET NULL,
+    claimed_at TIMESTAMP,
+    delivery_status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_gifts_token ON gifts(redemption_token);
+CREATE INDEX idx_gifts_recipient ON gifts(recipient_email);
+CREATE INDEX idx_gifts_delivery ON gifts(delivery_status);
 
 -- Bảng lưu dữ liệu những giao dịch chuyển tiền từ hệ thống vô tài khoản ngân hàng của instructor
 CREATE TABLE instructor_payouts (
@@ -784,6 +806,7 @@ SELECT setval(pg_get_serial_sequence('chats', 'chat_id'), (SELECT COALESCE(MAX(c
 SELECT setval(pg_get_serial_sequence('messages', 'message_id'), (SELECT COALESCE(MAX(message_id), 1) FROM messages));
 SELECT setval(pg_get_serial_sequence('material_completions', 'id'), (SELECT COALESCE(MAX(id), 1) FROM material_completions));
 SELECT setval(pg_get_serial_sequence('avatar_frames', 'id'), (SELECT COALESCE(MAX(id), 1) FROM avatar_frames));
+SELECT setval(pg_get_serial_sequence('gifts', 'gift_id'), (SELECT COALESCE(MAX(gift_id), 1) FROM gifts));
 
 DO $$
 DECLARE

@@ -148,6 +148,67 @@ public class CheckoutController : ControllerBase
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/checkout/gift
+    // Khởi tạo thanh toán Stripe Checkout cho Quà Tặng (UC-17)
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("gift")]
+    public async Task<IActionResult> GiftCheckout([FromBody] GiftCheckoutRequest request)
+    {
+        var userId = GetUserId();
+        if (userId == null)
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
+
+        if (!await _authService.IsEmailVerifiedAsync(userId.Value))
+            return BadRequest(ApiResponse<string>.ErrorResponse("Please verify your email address."));
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.SuccessUrl) || string.IsNullOrWhiteSpace(request.CancelUrl))
+                return BadRequest(ApiResponse<string>.ErrorResponse("SuccessUrl or CancelUrl is missing."));
+
+            var result = await _checkoutService.InitiateGiftCheckoutAsync(userId.Value, request);
+            return Ok(ApiResponse<CheckoutResponse>.SuccessResponse(result, "Gift checkout session created."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Server error: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/checkout/gift-intent
+    // Tạo Stripe PaymentIntent cho Quà Tặng
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("gift-intent")]
+    public async Task<IActionResult> GiftCreateIntent([FromBody] GiftCheckoutRequest request)
+    {
+        var userId = GetUserId();
+        if (userId == null)
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
+
+        if (!await _authService.IsEmailVerifiedAsync(userId.Value))
+            return BadRequest(ApiResponse<string>.ErrorResponse("Please verify your email address."));
+
+        try
+        {
+            var result = await _checkoutService.InitiateGiftPaymentIntentAsync(userId.Value, request);
+            return Ok(ApiResponse<CheckoutResponse>.SuccessResponse(result, "Gift payment intent created successfully."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Server error: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // POST /api/checkout/success?session_id=cs_xxx
     // Frontend gọi API này sau khi nhận callback từ Stripe.
     // ═══════════════════════════════════════════════════════════════════════

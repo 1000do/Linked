@@ -3,6 +3,7 @@ using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Application.Services;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Hubs;
+using CourseMarketplaceBE.Infrastructure.BackgroundServices;
 using CourseMarketplaceBE.Infrastructure.Data;
 using CourseMarketplaceBE.Infrastructure.Repositories;
 using CourseMarketplaceBE.Infrastructure.Services;
@@ -11,12 +12,11 @@ using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using CourseMarketplaceBE.Infrastructure.BackgroundServices;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Stripe;
-using StackExchange.Redis;
 using Npgsql;
+using StackExchange.Redis;
+using Stripe;
 
 
 namespace CourseMarketplaceBE;
@@ -168,7 +168,7 @@ public class Program
         builder.Services.AddScoped<ICouponRepository, CouponRepository>();
         builder.Services.AddScoped<ICouponService, CourseMarketplaceBE.Application.Services.CouponService>();
 
-        builder.Services.AddAutoMapper(config => {}, AppDomain.CurrentDomain.GetAssemblies());
+        builder.Services.AddAutoMapper(config => { }, AppDomain.CurrentDomain.GetAssemblies());
 
         // Register file upload implementation conditionally.
         // If Cloudinary config is present, use CloudinaryUploadService; otherwise use a no-op fallback.
@@ -195,6 +195,10 @@ public class Program
         // 🛒 Cart & Coupon
         builder.Services.AddScoped<ICartRepository, CartRepository>();
         builder.Services.AddScoped<ICartService, CartService>();
+
+        // 🎁 Gift Module
+        builder.Services.AddScoped<IGiftRepository, GiftRepository>();
+        builder.Services.AddScoped<IGiftService, GiftService>();
 
         // 💳 Checkout & Payment (UC-19)
         builder.Services.AddScoped<ICheckoutRepository, CheckoutRepository>();
@@ -233,11 +237,11 @@ public class Program
         builder.Services.AddScoped<IReportRepository, ReportRepository>();
         builder.Services.AddScoped<IReportService, ReportService>();
 
-        
+
         // 🔥 Background Tasks
         builder.Services.AddHostedService<PayoutScheduleTask>();
         builder.Services.AddHostedService<CourseMarketplaceBE.Infrastructure.BackgroundServices.CloudinaryCleanupService>();
-        
+
         // Redis Configuration
         builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
@@ -294,7 +298,7 @@ public class Program
                     // 2. Nếu là SignalR, nó thường gửi token qua query string "access_token"
                     var accessToken = context.Request.Query["access_token"];
                     var path = context.HttpContext.Request.Path;
-                    if (!string.IsNullOrEmpty(accessToken) && 
+                    if (!string.IsNullOrEmpty(accessToken) &&
                         (path.StartsWithSegments("/notificationHub") || path.StartsWithSegments("/chatHub")))
                     {
                         context.Token = accessToken;
@@ -380,17 +384,37 @@ public class Program
                     using (var cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"
-                            CREATE TABLE IF NOT EXISTS transaction_exts (
-                                transaction_id INT PRIMARY KEY REFERENCES transactions(transaction_id) ON DELETE CASCADE,
-                                refund_reason TEXT,
-                                refund_admin_note TEXT,
-                                refund_requested_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                            );
-                            ALTER TABLE transactions DROP COLUMN IF EXISTS refund_reason;
-                            ALTER TABLE transactions DROP COLUMN IF EXISTS refund_admin_note;
-                            ALTER TABLE transactions DROP COLUMN IF EXISTS refund_requested_at;
-                            ALTER TABLE instructors ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
-                        ";
+                             CREATE TABLE IF NOT EXISTS transaction_exts (
+                                 transaction_id INT PRIMARY KEY REFERENCES transactions(transaction_id) ON DELETE CASCADE,
+                                 refund_reason TEXT,
+                                 refund_admin_note TEXT,
+                                 refund_requested_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                             );
+                             ALTER TABLE transactions DROP COLUMN IF EXISTS refund_reason;
+                             ALTER TABLE transactions DROP COLUMN IF EXISTS refund_admin_note;
+                             ALTER TABLE transactions DROP COLUMN IF EXISTS refund_requested_at;
+                             ALTER TABLE instructors ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
+
+                             CREATE TABLE IF NOT EXISTS gifts (
+                                 gift_id SERIAL PRIMARY KEY,
+                                 order_item_id INT NOT NULL REFERENCES order_items(id) ON DELETE CASCADE,
+                                 sender_id INT REFERENCES accounts(account_id) ON DELETE SET NULL,
+                                 recipient_email VARCHAR(255) NOT NULL,
+                                 recipient_name VARCHAR(255),
+                                 gift_message TEXT,
+                                 card_theme VARCHAR(50) DEFAULT 'classic',
+                                 redemption_token VARCHAR(255) UNIQUE NOT NULL,
+                                 is_claimed BOOLEAN DEFAULT FALSE,
+                                 claimed_by_user_id INT REFERENCES users(user_id) ON DELETE SET NULL,
+                                 claimed_at TIMESTAMP WITHOUT TIME ZONE,
+                                 delivery_status VARCHAR(50) DEFAULT 'pending',
+                                 created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                                 updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                             );
+                             CREATE INDEX IF NOT EXISTS idx_gifts_token ON gifts(redemption_token);
+                             CREATE INDEX IF NOT EXISTS idx_gifts_recipient ON gifts(recipient_email);
+                             CREATE INDEX IF NOT EXISTS idx_gifts_delivery ON gifts(delivery_status);
+                         ";
                         cmd.ExecuteNonQuery();
                     }
                 }

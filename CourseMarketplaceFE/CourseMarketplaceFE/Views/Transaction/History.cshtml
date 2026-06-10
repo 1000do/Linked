@@ -114,7 +114,9 @@
                     {
                         var (bgClass, textClass, dotClass, label) = item.Status switch
                         {
-                            "succeeded"      => ("bg-emerald-50/80 border-emerald-100/50", "text-emerald-700", "bg-emerald-500", "Success"),
+                            "succeeded"      => item.IsGift && item.IsGiftClaimed
+                                                ? ("bg-blue-50/80 border-blue-100/50", "text-blue-700", "bg-blue-500", "Claimed")
+                                                : ("bg-emerald-50/80 border-emerald-100/50", "text-emerald-700", "bg-emerald-500", "Success"),
                             "failed"         => ("bg-rose-50/80 border-rose-100/50", "text-rose-700", "bg-rose-500", "Failed"),
                             "pending"        => ("bg-amber-50/80 border-amber-100/50", "text-amber-700", "bg-amber-400", "Pending"),
                             "refund_pending" => ("bg-orange-50/80 border-orange-100/50", "text-orange-700", "bg-orange-500", "Refund Pending"),
@@ -138,10 +140,29 @@
                                     <span class="material-symbols-outlined @iconTextClass group-hover:scale-110 transition-transform duration-300">@iconName</span>
                                 </div>
                                 <div class="min-w-0 space-y-1">
-                                    <h3 class="text-sm font-black text-slate-800 group-hover:text-indigo-600 transition-colors truncate">@item.CourseTitle</h3>
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="material-symbols-outlined text-[13px] text-slate-400">person</span>
-                                        <span class="text-[11px] text-slate-500 font-semibold">@item.InstructorName</span>
+                                    <h3 class="text-sm font-black text-slate-800 group-hover:text-indigo-600 transition-colors truncate flex items-center gap-2">
+                                        @item.CourseTitle
+                                        @if (item.IsGift)
+                                        {
+                                            <span class="bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-200/80 flex items-center gap-1 shrink-0">
+                                                <span class="material-symbols-outlined text-[10px]">redeem</span>
+                                                Gift
+                                            </span>
+                                        }
+                                    </h3>
+                                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="material-symbols-outlined text-[13px] text-slate-400">person</span>
+                                            <span class="text-[11px] text-slate-500 font-semibold">@item.InstructorName</span>
+                                        </div>
+                                        @if (item.IsGift && !string.IsNullOrEmpty(item.RecipientEmail))
+                                        {
+                                            <div class="flex items-center gap-1.5 text-slate-400">
+                                                <span class="text-xs">•</span>
+                                                <span class="material-symbols-outlined text-[13px] text-slate-400">mail</span>
+                                                <span class="text-[11px] text-slate-500 font-semibold">Gift to: @item.RecipientEmail</span>
+                                            </div>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -179,7 +200,10 @@
                             <!-- Col 4: Actions -->
                             <div class="col-span-1 lg:col-span-2 flex items-center justify-end gap-2.5 mt-2 lg:mt-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 w-full">
                                 @{
-                                    var isRefundable = item.Status == "succeeded" && item.Date.HasValue && item.Date.Value >= DateTime.UtcNow.AddDays(-14);
+                                    var isRefundable = item.Status == "succeeded" 
+                                        && item.Date.HasValue 
+                                        && item.Date.Value >= DateTime.UtcNow.AddDays(-14)
+                                        && !(item.IsGift && item.IsGiftClaimed);
                                 }
                                 @if (isRefundable)
                                 {

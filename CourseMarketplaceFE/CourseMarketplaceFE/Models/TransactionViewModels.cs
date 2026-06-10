@@ -18,6 +18,9 @@ namespace CourseMarketplaceFE.Models
         public string? RefundReason { get; set; }
         public string? RefundAdminNote { get; set; }
         public DateTime? RefundRequestedAt { get; set; }
+        public bool IsGift { get; set; }
+        public string? RecipientEmail { get; set; }
+        public bool IsGiftClaimed { get; set; }
     }
 
     public class TransactionPagedVM
