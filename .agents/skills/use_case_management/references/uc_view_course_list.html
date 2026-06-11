@@ -1,0 +1,226 @@
+<div class="uc-container" style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <style>
+        .uc-container, .uc-container table, .uc-container tr, .uc-container td, .uc-container p, .uc-container ol, .uc-container ul, .uc-container li, .uc-container span, .uc-container strong, .uc-container b {
+            font-family: 'Times New Roman', serif !important;
+            font-size: 12pt !important;
+            color: black !important;
+        }
+    </style>
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">UC ID and Name</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">UC-02-View Course List</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Created By:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Truong Phuoc Tai</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Date Created:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">10/06/2026</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Primary Actor:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">User, Guest, Instructor, Staff, Admin</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Secondary Actors:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Trigger:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Actor accesses the explore courses page or searches for courses.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Description:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Allows Guests and Users to browse, search, filter, and sort the public list of courses on the marketplace. Authenticated Users can toggle course wishlist status, add courses to their shopping cart, or view their enrollment status directly from the course cards.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Preconditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>PRE-1.</b> None.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Post-conditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>POST-1.</b> Detailed course card catalog, including thumbnail, title, category, instructor name, rating average, price, wishlist toggle, and cart action controls, is rendered successfully matching the active filter criteria.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Normal Flow:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A. Explore Courses Successfully</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>Actor accesses the explore courses page.</li>
+                    <li>The system retrieves the active filter categories.</li>
+                    <li>The system retrieves the default paginated course list.</li>
+                    <li>The system checks the actor's authentication status.</li>
+                    <li>The system retrieves the actor's wishlist (if authenticated).</li>
+                    <li>The system maps wishlist status to each course in the list.</li>
+                    <li>The system displays the explore courses page showing the categories, filter options, and the course list.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Alternative Flows:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A.2.1 Select Category Pill</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks on a category pill (e.g., a specific category name or the "All Categories" pill).</li>
+                    <li>The system updates the category filter parameter.</li>
+                    <li>Back to step 3.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.3 Empty Catalog (No Courses Found)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects the retrieved course list is empty.</li>
+                    <li>The system displays a "No courses found" state message.</li>
+                    <li>The system renders a "Clear All Filters" button.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.3.1 Clear All Filters from Empty State</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks the "Clear All Filters" button in the empty state block.</li>
+                    <li>The system resets all search keywords, categories, and advanced filters.</li>
+                    <li>Back to step 3.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.1 Search by Keyword</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor enters a search term in the search input box.</li>
+                    <li>The system triggers the search after a brief debounce delay.</li>
+                    <li>Back to step 3.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.2 Clear Search Keyword</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks the close icon ("close" symbol button) next to the search input.</li>
+                    <li>The system clears the search input field.</li>
+                    <li>Back to step 3.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.3 Select Sorting Option</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor selects a sorting option (e.g., "Newest", "Highest Rated", "Price: Low to High", or "Price: High to Low").</li>
+                    <li>The system updates the sort order parameter.</li>
+                    <li>Back to step 3.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.4 Filter by Rating</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor selects a rating radio option under the "Rating" accordion (e.g., "4.5" and up, "4.0" and up, "3.5" and up, or "All Ratings").</li>
+                    <li>The system updates the rating filter parameter.</li>
+                    <li>Back to step 3.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.5 Filter by Price</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor selects a price radio option under the "Price" accordion (e.g., "Free", "Paid", or "All Prices").</li>
+                    <li>The system updates the price filter parameter.</li>
+                    <li>Back to step 3.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.6 Toggle Filter Accordion</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks the toggle icon next to the accordion header (e.g., "Rating" or "Price" accordion).</li>
+                    <li>The system toggles the visibility of the accordion filter options.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.7 Apply Filters Manually</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks the "Apply Filters" button.</li>
+                    <li>The system submits the filter form.</li>
+                    <li>Back to step 3.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.8 Clear Filters</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks the "Clear Filters" button.</li>
+                    <li>The system resets all search keyword, category, price, and rating inputs to their default states.</li>
+                    <li>Back to step 3.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.9 Remove Active Filter Badge</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks the close icon ("close" symbol button) on an active filter badge.</li>
+                    <li>The system resets the corresponding filter.</li>
+                    <li>Back to step 3.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.10 Switch View Mode</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks the view switcher icon (e.g., Grid view "grid_view" or List view "view_list" icon).</li>
+                    <li>The system updates the layout format of the course catalog and saves the preference locally.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.11 Add Course to Cart</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks the "Add to cart" button ("add_shopping_cart" icon) on a course card.</li>
+                    <li>The system validates that the actor is an authenticated User.</li>
+                    <li>The system adds the course to the user's shopping cart.</li>
+                    <li>The system updates the shopping cart item count in the header.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.12 Toggle Wishlist Status</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks the Wishlist Heart button ("favorite" icon) on a course card.</li>
+                    <li>The system validates that the actor is an authenticated User.</li>
+                    <li>The system toggles the course's wishlist state.</li>
+                    <li>The system displays a confirmation notification regarding the wishlist update.</li>
+                    <li>The system updates the styling of the Wishlist Heart button.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.13 Navigate Pagination</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks a page link or page navigation control (e.g., page number, left chevron "chevron_left", or right chevron "chevron_right").</li>
+                    <li>The system updates the current page index.</li>
+                    <li>The system scrolls the viewport smoothly back to the top of the course catalog.</li>
+                    <li>Back to step 3.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Exceptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>EX-1 Session Invalid (Not Logged In)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system displays an authentication error message.</li>
+                    <li>The system redirects the user to the login page.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Priority:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Frequency of Use:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Business Rules:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li><strong>Public Visibility:</strong> The course list displays only courses that are currently published. Draft, pending, rejected, archived, or locked courses are excluded from the public list.</li>
+                    <li><strong>Wishlist Sync:</strong> Wishlist heart icons reflect the current wishlist status of the logged-in User in real-time, displaying a filled red heart for wishlisted courses and an unfilled icon otherwise.</li>
+                    <li><strong>Cart Status Integration:</strong> If a logged-in User has already purchased/enrolled in a course, the "Add to cart" button is replaced by a checkmark icon to prevent double purchases.</li>
+                    <li><strong>Debounced Live Search:</strong> Real-time keyword filtering is debounced by 350ms to minimize API calls during continuous typing.</li>
+                    <li><strong>View Mode Retention:</strong> User layout preference (Grid vs. List view) is stored in the browser's local storage and persists across sessions.</li>
+                    <li><strong>State Persistence:</strong> Active filter parameters are stored in the browser's local storage and are automatically applied when the user returns to the page without URL parameters.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Other Information:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Assumptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;">User, Guest, Instructor, Staff, Admin has stable internet connection.</p>
+            </td>
+        </tr>
+    </table>
+</div>
