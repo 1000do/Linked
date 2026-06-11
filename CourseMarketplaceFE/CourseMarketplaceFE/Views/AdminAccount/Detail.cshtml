@@ -64,7 +64,7 @@
                         </span>
                     }
                 </div>
-                <div class="text-xs text-slate-500 font-medium flex items-center gap-1 flex-wrap">
+                <div class="text-xs text-slate-500 font-medium flex items-center gap-1.5 flex-wrap">
                     <span class="font-mono bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">ID: @Model.Account.AccountId</span>
                     <span class="text-slate-300">•</span>
                     <span>@Model.Account.Email</span>
@@ -72,6 +72,16 @@
                     {
                         <span class="text-slate-300">•</span>
                         <span class="font-mono">@Model.Account.PhoneNumber</span>
+                    }
+                </div>
+                <div class="text-xs text-slate-500 font-medium flex items-center gap-3 flex-wrap mt-1">
+                    <span>Created: <strong class="text-slate-700 font-mono">@(Model.Account.AccountCreatedAt?.ToString("dd MMM yyyy HH:mm") ?? "N/A")</strong></span>
+                    @if (Model.Account.LockoutEnd.HasValue)
+                    {
+                        <span class="text-slate-300">•</span>
+                        <span class="text-rose-600">Suspension Started: <strong class="text-rose-700 font-mono">@(Model.Account.LockoutStart?.ToString("dd MMM yyyy HH:mm") ?? "N/A")</strong></span>
+                        <span class="text-slate-300">•</span>
+                        <span class="text-rose-600">Suspension End: <strong class="text-rose-700 font-mono">@Model.Account.LockoutEnd.Value.ToString("dd MMM yyyy HH:mm")</strong></span>
                     }
                 </div>
             </div>

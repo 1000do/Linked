@@ -1,0 +1,153 @@
+<div style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">UC ID and Name</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">UC-53 - Edit Courses</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Created By:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">System</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Date Created:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">09/06/2026</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Primary Actor:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Instructor</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Secondary Actors:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Cloud Storage Service</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Trigger:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Instructor clicks the "edit" icon of a course from his/her course list.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Description:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Allows instructors to modify details of their courses (title, description, category, price, requirements, and promotional thumbnails) with integrated automatic debounced saving and content security hashing.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Preconditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>PRE-1.</b> User must be successfully authenticated as an approved Instructor.</p>
+    <p style="margin: 0;"><b>PRE-2.</b> The course must exist in the database and belong to the active Instructor's Account ID.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Post-conditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>POST-1.</b> Course details are updated in the primary course tables.</p>
+    <p style="margin: 0;"><b>POST-2.</b> Content hashes are computed and updated in the secondary table.</p>
+    <p style="margin: 0;"><b>POST-3.</b> The stale Redis cache for this course is invalidated.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Normal Flow:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A. Edit Course Details Successfully</strong></p>
+    <ol style="margin: 0; padding-left: 20px;">
+        <li>Instructor accesses the course editor.</li>
+        <li>Instructor modifies the course details.</li>
+        <li>The system triggers a brief debounce delay.</li>
+        <li>The system validates the form inputs.</li>
+        <li>The system validates the instructor's rights.</li>
+        <li>The system validates the course status.</li>
+        <li>The system retrieves the thumbnail from the Cloud Storage Service and computes the course fingerprint hashes.</li>
+        <li>The system updates the course details and fingerprint hashes in the database.</li>
+        <li>The system invalidates the cached course data.</li>
+        <li>The system displays a success message.</li>
+    </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Alternative Flows:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A.4 Invalid Form Input</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system detects one or more form inputs are invalid.</li>
+        <li>The system displays a validation error message.</li>
+        <li>Back to step 2.</li>
+    </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Exceptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>EX-1.1 Session Invalid (Not Logged In)</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system displays an authentication error message.</li>
+        <li>The system redirects the user to the login page.</li>
+    </ol>
+
+    <p style="margin: 0 0 5px 0;"><strong>EX-1.2 Course Not Found</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system displays a course not found error message.</li>
+        <li>The system redirects the user back to the course list page.</li>
+    </ol>
+
+    <p style="margin: 0 0 5px 0;"><strong>EX-2 File Upload Failed</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system fails to upload the thumbnail file to the Cloud Storage Service.</li>
+        <li>The system displays a file upload error message.</li>
+        <li>Back to step 2.</li>
+    </ol>
+
+    <p style="margin: 0 0 5px 0;"><strong>EX-5 Invalid Instructor Rights</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system detects the instructor is unauthorized to edit this course or has an active lockout status.</li>
+        <li>The system displays an error message regarding invalid instructor rights.</li>
+        <li>Back to step 1.</li>
+    </ol>
+
+    <p style="margin: 0 0 5px 0;"><strong>EX-6 Invalid Course Status</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system detects the course is pending review or is permanently discontinued due to policy violations.</li>
+        <li>The system displays an error message regarding invalid course status.</li>
+        <li>Back to step 1.</li>
+    </ol>
+
+    <p style="margin: 0 0 5px 0;"><strong>EX-8.1 Duplicate Course Content Detected</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system detects a duplication in course content using the computed fingerprint.</li>
+        <li>The system displays an error message regarding content duplication.</li>
+        <li>Back to step 2.</li>
+    </ol>
+
+    <p style="margin: 0 0 5px 0;"><strong>EX-8.2 Database Save Failed</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system fails to save the course updates or fingerprint hashes to the database.</li>
+        <li>The system displays a database transaction failure message.</li>
+        <li>Back to step 2.</li>
+    </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Priority:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Medium</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Frequency of Use:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Business Rules:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <ol style="margin: 0; padding-left: 20px;">
+        <li><strong>Debounce Optimization:</strong> Auto-saving uses a 1.5-second debounce delay to prevent database spamming during rapid typing.</li>
+        <li><strong>Draft Reversion:</strong> To ensure content integrity, any edits made to an already "published" course will automatically degrade its status back to "draft", requiring a new moderation review submission and clearing previous moderation feedback.</li>
+        <li><strong>Price Enforcement for Unlinked Stripe:</strong> If the instructor has not linked an active Stripe account, the system automatically sets the course price to 0 regardless of the submitted value.</li>
+        <li><strong>Locked Out Instructor Rights:</strong> Instructors with an active lockout status are prohibited from updating courses.</li>
+        <li><strong>Content Integrity Hashing:</strong> Textual details and the thumbnail file are hashed using MD5 and stored as a unique fingerprint to prevent duplication and support anti-plagiarism tracking.</li>
+    </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Other Information:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Assumptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;">Instructor has stable internet connection.<br>Cloud Storage Service is working properly.</p>
+            </td>
+        </tr>
+    </table>
+</div>

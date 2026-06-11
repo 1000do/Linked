@@ -715,6 +715,10 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.ManagerId).ValueGeneratedNever().HasColumnName("manager_id");
             entity.Property(e => e.Role).HasMaxLength(50).HasColumnName("role");
             entity.Property(e => e.DisplayName).HasMaxLength(255).HasColumnName("display_name");
+            entity.Property(e => e.FullName).HasMaxLength(255).HasColumnName("full_name");
+            entity.Property(e => e.PhoneNumber).HasMaxLength(50).HasColumnName("phone_number");
+            entity.Property(e => e.AvatarUrl).HasColumnName("avatar_url");
+            entity.Property(e => e.Bio).HasColumnName("bio");
 
             entity.HasOne(d => d.ManagerNavigation).WithOne(p => p.Manager)
                 .HasForeignKey<Manager>(d => d.ManagerId)

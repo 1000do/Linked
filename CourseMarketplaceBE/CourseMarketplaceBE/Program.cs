@@ -190,6 +190,8 @@ public class Program
         }
 
         builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+        builder.Services.AddScoped<IManagerRepository, ManagerRepository>();
+        builder.Services.AddScoped<IManagerProfileService, ManagerProfileService>();
         builder.Services.AddScoped<IInstructorService, InstructorService>();
 
         // 🛒 Cart & Coupon

@@ -1,0 +1,152 @@
+<div style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">UC ID and Name</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">UC-AddMaterials - Add Learning Materials</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Created By:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">System</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Date Created:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">09/06/2026</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Primary Actor:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Instructor</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Secondary Actors:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Cloud Storage Service</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Trigger:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Instructor clicks the "Upload Video" area for video content, or clicks the "Choose File" button for supplementary files in the lesson editor.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Description:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Allows an instructor to add new learning materials (such as videos or document files) to an empty lesson. The system enforces business rules including Stripe account limits, handles file uploads to the cloud, and updates the course status to draft if it was previously published.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Preconditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>PRE-1.</b> User must be successfully authenticated as an approved instructor.</p>
+    <p style="margin: 0;"><b>PRE-2.</b> The lesson must exist and belong to a course owned by the active instructor.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Post-conditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>POST-1.</b> The new material is uploaded and linked to the lesson.</p>
+    <p style="margin: 0;"><b>POST-2.</b> The physical file is stored in the Cloud Storage Service.</p>
+    <p style="margin: 0;"><b>POST-3.</b> If the course was previously published, its status is reverted to draft and moderation feedback is cleared.</p>
+    <p style="margin: 0;"><b>POST-4.</b> Stale cache data is cleared.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Normal Flow:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A. Add Material Successfully</strong></p>
+    <ol style="margin: 0; padding-left: 20px;">
+        <li>Instructor accesses the course edit page.</li>
+        <li>Instructor selects a specific lesson from the curriculum list.</li>
+        <li>Instructor clicks the "Upload Video" area for video content, or clicks the "Choose File" button for supplementary files.</li>
+        <li>The frontend system directly uploads the file to the Cloud Storage Service and submits the resulting URL to the backend.</li>
+        <li>The system validates the instructor's rights.</li>
+        <li>The system validates the course status.</li>
+        <li>The system validates the document limits.</li>
+        <li>The system creates the new material record in the database.</li>
+        <li>The system updates the course status to draft and clears previous moderation feedback (if previously published).</li>
+        <li>The system invalidates the cached course data.</li>
+        <li>The system displays a success message.</li>
+    </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Alternative Flows:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A.4 Upload cancelled or failed</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system displays an upload failure message.</li>
+        <li>Back to step 3.</li>
+    </ol>
+    
+    <p style="margin: 0 0 5px 0;"><strong>A.9 Course is not published</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system skips updating the course status and moderation feedback.</li>
+        <li>Back to step 10.</li>
+    </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Exceptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>EX-1.1 Session Invalid (Not Logged In)</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system displays an authentication error message.</li>
+        <li>The system redirects the user to the login page.</li>
+    </ol>
+    
+    <p style="margin: 0 0 5px 0;"><strong>EX-2 Lesson Not Found</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system halts execution and displays a lesson not found error message.</li>
+    </ol>
+    
+    <p style="margin: 0 0 5px 0;"><strong>EX-5 Invalid Instructor Rights</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system detects the instructor is unauthorized to add material to this lesson or has an active lockout status.</li>
+        <li>The system displays an error message regarding invalid instructor rights.</li>
+        <li>Back to step 3.</li>
+    </ol>
+    
+    <p style="margin: 0 0 5px 0;"><strong>EX-6 Invalid Course Status</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system detects the course is pending review or is permanently archived due to policy violations.</li>
+        <li>The system displays an error message regarding invalid course status.</li>
+        <li>Back to step 3.</li>
+    </ol>
+    
+    <p style="margin: 0 0 5px 0;"><strong>EX-7 Document Limit Exceeded</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system detects the instructor has not linked an active Stripe Connect profile and already reached the maximum of 2 documents for the lesson.</li>
+        <li>The system displays an error message regarding the document limit.</li>
+        <li>Back to step 3.</li>
+    </ol>
+    
+    <p style="margin: 0 0 5px 0;"><strong>EX-8 Database Save Failed</strong></p>
+    <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+        <li>The system fails to save the material changes to the database.</li>
+        <li>The system displays a database transaction failure message.</li>
+        <li>Back to step 3.</li>
+    </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Priority:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Medium</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Frequency of Use:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Business Rules:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <ol style="margin: 0; padding-left: 20px;">
+        <li><strong>Locked Out Instructor Rights:</strong> Instructors with an active lockout status are prohibited from adding materials.</li>
+        <li><strong>Pending Restriction:</strong> Materials cannot be added to a course while it is currently in 'Pending' review status.</li>
+        <li><strong>Archived Course Restriction:</strong> Courses that are permanently archived due to policy violations (flag count >= 3) cannot be modified.</li>
+        <li><strong>Document Limit for Unlinked Stripe Accounts:</strong> Instructors who have not linked an active Stripe Connect profile are only allowed to attach up to 2 documents per lesson.</li>
+        <li><strong>Status Reversion:</strong> Adding a material to a 'Published' course automatically changes its status back to 'Draft' and clears any existing moderation feedback.</li>
+    </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Other Information:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Assumptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;">Instructor has stable internet connection.<br>Cloud Storage Service is working properly.</p>
+            </td>
+        </tr>
+    </table>
+</div>

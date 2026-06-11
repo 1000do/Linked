@@ -116,7 +116,11 @@ CREATE TABLE users (
 CREATE TABLE managers (
     manager_id INT PRIMARY KEY REFERENCES accounts(account_id) ON DELETE CASCADE,
     role VARCHAR(50),
-    display_name VARCHAR(255) NOT NULL
+    display_name VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255),
+    phone_number VARCHAR(50),
+    avatar_url TEXT,
+    bio TEXT
 );
 
 -- ─── AVATAR FRAMES SYSTEM ────────────────────────────────────────────────
