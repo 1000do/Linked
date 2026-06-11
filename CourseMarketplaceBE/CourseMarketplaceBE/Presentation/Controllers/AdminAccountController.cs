@@ -129,6 +129,12 @@ public class AdminAccountController : ControllerBase
     {
         try
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(" ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return BadRequest(new { status = 400, message = errors });
+            }
+
             if (string.IsNullOrWhiteSpace(request.DisplayName))
             {
                 return BadRequest(new { status = 400, message = "Display name is required." });

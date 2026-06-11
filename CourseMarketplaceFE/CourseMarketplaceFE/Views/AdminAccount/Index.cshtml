@@ -486,6 +486,75 @@
             const phoneNumber = document.getElementById('editPhone').value.trim();
             const accountStatus = document.getElementById('editStatus').value;
 
+            // Client-side validations
+            if (!displayName) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Display name is required.',
+                    icon: 'warning',
+                    confirmButtonColor: '#0f172a'
+                });
+                return;
+            }
+
+            if (displayName.length > 255) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Display name cannot exceed 255 characters.',
+                    icon: 'warning',
+                    confirmButtonColor: '#0f172a'
+                });
+                return;
+            }
+
+            if (password && password.length < 6) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'New password must be at least 6 characters long.',
+                    icon: 'warning',
+                    confirmButtonColor: '#0f172a'
+                });
+                return;
+            }
+
+            if (phoneNumber) {
+                const phoneRegex = /^\+?[0-9\s-]{9,15}$/;
+                if (!phoneRegex.test(phoneNumber)) {
+                    Swal.fire({
+                        title: 'Validation Error',
+                        text: 'Invalid phone number format.',
+                        icon: 'warning',
+                        confirmButtonColor: '#0f172a'
+                    });
+                    return;
+                }
+                if (phoneNumber.length > 50) {
+                    Swal.fire({
+                        title: 'Validation Error',
+                        text: 'Phone number cannot exceed 50 characters.',
+                        icon: 'warning',
+                        confirmButtonColor: '#0f172a'
+                    });
+                    return;
+                }
+            }
+
+            // Confirm SweetAlert
+            const confirmResult = await Swal.fire({
+                title: 'Confirm Account Modifications?',
+                text: 'Are you sure you want to save the changes for this staff member?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#0f172a',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, Save Changes',
+                cancelButtonText: 'Cancel',
+                background: '#ffffff',
+                customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' }
+            });
+
+            if (!confirmResult.isConfirmed) return;
+
             try {
                 const response = await fetch(`/AdminAccount/EditStaff/${id}`, {
                     method: 'POST',
