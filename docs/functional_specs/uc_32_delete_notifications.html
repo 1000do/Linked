@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-32 - Delete Notifications</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-32. Delete Notifications</strong></p>
+
+    <p><strong>Function Trigger:</strong> User or Instructor clicks the delete icon next to a notification.</p>
+
+    <p><strong>Function Description:</strong> Allows users and instructors to permanently delete a notification. The system displays a confirmation dialog before sending the request to the database.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>User or Instructor must be successfully authenticated.</li>
+                <li>The notification must exist in the database and belong to the active user.</li>
+                <li>User or Instructor has a stable internet connection.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Confirm and Delete:</strong>
+                    <ul>
+                        <li>User or Instructor clicks the delete icon next to a notification.</li>
+                        <li>The system displays a confirmation dialog.</li>
+                        <li>User or Instructor clicks the "Delete" button.</li>
+                        <li>The system sends a delete request to the backend.</li>
+                        <li>The system deletes the notification from the database.</li>
+                        <li>The system displays a deletion success notification.</li>
+                        <li>The system updates the UI to remove the notification.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Cancel deletion)</strong>
+            <ul>
+                <li>If the user cancels the deletion:
+                    <ul>
+                        <li>User or Instructor clicks the "Cancel" button on the confirmation dialog.</li>
+                        <li>The system closes the confirmation dialog without making any changes.</li>
+                        <li>The process returns to the initial state (list view).</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The notification is permanently deleted from the database.</li>
+                <li>The notification is removed from the UI.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+                <li><strong>Delete request failed or access denied:</strong> The system displays an error message regarding missing notification or permission.</li>
+                <li><strong>Database update failed:</strong> The system fails to delete the notification from the database and displays a database transaction failure message.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Confirmation Prompt:</strong> Deleting a notification requires confirmation via a dialog to prevent accidental deletion.</li>
+                <li><strong>Ownership Validation:</strong> The backend must rigorously verify that the authenticated user is the legitimate owner of the notification being deleted to prevent unauthorized data removal.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>
