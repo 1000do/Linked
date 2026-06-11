@@ -25,6 +25,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         private readonly ISystemConfigRepository _mockConfigRepo;
         private readonly ICourseRepository _mockCourseRepo;
         private readonly IStripeConnectService _mockStripeConnect;
+        private readonly IGiftRepository _mockGiftRepo;
 
         private readonly AdminFinanceService _financeService;
 
@@ -39,6 +40,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mockConfigRepo = Substitute.For<ISystemConfigRepository>();
             _mockCourseRepo = Substitute.For<ICourseRepository>();
             _mockStripeConnect = Substitute.For<IStripeConnectService>();
+            _mockGiftRepo = Substitute.For<IGiftRepository>();
 
             _financeService = new AdminFinanceService(
                 _mockRepo,
@@ -49,7 +51,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 _mockLogger,
                 _mockConfigRepo,
                 _mockCourseRepo,
-                _mockStripeConnect
+                _mockStripeConnect,
+                _mockGiftRepo
             );
         }
 

@@ -684,9 +684,34 @@
                 const notiConn = new signalR.HubConnectionBuilder()
                     .withUrl("http://localhost:5207/notificationHub", { accessTokenFactory: () => currentToken })
                     .withAutomaticReconnect().build();
-                notiConn.on("ReceiveNotification", () => {
+                notiConn.on("ReceiveNotification", (noti) => {
                     loadTopNotifications();
                     document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
+
+                    if (noti && noti.title) {
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 6000,
+                            timerProgressBar: true,
+                            didOpen: (toast) => {
+                                toast.addEventListener('mouseenter', Swal.stopTimer)
+                                toast.addEventListener('mouseleave', Swal.resumeTimer)
+                            }
+                        });
+
+                        Toast.fire({
+                            icon: 'info',
+                            title: noti.title,
+                            html: `
+                                <div class="text-left font-body">
+                                    <p class="text-[12px] text-slate-600 mt-1 leading-relaxed">${noti.content}</p>
+                                    ${noti.linkAction ? `<a href="${noti.linkAction}" class="inline-block mt-2 text-[12px] font-bold text-emerald-600 hover:text-emerald-700 transition-colors">View Gift Course &rarr;</a>` : ''}
+                                </div>
+                            `
+                        });
+                    }
                 });
                 notiConn.on("UpdateWishlistCount", () => {
                     if (typeof updateWishlistBadge === 'function') {

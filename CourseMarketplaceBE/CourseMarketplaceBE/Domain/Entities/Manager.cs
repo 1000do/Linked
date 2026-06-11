@@ -11,6 +11,14 @@ public partial class Manager
 
     public string DisplayName { get; set; } = null!;
 
+    public string? FullName { get; set; }
+
+    public string? PhoneNumber { get; set; }
+
+    public string? AvatarUrl { get; set; }
+
+    public string? Bio { get; set; }
+
     public virtual ICollection<Coupon> Coupons { get; set; } = new List<Coupon>();
 
     public virtual Account ManagerNavigation { get; set; } = null!;

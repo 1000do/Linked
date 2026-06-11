@@ -23,6 +23,9 @@ public class CreateStaffRequest
     public string Password { get; set; } = null!;
     public string DisplayName { get; set; } = null!;
     public string? PhoneNumber { get; set; }
+    public string? FullName { get; set; }
+    public string? AvatarUrl { get; set; }
+    public string? Bio { get; set; }
 }
 
 public class UpdateStaffRequest
@@ -31,6 +34,9 @@ public class UpdateStaffRequest
     public string? PhoneNumber { get; set; }
     public string? Password { get; set; } // Optional password reset
     public string? AccountStatus { get; set; }
+    public string? FullName { get; set; }
+    public string? AvatarUrl { get; set; }
+    public string? Bio { get; set; }
 }
 
 public class AdminAccountDetailDto
@@ -45,6 +51,9 @@ public class AdminAccountDetailDto
     public string? AvatarUrl { get; set; }
     public int? AccountFlagCount { get; set; }
     public string? Role { get; set; }
+    public string? Bio { get; set; }
+    public DateTime? LockoutStart { get; set; }
+    public DateTime? LockoutEnd { get; set; }
 
     // User-specific details (Students/Instructors)
     public decimal TotalSpent { get; set; }
