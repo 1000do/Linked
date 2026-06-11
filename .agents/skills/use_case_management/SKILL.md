@@ -17,12 +17,20 @@ Do NOT invent custom actor names (like "Learner" or "Customer"). You must exclus
 - `Staff` (Authorized manager)
 - `Admin` (Highest Authority manager)
 
+### Use Case ID and Name Convention
+The use case ID and name (e.g., in the "UC ID and Name" metadata field) MUST follow the exact format: `UC-[Number]-[Name]` where the name contains spaces.
+- *Correct:* `UC-02-View Course List`, `UC-03-View Course Details`
+- *Incorrect:* `UC-ViewCourseList - View Course List`, `UC-ViewCourseDetails - View Course Details`
+
+### Multiple Primary Actors Rule
+If a use case has multiple primary actors listed in its metadata (e.g., `User, Instructor`), the steps in the Normal Flow and Alternative Flows must use the generic term `Actor` (or `Actors`) in triggers and steps (e.g., `Actor accesses the page` instead of `User accesses the page`), unless a specific step or flow strictly applies to only one of those actors.
+
 ## 2. Ambiguity vs. Precision Guidelines
 *   **Be Descriptive, Not Exact:** Do not be too precise for everything. Avoid including specific examples in the specification. Maintain a descriptive, somewhat ambiguous tone for general UI elements, data, and system messages.
 *   **Descriptive Language for UI/Messages:** For things like message strings, page names, form names, and status strings, do NOT include the exact string. Use descriptive language instead.
     *   *Correct:* "The system displays an error message regarding database update failure", "course edit form", "pending status".
     *   *Incorrect:* "The system displays 'Error 500: Failed to update DB'", "CourseEditPage.jsx", "Status='Pending'".
-*   **100% Precision for Actionable Elements:** Names of **buttons, icons, and links** MUST be 100% precise, matching their exact implementation in the UI. Keep business rules details (like exact numbers or limits) strictly precise as well.
+*   **100% Precision for Actionable Elements:** Names of **buttons, icons, and links** MUST be 100% precise, matching their exact implementation in the UI. Wrap them in standard double quotes `""` (e.g., `"Apply Filters"`, `"grid_view"` icon) instead of `<code>` tags, as `<code>` tags disrupt font styling and size consistency on copy-pasting. Keep business rules details (like exact numbers or limits) strictly precise as well.
 
 ## 3. Step Granularity (The "1-Job" Rule)
 *   **One Job per Step:** Every step in the Normal Flow should do exactly ONE job.
@@ -31,6 +39,11 @@ Do NOT invent custom actor names (like "Learner" or "Customer"). You must exclus
         *   "1. The system validates form inputs."
         *   "2. The system validates course content against business rule limits."
 *   **Transactional Grouping:** If multiple database updates happen in a single transaction in the code, they should be grouped into one step.
+*   **Split Retrieval and Verification:** System retrieval of data and validation/check of that data must be represented as separate steps.
+    *   *Incorrect:* "The system retrieves the course details and checks the user's enrollment status."
+    *   *Correct:*
+        *   "1. The system retrieves the course details."
+        *   "2. The system validates the user's enrollment status."
 
 ## 4. Flow Types and Exclusions
 *   **Normal Flow Label:** The normal flow must include a label describing the successful process right below the "Normal Flow" header, format: `**A. [Description] Successfully**` (e.g., `**A. Remove Learning Materials Successfully**`).
@@ -73,19 +86,30 @@ Do NOT invent custom actor names (like "Learner" or "Customer"). You must exclus
 *   **Preconditions** must be labeled as `**PRE-1.**`, `**PRE-2.**`, etc.
 *   **Post-conditions** must be labeled as `**POST-1.**`, `**POST-2.**`, etc.
 *   *Note:* In HTML exports, use paragraph tags with bold labels (e.g., `<p><b>PRE-1.</b> User must be...</p>`) instead of standard list tags (`<ol>`/`<li>`) to preserve the exact prefix format.
+*   **Actor-Precondition Alignment:** Ensure preconditions do not lock out any listed Primary Actor. If an `Instructor` can access a page without being enrolled (due to ownership), the precondition must reflect this bypass (e.g., `Actor must be enrolled in the course, or be the owner of the course`), rather than a blanket `Actor must be enrolled`.
 
 ## 9. Output & Export Workflow
 When creating a use case specification, you MUST follow this workflow:
 1. **Preview First:** Generate the initial use case specification as a standard Markdown (`.md`) artifact. Present this to the user for review.
 2. **Export on Approval:** Once the user reviews and explicitly approves the preview, you must export the specification as an HTML file to the `docs/uc_spec` directory in the workspace. 
-   * The HTML file MUST be structured as a 4-column bordered table to be copy-paste friendly for Google Docs.
-   * Required inline styles for the container: `font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;`.
-   * The table should use `border-collapse: collapse; width: 100%; border: 1px solid black;`.
-   * All `<td>` cells must have `border: 1px solid black; padding: 5px; vertical-align: top;`.
-   * Left-side label columns (e.g., "UC ID and Name", "Created By:", "Primary Actor:") must have `text-align: right;` and typically take up `width: 20%;` where applicable. Right-side value columns must have `text-align: left;`.
-   * The top rows contain metadata (UC ID and Name, Created By, Date Created, Primary Actor, Secondary Actors). Most subsequent rows (Trigger, Description, Normal Flow, etc.) will have the label in the first column, and the content in the second column utilizing `colspan="3"`.
-   * Do NOT use HTML heading tags (e.g., `<h3>`, `<h4>`). Use normal paragraph tags with bold text (e.g., `<p style="margin: 0 0 5px 0;"><strong>Section Name</strong></p>`) inside the table cells.
-   * Maintain `<ol>` and `<ul>` list structures for flows to keep the layout clean within the cells.
+    * The HTML file MUST be structured as a 4-column bordered table to be copy-paste friendly for Google Docs.
+    * Required inline styles for the container `div` (e.g., `<div class="uc-container" style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">`).
+    * You MUST include a `<style>` block immediately inside the container `div` to strictly enforce the font-family, font-size, and color for all child elements (including tables, cells, lists, list items, paragraphs, spans, bold/strong tags, etc.) so that browser-specific defaults do not override the style when copy-pasting:
+      ```html
+      <style>
+          .uc-container, .uc-container table, .uc-container tr, .uc-container td, .uc-container p, .uc-container ol, .uc-container ul, .uc-container li, .uc-container span, .uc-container strong, .uc-container b {
+              font-family: 'Times New Roman', serif !important;
+              font-size: 12pt !important;
+              color: black !important;
+          }
+      </style>
+      ```
+    * The table should use `border-collapse: collapse; width: 100%; border: 1px solid black;`.
+    * All `<td>` cells must have `border: 1px solid black; padding: 5px; vertical-align: top;`.
+    * Left-side label columns (e.g., "UC ID and Name", "Created By:", "Primary Actor:") must have `text-align: right;` and typically take up `width: 20%;` where applicable. Right-side value columns must have `text-align: left;`.
+    * The top rows contain metadata (UC ID and Name, Created By, Date Created, Primary Actor, Secondary Actors). Most subsequent rows (Trigger, Description, Normal Flow, etc.) will have the label in the first column, and the content in the second column utilizing `colspan="3"`.
+    * Do NOT use HTML heading tags (e.g., `<h3>`, `<h4>`). Use normal paragraph tags with bold text (e.g., `<p style="margin: 0 0 5px 0;"><strong>Section Name</strong></p>`) inside the table cells.
+    * Maintain `<ol>` and `<ul>` list structures for flows to keep the layout clean within the cells.
 
 ## 10. Example Use Case Specifications
 For complete, well-formatted examples adhering to these rules, please refer to all the `.html` files located in the `references/` directory within this skill folder.

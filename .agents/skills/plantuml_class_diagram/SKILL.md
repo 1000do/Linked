@@ -39,7 +39,9 @@ Use **ONLY** the following relationship connections. Do not use any custom or st
 | **Inheritance** | `--|>` | Standard class inheritance; hollow arrow pointing to base class |
 
 > [!IMPORTANT]
-> **Multiplicity / Cardinality**: DO NOT include any multiplicity labels or cardinality text on relationships (e.g., do not use `class1 "1" --> "*" class2`). Leave relationships clean of cardinality.
+> - **Multiplicity / Cardinality**: DO NOT include any multiplicity labels or cardinality text on relationships (e.g., do not use `class1 "1" --> "*" class2`). Leave relationships clean of cardinality.
+> - **No Relationship Labels / Text**: DO NOT include any text, description, or label on relationship lines (e.g., do not use `: uses`, `: calls`, `: creates`, `: queries`, etc.). Leave all relationships completely clean of text.
+> - **No PK / FK Markers**: DO NOT include database key markers like `<<PK>>` or `<<FK>>` in entity classes.
 
 ---
 
@@ -62,8 +64,8 @@ To maintain consistency across diagrams, assign relationships strictly according
   2. Class A **accepts** an object of Class B as an argument in its methods.
   3. Class A **returns** an object of Class B to its callers.
 - **Service-to-Entity Constraints based on Use Case Type**:
-  - **INSERT (Create) Use Cases**: A Service has a direct **Dependency** on an Entity (e.g., `Service ..> Entity : creates`) because the service instantiates the entity.
-  - **UPDATE / DELETE / SELECT (Read) Use Cases**: A Service **DOES NOT** have a direct dependency on an Entity. Entities are queried, updated, or deleted by the Repository layer. The Repository returns the Entity (or DTO) to the Service. Therefore, for these use cases, the Service only depends on the DTO (`Service ..> DTO`), and the Repository depends on the Entity (`Repository ..> Entity : queries`).
+  - **INSERT (Create) Use Cases**: A Service has a direct **Dependency** on an Entity (e.g., `Service ..> Entity`) because the service instantiates the entity.
+  - **UPDATE / DELETE / SELECT (Read) Use Cases**: A Service **DOES NOT** have a direct dependency on an Entity. Entities are queried, updated, or deleted by the Repository layer. The Repository returns the Entity (or DTO) to the Service. Therefore, for these use cases, the Service only depends on the DTO (`Service ..> DTO`), and the Repository depends on the Entity (`Repository ..> Entity`).
 - Additionally, use a **Dependency** arrow from Frontend Controller to Backend Controller if Frontend Controller participates in the use case.
 
 ### C. Unidirectional Association (`-->`)
@@ -225,10 +227,10 @@ class CourseResponse #E6CCFF {
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Course #CCFFE6 {
-    + CourseId : int <<PK>>
-    + InstructorId : int? <<FK>>
-    + CategoryId : int? <<FK>>
-    + CouponId : int? <<FK>>
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
     + Title : string
     + Description : string?
     + Price : decimal
@@ -240,14 +242,14 @@ class Course #CCFFE6 {
 }
 
 class Category #CCFFE6 {
-    + CategoryId : int <<PK>>
+    + CategoryId : int
     + CategoriesName : string
     + Description : string?
     + CreatedAt : DateTime?
 }
 
 class Instructor #CCFFE6 {
-    + InstructorId : int <<PK>>
+    + InstructorId : int
     + ProfessionalTitle : string?
     + ExpertiseCategories : string?
     + LinkedinUrl : string?
@@ -261,8 +263,8 @@ class Instructor #CCFFE6 {
 }
 
 class Coupon #CCFFE6 {
-    + CouponId : int <<PK>>
-    + ManagerId : int? <<FK>>
+    + CouponId : int
+    + ManagerId : int?
     + CouponCode : string
     + CouponType : string?
     + DiscountValue : decimal
@@ -444,13 +446,13 @@ CourseCommandService ..|> ICourseCommandService
 CourseRepository ..|> ICourseRepository
 
 ' === DEPENDENCY (dashed arrows) ===
-InstructorCourseController ..> CourseController : calls
-InstructorCourseController ..> CreateCourseViewModel : uses
-CourseController ..> CourseCreateRequest : uses
-CourseCommandService ..> CourseCreateRequest : uses
-CourseCommandService ..> CourseResponse : creates
-CourseCommandService ..> Course : instantiates
-CourseRepository ..> Course : saves
+InstructorCourseController ..> CourseController
+InstructorCourseController ..> CreateCourseViewModel
+CourseController ..> CourseCreateRequest
+CourseCommandService ..> CourseCreateRequest
+CourseCommandService ..> CourseResponse
+CourseCommandService ..> Course
+CourseRepository ..> Course
 
 @enduml
 ```

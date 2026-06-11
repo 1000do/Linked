@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>UC-31 - Mark As Read</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        p {
+            margin: 8px 0;
+        }
+
+        strong {
+            font-weight: bold;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #ccc;
+            margin: 20px 0;
+        }
+
+        ul,
+        ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <p><strong>UC-31. Mark As Read</strong></p>
+
+    <p><strong>Function Trigger:</strong> User or Instructor clicks the "Mark as read" button (check circle icon) next
+        to an unread notification OR clicks on an unread notification to view its details.</p>
+
+    <p><strong>Function Description:</strong> Allows users and instructors to mark their received notifications as read.
+        The system updates the notification status in the database, notifies active client sessions in real-time, and
+        updates the unread count in the UI.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>User or Instructor must be successfully authenticated.</li>
+                <li>User or Instructor has a stable internet connection.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Mark Single Notification:</strong>
+                    <ul>
+                        <li>User or Instructor accesses the notifications page.</li>
+                        <li>User or Instructor clicks the "Mark as read" button on a specific unread notification.</li>
+                        <li>The system validates the user's session.</li>
+                        <li>The system validates the notification ownership.</li>
+                        <li>The system updates the notification's read status to 'read' in the database.</li>
+                        <li>The system sends a real-time update event to the user's active client connections.</li>
+                        <li>The system updates the UI to display the notification as read.</li>
+                        <li>The system updates the unread notification count in the navigation bar.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Click notification to view details)</strong>
+            <ul>
+                <li>If the user clicks to view details:
+                    <ul>
+                        <li>User or Instructor clicks on the unread notification item.</li>
+                        <li>The system displays the notification detail modal.</li>
+                        <li>The system proceeds to validate the user's session.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Mark all notifications as read)</strong>
+            <ul>
+                <li>If the user marks all as read:
+                    <ul>
+                        <li>User or Instructor clicks the "Mark All as Read" button.</li>
+                        <li>The system validates if there are unread notifications.</li>
+                        <li>The system validates the user's session.</li>
+                        <li>The system updates all unread notifications for the user to read status in the database.
+                        </li>
+                        <li>The system sends a real-time update event to the user's active client connections.</li>
+                        <li>The system updates the UI to display all notifications as read.</li>
+                        <li>The system updates the unread notification count in the navigation bar.</li>
+                        <li>The system displays a success confirmation message.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (No unread notifications)</strong>
+            <ul>
+                <li>If there are no unread notifications when marking all:
+                    <ul>
+                        <li>The system displays a message indicating all notifications are already read.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The selected notification (or all notifications) is updated with a read status in the database.</li>
+                <li>The unread notification count is updated in the UI.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error
+                    message and redirects the user to the login page.</li>
+                <li><strong>Notification Not Found or Access Denied:</strong> The system halts execution and displays a
+                    notification not found or access denied error message.</li>
+                <li><strong>Database update failed:</strong> The system fails to save the notification read status. The
+                    system displays a database transaction failure message.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Ownership Constraint:</strong> A user or instructor can only mark their own received
+                    notifications as read.</li>
+                <li><strong>Real-time Synchronization:</strong> Marking a notification as read immediately syncs the
+                    status across all open tabs/devices of the current user via WebSockets/SignalR and decrements the
+                    unread count.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+
+</html>
