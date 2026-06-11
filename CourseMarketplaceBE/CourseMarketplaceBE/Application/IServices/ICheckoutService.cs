@@ -34,6 +34,13 @@ public interface ICheckoutService
         string cancelUrl);
 
     /// <summary>
+    /// Khởi tạo checkout cho quà tặng: tạo Stripe Checkout Session với thông tin quà tặng trong metadata.
+    /// </summary>
+    Task<CheckoutResponse> InitiateGiftCheckoutAsync(
+        int userId,
+        GiftCheckoutRequest request);
+
+    /// <summary>
     /// Bước 2: Xử lý khi Stripe báo thành công.
     /// Update Transaction → Update Order → Tạo Enrollment → Tính Payout → Xóa Cart.
     /// </summary>
@@ -60,4 +67,11 @@ public interface ICheckoutService
     /// Xử lý lưu DB (tạo Order, OrderItems, Transaction, Enrollment, Payout...) sau khi Stripe Elements thanh toán thành công.
     /// </summary>
     Task ProcessPaymentIntentSuccessAsync(string paymentIntentId);
+
+    /// <summary>
+    /// Khởi tạo thanh toán nhúng Stripe Elements cho Quà Tặng.
+    /// </summary>
+    Task<CheckoutResponse> InitiateGiftPaymentIntentAsync(
+        int userId,
+        GiftCheckoutRequest request);
 }

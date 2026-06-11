@@ -58,18 +58,27 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
-        public IActionResult Login()
+        public IActionResult Login(string? returnUrl = null)
         {
-            // Đã login (có AccessToken) → về Home
-            if (Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Index", "Home");
+            // Đã login (có AccessToken) → về Home/returnUrl
+            if (Request.Cookies.ContainsKey("AccessToken"))
+            {
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    return Redirect(returnUrl);
+                return RedirectToAction("Index", "Home");
+            }
             ViewBag.GoogleClientId = _config["Authentication:Google:ClientId"];
+            ViewBag.ReturnUrl = returnUrl;
 
             return View();
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(LoginViewModel model)
+        public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
+            ViewBag.ReturnUrl = returnUrl;
+            ViewBag.GoogleClientId = _config["Authentication:Google:ClientId"];
+
             if (!ModelState.IsValid) return View(model);
 
             // Endpoint login không cần auth → dùng HttpClient trực tiếp
@@ -133,6 +142,9 @@ namespace CourseMarketplaceFE.Controllers
                 var roleLower = result.Role.Trim().ToLower();
                 if (roleLower == "admin" || roleLower == "staff")
                     return RedirectToAction("Admin", "Notification");
+
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    return Redirect(returnUrl);
 
                 return RedirectToAction("Index", "Home", new { debug = "is_user" });
 

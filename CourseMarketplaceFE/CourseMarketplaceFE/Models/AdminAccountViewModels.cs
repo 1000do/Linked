@@ -39,6 +39,9 @@ public class AdminAccountDetailViewModel
     public string? AvatarUrl { get; set; }
     public int AccountFlagCount { get; set; }
     public string? Role { get; set; }
+    public string? Bio { get; set; }
+    public DateTime? LockoutStart { get; set; }
+    public DateTime? LockoutEnd { get; set; }
 
     // User-specific details
     public decimal TotalSpent { get; set; }

@@ -1,0 +1,452 @@
+@model CourseMarketplaceFE.Controllers.GiftSetupViewModel
+@{
+    ViewData["Title"] = "Gift Course - " + (ViewBag.Course?.Title ?? "Setup");
+    var course = ViewBag.Course as CourseMarketplaceFE.Models.PublicCourseViewModel;
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+        --secondary-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --card-bg: rgba(255, 255, 255, 0.85);
+        --text-dark: #2D3436;
+        --text-muted: #636E72;
+        --border-radius: 20px;
+    }
+
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background: radial-gradient(circle at 50% 50%, #fef9f8 0%, #f6f0ec 100%);
+    }
+
+    .setup-container {
+        max-width: 1100px;
+        margin: 40px auto;
+        padding: 0 15px;
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 30px;
+    }
+
+    @@media (max-width: 992px) {
+        .setup-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .glass-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: var(--border-radius);
+        padding: 40px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+    }
+
+    .course-summary-card {
+        background: #fff;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.02);
+    }
+
+    .course-thumbnail {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .course-info {
+        padding: 25px;
+    }
+
+    .course-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 10px;
+        line-height: 1.4;
+    }
+
+    .course-price {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #FF6B6B;
+        margin-top: 15px;
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-label {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-control {
+        border-radius: 12px;
+        border: 2px solid #E2E8F0;
+        padding: 14px 18px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+        color: var(--text-dark);
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .form-control:focus {
+        border-color: #FF8E53;
+        box-shadow: 0 0 0 4px rgba(255, 142, 83, 0.15);
+        outline: none;
+    }
+
+    .theme-selector {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+
+    .theme-option {
+        border: 2px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 15px 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        font-size: 0.9rem;
+        user-select: none;
+    }
+
+    .theme-option.active {
+        border-color: #FF6B6B;
+        background: rgba(255, 107, 107, 0.08);
+        color: #FF6B6B;
+        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.1);
+    }
+
+    /* Card Preview styles */
+    .card-preview-wrapper {
+        border-radius: var(--border-radius);
+        padding: 30px;
+        color: #fff;
+        min-height: 250px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .theme-classic {
+        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    }
+
+    .theme-birthday {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+        color: #2D3436 !important;
+    }
+
+    .theme-thanks {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .theme-congrats {
+        background: linear-gradient(135deg, #f857a6 0%, #ff5858 100%);
+    }
+
+    .preview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .preview-badge {
+        background: rgba(255,255,255,0.25);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        backdrop-filter: blur(5px);
+    }
+
+    .theme-birthday .preview-badge {
+        background: rgba(0,0,0,0.06);
+    }
+
+    .preview-msg {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.15rem;
+        font-style: italic;
+        margin: 20px 0;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .preview-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+    .preview-names h4 {
+        font-size: 1.1rem;
+        margin: 0 0 4px 0;
+        font-weight: 700;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .preview-names p {
+        font-size: 0.85rem;
+        margin: 0;
+        opacity: 0.8;
+    }
+
+    .submit-btn {
+        background: var(--primary-gradient);
+        color: #fff;
+        border: none;
+        padding: 16px 30px;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        width: 100%;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(255, 107, 107, 0.35);
+        margin-top: 10px;
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 25px rgba(255, 107, 107, 0.45);
+    }
+
+    .char-counter {
+        text-align: right;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+
+    .form-control.input-validation-error {
+        border-color: #f43f5e !important;
+        box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.15) !important;
+    }
+
+    .field-validation-error {
+        margin-top: 10px;
+        padding: 12px 16px;
+        background-color: #fff1f2;
+        border: 1px solid #ffe4e6;
+        color: #e11d48;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: flex !important;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .field-validation-error::before {
+        content: "warning";
+        font-family: 'Material Symbols Outlined';
+        font-size: 18px;
+        color: #f43f5e;
+    }
+</style>
+
+<div class="setup-container">
+    <div class="glass-card">
+        <h2 style="font-family: 'Outfit', sans-serif; font-weight:700; color:var(--text-dark); margin-top:0; margin-bottom: 10px;">Gift Details</h2>
+        <p style="color:var(--text-muted); margin-bottom:30px;">Personalize your gift card design and greeting message.</p>
+
+        <form asp-action="Setup" method="post" id="giftForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="CourseId" />
+            <input type="hidden" asp-for="CardTheme" id="cardThemeInput" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom:20px; font-weight:600;"></div>
+
+            <div class="form-group">
+                <label class="form-label" asp-for="RecipientEmail"></label>
+                <input asp-for="RecipientEmail" class="form-control" placeholder="example@email.com" id="recipientEmailInput" />
+                <span asp-validation-for="RecipientEmail" class="text-danger" style="font-size:0.85rem; margin-top:5px; display:block;"></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" asp-for="RecipientName"></label>
+                <input asp-for="RecipientName" class="form-control" placeholder="Alex Carter" id="recipientNameInput" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Choose Card Theme</label>
+                <div class="theme-selector">
+                    <div class="theme-option active" data-theme="classic">Classic</div>
+                    <div class="theme-option" data-theme="birthday">Birthday 🎂</div>
+                    <div class="theme-option" data-theme="thanks">Thanks 🙏</div>
+                    <div class="theme-option" data-theme="congrats">Congrats 🎉</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" asp-for="GiftMessage"></label>
+                <textarea asp-for="GiftMessage" class="form-control" rows="5" placeholder="Happy learning! Hope you enjoy this course..." id="messageInput" maxlength="1000"></textarea>
+                <div class="char-counter"><span id="charCount">0</span>/1000 characters</div>
+            </div>
+
+            <button type="submit" class="submit-btn">Proceed to Payment</button>
+        </form>
+    </div>
+
+    <div>
+        <div class="course-summary-card mb-4" style="margin-bottom: 25px;">
+            @if (course != null)
+            {
+                <img src="@(string.IsNullOrEmpty(course.CourseThumbnailUrl) ? "/img/default-course.jpg" : course.CourseThumbnailUrl)" class="course-thumbnail" alt="@course.Title" />
+                <div class="course-info">
+                    <span style="font-size:0.75rem; background:rgba(0,0,0,0.06); padding:4px 8px; border-radius:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">You are gifting:</span>
+                    <h3 class="course-title" style="margin-top:10px;">@course.Title</h3>
+                    <div class="course-price">$@course.Price</div>
+                </div>
+            }
+        </div>
+
+        <div style="background: rgba(255,255,255,0.7); padding: 20px; border-radius: var(--border-radius); border: 1px dashed rgba(0,0,0,0.1); margin-bottom:20px;">
+            <h4 style="margin: 0 0 10px 0; font-family:'Outfit';">Live Gift Card Preview</h4>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin:0 0 15px 0;">This is exactly how the email card will display to the recipient.</p>
+
+            <div class="card-preview-wrapper theme-classic" id="cardPreview">
+                <div class="preview-header">
+                    <span class="preview-badge">Special Gift</span>
+                    <span style="font-size:0.8rem; font-weight:600;">LinkedLearn</span>
+                </div>
+                <div class="preview-msg" id="previewMsg">Happy learning! Hope you enjoy this course...</div>
+                <div class="preview-footer">
+                    <div class="preview-names">
+                        <h4 id="previewRecipient">To: Someone Special</h4>
+                        <p>Enjoy a new learning experience!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const themeOptions = document.querySelectorAll(".theme-option");
+        const themeInput = document.getElementById("cardThemeInput");
+        const cardPreview = document.getElementById("cardPreview");
+        
+        const messageInput = document.getElementById("messageInput");
+        const previewMsg = document.getElementById("previewMsg");
+        const charCount = document.getElementById("charCount");
+
+        const recipientInput = document.getElementById("recipientNameInput");
+        const previewRecipient = document.getElementById("previewRecipient");
+
+        // Theme switching
+        themeOptions.forEach(opt => {
+            opt.addEventListener("click", function () {
+                themeOptions.forEach(o => o.classList.remove("active"));
+                this.classList.add("active");
+                
+                const theme = this.dataset.theme;
+                themeInput.value = theme;
+
+                // Reset preview classes
+                cardPreview.className = "card-preview-wrapper theme-" + theme;
+            });
+        });
+
+        // Sync message
+        messageInput.addEventListener("input", function () {
+            const val = this.value;
+            previewMsg.textContent = val.trim() !== "" ? val : "Happy learning! Hope you enjoy this course...";
+            charCount.textContent = val.length;
+        });
+
+        // Sync recipient
+        recipientInput.addEventListener("input", function () {
+            const val = this.value;
+            previewRecipient.textContent = val.trim() !== "" ? "To: " + val : "To: Someone Special";
+        });
+
+        // Real-time recipient enrollment check
+        const emailInput = document.getElementById("recipientEmailInput");
+        const courseId = document.querySelector('input[name="CourseId"]').value;
+        const submitBtn = document.querySelector(".submit-btn");
+        let errorSpan = document.querySelector('[data-valmsg-for="RecipientEmail"]');
+
+        let timeout = null;
+
+        function validateRecipientEmail() {
+            const email = emailInput.value.trim();
+            if (!email) {
+                if (errorSpan) errorSpan.textContent = "";
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = "";
+                submitBtn.style.cursor = "";
+                return;
+            }
+
+            const emailRegex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+            if (!emailRegex.test(email)) {
+                return; // Let standard validation handle layout
+            }
+
+            fetch(`/Gift/CheckRecipient?email=${encodeURIComponent(email)}&courseId=${courseId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.enrolled) {
+                        if (errorSpan) {
+                            errorSpan.textContent = "The recipient has already owned/joined this course.";
+                            errorSpan.className = "text-danger field-validation-error";
+                        }
+                        emailInput.classList.add("input-validation-error");
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = "0.6";
+                        submitBtn.style.cursor = "not-allowed";
+                    } else {
+                        if (errorSpan && errorSpan.textContent === "The recipient has already owned/joined this course.") {
+                            errorSpan.textContent = "";
+                            errorSpan.className = "text-danger field-validation-valid";
+                        }
+                        emailInput.classList.remove("input-validation-error");
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = "";
+                        submitBtn.style.cursor = "";
+                    }
+                })
+                .catch(err => {
+                    console.error("Error checking enrollment:", err);
+                });
+        }
+
+        emailInput.addEventListener("blur", validateRecipientEmail);
+        emailInput.addEventListener("input", function() {
+            clearTimeout(timeout);
+            timeout = setTimeout(validateRecipientEmail, 500);
+        });
+    });
+</script>

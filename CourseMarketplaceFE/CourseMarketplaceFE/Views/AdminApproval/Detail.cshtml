@@ -1,0 +1,294 @@
+@model CourseMarketplaceFE.Models.InstructorApprovalViewModel
+@using System.Linq
+@{
+    ViewData["Title"] = "Application Detail";
+    ViewData["PageHeader"] = "Instructor Registration Detail";
+    Layout = "_AdminLayout";
+}
+
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Back button & Header -->
+    <div class="flex items-center justify-between">
+        <a href="/AdminApproval" class="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-xs transition-all shadow-sm">
+            <span class="material-symbols-outlined text-[16px] font-bold">arrow_back</span>
+            Back to List
+        </a>
+        <div class="flex items-center gap-2">
+            <span class="px-3 py-1 text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 rounded-full uppercase tracking-wider shadow-sm">Pending Approval</span>
+        </div>
+    </div>
+
+    <!-- Main Detail Card -->
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row">
+        <!-- Left Column: Profile Card -->
+        <div class="md:w-1/3 border-r border-slate-100 bg-slate-50/20 p-6 flex flex-col items-center text-center">
+            <div class="relative mb-4">
+                @{
+                    var avatar = !string.IsNullOrEmpty(Model.AvatarUrl) ? Model.AvatarUrl : "/img/default-avatar.png";
+                }
+                <img src="@avatar" class="w-32 h-32 rounded-3xl object-cover border-4 border-white shadow-lg" onerror="this.src='/img/default-avatar.png'" />
+                <span class="absolute bottom-2 right-2 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-[0_0_8px_#10b981]"></span>
+            </div>
+            
+            <h2 class="text-xl font-bold text-slate-900 leading-tight">@Model.FullName</h2>
+            <p class="text-sm text-slate-500 font-medium mt-1">@Model.Email</p>
+
+            <div class="w-full h-[1px] bg-slate-100 my-5"></div>
+
+            <div class="w-full text-left space-y-4">
+                <!-- Title -->
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">Professional Title</span>
+                    <p class="text-sm font-semibold text-slate-800 mt-1">@(Model.ProfessionalTitle ?? "No Title Provided")</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Details & Documents -->
+        <div class="md:w-2/3 p-8 space-y-6">
+            <!-- Expertise Categories -->
+            <div class="space-y-2.5">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[16px]">school</span>
+                    Specializations & Expertise
+                </h4>
+                <div class="flex flex-wrap gap-1.5 p-4 rounded-2xl border border-slate-100 bg-slate-50/30">
+                    @if (!string.IsNullOrEmpty(Model.ExpertiseCategories))
+                    {
+                        var categories = Model.ExpertiseCategories.Split(',').Select(x => x.Trim());
+                        foreach (var cat in categories)
+                        {
+                            <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50/80 text-emerald-700 border border-emerald-100 uppercase tracking-wide shadow-sm">
+                                @cat
+                            </span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-xs text-slate-400 italic">No expertise areas provided</span>
+                    }
+                </div>
+            </div>
+
+            <!-- Social Media Profiles -->
+            <div class="space-y-2.5">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[16px]">public</span>
+                    Social Media Profiles
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <!-- LinkedIn -->
+                    <div class="flex items-center gap-3 p-3 rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
+                        <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase leading-none">LinkedIn</span>
+                            @if (!string.IsNullOrEmpty(Model.LinkedInUrl) && Model.LinkedInUrl != "#")
+                            {
+                                <a href="@Model.LinkedInUrl" target="_blank" class="text-xs font-bold text-blue-600 hover:underline truncate mt-1">Visit Profile</a>
+                            }
+                            else
+                            {
+                                <span class="text-xs text-slate-400 italic mt-1 leading-normal">Not Provided</span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- YouTube -->
+                    <div class="flex items-center gap-3 p-3 rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
+                        <div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.517 3.545 12 3.545 12 3.545s-7.517 0-9.388.508a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11c1.871.508 9.388.508 9.388.508s7.517 0 9.388-.508a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase leading-none">YouTube</span>
+                            @if (!string.IsNullOrEmpty(Model.YoutubeUrl) && Model.YoutubeUrl != "#")
+                            {
+                                <a href="@Model.YoutubeUrl" target="_blank" class="text-xs font-bold text-red-650 hover:underline truncate mt-1">Visit Channel</a>
+                            }
+                            else
+                            {
+                                <span class="text-xs text-slate-400 italic mt-1 leading-normal">Not Provided</span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Facebook -->
+                    <div class="flex items-center gap-3 p-3 rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
+                        <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase leading-none">Facebook</span>
+                            @if (!string.IsNullOrEmpty(Model.FacebookUrl) && Model.FacebookUrl != "#")
+                            {
+                                <a href="@Model.FacebookUrl" target="_blank" class="text-xs font-bold text-indigo-600 hover:underline truncate mt-1">Visit Profile</a>
+                            }
+                            else
+                            {
+                                <span class="text-xs text-slate-400 italic mt-1 leading-normal">Not Provided</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Uploaded Documents / Resume -->
+            <div class="space-y-2.5">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[16px]">description</span>
+                    Submitted Documents
+                </h4>
+                <div class="flex flex-col gap-2 p-4 rounded-2xl border border-slate-100 bg-slate-50/30">
+                    @if (!string.IsNullOrEmpty(Model.DocumentUrl))
+                    {
+                        var urls = Model.DocumentUrl.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                        if (urls.Length > 0)
+                        {
+                            foreach (var item in urls.Select((url, index) => new { url, index }))
+                            {
+                                var filename = item.url.Split('/').Last();
+                                var ext = filename.Split('.').Last().ToLower();
+                                var iconName = (ext == "pdf") ? "picture_as_pdf" : "image";
+                                var displayName = $"Document #{item.index + 1} (.{ext})";
+
+                                <a href="@item.url" target="_blank" 
+                                   class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold bg-white text-slate-700 border border-slate-150 hover:bg-slate-50 hover:border-slate-300 hover:scale-[1.01] transition-all duration-300 w-full shadow-sm">
+                                    <span class="material-symbols-outlined text-[20px] text-slate-400 shrink-0">@iconName</span>
+                                    <span class="truncate flex-1">@displayName</span>
+                                    <span class="material-symbols-outlined text-[16px] text-slate-400 shrink-0">open_in_new</span>
+                                </a>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-xs text-slate-400 italic">No resume or portfolio uploaded</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-xs text-slate-400 italic">No resume or portfolio uploaded</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Footer -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+        <a href="/AdminApproval" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-xs transition-colors shadow-sm">
+            Cancel
+        </a>
+        <div class="flex items-center gap-3">
+            <button onclick="processApproval('Rejected')" class="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 hover:border-red-650 rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
+                <span class="material-symbols-outlined text-[16px] font-bold">close</span> Reject
+            </button>
+            <button onclick="processApproval('Approved')" class="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 hover:border-emerald-650 rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
+                <span class="material-symbols-outlined text-[16px] font-bold">check</span> Approve
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function processApproval(status) {
+            const id = @Model.InstructorId;
+            let reason = '';
+            
+            if (status === 'Approved') {
+                const confirmResult = await Swal.fire({
+                    title: 'Approve Application',
+                    text: 'Are you absolutely sure you want to approve this instructor application?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Approve',
+                    cancelButtonText: 'Cancel',
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl'
+                    }
+                });
+                if (!confirmResult.isConfirmed) return;
+            } else {
+                // Rejected -> Open SweetAlert2 with Textarea for Reason
+                const { value: text, isConfirmed } = await Swal.fire({
+                    title: 'Reject Application',
+                    input: 'textarea',
+                    inputLabel: 'Reason for Rejection',
+                    inputPlaceholder: 'Please type the reason why this application is rejected...',
+                    inputAttributes: {
+                        'aria-label': 'Type your reason here'
+                    },
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Reject',
+                    cancelButtonText: 'Cancel',
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl'
+                    },
+                    inputValidator: (value) => {
+                        if (!value || value.trim() === '') {
+                            return 'You must enter a reason for rejection!';
+                        }
+                    }
+                });
+                if (!isConfirmed) return;
+                reason = text;
+            }
+
+            const actionText = status === 'Approved' ? 'approved' : 'rejected';
+
+            try {
+                const response = await fetch(`/AdminApproval/Process?id=${id}&status=${status}&reason=${encodeURIComponent(reason)}`, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    await Swal.fire({
+                        title: 'Success!',
+                        text: `The instructor profile has been successfully ${actionText}.`,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#ffffff',
+                        customClass: {
+                            popup: 'rounded-2xl border border-slate-100 shadow-xl'
+                        }
+                    });
+
+                    // Redirect back to main list page
+                    window.location.href = '/AdminApproval';
+                } else {
+                    Swal.fire({
+                        title: 'Execution Error',
+                        text: result.message || "Failed to process execution.",
+                        icon: 'error',
+                        confirmButtonColor: '#10b981',
+                        background: '#ffffff',
+                        customClass: {
+                            popup: 'rounded-2xl'
+                        }
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    title: 'Connection Error',
+                    text: "Could not connect to the remote server.",
+                    icon: 'error',
+                    confirmButtonColor: '#10b981',
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'rounded-2xl'
+                    }
+                });
+            }
+        }
+    </script>
+}

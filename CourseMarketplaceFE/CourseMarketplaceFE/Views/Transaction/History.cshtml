@@ -34,47 +34,47 @@
                     </div>
                 </div>
 
-                <!-- ── Search, Sort, Filter Bar ───────────────────── -->
-                <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
-                    <form method="get" action="/Transaction/History" class="flex flex-col md:flex-row items-center gap-4">
+                                <!-- ── Search, Sort, Filter Bar ───────────────────── -->
+                <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-xl shadow-slate-100/40">
+                    <form method="get" action="/Transaction/History" class="flex flex-col lg:flex-row items-center gap-4">
                         <input type="hidden" name="page" value="1" />
                         <input type="hidden" name="pageSize" value="@Model.PageSize" />
 
-                        <div class="relative w-full md:w-1/3">
-                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                        <div class="relative w-full lg:w-1/3">
+                            <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
                             <input type="text" name="keyword" value="@ViewBag.Keyword" placeholder="Search by course title..." 
-                                   class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-slate-800 placeholder:text-slate-400 bg-slate-50 focus:bg-white" />
+                                   class="w-full pl-11 pr-4 py-3 text-xs font-semibold border border-slate-200/80 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-800 placeholder:text-slate-400 bg-slate-50 focus:bg-white" />
                         </div>
                         
-                        <div class="flex flex-wrap items-center gap-4 w-full md:w-auto md:ml-auto">
+                        <div class="flex flex-col sm:flex-row flex-wrap items-center gap-3 w-full lg:w-auto lg:ml-auto">
                             <div class="relative w-full sm:w-auto">
-                                <select name="status" class="w-full sm:w-auto appearance-none border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-slate-700 cursor-pointer">
+                                <select name="status" class="w-full sm:w-auto appearance-none border border-slate-200/80 rounded-2xl pl-4 pr-10 py-3 text-xs font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-600 cursor-pointer">
                                     <option value="">All Statuses</option>
                                     <option value="succeeded" selected="@(ViewBag.Status == "succeeded")">Success</option>
                                     <option value="refund_pending" selected="@(ViewBag.Status == "refund_pending")">Refund Pending</option>
                                     <option value="refunded" selected="@(ViewBag.Status == "refunded")">Refunded</option>
                                     <option value="failed" selected="@(ViewBag.Status == "failed")">Failed</option>
                                 </select>
-                                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
+                                <span class="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
                             </div>
 
                             <div class="relative w-full sm:w-auto">
-                                <select name="sortBy" class="w-full sm:w-auto appearance-none border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-slate-700 cursor-pointer">
+                                <select name="sortBy" class="w-full sm:w-auto appearance-none border border-slate-200/80 rounded-2xl pl-4 pr-10 py-3 text-xs font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-600 cursor-pointer">
                                     <option value="date_desc" selected="@(ViewBag.SortBy == "date_desc")">Newest</option>
                                     <option value="date_asc" selected="@(ViewBag.SortBy == "date_asc")">Oldest</option>
                                     <option value="amount_desc" selected="@(ViewBag.SortBy == "amount_desc")">Price: High to Low</option>
                                     <option value="amount_asc" selected="@(ViewBag.SortBy == "amount_asc")">Price: Low to High</option>
                                 </select>
-                                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
+                                <span class="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
                             </div>
 
-                            <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-primary transition-all duration-300">
+                            <button type="submit" class="w-full sm:w-auto px-6 py-3 bg-slate-900 hover:bg-indigo-600 text-white font-black text-xs rounded-2xl shadow-md shadow-slate-900/10 hover:shadow-indigo-600/20 transition-all active:scale-95 duration-200">
                                 Apply
                             </button>
 
                             @if (!string.IsNullOrEmpty(ViewBag.Keyword) || !string.IsNullOrEmpty(ViewBag.Status) || ViewBag.SortBy != "date_desc")
                             {
-                                <a href="/Transaction/History" class="w-full sm:w-auto px-4 py-2.5 text-sm font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 text-center rounded-xl transition-all">
+                                <a href="/Transaction/History" class="w-full sm:w-auto px-4 py-3 text-xs font-black bg-slate-100 hover:bg-slate-200 text-slate-600 text-center rounded-2xl transition-all">
                                     Reset
                                 </a>
                             }
@@ -82,29 +82,20 @@
                     </form>
                 </div>
 
-                @* 14-Day Guarantee & Stripe Billing Help Desk (Horizontal banner) *@
-                <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 text-white shadow-xl shadow-slate-200/50 border border-slate-700/50 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-400/20 flex-shrink-0">
-                            <span class="material-symbols-outlined text-indigo-300">verified_user</span>
-                        </div>
-                        <div>
-                            <h4 class="font-black text-sm tracking-tight flex items-center gap-2">
-                                14-Day Escrow Policy
-                                <span class="bg-indigo-500/20 text-indigo-300 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-indigo-400/20">Stripe Secure Hold</span>
-                            </h4>
-                            <p class="text-xs text-indigo-200/80 leading-relaxed font-medium mt-1">
-                                All payments are held securely in escrow for 14 days under our buyer protection policy. 
-                                Instructors are credited only after the refund window expires.
-                            </p>
-                        </div>
+                @* 14-Day Guarantee (Horizontal banner) *@
+                <div class="bg-gradient-to-r from-indigo-50/70 to-purple-50/50 backdrop-blur-md rounded-3xl p-6 border border-indigo-100/60 shadow-md shadow-indigo-100/10 flex items-start gap-4 hover:shadow-lg transition-all duration-300">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200 flex-shrink-0">
+                        <span class="material-symbols-outlined text-white text-[22px]">verified_user</span>
                     </div>
-                    <div class="flex-shrink-0 w-full md:w-auto">
-                        <button type="button" onclick="showHelpDeskModal()" 
-                                class="w-full md:w-auto px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/40 transition-all active:scale-95 flex items-center justify-center gap-2">
-                            <span class="material-symbols-outlined text-[16px]">contact_support</span>
-                            Stripe Billing Help Desk
-                        </button>
+                    <div class="space-y-1">
+                        <h4 class="font-black text-slate-800 text-sm tracking-tight flex items-center gap-2 flex-wrap">
+                            14-Day Escrow Policy
+                            <span class="bg-indigo-100 text-indigo-700 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-indigo-200/50">Stripe Secure Hold</span>
+                        </h4>
+                        <p class="text-xs text-slate-500/90 leading-relaxed font-medium">
+                            All payments are held securely in escrow for 14 days under our buyer protection policy. 
+                            Instructors are credited only after the refund window expires.
+                        </p>
                     </div>
                 </div>
 
@@ -112,70 +103,121 @@
                 <div class="space-y-4">
                 @if (Model.Items != null && Model.Items.Any())
                 {
+                    <div class="hidden lg:grid grid-cols-12 px-6 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        <div class="col-span-4">Course Details</div>
+                        <div class="col-span-3">Date & ID</div>
+                        <div class="col-span-3 text-right">Amount & Status</div>
+                        <div class="col-span-2 text-right">Actions</div>
+                    </div>
+
                     @foreach (var item in Model.Items)
                     {
-                        <div class="group bg-white rounded-[2rem] p-6 border border-slate-100 hover:border-indigo-200 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-500 flex flex-col md:flex-row items-center gap-6">
-                            @* Transaction Info *@
-                            <div class="w-16 h-16 rounded-3xl bg-slate-50 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-50 transition-colors">
-                                <span class="material-symbols-outlined text-slate-400 group-hover:text-indigo-500 transition-colors">shopping_bag</span>
-                            </div>
+                        var (bgClass, textClass, dotClass, label) = item.Status switch
+                        {
+                            "succeeded"      => item.IsGift && item.IsGiftClaimed
+                                                ? ("bg-blue-50/80 border-blue-100/50", "text-blue-700", "bg-blue-500", "Claimed")
+                                                : ("bg-emerald-50/80 border-emerald-100/50", "text-emerald-700", "bg-emerald-500", "Success"),
+                            "failed"         => ("bg-rose-50/80 border-rose-100/50", "text-rose-700", "bg-rose-500", "Failed"),
+                            "pending"        => ("bg-amber-50/80 border-amber-100/50", "text-amber-700", "bg-amber-400", "Pending"),
+                            "refund_pending" => ("bg-orange-50/80 border-orange-100/50", "text-orange-700", "bg-orange-500", "Refund Pending"),
+                            "refunded"       => ("bg-violet-50/80 border-violet-100/50", "text-violet-700", "bg-violet-500", "Refunded"),
+                            _                => ("bg-slate-50/80 border-slate-100/50", "text-slate-600", "bg-slate-400", item.Status ?? "—")
+                        };
 
-                            <div class="flex-grow text-center md:text-left">
-                                <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-1">
-                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">#@item.TransactionId</span>
-                                    <span class="text-slate-300">•</span>
-                                    <span class="text-[10px] font-bold text-slate-500">@(item.Date.HasValue ? item.Date.Value.ToString("dd MMM, yyyy HH:mm") : "—")</span>
+                        var (iconName, iconBgClass, iconTextClass) = item.Status switch
+                        {
+                            "succeeded"      => ("school", "from-emerald-50 to-teal-50/50 group-hover:from-emerald-100 group-hover:to-teal-100/60", "text-emerald-600"),
+                            "refund_pending" => ("assignment_return", "from-amber-50 to-orange-50/50 group-hover:from-amber-100 group-hover:to-orange-100/60", "text-amber-600"),
+                            "refunded"       => ("history", "from-violet-50 to-purple-50/50 group-hover:from-violet-100 group-hover:to-purple-100/60", "text-violet-600"),
+                            "failed"         => ("sms_failed", "from-rose-50 to-red-50/50 group-hover:from-rose-100 group-hover:to-red-100/60", "text-rose-600"),
+                            _                => ("shopping_bag", "from-slate-50 to-slate-100/50 group-hover:from-slate-100 group-hover:to-slate-200/60", "text-slate-500")
+                        };
+
+                        <div class="group bg-white rounded-3xl p-5 border border-slate-100 hover:border-indigo-100/80 hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-0.5 transition-all duration-300 grid grid-cols-1 lg:grid-cols-12 items-center gap-4 lg:gap-6">
+                            <!-- Col 1: Course Info -->
+                            <div class="col-span-1 lg:col-span-4 flex items-center gap-4 min-w-0">
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br @iconBgClass flex items-center justify-center flex-shrink-0 transition-all duration-300">
+                                    <span class="material-symbols-outlined @iconTextClass group-hover:scale-110 transition-transform duration-300">@iconName</span>
                                 </div>
-                                <h3 class="text-lg font-black text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">@item.CourseTitle</h3>
-                                <p class="text-sm text-slate-500 font-medium mt-0.5">Instructor: <span class="text-slate-700 font-bold">@item.InstructorName</span></p>
+                                <div class="min-w-0 space-y-1">
+                                    <h3 class="text-sm font-black text-slate-800 group-hover:text-indigo-600 transition-colors truncate flex items-center gap-2">
+                                        @item.CourseTitle
+                                        @if (item.IsGift)
+                                        {
+                                            <span class="bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-200/80 flex items-center gap-1 shrink-0">
+                                                <span class="material-symbols-outlined text-[10px]">redeem</span>
+                                                Gift
+                                            </span>
+                                        }
+                                    </h3>
+                                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="material-symbols-outlined text-[13px] text-slate-400">person</span>
+                                            <span class="text-[11px] text-slate-500 font-semibold">@item.InstructorName</span>
+                                        </div>
+                                        @if (item.IsGift && !string.IsNullOrEmpty(item.RecipientEmail))
+                                        {
+                                            <div class="flex items-center gap-1.5 text-slate-400">
+                                                <span class="text-xs">•</span>
+                                                <span class="material-symbols-outlined text-[13px] text-slate-400">mail</span>
+                                                <span class="text-[11px] text-slate-500 font-semibold">Gift to: @item.RecipientEmail</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="flex flex-col items-center md:items-end gap-3 flex-shrink-0">
-                                <div class="text-xl font-black text-slate-900">
+                            <!-- Col 2: Date & ID -->
+                            <div class="col-span-1 lg:col-span-3 flex flex-row lg:flex-col items-center lg:items-start justify-between lg:justify-center gap-2 lg:gap-1 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[13px] text-slate-400">fingerprint</span>
+                                    <span class="text-[11px] lg:text-xs font-bold font-mono text-slate-600">#@item.TransactionId</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[13px] text-slate-400">calendar_today</span>
+                                    <span class="text-[11px] lg:text-xs text-slate-500 font-medium">@(item.Date.HasValue ? item.Date.Value.ToString("dd MMM, yyyy HH:mm") : "—")</span>
+                                </div>
+                            </div>
+
+                            <!-- Col 3: Amount & Status -->
+                            <div class="col-span-1 lg:col-span-3 flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-2 lg:gap-1.5 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                                <div class="text-sm lg:text-base font-black font-mono text-slate-900">
                                     @if (item.Status == "refunded")
                                     {
-                                        <span class="text-rose-600 font-bold">- @((item.Currency ?? "USD").ToUpper()) @Math.Abs(item.Amount).ToString("N2")</span>
+                                        <span class="text-rose-600 font-black">- @((item.Currency ?? "USD").ToUpper()) @Math.Abs(item.Amount).ToString("N2")</span>
                                     }
                                     else
                                     {
                                         <span>@((item.Currency ?? "USD").ToUpper()) @item.Amount.ToString("N2")</span>
                                     }
                                 </div>
-                                
-                                @{
-                                    var (bgClass, textClass, dotClass, label) = item.Status switch
-                                    {
-                                        "succeeded"      => ("bg-emerald-50", "text-emerald-600", "bg-emerald-500", "Success"),
-                                        "failed"         => ("bg-rose-50",    "text-rose-600",    "bg-rose-500",    "Failed"),
-                                        "pending"        => ("bg-amber-50",   "text-amber-600",   "bg-amber-400",   "Pending"),
-                                        "refund_pending" => ("bg-orange-50",  "text-orange-600",  "bg-orange-500",  "Refund Pending"),
-                                        "refunded"       => ("bg-violet-50",  "text-violet-600",  "bg-violet-500",  "Refunded"),
-                                        _                => ("bg-slate-50",   "text-slate-500",   "bg-slate-400",   item.Status ?? "—")
-                                    };
-                                }
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider @bgClass @textClass">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border @bgClass @textClass">
                                     <span class="w-1.5 h-1.5 rounded-full @dotClass"></span>
                                     @label
                                 </span>
                             </div>
 
-                            <div class="flex-shrink-0 flex items-center gap-3">
+                            <!-- Col 4: Actions -->
+                            <div class="col-span-1 lg:col-span-2 flex items-center justify-end gap-2.5 mt-2 lg:mt-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 w-full">
                                 @{
-                                    var isRefundable = item.Status == "succeeded" && item.Date.HasValue && item.Date.Value >= DateTime.UtcNow.AddDays(-14);
+                                    var isRefundable = item.Status == "succeeded" 
+                                        && item.Date.HasValue 
+                                        && item.Date.Value >= DateTime.UtcNow.AddDays(-14)
+                                        && !(item.IsGift && item.IsGiftClaimed);
                                 }
                                 @if (isRefundable)
                                 {
                                     <button type="button" 
                                             onclick="requestRefund(@item.TransactionId, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.CourseTitle))')"
-                                            class="flex items-center gap-1.5 px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 font-bold text-xs rounded-xl border border-rose-100 hover:border-rose-200 transition-all shadow-sm active:scale-95">
-                                        <span class="material-symbols-outlined text-[16px]">restart_alt</span>
-                                        Refund Request
+                                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 font-bold text-[11px] rounded-xl border border-rose-100/80 hover:border-rose-200 transition-all shadow-sm active:scale-95 duration-200">
+                                        <span class="material-symbols-outlined text-[14px]">restart_alt</span>
+                                        Refund
                                     </button>
                                 }
                                 <a href="@Url.Action("HistoryDetail", "Transaction", new { id = item.TransactionId })" 
-                                   class="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all active:scale-90"
+                                   class="w-9 h-9 rounded-xl bg-slate-50 text-slate-500 border border-slate-200/50 hover:bg-slate-900 hover:text-white flex items-center justify-center transition-all duration-200 active:scale-90"
                                    title="View Details">
-                                    <span class="material-symbols-outlined">chevron_right</span>
+                                    <span class="material-symbols-outlined text-[18px]">chevron_right</span>
                                 </a>
                             </div>
                         </div>
@@ -320,85 +362,6 @@
             });
         }
 
-        function showHelpDeskModal() {
-            Swal.fire({
-                title: 'Stripe Billing Help Desk',
-                html: `
-                    <div class="text-left font-sans space-y-4">
-                        <p class="text-xs text-slate-500">
-                            Encountered an issue with your payment, billing invoice, or refund status? 
-                            Submit a priority ticket directly to our Stripe Integration Support Team.
-                        </p>
-                        <div>
-                            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">Issue Category</label>
-                            <select id="supportCategory" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-indigo-500 outline-none transition-all font-medium appearance-none cursor-pointer">
-                                <option value="payment_failure">Payment Failed / Stripe Card Declined</option>
-                                <option value="refund_dispute">Refund Request Pending > 14 Days</option>
-                                <option value="double_charge">Double Charge / Unauthorized Invoice</option>
-                                <option value="other">Other Account & Billing Issues</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">Detailed Description</label>
-                            <textarea id="supportDescription" placeholder="Please describe what happened, including dates or error messages if possible..." class="w-full h-24 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-indigo-500 outline-none transition-all font-medium resize-none"></textarea>
-                        </div>
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'Submit Ticket',
-                cancelButtonText: 'Cancel',
-                confirmButtonColor: '#4f46e5',
-                cancelButtonColor: '#64748b',
-                customClass: {
-                    popup: 'rounded-3xl border border-slate-100 p-8 shadow-2xl max-w-md w-full',
-                    title: 'text-xl font-black text-slate-900 tracking-tight text-left',
-                    confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all',
-                    cancelButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
-                },
-                preConfirm: () => {
-                    const category = document.getElementById('supportCategory').value;
-                    const description = document.getElementById('supportDescription').value;
-                    if (!description || description.trim() === '') {
-                        Swal.showValidationMessage('Please write a detailed description of your issue.');
-                        return false;
-                    }
-                    return { category, description };
-                },
-                showLoaderOnConfirm: true,
-                allowOutsideClick: () => !Swal.isLoading()
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    var ticketRef = 'TK-STRIPE-' + Math.floor(100000 + Math.random() * 900000);
-                    Swal.fire({
-                        title: 'Ticket Submitted Successfully!',
-                        html: `
-                            <div class="text-left font-sans space-y-3">
-                                <p class="text-sm text-slate-500">
-                                    Our support agents are investigating your Stripe billing transaction logs.
-                                </p>
-                                <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex flex-col gap-2">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-[10px] uppercase font-black tracking-wider text-indigo-400">Ticket Reference</span>
-                                        <span class="text-xs font-black text-indigo-900">` + ticketRef + `</span>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-[10px] uppercase font-black tracking-wider text-indigo-400">Response Time</span>
-                                        <span class="text-xs font-bold text-emerald-600">Within 24 Hours</span>
-                                    </div>
-                                </div>
-                            </div>
-                        `,
-                        icon: 'success',
-                        confirmButtonText: 'Got it',
-                        confirmButtonColor: '#10b981',
-                        customClass: {
-                            popup: 'rounded-3xl border border-slate-100 p-8 shadow-2xl',
-                            title: 'text-xl font-black text-slate-900 tracking-tight',
-                            confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
-                        }
-                    });
-                }
-            });
-        }
+
     </script>
 }

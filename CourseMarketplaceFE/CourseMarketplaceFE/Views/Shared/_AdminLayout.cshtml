@@ -176,7 +176,7 @@
         var avatarUrl = Context.Request.Cookies["AvatarUrl"];
     }
     <div class="p-4 border-t border-slate-100">
-        <div class="flex items-center gap-3 p-3 rounded-2xl bg-white border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.02)] hover:border-emerald-100 hover:shadow-[0_4px_12px_rgba(16,185,129,0.05)] transition-all duration-300 cursor-pointer">
+        <div onclick="window.location.href='/AdminProfile'" class="flex items-center gap-3 p-3 rounded-2xl bg-white border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.02)] hover:border-emerald-100 hover:shadow-[0_4px_12px_rgba(16,185,129,0.05)] transition-all duration-300 cursor-pointer">
             <div class="relative shrink-0">
                 @await Html.PartialAsync("_UserAvatar", new { 
                     Url = avatarUrl, 
@@ -191,7 +191,7 @@
             <div class="flex flex-col flex-1 overflow-hidden">
                 <span class="text-xs font-bold text-slate-800 truncate">@managerName</span>
                 <span class="text-[10px] text-slate-400 font-medium truncate uppercase tracking-wider mt-0.5">@(isStaff ? "Support Staff" : "Super Admin")</span>
-                <form method="post" action="/Account/Logout" class="m-0 mt-1.5">
+                <form method="post" action="/Account/Logout" class="m-0 mt-1.5" onclick="event.stopPropagation();">
                     @Html.AntiForgeryToken()
                     <button type="submit" class="text-[11px] text-slate-400 hover:text-rose-500 font-semibold flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer text-left transition-colors duration-200">
                         Logout

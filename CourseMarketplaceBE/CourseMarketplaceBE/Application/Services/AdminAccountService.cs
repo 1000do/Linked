@@ -84,7 +84,7 @@ namespace CourseMarketplaceBE.Application.Services
                 if (a.Manager != null)
                 {
                     roleName = a.Manager.Role;
-                    fullName = a.Manager.DisplayName;
+                    fullName = a.Manager.FullName ?? a.Manager.DisplayName;
                 }
                 else if (a.User?.Instructor != null)
                 {
@@ -100,8 +100,8 @@ namespace CourseMarketplaceBE.Application.Services
                     AccountStatus = a.AccountStatus ?? AccountStatus.Active.ToValue(),
                     AccountCreatedAt = a.AccountCreatedAt,
                     AccountLastLoginAt = a.AccountLastLoginAt,
-                    PhoneNumber = a.PhoneNumber,
-                    AvatarUrl = a.AvatarUrl,
+                    PhoneNumber = a.Manager?.PhoneNumber ?? a.PhoneNumber,
+                    AvatarUrl = a.Manager?.AvatarUrl ?? a.AvatarUrl,
                     AccountFlagCount = a.AccountFlagCount ?? 0
                 };
             }).ToList();
@@ -115,6 +115,7 @@ namespace CourseMarketplaceBE.Application.Services
                 .Include(a => a.Manager)
                 .Include(a => a.User)
                     .ThenInclude(u => u!.Instructor)
+                .Include(a => a.Lockouts)
                 .FirstOrDefaultAsync(a => a.AccountId == id);
 
             if (account == null) return null;
@@ -125,25 +126,33 @@ namespace CourseMarketplaceBE.Application.Services
             if (account.Manager != null)
             {
                 roleName = account.Manager.Role;
-                fullName = account.Manager.DisplayName;
+                fullName = account.Manager.FullName ?? account.Manager.DisplayName;
             }
             else if (account.User?.Instructor != null)
             {
                 roleName = "instructor";
             }
 
+            var activeLockout = account.Lockouts
+                .Where(l => l.LockoutType == "account")
+                .OrderByDescending(l => l.LockoutEnd)
+                .FirstOrDefault();
+
             var dto = new AdminAccountDetailDto
             {
                 AccountId = account.AccountId,
                 Email = account.Email,
                 FullName = fullName ?? "No Name",
-                PhoneNumber = account.PhoneNumber,
+                PhoneNumber = account.Manager?.PhoneNumber ?? account.PhoneNumber,
                 AccountStatus = account.AccountStatus ?? AccountStatus.Active.ToValue(),
                 AccountCreatedAt = account.AccountCreatedAt,
                 AccountLastLoginAt = account.AccountLastLoginAt,
-                AvatarUrl = account.AvatarUrl,
+                AvatarUrl = account.Manager?.AvatarUrl ?? account.AvatarUrl,
                 AccountFlagCount = account.AccountFlagCount ?? 0,
-                Role = roleName
+                Role = roleName,
+                Bio = account.Manager?.Bio,
+                LockoutStart = activeLockout?.LockoutStart,
+                LockoutEnd = activeLockout?.LockoutEnd
             };
 
             // Nếu là Học viên
@@ -267,6 +276,7 @@ namespace CourseMarketplaceBE.Application.Services
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 PhoneNumber = request.PhoneNumber,
+                AvatarUrl = request.AvatarUrl,
                 AccountStatus = AccountStatus.Active.ToValue(),
                 AccountCreatedAt = DateTime.UtcNow,
                 IsVerified = true // Auto-verify admin-created staff
@@ -281,7 +291,11 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 ManagerId = newAccount.AccountId,
                 Role = "staff",
-                DisplayName = request.DisplayName
+                DisplayName = request.DisplayName,
+                FullName = request.FullName,
+                PhoneNumber = request.PhoneNumber,
+                AvatarUrl = request.AvatarUrl,
+                Bio = request.Bio
             };
 
             await _context.Managers.AddAsync(newManager);
@@ -302,7 +316,16 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             account.Manager.DisplayName = request.DisplayName;
+            account.Manager.FullName = request.FullName;
+            account.Manager.PhoneNumber = request.PhoneNumber;
+            account.Manager.AvatarUrl = request.AvatarUrl;
+            account.Manager.Bio = request.Bio;
+
             account.PhoneNumber = request.PhoneNumber;
+            if (request.AvatarUrl != null)
+            {
+                account.AvatarUrl = request.AvatarUrl;
+            }
 
             if (!string.IsNullOrWhiteSpace(request.Password))
             {
@@ -311,7 +334,27 @@ namespace CourseMarketplaceBE.Application.Services
 
             if (!string.IsNullOrWhiteSpace(request.AccountStatus))
             {
+                var oldStatus = account.AccountStatus;
                 account.AccountStatus = request.AccountStatus;
+                if (request.AccountStatus == AccountStatus.Banned.ToValue() && oldStatus != AccountStatus.Banned.ToValue())
+                {
+                    var lockout = new Lockout
+                    {
+                        AccountId = account.AccountId,
+                        LockoutType = "account",
+                        LockoutLevel = "severe",
+                        LockoutStart = DateTime.UtcNow,
+                        LockoutEnd = DateTime.UtcNow.AddYears(100)
+                    };
+                    await _context.Lockouts.AddAsync(lockout);
+                }
+                else if (request.AccountStatus != AccountStatus.Banned.ToValue() && oldStatus == AccountStatus.Banned.ToValue())
+                {
+                    var activeLockouts = await _context.Lockouts
+                        .Where(l => l.AccountId == account.AccountId && l.LockoutType == "account")
+                        .ToListAsync();
+                    _context.Lockouts.RemoveRange(activeLockouts);
+                }
             }
 
             int rows3 = await _context.SaveChangesAsync();
@@ -337,10 +380,23 @@ namespace CourseMarketplaceBE.Application.Services
             if (account.AccountStatus == AccountStatus.Banned.ToValue())
             {
                 account.AccountStatus = AccountStatus.Active.ToValue();
+                var activeLockouts = await _context.Lockouts
+                    .Where(l => l.AccountId == account.AccountId && l.LockoutType == "account")
+                    .ToListAsync();
+                _context.Lockouts.RemoveRange(activeLockouts);
             }
             else
             {
                 account.AccountStatus = AccountStatus.Banned.ToValue();
+                var lockout = new Lockout
+                {
+                    AccountId = account.AccountId,
+                    LockoutType = "account",
+                    LockoutLevel = "severe",
+                    LockoutStart = DateTime.UtcNow,
+                    LockoutEnd = DateTime.UtcNow.AddYears(100)
+                };
+                await _context.Lockouts.AddAsync(lockout);
             }
 
             int rows4 = await _context.SaveChangesAsync();
@@ -351,7 +407,9 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task<(bool Success, int CurrentFlags, string? NewStatus, string? ErrorMessage)> FlagAccountAsync(int id, string reason)
         {
-            var account = await _context.Accounts.FindAsync(id);
+            var account = await _context.Accounts
+                .Include(a => a.Manager)
+                .FirstOrDefaultAsync(a => a.AccountId == id);
             if (account == null)
             {
                 return (false, 0, null, "Account not found.");
@@ -377,6 +435,15 @@ namespace CourseMarketplaceBE.Application.Services
             else if (newFlags >= 3)
             {
                 account.AccountStatus = AccountStatus.Banned.ToValue();
+                var lockout = new Lockout
+                {
+                    AccountId = account.AccountId,
+                    LockoutType = "account",
+                    LockoutLevel = "severe",
+                    LockoutStart = DateTime.UtcNow,
+                    LockoutEnd = DateTime.UtcNow.AddDays(30)
+                };
+                await _context.Lockouts.AddAsync(lockout);
             }
 
             int rows5 = await _context.SaveChangesAsync();
