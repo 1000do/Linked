@@ -1,0 +1,169 @@
+<div class="uc-container" style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <style>
+        .uc-container, .uc-container table, .uc-container tr, .uc-container td, .uc-container p, .uc-container ol, .uc-container ul, .uc-container li, .uc-container span, .uc-container strong, .uc-container b {
+            font-family: 'Times New Roman', serif !important;
+            font-size: 12pt !important;
+            color: black !important;
+        }
+    </style>
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">UC ID and Name</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">UC-10-View Learning Progress</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Created By:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Truong Phuoc Tai</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Date Created:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">13/05/2026</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Primary Actor:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">User, Instructor</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Secondary Actors:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Trigger:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Actor accesses the enrolled courses page or accesses the course player/learning page.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Description:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Allows Users and Instructors to track learning progress for enrolled or owned courses. Actors can view progress percentages on their enrolled courses dashboard, continue learning in the course player, view videos, read text documents, download learning materials, and automatically update their progress checks. When all materials are completed, the course is marked as completed.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Preconditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>PRE-1.</b> Actor must be authenticated.</p>
+                <p style="margin: 5px 0 0 0;"><b>PRE-2.</b> Actor must be enrolled in the course, or be the owner (Instructor) of the course.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Post-conditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>POST-1.</b> Detailed course list with progress percentage, completion status, and navigation controls is displayed.</p>
+                <p style="margin: 5px 0 0 0;"><b>POST-2.</b> Overall progress percentage and completion bar are rendered in the course player header.</p>
+                <p style="margin: 5px 0 0 0;"><b>POST-3.</b> Checkmark icons are displayed next to completed learning materials in the player's curriculum sidebar.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Normal Flow:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A. View Course Progress Successfully</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>Actor accesses the "My Enrolled Courses" page.</li>
+                    <li>The system checks the actor's session authentication.</li>
+                    <li>The system retrieves the list of courses the actor is enrolled in.</li>
+                    <li>For each course, the system retrieves the total material count and the completed material count.</li>
+                    <li>For each course, the system calculates the progress percentage.</li>
+                    <li>The system displays the enrolled courses page showing the course title, instructor, thumbnail, progress percentage, completion status, and action buttons.</li>
+                    <li>Actor clicks the "Continue learning" button (or "Review" button if the course is completed) on a course card.</li>
+                    <li>The system retrieves the course details (lessons and learning materials).</li>
+                    <li>The system validates the actor's enrollment status or course ownership.</li>
+                    <li>The system retrieves the actor's learning progress for this course, including completed material IDs.</li>
+                    <li>The system calculates the overall completion percentage.</li>
+                    <li>The system displays the course player showing the media viewer, the overall progress percentage and progress bar in the header, and checkmarks next to completed items in the syllabus sidebar.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Alternative Flows:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A.3 Empty Enrollment List</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects the actor has no enrolled courses.</li>
+                    <li>The system displays the empty state message.</li>
+                    <li>The system renders the "Browse Courses" button.</li>
+                    <li>Actor clicks the "Browse Courses" button.</li>
+                    <li>The system redirects the actor to the course exploration page.</li>
+                    <li>Use case ends.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.12.1 Complete Video Material</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor plays a video material in the media player.</li>
+                    <li>The video playback reaches the end.</li>
+                    <li>The system saves the completed material ID to the database.</li>
+                    <li>The system recalculates the progress percentage.</li>
+                    <li>The system updates the progress bar and syllabus checkmarks.</li>
+                    <li>Back to step 12.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.12.2 Complete Text Material</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor selects a text-based material.</li>
+                    <li>The system displays the text content.</li>
+                    <li>The system saves the completed material ID to the database.</li>
+                    <li>The system recalculates the progress percentage.</li>
+                    <li>The system updates the progress bar and syllabus checkmarks.</li>
+                    <li>Back to step 12.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.12.3 Complete Downloadable Material</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks the "Download Resource" button for a non-viewable material.</li>
+                    <li>The system saves the completed material ID to the database.</li>
+                    <li>The system recalculates the progress percentage.</li>
+                    <li>The system updates the progress bar and syllabus checkmarks.</li>
+                    <li>The browser downloads the file.</li>
+                    <li>Back to step 12.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.12.4 Course Completion</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>The system detects the completed material count equals the total material count.</li>
+                    <li>The system updates the enrollment status to completed in the database.</li>
+                    <li>The system records the completion date in the database.</li>
+                    <li>The system updates the course player UI to display a completion state.</li>
+                    <li>Back to step 12.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Exceptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>EX-2 Session Invalid (Not Logged In)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system displays an authentication error message.</li>
+                    <li>The system redirects the actor to the login page.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-9 Access Denied (Not Enrolled)</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>The system detects the actor is not enrolled in the course and is not the course owner.</li>
+                    <li>The system redirects the actor to the error page.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Priority:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Frequency of Use:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Business Rules:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li><b>Progress Calculation:</b> Course progress percentage is calculated as (Completed Materials / Total Materials) * 100, rounded to 1 decimal place.</li>
+                    <li><b>Video Completion Trigger:</b> A video material is marked as completed only when the video playback reaches the end ("onended" event).</li>
+                    <li><b>Document/Text Completion Trigger:</b> A text document (".txt") is marked as completed immediately upon viewing. Other downloadable resources are marked as completed when the User clicks the download button.</li>
+                    <li><b>Course Completion State:</b> When all learning materials in a course are marked as completed, the system automatically sets the enrollment status IsCompleted = true and updates the completion date in the database.</li>
+                    <li><b>Instructor Bypass:</b> Course owners/instructors can access the Course Player ("Learn" page) for preview, and their progress is treated as 100% completed virtual progress without writing completions to the database.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Other Information:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Assumptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;">User, Instructor has stable internet connection.</p>
+            </td>
+        </tr>
+    </table>
+</div>
