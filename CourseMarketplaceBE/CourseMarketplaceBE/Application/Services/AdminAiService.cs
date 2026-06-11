@@ -75,11 +75,11 @@ namespace CourseMarketplaceBE.Application.Services
                 ModelUpdatedAt = DateTime.UtcNow
             };
 
-            _aiModelRepo.Add(model);
+            var addedModel = _aiModelRepo.Add(model);
             var affected = await _aiModelRepo.SaveChangesAsync();
             if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
-            Console.WriteLine($"New Model Id {model.ModelId}");
-            return await GetModelByIdAsync(model.ModelId);
+            Console.WriteLine($"New Model Id {addedModel.ModelId}");
+            return _mapper.Map<AiModelAdminDto>(addedModel);
         }
 
         public async Task<AiModelAdminDto> UpdateModelAsync(int id, UpdateAiModelRequest req)
@@ -93,14 +93,14 @@ namespace CourseMarketplaceBE.Application.Services
             model.Description = req.Description;
             model.ModelUpdatedAt = DateTime.UtcNow;
 
-            _aiModelRepo.Update(model);
+            var updatedModel = _aiModelRepo.Update(model);
             var affected = await _aiModelRepo.SaveChangesAsync();
             if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
 
-            return await GetModelByIdAsync(model.ModelId);
+            return _mapper.Map<AiModelAdminDto>(updatedModel);
         }
 
-        public async Task ToggleModelStatusAsync(int id)
+        public async Task<bool> ToggleModelStatusAsync(int id)
         {
             var model = await _aiModelRepo.GetByIdAsync(id);
             if (model == null) throw new KeyNotFoundException("AI Model not found.");
@@ -111,11 +111,17 @@ namespace CourseMarketplaceBE.Application.Services
             _aiModelRepo.Update(model);
             var affected = await _aiModelRepo.SaveChangesAsync();
             if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
+            return true;
         }
 
         public async Task<AiConfigurationDto> GetConfigurationsAsync()
         {
-            var dto = new AiConfigurationDto();
+            var dto = new AiConfigurationDto
+            {
+                SimilarityScoreThreshold = AiModelConst.DefaultSimilarityScoreThreshold,
+                SpamConfidenceThreshold = AiModelConst.DefaultSpamScoreThreshold,
+                ToxicityConfidenceThreshold = AiModelConst.DefaultToxicScoreThreshold
+            };
 
             var modThresholdStr = await _configRepo.GetValueAsync(SystemConfigKeys.ModerationThreshold);
             if (!string.IsNullOrEmpty(modThresholdStr))
@@ -136,12 +142,12 @@ namespace CourseMarketplaceBE.Application.Services
             dto.CourseHarmfulTextClassifierPath = await _configRepo.GetValueAsync(SystemConfigKeys.CourseHarmfulTextClassifier);
             dto.CourseTextEmbeddingGeneratorPath = await _configRepo.GetValueAsync(SystemConfigKeys.CourseTextEmbeddingGenerator);
             dto.CourseMediaEmbeddingGeneratorPath = await _configRepo.GetValueAsync(SystemConfigKeys.CourseMediaEmbeddingGenerator);
-            dto.ReviewHarmfulTextClassifierPath = await _configRepo.GetValueAsync("review_harmful_text_classifier");
+            dto.ReviewHarmfulTextClassifierPath = await _configRepo.GetValueAsync(SystemConfigKeys.ReviewHarmfulTextClassifier);
 
             return dto;
         }
 
-        public async Task UpdateThresholdsAsync(UpdateThresholdsRequest req)
+        public async Task<bool> UpdateThresholdsAsync(UpdateThresholdsRequest req)
         {
             var newThresholds = new
             {
@@ -152,12 +158,14 @@ namespace CourseMarketplaceBE.Application.Services
             var jsonString = System.Text.Json.JsonSerializer.Serialize(newThresholds);
             var affected = await _configRepo.UpsertConfigAsync(SystemConfigKeys.ModerationThreshold, jsonString, "system config of AI moderation threshold");
             if (affected == 0) throw new InvalidOperationException("Failed to update moderation thresholds: No changes were saved to the database.");
+            return true;
         }
 
-        public async Task UpdateIntegrationAsync(UpdateIntegrationRequest req)
+        public async Task<bool> UpdateIntegrationAsync(UpdateIntegrationRequest req)
         {
             var affected = await _configRepo.UpsertConfigAsync(req.ConfigKey, req.ConfigValue, $"system config of {req.ConfigKey}");
             if (affected == 0) throw new InvalidOperationException($"Failed to update {req.ConfigKey}: No changes were saved to the database.");
+            return true;
         }
 
         public async Task<(List<CourseModerationLogAdminDto> Items, int TotalCount)> GetCourseModerationLogsAsync(int page, int pageSize)
@@ -170,7 +178,8 @@ namespace CourseMarketplaceBE.Application.Services
         public async Task<CourseModerationLogAdminDto?> GetCourseModerationLogDetailAsync(int logId)
         {
             var entity = await _courseLogRepo.GetAdminDetailByIdAsync(logId);
-            return entity == null ? null : _mapper.Map<CourseModerationLogAdminDto>(entity);
+            if (entity == null) throw new KeyNotFoundException("Log not found.");
+            return _mapper.Map<CourseModerationLogAdminDto>(entity);
         }
 
         public async Task<(List<ReviewModerationLogAdminDto> Items, int TotalCount)> GetCourseReviewModerationLogsAsync(int page, int pageSize)
@@ -183,7 +192,8 @@ namespace CourseMarketplaceBE.Application.Services
         public async Task<ReviewModerationLogAdminDto?> GetCourseReviewModerationLogDetailAsync(int logId)
         {
             var entity = await _courseReviewLogRepo.GetAdminDetailByIdAsync(logId);
-            return entity == null ? null : _mapper.Map<ReviewModerationLogAdminDto>(entity);
+            if (entity == null) throw new KeyNotFoundException("Log not found.");
+            return _mapper.Map<ReviewModerationLogAdminDto>(entity);
         }
 
         public async Task<(List<ReviewModerationLogAdminDto> Items, int TotalCount)> GetLessonReviewModerationLogsAsync(int page, int pageSize)
@@ -196,7 +206,8 @@ namespace CourseMarketplaceBE.Application.Services
         public async Task<ReviewModerationLogAdminDto?> GetLessonReviewModerationLogDetailAsync(int logId)
         {
             var entity = await _lessonReviewLogRepo.GetAdminDetailByIdAsync(logId);
-            return entity == null ? null : _mapper.Map<ReviewModerationLogAdminDto>(entity);
+            if (entity == null) throw new KeyNotFoundException("Log not found.");
+            return _mapper.Map<ReviewModerationLogAdminDto>(entity);
         }
     }
 }

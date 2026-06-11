@@ -1,0 +1,111 @@
+<div style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">UC ID and Name</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">UC-105 - View Report Detail</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Created By:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">System</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Date Created:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">09/06/2026</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Primary Actor:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Staff, Admin</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Secondary Actors:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Trigger:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Staff or Admin clicks on a specific report row in the Report Center (applies to course reports, course review reports, and lesson review reports).</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Description:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Displays details and evidence of a reported violation.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Preconditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>PRE-1.</b> The actor must be authenticated.</p>
+                <p style="margin: 0;"><b>PRE-2.</b> The actor must have Staff or Admin role.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Post-conditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>POST-1.</b> The system displays a popup containing the detailed information of the selected report.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Normal Flow:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A. View Report Detail Successfully</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>Staff or Admin accesses the Report Center page.</li>
+                    <li>The system validates the actor's authentication and authorization.</li>
+                    <li>Staff or Admin clicks on a report row (course report, course review report, or lesson review report) in the report list.</li>
+                    <li>The system retrieves the selected report details.</li>
+                    <li>The system determines the report status does not contain resolution details.</li>
+                    <li>The system displays a popup containing the report details (Reporter, Submitted At, Status, Reported Content, Reason, and Description).</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Alternative Flows:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A.5 View Resolved/Rejected Report Detail</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system determines the report status contains resolution details (e.g., resolved, rejected).</li>
+                    <li>The system appends the Resolution Details (Moderator, Resolved At, Resolution Note) to the report details.</li>
+                    <li>Back to step 6.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Exceptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>EX-2.1 Session Invalid (Not Logged In)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system displays an authentication error message.</li>
+                    <li>The system redirects the user to the login page.</li>
+                </ol>
+                <p style="margin: 0 0 5px 0;"><strong>EX-2.2 Unauthorized Access</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects the actor does not have the Staff or Admin role.</li>
+                    <li>The system redirects the actor to the home page or access denied page.</li>
+                </ol>
+                <p style="margin: 0 0 5px 0;"><strong>EX-4 Database Query Failure</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system encounters an error while retrieving the report details from the database.</li>
+                    <li>The system displays an error message regarding the data retrieval failure.</li>
+                    <li>Use case ends.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Priority:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Medium</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Frequency of Use:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Business Rules:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                BR-15, BR-16
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Other Information:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Assumptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;">Staff, Admin has stable internet connection.</p>
+            </td>
+        </tr>
+    </table>
+</div>

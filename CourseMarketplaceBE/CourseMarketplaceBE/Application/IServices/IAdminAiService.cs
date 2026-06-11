@@ -12,12 +12,12 @@ namespace CourseMarketplaceBE.Application.IServices
         Task<AiModelAdminDto> GetModelByIdAsync(int id);
         Task<AiModelAdminDto> AddModelAsync(CreateAiModelRequest req);
         Task<AiModelAdminDto> UpdateModelAsync(int id, UpdateAiModelRequest req);
-        Task ToggleModelStatusAsync(int id);
+        Task<bool> ToggleModelStatusAsync(int id);
 
         // Configurations
         Task<AiConfigurationDto> GetConfigurationsAsync();
-        Task UpdateThresholdsAsync(UpdateThresholdsRequest req);
-        Task UpdateIntegrationAsync(UpdateIntegrationRequest req);
+        Task<bool> UpdateThresholdsAsync(UpdateThresholdsRequest req);
+        Task<bool> UpdateIntegrationAsync(UpdateIntegrationRequest req);
 
         // Logs
         Task<(List<CourseModerationLogAdminDto> Items, int TotalCount)> GetCourseModerationLogsAsync(int page, int pageSize);

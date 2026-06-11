@@ -214,9 +214,19 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         [HttpGet("logs/course/{id}")]
         public async Task<IActionResult> GetCourseModerationLogDetail(int id)
         {
-            var log = await _adminAiService.GetCourseModerationLogDetailAsync(id);
-            if (log == null) return NotFound(ApiResponse<object>.ErrorResponse("Log not found"));
-            return Ok(ApiResponse<object>.SuccessResponse(log, "Log detail retrieved"));
+            try
+            {
+                var log = await _adminAiService.GetCourseModerationLogDetailAsync(id);
+                return Ok(ApiResponse<object>.SuccessResponse(log, "Log detail retrieved"));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+            }
         }
 
         [HttpGet("logs/course-review")]
@@ -241,9 +251,19 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         [HttpGet("logs/course-review/{id}")]
         public async Task<IActionResult> GetCourseReviewModerationLogDetail(int id)
         {
-            var log = await _adminAiService.GetCourseReviewModerationLogDetailAsync(id);
-            if (log == null) return NotFound(ApiResponse<object>.ErrorResponse("Log not found"));
-            return Ok(ApiResponse<object>.SuccessResponse(log, "Log detail retrieved"));
+            try
+            {
+                var log = await _adminAiService.GetCourseReviewModerationLogDetailAsync(id);
+                return Ok(ApiResponse<object>.SuccessResponse(log, "Log detail retrieved"));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+            }
         }
 
         [HttpGet("logs/lesson-review")]
@@ -268,9 +288,19 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         [HttpGet("logs/lesson-review/{id}")]
         public async Task<IActionResult> GetLessonReviewModerationLogDetail(int id)
         {
-            var log = await _adminAiService.GetLessonReviewModerationLogDetailAsync(id);
-            if (log == null) return NotFound(ApiResponse<object>.ErrorResponse("Log not found"));
-            return Ok(ApiResponse<object>.SuccessResponse(log, "Log detail retrieved"));
+            try
+            {
+                var log = await _adminAiService.GetLessonReviewModerationLogDetailAsync(id);
+                return Ok(ApiResponse<object>.SuccessResponse(log, "Log detail retrieved"));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+            }
         }
     }
 }

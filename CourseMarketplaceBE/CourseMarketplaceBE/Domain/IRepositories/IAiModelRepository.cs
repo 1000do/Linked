@@ -37,12 +37,12 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         /// <summary>
         /// Adds a new AI model to the database tracking.
         /// </summary>
-        void Add(AiModel model);
+        AiModel Add(AiModel model);
 
         /// <summary>
         /// Updates an existing AI model tracking.
         /// </summary>
-        void Update(AiModel model);
+        AiModel Update(AiModel model);
 
         /// <summary>
         /// Removes an existing AI model tracking.

@@ -76,14 +76,14 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
             };
         }
 
-        public void Add(AiModel model)
+        public AiModel Add(AiModel model)
         {
-            _context.AiModels.Add(model);
+            return _context.AiModels.Add(model).Entity;
         }
 
-        public void Update(AiModel model)
+        public AiModel Update(AiModel model)
         {
-            _context.AiModels.Update(model);
+            return _context.AiModels.Update(model).Entity;
         }
 
         public void Remove(AiModel model)
