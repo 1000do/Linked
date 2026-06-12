@@ -1,4 +1,4 @@
-@startuml
+@startuml 
 <style>
     sequenceDiagram{
         actor{
@@ -27,10 +27,10 @@
 hide footbox
 
 mainframe Delete Chats (Clear Chat History)
-
 actor User as act
-participant "ChatIndexView" as view
-participant "ChatController" as be_ctrl
+
+participant "Chat/Index.cshtml" as view
+participant "ChatController" as be_ctrl <<backend controller>>
 participant ":ChatService" as sv
 participant ":ChatRepository" as repo
 participant ":AppDbContext" as ctx
@@ -38,27 +38,27 @@ database Database as db
 
 act++
 act->view++: Click "Delete Chat" button
-view->view++: confirm()
+view->view++: Prompt confirmation dialog
 view--
 
-group opt [Confirmed]
-    view->be_ctrl++: Send DELETE request to /api/chat/{chatId}/clear (with AccessToken)
+alt [Confirmed]
+    view->be_ctrl++: Send DELETE /api/chat/{chatId}/clear (with Bearer Token)
     be_ctrl->be_ctrl++: Get accountId from Claims
     be_ctrl--
     
     be_ctrl->sv++: Call ClearChatHistoryAsync(chatId, accountId)
     sv->repo++: Call GetParticipantAsync(chatId, accountId)
     repo->ctx++: Query ChatParticipant by ChatId and AccountId
-    ctx->db++: SELECT * FROM ChatParticipants WHERE ChatId = {chatId} AND AccountId = {accountId}
-    db-->>ctx--: Return record
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return ChatParticipant record
     ctx-->>repo--: Return ChatParticipant
     repo-->>sv--: Return ChatParticipant
     
-    alt participant is null
+    alt [participant == null]
         sv-->>be_ctrl: Return false
         be_ctrl-->>view: Return statusCode 400 (BadRequest)
         view-->>act: Display error message
-    else participant is not null
+    else [participant != null]
         sv->sv++: Set participant.ClearedAt = DateTime.UtcNow
         sv--
         sv->repo++: Call UpdateParticipantAsync(participant)
@@ -68,29 +68,33 @@ group opt [Confirmed]
         
         sv->repo++: Call SaveChangesAsync()
         repo->ctx++: Call SaveChangesAsync()
-        ctx->db++: Save changes (Update ClearedAt)
-        db-->>ctx--: Return numberOfRowsAffected
+        ctx->db++: Execute UPDATE statement
+        db-->>ctx--: Return rows affected
         ctx-->>repo--: Return numberOfRowsAffected
         repo-->>sv--: Return numberOfRowsAffected
         
-        sv->sv++: Check numberOfRowsAffected > 0
-        sv--
+        repo->repo++: Check numberOfRowsAffected
+        repo--
         
-        alt numberOfRowsAffected > 0
+        alt [numberOfRowsAffected > 0]
+            repo-->>sv: Return true
             sv-->>be_ctrl: Return true
-            be_ctrl-->>view: Return statusCode 200 (OK)
+            be_ctrl-->>view: Return statusCode 200 (Ok)
             view->view++: Clear message list UI & Hide panel
             view--
-            view->view++: loadChats()
+            view->view++: Reload chats list
             view--
-            view-->>act: Display chat cleared success message
-        else numberOfRowsAffected = 0
+            view-->>act: Display success message
+        else [numberOfRowsAffected = 0]
+            repo-->>sv--: Return false
+            sv->sv++: throw InvalidOperationException
+            sv--
             sv-->>be_ctrl--: throw InvalidOperationException
             be_ctrl-->>view--: Return statusCode 400 (BadRequest)
             view-->>act--: Display error message
         end
     end
-else Cancelled
-    view-->>act: Do nothing
+else [Cancelled]
+    view-->>act--: Do nothing
 end
 @enduml

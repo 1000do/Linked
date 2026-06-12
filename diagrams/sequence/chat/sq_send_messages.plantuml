@@ -1,4 +1,4 @@
-@startuml
+@startuml 
 <style>
     sequenceDiagram{
         actor{
@@ -27,9 +27,9 @@
 hide footbox
 
 mainframe Send Messages
-
 actor User as act
-participant "ChatIndexView" as view
+
+participant "Chat/Index.cshtml" as view
 participant "ChatHub" as hub
 participant ":ChatService" as sv
 participant ":RedisService" as redis
@@ -38,11 +38,11 @@ participant ":AppDbContext" as ctx
 database Database as db
 
 act++
-act->view++: Enter message and click Send
+act->view++: Enter message and click "Send"
 view->view++: Validate input
 view--
 
-group opt [Valid input]
+alt [Valid input]
     view->hub++: Call SendMessage(dto) via SignalR
     hub->hub++: Get senderId from Connection Context
     hub--
@@ -50,44 +50,44 @@ group opt [Valid input]
     hub->sv++: Call SaveMessageAsync(senderId, dto)
     sv->repo++: Call IsParticipantAsync(chatId, senderId)
     repo->ctx++: Check participant existence
-    ctx->db++: SELECT 1 FROM ChatParticipants WHERE ChatId = {chatId} AND AccountId = {senderId}
+    ctx->db++: Execute SELECT query
     db-->>ctx--: Return result
-    ctx-->>repo--: Return result
+    ctx-->>repo--: Return boolean
     repo-->>sv--: Return isParticipant
     
-    alt isParticipant == false
+    group opt [isParticipant == false]
         sv->repo++: Call HasActiveReportForChatAsync(chatId)
         repo->ctx++: Query Active Reports for Chat
-        ctx->db++: SELECT 1 FROM UserReports WHERE ChatId = {chatId} AND Status = 'Active'
+        ctx->db++: Execute SELECT query
         db-->>ctx--: Return result
-        ctx-->>repo--: Return result
+        ctx-->>repo--: Return boolean
         repo-->>sv--: Return hasActiveReport
     end
     
-    alt isParticipant == false AND hasActiveReport == false
+    alt [isParticipant == false AND hasActiveReport == false]
         sv-->>hub: throw UnauthorizedAccessException
-        hub-->>view: Send error notification to caller
+        hub-->>view: Broadcast error message
         view-->>act: Display error message
-    else Authorized (isParticipant == true OR hasActiveReport == true)
+    else [Authorized (isParticipant == true OR hasActiveReport == true)]
         sv->sv++: Create Message entity
         sv--
         sv->repo++: Call AddMessageAsync(message)
-        repo->ctx++: Call AddAsync()
+        repo->ctx++: Add Message entity
         ctx-->>repo--: Return
         repo-->>sv--: Return
         
         sv->repo++: Call GetChatByIdAsync(chatId)
-        repo->ctx++: Query Chat
-        ctx->db++: SELECT * FROM Chats WHERE ChatId = {chatId}
+        repo->ctx++: Query Chat details
+        ctx->db++: Execute SELECT query
         db-->>ctx--: Return Chat
         ctx-->>repo--: Return Chat
         repo-->>sv--: Return Chat
         
-        alt Chat not found
-            sv-->>hub: throw InvalidOperationException("Chat not found")
-            hub-->>view: Send error notification to caller
-            view-->>act: Display error
-        else Chat found
+        alt [Chat not found]
+            sv-->>hub: throw InvalidOperationException
+            hub-->>view: Broadcast error message
+            view-->>act: Display error message
+        else [Chat found]
             sv->sv++: Set chat.LastMessageAt = message.SentAt
             sv--
             sv->repo++: Call UpdateChatAsync(chat)
@@ -97,18 +97,19 @@ group opt [Valid input]
             
             sv->repo++: Call SaveChangesAsync()
             repo->ctx++: Call SaveChangesAsync()
-            ctx->db++: Save changes (INSERT Message, UPDATE Chat)
-            db-->>ctx--: Return numberOfRowsAffected
+            ctx->db++: Execute INSERT and UPDATE statements
+            db-->>ctx--: Return result
             ctx-->>repo--: Return numberOfRowsAffected
             repo-->>sv--: Return numberOfRowsAffected
             
-            sv->sv++: Check numberOfRowsAffected > 0
-            sv--
+            repo->repo++: Check numberOfRowsAffected
+            repo--
             
-            alt numberOfRowsAffected > 0
+            alt [numberOfRowsAffected > 0]
+                repo-->>sv: Return true
                 sv->repo++: Call GetParticipantIdsAsync(chatId)
                 repo->ctx++: Query Participant IDs
-                ctx->db++: SELECT AccountId FROM ChatParticipants WHERE ChatId = {chatId}
+                ctx->db++: Execute SELECT query
                 db-->>ctx--: Return list of IDs
                 ctx-->>repo--: Return List<int>
                 repo-->>sv--: Return List<int>
@@ -123,12 +124,15 @@ group opt [Valid input]
                 sv-->>hub: Return MessageDto
                 hub->hub++: Broadcast message via SignalR
                 hub--
-                hub-->>view: Broadcast to Clients.Group(chatId).ReceiveMessage(messageDto)
-                view->view++: appendMessage(msg)
+                hub-->>view: Broadcast ReceiveMessage(messageDto) to Clients in Group
+                view->view++: appendMessage(messageDto)
                 view--
                 view-->>act: Display sent message with single tick
-            else numberOfRowsAffected = 0
-                sv-->>hub--: throw InvalidOperationException("Failed to save message")
+            else [numberOfRowsAffected = 0]
+                repo-->>sv--: Return false
+                sv->sv++: throw InvalidOperationException
+                sv--
+                sv-->>hub--: throw InvalidOperationException
                 hub-->>view--: Send error message to caller
                 view-->>act--: Display send error message
             end
