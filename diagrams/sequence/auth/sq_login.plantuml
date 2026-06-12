@@ -30,35 +30,40 @@ mainframe Login
 actor User as act
 
 participant "Login.cshtml" as view
-participant "AccountController (FE)" as fe_ctrl
-participant "AuthController (BE)" as be_ctrl
-participant ":AuthService" as auth_sv
+participant "AdminNotification.cshtml" as admin_view
+participant "Index.cshtml" as home_view
+participant "AccountController" as fe_ctrl <<frontend controller>>
+participant "AuthController" as be_ctrl <<backend controller>>
+participant ":AuthService" as sv
+participant ":AppDbContext" as ctx
 database Database as db
 
 act++
-act->view++: Enter Username/Email and Password\nand click "Sign In" button
+act->view++: Enter Username/Email and Password\nand click "Sign In"
 view->fe_ctrl++: Send POST /Account/Login with form body
 
 fe_ctrl->be_ctrl++: Send POST /api/auth/login with LoginRequest JSON
 
-be_ctrl->auth_sv++: Call LoginAsync(request)
-auth_sv->db++: Query Account by Username or Email
-db-->>auth_sv--: Return Account entity with password hash and role
+be_ctrl->sv++: Call LoginAsync(request)
+sv->ctx++: Query Accounts table for Username or Email
+ctx->db++: Execute select query
+db-->>ctx--: Return Account entity details
+ctx-->>sv--: Return Account entity
 
-auth_sv->auth_sv++: Verify password hash match
-auth_sv--
+sv->sv++: Verify password hash match
+sv--
 
 alt [Invalid credentials]
-    auth_sv-->>be_ctrl: Return null
+    sv-->>be_ctrl: Return null
     be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
     fe_ctrl->fe_ctrl++: Parse error message to display
     fe_ctrl--
-    fe_ctrl-->>view: Return View(model) with error
+    fe_ctrl-->>view: Return statusCode 401
     view-->>act: Display "Incorrect username/email or password" error
 else [Valid credentials]
-    auth_sv->auth_sv++: Generate JWT AccessToken (24h) and RefreshToken (7d)
-    auth_sv--
-    auth_sv-->>be_ctrl--: Return LoginResponse DTO
+    sv->sv++: Generate JWT AccessToken (24h) and RefreshToken (7d)
+    sv--
+    sv-->>be_ctrl--: Return LoginResponse DTO
     
     be_ctrl->be_ctrl++: Append HttpOnly cookies to response (API path)
     be_ctrl--
@@ -68,10 +73,15 @@ else [Valid credentials]
     fe_ctrl--
     
     alt [UserRole is Admin or Staff]
-        fe_ctrl-->>view: Redirect to /Notification/Admin
+        fe_ctrl -> admin_view++: Redirect to Admin Notification page
+        deactivate fe_ctrl
+        admin_view -->> act--: Display Admin Notification page
     else [UserRole is Learner (User) or Instructor]
-        fe_ctrl-->>view: Redirect to /Home/Index
+        fe_ctrl -> home_view++: Redirect to Home Index page
+        deactivate fe_ctrl
+        home_view -->> act--: Display Homepage
     end
-    view-->>act--: Display appropriate home / dashboard page
+    
+    deactivate view
 end
 @enduml
