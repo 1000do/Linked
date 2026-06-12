@@ -1,4 +1,4 @@
-@startuml SendNotifications
+@startuml
 <style>
     sequenceDiagram{
         actor{
@@ -29,17 +29,17 @@ hide footbox
 mainframe Send Notification
 actor Admin as act
 
-participant "SystemNotificationsView" as view
-participant "NotificationController" as be_ctrl
+participant "Notification/SystemNotifications.cshtml" as view
+participant "NotificationController" as be_ctrl <<backend controller>>
 participant ":NotificationService" as sv
 participant ":UserRepository" as user_repo
 participant ":NotificationRepository" as repo
-participant ":AppDbContext" as ctx
 participant "NotificationHub" as hub
+participant ":AppDbContext" as ctx
 database Database as db
 
 act++
-act->view++: Compose notification details (Target, Title, Content)
+act->view++: Compose notification details
 act->view: Click "Send Notification"
 view->view++: Validate input form
 view--
@@ -48,7 +48,7 @@ group opt [Invalid input]
 end
 
 act->view: Confirm and submit
-view->be_ctrl++: Send POST request to /api/Notification/send-advanced (JSON payload)
+view->be_ctrl++: Send POST /api/Notification/send-advanced (JSON payload)
 
 be_ctrl->be_ctrl++: Validate title and content length
 be_ctrl--
@@ -59,21 +59,21 @@ end
 
 be_ctrl->sv++: Call SendAdvancedAsync(dto)
 
-alt dto.TargetType == "ALL"
+alt [dto.TargetType == "ALL"]
     sv->user_repo++: Call GetAllUserIdsAsync()
-    user_repo->ctx++: Call GetAllUserIdsAsync()
-    ctx->db++: Query all user IDs
+    user_repo->ctx++: Query all user IDs
+    ctx->db++: Execute SELECT query
     db-->>ctx--: Return user IDs list
     ctx-->>user_repo--: Return user IDs list
     user_repo-->>sv--: Return user IDs list
-else dto.TargetType == "SINGLE" (Specific users by emails)
+else [dto.TargetType == "SINGLE"]
     loop for each email in dto.Emails
         sv->user_repo++: Call GetUserIdByEmailAsync(email)
-        user_repo->ctx++: Call GetUserIdByEmailAsync(email)
-        ctx->db++: Query user ID by email
-        db-->>ctx--: Return userId or null
-        ctx-->>user_repo--: Return userId or null
-        user_repo-->>sv--: Return userId or null
+        user_repo->ctx++: Query user ID by email
+        ctx->db++: Execute SELECT query
+        db-->>ctx--: Return userId
+        ctx-->>user_repo--: Return userId
+        user_repo-->>sv--: Return userId
     end
 end
 
@@ -87,20 +87,20 @@ end
 
 sv->repo++: Call AddRangeAsync(notifications)
 repo->ctx++: Call AddRangeAsync(notifications)
-ctx-->>repo--: Return success
-repo-->>sv--: Return success
+ctx-->>repo--: Return
+repo-->>sv--: Return
 
 sv->repo++: Call SaveChangesAsync()
 repo->ctx++: Call SaveChangesAsync()
-ctx->db++: Save notifications to Database
-db-->>ctx--: Return numberOfRowsAffected
+ctx->db++: Execute INSERT statement
+db-->>ctx--: Return result
 ctx-->>repo--: Return numberOfRowsAffected
 repo-->>sv--: Return numberOfRowsAffected
 
-sv->sv++: Check if numberOfRowsAffected > 0
+sv->sv++: Check numberOfRowsAffected
 sv--
 
-alt numberOfRowsAffected > 0
+alt [numberOfRowsAffected > 0]
     loop for each userId in targetUserIds
         sv->hub++: Call Clients.User(userId).SendAsync("ReceiveNotification", notiData)
         hub-->>sv: Broadcast notification via SignalR Hub
@@ -108,11 +108,10 @@ alt numberOfRowsAffected > 0
     end
     sv-->>be_ctrl: Return targetUserIds.Count
     be_ctrl-->>view: Return statusCode 200 (Ok)
-    view-->>act: Display "Sent successfully" notification
-else numberOfRowsAffected <= 0
-    sv-->>be_ctrl--: Throw InvalidOperationException("Failed to save changes")
-    be_ctrl-->>view--: Return statusCode 500 (InternalServerError)
+    view-->>act: Display success message
+else [numberOfRowsAffected = 0]
+    sv-->>be_ctrl--: throw InvalidOperationException
+    be_ctrl-->>view--: Return statusCode 400 (BadRequest)
     view-->>act--: Display database error message
 end
-
 @enduml
