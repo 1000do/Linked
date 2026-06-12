@@ -1,0 +1,156 @@
+@model CourseMarketplaceFE.Models.AdminProfileViewModel
+@{
+    ViewData["Title"] = "My Administrative Profile";
+    ViewData["PageHeader"] = "Account Controls";
+    Layout = "_AdminLayout";
+}
+
+<div class="max-w-4xl mx-auto flex flex-col gap-8">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 text-sm font-semibold shadow-sm">
+            <span class="material-symbols-outlined text-[20px] text-emerald-600">check_circle</span>
+            <span>@TempData["SuccessMessage"]</span>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="flex items-center gap-3 p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-800 text-sm font-semibold shadow-sm">
+            <span class="material-symbols-outlined text-[20px] text-rose-600">error</span>
+            <span>@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
+    <!-- Main Profile Card -->
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-8 flex flex-col sm:flex-row items-center sm:items-start gap-8 relative overflow-hidden">
+        <div class="relative group">
+            <img src="@(string.IsNullOrEmpty(Model.AvatarUrl) ? "/img/default-avatar.png" : Model.AvatarUrl)"
+                 class="w-24 h-24 rounded-full object-cover border-2 border-slate-200/80 shadow-sm bg-slate-50"
+                 onerror="this.src='/img/default-avatar.png'" />
+            <div class="absolute bottom-0 right-0 w-6 h-6 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center shadow">
+                <span class="material-symbols-outlined text-white text-[12px] font-bold">verified_user</span>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col gap-4 text-center sm:text-left">
+            <div class="flex flex-col gap-1.5">
+                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                    <h2 class="text-2xl font-bold text-slate-900 leading-tight">@(Model.FullName ?? Model.DisplayName)</h2>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border bg-blue-50 text-blue-700 border-blue-200">
+                        @(Model.Role?.ToUpper() == "ADMIN" ? "Super Admin" : "Staff Support")
+                    </span>
+                </div>
+                <p class="text-sm text-slate-500 font-medium">@Model.Email</p>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Bio))
+            {
+                <p class="text-sm text-slate-600 italic bg-slate-50 border border-slate-100 p-4 rounded-xl max-w-xl leading-relaxed">
+                    "@Model.Bio"
+                </p>
+            }
+
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-2">
+                <a href="@Url.Action("Edit", "AdminProfile")" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition-all active:scale-[0.98]">
+                    <span class="material-symbols-outlined text-[18px]">edit</span>
+                    Edit Profile
+                </a>
+                <button onclick="openChangePasswordModal()" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-sm transition-all active:scale-[0.98]">
+                    <span class="material-symbols-outlined text-[18px]">key</span>
+                    Change Password
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Details List -->
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4.5 border-b border-slate-200 bg-slate-50/50">
+            <h3 class="text-sm font-bold text-slate-900 tracking-tight">Employment & System Information</h3>
+        </div>
+        <div class="divide-y divide-slate-100 text-sm">
+            <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span class="font-medium text-slate-500">Public Display Name</span>
+                <span class="font-semibold text-slate-900">@Model.DisplayName</span>
+            </div>
+            <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span class="font-medium text-slate-500">Full Name</span>
+                <span class="font-semibold text-slate-900">@(Model.FullName ?? "Not configured")</span>
+            </div>
+            <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span class="font-medium text-slate-500">Contact Number</span>
+                <span class="font-semibold text-slate-900 font-mono">@(Model.PhoneNumber ?? "Not configured")</span>
+            </div>
+            <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span class="font-medium text-slate-500">Account Created Date</span>
+                <span class="font-semibold text-slate-900 font-mono">@(Model.AccountCreatedAt?.ToString("dd MMM yyyy HH:mm") ?? "N/A")</span>
+            </div>
+            @if (Model.LockoutEnd.HasValue)
+            {
+                <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-rose-50/30">
+                    <span class="font-medium text-rose-600">Suspension Started Date</span>
+                    <span class="font-semibold text-rose-700 font-mono">@(Model.LockoutStart?.ToString("dd MMM yyyy HH:mm") ?? "N/A")</span>
+                </div>
+                <div class="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-rose-50/30">
+                    <span class="font-medium text-rose-600">Suspension End Date</span>
+                    <span class="font-semibold text-rose-700 font-mono">@Model.LockoutEnd.Value.ToString("dd MMM yyyy HH:mm")</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: CHANGE PASSWORD (Glassmorphism backdrop) -->
+<div id="changePasswordModal" class="fixed inset-0 z-50 hidden bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 transition-all">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 transition-all">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="text-base font-bold text-slate-900">Update Password</h3>
+            <button onclick="closeChangePasswordModal()" class="text-slate-400 hover:text-slate-600">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        <!-- Form Content -->
+        <form action="@Url.Action("ChangePassword", "AdminProfile")" method="post" class="p-6 flex flex-col gap-4">
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-700">Current Password</label>
+                <input type="password" name="currentPassword" required placeholder="Enter current password"
+                       class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-700">New Password</label>
+                <input type="password" name="newPassword" required placeholder="Minimum 6 characters"
+                       class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-slate-700">Confirm New Password</label>
+                <input type="password" name="confirmNewPassword" required placeholder="Retype new password"
+                       class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
+            </div>
+            <div class="flex items-center gap-3 mt-2">
+                <button type="button" onclick="closeChangePasswordModal()" class="w-full py-2 text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="w-full py-2 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors shadow-sm">
+                    Change Password
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openChangePasswordModal() {
+            const modal = document.getElementById('changePasswordModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.firstElementChild.classList.remove('scale-95'), 50);
+        }
+
+        function closeChangePasswordModal() {
+            const modal = document.getElementById('changePasswordModal');
+            modal.firstElementChild.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 150);
+        }
+    </script>
+}

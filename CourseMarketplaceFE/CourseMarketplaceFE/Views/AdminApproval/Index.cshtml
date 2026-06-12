@@ -135,6 +135,8 @@
     }
 </div>
 
+
+
 @section Scripts {
     <script>
         // Parse model data directly to JS
@@ -235,6 +237,11 @@
 
                         <td class="px-6 py-4 align-middle text-right">
                             <div class="flex items-center justify-end gap-2.5">
+                                <a href="/AdminApproval/Detail/${item.instructorId}" 
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-slate-50 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-lg shadow-sm hover:scale-105 active:scale-95 transition-all duration-300"
+                                   title="View detailed application details">
+                                    <span class="material-symbols-outlined text-[15px] font-bold">visibility</span> View Info
+                                </a>
                                 <button onclick="processAction(${item.instructorId}, 'Approved')" 
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 hover:border-emerald-600 rounded-lg shadow-sm hover:scale-105 active:scale-95 transition-all duration-300">
                                     <span class="material-symbols-outlined text-[15px] font-bold">check</span> Approve
@@ -404,6 +411,8 @@
                 });
             }
         }
+
+
 
         // Initialize dynamic filter items and default state
         document.addEventListener('DOMContentLoaded', () => {

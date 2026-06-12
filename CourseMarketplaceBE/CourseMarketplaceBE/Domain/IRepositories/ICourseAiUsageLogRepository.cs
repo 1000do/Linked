@@ -33,5 +33,15 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         /// Get all usage logs.
         /// </summary>
         Task<List<CourseAiUsageLog>> GetAllAsync();
+
+        /// <summary>
+        /// Gets paginated course moderation logs for admin view.
+        /// </summary>
+        Task<(List<CourseAiUsageLog> Items, int TotalCount)> GetPagedAdminAsync(int page, int pageSize);
+
+        /// <summary>
+        /// Gets a detailed course moderation log for admin view.
+        /// </summary>
+        Task<CourseAiUsageLog?> GetAdminDetailByIdAsync(int logId);
     }
 }

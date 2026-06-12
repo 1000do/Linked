@@ -54,7 +54,7 @@ public class CartController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to add to cart"));
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
@@ -81,7 +81,7 @@ public class CartController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to remove from cart"));
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
@@ -106,6 +106,10 @@ public class CartController : ControllerBase
         {
             var summary = await _cartService.GetCartSummaryAsync(userId.Value, couponCode);
             return Ok(ApiResponse<CartSummaryResponse>.SuccessResponse(summary));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {

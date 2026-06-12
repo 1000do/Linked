@@ -64,6 +64,7 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<AvatarFrame> AvatarFrames { get; set; }
     public virtual DbSet<UserAvatarFrame> UserAvatarFrames { get; set; }
     public virtual DbSet<PlatformWithdrawal> PlatformWithdrawals { get; set; }
+    public virtual DbSet<Gift> Gifts { get; set; }
 
     // ─── Report Tables ────────────────────────────────────────────────────────
     public virtual DbSet<CourseReport> CourseReports { get; set; }
@@ -714,6 +715,10 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.ManagerId).ValueGeneratedNever().HasColumnName("manager_id");
             entity.Property(e => e.Role).HasMaxLength(50).HasColumnName("role");
             entity.Property(e => e.DisplayName).HasMaxLength(255).HasColumnName("display_name");
+            entity.Property(e => e.FullName).HasMaxLength(255).HasColumnName("full_name");
+            entity.Property(e => e.PhoneNumber).HasMaxLength(50).HasColumnName("phone_number");
+            entity.Property(e => e.AvatarUrl).HasColumnName("avatar_url");
+            entity.Property(e => e.Bio).HasColumnName("bio");
 
             entity.HasOne(d => d.ManagerNavigation).WithOne(p => p.Manager)
                 .HasForeignKey<Manager>(d => d.ManagerId)
@@ -1389,6 +1394,49 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.LessonReviewId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("lesson_review_reports_lesson_review_id_fkey");
+        });
+
+        // ── gifts ─────────────────────────────────────────────────────────────
+        modelBuilder.Entity<Gift>(entity =>
+        {
+            entity.HasKey(e => e.GiftId).HasName("gifts_pkey");
+            entity.ToTable("gifts");
+            entity.HasIndex(e => e.RedemptionToken, "idx_gifts_token").IsUnique();
+            entity.HasIndex(e => e.RecipientEmail, "idx_gifts_recipient");
+            entity.HasIndex(e => e.DeliveryStatus, "idx_gifts_delivery");
+
+            entity.Property(e => e.GiftId).HasColumnName("gift_id");
+            entity.Property(e => e.OrderItemId).HasColumnName("order_item_id");
+            entity.Property(e => e.SenderId).HasColumnName("sender_id");
+            entity.Property(e => e.RecipientEmail).HasMaxLength(255).HasColumnName("recipient_email");
+            entity.Property(e => e.RecipientName).HasMaxLength(255).HasColumnName("recipient_name");
+            entity.Property(e => e.GiftMessage).HasColumnName("gift_message");
+            entity.Property(e => e.CardTheme).HasMaxLength(50).HasDefaultValue("classic").HasColumnName("card_theme");
+            entity.Property(e => e.RedemptionToken).HasMaxLength(255).HasColumnName("redemption_token");
+            entity.Property(e => e.IsClaimed).HasDefaultValue(false).HasColumnName("is_claimed");
+            entity.Property(e => e.ClaimedByUserId).HasColumnName("claimed_by_user_id");
+            entity.Property(e => e.ClaimedAt).HasColumnType("timestamp without time zone").HasColumnName("claimed_at");
+            entity.Property(e => e.DeliveryStatus).HasMaxLength(50).HasDefaultValue("pending").HasColumnName("delivery_status");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnType("timestamp without time zone").HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnType("timestamp without time zone").HasColumnName("updated_at");
+
+            entity.HasOne(d => d.OrderItem)
+                .WithMany()
+                .HasForeignKey(d => d.OrderItemId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("gifts_order_item_id_fkey");
+
+            entity.HasOne(d => d.Sender)
+                .WithMany()
+                .HasForeignKey(d => d.SenderId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("gifts_sender_id_fkey");
+
+            entity.HasOne(d => d.ClaimedByUser)
+                .WithMany()
+                .HasForeignKey(d => d.ClaimedByUserId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("gifts_claimed_by_user_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);

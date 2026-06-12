@@ -1,6 +1,8 @@
 using AutoMapper;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Constants;
+using System;
 
 namespace CourseMarketplaceBE.Application.Mappings;
 
@@ -92,5 +94,61 @@ public class MappingProfile : Profile
         CreateMap<LearningMaterial, MaterialResponse>();
 
         CreateMap<Category, CategoryResponse>();
+
+        // Admin AI Service Log Mapping
+        CreateMap<AiModel, AiModelAdminDto>();
+
+        CreateMap<CourseAiUsageLog, CourseModerationLogAdminDto>()
+            .ForMember(dest => dest.ModelId, opt => opt.MapFrom(src => src.CourseAiIntegration != null ? (src.CourseAiIntegration.ModelId ?? 0) : 0))
+            .ForMember(dest => dest.ModelName, opt => opt.MapFrom(src => src.CourseAiIntegration != null && src.CourseAiIntegration.Model != null ? src.CourseAiIntegration.Model.ModelName : "Unknown"))
+            .ForMember(dest => dest.CourseId, opt => opt.MapFrom(src => src.CourseAiIntegration != null ? (src.CourseAiIntegration.CourseId ?? 0) : 0))
+            .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.CourseAiIntegration != null && src.CourseAiIntegration.Course != null ? src.CourseAiIntegration.Course.Title : "Unknown"))
+            .ForMember(dest => dest.TokenUsage, opt => opt.MapFrom(src => (int)(src.TokenUsage ?? 0)))
+            .ForMember(dest => dest.LatencyMs, opt => opt.MapFrom(src => (int)(src.LatencyMs ?? 0)))
+            .ForMember(dest => dest.LogCreatedAt, opt => opt.MapFrom(src => src.LogCreatedAt ?? DateTime.UtcNow))
+            .AfterMap((src, dest) => MapResultStatus(src.ErrorMessage, src.OutputJson, dest));
+
+        CreateMap<CourseReviewModerationLog, ReviewModerationLogAdminDto>()
+            .ForMember(dest => dest.ModelId, opt => opt.MapFrom(src => src.ModelId ?? 0))
+            .ForMember(dest => dest.ModelName, opt => opt.MapFrom(src => src.Model != null ? src.Model.ModelName : "Unknown"))
+            .ForMember(dest => dest.ReviewId, opt => opt.MapFrom(src => src.CourseReviewId ?? 0))
+            .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.CourseReview != null ? (src.CourseReview.Comment ?? "") : ""))
+            .ForMember(dest => dest.LatencyMs, opt => opt.MapFrom(src => (int)(src.LatencyMs ?? 0)))
+            .ForMember(dest => dest.LogCreatedAt, opt => opt.MapFrom(src => src.LogCreatedAt ?? DateTime.UtcNow))
+            .AfterMap((src, dest) => MapResultStatus(src.ErrorMessage, src.OutputJson, dest));
+
+        CreateMap<LessonReviewModerationLog, ReviewModerationLogAdminDto>()
+            .ForMember(dest => dest.ModelId, opt => opt.MapFrom(src => src.ModelId ?? 0))
+            .ForMember(dest => dest.ModelName, opt => opt.MapFrom(src => src.Model != null ? src.Model.ModelName : "Unknown"))
+            .ForMember(dest => dest.ReviewId, opt => opt.MapFrom(src => src.LessonReviewId ?? 0))
+            .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.LessonReview != null ? (src.LessonReview.Comment ?? "") : ""))
+            .ForMember(dest => dest.LatencyMs, opt => opt.MapFrom(src => (int)(src.LatencyMs ?? 0)))
+            .ForMember(dest => dest.LogCreatedAt, opt => opt.MapFrom(src => src.LogCreatedAt ?? DateTime.UtcNow))
+            .AfterMap((src, dest) => MapResultStatus(src.ErrorMessage, src.OutputJson, dest));
+    }
+
+    private static void MapResultStatus(string? errorMessage, string? outputJson, BaseAiLogAdminDto dest)
+    {
+        dest.ResultStatus = string.IsNullOrEmpty(errorMessage) ? "Processed" : "ERROR";
+
+        if (dest.ResultStatus == "ERROR") return;
+
+        dest.ResultStatus = "Pass";
+        if (!string.IsNullOrEmpty(outputJson))
+        {
+            try {
+                using var doc = System.Text.Json.JsonDocument.Parse(outputJson);
+                if (doc.RootElement.TryGetProperty("result", out var resProp))
+                {
+                    var rawResult = resProp.GetString()?.ToUpperInvariant();
+                    if (rawResult == StageLogResult.Flagged.ToValue()) dest.ResultStatus = "Flagged";
+                    else if (rawResult == StageLogResult.MatchFound.ToValue()) dest.ResultStatus = "Match Found";
+                    else if (rawResult == StageLogResult.ManualAudit.ToValue()) dest.ResultStatus = "Manual Audit";
+                    else if (rawResult == StageLogResult.NoMatch.ToValue()) dest.ResultStatus = "No Match";
+                    else if (rawResult == StageLogResult.Approved.ToValue()) dest.ResultStatus = "Approved";
+                    else dest.ResultStatus = "Pass";
+                }
+            } catch { }
+        }
     }
 }

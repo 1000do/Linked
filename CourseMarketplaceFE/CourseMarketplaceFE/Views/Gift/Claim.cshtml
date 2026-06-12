@@ -1,0 +1,310 @@
+@model CourseMarketplaceFE.Controllers.GiftValidationViewModel
+@{
+    ViewData["Title"] = "You've Received a Gift! - " + Model.CourseTitle;
+    var token = ViewBag.Token as string;
+    var isLoggedIn = ViewBag.IsLoggedIn is bool && (bool)ViewBag.IsLoggedIn;
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+        --text-dark: #2D3436;
+        --text-muted: #636E72;
+        --border-radius: 24px;
+    }
+
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background: radial-gradient(circle at 50% 50%, #fef9f8 0%, #f6f0ec 100%);
+        min-height: 100vh;
+        margin: 0;
+    }
+
+    .claim-wrapper {
+        max-width: 750px;
+        margin: 60px auto;
+        padding: 0 20px;
+    }
+
+    .gift-card-main {
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+        background: #fff;
+        border: 1px solid rgba(255,255,255,0.4);
+    }
+
+    .theme-header {
+        padding: 50px 40px;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        min-height: 220px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    /* Gradient Backgrounds */
+    .theme-header.theme-classic {
+        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    }
+
+    .theme-header.theme-birthday {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+        color: #2D3436 !important;
+    }
+
+    .theme-header.theme-thanks {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .theme-header.theme-congrats {
+        background: linear-gradient(135deg, #f857a6 0%, #ff5858 100%);
+    }
+
+    /* Interactive Elements for Themes */
+    .birthday-balloon {
+        position: absolute;
+        bottom: -20px;
+        font-size: 2.5rem;
+        animation: floatUp 8s infinite ease-in-out;
+        opacity: 0.75;
+    }
+
+    @@keyframes floatUp {
+        0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.8; }
+        90% { opacity: 0.8; }
+        100% { transform: translateY(-260px) rotate(15deg); opacity: 0; }
+    }
+
+    .gift-logo {
+        font-size: 0.85rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        opacity: 0.9;
+    }
+
+    .sender-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-top: 15px;
+        line-height: 1.2;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .message-body {
+        padding: 40px;
+        background: #fff;
+        border-bottom: 1px solid #F1F2F6;
+    }
+
+    .message-text {
+        font-size: 1.15rem;
+        line-height: 1.6;
+        color: #4A4A4A;
+        font-style: italic;
+        margin-bottom: 30px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .course-details-box {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        background: #F8F9FA;
+        padding: 20px;
+        border-radius: 16px;
+        border: 1px solid #E9ECEF;
+    }
+
+    .course-img {
+        width: 100px;
+        height: 70px;
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    .course-name {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: var(--text-dark);
+        margin: 0 0 5px 0;
+    }
+
+    .claim-action-section {
+        padding: 35px 40px;
+        text-align: center;
+        background: rgba(250, 250, 250, 0.7);
+    }
+
+    .claim-btn {
+        background: var(--primary-gradient);
+        color: #fff;
+        border: none;
+        padding: 18px 40px;
+        border-radius: 14px;
+        font-size: 1.25rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 25px rgba(255, 107, 107, 0.35);
+        display: inline-block;
+        width: 100%;
+        box-sizing: border-box;
+        text-decoration: none;
+    }
+
+    .claim-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(255, 107, 107, 0.45);
+        color: #fff;
+    }
+
+    .login-needed-box {
+        background: rgba(254, 150, 0, 0.08);
+        border: 1px solid rgba(254, 150, 0, 0.2);
+        padding: 20px;
+        border-radius: 16px;
+        margin-bottom: 20px;
+        text-align: left;
+    }
+</style>
+
+<div class="claim-wrapper">
+    <div class="gift-card-main">
+        
+        <!-- Thiệp động dựa theo Theme -->
+        <div class="theme-header theme-@Model.CardTheme">
+            @if (Model.CardTheme == "birthday")
+            {
+                <!-- Hiệu ứng bong bóng bay -->
+                <div class="birthday-balloon" style="left: 10%; animation-delay: 0s;">🎈</div>
+                <div class="birthday-balloon" style="left: 30%; animation-delay: 2s; font-size: 2rem;">🎈</div>
+                <div class="birthday-balloon" style="left: 60%; animation-delay: 1.5s;">🎈</div>
+                <div class="birthday-balloon" style="left: 85%; animation-delay: 3.5s; font-size: 1.8rem;">🎈</div>
+            }
+            <div class="gift-logo">Special Gift For You</div>
+            <div class="sender-title">
+                @(string.IsNullOrEmpty(Model.RecipientName) ? "Hello!" : $"Dear {Model.RecipientName},")
+                <br />
+                <span style="font-size: 1.25rem; font-weight:400; opacity: 0.9;">
+                    @Model.SenderName has sent you a course gift card!
+                </span>
+            </div>
+        </div>
+
+        <div class="message-body">
+            @if (!string.IsNullOrWhiteSpace(Model.GiftMessage))
+            {
+                <div class="message-text">“@Model.GiftMessage”</div>
+            }
+            else
+            {
+                <div class="message-text">“Happy learning! Enjoy your new online course!”</div>
+            }
+
+            <div class="course-details-box">
+                <img src="@(string.IsNullOrEmpty(Model.CourseThumbnailUrl) ? "/img/default-course.jpg" : Model.CourseThumbnailUrl)" class="course-img" alt="@Model.CourseTitle" />
+                <div>
+                    <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--text-muted);">Gift Course</span>
+                    <h4 class="course-name">@Model.CourseTitle</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="claim-action-section">
+            @if (Model.IsClaimed)
+            {
+                <div style="padding: 20px; background: rgba(0,0,0,0.03); border-radius: 12px; color: var(--text-muted); font-weight:600; font-size:1.1rem;">
+                    This gift has already been claimed successfully. Enjoy your learning!
+                </div>
+            }
+            else if (isLoggedIn)
+            {
+                <button type="button" class="claim-btn" id="claimButton">Claim Your Course Now</button>
+            }
+            else
+            {
+                <div class="login-needed-box">
+                    <h4 style="margin:0 0 8px 0; color:#E67E22; font-family:'Outfit'; font-weight:700;">Account Required</h4>
+                    <p style="margin:0 0 15px 0; font-size:0.9rem; color:var(--text-muted); line-height:1.4;">
+                        To claim this course, please log in to your account or register a new one. 
+                        <strong>Tip:</strong> Registering with <strong>@Model.RecipientName</strong>'s email will instantly verify your account!
+                    </p>
+                    <div style="display:flex; gap:10px;">
+                        <a href="/Account/Login?returnUrl=@(Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString))" class="btn btn-primary" style="flex:1; font-weight:700;">Log In</a>
+                        <a href="/Account/Register?giftToken=@token&returnUrl=@(Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString))" class="btn btn-outline-primary" style="flex:1; font-weight:700;">Register</a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const claimBtn = document.getElementById("claimButton");
+        const token = "@token";
+
+        if (claimBtn) {
+            claimBtn.addEventListener("click", async function () {
+                // Thêm hiệu ứng loading
+                claimBtn.disabled = true;
+                claimBtn.textContent = "Processing claim...";
+
+                try {
+                    const response = await fetch("/Gift/ClaimGiftAjax", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                        },
+                        body: `token=${encodeURIComponent(token)}`
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Bắn pháo hoa giấy chúc mừng!
+                        confetti({
+                            particleCount: 150,
+                            spread: 80,
+                            origin: { y: 0.6 }
+                        });
+
+                        claimBtn.textContent = "Claimed successfully! Redirecting...";
+                        claimBtn.style.background = "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)";
+                        claimBtn.style.boxShadow = "0 10px 25px rgba(56, 239, 125, 0.35)";
+
+                        // Đợi 2 giây xem pháo hoa rồi redirect sang trang học tập
+                        setTimeout(() => {
+                            window.location.href = "/Course/MyCourses";
+                        }, 2200);
+
+                    } else {
+                        alert(result.message || "Failed to claim course.");
+                        claimBtn.disabled = false;
+                        claimBtn.textContent = "Claim Your Course Now";
+                    }
+                } catch (err) {
+                    alert("A connection error occurred. Please try again.");
+                    claimBtn.disabled = false;
+                    claimBtn.textContent = "Claim Your Course Now";
+                }
+            });
+        }
+    });
+</script>

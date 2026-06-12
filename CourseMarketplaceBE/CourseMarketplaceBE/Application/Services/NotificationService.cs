@@ -54,6 +54,7 @@ namespace CourseMarketplaceBE.Application.Services
                         notificationId = noti.NotificationId,
                         title = noti.Title,
                         content = noti.Content,
+                        linkAction = noti.LinkAction,
                         createdAt = noti.CreatedAt,
                         isRead = false,
                         receiverId = noti.ReceiverId
@@ -260,6 +261,7 @@ namespace CourseMarketplaceBE.Application.Services
                     notificationId = 0,
                     title = dto.Title,
                     content = dto.Content,
+                    linkAction = (string?)null,
                     createdAt = now,
                     isRead = false,
                     receiverId = uid,
@@ -304,6 +306,7 @@ namespace CourseMarketplaceBE.Application.Services
                         notificationId = noti.NotificationId,
                         title = noti.Title,
                         content = noti.Content,
+                        linkAction = noti.LinkAction,
                         createdAt = noti.CreatedAt,
                         isRead = false,
                         receiverId = noti.ReceiverId

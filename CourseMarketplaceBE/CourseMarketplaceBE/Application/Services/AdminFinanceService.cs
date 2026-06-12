@@ -36,6 +36,7 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly ISystemConfigRepository _configRepo;
         private readonly ICourseRepository _courseRepo;
         private readonly IStripeConnectService _stripeConnect;
+        private readonly IGiftRepository _giftRepo;
 
         // Key trong bảng system_configs
         private const string TransferRateKey = "TransferRate";
@@ -50,7 +51,8 @@ namespace CourseMarketplaceBE.Application.Services
             ILogger<AdminFinanceService> logger,
             ISystemConfigRepository configRepo,
             ICourseRepository courseRepo,
-            IStripeConnectService stripeConnect)
+            IStripeConnectService stripeConnect,
+            IGiftRepository giftRepo)
         {
             _repo = repo;
             _paymentGateway = paymentGateway;
@@ -61,6 +63,7 @@ namespace CourseMarketplaceBE.Application.Services
             _configRepo = configRepo;
             _courseRepo = courseRepo;
             _stripeConnect = stripeConnect;
+            _giftRepo = giftRepo;
         }
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -662,21 +665,56 @@ namespace CourseMarketplaceBE.Application.Services
                 payout.PayoutAmount = -Math.Abs(payout.PayoutAmount);
             }
 
-            // ── 5. REVOKE ENROLLMENT ────────────────────────────────────────
+            // ── 5. REVOKE ENROLLMENT & GIFT HANDLING ────────────────────────
             bool enrollmentRevoked = false;
-            var buyerUserId = txn.AccountFromNavigation?.User?.UserId;
             var courseId = txn.OrderItem?.CourseId;
 
-            if (buyerUserId.HasValue && courseId.HasValue)
+            if (courseId.HasValue)
             {
-                var enrollment = await _courseRepo.GetActiveEnrollmentAsync(buyerUserId.Value, courseId.Value);
-                if (enrollment != null)
+                // Kiểm tra xem đây có phải giao dịch Quà tặng không
+                Domain.Entities.Gift? gift = null;
+                if (txn.OrderItemId.HasValue)
                 {
-                    enrollment.EnrollmentStatus = "revoked";
-                    enrollmentRevoked = true;
-                    _logger.LogInformation(
-                        "🚫 Enrollment revoked | UserId={UID} | CourseId={CID}",
-                        buyerUserId.Value, courseId.Value);
+                    gift = await _giftRepo.GetByOrderItemIdAsync(txn.OrderItemId.Value);
+                }
+
+                if (gift != null)
+                {
+                    // Cập nhật trạng thái quà tặng thành 'refunded' để vô hiệu hóa
+                    gift.DeliveryStatus = "refunded";
+                    gift.UpdatedAt = DateTime.Now;
+                    _giftRepo.Update(gift);
+
+                    // Thu hồi Enrollment của người nhận (nếu có)
+                    if (gift.ClaimedByUserId.HasValue)
+                    {
+                        var enrollment = await _courseRepo.GetActiveEnrollmentAsync(gift.ClaimedByUserId.Value, courseId.Value);
+                        if (enrollment != null)
+                        {
+                            enrollment.EnrollmentStatus = "revoked";
+                            enrollmentRevoked = true;
+                            _logger.LogInformation(
+                                "🚫 Recipient Enrollment revoked | UserId={UID} | CourseId={CID}",
+                                gift.ClaimedByUserId.Value, courseId.Value);
+                        }
+                    }
+                }
+                else
+                {
+                    // Thu hồi Enrollment của người mua (giao dịch mua thông thường)
+                    var buyerUserId = txn.AccountFromNavigation?.User?.UserId;
+                    if (buyerUserId.HasValue)
+                    {
+                        var enrollment = await _courseRepo.GetActiveEnrollmentAsync(buyerUserId.Value, courseId.Value);
+                        if (enrollment != null)
+                        {
+                            enrollment.EnrollmentStatus = "revoked";
+                            enrollmentRevoked = true;
+                            _logger.LogInformation(
+                                "🚫 Buyer Enrollment revoked | UserId={UID} | CourseId={CID}",
+                                buyerUserId.Value, courseId.Value);
+                        }
+                    }
                 }
             }
 
@@ -814,6 +852,16 @@ namespace CourseMarketplaceBE.Application.Services
             if (txn.TransactionCreatedAt.HasValue && txn.TransactionCreatedAt.Value < DateTime.UtcNow.AddDays(-14))
                 throw new InvalidOperationException("The transaction has exceeded the 14-day refund period required by platform rules.");
 
+            // Ràng buộc hoàn tiền giao dịch Quà tặng: Không cho phép hoàn tiền nếu quà đã được nhận (Claimed)
+            if (txn.OrderItemId.HasValue)
+            {
+                var gift = await _giftRepo.GetByOrderItemIdAsync(txn.OrderItemId.Value);
+                if (gift != null && gift.IsClaimed)
+                {
+                    throw new InvalidOperationException("This gift has already been claimed, refund is not allowed.");
+                }
+            }
+
             var courseId = txn.OrderItem?.CourseId;
             if (courseId == null)
                 throw new InvalidOperationException("Course not found for this transaction.");
@@ -929,6 +977,49 @@ namespace CourseMarketplaceBE.Application.Services
 
             if (txn.TransactionsStatus != TransactionStatus.RefundPending.ToValue())
                 throw new InvalidOperationException("Transaction is not in pending refund approval status.");
+
+            // Kiểm tra ràng buộc quà tặng (is_claimed)
+            if (txn.OrderItemId.HasValue)
+            {
+                var gift = await _giftRepo.GetByOrderItemIdAsync(txn.OrderItemId.Value);
+                if (gift != null && gift.IsClaimed)
+                {
+                    // Tự động chuyển yêu cầu thành Rejected (quay về trạng thái succeeded)
+                    txn.TransactionsStatus = TransactionStatus.Succeeded.ToValue();
+                    var rejectNote = "This gift has already been claimed, refund is not allowed.";
+                    if (txn.TransactionExt == null)
+                    {
+                        txn.TransactionExt = new Domain.Entities.TransactionExt
+                        {
+                            TransactionId = txn.TransactionId,
+                            RefundAdminNote = rejectNote,
+                            RefundRequestedAt = DateTime.UtcNow
+                        };
+                    }
+                    else
+                    {
+                        txn.TransactionExt.RefundAdminNote = rejectNote;
+                    }
+                    await _repo.SaveChangesAsync();
+
+                    // Gửi thông báo đến học viên (người mua)
+                    if (txn.AccountFrom.HasValue)
+                    {
+                        try
+                        {
+                            await _notiService.SendNotificationAsync(
+                                txn.AccountFrom.Value,
+                                "Refund Request REJECTED",
+                                $"Your refund request for transaction #{transactionId} has been rejected by the system. Note: {rejectNote}",
+                                "/Transaction/History"
+                            );
+                        }
+                        catch { }
+                    }
+
+                    throw new InvalidOperationException("This gift has already been claimed, refund is not allowed.");
+                }
+            }
 
             // Lưu thông tin duyệt của Admin trước
             if (txn.TransactionExt == null)

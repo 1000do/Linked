@@ -83,8 +83,39 @@ public class CartController : Controller
             : $"cart/summary?couponCode={Uri.EscapeDataString(couponCode)}";
 
         var response = await _api.GetAsync(url);
-        var json = await response.Content.ReadAsStringAsync();
+        if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+        {
+            var errJson = await response.Content.ReadAsStringAsync();
+            string errorMsg = "This coupon is invalid.";
+            try
+            {
+                using var errDoc = JsonDocument.Parse(errJson);
+                if (errDoc.RootElement.TryGetProperty("message", out var m))
+                    errorMsg = m.GetString() ?? errorMsg;
+            }
+            catch { }
 
+            TempData["CartError"] = errorMsg;
+
+            if (TempData["PendingCouponCheck"] is int badPendingCourseId)
+            {
+                couponMap.Remove(badPendingCourseId);
+                SaveCouponMapToCookie(couponMap);
+            }
+            else
+            {
+                SaveCouponMapToCookie(new Dictionary<int, string>());
+            }
+
+            var updatedCouponCode = string.Join(",", couponMap.Values.Distinct());
+            url = string.IsNullOrWhiteSpace(updatedCouponCode)
+                ? "cart/summary"
+                : $"cart/summary?couponCode={Uri.EscapeDataString(updatedCouponCode)}";
+
+            response = await _api.GetAsync(url);
+        }
+
+        var json = await response.Content.ReadAsStringAsync();
         var model = new CartViewModel();
 
         if (response.IsSuccessStatusCode && !string.IsNullOrWhiteSpace(json))

@@ -1,4 +1,4 @@
-﻿namespace CourseMarketplaceFE.Models
+namespace CourseMarketplaceFE.Models
 {
     public class InstructorApprovalViewModel
     {
@@ -8,6 +8,8 @@
         public string? AvatarUrl { get; set; }
         public string? ProfessionalTitle { get; set; }
         public string? LinkedInUrl { get; set; }
+        public string? YoutubeUrl { get; set; }
+        public string? FacebookUrl { get; set; }
         public string? DocumentUrl { get; set; }
         public string? ApprovalStatus { get; set; }
         public string? ExpertiseCategories { get; set; }
