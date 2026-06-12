@@ -29,15 +29,16 @@ hide footbox
 mainframe Sort Instructor's Transaction History
 actor Instructor as act
 
-participant "Instructor.cshtml" as view
-participant "TransactionControllerFE" as fe_ctrl
-participant "TransactionControllerBE" as be_ctrl
+participant "Transaction/Instructor.cshtml" as view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "TransactionController" as be_ctrl <<backend controller>>
 participant ":TransactionService" as sv
 participant ":TransactionRepository" as repo
+participant ":AppDbContext" as ctx
 database Database as db
 
 act++
-act->view++: Select sort option (e.g. "Amount: High to Low")\nand click "Filter" button
+act->view++: Select sort option and click "Filter"
 view->fe_ctrl++: Send GET /Transaction/Instructor?tab=tx&sortBy=amount_desc&page=1
 
 fe_ctrl->be_ctrl++: Send GET /api/transactions/instructor?page=1&pageSize=20&sortBy=amount_desc&year=... (with Bearer Token)
@@ -62,15 +63,17 @@ else [sortBy == "date_asc"]
     repo--
 end
 
-repo->db++: Execute ordered query with Skip() and Take()
-db-->>repo--: Return ordered transaction list & total count
+repo->ctx++: Query Transactions
+ctx->db++: Execute ordered query with Skip() and Take()
+db-->>ctx--: Return ordered transaction list & total count
+ctx-->>repo--: Return transactions list and count
 
 repo-->>sv--: Return (sortedList, totalCount)
 sv-->>be_ctrl--: Return PagedResult<TransactionListDto>
 be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with sorted Transactions JSON
 
-fe_ctrl-->>view--: Return View(vm) with sorted list
-view->view++: Re-render purchases table in the new sorted order
+fe_ctrl-->>view--: Return View(vm)
+view->view++: Re-render purchases table
 view--
 view-->>act--: Display transaction list sorted by amount
 @enduml

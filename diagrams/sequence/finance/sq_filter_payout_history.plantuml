@@ -29,15 +29,16 @@ hide footbox
 mainframe Filter Payout History
 actor Instructor as act
 
-participant "Instructor.cshtml" as view
-participant "TransactionControllerFE" as fe_ctrl
-participant "InstructorControllerBE" as be_ctrl
+participant "Transaction/Instructor.cshtml" as view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "InstructorController" as be_ctrl <<backend controller>>
 participant ":InstructorService" as sv
 participant ":InstructorRepository" as repo
+participant ":AppDbContext" as ctx
 database Database as db
 
 act++
-act->view++: Enter payout keyword (e.g. "Stripe") and select payout status (e.g. "Success")\nand click "Filter" button
+act->view++: Enter payout keyword, select status, and click "Filter"
 view->fe_ctrl++: Send GET /Transaction/Instructor?tab=po&payoutKeyword=Stripe&payoutStatus=succeeded&payoutPage=1
 
 fe_ctrl->be_ctrl++: Send GET /api/instructor/payouts?page=1&pageSize=20&keyword=Stripe&status=succeeded&year=... (with Bearer Token)
@@ -58,15 +59,17 @@ alt [status is not null or empty]
     repo--
 end
 
-repo->db++: Execute filtered query with Skip() and Take()
-db-->>repo--: Return filtered payouts list and total count
+repo->ctx++: Query InstructorPayouts
+ctx->db++: Execute filtered query with Skip() and Take()
+db-->>ctx--: Return filtered payouts list and total count
+ctx-->>repo--: Return payouts list and count
 
 repo-->>sv--: Return PagedResult<InstructorPayoutDto>
 sv-->>be_ctrl--: Return PagedResult<InstructorPayoutDto>
 be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with filtered Payouts JSON
 
-fe_ctrl-->>view--: Return View(vm) with filtered list
-view->view++: Re-render Payout History table with filtered rows
+fe_ctrl-->>view--: Return View(vm)
+view->view++: Re-render Payout History table
 view--
 view-->>act--: Display payout list matching criteria
 @enduml

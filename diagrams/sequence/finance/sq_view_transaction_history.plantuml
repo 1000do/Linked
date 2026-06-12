@@ -29,11 +29,12 @@ hide footbox
 mainframe View Instructor's Transaction History
 actor Instructor as act
 
-participant "Instructor.cshtml" as view
-participant "TransactionControllerFE" as fe_ctrl
-participant "TransactionControllerBE" as be_ctrl
+participant "Transaction/Instructor.cshtml" as view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "TransactionController" as be_ctrl <<backend controller>>
 participant ":TransactionService" as sv
 participant ":TransactionRepository" as repo
+participant ":AppDbContext" as ctx
 database Database as db
 
 act++
@@ -48,15 +49,17 @@ be_ctrl--
 be_ctrl->sv++: Call GetInstructorTransactionsAsync(instructorId, page, pageSize, ...)
 sv->repo++: Call GetInstructorTransactionsAsync(instructorId, page, pageSize, ...)
 
-repo->db++: Query Transactions joined with course and buyer details\nwhere InstructorId = instructorId
-db-->>repo--: Return list of matching transactions and total count
+repo->ctx++: Query Transactions
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return list of matching transactions and total count
+ctx-->>repo--: Return data
 
 repo-->>sv--: Return (transactionsList, totalCount)
 sv-->>be_ctrl--: Return PagedResult<TransactionListDto>
 be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with Transactions JSON
 
-fe_ctrl-->>view--: Return View(vm) with Transactions list data
-view->view++: Render table of Learner Purchases:\nDate, Course Title, Purchaser, Net Amount, Status
+fe_ctrl-->>view--: Return View(vm)
+view->view++: Render table of Learner Purchases
 view--
 view-->>act--: Display transaction history list with pagination
 @enduml

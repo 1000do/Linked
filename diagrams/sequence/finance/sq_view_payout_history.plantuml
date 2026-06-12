@@ -29,11 +29,12 @@ hide footbox
 mainframe View Payout History
 actor Instructor as act
 
-participant "Instructor.cshtml" as view
-participant "TransactionControllerFE" as fe_ctrl
-participant "InstructorControllerBE" as be_ctrl
+participant "Transaction/Instructor.cshtml" as view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "InstructorController" as be_ctrl <<backend controller>>
 participant ":InstructorService" as sv
 participant ":InstructorRepository" as repo
+participant ":AppDbContext" as ctx
 database Database as db
 
 act++
@@ -48,15 +49,17 @@ be_ctrl--
 be_ctrl->sv++: Call GetPayoutsAsync(instructorId, page, pageSize, ...)
 sv->repo++: Call GetPayoutsAsync(instructorId, page, pageSize, ...)
 
-repo->db++: Query InstructorPayouts where InstructorId = instructorId
-db-->>repo--: Return list of payout entries and total count
+repo->ctx++: Query InstructorPayouts
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return list of payout entries and total count
+ctx-->>repo--: Return data
 
 repo-->>sv--: Return PagedResult<InstructorPayoutDto>
 sv-->>be_ctrl--: Return PagedResult<InstructorPayoutDto>
 be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with Payouts JSON
 
-fe_ctrl-->>view--: Return View(vm) with Payouts list data
-view->view++: Render table of Payout History:\nPayout Date, Course Title, Net Payout, Status
+fe_ctrl-->>view--: Return View(vm)
+view->view++: Render table of Payout History
 view--
 view-->>act--: Display payout history list with pagination
 @enduml

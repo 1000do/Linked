@@ -29,11 +29,12 @@ hide footbox
 mainframe View Instructor's Course Revenue
 actor Instructor as act
 
-participant "Instructor.cshtml" as view
-participant "TransactionControllerFE" as fe_ctrl
-participant "TransactionControllerBE" as be_ctrl
+participant "Transaction/Instructor.cshtml" as view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "TransactionController" as be_ctrl <<backend controller>>
 participant ":AdminFinanceService" as sv
 participant ":AdminFinanceRepository" as repo
+participant ":AppDbContext" as ctx
 database Database as db
 
 act++
@@ -48,18 +49,20 @@ be_ctrl--
 be_ctrl->sv++: Call GetInstructorCourseRevenuesByInstructorAsync(instructorId, year, month)
 sv->repo++: Call GetInstructorCourseRevenuesByInstructorAsync(instructorId, year, month)
 
-repo->db++: Query Courses and aggregate Transactions:\n- Sales count\n- Monthly, Previous Month, Yearly, and Lifetime Revenues
-db-->>repo--: Return aggregated course revenues list
+repo->ctx++: Query Courses and aggregate Transactions
+ctx->db++: Execute aggregation SELECT query
+db-->>ctx--: Return aggregated course revenues list
+ctx-->>repo--: Return data
 
 repo-->>sv--: Return List<InstructorCourseRevenueResponse>
 sv-->>be_ctrl--: Return List<InstructorCourseRevenueResponse>
 be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with course revenues JSON
 
-fe_ctrl->fe_ctrl++: Sort revenues list based on courseSortBy ("sales_desc")
+fe_ctrl->fe_ctrl++: Sort revenues list based on courseSortBy
 fe_ctrl--
 
-fe_ctrl-->>view--: Return View(vm) with sorted CourseRevenues list
-view->view++: Render Course Revenues table:\nCourse Title, Sales Count, Monthly, Yearly, and Lifetime Revenue
+fe_ctrl-->>view--: Return View(vm)
+view->view++: Render Course Revenues table
 view--
 view-->>act--: Display course-by-course revenue analytics
 @enduml
