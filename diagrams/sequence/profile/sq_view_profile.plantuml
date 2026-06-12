@@ -27,22 +27,19 @@
 hide footbox
 
 mainframe View Profile
-
 actor User as act
 
-participant "Profile" as view
-participant "AccountController" as fe_ctrl
-participant "ProfileController" as be_ctrl
+participant "Account/Profile.cshtml" as view
+participant "AccountController" as fe_ctrl <<frontend controller>>
+participant "ProfileController" as be_ctrl <<backend controller>>
 participant ":UserProfileService" as sv
-participant ":UserProfileResponse" as res
-participant ":User" as ett
 participant ":UserRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act++
 act->view++: Access profile page
-view->fe_ctrl++: Send GET request to /Account/Profile
+view->fe_ctrl++: Send GET /Account/Profile
 
 fe_ctrl->fe_ctrl++: Check AccessToken cookie
 fe_ctrl--
@@ -51,7 +48,7 @@ group opt [No AccessToken]
     view-->>act: Display login page
 end
 
-fe_ctrl->be_ctrl++: Send GET request to /api/Profile (with AccessToken)
+fe_ctrl->be_ctrl++: Send GET /api/Profile (with AccessToken)
 
 be_ctrl->be_ctrl++: Validate login session & Parse userId
 be_ctrl--
@@ -64,25 +61,23 @@ end
 be_ctrl->sv++: Call GetUserProfileAsync(userId)
 
 sv->repo++: Call GetUserByIdAsync(userId)
-repo->ctx++: Fetch user with navigation & instructor details
-ctx->db++: Query user, account, and instructor tables
-db-->>ctx--: Return database record
+repo->ctx++: Query User joined with navigation details
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return user record
 ctx-->>repo--: Return User entity
 repo-->>sv--: Return User entity
 
 sv->sv++: Check user != null
 sv--
 
-alt user == null
+alt [user == null]
     sv-->>be_ctrl: Return null
     be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
     fe_ctrl-->>view: Redirect to /Account/Login
     view-->>act: Display login page
-else user != null
-    sv->res++: Call UserProfileResponse()
-    res-->>sv--: Return UserProfileResponse object
+else [user != null]
     sv-->>be_ctrl--: Return UserProfileResponse DTO
-    be_ctrl-->>fe_ctrl--: Return statusCode 200 (with user profile data)
+    be_ctrl-->>fe_ctrl--: Return statusCode 200 with user profile data
     
     fe_ctrl->fe_ctrl++: Read response and check IsVerified
     fe_ctrl--
@@ -91,5 +86,4 @@ else user != null
     fe_ctrl->view--: Return View with profile data
     view-->>act--: Display user profile information
 end
-
 @enduml
