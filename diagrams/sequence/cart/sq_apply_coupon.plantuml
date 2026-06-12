@@ -30,25 +30,28 @@ mainframe Apply Coupons
 actor User as act
 
 participant "Cart/Index.cshtml" as view
-participant "CartController (FE)" as fe_ctrl
-participant "CartController (BE)" as be_ctrl
+participant "CartController" as fe_ctrl <<frontend controller>>
+participant "CartController" as be_ctrl <<backend controller>>
 participant ":CartService" as sv
 participant ":CouponRepository" as couponRepo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act++
-act->view++: Enter coupon code in coupon input box
-act->view: Click "Apply" button
-view->fe_ctrl++: Send POST request to /Cart/ApplyCoupon?couponCode=...
+act->view++: Enter coupon code and click "Apply"
+view->fe_ctrl++: Send POST /Cart/ApplyCoupon?couponCode=...
 
 fe_ctrl->fe_ctrl++: Retrieve applied coupon map from cookies
 fe_ctrl--
 fe_ctrl->fe_ctrl++: Save updated coupon code to cookie map
 fe_ctrl--
-fe_ctrl-->>view: Redirect to GET /Cart
 
-view->fe_ctrl: Send GET request to /Cart
+fe_ctrl -> view++: Redirect to Cart page
+deactivate fe_ctrl
+deactivate view
+
+view->fe_ctrl++: Send GET /Cart
+
 fe_ctrl->be_ctrl++: Send GET /api/cart/summary?couponCode=... (with Bearer Token)
 
 be_ctrl->sv++: Call GetCartSummaryAsync(userId, couponCode)
@@ -62,11 +65,11 @@ couponRepo-->>sv--: Return Coupon entity
 alt [Coupon is invalid (null / inactive / expired / limit reached)]
     sv->sv++: Set validation error message and 0 discount
     sv--
-    sv-->>be_ctrl: Return CartSummaryResponse with CouponMessage & no discount
+    sv-->>be_ctrl: Return CartSummaryResponse DTO with CouponMessage
 else [Coupon is valid]
     sv->sv++: Calculate discount based on CouponType (Percent / Flat) & MinOrderValue
     sv--
-    sv-->>be_ctrl--: Return CartSummaryResponse with AppliedCouponCode & DiscountAmount
+    sv-->>be_ctrl--: Return CartSummaryResponse DTO with AppliedCouponCode & DiscountAmount
 end
 
 be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with CartSummaryResponse JSON

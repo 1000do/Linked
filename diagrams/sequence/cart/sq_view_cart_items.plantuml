@@ -30,8 +30,8 @@ mainframe View Cart Items
 actor User as act
 
 participant "Cart/Index.cshtml" as view
-participant "CartController (FE)" as fe_ctrl
-participant "CartController (BE)" as be_ctrl
+participant "CartController" as fe_ctrl <<frontend controller>>
+participant "CartController" as be_ctrl <<backend controller>>
 participant ":CartService" as sv
 participant ":CartRepository" as repo
 participant ":CouponRepository" as couponRepo
