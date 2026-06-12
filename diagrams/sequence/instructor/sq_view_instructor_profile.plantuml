@@ -1,0 +1,79 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Instructor Profile
+actor Guest as act
+
+participant "Instructor/Profile.cshtml" as view
+participant "InstructorController" as fe_ctrl <<frontend controller>>
+participant "InstructorController" as be_ctrl <<backend controller>>
+participant ":InstructorService" as sv
+participant ":InstructorRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Click on instructor's name/profile link
+view->fe_ctrl++: Send GET /Instructor/Profile/{id}
+
+fe_ctrl->be_ctrl++: Send GET /api/instructor/public/{id}
+
+be_ctrl->sv++: Call GetPublicProfileAsync(id)
+
+sv->repo++: Call GetByIdWithNavigationAsync(id)
+repo->ctx++: Query Instructor joined with User details
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return data
+ctx-->>repo--: Return data
+repo-->>sv--: Return Instructor entity
+
+sv->repo++: Call GetStatsAsync(id)
+repo->ctx++: Query Transactions and Reviews
+ctx->db++: Execute aggregation query
+db-->>ctx--: Return stats
+ctx-->>repo--: Return stats DTO
+repo-->>sv--: Return stats DTO
+
+sv->repo++: Call CountActiveCoursesAsync(id)
+repo->ctx++: Query published courses count
+ctx->db++: Execute COUNT query
+db-->>ctx--: Return count
+ctx-->>repo--: Return count
+repo-->>sv--: Return count
+
+sv->sv++: Assemble InstructorPublicProfileDto
+sv--
+
+sv-->>be_ctrl--: Return InstructorPublicProfileDto
+be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with Profile JSON
+
+fe_ctrl-->>view--: Return View(vm)
+view->view++: Render profile details
+view--
+view-->>act--: Display Instructor Public Profile page
+@enduml

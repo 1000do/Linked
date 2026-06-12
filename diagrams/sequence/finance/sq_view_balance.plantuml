@@ -1,0 +1,88 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Balance (Financial Overview)
+actor Instructor as act
+
+participant "Transaction/Instructor.cshtml" as view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "InstructorController" as inst_be_ctrl <<backend controller>>
+participant "TransactionController" as tx_be_ctrl <<backend controller>>
+participant ":InstructorService" as inst_sv
+participant ":TransactionService" as tx_sv
+participant ":AdminFinanceService" as finance_sv
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Access "Revenue & Payouts" page
+view->fe_ctrl++: Send GET /Transaction/Instructor
+
+note over fe_ctrl
+    Calls are executed in parallel
+    via Task.WhenAll()
+end note
+
+fe_ctrl->inst_be_ctrl++: Send GET /api/instructor/payouts?page=1&pageSize=100000 (with Year/Month)
+inst_be_ctrl->inst_sv++: Call GetPayoutsAsync(userId, page, pageSize, ...)
+inst_sv->ctx++: Query InstructorPayouts where InstructorId = userId
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return payout entities
+ctx-->>inst_sv--: Return payout entities
+inst_sv-->>inst_be_ctrl--: Return PagedResult<InstructorPayoutDto>
+inst_be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with Payouts JSON
+
+fe_ctrl->inst_be_ctrl++: Send GET /api/instructor/payout-days
+inst_be_ctrl->finance_sv++: Call GetPayoutDaysConfigAsync()
+finance_sv->ctx++: Query PayoutDays system config
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return payout days configuration
+ctx-->>finance_sv--: Return config
+finance_sv-->>inst_be_ctrl--: Return config value (e.g. "15")
+inst_be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with string value
+
+fe_ctrl->tx_be_ctrl++: Send GET /api/transactions/instructor/course-revenues (with Year/Month)
+tx_be_ctrl->tx_sv++: Call GetCourseRevenuesAsync(userId, year, month)
+tx_sv->ctx++: Query transactions and group by course
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return course revenues list
+ctx-->>tx_sv--: Return course revenues list
+tx_sv-->>tx_be_ctrl--: Return List<InstructorCourseRevenueResponse>
+tx_be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with Revenues JSON
+
+fe_ctrl->fe_ctrl++: Calculate financial stats
+fe_ctrl--
+
+fe_ctrl->fe_ctrl++: Calculate Next automated transfer date
+fe_ctrl--
+
+fe_ctrl-->>view--: Return View(vm)
+view->view++: Render Revenue Statistics cards
+view--
+view-->>act--: Display balances and next payout date information
+@enduml

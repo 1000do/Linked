@@ -1,0 +1,157 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Checkout (Stripe Session Flow)
+actor User as act
+
+participant "Cart/Index.cshtml" as view
+participant "CartController" as fe_ctrl <<frontend controller>>
+participant "CheckoutController" as be_ctrl <<backend controller>>
+participant ":CheckoutService" as sv
+participant ":CheckoutRepository" as repo
+participant ":PaymentGatewayService" as gateway
+participant "Stripe API" as stripe
+participant ":AppDbContext" as ctx
+database Database as db
+
+== Phase 1: Initiate Checkout Session ==
+act++
+act->view++: Click "Checkout" button
+view->fe_ctrl++: Send POST request to /Cart/Checkout
+
+fe_ctrl->be_ctrl++: Send POST /api/checkout/process (with Bearer Token & CouponCode)
+
+be_ctrl->sv++: Call InitiateCheckoutAsync(userId, request)
+sv->repo++: Call GetCartItemsWithCourseAndInstructorAsync(userId)
+repo->ctx++: Query CartItems joined with Course & Instructor details
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return CartItems list
+ctx-->>repo--: Return CartItems list
+repo-->>sv--: Return CartItems list
+
+sv->sv++: Calculate order totals (apply Coupon if active)
+sv--
+
+sv->gateway++: Call CreateCheckoutSessionAsync(lineItems, successUrl, cancelUrl, ...)
+gateway->stripe++: Create Stripe Checkout Session
+stripe-->>gateway--: Return Stripe Session URL & SessionId
+gateway-->>sv--: Return PaymentSessionResult
+
+sv->repo++: Call AddOrderAsync(order) (Creates OrderInfo with Status = Pending)
+repo->ctx++: Add OrderInfo entity
+ctx-->>repo--: Return
+repo-->>sv--: Return
+
+sv->repo++: Call SaveChangesAsync()
+repo->ctx++: Call SaveChangesAsync()
+ctx->db++: Execute INSERT OrderInfo in Database
+db-->>ctx--: Return result
+ctx-->>repo--: Return numberOfRowsAffected
+repo-->>sv--: Return numberOfRowsAffected
+
+repo->repo++: Check numberOfRowsAffected
+repo--
+
+alt [numberOfRowsAffected > 0]
+    repo-->>sv: Return true
+    sv-->>be_ctrl--: Return CheckoutResponse DTO (with SessionUrl & SessionId)
+    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with CheckoutResponse JSON
+    fe_ctrl-->>view--: Redirect User to Stripe SessionUrl
+    view-->>act--: Redirected to Stripe Checkout form
+else [numberOfRowsAffected = 0]
+    repo-->>sv--: Return false
+    sv->sv++: throw InvalidOperationException
+    sv--
+    sv-->>be_ctrl--: throw InvalidOperationException
+    be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view--: Return statusCode 400
+    view-->>act--: Display order creation failed error message
+end
+
+== Phase 2: Checkout Success Callback ==
+stripe->act++: Completes payment card form & confirms purchase
+act->fe_ctrl++: Redirected to /Cart/CheckoutSuccess?sessionId=...
+fe_ctrl->be_ctrl++: Send GET /api/checkout/success?sessionId=... (with Bearer Token)
+
+be_ctrl->sv++: Call ProcessPaymentSuccessAsync(sessionId)
+sv->gateway++: Call GetSessionMetadataAsync(sessionId)
+gateway->stripe++: Retrieve Session details
+stripe-->>gateway--: Return Stripe Session & Metadata (userId, couponCode)
+gateway-->>sv--: Return metadata
+
+sv->repo++: Call GetTransactionsBySessionIdAsync(sessionId)
+repo->ctx++: Query Transactions matching StripeSessionId
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return Transactions list
+ctx-->>repo--: Return result
+repo-->>sv--: Return result
+
+alt [Payment has already been processed]
+    sv-->>be_ctrl--: Return
+    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+    fe_ctrl-->>view++: Return View("Success")
+    view-->>act--: Display Purchase Success confirmation page
+else [Payment is new]
+    sv->repo++: Update OrderInfo (Status = Succeeded) and Add OrderItems
+    repo-->>sv--: Return
+    
+    sv->repo++: Add Transaction (type Purchase) and InstructorPayout entities
+    repo-->>sv--: Return
+    
+    sv->repo++: Call ClearCartAsync(userId)
+    repo->ctx++: Delete CartItems for User
+    ctx-->>repo--: Return
+    repo-->>sv--: Return
+    
+    sv->repo++: Call SaveChangesAsync()
+    repo->ctx++: Call SaveChangesAsync()
+    ctx->db++: Execute UPDATE, INSERT, DELETE statements
+    db-->>ctx--: Return result
+    ctx-->>repo--: Return numberOfRowsAffected
+    repo-->>sv--: Return numberOfRowsAffected
+    
+    repo->repo++: Check numberOfRowsAffected
+    repo--
+    
+    alt [numberOfRowsAffected > 0]
+        repo-->>sv: Return true
+        sv-->>be_ctrl--: Return completion Task
+        be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+        fe_ctrl-->>view++: Return View("Success")
+        view-->>act--: Display Purchase Success confirmation page
+    else [numberOfRowsAffected = 0]
+        repo-->>sv--: Return false
+        sv->sv++: throw InvalidOperationException
+        sv--
+        sv-->>be_ctrl--: throw InvalidOperationException
+        be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
+        fe_ctrl-->>view--: Return statusCode 400
+        view-->>act--: Display processing error message
+    end
+end
+@enduml

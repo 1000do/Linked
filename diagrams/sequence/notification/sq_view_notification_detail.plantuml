@@ -1,0 +1,91 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Notification Detail
+actor User as act
+
+participant "Notification/Index.cshtml" as view
+participant "NotificationController" as be_ctrl <<backend controller>>
+participant ":NotificationService" as sv
+participant ":NotificationHub" as hub
+participant ":NotificationRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Click on a notification row
+view->view++: Retrieve notification details
+view--
+
+alt [Notification exists]
+    view->view++: Populate and open modal
+    view--
+    view-->>act: Show Notification Detail Modal
+    
+    opt [Notification is unread]
+        view->be_ctrl++: Send PUT /api/Notification/mark-as-read/{id} (with Bearer Token)
+        
+        be_ctrl->sv++: Call MarkAsReadAsync(id, userId)
+        sv->repo++: Call MarkAsReadAsync(id, userId)
+        repo->ctx++: Query notification by id and userId
+        ctx->db++: Execute SELECT query
+        db-->>ctx--: Return notification entity
+        ctx-->>repo--: Return notification entity
+        
+        alt [notification == null]
+            repo-->>sv: Return 0
+        else [notification != null]
+            repo->ctx++: Set IsRead = true
+            ctx-->>repo--: Return
+            repo->ctx++: Call SaveChangesAsync()
+            ctx->db++: Execute UPDATE statement
+            db-->>ctx--: Return result
+            ctx-->>repo--: Return numberOfRowsAffected
+            repo-->>sv--: Return numberOfRowsAffected
+        end
+        
+        sv->sv++: Check numberOfRowsAffected
+        sv--
+        
+        alt [numberOfRowsAffected > 0]
+            sv->hub++: Call Clients.All.SendAsync("ReceiveNotification")
+            hub-->>sv: Broadcast notification via SignalR
+            hub--
+            sv-->>be_ctrl: Return true
+            be_ctrl-->>view: Return statusCode 200 (Ok)
+            view->view++: Update local state to read
+            view--
+            view-->>act: Update list UI to show notification is read
+        else [numberOfRowsAffected = 0]
+            sv-->>be_ctrl--: throw InvalidOperationException
+            be_ctrl-->>view--: Return statusCode 400 (BadRequest)
+            view-->>act--: Display error message
+        end
+    end
+end
+@enduml

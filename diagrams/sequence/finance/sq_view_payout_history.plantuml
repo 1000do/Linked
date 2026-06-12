@@ -1,0 +1,65 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Payout History
+actor Instructor as act
+
+participant "Transaction/Instructor.cshtml" as view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "InstructorController" as be_ctrl <<backend controller>>
+participant ":InstructorService" as sv
+participant ":InstructorRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Click "Payout History" tab
+view->fe_ctrl++: Send GET /Transaction/Instructor?tab=po&payoutPage=1&payoutPageSize=20
+
+fe_ctrl->be_ctrl++: Send GET /api/instructor/payouts?page=1&pageSize=20&year=... (with Bearer Token)
+
+be_ctrl->be_ctrl++: Extract instructorId from claims
+be_ctrl--
+
+be_ctrl->sv++: Call GetPayoutsAsync(instructorId, page, pageSize, ...)
+sv->repo++: Call GetPayoutsAsync(instructorId, page, pageSize, ...)
+
+repo->ctx++: Query InstructorPayouts
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return list of payout entries and total count
+ctx-->>repo--: Return data
+
+repo-->>sv--: Return PagedResult<InstructorPayoutDto>
+sv-->>be_ctrl--: Return PagedResult<InstructorPayoutDto>
+be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with Payouts JSON
+
+fe_ctrl-->>view--: Return View(vm)
+view->view++: Render table of Payout History
+view--
+view-->>act--: Display payout history list with pagination
+@enduml

@@ -1,0 +1,130 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Learning Progress
+actor User as act
+
+participant "Course/Learn.cshtml" as view
+participant "CourseController" as fe_ctrl <<frontend controller>>
+participant "EnrollmentController" as be_ctrl <<backend controller>>
+participant ":EnrollmentService" as sv
+participant ":EnrollmentRepository" as repo
+participant ":CourseRepository" as courseRepo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Access course learning page
+view->view++: loadProgress()
+view--
+
+view->fe_ctrl++: Send GET /Course/GetProgress/{courseId}
+fe_ctrl->be_ctrl++: Send GET /api/Enrollment/progress/{courseId} (with AccessToken)
+
+be_ctrl->be_ctrl++: Parse userId from token
+be_ctrl--
+
+group opt [userId == null]
+    be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
+    fe_ctrl-->>view: Return JSON (success = false)
+    view-->>act: Display unauthorized message
+end
+
+be_ctrl->sv++: Call GetProgressAsync(userId, courseId)
+
+sv->repo++: Call GetEnrollmentAsync(userId, courseId)
+repo->ctx++: Query enrollment details
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return enrollment record
+ctx-->>repo--: Return Enrollment entity
+repo-->>sv--: Return Enrollment entity
+
+sv->sv++: Check enrollment == null
+sv--
+
+alt [enrollment == null]
+    sv->courseRepo++: Call GetByIdAsync(courseId)
+    courseRepo->ctx++: Query Course details
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return Course record
+    ctx-->>courseRepo--: Return Course entity
+    courseRepo-->>sv--: Return Course entity
+    
+    sv->sv++: Check course and ownership
+    sv--
+    
+    alt [course != null && course.InstructorId == userId (Instructor Bypass)]
+        sv->courseRepo++: Call GetCourseStatsAsync(courseId)
+        courseRepo->ctx++: Query CourseStats
+        ctx->db++: Execute SELECT query
+        db-->>ctx--: Return stats record
+        ctx-->>courseRepo--: Return stats
+        courseRepo-->>sv--: Return stats
+        
+        sv-->>be_ctrl: Return ProgressResponse
+        be_ctrl-->>fe_ctrl: Return statusCode 200 (Ok)
+        fe_ctrl-->>view: Return JSON (success = true)
+        view->view++: Update UI
+        view--
+        view-->>act: Display course progress
+    else [course is null or not owner]
+        sv-->>be_ctrl: Return null
+        be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
+        fe_ctrl-->>view: Return JSON (success = false)
+        view-->>act: Display error message
+    end
+else [enrollment != null]
+    sv->courseRepo++: Call GetCourseStatsAsync(courseId)
+    courseRepo->ctx++: Query CourseStats
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return stats record
+    ctx-->>courseRepo--: Return stats
+    courseRepo-->>sv--: Return stats
+    
+    sv->repo++: Call GetCompletedMaterialCountAsync(enrollment.EnrollmentId)
+    repo->ctx++: Count completed materials
+    ctx->db++: Execute COUNT query
+    db-->>ctx--: Return count
+    ctx-->>repo--: Return count
+    repo-->>sv--: Return count
+    
+    sv->repo++: Call GetCompletedMaterialIdsAsync(enrollment.EnrollmentId)
+    repo->ctx++: Get completed material IDs
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return completed material IDs list
+    ctx-->>repo--: Return Completed material IDs list
+    repo-->>sv--: Return Completed material IDs list
+    
+    sv-->>be_ctrl--: Return ProgressResponse
+    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+    fe_ctrl-->>view--: Return JSON (success = true)
+    view->view++: Update UI
+    view--
+    view-->>act--: Display course progress to User
+end
+@enduml

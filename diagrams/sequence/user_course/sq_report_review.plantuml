@@ -1,0 +1,123 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Report a Review
+actor User as act
+
+participant "Course/ReportReviewModal.cshtml" as view
+participant "ReportController" as fe_ctrl <<frontend controller>>
+participant "ReportController" as be_ctrl <<backend controller>>
+participant ":ReportService" as sv
+participant ":ReviewRepository" as rev_repo
+participant ":ReportRepository" as r_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Select reason & input description
+act->view: Click "Submit Report"
+view->view++: Validate input
+view--
+group opt [Reason is empty]
+    view-->>act: Display client validation errors
+end
+
+view->fe_ctrl++: Send POST /Report/ReportCourseReview (JSON body)
+
+fe_ctrl->be_ctrl++: Send POST /api/report/course-reviews (with AccessToken)
+
+be_ctrl->be_ctrl++: Parse userId from token
+be_ctrl--
+
+group opt [userId == null]
+    be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
+    fe_ctrl-->>view: Return JSON (success = false)
+    view-->>act: Display unauthorized message
+end
+
+be_ctrl->sv++: Call CreateCourseReviewReportAsync(userId, request)
+
+sv->rev_repo++: Call GetCourseReviewByIdAsync(courseReviewId)
+rev_repo->ctx++: Query CourseReview details
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return review record
+ctx-->>rev_repo--: Return CourseReview entity
+rev_repo-->>sv--: Return CourseReview entity
+
+group opt [review == null]
+    sv-->>be_ctrl: throw InvalidOperationException
+    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view: Return JSON (success = false)
+    view-->>act: Display error message
+end
+
+sv->r_repo++: Call GetPendingCourseReviewReportAsync(reporterId, courseReviewId)
+r_repo->ctx++: Query pending review reports
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return report record
+ctx-->>r_repo--: Return CourseReviewReport entity
+r_repo-->>sv--: Return CourseReviewReport entity
+
+group opt [existing != null]
+    sv-->>be_ctrl: throw InvalidOperationException
+    be_ctrl-->>fe_ctrl: Return statusCode 400
+    fe_ctrl-->>view: Return JSON (success = false)
+    view-->>act: Display error message
+end
+
+sv->r_repo++: Call AddCourseReviewReportAsync(report)
+r_repo->ctx++: Add CourseReviewReport entity
+ctx-->>r_repo--: Return
+r_repo-->>sv--: Return
+
+sv->r_repo++: Call SaveChangesAsync()
+r_repo->ctx++: Call SaveChangesAsync()
+ctx->db++: Execute INSERT statement
+db-->>ctx--: Return result
+ctx-->>r_repo--: Return numberOfRowsAffected
+r_repo-->>sv--: Return numberOfRowsAffected
+
+r_repo->r_repo++: Check numberOfRowsAffected
+r_repo--
+
+alt [numberOfRowsAffected > 0]
+    r_repo-->>sv: Return true
+    sv-->>be_ctrl: Return success
+    be_ctrl-->>fe_ctrl: Return statusCode 200 (Success)
+    fe_ctrl-->>view: Return JSON (success = true)
+    view-->>act: Close modal and display success alert
+else [numberOfRowsAffected = 0]
+    r_repo-->>sv--: Return false
+    sv->sv++: throw InvalidOperationException
+    sv--
+    sv-->>be_ctrl--: throw InvalidOperationException
+    be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view--: Return JSON (success = false)
+    view-->>act--: Display error message
+end
+@enduml

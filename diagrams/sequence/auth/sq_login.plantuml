@@ -1,0 +1,87 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Login
+actor User as act
+
+participant "Login.cshtml" as view
+participant "AdminNotification.cshtml" as admin_view
+participant "Index.cshtml" as home_view
+participant "AccountController" as fe_ctrl <<frontend controller>>
+participant "AuthController" as be_ctrl <<backend controller>>
+participant ":AuthService" as sv
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Enter Username/Email and Password\nand click "Sign In"
+view->fe_ctrl++: Send POST /Account/Login with form body
+
+fe_ctrl->be_ctrl++: Send POST /api/auth/login with LoginRequest JSON
+
+be_ctrl->sv++: Call LoginAsync(request)
+sv->ctx++: Query Accounts table for Username or Email
+ctx->db++: Execute select query
+db-->>ctx--: Return Account entity details
+ctx-->>sv--: Return Account entity
+
+sv->sv++: Verify password hash match
+sv--
+
+alt [Invalid credentials]
+    sv-->>be_ctrl: Return null
+    be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
+    fe_ctrl->fe_ctrl++: Parse error message to display
+    fe_ctrl--
+    fe_ctrl-->>view: Return statusCode 401
+    view-->>act: Display "Incorrect username/email or password" error
+else [Valid credentials]
+    sv->sv++: Generate JWT AccessToken (24h) and RefreshToken (7d)
+    sv--
+    sv-->>be_ctrl--: Return LoginResponse DTO
+    
+    be_ctrl->be_ctrl++: Append HttpOnly cookies to response (API path)
+    be_ctrl--
+    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with LoginResponse JSON
+    
+    fe_ctrl->fe_ctrl++: Append HttpOnly cookies (AccessToken, RefreshToken)\nand client-readable cookies (UserRole, UserName, AvatarUrl, UserId, IsVerified)
+    fe_ctrl--
+    
+    alt [UserRole is Admin or Staff]
+        fe_ctrl -> admin_view++: Redirect to Admin Notification page
+        deactivate fe_ctrl
+        admin_view -->> act--: Display Admin Notification page
+    else [UserRole is Learner (User) or Instructor]
+        fe_ctrl -> home_view++: Redirect to Home Index page
+        deactivate fe_ctrl
+        home_view -->> act--: Display Homepage
+    end
+    
+    deactivate view
+end
+@enduml
