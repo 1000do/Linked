@@ -27,12 +27,11 @@
 hide footbox
 
 mainframe View Wishlist
-
 actor User as act
 
-participant "WishlistIndexView" as view
-participant "WishlistController" as fe_ctrl
-participant "WishlistController" as be_ctrl
+participant "Wishlist/Index.cshtml" as view
+participant "WishlistController" as fe_ctrl <<frontend controller>>
+participant "WishlistController" as be_ctrl <<backend controller>>
 participant ":WishlistService" as sv
 participant ":WishlistRepository" as w_repo
 participant ":CourseRepository" as c_repo
@@ -41,38 +40,38 @@ database Database as db
 
 act++
 act->view++: Access wishlist page
-view->fe_ctrl++: Send GET request to /Wishlist/Index
+view->fe_ctrl++: Send GET /Wishlist/Index
 
-fe_ctrl->be_ctrl++: Send GET request to /api/wishlist (with AccessToken)
+fe_ctrl->be_ctrl++: Send GET /api/wishlist (with AccessToken)
 
-be_ctrl->be_ctrl++: GetUserId() from Token Claims
+be_ctrl->be_ctrl++: Parse userId from token
 be_ctrl--
 
-alt response.StatusCode == 401 (Unauthorized)
+alt [Unauthenticated / Unauthorized]
     be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
     fe_ctrl-->>view: Redirect to /Account/Login
     view-->>act: Display login page
-else response.IsSuccessStatusCode == true
+else [Authorized]
     be_ctrl->sv++: Call GetWishlistAsync(userId)
     
     sv->w_repo++: Call GetByUserIdAsync(userId)
-    w_repo->ctx++: Query WishlistItems filtered by userId
-    ctx->db++: SELECT from WishlistItems, Courses, Instructors
-    db-->>ctx--: Return database records
-    ctx-->>w_repo--: Return List<WishlistItem>
-    w_repo-->>sv--: Return List<WishlistItem>
+    w_repo->ctx++: Query WishlistItems by userId
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return data
+    ctx-->>w_repo--: Return list
+    w_repo-->>sv--: Return list
     
     loop for each WishlistItem in items
         sv->c_repo++: Call IsEnrolledAsync(userId, courseId)
-        c_repo->ctx++: Check enrollment status
-        ctx->db++: Query Enrollments table
+        c_repo->ctx++: Query enrollment status
+        ctx->db++: Execute SELECT query
         db-->>ctx--: Return boolean
         ctx-->>c_repo--: Return boolean
         c_repo-->>sv--: Return isEnrolled
         
         sv->c_repo++: Call GetCourseStatsAsync(courseId)
-        c_repo->ctx++: Get rating/student stats for course
-        ctx->db++: Query course statistics
+        c_repo->ctx++: Query course statistics
+        ctx->db++: Execute SELECT query
         db-->>ctx--: Return stats record
         ctx-->>c_repo--: Return stats
         c_repo-->>sv--: Return stats
@@ -81,10 +80,9 @@ else response.IsSuccessStatusCode == true
     sv-->>be_ctrl--: Return List<WishlistResponse> DTOs
     be_ctrl-->>fe_ctrl--: Return statusCode 200 (Success)
     
-    fe_ctrl->fe_ctrl++: Parse JSON & Deserialize WishlistResponse
+    fe_ctrl->fe_ctrl++: Deserialize response
     fe_ctrl--
     fe_ctrl->view--: Return View with wishlist data
     view-->>act--: Display Wishlist page with courses
 end
-
 @enduml

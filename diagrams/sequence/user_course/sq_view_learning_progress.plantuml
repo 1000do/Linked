@@ -27,14 +27,12 @@
 hide footbox
 
 mainframe View Learning Progress
-
 actor User as act
 
-participant "Learn" as view
-participant "CourseController" as fe_ctrl
-participant "EnrollmentController" as be_ctrl
+participant "Course/Learn.cshtml" as view
+participant "CourseController" as fe_ctrl <<frontend controller>>
+participant "EnrollmentController" as be_ctrl <<backend controller>>
 participant ":EnrollmentService" as sv
-participant ":ProgressResponse" as res
 participant ":EnrollmentRepository" as repo
 participant ":CourseRepository" as courseRepo
 participant ":AppDbContext" as ctx
@@ -45,23 +43,23 @@ act->view++: Access course learning page
 view->view++: loadProgress()
 view--
 
-view->fe_ctrl++: Send GET request to /Course/GetProgress/{courseId}
-fe_ctrl->be_ctrl++: Send GET request to api/Enrollment/progress/{courseId} (with AccessToken)
+view->fe_ctrl++: Send GET /Course/GetProgress/{courseId}
+fe_ctrl->be_ctrl++: Send GET /api/Enrollment/progress/{courseId} (with AccessToken)
 
-be_ctrl->be_ctrl++: GetUserId() from Token Claims
+be_ctrl->be_ctrl++: Parse userId from token
 be_ctrl--
 
 group opt [userId == null]
     be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
-    fe_ctrl-->>view: Return JSON { success = false }
-    view-->>act: Display unauthorized/login message
+    fe_ctrl-->>view: Return JSON (success = false)
+    view-->>act: Display unauthorized message
 end
 
 be_ctrl->sv++: Call GetProgressAsync(userId, courseId)
 
 sv->repo++: Call GetEnrollmentAsync(userId, courseId)
-repo->ctx++: Query enrollment by userId and courseId
-ctx->db++: Query Enrollments table
+repo->ctx++: Query enrollment details
+ctx->db++: Execute SELECT query
 db-->>ctx--: Return enrollment record
 ctx-->>repo--: Return Enrollment entity
 repo-->>sv--: Return Enrollment entity
@@ -69,71 +67,64 @@ repo-->>sv--: Return Enrollment entity
 sv->sv++: Check enrollment == null
 sv--
 
-alt enrollment == null
+alt [enrollment == null]
     sv->courseRepo++: Call GetByIdAsync(courseId)
-    courseRepo->ctx++: Fetch Course by ID
-    ctx->db++: Query Courses table
-    db-->>ctx--: Return course record
+    courseRepo->ctx++: Query Course details
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return Course record
     ctx-->>courseRepo--: Return Course entity
     courseRepo-->>sv--: Return Course entity
     
-    sv->sv++: Check course != null && InstructorId == userId
+    sv->sv++: Check course and ownership
     sv--
     
-    alt course != null && course.InstructorId == userId (Instructor Bypass)
+    alt [course != null && course.InstructorId == userId (Instructor Bypass)]
         sv->courseRepo++: Call GetCourseStatsAsync(courseId)
-        courseRepo->ctx++: Fetch CourseStats by courseId
-        ctx->db++: Query CourseStats view/table
+        courseRepo->ctx++: Query CourseStats
+        ctx->db++: Execute SELECT query
         db-->>ctx--: Return stats record
-        ctx-->>courseRepo--: Return CourseStats entity
-        courseRepo-->>sv--: Return CourseStats entity
-        
-        sv->res++: Call ProgressResponse()
-        res-->>sv--: Return ProgressResponse (100% complete)
+        ctx-->>courseRepo--: Return stats
+        courseRepo-->>sv--: Return stats
         
         sv-->>be_ctrl: Return ProgressResponse
         be_ctrl-->>fe_ctrl: Return statusCode 200 (Ok)
-        fe_ctrl-->>view: Return JSON { success = true, data }
-        view->view++: Calculate progressPercentage & update UI
+        fe_ctrl-->>view: Return JSON (success = true)
+        view->view++: Update UI
         view--
-        view-->>act: Display course progress to User
-    else course is null or not owner
+        view-->>act: Display course progress
+    else [course is null or not owner]
         sv-->>be_ctrl: Return null
         be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
-        fe_ctrl-->>view: Return JSON { success = false }
-        view-->>act: Display error/default progress
+        fe_ctrl-->>view: Return JSON (success = false)
+        view-->>act: Display error message
     end
-else enrollment is NOT null
+else [enrollment != null]
     sv->courseRepo++: Call GetCourseStatsAsync(courseId)
-    courseRepo->ctx++: Fetch CourseStats by courseId
-    ctx->db++: Query CourseStats view/table
+    courseRepo->ctx++: Query CourseStats
+    ctx->db++: Execute SELECT query
     db-->>ctx--: Return stats record
-    ctx-->>courseRepo--: Return CourseStats entity
-    courseRepo-->>sv--: Return CourseStats entity
+    ctx-->>courseRepo--: Return stats
+    courseRepo-->>sv--: Return stats
     
     sv->repo++: Call GetCompletedMaterialCountAsync(enrollment.EnrollmentId)
     repo->ctx++: Count completed materials
-    ctx->db++: Query MaterialCompletions table for count
+    ctx->db++: Execute COUNT query
     db-->>ctx--: Return count
     ctx-->>repo--: Return count
     repo-->>sv--: Return count
     
     sv->repo++: Call GetCompletedMaterialIdsAsync(enrollment.EnrollmentId)
     repo->ctx++: Get completed material IDs
-    ctx->db++: Query MaterialCompletions table for IDs
-    db-->>ctx--: Return completed material IDs
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return completed material IDs list
     ctx-->>repo--: Return Completed material IDs list
     repo-->>sv--: Return Completed material IDs list
     
-    sv->res++: Call ProgressResponse()
-    res-->>sv--: Return ProgressResponse
-    
     sv-->>be_ctrl--: Return ProgressResponse
     be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
-    fe_ctrl-->>view--: Return JSON { success = true, data }
-    view->view++: Calculate progressPercentage & update UI
+    fe_ctrl-->>view--: Return JSON (success = true)
+    view->view++: Update UI
     view--
     view-->>act--: Display course progress to User
 end
-
 @enduml

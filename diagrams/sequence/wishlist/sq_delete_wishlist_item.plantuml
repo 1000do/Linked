@@ -27,12 +27,11 @@
 hide footbox
 
 mainframe Delete Wishlist Items
-
 actor User as act
 
-participant "WishlistIndexView" as view
-participant "WishlistController" as fe_ctrl
-participant "WishlistController" as be_ctrl
+participant "Wishlist/Index.cshtml" as view
+participant "WishlistController" as fe_ctrl <<frontend controller>>
+participant "WishlistController" as be_ctrl <<backend controller>>
 participant ":WishlistService" as sv
 participant ":WishlistRepository" as repo
 participant ":AppDbContext" as ctx
@@ -40,10 +39,11 @@ database Database as db
 
 act++
 act->view++: Click "Remove" button next to a course
-view->fe_ctrl++: Send POST request to Wishlist/Remove (with courseId)
+view->fe_ctrl++: Send POST /Wishlist/Remove (with courseId)
 
-fe_ctrl->be_ctrl++: Send DELETE request to /api/wishlist/{courseId} (with AccessToken)
-be_ctrl->be_ctrl++: GetUserId() from Token Claims
+fe_ctrl->be_ctrl++: Send DELETE /api/wishlist/{courseId} (with AccessToken)
+
+be_ctrl->be_ctrl++: Parse userId from token
 be_ctrl--
 
 group opt [userId == null]
@@ -55,50 +55,50 @@ end
 be_ctrl->sv++: Call RemoveFromWishlistAsync(userId, courseId)
 
 sv->repo++: Call GetByUserAndCourseAsync(userId, courseId)
-repo->ctx++: Query WishlistItems matching userId and courseId
-ctx->db++: SELECT first match
+repo->ctx++: Query WishlistItem
+ctx->db++: Execute SELECT query
 db-->>ctx--: Return record
 ctx-->>repo--: Return WishlistItem entity
 repo-->>sv--: Return WishlistItem entity
 
-sv->sv++: Check if item is null
-sv--
 group opt [item == null]
-    sv-->>be_ctrl: Throw KeyNotFoundException
+    sv-->>be_ctrl: throw KeyNotFoundException
     be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
-    fe_ctrl-->>view: Return view with error message
-    view-->>act: Display course not found error
+    fe_ctrl-->>view: Return View with error
+    view-->>act: Display error message
 end
 
 sv->repo++: Call RemoveAsync(item)
-repo->ctx++: Remove entity from DB set
-ctx-->>repo--: Done
-repo-->>sv--: Done
+repo->ctx++: Mark entity as deleted
+ctx-->>repo--: Return
+repo-->>sv--: Return
 
 sv->repo++: Call SaveChangesAsync()
 repo->ctx++: Call SaveChangesAsync()
-ctx->db++: Save changes to Database
-db-->>ctx--: Return numberOfRowsAffected
+ctx->db++: Execute DELETE statement
+db-->>ctx--: Return result
 ctx-->>repo--: Return numberOfRowsAffected
 repo-->>sv--: Return numberOfRowsAffected
 
-sv->sv++: Check numberOfRowsAffected > 0
-sv--
+repo->repo++: Check numberOfRowsAffected
+repo--
 
-alt numberOfRowsAffected > 0
+alt [numberOfRowsAffected > 0]
+    repo-->>sv: Return true
     sv-->>be_ctrl: Return success
     be_ctrl-->>fe_ctrl++: Return statusCode 200 (Success)
     
-    fe_ctrl->fe_ctrl++: Redirect to Wishlist/Index
-    fe_ctrl--
-    
-    fe_ctrl->view--: Return RedirectToAction("Index")
+    fe_ctrl -> view++: Redirect to Wishlist/Index
+    deactivate fe_ctrl
+    deactivate view
     view-->>act: Reload wishlist page with course removed
-else numberOfRowsAffected <= 0
-    sv-->>be_ctrl--: Throw InvalidOperationException
+else [numberOfRowsAffected = 0]
+    repo-->>sv--: Return false
+    sv->sv++: throw InvalidOperationException
+    sv--
+    sv-->>be_ctrl--: throw InvalidOperationException
     be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
     fe_ctrl-->>view--: Return View with error message
-    view-->>act--: Display deletion error message
+    view-->>act--: Display error message
 end
-
 @enduml

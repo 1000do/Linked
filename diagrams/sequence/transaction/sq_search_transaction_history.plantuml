@@ -29,9 +29,9 @@ hide footbox
 mainframe Search Transaction History
 actor User as act
 
-participant "History.cshtml" as view
-participant "TransactionController (FE)" as fe_ctrl
-participant "TransactionController (BE)" as be_ctrl
+participant "Transaction/History.cshtml" as view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "TransactionController" as be_ctrl <<backend controller>>
 participant ":TransactionService" as sv
 participant ":TransactionRepository" as repo
 participant ":AppDbContext" as ctx
@@ -47,23 +47,23 @@ fe_ctrl->be_ctrl++: Send GET /api/transactions/my?keyword=...&status=...&sortBy=
 be_ctrl->sv++: Call GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
 sv->repo++: Call GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
 
-repo->ctx++: Apply search on CourseTitle, filter by status, and order by sortBy
+repo->ctx++: Apply search, filter, and ordering
 ctx->db++: Execute SELECT query with filters
-db-->>ctx--: Return filtered transactions & totalCount
-ctx-->>repo--: Return filtered transactions & totalCount
-repo-->>sv--: Return filtered transactions & totalCount
+db-->>ctx--: Return database results
+ctx-->>repo--: Return data
+repo-->>sv--: Return data
 
-sv->sv++: Map to PagedResult<TransactionListDto>
+sv->sv++: Map to PagedResult
 sv--
-sv-->>be_ctrl--: Return PagedResult<TransactionListDto>
+sv-->>be_ctrl--: Return DTO list
 be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with JSON data
 
-fe_ctrl->fe_ctrl++: Deserialize to ApiResp<TransactionPagedVM>
+fe_ctrl->fe_ctrl++: Deserialize response
 fe_ctrl--
 fe_ctrl-->>view--: Return View(vm)
 
 alt [No transactions match filters]
-    view-->>act: Display "No transactions found" empty state
+    view-->>act: Display empty state message
 else [Matching transactions found]
     view-->>act--: Display filtered and sorted purchase history list
 end
