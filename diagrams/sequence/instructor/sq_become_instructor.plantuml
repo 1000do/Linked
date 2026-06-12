@@ -1,0 +1,136 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Become an Instructor
+actor User as act
+
+participant "Instructor/Become.cshtml" as view
+participant "Instructor/ApplicationStatus.cshtml" as status_view
+participant "InstructorController" as fe_ctrl <<frontend controller>>
+participant "InstructorController" as be_ctrl <<backend controller>>
+participant ":InstructorService" as sv
+participant ":InstructorRepository" as repo
+participant "Cloudinary API" as cloud
+participant ":AppDbContext" as ctx
+database Database as db
+
+== Step 1: Access Application Form ==
+act++
+act->view++: Access "Become an Instructor" page
+view->fe_ctrl++: Send GET /Instructor/Apply
+
+fe_ctrl->be_ctrl++: Send GET /api/instructor/dashboard (with Bearer Token)
+be_ctrl-->>fe_ctrl--: Return statusCode 404 (Not Found)
+
+fe_ctrl->be_ctrl++: Send GET /api/instructor/stripe-countries
+be_ctrl-->>fe_ctrl--: Return supported countries list
+
+fe_ctrl->be_ctrl++: Send GET /api/public/courses/categories
+be_ctrl-->>fe_ctrl--: Return available categories list
+
+fe_ctrl-->>view--: Return View(applyModel)
+view-->>act--: Display Become an Instructor form
+
+== Step 2: Submit Application ==
+act++
+act->view++: Enter bio, professional title, upload CV, and click "Submit"
+view->fe_ctrl++: Send POST /Instructor/Apply (with Form Data)
+
+fe_ctrl->be_ctrl++: Send POST /api/instructor/apply (with MultipartFormDataContent)
+
+be_ctrl->sv++: Call SubmitApplicationAsync(userId, request)
+sv->repo++: Call GetApplicationByUserIdAsync(userId)
+repo->ctx++: Query existing application
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return application
+ctx-->>repo--: Return application
+repo-->>sv--: Return application
+
+alt [CV Document File provided]
+    sv->cloud++: Upload certificate/CV file
+    cloud-->>sv--: Return Cloudinary file URL
+end
+
+alt [Previous application was Rejected]
+    sv->repo++: Call UpdateApplicationAsync(app)
+    repo->ctx++: Mark application as modified
+    ctx-->>repo--: Return
+    repo-->>sv--: Return
+else [New application]
+    sv->repo++: Call AddApplicationAsync(app)
+    repo->ctx++: Add application entity
+    ctx-->>repo--: Return
+    repo-->>sv--: Return
+end
+
+sv->repo++: Call SaveChangesAsync()
+repo->ctx++: Call SaveChangesAsync()
+ctx->db++: Execute INSERT or UPDATE statement
+db-->>ctx--: Return result
+ctx-->>repo--: Return numberOfRowsAffected
+repo-->>sv--: Return numberOfRowsAffected
+
+repo->repo++: Check numberOfRowsAffected
+repo--
+
+alt [numberOfRowsAffected > 0]
+    repo-->>sv: Return true
+    sv-->>be_ctrl--: Return success message
+    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+    
+    fe_ctrl -> status_view++: Redirect to status page
+    deactivate fe_ctrl
+    deactivate view
+    
+    status_view->fe_ctrl++: Send GET /Instructor/ApplicationStatus
+    fe_ctrl->be_ctrl++: Send GET /api/instructor/dashboard (with Bearer Token)
+    be_ctrl->sv++: Call GetInstructorDashboardAsync(userId)
+    sv->repo++: Call GetDashboardAsync(userId)
+    repo->ctx++: Query details
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return details
+    ctx-->>repo--: Return details
+    repo-->>sv--: Return details
+    sv-->>be_ctrl--: Return details
+    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with dashboard JSON
+    
+    fe_ctrl->fe_ctrl++: Save Cookie "InstructorApprovalStatus" = "Pending"
+    fe_ctrl--
+    fe_ctrl-->>status_view--: Return View(model)
+    deactivate fe_ctrl
+    status_view-->>act--: Display application status page
+else [numberOfRowsAffected = 0]
+    repo-->>sv--: Return false
+    sv->sv++: throw InvalidOperationException
+    sv--
+    sv-->>be_ctrl--: throw InvalidOperationException
+    be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view--: Return statusCode 400
+    view-->>act--: Display submission failure error message
+end
+@enduml
