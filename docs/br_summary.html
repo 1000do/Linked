@@ -1,0 +1,144 @@
+<div class="uc-container" style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <style>
+        .uc-container, .uc-container table, .uc-container tr, .uc-container td, .uc-container th, .uc-container p, .uc-container span, .uc-container strong, .uc-container b {
+            font-family: 'Times New Roman', serif !important;
+            font-size: 12pt !important;
+            color: black !important;
+        }
+    </style>
+    <p style="margin: 0 0 10px 0;"><strong>Business Rules Summary</strong></p>
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <thead>
+            <tr style="background-color: #f2f2f2;">
+                <th style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top; width: 15%;"><strong>ID</strong></th>
+                <th style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top; width: 85%;"><strong>Rule Definition</strong></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-1</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Universal Form Data Validation:</strong> All submitted form fields must pass strict data type, format, length, and value constraints (e.g., report descriptions must be at least 20 characters, and confidence thresholds must be decimals between 0.01 and 1.0) before the system processes the submission.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-2</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unique Reasons:</strong> The user cannot select the same report reason more than once in a single submission.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-3</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Reason Selection:</strong> A valid violation reason (Spam, Offensive, Fake, Other) must be selected before submission.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-4</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Duplicate Report Prevention:</strong> A user cannot report the same review with the same reason if their previous report is still pending.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-5</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Stripe Link Limits:</strong> Instructors without an active Stripe Connect profile may publish up to 2 courses with a maximum of 30 minutes of video content.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-6</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Free Course Video Ceiling:</strong> Courses priced at 0 are capped at 60 minutes of video content. Paid courses require an active Stripe Connect configuration.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-7</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Content Re-activation:</strong> On resubmission, the system automatically resets any previously rejected lesson and material statuses back to active for admin review.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-8</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Locked Out Instructor Rights:</strong> Instructors with an active lockout status are prohibited from submitting courses for review or changing course status.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-9</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default View — Course Reports:</strong> The Report Center always opens with the Course Reports tab and the "Pending" status filter selected by default.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-10</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Access Control — Report Center:</strong> Only authenticated Staff and Admin actors are permitted to access the Report Center.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-11</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Status Badges:</strong> Report statuses (Pending, Resolved, Rejected, Escalated) are visually distinguished using specific status badges.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-12</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Action Availability:</strong> The "Moderate" action button is available only for reports in Pending, Under Review, or Escalated status. All other statuses display an "Info" button instead.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-13</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Staff Escalation Limitation:</strong> Staff actors cannot moderate Escalated reports. Only Admins may moderate reports in the Escalated status.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-14</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default View — Course Reviews Subtab:</strong> When the Review Reports tab is accessed, the system defaults to the "Course Reviews" subtab with the "Pending" status filter applied.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-15</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Adaptive Moderation/Detail Popup UI:</strong> The moderation and detail popups dynamically adjust titles, fields, labels, and action terminologies (e.g., "Flag Course" vs "Remove content") depending on whether a course or a review is being viewed/moderated.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-16</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Resolution Visibility:</strong> Resolution details (Moderator, Resolved At, Resolution Note) are visible only for reports with a resolved or rejected status.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-17</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Independent Status Filters:</strong> The status filter in the Course Reports tab maintains its own independent state from the status filter in the Review Reports tab.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-18</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Subtab Filter Retention:</strong> When switching between the "Course Reviews" and "Lesson Reviews" subtabs, the currently active status filter is retained and applied to the newly selected subtype.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-19</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Universal Empty State Display:</strong> Whenever a list retrieval operation yields no records (either due to an empty database or active filter criteria), the system displays a user-friendly empty state message instead of a blank table or list container.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-20</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Escalation Restriction:</strong> Staff may select the "Escalate to Senior Admin" option. Admins do not see this option, as they are the highest escalation tier.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-21</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Action Limitations:</strong> The "Flag Course / Remove content" checkbox is enabled exclusively when the Resolution Status is set to "Accept Report". Changing the status automatically clears and disables the checkbox.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-22</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Strike System:</strong> When a course report is accepted with the "Flag Course" toggle checked: Strike 1–2 sends a warning to the instructor; Strike 3 permanently archives the course and applies a 30-day severe instructor lockout.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-23</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Review Penalty System:</strong> When a review report is accepted with "Remove content" checked: Strike 1 sends a warning; Strike 2 applies a 7-day moderate review lockout; Strike 3 applies a 30-day severe full account ban and terminates active sessions.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-24</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Implicit Refresh:</strong> A successful moderation action automatically triggers a silent refresh of the current report list and overall statistics.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-25</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Admin Authorization for AI Services:</strong> Only authenticated Admin actors are authorized to access and perform actions within the AI Service and Model Management module (including adding/updating models, toggling status, viewing details/list, configuring thresholds, and viewing activity logs).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-26</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>List Sorting and Ordering:</strong> Administrative lists (such as the AI model list and activity logs) are sorted in descending order of their latest timestamp (last modified date for models, creation date for logs), ensuring that the most recent entries are displayed first.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-27</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Pre-populated Data:</strong> Model details displayed in the popup are sourced from data embedded in the page during the initial render; no additional server request is made on click.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-28</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Universal List Pagination:</strong> All list retrieval operations displaying tabular or grid data must display a limited number of entries per page with pagination controls.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-29</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Subtab — Activity Log:</strong> The course moderation category is displayed by default when the logs tab is opened.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-30</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Status Default:</strong> The model status defaults to active upon creation.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-31</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Status Toggle:</strong> Toggling an active model sets its status to inactive; toggling an inactive model restores it to active.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

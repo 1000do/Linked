@@ -885,7 +885,12 @@ VALUES
 ('course_media_embedding_generator','openai/clip-vit-base-patch32','system config of course_media_embedding_generator'),
 ('review_harmful_text_classifier','/app/models/spam_1/,/app/models/toxic_3/','system config of review_harmful_text_classifier');
 
-   
+INSERT INTO
+system_configs(config_key,config_value,description)
+VALUES
+('moderation_threshold',
+'{"similarity": 0.85,"spam": 0.85,"toxic": 0.85}',
+'system config of AI moderation threshold');
 
 
-         
+        

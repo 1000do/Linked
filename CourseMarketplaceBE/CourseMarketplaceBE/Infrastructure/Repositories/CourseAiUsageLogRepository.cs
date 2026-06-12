@@ -52,5 +52,38 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .AsNoTracking()
                 .ToListAsync();
         }
+
+        public async Task<(List<CourseAiUsageLog> Items, int TotalCount)> GetPagedAdminAsync(int page, int pageSize)
+        {
+            var query = _context.CourseAiUsageLogs
+                .Include(l => l.CourseAiIntegration)
+                    .ThenInclude(i => i.Course)
+                .Include(l => l.CourseAiIntegration)
+                    .ThenInclude(i => i.Model)
+                .AsNoTracking();
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(l => l.LogCreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
+        public async Task<CourseAiUsageLog?> GetAdminDetailByIdAsync(int logId)
+        {
+            var l = await _context.CourseAiUsageLogs
+                .Include(l => l.CourseAiIntegration)
+                    .ThenInclude(i => i.Course)
+                .Include(l => l.CourseAiIntegration)
+                    .ThenInclude(i => i.Model)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.LogId == logId);
+
+            return l;
+        }
     }
 }

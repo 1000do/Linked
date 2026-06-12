@@ -75,5 +75,49 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 ProcessType = m.ProcessType
             };
         }
+
+        public AiModel Add(AiModel model)
+        {
+            return _context.AiModels.Add(model).Entity;
+        }
+
+        public AiModel Update(AiModel model)
+        {
+            return _context.AiModels.Update(model).Entity;
+        }
+
+        public void Remove(AiModel model)
+        {
+            _context.AiModels.Remove(model);
+        }
+
+        public async Task<int> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<AiModel>> GetAllAdminAsync()
+        {
+            return await _context.AiModels
+                .AsNoTracking()
+                .OrderByDescending(am => am.ModelUpdatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<(List<AiModel> Items, int TotalCount)> GetPagedAdminAsync(int page, int pageSize)
+        {
+            var query = _context.AiModels
+                .AsNoTracking();
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(am => am.ModelUpdatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
     }
 }

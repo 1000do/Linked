@@ -1,0 +1,126 @@
+<div class="uc-container" style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <style>
+        .uc-container, .uc-container table, .uc-container tr, .uc-container td, .uc-container p, .uc-container ol, .uc-container ul, .uc-container li, .uc-container span, .uc-container strong, .uc-container b {
+            font-family: 'Times New Roman', serif !important;
+            font-size: 12pt !important;
+            color: black !important;
+        }
+    </style>
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">UC ID and Name</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">UC-112 - View AI Model List</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Created By:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">An</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Date Created:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">11/06/2026</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Primary Actor:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Admin</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Secondary Actors:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Trigger:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Admin accesses the AI Service management page.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Description:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Displays a paginated list of all registered AI moderation models, showing each model's name, version, type, process type, status, and last modified date. Admin can navigate between pages using pagination controls.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Preconditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>PRE-1.</b> Admin must be successfully authenticated.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Post-conditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>POST-1.</b> The AI model list is displayed to the Admin in paginated form.</p>
+                <p style="margin: 0;"><b>POST-2.</b> The model list is ordered by last modified date in descending order.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Normal Flow:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A. View AI Model List Successfully</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>Admin accesses the AI Service management page.</li>
+                    <li>The system validates the Admin's access authorization.</li>
+                    <li>The system retrieves the paginated list of AI models from the database.</li>
+                    <li>The system displays the AI model list under the model management tab.</li>
+                    <li>Admin views the AI model list.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Alternative Flows:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A.3 No AI Models Registered</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects no AI models are registered in the database.</li>
+                    <li>The system displays an empty state message in the model list area.</li>
+                    <li>Back to step 5.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.5 Admin Navigates to Another Page</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Admin clicks the "Next" or "Previous" pagination button.</li>
+                    <li>The system reloads the page with the requested page of AI models.</li>
+                    <li>Back to step 1.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Exceptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>EX-1 Session Invalid (Not Logged In)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system displays an authentication error message.</li>
+                    <li>The system redirects the user to the login page.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-2 Unauthorized Access</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects the current user does not have Admin authorization.</li>
+                    <li>The system displays an unauthorized access error message.</li>
+                    <li>The system redirects the user to the login page.</li>
+                </ol>
+                <p style="margin: 0 0 5px 0;"><strong>EX-3 Database Query Failed</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system fails to retrieve the AI model list from the database.</li>
+                    <li>The system displays an error message regarding the retrieval failure.</li>
+                    <li>Back to step 1.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Priority:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Medium</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Frequency of Use:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Medium</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Business Rules:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                BR-19, BR-25, BR-26, BR-28
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Other Information:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Assumptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;">Admin has stable internet connection.</p>
+            </td>
+        </tr>
+    </table>
+</div>
