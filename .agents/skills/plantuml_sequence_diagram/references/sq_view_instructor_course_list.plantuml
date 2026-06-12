@@ -75,7 +75,7 @@ else Valid Dashboard Access
 
 
     alt totalCount = 0
-        course_sv -->> be_course_ctrl: Return empty list
+        course_sv -->> be_course_ctrl: throw KeyNotFoundException
         be_course_ctrl -->> fe_ctrl: Return statusCode 404
         fe_ctrl -->> view: Return statusCode 404
         view -->> act: Display empty state message

@@ -1,0 +1,213 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Constants;
+using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.IRepositories;
+using AutoMapper;
+
+namespace CourseMarketplaceBE.Application.Services
+{
+    public class AdminAiService : IAdminAiService
+    {
+        private readonly IAiModelRepository _aiModelRepo;
+        private readonly ISystemConfigRepository _configRepo;
+        private readonly ICourseAiUsageLogRepository _courseLogRepo;
+        private readonly ICourseReviewModerationLogRepository _courseReviewLogRepo;
+        private readonly ILessonReviewModerationLogRepository _lessonReviewLogRepo;
+        private readonly IMapper _mapper;
+
+        public AdminAiService(
+            IAiModelRepository aiModelRepo,
+            ISystemConfigRepository configRepo,
+            ICourseAiUsageLogRepository courseLogRepo,
+            ICourseReviewModerationLogRepository courseReviewLogRepo,
+            ILessonReviewModerationLogRepository lessonReviewLogRepo,
+            IMapper mapper)
+        {
+            _aiModelRepo = aiModelRepo;
+            _configRepo = configRepo;
+            _courseLogRepo = courseLogRepo;
+            _courseReviewLogRepo = courseReviewLogRepo;
+            _lessonReviewLogRepo = lessonReviewLogRepo;
+            _mapper = mapper;
+        }
+
+        public async Task<List<AiModelAdminDto>> GetAllModelsAsync()
+        {
+            var models = await _aiModelRepo.GetAllAdminAsync();
+            if (models == null || models.Count == 0) throw new KeyNotFoundException("No AI models found.");
+            return _mapper.Map<List<AiModelAdminDto>>(models);
+        }
+
+        public async Task<(List<AiModelAdminDto> Items, int TotalCount)> GetPagedModelsAsync(int page, int pageSize)
+        {
+            var (items, totalCount) = await _aiModelRepo.GetPagedAdminAsync(page, pageSize);
+            if (items == null || items.Count == 0) throw new KeyNotFoundException("No AI models found.");
+            var dtos = _mapper.Map<List<AiModelAdminDto>>(items);
+            return (dtos, totalCount);
+        }
+
+        public async Task<AiModelAdminDto> GetModelByIdAsync(int id)
+        {
+            var m = await _aiModelRepo.GetByIdAsync(id);
+            if (m == null) throw new KeyNotFoundException("AI Model not found.");
+
+            return _mapper.Map<AiModelAdminDto>(m);
+        }
+
+        public async Task<AiModelAdminDto> AddModelAsync(CreateAiModelRequest req)
+        {
+            var model = new AiModel
+            {
+                ModelName = req.ModelName,
+                ModelVersion = req.ModelVersion,
+                ModelPath = req.ModelPath,
+                ModelProvider = req.ModelProvider,
+                ModelType = req.ModelType,
+                ProcessType = req.ProcessType,
+                Description = req.Description,
+                ModelStatus = req.ModelStatus,
+                ModelCreatedAt = DateTime.UtcNow,
+                ModelUpdatedAt = DateTime.UtcNow
+            };
+
+            var addedModel = _aiModelRepo.Add(model);
+            var affected = await _aiModelRepo.SaveChangesAsync();
+            if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
+            Console.WriteLine($"New Model Id {addedModel.ModelId}");
+            return _mapper.Map<AiModelAdminDto>(addedModel);
+        }
+
+        public async Task<AiModelAdminDto> UpdateModelAsync(int id, UpdateAiModelRequest req)
+        {
+            var model = await _aiModelRepo.GetByIdAsync(id);
+            if (model == null) throw new KeyNotFoundException("AI Model not found.");
+
+            model.ModelProvider = req.ModelProvider;
+            model.ModelVersion = req.ModelVersion;
+            model.ModelPath = req.ModelPath;
+            model.Description = req.Description;
+            model.ModelUpdatedAt = DateTime.UtcNow;
+
+            var updatedModel = _aiModelRepo.Update(model);
+            var affected = await _aiModelRepo.SaveChangesAsync();
+            if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
+
+            return _mapper.Map<AiModelAdminDto>(updatedModel);
+        }
+
+        public async Task<bool> ToggleModelStatusAsync(int id)
+        {
+            var model = await _aiModelRepo.GetByIdAsync(id);
+            if (model == null) throw new KeyNotFoundException("AI Model not found.");
+
+            model.ModelStatus = model.ModelStatus == AiModelConst.Active ? AiModelConst.Inactive : AiModelConst.Active;
+            model.ModelUpdatedAt = DateTime.UtcNow;
+
+            _aiModelRepo.Update(model);
+            var affected = await _aiModelRepo.SaveChangesAsync();
+            if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
+            return true;
+        }
+
+        public async Task<AiConfigurationDto> GetConfigurationsAsync()
+        {
+            var dto = new AiConfigurationDto
+            {
+                SimilarityScoreThreshold = AiModelConst.DefaultSimilarityScoreThreshold,
+                SpamConfidenceThreshold = AiModelConst.DefaultSpamScoreThreshold,
+                ToxicityConfidenceThreshold = AiModelConst.DefaultToxicScoreThreshold
+            };
+
+            var modThresholdStr = await _configRepo.GetValueAsync(SystemConfigKeys.ModerationThreshold);
+            if (!string.IsNullOrEmpty(modThresholdStr))
+            {
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(modThresholdStr);
+                    if (doc.RootElement.TryGetProperty("spam", out var spamProp) && spamProp.TryGetSingle(out var sVal))
+                        dto.SpamConfidenceThreshold = sVal;
+                    if (doc.RootElement.TryGetProperty("toxic", out var toxicProp) && toxicProp.TryGetSingle(out var tVal))
+                        dto.ToxicityConfidenceThreshold = tVal;
+                    if (doc.RootElement.TryGetProperty("similarity", out var simProp) && simProp.TryGetSingle(out var simVal))
+                        dto.SimilarityScoreThreshold = simVal;
+                }
+                catch { /* Ignore parsing errors and use defaults */ }
+            }
+
+            dto.CourseHarmfulTextClassifierPath = await _configRepo.GetValueAsync(SystemConfigKeys.CourseHarmfulTextClassifier);
+            dto.CourseTextEmbeddingGeneratorPath = await _configRepo.GetValueAsync(SystemConfigKeys.CourseTextEmbeddingGenerator);
+            dto.CourseMediaEmbeddingGeneratorPath = await _configRepo.GetValueAsync(SystemConfigKeys.CourseMediaEmbeddingGenerator);
+            dto.ReviewHarmfulTextClassifierPath = await _configRepo.GetValueAsync(SystemConfigKeys.ReviewHarmfulTextClassifier);
+
+            return dto;
+        }
+
+        public async Task<bool> UpdateThresholdsAsync(UpdateThresholdsRequest req)
+        {
+            var newThresholds = new
+            {
+                similarity = req.SimilarityScoreThreshold,
+                spam = req.SpamConfidenceThreshold,
+                toxic = req.ToxicityConfidenceThreshold
+            };
+            var jsonString = System.Text.Json.JsonSerializer.Serialize(newThresholds);
+            var affected = await _configRepo.UpsertConfigAsync(SystemConfigKeys.ModerationThreshold, jsonString, "system config of AI moderation threshold");
+            if (affected == 0) throw new InvalidOperationException("Failed to update moderation thresholds: No changes were saved to the database.");
+            return true;
+        }
+
+        public async Task<bool> UpdateIntegrationAsync(UpdateIntegrationRequest req)
+        {
+            var affected = await _configRepo.UpsertConfigAsync(req.ConfigKey, req.ConfigValue, $"system config of {req.ConfigKey}");
+            if (affected == 0) throw new InvalidOperationException($"Failed to update {req.ConfigKey}: No changes were saved to the database.");
+            return true;
+        }
+
+        public async Task<(List<CourseModerationLogAdminDto> Items, int TotalCount)> GetCourseModerationLogsAsync(int page, int pageSize)
+        {
+            var (items, totalCount) = await _courseLogRepo.GetPagedAdminAsync(page, pageSize);
+            if (items == null || items.Count == 0) throw new KeyNotFoundException("No course moderation logs found.");
+            return (_mapper.Map<List<CourseModerationLogAdminDto>>(items), totalCount);
+        }
+
+        public async Task<CourseModerationLogAdminDto?> GetCourseModerationLogDetailAsync(int logId)
+        {
+            var entity = await _courseLogRepo.GetAdminDetailByIdAsync(logId);
+            if (entity == null) throw new KeyNotFoundException("Log not found.");
+            return _mapper.Map<CourseModerationLogAdminDto>(entity);
+        }
+
+        public async Task<(List<ReviewModerationLogAdminDto> Items, int TotalCount)> GetCourseReviewModerationLogsAsync(int page, int pageSize)
+        {
+            var (items, totalCount) = await _courseReviewLogRepo.GetPagedAdminAsync(page, pageSize);
+            if (items == null || items.Count == 0) throw new KeyNotFoundException("No course review moderation logs found.");
+            return (_mapper.Map<List<ReviewModerationLogAdminDto>>(items), totalCount);
+        }
+
+        public async Task<ReviewModerationLogAdminDto?> GetCourseReviewModerationLogDetailAsync(int logId)
+        {
+            var entity = await _courseReviewLogRepo.GetAdminDetailByIdAsync(logId);
+            if (entity == null) throw new KeyNotFoundException("Log not found.");
+            return _mapper.Map<ReviewModerationLogAdminDto>(entity);
+        }
+
+        public async Task<(List<ReviewModerationLogAdminDto> Items, int TotalCount)> GetLessonReviewModerationLogsAsync(int page, int pageSize)
+        {
+            var (items, totalCount) = await _lessonReviewLogRepo.GetPagedAdminAsync(page, pageSize);
+            if (items == null || items.Count == 0) throw new KeyNotFoundException("No lesson review moderation logs found.");
+            return (_mapper.Map<List<ReviewModerationLogAdminDto>>(items), totalCount);
+        }
+
+        public async Task<ReviewModerationLogAdminDto?> GetLessonReviewModerationLogDetailAsync(int logId)
+        {
+            var entity = await _lessonReviewLogRepo.GetAdminDetailByIdAsync(logId);
+            if (entity == null) throw new KeyNotFoundException("Log not found.");
+            return _mapper.Map<ReviewModerationLogAdminDto>(entity);
+        }
+    }
+}

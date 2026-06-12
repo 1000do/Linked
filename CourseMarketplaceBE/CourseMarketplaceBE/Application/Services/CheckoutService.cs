@@ -32,6 +32,8 @@ public class CheckoutService : ICheckoutService
     private readonly ICouponRepository _couponRepo;
     private readonly IUserRepository _userRepo;
     private readonly IAdminFinanceService _adminFinanceService;
+    private readonly IGiftRepository _giftRepo;
+    private readonly IEmailService _emailService;
 
     public CheckoutService(
         ICheckoutRepository repo,
@@ -43,7 +45,9 @@ public class CheckoutService : ICheckoutService
         INotificationService notificationService,
         ICourseRepository courseRepo,
         ICouponRepository couponRepo,
-        IUserRepository userRepo)
+        IUserRepository userRepo,
+        IGiftRepository giftRepo,
+        IEmailService emailService)
     {
         _repo = repo;
         _enrollmentRepo = enrollmentRepo;
@@ -55,6 +59,8 @@ public class CheckoutService : ICheckoutService
         _couponRepo = couponRepo;
         _userRepo = userRepo;
         _adminFinanceService = adminFinanceService;
+        _giftRepo = giftRepo;
+        _emailService = emailService;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -95,17 +101,28 @@ public class CheckoutService : ICheckoutService
 
             foreach (var code in codes)
             {
-                var cp = await _couponRepo.GetValidCouponAsync(code, DateTime.Now);
-                if (cp != null)
+                var cp = await _couponRepo.GetByCodeAsync(code);
+                if (cp == null)
                 {
-                    decimal eligibleSubTotal = cartItems
-                        .Where(c => c.Course != null && c.Course.CouponId == cp.CouponId)
-                        .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
+                    throw new InvalidOperationException("This coupon does not exist.");
+                }
 
-                    if (eligibleSubTotal >= cp.MinOrderValue && eligibleSubTotal > 0)
-                    {
-                        appliedCoupons.Add(cp);
-                    }
+                var now = DateTime.Now;
+                if (cp.IsActive != true ||
+                    (cp.StartDate.HasValue && now < cp.StartDate.Value) ||
+                    (cp.EndDate.HasValue && now > cp.EndDate.Value) ||
+                    (cp.UsageLimit.HasValue && (cp.UsedCount ?? 0) >= cp.UsageLimit.Value))
+                {
+                    throw new InvalidOperationException("This coupon has expired or run out of usage.");
+                }
+
+                decimal eligibleSubTotal = cartItems
+                    .Where(c => c.Course != null && c.Course.CouponId == cp.CouponId)
+                    .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
+
+                if (eligibleSubTotal >= cp.MinOrderValue && eligibleSubTotal > 0)
+                {
+                    appliedCoupons.Add(cp);
                 }
             }
         }
@@ -207,28 +224,35 @@ public class CheckoutService : ICheckoutService
         
         if (!string.IsNullOrWhiteSpace(couponCode))
         {
-            coupon = await _couponRepo.GetValidCouponAsync(couponCode, DateTime.Now);
-            if (coupon != null)
+            coupon = await _couponRepo.GetByCodeAsync(couponCode);
+            if (coupon == null)
             {
-                if (course.CouponId != coupon.CouponId)
-                {
-                    throw new InvalidOperationException("This coupon is not applicable to this course.");
-                }
-
-                if (originalPrice < coupon.MinOrderValue)
-                {
-                    throw new InvalidOperationException($"This coupon requires a minimum course value of ${coupon.MinOrderValue:N2}.");
-                }
-
-                discountAmount = coupon.CouponType == "percentage"
-                    ? originalPrice * (coupon.DiscountValue / 100m)
-                    : coupon.DiscountValue;
-                discountAmount = Math.Round(Math.Min(discountAmount, originalPrice), 2);
+                throw new InvalidOperationException("This coupon does not exist.");
             }
-            else
+
+            var now = DateTime.Now;
+            if (coupon.IsActive != true ||
+                (coupon.StartDate.HasValue && now < coupon.StartDate.Value) ||
+                (coupon.EndDate.HasValue && now > coupon.EndDate.Value) ||
+                (coupon.UsageLimit.HasValue && (coupon.UsedCount ?? 0) >= coupon.UsageLimit.Value))
             {
-                throw new InvalidOperationException("Coupon does not exist or has expired.");
+                throw new InvalidOperationException("This coupon has expired or run out of usage.");
             }
+
+            if (course.CouponId != coupon.CouponId)
+            {
+                throw new InvalidOperationException("This coupon is not applicable to this course.");
+            }
+
+            if (originalPrice < coupon.MinOrderValue)
+            {
+                throw new InvalidOperationException($"This coupon requires a minimum course value of ${coupon.MinOrderValue:N2}.");
+            }
+
+            discountAmount = coupon.CouponType == "percentage"
+                ? originalPrice * (coupon.DiscountValue / 100m)
+                : coupon.DiscountValue;
+            discountAmount = Math.Round(Math.Min(discountAmount, originalPrice), 2);
         }
 
         var purchasePrice = Math.Max(originalPrice - discountAmount, 0m);
@@ -272,6 +296,153 @@ public class CheckoutService : ICheckoutService
         {
             SessionUrl = paymentResult.SessionUrl,
             SessionId = paymentResult.SessionId
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // BƯỚC 1.6: INITIATE GIFT CHECKOUT (Mua làm quà tặng)
+    // ═══════════════════════════════════════════════════════════════════════════
+    public async Task<CheckoutResponse> InitiateGiftCheckoutAsync(
+        int userId,
+        GiftCheckoutRequest request)
+    {
+        var course = await _courseRepo.GetCourseWithInstructorAsync(request.CourseId);
+        if (course == null)
+            throw new InvalidOperationException("Course not found.");
+
+
+        // Kiểm tra xem người nhận đã sở hữu khóa học chưa
+        var recipientAccount = await _userRepo.GetAccountByEmailAsync(request.RecipientEmail);
+        if (recipientAccount != null)
+        {
+            if (await _courseRepo.IsEnrolledAsync(recipientAccount.AccountId, request.CourseId))
+            {
+                throw new InvalidOperationException("The recipient has already owned/joined this course.");
+            }
+        }
+
+        var stripeAccountId = await _userRepo.GetInstructorStripeAccountIdAsync(course.InstructorId ?? 0);
+        if (string.IsNullOrEmpty(stripeAccountId))
+            throw new InvalidOperationException("Instructor has not connected a Stripe payment account.");
+
+        decimal originalPrice = course.Price;
+        decimal purchasePrice = Math.Round(originalPrice, 2);
+        var userEmail = await _userRepo.GetUserEmailAsync(userId);
+
+        var paymentLineItems = new List<PaymentLineItem>
+        {
+            new PaymentLineItem
+            {
+                CourseName = $"Gift: {course.Title}",
+                ThumbnailUrl = course.CourseThumbnailUrl,
+                UnitPrice = purchasePrice
+            }
+        };
+
+        var instructorCountry = await _userRepo.GetInstructorStripeCountryAsync(course.InstructorId ?? 0);
+        var sessionCurrency = GetCurrencyFromCountry(instructorCountry);
+
+        var orderReference = $"gift_{Guid.NewGuid().ToString("N")}";
+
+        var feBaseUrl = request.SuccessUrl;
+        int idx = feBaseUrl.IndexOf("/Gift/CheckoutSuccess", StringComparison.OrdinalIgnoreCase);
+        if (idx >= 0)
+        {
+            feBaseUrl = feBaseUrl.Substring(0, idx);
+        }
+        else
+        {
+            feBaseUrl = "http://localhost:5005";
+        }
+
+        var metadata = new Dictionary<string, string>
+        {
+            { "userId", userId.ToString() },
+            { "checkoutType", "gift" },
+            { "courseIds", request.CourseId.ToString() },
+            { "recipientEmail", request.RecipientEmail },
+            { "recipientName", request.RecipientName ?? "" },
+            { "giftMessage", request.GiftMessage ?? "" },
+            { "cardTheme", request.CardTheme },
+            { "feBaseUrl", feBaseUrl }
+        };
+
+        var paymentResult = await _paymentGateway.CreateCheckoutSessionAsync(
+            paymentLineItems,
+            request.SuccessUrl,
+            request.CancelUrl,
+            userEmail,
+            orderReference,
+            sessionCurrency,
+            null,
+            null,
+            metadata);
+
+        return new CheckoutResponse
+        {
+            SessionUrl = paymentResult.SessionUrl,
+            SessionId = paymentResult.SessionId
+        };
+    }
+
+    public async Task<CheckoutResponse> InitiateGiftPaymentIntentAsync(
+        int userId,
+        GiftCheckoutRequest request)
+    {
+        var course = await _courseRepo.GetCourseWithInstructorAsync(request.CourseId);
+        if (course == null)
+            throw new InvalidOperationException("Course not found.");
+
+
+        // Kiểm tra xem người nhận đã sở hữu khóa học chưa
+        var recipientAccount = await _userRepo.GetAccountByEmailAsync(request.RecipientEmail);
+        if (recipientAccount != null)
+        {
+            if (await _courseRepo.IsEnrolledAsync(recipientAccount.AccountId, request.CourseId))
+            {
+                throw new InvalidOperationException("The recipient has already owned/joined this course.");
+            }
+        }
+
+        var stripeAccountId = await _userRepo.GetInstructorStripeAccountIdAsync(course.InstructorId ?? 0);
+        if (string.IsNullOrEmpty(stripeAccountId))
+            throw new InvalidOperationException("Instructor has not connected a Stripe payment account.");
+
+        decimal originalPrice = course.Price;
+        decimal purchasePrice = Math.Round(originalPrice, 2);
+
+        var feBaseUrl = request.SuccessUrl;
+        int idx = feBaseUrl.IndexOf("/Gift/CheckoutSuccess", StringComparison.OrdinalIgnoreCase);
+        if (idx >= 0)
+        {
+            feBaseUrl = feBaseUrl.Substring(0, idx);
+        }
+        else
+        {
+            feBaseUrl = "http://localhost:5005";
+        }
+
+        var metadata = new Dictionary<string, string>
+        {
+            { "userId", userId.ToString() },
+            { "checkoutType", "gift" },
+            { "courseIds", request.CourseId.ToString() },
+            { "recipientEmail", request.RecipientEmail },
+            { "recipientName", request.RecipientName ?? "" },
+            { "giftMessage", request.GiftMessage ?? "" },
+            { "cardTheme", request.CardTheme },
+            { "feBaseUrl", feBaseUrl }
+        };
+
+        var paymentResult = await _paymentGateway.CreatePaymentIntentAsync(
+            purchasePrice,
+            "usd",
+            metadata);
+
+        return new CheckoutResponse
+        {
+            SessionUrl = paymentResult.ClientSecret,
+            SessionId = paymentResult.PaymentIntentId
         };
     }
 
@@ -414,33 +585,132 @@ public class CheckoutService : ICheckoutService
                     int rows3 = await _repo.SaveChangesAsync();
                     if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
 
-                    // Cấp Enrollment (Hoặc kích hoạt lại nếu đã từng refund)
-                    var existingEnrollment = await _enrollmentRepo.GetEnrollmentIncludingRefundedAsync(userId, courseId);
-                    if (existingEnrollment != null)
+                    if (checkoutType == "gift")
                     {
-                        existingEnrollment.EnrollmentStatus = "active";
-                        existingEnrollment.EnrollDate = DateOnly.FromDateTime(DateTime.Now);
-                        existingEnrollment.IsCompleted = false;
-                        existingEnrollment.CompletedDate = null;
-                        existingEnrollment.LastAccessedAt = DateTime.Now;
+                        // ── 2.5a Tạo bản ghi Quà Tặng ─────────────────────────────
+                        string recipientEmail = metadata.TryGetValue("recipientEmail", out var re) ? re : "";
+                        string recipientName = metadata.TryGetValue("recipientName", out var rn) ? rn : null;
+                        string giftMessage = metadata.TryGetValue("giftMessage", out var gm) ? gm : null;
+                        string cardTheme = metadata.TryGetValue("cardTheme", out var theme) ? theme : "classic";
+                        string feBaseUrl = metadata.TryGetValue("feBaseUrl", out var fbUrl) ? fbUrl : "http://localhost:5005";
 
-                        await _enrollmentRepo.ClearMaterialCompletionsAsync(existingEnrollment.EnrollmentId);
+                        var token = Guid.NewGuid().ToString("N");
+
+                        var gift = new Gift
+                        {
+                            OrderItemId = orderItem.Id,
+                            SenderId = userId,
+                            RecipientEmail = recipientEmail,
+                            RecipientName = recipientName,
+                            GiftMessage = giftMessage,
+                            CardTheme = cardTheme,
+                            RedemptionToken = token,
+                            IsClaimed = false,
+                            DeliveryStatus = "sent",
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now
+                        };
+
+                        await _giftRepo.AddAsync(gift);
+                        int rowsGift = await _giftRepo.SaveChangesAsync();
+                        if (rowsGift <= 0) throw new InvalidOperationException("Failed to save gift record");
+
+                        // ── 2.5b Gửi Email Thiệp Quà Tặng ──────────────────────────
+                        var claimLink = $"{feBaseUrl}/Gift/Claim?token={token}";
+                        var senderName = "A Friend";
+                        var senderAccount = await _userRepo.GetAccountByIdAsync(userId);
+                        if (senderAccount != null)
+                        {
+                            senderName = senderAccount.User?.FullName ?? senderAccount.Username ?? senderAccount.Email ?? "A Friend";
+                        }
+
+                        var subject = $"🎁 You received a gift course from {senderName}!";
+                        var body = $@"
+                            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;'>
+                                <div style='background: linear-gradient(135deg, #059669 0%, #0d9488 100%); padding: 30px; text-align: center; color: white;'>
+                                    <h1 style='margin: 0; font-size: 24px;'>A Special Gift For You!</h1>
+                                </div>
+                                <div style='padding: 30px;'>
+                                    <p>Hi {(string.IsNullOrEmpty(recipientName) ? "" : recipientName)},</p>
+                                    <p>Great news! <strong>{senderName}</strong> has sent you a course gift card on LinkedLearn:</p>
+                                    <div style='background-color: #f8fafc; border-left: 4px solid #059669; padding: 15px; margin: 20px 0; border-radius: 4px;'>
+                                        <p style='margin: 0; font-weight: bold;'>Course:</p>
+                                        <p style='margin: 5px 0 15px 0; font-size: 18px; color: #0f172a;'>{course.Title}</p>
+                                        {(string.IsNullOrWhiteSpace(giftMessage) ? "" : $@"
+                                        <p style='margin: 0; font-weight: bold;'>Personal Message:</p>
+                                        <p style='margin: 5px 0 0 0; font-style: italic; color: #475569;'>""{giftMessage}""</p>")}
+                                    </div>
+                                    <p>Click the button below to claim your gift and start learning now:</p>
+                                    <div style='text-align: center; margin: 30px 0;'>
+                                        <a href='{claimLink}' style='background-color: #059669; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);'>Claim Your Gift Course</a>
+                                    </div>
+                                    <p style='font-size: 12px; color: #64748b;'>If you cannot click the button, copy and paste this link into your browser:<br/><a href='{claimLink}'>{claimLink}</a></p>
+                                </div>
+                                <div style='background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;'>
+                                    <p style='margin: 0;'>LinkedLearn Course Marketplace</p>
+                                </div>
+                            </div>";
+
+                        try
+                        {
+                            await _emailService.SendEmailAsync(recipientEmail, subject, body);
+                        }
+                        catch (Exception emailEx)
+                        {
+                            _logger.LogError(emailEx, $"Failed to send gift email to {recipientEmail}");
+                        }
+
+                        // ── 2.5c Gửi Thông Báo Trong Hệ Thống (Topping) ────────────
+                        try
+                        {
+                            var recipientAccount = await _userRepo.GetAccountByEmailAsync(recipientEmail);
+                            if (recipientAccount != null)
+                            {
+                                var notiTitle = $"🎁 You received a gift course from {senderName}!";
+                                var notiContent = $"{senderName} has sent you the course '{course.Title}'. Click here to claim your gift card.";
+                                await _notificationService.SendNotificationAsync(
+                                    recipientAccount.AccountId,
+                                    notiTitle,
+                                    notiContent,
+                                    claimLink
+                                );
+                            }
+                        }
+                        catch (Exception notiEx)
+                        {
+                            _logger.LogError(notiEx, $"Failed to send in-app notification to {recipientEmail}");
+                        }
                     }
                     else
                     {
-                        var enrollment = new Enrollment
+                        // Cấp Enrollment (Hoặc kích hoạt lại nếu đã từng refund)
+                        var existingEnrollment = await _enrollmentRepo.GetEnrollmentIncludingRefundedAsync(userId, courseId);
+                        if (existingEnrollment != null)
                         {
-                            UserId = userId,
-                            CourseId = courseId,
-                            Title = course.Title,
-                            EnrollDate = DateOnly.FromDateTime(DateTime.Now),
-                            IsCompleted = false,
-                            EnrollmentStatus = "active",
-                            LastAccessedAt = DateTime.Now
-                        };
-                        await _enrollmentRepo.AddEnrollmentAsync(enrollment);
-                        int rows4 = await _enrollmentRepo.SaveChangesAsync();
-                        if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
+                            existingEnrollment.EnrollmentStatus = "active";
+                            existingEnrollment.EnrollDate = DateOnly.FromDateTime(DateTime.Now);
+                            existingEnrollment.IsCompleted = false;
+                            existingEnrollment.CompletedDate = null;
+                            existingEnrollment.LastAccessedAt = DateTime.Now;
+
+                            await _enrollmentRepo.ClearMaterialCompletionsAsync(existingEnrollment.EnrollmentId);
+                        }
+                        else
+                        {
+                            var enrollment = new Enrollment
+                            {
+                                UserId = userId,
+                                CourseId = courseId,
+                                Title = course.Title,
+                                EnrollDate = DateOnly.FromDateTime(DateTime.Now),
+                                IsCompleted = false,
+                                EnrollmentStatus = "active",
+                                LastAccessedAt = DateTime.Now
+                            };
+                            await _enrollmentRepo.AddEnrollmentAsync(enrollment);
+                            int rows4 = await _enrollmentRepo.SaveChangesAsync();
+                            if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
+                        }
                     }
 
                     // Tính toán phí Stripe (2.9% + $0.30) và lấy doanh thu thuần của khoá học
@@ -455,7 +725,7 @@ public class CheckoutService : ICheckoutService
                         TransactionId = transaction.TransactionId,
                         InstructorId = course.InstructorId ?? 0,
                         PayoutAmount = payoutAmount,
-                        PayoutDate = DateTime.Now.AddDays(14),
+                        PayoutDate = await CalculatePayoutDateAsync(DateTime.Now),
                         IsPaid = false,
                         PayoutStatus = "pending",
                         StripeTransferId = null
@@ -484,8 +754,7 @@ public class CheckoutService : ICheckoutService
                     await _repo.ClearCartAsync(userId);
                 }
 
-                int rows5 = await _repo.SaveChangesAsync();
-                if (rows5 <= 0) throw new InvalidOperationException("Failed to save changes");
+                await _repo.SaveChangesAsync();
 
                 Console.WriteLine("[CHECKOUT-DEBUG] 🏁 Committing Transaction...");
                 await dbTransaction.CommitAsync();
@@ -552,17 +821,28 @@ public class CheckoutService : ICheckoutService
 
             foreach (var code in codes)
             {
-                var cp = await _couponRepo.GetValidCouponAsync(code, DateTime.Now);
-                if (cp != null)
+                var cp = await _couponRepo.GetByCodeAsync(code);
+                if (cp == null)
                 {
-                    decimal eligibleSubTotal = cartItems
-                        .Where(c => c.Course != null && c.Course.CouponId == cp.CouponId)
-                        .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
+                    throw new InvalidOperationException("This coupon does not exist.");
+                }
 
-                    if (eligibleSubTotal >= cp.MinOrderValue && eligibleSubTotal > 0)
-                    {
-                        appliedCoupons.Add(cp);
-                    }
+                var now = DateTime.Now;
+                if (cp.IsActive != true ||
+                    (cp.StartDate.HasValue && now < cp.StartDate.Value) ||
+                    (cp.EndDate.HasValue && now > cp.EndDate.Value) ||
+                    (cp.UsageLimit.HasValue && (cp.UsedCount ?? 0) >= cp.UsageLimit.Value))
+                {
+                    throw new InvalidOperationException("This coupon has expired or run out of usage.");
+                }
+
+                decimal eligibleSubTotal = cartItems
+                    .Where(c => c.Course != null && c.Course.CouponId == cp.CouponId)
+                    .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
+
+                if (eligibleSubTotal >= cp.MinOrderValue && eligibleSubTotal > 0)
+                {
+                    appliedCoupons.Add(cp);
                 }
             }
         }
@@ -754,33 +1034,132 @@ public class CheckoutService : ICheckoutService
                     int rows3 = await _repo.SaveChangesAsync();
                     if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
 
-                    // Cấp Enrollment (Hoặc kích hoạt lại nếu đã từng refund)
-                    var existingEnrollment = await _enrollmentRepo.GetEnrollmentIncludingRefundedAsync(userId, courseId);
-                    if (existingEnrollment != null)
+                    if (checkoutType == "gift")
                     {
-                        existingEnrollment.EnrollmentStatus = "active";
-                        existingEnrollment.EnrollDate = DateOnly.FromDateTime(DateTime.Now);
-                        existingEnrollment.IsCompleted = false;
-                        existingEnrollment.CompletedDate = null;
-                        existingEnrollment.LastAccessedAt = DateTime.Now;
+                        // ── Tạo bản ghi Quà Tặng ─────────────────────────────
+                        string recipientEmail = metadata.TryGetValue("recipientEmail", out var re) ? re : "";
+                        string recipientName = metadata.TryGetValue("recipientName", out var rn) ? rn : null;
+                        string giftMessage = metadata.TryGetValue("giftMessage", out var gm) ? gm : null;
+                        string cardTheme = metadata.TryGetValue("cardTheme", out var theme) ? theme : "classic";
+                        string feBaseUrl = metadata.TryGetValue("feBaseUrl", out var fbUrl) ? fbUrl : "http://localhost:5005";
 
-                        await _enrollmentRepo.ClearMaterialCompletionsAsync(existingEnrollment.EnrollmentId);
+                        var token = Guid.NewGuid().ToString("N");
+
+                        var gift = new Gift
+                        {
+                            OrderItemId = orderItem.Id,
+                            SenderId = userId,
+                            RecipientEmail = recipientEmail,
+                            RecipientName = recipientName,
+                            GiftMessage = giftMessage,
+                            CardTheme = cardTheme,
+                            RedemptionToken = token,
+                            IsClaimed = false,
+                            DeliveryStatus = "sent",
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now
+                        };
+
+                        await _giftRepo.AddAsync(gift);
+                        int rowsGift = await _giftRepo.SaveChangesAsync();
+                        if (rowsGift <= 0) throw new InvalidOperationException("Failed to save gift record");
+
+                        // ── Gửi Email Thiệp Quà Tặng ──────────────────────────
+                        var claimLink = $"{feBaseUrl}/Gift/Claim?token={token}";
+                        var senderName = "A Friend";
+                        var senderAccount = await _userRepo.GetAccountByIdAsync(userId);
+                        if (senderAccount != null)
+                        {
+                            senderName = senderAccount.User?.FullName ?? senderAccount.Username ?? senderAccount.Email ?? "A Friend";
+                        }
+
+                        var subject = $"🎁 You received a gift course from {senderName}!";
+                        var body = $@"
+                            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;'>
+                                <div style='background: linear-gradient(135deg, #059669 0%, #0d9488 100%); padding: 30px; text-align: center; color: white;'>
+                                    <h1 style='margin: 0; font-size: 24px;'>A Special Gift For You!</h1>
+                                </div>
+                                <div style='padding: 30px;'>
+                                    <p>Hi {(string.IsNullOrEmpty(recipientName) ? "" : recipientName)},</p>
+                                    <p>Great news! <strong>{senderName}</strong> has sent you a course gift card on LinkedLearn:</p>
+                                    <div style='background-color: #f8fafc; border-left: 4px solid #059669; padding: 15px; margin: 20px 0; border-radius: 4px;'>
+                                        <p style='margin: 0; font-weight: bold;'>Course:</p>
+                                        <p style='margin: 5px 0 15px 0; font-size: 18px; color: #0f172a;'>{course.Title}</p>
+                                        {(string.IsNullOrWhiteSpace(giftMessage) ? "" : $@"
+                                        <p style='margin: 0; font-weight: bold;'>Personal Message:</p>
+                                        <p style='margin: 5px 0 0 0; font-style: italic; color: #475569;'>""{giftMessage}""</p>")}
+                                    </div>
+                                    <p>Click the button below to claim your gift and start learning now:</p>
+                                    <div style='text-align: center; margin: 30px 0;'>
+                                        <a href='{claimLink}' style='background-color: #059669; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);'>Claim Your Gift Course</a>
+                                    </div>
+                                    <p style='font-size: 12px; color: #64748b;'>If you cannot click the button, copy and paste this link into your browser:<br/><a href='{claimLink}'>{claimLink}</a></p>
+                                </div>
+                                <div style='background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;'>
+                                    <p style='margin: 0;'>LinkedLearn Course Marketplace</p>
+                                </div>
+                            </div>";
+
+                        try
+                        {
+                            await _emailService.SendEmailAsync(recipientEmail, subject, body);
+                        }
+                        catch (Exception emailEx)
+                        {
+                            _logger.LogError(emailEx, $"Failed to send gift email to {recipientEmail}");
+                        }
+
+                        // ── Gửi Thông Báo Trong Hệ Thống (Topping) ────────────
+                        try
+                        {
+                            var recipientAccount = await _userRepo.GetAccountByEmailAsync(recipientEmail);
+                            if (recipientAccount != null)
+                            {
+                                var notiTitle = $"🎁 You received a gift course from {senderName}!";
+                                var notiContent = $"{senderName} has sent you the course '{course.Title}'. Click here to claim your gift card.";
+                                await _notificationService.SendNotificationAsync(
+                                    recipientAccount.AccountId,
+                                    notiTitle,
+                                    notiContent,
+                                    claimLink
+                                );
+                            }
+                        }
+                        catch (Exception notiEx)
+                        {
+                            _logger.LogError(notiEx, $"Failed to send in-app notification to {recipientEmail}");
+                        }
                     }
                     else
                     {
-                        var enrollment = new Enrollment
+                        // Cấp Enrollment (Hoặc kích hoạt lại nếu đã từng refund)
+                        var existingEnrollment = await _enrollmentRepo.GetEnrollmentIncludingRefundedAsync(userId, courseId);
+                        if (existingEnrollment != null)
                         {
-                            UserId = userId,
-                            CourseId = courseId,
-                            Title = course.Title,
-                            EnrollDate = DateOnly.FromDateTime(DateTime.Now),
-                            IsCompleted = false,
-                            EnrollmentStatus = "active",
-                            LastAccessedAt = DateTime.Now
-                        };
-                        await _enrollmentRepo.AddEnrollmentAsync(enrollment);
-                        int rows4 = await _enrollmentRepo.SaveChangesAsync();
-                        if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
+                            existingEnrollment.EnrollmentStatus = "active";
+                            existingEnrollment.EnrollDate = DateOnly.FromDateTime(DateTime.Now);
+                            existingEnrollment.IsCompleted = false;
+                            existingEnrollment.CompletedDate = null;
+                            existingEnrollment.LastAccessedAt = DateTime.Now;
+
+                            await _enrollmentRepo.ClearMaterialCompletionsAsync(existingEnrollment.EnrollmentId);
+                        }
+                        else
+                        {
+                            var enrollment = new Enrollment
+                            {
+                                UserId = userId,
+                                CourseId = courseId,
+                                Title = course.Title,
+                                EnrollDate = DateOnly.FromDateTime(DateTime.Now),
+                                IsCompleted = false,
+                                EnrollmentStatus = "active",
+                                LastAccessedAt = DateTime.Now
+                            };
+                            await _enrollmentRepo.AddEnrollmentAsync(enrollment);
+                            int rows4 = await _enrollmentRepo.SaveChangesAsync();
+                            if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
+                        }
                     }
 
                     // Tính toán phí Stripe (2.9% + $0.30) và lấy doanh thu thuần của khoá học
@@ -795,7 +1174,7 @@ public class CheckoutService : ICheckoutService
                         TransactionId = transaction.TransactionId,
                         InstructorId = course.InstructorId ?? 0,
                         PayoutAmount = payoutAmount,
-                        PayoutDate = DateTime.Now.AddDays(14),
+                        PayoutDate = await CalculatePayoutDateAsync(DateTime.Now),
                         IsPaid = false,
                         PayoutStatus = "pending",
                         StripeTransferId = null
@@ -824,8 +1203,7 @@ public class CheckoutService : ICheckoutService
                     await _repo.ClearCartAsync(userId);
                 }
 
-                int rows5 = await _repo.SaveChangesAsync();
-                if (rows5 <= 0) throw new InvalidOperationException("Failed to save changes");
+                await _repo.SaveChangesAsync();
 
                 Console.WriteLine("[CHECKOUT-DEBUG] 🏁 Committing Transaction...");
                 await dbTransaction.CommitAsync();
@@ -904,5 +1282,28 @@ public class CheckoutService : ICheckoutService
             "VN" => "VND",
             _ => "USD"
         };
+    }
+
+    private async Task<DateTime> CalculatePayoutDateAsync(DateTime transactionDate)
+    {
+        var payoutDaysConfig = await _adminFinanceService.GetPayoutDaysConfigAsync();
+        int payoutDay = 15;
+        if (!string.IsNullOrWhiteSpace(payoutDaysConfig))
+        {
+            var firstConfigDay = payoutDaysConfig.Split(',')
+                .Select(s => int.TryParse(s.Trim(), out var d) ? d : 0)
+                .Where(d => d > 0)
+                .FirstOrDefault();
+            if (firstConfigDay > 0)
+            {
+                payoutDay = firstConfigDay;
+            }
+        }
+
+        var nextMonth = transactionDate.AddMonths(1);
+        int daysInNextMonth = DateTime.DaysInMonth(nextMonth.Year, nextMonth.Month);
+        int targetDay = Math.Min(payoutDay, daysInNextMonth);
+
+        return new DateTime(nextMonth.Year, nextMonth.Month, targetDay, 0, 0, 0, transactionDate.Kind);
     }
 }

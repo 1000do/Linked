@@ -114,7 +114,10 @@ public class TransactionRepository : ITransactionRepository
 
                 RefundReason = t.TransactionExt != null ? t.TransactionExt.RefundReason : null,
                 RefundAdminNote = t.TransactionExt != null ? t.TransactionExt.RefundAdminNote : null,
-                RefundRequestedAt = t.TransactionExt != null ? t.TransactionExt.RefundRequestedAt : null
+                RefundRequestedAt = t.TransactionExt != null ? t.TransactionExt.RefundRequestedAt : null,
+                IsGift          = _context.Gifts.Any(g => g.OrderItemId == t.OrderItemId),
+                RecipientEmail  = _context.Gifts.Where(g => g.OrderItemId == t.OrderItemId).Select(g => g.RecipientEmail).FirstOrDefault(),
+                IsGiftClaimed   = _context.Gifts.Any(g => g.OrderItemId == t.OrderItemId && g.IsClaimed)
             });
 
         // ★ Đếm tổng trước (COUNT chạy trong DB)
@@ -350,7 +353,10 @@ public class TransactionRepository : ITransactionRepository
 
                 RefundReason = t.TransactionExt != null ? t.TransactionExt.RefundReason : null,
                 RefundAdminNote = t.TransactionExt != null ? t.TransactionExt.RefundAdminNote : null,
-                RefundRequestedAt = t.TransactionExt != null ? t.TransactionExt.RefundRequestedAt : null
+                RefundRequestedAt = t.TransactionExt != null ? t.TransactionExt.RefundRequestedAt : null,
+                IsGift          = _context.Gifts.Any(g => g.OrderItemId == t.OrderItemId),
+                RecipientEmail  = _context.Gifts.Where(g => g.OrderItemId == t.OrderItemId).Select(g => g.RecipientEmail).FirstOrDefault(),
+                IsGiftClaimed   = _context.Gifts.Any(g => g.OrderItemId == t.OrderItemId && g.IsClaimed)
             });
 
         var totalCount = await query.CountAsync();
@@ -358,5 +364,34 @@ public class TransactionRepository : ITransactionRepository
         var items = await query.Skip(skip).Take(pageSize).ToListAsync();
 
         return (items, totalCount);
+    }
+
+    public async Task<bool> RejectPendingRefundForGiftClaimedAsync(int orderItemId)
+    {
+        var txn = await _context.Transactions
+            .Include(t => t.TransactionExt)
+            .FirstOrDefaultAsync(t => t.OrderItemId == orderItemId && t.TransactionsStatus == "refund_pending");
+
+        if (txn != null)
+        {
+            txn.TransactionsStatus = "succeeded";
+            var rejectNote = "This gift has already been claimed, refund is not allowed.";
+            if (txn.TransactionExt == null)
+            {
+                txn.TransactionExt = new Domain.Entities.TransactionExt
+                {
+                    TransactionId = txn.TransactionId,
+                    RefundAdminNote = rejectNote,
+                    RefundRequestedAt = DateTime.UtcNow
+                };
+            }
+            else
+            {
+                txn.TransactionExt.RefundAdminNote = rejectNote;
+            }
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        return false;
     }
 }

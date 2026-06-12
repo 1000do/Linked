@@ -63,11 +63,11 @@ If a use case has multiple primary actors listed in its metadata (e.g., `User, I
     *   *Note:* Only add the extra `.1, .2` numbering levels if there are multiple branches originating from the exact same step. If there is only one exception at step 5, name it `EX-5`.
 
 ## 6. Alternative Flows vs Exceptions
-*   **Alternative Flow:** A flow is considered an alt flow if it simply halts execution due to some restrictions, validations, or invalidation (e.g., frontend form validation, cancelling a modal), and then brings the actor back to a normal flow step (without a page reload).
+*   **Alternative Flow:** A flow is considered an alt flow if it simply halts execution due to some restrictions, validations, or invalidation (e.g., frontend form validation, cancelling a modal), and then brings the actor back to a normal flow step. This includes intentional user-triggered navigation actions that cause a page reload (e.g., pagination, tab switching) — these should be modeled as alt flows ending with `Back to step 1.`, NOT as exceptions.
     *   *Rule:* Alternative flows MUST reference back to a normal flow step (e.g., "3. Back to step 3.").
 *   **Exception:** A flow is considered an exception if it:
     1. Kicks the actor out of the normal flow entirely (e.g., Session Invalid redirects to login).
-    2. Makes the actor go back to step 1 (due to a full page reload).
+    2. Makes the actor go back to step 1 due to a full page reload caused by an **error or system-triggered redirect** — NOT by an intentional user navigation action (e.g., clicking a pagination button or switching tabs). Those belong in Alternative Flows.
     3. Explicitly throws a backend exception (e.g., `UnauthorizedAccessException`, database failure). *Note: Exceptions that don't kick the user out should also end with a reference back to a normal flow step (e.g., "3. Back to step 2.").*
 
 ## 7. Assumptions and Authentication Exceptions

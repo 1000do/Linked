@@ -9,6 +9,8 @@ namespace CourseMarketplaceBE.Application.DTOs
         public string? ProfessionalTitle { get; set; }
         public string? DocumentUrl { get; set; } // Link CV (PDF)
         public string? LinkedInUrl { get; set; } // Link mạng xã hội
+        public string? YoutubeUrl { get; set; }
+        public string? FacebookUrl { get; set; }
         public string? ApprovalStatus { get; set; }
         public string? ExpertiseCategories { get; set; }
     }

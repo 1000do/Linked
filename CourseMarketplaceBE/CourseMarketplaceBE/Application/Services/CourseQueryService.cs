@@ -161,13 +161,7 @@ public class CourseQueryService : ICourseQueryService
 
         if (totalCount == 0)
         {
-            return new PagedResult<CourseResponse>
-            {
-                Items = new List<CourseResponse>(),
-                TotalCount = 0,
-                Page = finalPage,
-                PageSize = finalPageSize
-            };
+            throw new KeyNotFoundException("No courses match the specified criteria.");
         }
 
         var courseIds = courses.Select(c => c.CourseId).ToList();

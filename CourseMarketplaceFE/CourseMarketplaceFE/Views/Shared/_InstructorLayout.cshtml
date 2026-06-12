@@ -306,6 +306,32 @@
                 }
             }
 
+            // Show a premium real-time toast alert
+            if (noti && noti.title && localStorage.getItem("AccountLocked") !== "true") {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 6000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer)
+                        toast.addEventListener('mouseleave', Swal.resumeTimer)
+                    }
+                });
+
+                Toast.fire({
+                    icon: 'info',
+                    title: noti.title,
+                    html: `
+                        <div class="text-left font-body">
+                            <p class="text-[12px] text-slate-600 mt-1 leading-relaxed">${noti.content}</p>
+                            ${noti.linkAction ? `<a href="${noti.linkAction}" class="inline-block mt-2 text-[12px] font-bold text-teal-600 hover:text-teal-700 transition-colors">View Detail &rarr;</a>` : ''}
+                        </div>
+                    `
+                });
+            }
+
             // 4. Cập nhật Sidebar badge
             loadUnreadSummary();
         });
