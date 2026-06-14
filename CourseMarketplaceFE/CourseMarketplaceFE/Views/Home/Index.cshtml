@@ -245,11 +245,14 @@
                         <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
 
                         @* Wishlist Toggle *@
-                        <button type="button" 
-                                class="absolute top-3 right-3 z-30 w-9 h-9 rounded-full bg-white/90 @(course.IsInWishlist ? "text-red-500" : "text-slate-400") flex items-center justify-center hover:bg-white hover:text-red-500 hover:scale-110 shadow-sm transition-all duration-300"
-                                onclick="event.stopPropagation(); toggleWishlist(this, @course.CourseId);">
-                            <span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "FILL" @(course.IsInWishlist ? "1" : "0");'>favorite</span>
-                        </button>
+                        @if (course.Price > 0)
+                        {
+                            <button type="button" 
+                                    class="absolute top-3 right-3 z-30 w-9 h-9 rounded-full bg-white/90 @(course.IsInWishlist ? "text-red-500" : "text-slate-400") flex items-center justify-center hover:bg-white hover:text-red-500 hover:scale-110 shadow-sm transition-all duration-300"
+                                    onclick="event.stopPropagation(); toggleWishlist(this, @course.CourseId);">
+                                <span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "FILL" @(course.IsInWishlist ? "1" : "0");'>favorite</span>
+                            </button>
+                        }
                     </div>
                     <div class="p-6 flex flex-col flex-grow">
                         <h3 class="text-lg font-bold text-slate-900 line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
@@ -285,18 +288,23 @@
                                     <span class="material-symbols-outlined text-[18px]">check_circle</span>
                                 </div>
                             }
+                            else if (course.Price == 0)
+                            {
+                                <button type="button" 
+                                        class="px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:bg-emerald-700 hover:scale-105 active:scale-95 shadow-sm transition-all duration-300 z-20 flex items-center gap-1"
+                                        onclick="event.stopPropagation(); enrollFree(@course.CourseId, this);">
+                                    <span class="material-symbols-outlined text-sm">person_add</span>
+                                    Enroll
+                                </button>
+                            }
                             else
                             {
-                                <form asp-action="AddToCart" asp-controller="Cart" method="post" class="m-0 z-20">
-                                    <input type="hidden" name="courseId" value="@course.CourseId" />
-                                    <input type="hidden" name="returnUrl" value="/" />
-                                    <button type="submit" 
-                                            class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all duration-300"
-                                            onclick="event.stopPropagation();"
-                                            title="Add to cart">
-                                        <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
-                                    </button>
-                                </form>
+                                <button type="button" 
+                                        class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all duration-300 z-20"
+                                        onclick="event.stopPropagation(); addToCart(@course.CourseId, this);"
+                                        title="Add to cart">
+                                    <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
+                                </button>
                             }
                         </div>
                     </div>

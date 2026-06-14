@@ -310,7 +310,27 @@
             if (!courseId) return;
 
             if (typeof currentToken === 'undefined' || !currentToken) {
-                window.location.href = '/Account/Login';
+                Swal.fire({
+                    title: 'Login Required',
+                    text: 'You need to log in to save this course to your wishlist.',
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Log In Now',
+                    cancelButtonText: 'Later',
+                    confirmButtonColor: '#006a62',
+                    cancelButtonColor: '#64748b',
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'rounded-[2rem] border border-slate-100 p-8 shadow-2xl',
+                        title: 'text-xl font-black text-slate-900 tracking-tight',
+                        confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all bg-primary hover:bg-emerald-700',
+                        cancelButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
+                    }
+                }).then((res) => {
+                    if (res.isConfirmed) {
+                        window.location.href = '/Account/Login';
+                    }
+                });
                 return;
             }
 
@@ -340,6 +360,16 @@
                         }
                         const textSpan = btn.querySelector('.wishlist-text');
                         if (textSpan) textSpan.innerText = "Saved to Wishlist";
+
+                        Swal.fire({
+                            title: 'Added to Wishlist',
+                            text: 'Course has been added to your wishlist.',
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false,
+                            position: 'top-end',
+                            toast: true
+                        });
                     } else {
                         btn.classList.remove('text-red-500');
                         const textSpan = btn.querySelector('.wishlist-text');
@@ -355,8 +385,18 @@
                         }
                         if (icon) icon.style.fontVariationSettings = "'FILL' 0";
 
+                        Swal.fire({
+                            title: 'Removed from Wishlist',
+                            text: 'Course has been removed from your wishlist.',
+                            icon: 'info',
+                            timer: 2000,
+                            showConfirmButton: false,
+                            position: 'top-end',
+                            toast: true
+                        });
+
                         if (window.location.pathname.toLowerCase() === '/wishlist') {
-                            const card = btn.closest('.group');
+                            const card = btn.closest('.group') || btn.closest('.course-card-custom') || btn.closest('[onclick*="/Course/Details"]');
                             if (card) {
                                 card.style.transition = 'all 0.3s ease';
                                 card.style.opacity = '0';
@@ -366,7 +406,27 @@
                         }
                     }
                 } else if (response.status === 401) {
-                    window.location.href = '/Account/Login';
+                    Swal.fire({
+                        title: 'Login Required',
+                        text: 'You need to log in to save this course to your wishlist.',
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonText: 'Log In Now',
+                        cancelButtonText: 'Later',
+                        confirmButtonColor: '#006a62',
+                        cancelButtonColor: '#64748b',
+                        background: '#ffffff',
+                        customClass: {
+                            popup: 'rounded-[2rem] border border-slate-100 p-8 shadow-2xl',
+                            title: 'text-xl font-black text-slate-900 tracking-tight',
+                            confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all bg-primary hover:bg-emerald-700',
+                            cancelButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
+                        }
+                    }).then((res) => {
+                        if (res.isConfirmed) {
+                            window.location.href = '/Account/Login';
+                        }
+                    });
                 } else {
                     console.error('Failed to toggle wishlist:', response.statusText);
                 }
@@ -377,6 +437,355 @@
                 btn.style.opacity = '1';
             }
         }
+
+        async function addToCart(courseId, btn) {
+            if (!courseId) return;
+
+            if (typeof currentToken === 'undefined' || !currentToken) {
+                Swal.fire({
+                    title: 'Login Required',
+                    text: 'You need to log in to add this course to your cart.',
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Log In Now',
+                    cancelButtonText: 'Later',
+                    confirmButtonColor: '#006a62',
+                    cancelButtonColor: '#64748b',
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'rounded-[2rem] border border-slate-100 p-8 shadow-2xl',
+                        title: 'text-xl font-black text-slate-900 tracking-tight',
+                        confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all bg-primary hover:bg-emerald-700',
+                        cancelButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
+                    }
+                }).then((res) => { 
+                    if (res.isConfirmed) {
+                        window.location.href = '/Account/Login'; 
+                    }
+                });
+                return;
+            }
+
+            let originalContent = '';
+            let disabledState = false;
+            if (btn) {
+                originalContent = btn.innerHTML;
+                disabledState = btn.disabled;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="animate-spin material-symbols-outlined text-[18px]">sync</span>';
+            }
+
+            try {
+                const response = await fetch('/Cart/AddToCartAjax/' + courseId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.status === 401) {
+                    Swal.fire({
+                        title: 'Login Required',
+                        text: 'Please log in to continue.',
+                        icon: 'warning',
+                        confirmButtonColor: '#006a62',
+                        background: '#ffffff',
+                        customClass: {
+                            popup: 'rounded-[2rem] border border-slate-100 p-8 shadow-2xl',
+                            title: 'text-xl font-black text-slate-900 tracking-tight',
+                            confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all bg-primary hover:bg-emerald-700'
+                        }
+                    }).then(() => { 
+                        window.location.href = '/Account/Login'; 
+                    });
+                    return;
+                }
+
+                const result = await response.json();
+                if (result.success) {
+                    // Dispatch global event so the header badge and header mini-dropdown updates too!
+                    document.dispatchEvent(new CustomEvent('cartUpdated'));
+
+                    Swal.fire({
+                        title: 'Added Successfully!',
+                        text: 'The course has been added to your cart.',
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: 'Go to Cart',
+                        cancelButtonText: 'Continue Browsing',
+                        confirmButtonColor: '#006a62',
+                        cancelButtonColor: '#64748b',
+                        background: '#ffffff',
+                        customClass: {
+                            popup: 'rounded-[2rem] border border-slate-100 p-8 shadow-2xl',
+                            title: 'text-xl font-black text-slate-900 tracking-tight',
+                            confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all bg-primary hover:bg-emerald-700',
+                            cancelButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
+                        }
+                    }).then((res) => {
+                        if (res.isConfirmed) {
+                            window.location.href = '/Cart';
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Notification',
+                        text: result.message || 'Could not add to cart.',
+                        icon: 'warning',
+                        confirmButtonColor: '#006a62',
+                        background: '#ffffff',
+                        customClass: {
+                            popup: 'rounded-[2rem] border border-slate-100 p-8 shadow-2xl',
+                            title: 'text-xl font-black text-slate-900 tracking-tight',
+                            confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all bg-primary hover:bg-emerald-700'
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'An error occurred while adding to cart.',
+                    icon: 'error',
+                    confirmButtonColor: '#ef4444',
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'rounded-[2rem] border border-slate-100 p-8 shadow-2xl',
+                        title: 'text-xl font-black text-slate-900 tracking-tight',
+                        confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all bg-red-600 hover:bg-red-700'
+                    }
+                });
+            } finally {
+                if (btn) {
+                    btn.disabled = disabledState;
+                    btn.innerHTML = originalContent;
+                }
+            }
+        }
+
+        async function enrollFree(courseId, btn) {
+            if (!courseId) return;
+
+            if (typeof currentToken === 'undefined' || !currentToken) {
+                Swal.fire({
+                    title: 'Login Required',
+                    text: 'You need to log in to enroll in this course.',
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Log In Now',
+                    cancelButtonText: 'Later',
+                    confirmButtonColor: '#006a62',
+                    cancelButtonColor: '#64748b',
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'rounded-[2rem] border border-slate-100 p-8 shadow-2xl',
+                        title: 'text-xl font-black text-slate-900 tracking-tight',
+                        confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all bg-primary hover:bg-emerald-700',
+                        cancelButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
+                    }
+                }).then((res) => {
+                    if (res.isConfirmed) {
+                        window.location.href = '/Account/Login';
+                    }
+                });
+                return;
+            }
+
+            let originalContent = '';
+            let disabledState = false;
+            if (btn) {
+                originalContent = btn.innerHTML;
+                disabledState = btn.disabled;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="animate-spin material-symbols-outlined text-[18px]">sync</span>';
+            }
+
+            try {
+                const response = await fetch('/Course/EnrollFree/' + courseId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.status === 401) {
+                    Swal.fire({
+                        title: 'Login Required',
+                        text: 'Please log in to continue.',
+                        icon: 'warning',
+                        confirmButtonColor: '#006a62',
+                        background: '#ffffff',
+                        customClass: {
+                            popup: 'rounded-[2rem] border border-slate-100 p-8 shadow-2xl',
+                            title: 'text-xl font-black text-slate-900 tracking-tight',
+                            confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all bg-primary hover:bg-emerald-700'
+                        }
+                    }).then(() => { 
+                        window.location.href = '/Account/Login'; 
+                    });
+                    return;
+                }
+
+                const result = await response.json();
+                if (result.success) {
+                    Swal.fire({
+                        title: 'Enrolled Successfully!',
+                        text: 'You have been enrolled in this course.',
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: 'Go to Course',
+                        cancelButtonText: 'Continue Browsing',
+                        confirmButtonColor: '#006a62',
+                        cancelButtonColor: '#64748b',
+                        background: '#ffffff',
+                        customClass: {
+                            popup: 'rounded-[2rem] border border-slate-100 p-8 shadow-2xl',
+                            title: 'text-xl font-black text-slate-900 tracking-tight',
+                            confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all bg-primary hover:bg-emerald-700',
+                            cancelButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
+                        }
+                    }).then((res) => {
+                        if (res.isConfirmed) {
+                            window.location.href = '/Course/Learn/' + courseId;
+                        } else {
+                            window.location.reload();
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Enrollment Failed',
+                        text: result.message || 'Could not enroll in course.',
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444',
+                        background: '#ffffff',
+                        customClass: {
+                            popup: 'rounded-[2rem] border border-slate-100 p-8 shadow-2xl',
+                            title: 'text-xl font-black text-slate-900 tracking-tight',
+                            confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all bg-red-600 hover:bg-red-700'
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error during free enrollment:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'An error occurred during enrollment.',
+                    icon: 'error',
+                    confirmButtonColor: '#ef4444',
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'rounded-[2rem] border border-slate-100 p-8 shadow-2xl',
+                        title: 'text-xl font-black text-slate-900 tracking-tight',
+                        confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all bg-red-600 hover:bg-red-700'
+                    }
+                });
+            } finally {
+                if (btn) {
+                    btn.disabled = disabledState;
+                    btn.innerHTML = originalContent;
+                }
+            }
+        }
+
+        function showAlreadyInCartPopup() {
+            Swal.fire({
+                title: 'Already in Cart',
+                text: 'This course is already in your shopping cart.',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'Go to Cart',
+                cancelButtonText: 'Continue Browsing',
+                confirmButtonColor: '#006a62',
+                cancelButtonColor: '#64748b',
+                background: '#ffffff',
+                customClass: {
+                    popup: 'rounded-[2rem] border border-slate-100 p-8 shadow-2xl',
+                    title: 'text-xl font-black text-slate-900 tracking-tight',
+                    confirmButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all bg-primary hover:bg-emerald-700',
+                    cancelButton: 'px-6 py-3 font-bold rounded-2xl text-sm transition-all'
+                }
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    window.location.href = '/Cart';
+                }
+            });
+        }
+
+        async function updateCartButtons() {
+            if (typeof currentToken === 'undefined' || !currentToken) return;
+
+            try {
+                const res = await fetch('http://localhost:5207/api/cart/summary', {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                if (!res.ok) return;
+
+                const result = await res.json();
+                const items = result?.data?.items ?? [];
+                const cartCourseIds = items.map(item => item.courseId);
+
+                const allButtons = document.querySelectorAll('button[onclick*="addToCart"]');
+                allButtons.forEach(btn => {
+                    const onclickText = btn.getAttribute('onclick') || '';
+                    const match = onclickText.match(/addToCart\(\s*(\d+)/);
+                    if (match && match[1]) {
+                        const courseId = parseInt(match[1]);
+                        if (cartCourseIds.includes(courseId)) {
+                            btn.title = "Already in cart";
+                            
+                            // Check if this is the large button (e.g. Details page)
+                            if (btn.classList.contains('w-full') || btn.innerText.toLowerCase().includes('add to cart')) {
+                                btn.className = "w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 decoration-none border-0";
+                                btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">check_circle</span> Go to Cart';
+                                btn.onclick = function(e) {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    showAlreadyInCartPopup();
+                                };
+                            } else {
+                                // Small round button
+                                btn.className = "w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm z-20 transition-all duration-300";
+                                // Check if it's the smaller 9x9 button from Course Catalog
+                                if (btn.classList.contains('w-9') || btn.classList.contains('h-9')) {
+                                    btn.className = "w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 z-20 transition-all duration-300";
+                                }
+                                btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">check</span>';
+                                btn.onclick = function(e) {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    showAlreadyInCartPopup();
+                                };
+                            }
+                        } else {
+                            // Restore original if it was checked
+                            if (btn.classList.contains('bg-emerald-100') || btn.classList.contains('bg-emerald-50') || btn.classList.contains('bg-emerald-600')) {
+                                if (btn.classList.contains('w-full')) {
+                                    btn.className = "w-full bg-primary text-white font-bold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2";
+                                    btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">add_shopping_cart</span> Add to cart';
+                                    btn.onclick = function(e) {
+                                        addToCart(courseId, btn);
+                                    };
+                                } else {
+                                    if (btn.classList.contains('w-9')) {
+                                        btn.className = "w-9 h-9 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 border border-slate-200/60 hover:border-primary shadow-sm transition-all ease-out-expo duration-200 z-20";
+                                        btn.innerHTML = '<span class="material-symbols-outlined text-[17px]" style=\'font-variation-settings:"FILL" 1;\'>add_shopping_cart</span>';
+                                    } else {
+                                        btn.className = "w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all duration-300 z-20";
+                                        btn.innerHTML = '<span class="material-symbols-outlined text-[18px]" style=\'font-variation-settings:"FILL" 1;\'>add_shopping_cart</span>';
+                                    }
+                                    btn.title = "Add to cart";
+                                    btn.onclick = function(e) {
+                                        e.stopPropagation();
+                                        addToCart(courseId, btn);
+                                    };
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Error updating cart buttons:", err);
+            }
+        }
+        window.updateCartButtons = updateCartButtons;
 
         window.addEventListener('unhandledrejection', function(event) {
             if (event.reason === undefined) {
@@ -671,6 +1080,8 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             loadTopNotifications();
+            updateCartButtons();
+            document.addEventListener('cartUpdated', updateCartButtons);
             
             if (currentToken) {
                 if (localStorage.getItem("AccountLocked") === "true") {
