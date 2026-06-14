@@ -4,6 +4,7 @@ using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using Microsoft.AspNetCore.SignalR;
 using CourseMarketplaceBE.Hubs;
+using CourseMarketplaceBE.Domain.Constants;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -50,6 +51,12 @@ public class WishlistService : IWishlistService
 
     public async Task AddToWishlistAsync(int userId, int courseId)
     {
+        var course = await _courseRepository.GetByIdAsync(courseId);
+        if (course == null || course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
+        {
+            throw new InvalidOperationException("Course does not exist or is not published.");
+        }
+
         if (await _wishlistRepository.ExistsAsync(userId, courseId))
         {
             throw new InvalidOperationException("Course is already in your wishlist.");
@@ -99,6 +106,12 @@ public class WishlistService : IWishlistService
         }
         else
         {
+            var course = await _courseRepository.GetByIdAsync(courseId);
+            if (course == null || course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
+            {
+                throw new InvalidOperationException("Course does not exist or is not published.");
+            }
+
             var newItem = new WishlistItem
             {
                 UserId = userId,

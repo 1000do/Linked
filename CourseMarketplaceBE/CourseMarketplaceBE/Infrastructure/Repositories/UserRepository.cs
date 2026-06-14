@@ -119,6 +119,7 @@ public class UserRepository : IUserRepository
     public async Task<Account?> GetAccountByIdAsync(int accountId) =>
         await _context.Accounts
             .Include(a => a.User)
+                .ThenInclude(u => u!.Instructor)
             .Include(a => a.Manager)
             .FirstOrDefaultAsync(a => a.AccountId == accountId);
 
@@ -310,5 +311,83 @@ public class UserRepository : IUserRepository
             .Where(i => i.InstructorId == instructorId)
             .Select(i => i.StripeCountry)
             .FirstOrDefaultAsync();
+    }
+
+    public async Task<(List<Account> Items, int TotalCount)> GetAccountsPagedAsync(string? keyword, string? role, int page, int pageSize)
+    {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        var query = _context.Accounts
+            .Include(a => a.Manager)
+            .Include(a => a.User)
+                .ThenInclude(u => u!.Instructor)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(role) && role.ToLower() != "all")
+        {
+            var roleLower = role.ToLower();
+            if (roleLower == "staff")
+            {
+                query = query.Where(a => a.Manager != null && a.Manager.Role == "staff");
+            }
+            else if (roleLower == "registered_staff")
+            {
+                query = query.Where(a => a.Manager != null && a.Manager.Role == "staff" && a.IsVerified);
+            }
+            else if (roleLower == "user")
+            {
+                query = query.Where(a => a.Manager == null);
+            }
+            else if (roleLower == "instructor")
+            {
+                query = query.Where(a => a.User != null && a.User.Instructor != null);
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var kw = keyword.ToLower();
+            query = query.Where(a =>
+                a.Email.ToLower().Contains(kw) ||
+                (a.PhoneNumber != null && a.PhoneNumber.Contains(kw)) ||
+                (a.Manager != null && a.Manager.DisplayName.ToLower().Contains(kw)) ||
+                (a.User != null && a.User.FullName.ToLower().Contains(kw))
+            );
+        }
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(a => a.AccountCreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    public async Task<bool> RegisterManagerAsync(Account account, Manager manager)
+    {
+        using var t = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            _context.Accounts.Add(account);
+            await _context.SaveChangesAsync();
+            manager.ManagerId = account.AccountId;
+            _context.Managers.Add(manager);
+            await _context.SaveChangesAsync();
+            await t.CommitAsync();
+            return true;
+        }
+        catch
+        {
+            await t.RollbackAsync();
+            return false;
+        }
+    }
+
+    public async Task<int> SaveChangesAsync()
+    {
+        return await _context.SaveChangesAsync();
     }
 }

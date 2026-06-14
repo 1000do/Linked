@@ -100,58 +100,212 @@
         </div>
     </div>
 
-    <!-- Financial Stats Grid Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        @if (Model.Account.Role?.ToLower() == "instructor" || Model.Account.IsInstructor)
-        {
-            <!-- Revenue -->
+    <!-- Financial Stats -->
+    @if (Model.Account.Role?.ToLower() == "instructor" || Model.Account.IsInstructor)
+    {
+        var allPayouts = Model.Transactions.Payouts ?? new List<CourseMarketplaceFE.Models.PayoutViewModel>();
+        
+        var grossRevenue = allPayouts.Sum(x => Math.Abs(x.PayoutAmount));
+        var refundedRevenue = allPayouts.Where(x => x.PayoutStatus?.ToLower() == "refunded").Sum(x => Math.Abs(x.PayoutAmount));
+        var netRevenue = grossRevenue - refundedRevenue;
+        
+        var stripeWallet = allPayouts.Where(x => x.PayoutStatus?.ToLower() == "transferred" || (x.PayoutStatus?.ToLower() == "refunded" && x.IsPaid && x.PaidToBankAt != null)).Sum(x => x.PayoutAmount);
+        var pendingPayout = allPayouts.Where(x => x.PayoutStatus?.ToLower() == "pending" || x.PayoutStatus?.ToLower() == "in_transit").Sum(x => x.PayoutAmount);
+        var paidPayout = allPayouts.Where(x => x.PayoutStatus?.ToLower() == "paid").Sum(x => x.PayoutAmount);
+
+        <!-- Revenue Statistics Section -->
+        <div class="space-y-4">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-emerald-600 text-xl font-bold">analytics</span>
+                <h2 class="text-xs font-black text-slate-800 uppercase tracking-wider">Revenue Statistics</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 1. Gross Revenue -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500 hover:shadow-md transition-all duration-300">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xs font-black text-slate-500 uppercase tracking-wider">Gross Revenue</h3>
+                        <div class="w-9 h-9 rounded-2xl bg-emerald-50 flex items-center justify-center border border-emerald-100/50 group-hover:bg-emerald-500/10 transition-colors duration-300">
+                            <span class="material-symbols-outlined text-[20px] text-emerald-500 font-bold group-hover:scale-110 transition-transform">add_chart</span>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors">$@grossRevenue.ToString("N2")</p>
+                        <p class="text-[10px] font-bold text-slate-400 mt-1.5 uppercase tracking-wide">Total Sales Revenue</p>
+                    </div>
+                </div>
+
+                <!-- 2. Total Refunded -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between group hover:border-rose-500 hover:shadow-md transition-all duration-300">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xs font-black text-slate-500 uppercase tracking-wider">Total Refunded</h3>
+                        <div class="w-9 h-9 rounded-2xl bg-rose-50 flex items-center justify-center border border-rose-100/50 group-hover:bg-rose-500/10 transition-colors duration-300">
+                            <span class="material-symbols-outlined text-[20px] text-rose-500 font-bold group-hover:scale-110 transition-transform">currency_exchange</span>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-black text-rose-600">
+                            @if (refundedRevenue > 0)
+                            {
+                                <span>- $@refundedRevenue.ToString("N2")</span>
+                            }
+                            else
+                            {
+                                <span>$@refundedRevenue.ToString("N2")</span>
+                            }
+                        </p>
+                        <p class="text-[10px] font-bold text-slate-400 mt-1.5 uppercase tracking-wide">Deductions & Returns</p>
+                    </div>
+                </div>
+
+                <!-- 3. Net Earnings -->
+                <div class="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden flex flex-col justify-between hover:scale-[1.01] hover:shadow-indigo-500/20 transition-all duration-300">
+                    <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                    <div class="flex items-center justify-between mb-4 relative z-10">
+                        <h3 class="text-xs font-black text-indigo-100 uppercase tracking-wider">Net Earnings</h3>
+                        <div class="w-9 h-9 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm">
+                            <span class="material-symbols-outlined text-[20px] text-white font-bold">account_balance_wallet</span>
+                        </div>
+                    </div>
+                    <div class="relative z-10">
+                        <p class="text-2xl font-black text-white">$@netRevenue.ToString("N2")</p>
+                        <p class="text-[10px] font-bold text-indigo-200 mt-1.5 uppercase tracking-wide">Actual Revenue after Payout</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payout Details & Balances Section -->
+        <div class="space-y-4">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-indigo-600 text-xl font-bold">account_balance_wallet</span>
+                <h2 class="text-xs font-black text-slate-800 uppercase tracking-wider">Payout Details & Balances</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 4. Pending transfer -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between group hover:border-amber-500 hover:shadow-md transition-all duration-300">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xs font-black text-slate-500 uppercase tracking-wider">Pending transfer</h3>
+                        <div class="w-9 h-9 rounded-2xl bg-amber-50 flex items-center justify-center border border-amber-100/50 group-hover:bg-amber-500/10 transition-colors duration-300">
+                            <span class="material-symbols-outlined text-[20px] text-amber-500 font-bold group-hover:scale-110 transition-transform">hourglass_empty</span>
+                        </div>
+                    </div>
+                    <div>
+                        @if (pendingPayout < 0)
+                        {
+                            <p class="text-2xl font-black text-rose-600">-$@Math.Abs(pendingPayout).ToString("N2")</p>
+                        }
+                        else
+                        {
+                            <p class="text-2xl font-black text-slate-900 group-hover:text-amber-600 transition-colors">$@pendingPayout.ToString("N2")</p>
+                        }
+                        <p class="text-[10px] font-bold text-slate-400 mt-1.5 uppercase tracking-wide">Escrow Hold / In Transit</p>
+                    </div>
+                </div>
+
+                <!-- 5. Stripe Wallet -->
+                <div class="bg-gradient-to-br from-violet-500 to-violet-600 rounded-3xl p-6 text-white shadow-md relative overflow-hidden flex flex-col justify-between hover:scale-[1.01] hover:shadow-violet-500/20 transition-all duration-300">
+                    <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                    <div class="flex items-center justify-between mb-4 relative z-10">
+                        <h3 class="text-xs font-black text-white/95 uppercase tracking-wider">Stripe Wallet</h3>
+                        <div class="w-9 h-9 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm">
+                            <span class="material-symbols-outlined text-[20px] text-white">account_balance</span>
+                        </div>
+                    </div>
+                    <div class="relative z-10">
+                        @if (stripeWallet < 0)
+                        {
+                            <p class="text-2xl font-black text-rose-200">-$@Math.Abs(stripeWallet).ToString("N2")</p>
+                        }
+                        else
+                        {
+                            <p class="text-2xl font-black text-white">$@stripeWallet.ToString("N2")</p>
+                        }
+                        <p class="text-[10px] font-bold text-violet-100 mt-1.5 uppercase tracking-wide">Ready for Bank Transfer</p>
+                    </div>
+                </div>
+
+                <!-- 6. Withdrawn -->
+                <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 text-white shadow-md relative overflow-hidden flex flex-col justify-between hover:scale-[1.01] hover:shadow-emerald-500/20 transition-all duration-300">
+                    <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                    <div class="flex items-center justify-between mb-4 relative z-10">
+                        <h3 class="text-xs font-black text-white/95 uppercase tracking-wider">Withdrawn</h3>
+                        <div class="w-9 h-9 rounded-2xl bg-white/15 flex items-center justify-center backdrop-blur-sm">
+                            <span class="material-symbols-outlined text-[20px] text-white">payments</span>
+                        </div>
+                    </div>
+                    <div class="relative z-10">
+                        <p class="text-2xl font-black text-white">$@paidPayout.ToString("N2")</p>
+                        <p class="text-[10px] font-bold text-emerald-100 mt-1.5 uppercase tracking-wide">Transferred to Bank Account</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (Model.Account.Role?.ToLower() == "staff" || Model.Account.Role?.ToLower() == "admin")
+    {
+        <!-- Staff / Admin Manager Activity Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Resolved Reports -->
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col gap-2 relative overflow-hidden">
                 <div class="absolute right-4 top-4 text-slate-100 pointer-events-none">
-                    <span class="material-symbols-outlined text-[64px]">payments</span>
+                    <span class="material-symbols-outlined text-[64px]">gavel</span>
                 </div>
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Gross Platform Revenue</span>
-                <span class="text-3xl font-black text-slate-900 tracking-tight">@Model.Account.TotalRevenue.ToString("C0")</span>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Resolved Reports</span>
+                <span class="text-3xl font-black text-slate-900 tracking-tight text-purple-600">@Model.Account.ResolvedReportsCount</span>
                 <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    Accumulated instructor share transfers
+                    <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                    Moderated user, course & review reports
                 </p>
             </div>
 
-            <!-- Payouts / Withdrawn -->
+            <!-- Sent Notifications -->
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col gap-2 relative overflow-hidden">
                 <div class="absolute right-4 top-4 text-slate-100 pointer-events-none">
-                    <span class="material-symbols-outlined text-[64px]">account_balance</span>
+                    <span class="material-symbols-outlined text-[64px]">campaign</span>
                 </div>
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Payouts Settled</span>
-                <span class="text-3xl font-black text-slate-900 tracking-tight text-indigo-600">@Model.Account.TotalWithdrawn.ToString("C0")</span>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Dispatched Notifications</span>
+                <span class="text-3xl font-black text-slate-900 tracking-tight text-indigo-600">@Model.Account.SentNotificationsCount</span>
                 <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
                     <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                    Successfully transferred to bank account
+                    System alerts and broadcast messages
                 </p>
             </div>
 
-            <!-- Available Wallet Balance -->
+            <!-- Active Chats -->
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col gap-2 relative overflow-hidden">
                 <div class="absolute right-4 top-4 text-slate-100 pointer-events-none">
-                    <span class="material-symbols-outlined text-[64px]">account_balance_wallet</span>
+                    <span class="material-symbols-outlined text-[64px]">forum</span>
                 </div>
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Available Ledger Balance</span>
-                <span class="text-3xl font-black text-slate-900 tracking-tight text-emerald-600">@Model.Account.AvailableBalance.ToString("C0")</span>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Chat Channels</span>
+                <span class="text-3xl font-black text-slate-900 tracking-tight text-emerald-600">@Model.Account.ActiveChatsCount</span>
                 <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                    On-hold or ready for next payout cycle
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Participating group & private rooms
                 </p>
             </div>
-        }
-        else
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.Account.Bio))
         {
-            <!-- Student / Staff standard stats -->
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col gap-3">
+                <h3 class="text-sm font-bold text-slate-955 uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[18px] text-indigo-600">contact_page</span>
+                    Manager Biography
+                </h3>
+                <p class="text-sm text-slate-600 leading-relaxed font-medium">@Model.Account.Bio</p>
+            </div>
+        }
+    }
+    else
+    {
+        <!-- Student standard stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col gap-2 relative overflow-hidden">
                 <div class="absolute right-4 top-4 text-slate-100 pointer-events-none">
                     <span class="material-symbols-outlined text-[64px]">shopping_cart</span>
                 </div>
                 <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Course Purchases</span>
-                <span class="text-3xl font-black text-slate-900 tracking-tight">@Model.Account.TotalSpent.ToString("C0")</span>
+                <span class="text-3xl font-black text-slate-900 tracking-tight">$@Model.Account.TotalSpent.ToString("N2")</span>
                 <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
                     <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
                     Lifetime spending in currency value
@@ -181,8 +335,8 @@
                     Flags submitted by the community
                 </p>
             </div>
-        }
-    </div>
+        </div>
+    }
 
     <!-- Instructor Stripe Connect Metadata -->
     @if (Model.Account.Role?.ToLower() == "instructor" || Model.Account.IsInstructor)
@@ -219,149 +373,170 @@
         </div>
     }
 
-    <!-- Connected Ledger Transactions Card -->
-    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-        <!-- Stripe Connected Account Ledger Tab Headers -->
-        <div class="px-6 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div class="flex overflow-x-auto gap-4 py-3">
-                <button onclick="switchTab('payments')" id="tab-btn-payments" 
-                        class="px-3 py-2 text-sm font-semibold border-b-2 border-slate-900 text-slate-900 transition-colors whitespace-nowrap focus:outline-none">
-                    Payments (Purchases)
-                </button>
-                <button onclick="switchTab('payouts')" id="tab-btn-payouts" 
-                        class="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-900 transition-colors whitespace-nowrap focus:outline-none">
-                    Payouts (Bank Settled)
-                </button>
-            </div>
-            <div class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest py-3">
-                Stripe Financial Ledger
-            </div>
-        </div>
+    @if (Model.Account.Role?.ToLower() != "staff" && Model.Account.Role?.ToLower() != "admin")
+    {
+        <!-- Connected Ledger Transactions Card -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <!-- Stripe Connected Account Ledger Tab Headers -->
+            @if (Model.Account.Role?.ToLower() == "instructor" || Model.Account.IsInstructor)
+            {
+                <div class="px-6 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex overflow-x-auto gap-4 py-3">
+                        <button onclick="switchTab('payments')" id="tab-btn-payments" 
+                                class="px-3 py-2 text-sm font-semibold border-b-2 border-slate-900 text-slate-900 transition-colors whitespace-nowrap focus:outline-none">
+                            Payments (Purchases)
+                        </button>
+                        <button onclick="switchTab('payouts')" id="tab-btn-payouts" 
+                                class="px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-900 transition-colors whitespace-nowrap focus:outline-none">
+                            Payouts (Bank Settled)
+                        </button>
+                    </div>
+                    <div class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest py-3">
+                        Stripe Financial Ledger
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-indigo-600 text-lg">receipt_long</span>
+                        Payments (Purchases)
+                    </div>
+                    <div class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">
+                        Learner Purchase History
+                    </div>
+                </div>
+            }
 
-        <!-- ───────────────── TAB: PAYMENTS ───────────────── -->
-        <div id="tab-content-payments" class="tab-content overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="border-b border-slate-200 bg-slate-50/50">
-                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Transaction ID</th>
-                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Purchased Course</th>
-                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Buyer Name</th>
-                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
-                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Purchased Date</th>
-                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-sm">
-                    @if (Model.Transactions.Payments != null && Model.Transactions.Payments.Any())
-                    {
-                        @foreach (var p in Model.Transactions.Payments)
-                        {
-                            <tr class="hover:bg-slate-50/20 transition-colors">
-                                <td class="px-6 py-3.5 font-mono text-xs text-indigo-600">tx_@p.TransactionId</td>
-                                <td class="px-6 py-3.5 font-semibold text-slate-800">@p.CourseTitle</td>
-                                <td class="px-6 py-3.5 text-slate-600">@p.StudentName</td>
-                                <td class="px-6 py-3.5 font-bold text-slate-900">@p.Amount.ToString("C0")</td>
-                                <td class="px-6 py-3.5 text-slate-500 text-xs">@p.CreatedAt?.ToString("dd MMM yyyy HH:mm")</td>
-                                <td class="px-6 py-3.5 text-right">
-                                    @{
-                                        string statusClass = p.Status?.ToLower() == "success" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-amber-50 text-amber-700 border-amber-100";
-                                    }
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border @statusClass">
-                                        @p.Status
-                                    </span>
-                                </td>
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="6" class="px-6 py-12 text-center">
-                                <div class="flex flex-col items-center justify-center text-slate-400">
-                                    <span class="material-symbols-outlined text-3xl mb-2 text-slate-300">payments</span>
-                                    <p class="text-xs font-semibold text-slate-600">No payment transactions recorded.</p>
-                                </div>
-                            </td>
+            <!-- ───────────────── TAB: PAYMENTS ───────────────── -->
+            <div id="tab-content-payments" class="tab-content overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200 bg-slate-50/50">
+                            <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Transaction ID</th>
+                            <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Purchased Course</th>
+                            <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Buyer Name</th>
+                            <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Purchased Date</th>
+                            <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Status</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-
-
-        <!-- ───────────────── TAB: PAYOUTS ───────────────── -->
-        <div id="tab-content-payouts" class="tab-content hidden overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="border-b border-slate-200 bg-slate-50/50">
-                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Payout ID</th>
-                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stripe Transfer Ref</th>
-                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stripe Payout Ref</th>
-                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Payout Amount</th>
-                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Scheduled Date</th>
-                        <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Payout Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-sm">
-                    @if (Model.Transactions.Payouts != null && Model.Transactions.Payouts.Any())
-                    {
-                        @foreach (var po in Model.Transactions.Payouts)
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                        @if (Model.Transactions.Payments != null && Model.Transactions.Payments.Any())
                         {
-                            <tr class="hover:bg-slate-50/20 transition-colors">
-                                <td class="px-6 py-3.5 font-mono text-xs text-indigo-600">po_@po.PayoutId</td>
-                                <td class="px-6 py-3.5 font-mono text-xs text-slate-500">@(string.IsNullOrEmpty(po.StripeTransferId) ? "No reference" : po.StripeTransferId)</td>
-                                <td class="px-6 py-3.5 font-mono text-xs text-slate-500">@(string.IsNullOrEmpty(po.StripePayoutId) ? "No reference" : po.StripePayoutId)</td>
-                                <td class="px-6 py-3.5 font-bold text-slate-900">@po.PayoutAmount.ToString("C0")</td>
-                                <td class="px-6 py-3.5 text-slate-500 text-xs">
-                                    <div class="flex flex-col gap-0.5">
-                                        <span>@po.PayoutDate.ToString("dd MMM yyyy")</span>
-                                        @if (po.PaidToBankAt.HasValue)
-                                        {
-                                            <span class="text-[10px] text-emerald-600">Bank: @po.PaidToBankAt.Value.ToString("dd/MM HH:mm")</span>
+                            @foreach (var p in Model.Transactions.Payments)
+                            {
+                                <tr class="hover:bg-slate-50/20 transition-colors">
+                                    <td class="px-6 py-3.5 font-mono text-xs text-indigo-600">tx_@p.TransactionId</td>
+                                    <td class="px-6 py-3.5 font-semibold text-slate-800">@p.CourseTitle</td>
+                                    <td class="px-6 py-3.5 text-slate-600">@p.StudentName</td>
+                                    <td class="px-6 py-3.5 font-bold text-slate-900">$@p.Amount.ToString("N2")</td>
+                                    <td class="px-6 py-3.5 text-slate-500 text-xs">@p.CreatedAt?.ToString("dd MMM yyyy HH:mm")</td>
+                                    <td class="px-6 py-3.5 text-right">
+                                        @{
+                                            string statusClass = p.Status?.ToLower() == "success" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-amber-50 text-amber-700 border-amber-100";
                                         }
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border @statusClass">
+                                            @p.Status
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="px-6 py-12 text-center">
+                                    <div class="flex flex-col items-center justify-center text-slate-400">
+                                        <span class="material-symbols-outlined text-3xl mb-2 text-slate-300">payments</span>
+                                        <p class="text-xs font-semibold text-slate-600">No payment transactions recorded.</p>
                                     </div>
                                 </td>
-                                <td class="px-6 py-3.5 text-right">
-                                    @{
-                                        string statusClass = "bg-slate-50 text-slate-600 border-slate-200";
-                                        switch (po.PayoutStatus?.ToLower())
-                                        {
-                                            case "paid":
-                                                statusClass = "bg-emerald-50 text-emerald-700 border-emerald-100";
-                                                break;
-                                            case "in_transit":
-                                                statusClass = "bg-blue-50 text-blue-700 border-blue-100";
-                                                break;
-                                            case "failed":
-                                                statusClass = "bg-red-50 text-red-700 border-red-100";
-                                                break;
-                                            case "pending":
-                                                statusClass = "bg-amber-50 text-amber-700 border-amber-100";
-                                                break;
-                                        }
-                                    }
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border @statusClass">
-                                        @po.PayoutStatus
-                                    </span>
-                                </td>
                             </tr>
                         }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="6" class="px-6 py-12 text-center">
-                                <div class="flex flex-col items-center justify-center text-slate-400">
-                                    <span class="material-symbols-outlined text-3xl mb-2 text-slate-300">account_balance</span>
-                                    <p class="text-xs font-semibold text-slate-600">No bank settlements paid out.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
+
+
+            <!-- ───────────────── TAB: PAYOUTS ───────────────── -->
+            @if (Model.Account.Role?.ToLower() == "instructor" || Model.Account.IsInstructor)
+            {
+                <div id="tab-content-payouts" class="tab-content hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 bg-slate-50/50">
+                                <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Payout ID</th>
+                                <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stripe Transfer Ref</th>
+                                <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stripe Payout Ref</th>
+                                <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Payout Amount</th>
+                                <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Scheduled Date</th>
+                                <th class="px-6 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right">Payout Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm">
+                            @if (Model.Transactions.Payouts != null && Model.Transactions.Payouts.Any())
+                            {
+                                @foreach (var po in Model.Transactions.Payouts)
+                                {
+                                    <tr class="hover:bg-slate-50/20 transition-colors">
+                                        <td class="px-6 py-3.5 font-mono text-xs text-indigo-600">po_@po.PayoutId</td>
+                                        <td class="px-6 py-3.5 font-mono text-xs text-slate-500">@(string.IsNullOrEmpty(po.StripeTransferId) ? "No reference" : po.StripeTransferId)</td>
+                                        <td class="px-6 py-3.5 font-mono text-xs text-slate-500">@(string.IsNullOrEmpty(po.StripePayoutId) ? "No reference" : po.StripePayoutId)</td>
+                                        <td class="px-6 py-3.5 font-bold text-slate-900">$@po.PayoutAmount.ToString("N2")</td>
+                                        <td class="px-6 py-3.5 text-slate-500 text-xs">
+                                            <div class="flex flex-col gap-0.5">
+                                                <span>@po.PayoutDate.ToString("dd MMM yyyy")</span>
+                                                @if (po.PaidToBankAt.HasValue)
+                                                {
+                                                    <span class="text-[10px] text-emerald-600">Bank: @po.PaidToBankAt.Value.ToString("dd/MM HH:mm")</span>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-3.5 text-right">
+                                            @{
+                                                string statusClass = "bg-slate-50 text-slate-600 border-slate-200";
+                                                switch (po.PayoutStatus?.ToLower())
+                                                {
+                                                    case "paid":
+                                                        statusClass = "bg-emerald-50 text-emerald-700 border-emerald-100";
+                                                        break;
+                                                    case "in_transit":
+                                                        statusClass = "bg-blue-50 text-blue-700 border-blue-100";
+                                                        break;
+                                                    case "failed":
+                                                        statusClass = "bg-red-50 text-red-700 border-red-100";
+                                                        break;
+                                                    case "pending":
+                                                        statusClass = "bg-amber-50 text-amber-700 border-amber-100";
+                                                        break;
+                                                }
+                                            }
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border @statusClass">
+                                                @po.PayoutStatus
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="px-6 py-12 text-center">
+                                        <div class="flex flex-col items-center justify-center text-slate-400">
+                                            <span class="material-symbols-outlined text-3xl mb-2 text-slate-300">account_balance</span>
+                                            <p class="text-xs font-semibold text-slate-600">No bank settlements paid out.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
-    </div>
+    }
 </div>
 
 @section Scripts {
@@ -378,15 +553,22 @@
                 document.getElementById('tab-btn-payouts')
             ];
             buttons.forEach(btn => {
-                btn.classList.remove('border-slate-900', 'text-slate-900');
-                btn.classList.add('border-transparent', 'text-slate-500');
+                if (btn) {
+                    btn.classList.remove('border-slate-900', 'text-slate-900');
+                    btn.classList.add('border-transparent', 'text-slate-500');
+                }
             });
 
             // Show current tab content & activate button
-            document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+            const targetContent = document.getElementById(`tab-content-${tabName}`);
+            if (targetContent) {
+                targetContent.classList.remove('hidden');
+            }
             const targetBtn = document.getElementById(`tab-btn-${tabName}`);
-            targetBtn.classList.remove('border-transparent', 'text-slate-500');
-            targetBtn.classList.add('border-slate-900', 'text-slate-900');
+            if (targetBtn) {
+                targetBtn.classList.remove('border-transparent', 'text-slate-500');
+                targetBtn.classList.add('border-slate-900', 'text-slate-900');
+            }
         }
 
         // Toggle account ban inside details

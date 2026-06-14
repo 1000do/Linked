@@ -47,6 +47,11 @@ public class AdminAccountDetailViewModel
     public decimal TotalSpent { get; set; }
     public int EnrolledCoursesCount { get; set; }
 
+    // Manager-specific details (Staff/Admin)
+    public int ResolvedReportsCount { get; set; }
+    public int SentNotificationsCount { get; set; }
+    public int ActiveChatsCount { get; set; }
+
     // Instructor-specific details
     public bool IsInstructor { get; set; }
     public string? ProfessionalTitle { get; set; }
@@ -90,6 +95,7 @@ public class PayoutViewModel
     public string? StripeTransferId { get; set; }
     public string? StripePayoutId { get; set; }
     public DateTime? PaidToBankAt { get; set; }
+    public bool IsPaid { get; set; }
 }
 
 public class AccountTransactionSummaryViewModel

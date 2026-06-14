@@ -5,6 +5,7 @@ using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using CourseMarketplaceBE.Domain.Constants;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -84,6 +85,9 @@ public class CheckoutService : ICheckoutService
         // ── 1.2 Kiểm tra không mua trùng (đã enrolled) ──────────────────────
         foreach (var item in cartItems)
         {
+            if (item.Course == null || item.Course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
+                throw new InvalidOperationException($"The course \"{item.Course?.Title ?? "Unknown"}\" is not published and cannot be purchased.");
+
             if (item.CourseId.HasValue && await _courseRepo.IsEnrolledAsync(userId, item.CourseId.Value))
                 throw new InvalidOperationException(
                     $"You have already purchased the course \"{item.Course?.Title}\". Please remove it from the cart.");
@@ -211,6 +215,9 @@ public class CheckoutService : ICheckoutService
         if (course == null)
             throw new InvalidOperationException("Course not found.");
 
+        if (course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
+            throw new InvalidOperationException($"The course \"{course.Title}\" is not published and cannot be purchased.");
+
         if (await _courseRepo.IsEnrolledAsync(userId, courseId))
             throw new InvalidOperationException($"You have already purchased the course \"{course.Title}\".");
 
@@ -310,6 +317,9 @@ public class CheckoutService : ICheckoutService
         if (course == null)
             throw new InvalidOperationException("Course not found.");
 
+        if (course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
+            throw new InvalidOperationException($"The course \"{course.Title}\" is not published and cannot be purchased.");
+
 
         // Kiểm tra xem người nhận đã sở hữu khóa học chưa
         var recipientAccount = await _userRepo.GetAccountByEmailAsync(request.RecipientEmail);
@@ -392,6 +402,9 @@ public class CheckoutService : ICheckoutService
         var course = await _courseRepo.GetCourseWithInstructorAsync(request.CourseId);
         if (course == null)
             throw new InvalidOperationException("Course not found.");
+
+        if (course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
+            throw new InvalidOperationException($"The course \"{course.Title}\" is not published and cannot be purchased.");
 
 
         // Kiểm tra xem người nhận đã sở hữu khóa học chưa
@@ -524,6 +537,9 @@ public class CheckoutService : ICheckoutService
                 {
                     var course = await _courseRepo.GetCourseWithInstructorAsync(courseId);
                     if (course == null) continue;
+
+                    if (course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
+                        throw new InvalidOperationException($"The course \"{course.Title}\" is not published and cannot be purchased.");
 
                     decimal originalPrice = course.Price;
                     decimal purchasePrice = originalPrice;
@@ -804,6 +820,9 @@ public class CheckoutService : ICheckoutService
         // ── 4.2 Kiểm tra không mua trùng (đã enrolled) ──────────────────────
         foreach (var item in cartItems)
         {
+            if (item.Course == null || item.Course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
+                throw new InvalidOperationException($"The course \"{item.Course?.Title ?? "Unknown"}\" is not published and cannot be purchased.");
+
             if (item.CourseId.HasValue && await _courseRepo.IsEnrolledAsync(userId, item.CourseId.Value))
                 throw new InvalidOperationException(
                     $"You have already purchased the course \"{item.Course?.Title}\". Please remove it from the cart.");
@@ -973,6 +992,9 @@ public class CheckoutService : ICheckoutService
                 {
                     var course = await _courseRepo.GetCourseWithInstructorAsync(courseId);
                     if (course == null) continue;
+
+                    if (course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
+                        throw new InvalidOperationException($"The course \"{course.Title}\" is not published and cannot be purchased.");
 
                     decimal originalPrice = course.Price;
                     decimal purchasePrice = originalPrice;
