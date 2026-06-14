@@ -167,11 +167,17 @@ namespace CourseMarketplaceBE.Application.Services
             return await _userRepository.IsEmailExistsAsync(email);
         }
 
+        public async Task<bool> IsUsernameExistsAsync(string username)
+        {
+            return await _userRepository.IsUsernameExistsAsync(username);
+        }
+
         public async Task CreateStaffAsync(CreateStaffRequest request)
         {
             var newAccount = new Account
             {
-                Email = request.Email,
+                Username = request.Username,
+                Email = request.Username, // Use username as email placeholder for staff
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 PhoneNumber = request.PhoneNumber,
                 AvatarUrl = request.AvatarUrl,

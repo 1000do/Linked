@@ -98,14 +98,14 @@ public class AdminAccountController : ControllerBase
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password) || string.IsNullOrWhiteSpace(request.DisplayName))
+            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password) || string.IsNullOrWhiteSpace(request.DisplayName))
             {
-                return BadRequest(new { status = 400, message = "Email, password, and display name are required." });
+                return BadRequest(new { status = 400, message = "Username, password, and display name are required." });
             }
 
-            if (await _accountService.IsEmailExistsAsync(request.Email))
+            if (await _accountService.IsUsernameExistsAsync(request.Username))
             {
-                return BadRequest(new { status = 400, message = "Email is already registered." });
+                return BadRequest(new { status = 400, message = "Username is already taken." });
             }
 
             await _accountService.CreateStaffAsync(request);
