@@ -1,0 +1,123 @@
+<div style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">UC ID and Name</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">UC-ReportReview - Report a review</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Created By:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Huynh Kien An</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Date Created:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">09/06/2026</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Primary Actor:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">User</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Secondary Actors:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Trigger:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">User clicks the "Report" button on a course review in the course details page.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Description:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Allows a user to report a course or lesson review for violations such as spam, offensive content, or fake reviews. The system prompts the user to select a reason and optionally provide a description before submitting the report for moderation.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Preconditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>PRE-1.</b> User must be successfully authenticated.</p>
+                <p style="margin: 0;"><b>PRE-2.</b> User must have completed the course or lesson to be able to report the review.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Post-conditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>POST-1.</b> The review report is recorded in the database for moderation.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Normal Flow:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A. Report Course Review Successfully</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>User accesses the course details page.</li>
+                    <li>User locates a course review and clicks the <code>Report</code> button.</li>
+                    <li>The system checks authentication.</li>
+                    <li>The system displays the report review form modal.</li>
+                    <li>User selects a violation reason from the dropdown.</li>
+                    <li>User optionally inputs additional description details.</li>
+                    <li>User clicks the <code>Submit Report</code> button.</li>
+                    <li>The system validates the report details and checks for duplicate pending reports.</li>
+                    <li>The system submits the course review report data to the server.</li>
+                    <li>The system saves the report in the database.</li>
+                    <li>The system displays a success message regarding report submission.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Alternative Flows:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A.1 Report Lesson Review Successfully</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>User accesses the course learning page.</li>
+                    <li>User locates a lesson review and clicks the <code>Report</code> button.</li>
+                    <li>Back to step 3.</li>
+                </ol>
+                <p style="margin: 0 0 5px 0;"><strong>A.7 Cancel reporting</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>User clicks the <code>Cancel</code> button.</li>
+                    <li>The system closes the report review modal.</li>
+                    <li>Back to step 2.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Exceptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>EX-3 Session Invalid (Not Logged In)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system displays an authentication error message.</li>
+                    <li>The system redirects the user to the login page.</li>
+                </ol>
+                <p style="margin: 0 0 5px 0;"><strong>EX-8 Duplicate Pending Report</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects that the user has already reported this review with the exact same reason and the report is still pending.</li>
+                    <li>The system displays a duplicate report error message preventing submission.</li>
+                    <li>Back to step 4.</li>
+                </ol>
+                <p style="margin: 0 0 5px 0;"><strong>EX-9 Database Save Failed</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>The system fails to save the report to the database.</li>
+                    <li>The system displays an error message regarding report submission failure.</li>
+                    <li>Back to step 4.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Priority:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Medium</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Frequency of Use:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Low</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Business Rules:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                BR-3, BR-4
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Other Information:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Assumptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;">User has stable internet connection.</p>
+            </td>
+        </tr>
+    </table>
+</div>

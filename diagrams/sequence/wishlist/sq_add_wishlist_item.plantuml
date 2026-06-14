@@ -1,0 +1,121 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Add Wishlist Item
+actor User as act
+
+participant "Course/Details.cshtml" as view
+participant "WishlistController" as fe_ctrl <<frontend controller>>
+participant "WishlistController" as be_ctrl <<backend controller>>
+participant ":WishlistService" as sv
+participant ":WishlistRepository" as w_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Click "Add to Wishlist" button
+view->fe_ctrl++: Send POST /Wishlist/ToggleAjax (with courseId)
+
+fe_ctrl->be_ctrl++: Send GET /api/wishlist/check/{courseId}
+
+be_ctrl->be_ctrl++: Parse userId from token
+be_ctrl--
+
+be_ctrl->sv++: Call IsInWishlistAsync(userId, courseId)
+sv->w_repo++: Call ExistsAsync(userId, courseId)
+w_repo->ctx++: Query WishlistItem
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return result
+ctx-->>w_repo--: Return exists
+w_repo-->>sv--: Return exists
+sv-->>be_ctrl--: Return exists
+be_ctrl-->>fe_ctrl--: Return statusCode 200 (isInWishlist = false)
+
+fe_ctrl->fe_ctrl++: Check isInWishlist
+fe_ctrl--
+
+group opt [!isInWishlist]
+    fe_ctrl->be_ctrl++: Send POST /api/wishlist/{courseId}
+    
+    be_ctrl->be_ctrl++: Parse userId from token
+    be_ctrl--
+    
+    group opt [userId == null]
+        be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
+        fe_ctrl-->>view: Redirect to /Account/Login
+        view-->>act: Display login page
+    end
+    
+    be_ctrl->sv++: Call AddToWishlistAsync(userId, courseId)
+    
+    sv->w_repo++: Call ExistsAsync(userId, courseId)
+    w_repo->ctx++: Query WishlistItem
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return result
+    ctx-->>w_repo--: Return exists
+    w_repo-->>sv--: Return exists
+    
+    group opt [exists == true]
+        sv-->>be_ctrl: throw InvalidOperationException
+        be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+        fe_ctrl-->>view: Return JSON (success = false)
+        view-->>act: Display error message
+    end
+    
+    sv->w_repo++: Call AddAsync(newItem)
+    w_repo->ctx++: Add WishlistItem entity
+    ctx-->>w_repo--: Return
+    w_repo-->>sv--: Return
+    
+    sv->w_repo++: Call SaveChangesAsync()
+    w_repo->ctx++: Call SaveChangesAsync()
+    ctx->db++: Execute INSERT statement
+    db-->>ctx--: Return result
+    ctx-->>w_repo--: Return numberOfRowsAffected
+    w_repo-->>sv--: Return numberOfRowsAffected
+    
+    w_repo->w_repo++: Check numberOfRowsAffected
+    w_repo--
+    
+    alt [numberOfRowsAffected > 0]
+        w_repo-->>sv: Return true
+        sv-->>be_ctrl: Return success
+        be_ctrl-->>fe_ctrl: Return statusCode 200 (Success)
+        fe_ctrl-->>view: Return JSON (success = true)
+        view-->>act: Update Wishlist icon
+    else [numberOfRowsAffected = 0]
+        w_repo-->>sv--: Return false
+        sv->sv++: throw InvalidOperationException
+        sv--
+        sv-->>be_ctrl--: throw InvalidOperationException
+        be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
+        fe_ctrl-->>view--: Return JSON (success = false)
+        view-->>act--: Display error message
+    end
+end
+@enduml

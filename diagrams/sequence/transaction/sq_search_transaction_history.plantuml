@@ -1,0 +1,70 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Search Transaction History
+actor User as act
+
+participant "Transaction/History.cshtml" as view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "TransactionController" as be_ctrl <<backend controller>>
+participant ":TransactionService" as sv
+participant ":TransactionRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Enter keyword / select status / select sortBy
+act->view: Click "Apply" button
+view->fe_ctrl++: Submit form to GET /Transaction/History
+
+fe_ctrl->be_ctrl++: Send GET /api/transactions/my?keyword=...&status=...&sortBy=...
+
+be_ctrl->sv++: Call GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
+sv->repo++: Call GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
+
+repo->ctx++: Apply search, filter, and ordering
+ctx->db++: Execute SELECT query with filters
+db-->>ctx--: Return database results
+ctx-->>repo--: Return data
+repo-->>sv--: Return data
+
+sv->sv++: Map to PagedResult
+sv--
+sv-->>be_ctrl--: Return DTO list
+be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with JSON data
+
+fe_ctrl->fe_ctrl++: Deserialize response
+fe_ctrl--
+fe_ctrl-->>view--: Return View(vm)
+
+alt [No transactions match filters]
+    view-->>act: Display empty state message
+else [Matching transactions found]
+    view-->>act--: Display filtered and sorted purchase history list
+end
+@enduml

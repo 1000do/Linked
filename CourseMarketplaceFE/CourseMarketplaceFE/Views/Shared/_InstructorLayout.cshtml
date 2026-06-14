@@ -307,7 +307,7 @@
             }
 
             // Show a premium real-time toast alert
-            if (noti && noti.title) {
+            if (noti && noti.title && localStorage.getItem("AccountLocked") !== "true") {
                 const Toast = Swal.mixin({
                     toast: true,
                     position: 'top-end',

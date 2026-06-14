@@ -688,7 +688,7 @@
                     loadTopNotifications();
                     document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
 
-                    if (noti && noti.title) {
+                    if (noti && noti.title && localStorage.getItem("AccountLocked") !== "true") {
                         const Toast = Swal.mixin({
                             toast: true,
                             position: 'top-end',
@@ -707,7 +707,7 @@
                             html: `
                                 <div class="text-left font-body">
                                     <p class="text-[12px] text-slate-600 mt-1 leading-relaxed">${noti.content}</p>
-                                    ${noti.linkAction ? `<a href="${noti.linkAction}" class="inline-block mt-2 text-[12px] font-bold text-emerald-600 hover:text-emerald-700 transition-colors">View Gift Course &rarr;</a>` : ''}
+                                    ${noti.linkAction ? `<a href="${noti.linkAction}" class="inline-block mt-2 text-[12px] font-bold text-emerald-600 hover:text-emerald-700 transition-colors">View Detail &rarr;</a>` : ''}
                                 </div>
                             `
                         });

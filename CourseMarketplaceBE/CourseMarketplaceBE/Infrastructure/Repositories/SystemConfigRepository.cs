@@ -81,11 +81,11 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 config.ConfigValue = jsonString;
                 _context.SystemConfigs.Update(config);
             }
-
-            await _context.SaveChangesAsync();
+            var affected = await _context.SaveChangesAsync();
+            if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
         }
 
-        public async Task UpsertConfigAsync(string configKey, string configValue, string? description = null)
+        public async Task<int> UpsertConfigAsync(string configKey, string configValue, string? description = null)
         {
             var existing = await _context.SystemConfigs
                 .FirstOrDefaultAsync(c => c.ConfigKey == configKey);
@@ -106,8 +106,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                     UpdatedAt = DateTime.Now
                 });
             }
-
-            await _context.SaveChangesAsync();
+            return await _context.SaveChangesAsync();
         }
     }
 }

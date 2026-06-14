@@ -55,7 +55,7 @@ public class ReportService : IReportService
 
     // ── User / Instructor: Tạo report khóa học ─────────────────────────────
 
-    public async Task CreateCourseReportAsync(int reporterId, CreateCourseReportRequest request, bool isInstructor)
+    public async Task<bool> CreateCourseReportAsync(int reporterId, CreateCourseReportRequest request, bool isInstructor)
     {
         var course = await _courseRepo.GetByIdAsync(request.CourseId)
             ?? throw new InvalidOperationException("Course not found.");
@@ -101,11 +101,13 @@ public class ReportService : IReportService
         int numRowsAffected = await _reportRepo.SaveChangesAsync();
         if (numRowsAffected == 0)
             throw new InvalidOperationException("Failed to save changes");
+            
+        return true;
     }
 
     // ── User / Instructor: Tạo report review khóa học ──────────────────────
 
-    public async Task CreateCourseReviewReportAsync(int reporterId, CreateCourseReviewReportRequest request)
+    public async Task<bool> CreateCourseReviewReportAsync(int reporterId, CreateCourseReviewReportRequest request)
     {
         var review = await _reviewRepo.GetCourseReviewByIdAsync(request.CourseReviewId)
             ?? throw new InvalidOperationException("Review not found.");
@@ -131,11 +133,13 @@ public class ReportService : IReportService
         int numRowsAffected = await _reportRepo.SaveChangesAsync();
         if (numRowsAffected == 0)
             throw new InvalidOperationException("Failed to save changes");
+            
+        return true;
     }
 
     // ── User / Instructor: Tạo report review bài học ───────────────────────
 
-    public async Task CreateLessonReviewReportAsync(int reporterId, CreateLessonReviewReportRequest request)
+    public async Task<bool> CreateLessonReviewReportAsync(int reporterId, CreateLessonReviewReportRequest request)
     {
         var review = await _reviewRepo.GetLessonReviewByIdAsync(request.LessonReviewId)
             ?? throw new InvalidOperationException("Review not found.");
@@ -161,6 +165,8 @@ public class ReportService : IReportService
         int numRowsAffected = await _reportRepo.SaveChangesAsync();
         if (numRowsAffected == 0)
             throw new InvalidOperationException("Failed to save changes");
+            
+        return true;
     }
 
     // ── User / Instructor: Xem lịch sử report của mình ─────────────────────

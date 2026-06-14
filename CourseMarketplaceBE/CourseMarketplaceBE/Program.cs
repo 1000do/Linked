@@ -222,6 +222,7 @@ public class Program
         builder.Services.AddScoped<IChatService, ChatService>();
         builder.Services.AddScoped<ICourseModerationService, CourseModerationService>();
         builder.Services.AddScoped<ICourseAiModerationService, CourseAiModerationService>();
+        builder.Services.AddScoped<IAdminAiService, AdminAiService>();
         builder.Services.AddScoped<IUserReportModerationService, UserReportModerationService>();
         builder.Services.AddScoped<IAiModelRepository, AiModelRepository>();
         builder.Services.AddScoped<ICourseAiIntegrationRepository, CourseAiIntegrationRepository>();
@@ -231,6 +232,8 @@ public class Program
         builder.Services.AddScoped<IMediaEmbeddingRepository, MediaEmbeddingRepository>();
         builder.Services.AddScoped<ICourseExtRepository, CourseExtRepository>();
         builder.Services.AddScoped<ICourseAiUsageLogRepository, CourseAiUsageLogRepository>();
+        builder.Services.AddScoped<ICourseReviewModerationLogRepository, CourseReviewModerationLogRepository>();
+        builder.Services.AddScoped<ILessonReviewModerationLogRepository, LessonReviewModerationLogRepository>();
         builder.Services.AddScoped<IContentHashService, ContentHashService>();
         builder.Services.AddScoped<IAvatarFrameRepository, AvatarFrameRepository>();
         builder.Services.AddScoped<IAvatarFrameService, AvatarFrameService>();

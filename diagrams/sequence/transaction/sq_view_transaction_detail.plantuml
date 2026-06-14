@@ -1,0 +1,67 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Transaction Detail
+actor User as act
+
+participant "Transaction/HistoryDetail.cshtml" as view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "TransactionController" as be_ctrl <<backend controller>>
+participant ":TransactionService" as sv
+participant ":TransactionRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Click chevron/details button on transaction card
+view->fe_ctrl++: Send GET /Transaction/HistoryDetail/{id}
+
+fe_ctrl->be_ctrl++: Send GET /api/transactions/{id} (with Bearer Token)
+
+alt [Transaction not found (404)]
+    be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
+    fe_ctrl-->>view: Redirect to Transaction/History with Error message
+    view-->>act: Redirect to Purchase History page and display error
+else [Transaction is found]
+    be_ctrl->sv++: Call GetTransactionDetailAsync(transactionId)
+    sv->repo++: Call GetTransactionDetailAsync(transactionId)
+    
+    repo->ctx++: Query detailed transaction data
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return data
+    ctx-->>repo--: Return DTO
+    repo-->>sv--: Return DTO
+    sv-->>be_ctrl--: Return DTO
+    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with JSON data
+    
+    fe_ctrl->fe_ctrl++: Deserialize response
+    fe_ctrl--
+    fe_ctrl-->>view--: Return View
+    view-->>act--: Display invoice details page
+end
+@enduml

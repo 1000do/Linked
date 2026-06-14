@@ -13,13 +13,13 @@ public interface IReportService
     /// - User: cần có enrollment hợp lệ.
     /// - Instructor: không cần enrollment, chỉ không thể tự report khóa của mình.
     /// </summary>
-    Task CreateCourseReportAsync(int reporterId, CreateCourseReportRequest request, bool isInstructor);
+    Task<bool> CreateCourseReportAsync(int reporterId, CreateCourseReportRequest request, bool isInstructor);
 
     /// <summary>Tạo report cho một đánh giá khóa học.</summary>
-    Task CreateCourseReviewReportAsync(int reporterId, CreateCourseReviewReportRequest request);
+    Task<bool> CreateCourseReviewReportAsync(int reporterId, CreateCourseReviewReportRequest request);
 
     /// <summary>Tạo report cho một đánh giá bài học.</summary>
-    Task CreateLessonReviewReportAsync(int reporterId, CreateLessonReviewReportRequest request);
+    Task<bool> CreateLessonReviewReportAsync(int reporterId, CreateLessonReviewReportRequest request);
 
     // ── User / Instructor: Xem lịch sử report của mình ─────────────────────
 
