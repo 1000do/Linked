@@ -102,5 +102,10 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<int> GetSentNotificationsCountAsync(int senderId)
+        {
+            return await _context.Notifications.CountAsync(n => n.SenderId == senderId);
+        }
     }
 }

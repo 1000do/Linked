@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace CourseMarketplaceBE.Application.DTOs;
 
@@ -19,7 +20,7 @@ public class AdminAccountListDto
 
 public class CreateStaffRequest
 {
-    public string Email { get; set; } = null!;
+    public string Username { get; set; } = null!;
     public string Password { get; set; } = null!;
     public string DisplayName { get; set; } = null!;
     public string? PhoneNumber { get; set; }
@@ -30,12 +31,25 @@ public class CreateStaffRequest
 
 public class UpdateStaffRequest
 {
+    [Required(ErrorMessage = "Display name is required.")]
+    [MaxLength(255, ErrorMessage = "Display name cannot exceed 255 characters.")]
     public string DisplayName { get; set; } = null!;
+
+    [MaxLength(50, ErrorMessage = "Phone number cannot exceed 50 characters.")]
+    [RegularExpression(@"^\+?[0-9\s-]{9,15}$", ErrorMessage = "Invalid phone number format.")]
     public string? PhoneNumber { get; set; }
+
+    [MinLength(6, ErrorMessage = "Password must be at least 6 characters long.")]
     public string? Password { get; set; } // Optional password reset
+
     public string? AccountStatus { get; set; }
+
+    [MaxLength(255, ErrorMessage = "Full name cannot exceed 255 characters.")]
     public string? FullName { get; set; }
+
     public string? AvatarUrl { get; set; }
+
+    [MaxLength(1000, ErrorMessage = "Bio cannot exceed 1000 characters.")]
     public string? Bio { get; set; }
 }
 
@@ -58,6 +72,11 @@ public class AdminAccountDetailDto
     // User-specific details (Students/Instructors)
     public decimal TotalSpent { get; set; }
     public int EnrolledCoursesCount { get; set; }
+
+    // Manager-specific details (Staff/Admin)
+    public int ResolvedReportsCount { get; set; }
+    public int SentNotificationsCount { get; set; }
+    public int ActiveChatsCount { get; set; }
 
     // Instructor-specific details
     public bool IsInstructor { get; set; }
@@ -102,6 +121,7 @@ public class PayoutDto
     public string? StripeTransferId { get; set; }
     public string? StripePayoutId { get; set; }
     public DateTime? PaidToBankAt { get; set; }
+    public bool IsPaid { get; set; }
 }
 
 public class AccountTransactionSummaryDto

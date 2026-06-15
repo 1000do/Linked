@@ -111,20 +111,20 @@
             </button>
         </div>
         <!-- Form Content -->
-        <form action="@Url.Action("ChangePassword", "AdminProfile")" method="post" class="p-6 flex flex-col gap-4">
+        <form id="changePasswordForm" onsubmit="submitChangePassword(event)" class="p-6 flex flex-col gap-4">
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs font-bold text-slate-700">Current Password</label>
-                <input type="password" name="currentPassword" required placeholder="Enter current password"
+                <input type="password" id="currentPasswordInput" name="currentPassword" required placeholder="Enter current password"
                        class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
             </div>
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs font-bold text-slate-700">New Password</label>
-                <input type="password" name="newPassword" required placeholder="Minimum 6 characters"
+                <input type="password" id="newPasswordInput" name="newPassword" required placeholder="Minimum 6 characters"
                        class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
             </div>
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs font-bold text-slate-700">Confirm New Password</label>
-                <input type="password" name="confirmNewPassword" required placeholder="Retype new password"
+                <input type="password" id="confirmNewPasswordInput" name="confirmNewPassword" required placeholder="Retype new password"
                        class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
             </div>
             <div class="flex items-center gap-3 mt-2">
@@ -151,6 +151,98 @@
             const modal = document.getElementById('changePasswordModal');
             modal.firstElementChild.classList.add('scale-95');
             setTimeout(() => modal.classList.add('hidden'), 150);
+            document.getElementById('changePasswordForm').reset();
+        }
+
+        async function submitChangePassword(event) {
+            event.preventDefault();
+
+            const currentPassword = document.getElementById('currentPasswordInput').value;
+            const newPassword = document.getElementById('newPasswordInput').value;
+            const confirmNewPassword = document.getElementById('confirmNewPasswordInput').value;
+
+            // Frontend validation
+            if (!currentPassword || !newPassword) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Current and New password fields are required.',
+                    icon: 'warning',
+                    confirmButtonColor: '#0f172a'
+                });
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'New password must be at least 6 characters long.',
+                    icon: 'warning',
+                    confirmButtonColor: '#0f172a'
+                });
+                return;
+            }
+
+            if (newPassword !== confirmNewPassword) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Password confirmation does not match.',
+                    icon: 'warning',
+                    confirmButtonColor: '#0f172a'
+                });
+                return;
+            }
+
+            // Confirm SweetAlert
+            const confirmResult = await Swal.fire({
+                title: 'Change Account Password?',
+                text: 'Are you sure you want to update your password?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#0f172a',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, Change Password',
+                cancelButtonText: 'Cancel',
+                background: '#ffffff',
+                customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' }
+            });
+
+            if (!confirmResult.isConfirmed) return;
+
+            try {
+                const response = await fetch('@Url.Action("ChangePassword", "AdminProfile")', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest' 
+                    },
+                    body: JSON.stringify({ currentPassword, newPassword, confirmNewPassword })
+                });
+
+                const res = await response.json();
+                if (res.success) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: res.message,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl border border-slate-100' }
+                    });
+                    closeChangePasswordModal();
+                } else {
+                    Swal.fire({
+                        title: 'Failed',
+                        text: res.message,
+                        icon: 'error',
+                        confirmButtonColor: '#0f172a',
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl' }
+                    });
+                }
+            } catch (err) {
+                Swal.fire({ title: 'Connection Failure', text: 'Could not contact server.', icon: 'error', confirmButtonColor: '#0f172a' });
+            }
         }
     </script>
 }

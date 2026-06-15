@@ -261,6 +261,11 @@ public class CouponService : ICouponService
 
         // 4. Gắn coupon vào course
         course.CouponId = couponId;
+        if (string.Equals(course.CourseStatus, "published", System.StringComparison.OrdinalIgnoreCase))
+        {
+            course.CourseStatus = "draft";
+            course.ModerationFeedback = null;
+        }
         _courseRepo.Update(course);
         int numberOfRowsAffected = await _repo.SaveChangesAsync();
         if (numberOfRowsAffected <= 0)

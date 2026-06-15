@@ -37,6 +37,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> UpdateProfile([FromForm] UpdateManagerProfileRequest request)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join(" ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return BadRequest(new { status = 400, message = errors });
+            }
+
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdStr, out int userId))
                 return Unauthorized(new { status = 401, message = "Invalid login session." });

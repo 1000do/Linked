@@ -227,4 +227,9 @@ public class ChatRepository : IChatRepository
     {
         return await _context.SaveChangesAsync();
     }
+
+    public async Task<int> GetActiveChatsCountAsync(int accountId)
+    {
+        return await _context.ChatParticipants.CountAsync(cp => cp.AccountId == accountId);
+    }
 }

@@ -95,7 +95,7 @@ public class AdminAccountController : Controller
     [HttpPost]
     public async Task<IActionResult> CreateStaff([FromBody] CreateStaffFERequest model)
     {
-        if (model == null || string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Password) || string.IsNullOrWhiteSpace(model.DisplayName))
+        if (model == null || string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.Password) || string.IsNullOrWhiteSpace(model.DisplayName))
         {
             return Json(new { success = false, message = "All required fields must be completed." });
         }

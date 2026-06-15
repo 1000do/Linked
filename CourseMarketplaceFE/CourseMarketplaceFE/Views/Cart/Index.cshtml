@@ -107,7 +107,7 @@
                                     <div class="mt-2 flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-1.5 w-fit">
                                         <span class="material-symbols-outlined text-emerald-500 text-xs">local_offer</span>
                                         <span class="text-[11px] font-bold text-emerald-700">@item.AppliedCouponCode</span>
-                                        <form asp-action="RemoveCoupon" asp-controller="Cart" method="post" class="m-0 inline-flex items-center">
+                                        <form asp-action="RemoveCoupon" asp-controller="Cart" method="post" class="m-0 inline-flex items-center" onsubmit="handleRemoveCoupon(event)">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="courseId" value="@item.CourseId" />
                                             <button type="submit" class="text-[10px] text-red-500 hover:text-red-700 font-extrabold ml-1.5 transition-colors uppercase">
@@ -278,6 +278,33 @@
         const confirmResult = await Swal.fire({
             title: 'Remove from cart?',
             text: "Are you sure you want to remove this course from your cart?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Remove',
+            cancelButtonText: 'Cancel',
+            background: '#ffffff',
+            customClass: { popup: 'rounded-2xl shadow-xl' }
+        });
+
+        if (confirmResult.isConfirmed) {
+            form.dataset.confirmed = "true";
+            form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        }
+    }
+
+    async function handleRemoveCoupon(event) {
+        if (event.currentTarget.dataset.confirmed) {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        const form = event.currentTarget;
+
+        const confirmResult = await Swal.fire({
+            title: 'Remove coupon?',
+            text: "Are you sure you want to remove this coupon?",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ef4444',

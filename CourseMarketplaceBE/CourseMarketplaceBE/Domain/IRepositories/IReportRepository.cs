@@ -37,4 +37,5 @@ public interface IReportRepository
     // ── Shared ──────────────────────────────────────────────────────────────
 
     Task<int> SaveChangesAsync();
+    Task<int> GetResolvedReportsCountAsync(int resolverId);
 }

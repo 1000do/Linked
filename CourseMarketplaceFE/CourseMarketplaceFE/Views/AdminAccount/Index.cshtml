@@ -306,8 +306,8 @@
         <!-- Form Content -->
         <form id="createStaffForm" onsubmit="submitCreateStaff(event)" class="p-6 flex flex-col gap-4">
             <div class="flex flex-col gap-1.5">
-                <label class="text-xs font-bold text-slate-700">Gmail Address <span class="text-rose-500">*</span></label>
-                <input type="email" id="createEmail" name="email" required placeholder="name@gmail.com" 
+                <label class="text-xs font-bold text-slate-700">Username <span class="text-rose-500">*</span></label>
+                <input type="text" id="createUsername" name="username" required placeholder="Enter username" 
                        class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
             </div>
             <div class="flex flex-col gap-1.5">
@@ -424,15 +424,15 @@
         async function submitCreateStaff(event) {
             event.preventDefault();
             
-            const email = document.getElementById('createEmail').value.trim();
+            const username = document.getElementById('createUsername').value.trim();
             const displayName = document.getElementById('createDisplayName').value.trim();
             const password = document.getElementById('createPassword').value;
             const phoneNumber = document.getElementById('createPhone').value.trim();
 
-            if (!email.toLowerCase().endsWith('@@gmail.com')) {
+            if (!username) {
                 Swal.fire({
                     title: 'Validation Error',
-                    text: 'Staff email address must be a valid @@gmail.com account.',
+                    text: 'Username is required.',
                     icon: 'warning',
                     confirmButtonColor: '#0f172a',
                     background: '#ffffff',
@@ -445,7 +445,7 @@
                 const response = await fetch('/AdminAccount/CreateStaff', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                    body: JSON.stringify({ email, displayName, password, phoneNumber })
+                    body: JSON.stringify({ username, displayName, password, phoneNumber })
                 });
 
                 const res = await response.json();
@@ -485,6 +485,75 @@
             const password = document.getElementById('editPassword').value;
             const phoneNumber = document.getElementById('editPhone').value.trim();
             const accountStatus = document.getElementById('editStatus').value;
+
+            // Client-side validations
+            if (!displayName) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Display name is required.',
+                    icon: 'warning',
+                    confirmButtonColor: '#0f172a'
+                });
+                return;
+            }
+
+            if (displayName.length > 255) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Display name cannot exceed 255 characters.',
+                    icon: 'warning',
+                    confirmButtonColor: '#0f172a'
+                });
+                return;
+            }
+
+            if (password && password.length < 6) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'New password must be at least 6 characters long.',
+                    icon: 'warning',
+                    confirmButtonColor: '#0f172a'
+                });
+                return;
+            }
+
+            if (phoneNumber) {
+                const phoneRegex = /^\+?[0-9\s-]{9,15}$/;
+                if (!phoneRegex.test(phoneNumber)) {
+                    Swal.fire({
+                        title: 'Validation Error',
+                        text: 'Invalid phone number format.',
+                        icon: 'warning',
+                        confirmButtonColor: '#0f172a'
+                    });
+                    return;
+                }
+                if (phoneNumber.length > 50) {
+                    Swal.fire({
+                        title: 'Validation Error',
+                        text: 'Phone number cannot exceed 50 characters.',
+                        icon: 'warning',
+                        confirmButtonColor: '#0f172a'
+                    });
+                    return;
+                }
+            }
+
+            // Confirm SweetAlert
+            const confirmResult = await Swal.fire({
+                title: 'Confirm Account Modifications?',
+                text: 'Are you sure you want to save the changes for this staff member?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#0f172a',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, Save Changes',
+                cancelButtonText: 'Cancel',
+                background: '#ffffff',
+                customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' }
+            });
+
+            if (!confirmResult.isConfirmed) return;
 
             try {
                 const response = await fetch(`/AdminAccount/EditStaff/${id}`, {

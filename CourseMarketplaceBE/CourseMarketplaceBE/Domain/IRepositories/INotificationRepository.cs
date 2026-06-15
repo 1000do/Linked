@@ -17,5 +17,6 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         Task<bool> MarkAllAsReadAsync(int userId);
         Task<int> GetUnreadCountAsync(int userId);
         Task AutoCleanupAdminNotificationsAsync();
+        Task<int> GetSentNotificationsCountAsync(int senderId);
     }
 }

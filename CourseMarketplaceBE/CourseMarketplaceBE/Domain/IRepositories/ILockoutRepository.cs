@@ -6,4 +6,5 @@ public interface ILockoutRepository
 {
     Task<Lockout?> GetActiveLockoutAsync(int accountId, string lockoutType);
     Task AddAsync(Lockout lockout);
+    Task RemoveAccountLockoutsAsync(int accountId);
 }

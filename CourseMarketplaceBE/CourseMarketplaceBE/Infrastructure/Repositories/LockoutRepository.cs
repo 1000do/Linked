@@ -29,4 +29,12 @@ public class LockoutRepository : ILockoutRepository
         await _context.Lockouts.AddAsync(lockout);
         await Task.CompletedTask;
     }
+
+    public async Task RemoveAccountLockoutsAsync(int accountId)
+    {
+        var activeLockouts = await _context.Lockouts
+            .Where(l => l.AccountId == accountId && l.LockoutType == "account")
+            .ToListAsync();
+        _context.Lockouts.RemoveRange(activeLockouts);
+    }
 }

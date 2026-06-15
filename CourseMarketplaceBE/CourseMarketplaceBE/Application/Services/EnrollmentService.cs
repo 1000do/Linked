@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Constants;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -25,6 +26,9 @@ public class EnrollmentService : IEnrollmentService
         var course = await _courseRepo.GetByIdAsync(courseId);
         if (course == null)
             throw new InvalidOperationException("Course not found.");
+
+        if (course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
+            throw new InvalidOperationException("Course is not published.");
 
         if (course.Price > 0)
             throw new InvalidOperationException("This course is not free. Please complete the purchase via your cart.");

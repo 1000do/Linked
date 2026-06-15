@@ -9,6 +9,7 @@ namespace CourseMarketplaceBE.Application.IServices
         Task<AdminAccountDetailDto?> GetAccountDetailAsync(int id);
         Task<AccountTransactionSummaryDto?> GetAccountTransactionsAsync(int id);
         Task<bool> IsEmailExistsAsync(string email);
+        Task<bool> IsUsernameExistsAsync(string username);
         Task CreateStaffAsync(CreateStaffRequest request);
         Task<bool> UpdateStaffAsync(int id, UpdateStaffRequest request);
         Task<string?> ToggleBanAsync(int id, int adminId);
