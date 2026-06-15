@@ -87,6 +87,7 @@ To maintain consistency across diagrams, assign relationships strictly according
   ' Styling & Settings
   skinparam style strictuml
   skinparam shadowing false
+  skinparam classAttributeIconSize 0
   skinparam class {
       BackgroundColor White
       BorderColor #1A73E8
@@ -121,6 +122,7 @@ Below is the standard, working PlantUML class diagram depicting the "Create Cour
 ' Styling & Settings
 skinparam style strictuml
 skinparam shadowing false
+skinparam classAttributeIconSize 0
 skinparam class {
     BackgroundColor White
     BorderColor #1A73E8
