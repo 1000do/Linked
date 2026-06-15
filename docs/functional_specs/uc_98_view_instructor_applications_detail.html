@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-98 - View Instructor Applications Detail</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-98. View Instructor Applications Detail</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor clicks the "View Info" link for a pending instructor application.</p>
+
+    <p><strong>Function Description:</strong> Allows the Actor to inspect the detailed credentials of an instructor applicant, including their external LinkedIn, YouTube, and Facebook profiles, and submitted resume or portfolio documents.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be successfully authenticated as a Staff member or Admin.</li>
+                <li>The instructor's application must exist in a pending status.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Access Details:</strong>
+                    <ul>
+                        <li>Actor accesses the pending applications list page.</li>
+                        <li>Actor clicks the "View Info" link.</li>
+                    </ul>
+                </li>
+                <li><strong>Retrieve Details:</strong>
+                    <ul>
+                        <li>The system retrieves the detailed data of the selected instructor application.</li>
+                    </ul>
+                </li>
+                <li><strong>Display Details:</strong>
+                    <ul>
+                        <li>The system displays the applicant's profile details, including their avatar, full name, email, professional title, expertise areas, social media links, and submitted documents.</li>
+                        <li>The system displays the "Approve" and "Reject" buttons.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Cancel Viewing Details)</strong>
+            <ul>
+                <li>If the Actor cancels viewing details:
+                    <ul>
+                        <li>Actor clicks the "Cancel" button or the "Back to List" link.</li>
+                        <li>The system redirects the Actor back to the pending applications list page.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The system displays the detailed credentials of the selected instructor applicant.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the Actor to the login page.</li>
+                <li><strong>Application Not Found:</strong> The system detects that the application ID is invalid or has been processed by another manager, displays an "Application not found" error message, and redirects the Actor back to the refreshed pending applications list.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Role-based Access Control:</strong> Access to the instructor application details is restricted strictly to authenticated users with Staff or Admin roles.</li>
+                <li><strong>Data Validation:</strong> The server validates that the requested application ID exists and is currently in a pending state before returning the detailed data.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

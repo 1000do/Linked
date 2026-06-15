@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-80 - Search Notifications</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-80. Search Notifications</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor enters text in the search input field on the System Notifications page.</p>
+
+    <p><strong>Function Description:</strong> Allows the Actor to search the system notifications log by recipient name, email address, message title, or content.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be successfully authenticated as a Staff member or Admin.</li>
+                <li>Actor is on the System Notifications page.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Enter Search Query:</strong>
+                    <ul>
+                        <li>Actor accesses the System Notifications page.</li>
+                        <li>Actor types a search query (such as recipient name, email, title keyword, or content keyword) in the search input box.</li>
+                    </ul>
+                </li>
+                <li><strong>Filter List:</strong>
+                    <ul>
+                        <li>The system filters the notifications list in real time as the text is entered.</li>
+                        <li>The system displays the matching notifications in the table, preserving any active role tab filters, status filters, or sorting orders.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Clear Search Query)</strong>
+            <ul>
+                <li>If the Actor clears the search query:
+                    <ul>
+                        <li>Actor deletes all text from the search input box.</li>
+                        <li>The system filters the notifications list using only the remaining active role tab filters, status filters, and sorting orders.</li>
+                        <li>The system displays the updated list in the table.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (No Matching Notifications)</strong>
+            <ul>
+                <li>If no notifications match the search query:
+                    <ul>
+                        <li>The search query does not match any notifications in the list.</li>
+                        <li>The system displays a message indicating "No notifications found matching your filters".</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The system displays only those notifications in the table list that match the search query.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the Actor to the login page.</li>
+                <li><strong>Unauthorized Access:</strong> The system detects that the Actor is not a Staff or Admin, displays an access denied error page, and terminates the flow.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Role-based Access Control:</strong> Access to search system notifications is restricted strictly to authenticated users with Staff or Admin roles.</li>
+                <li><strong>Input Sanitization:</strong> The system sanitizes search inputs to prevent cross-site scripting or injection vulnerabilities.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

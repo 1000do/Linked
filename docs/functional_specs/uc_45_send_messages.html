@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-45 - Send Messages</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-45. Send Messages</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor clicks the send button or presses the Enter key in the message input area.</p>
+
+    <p><strong>Function Description:</strong> Allows the Actor to send text messages and optionally attach files within an active conversation room. The message is transmitted in real time to other participants.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be successfully authenticated.</li>
+                <li>Actor must have an active conversation open.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Enter Message:</strong>
+                    <ul>
+                        <li>Actor accesses the active conversation panel.</li>
+                        <li>Actor enters the message text in the "Type a message..." textarea.</li>
+                        <li>Actor clicks the "send" button.</li>
+                    </ul>
+                </li>
+                <li><strong>Validate and Transmit:</strong>
+                    <ul>
+                        <li>The system validates that the message content is not empty.</li>
+                        <li>The system sends the message payload to the server via the active SignalR connection.</li>
+                        <li>The server checks if the sender is an authorized participant of the chat.</li>
+                        <li>The server creates a new message record with "ok" status.</li>
+                        <li>The server saves the message record to the database.</li>
+                        <li>The server increments the unread count for recipients in the cache.</li>
+                        <li>The server broadcasts the message to all participants in the chat room.</li>
+                    </ul>
+                </li>
+                <li><strong>Update UI:</strong>
+                    <ul>
+                        <li>The system displays the sent message in the message list viewport with a sent indicator.</li>
+                        <li>The system clears the input textarea.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Attach and Send Files)</strong>
+            <ul>
+                <li>If the Actor attaches and sends files:
+                    <ul>
+                        <li>Actor clicks the "attach_file" button.</li>
+                        <li>The system opens the device's file picker.</li>
+                        <li>Actor selects a file.</li>
+                        <li>The system displays the selected file in the attachment preview container.</li>
+                        <li>Actor clicks the "send" button.</li>
+                        <li>The system requests the backend to upload the file.</li>
+                        <li>The server saves the file to the storage server and returns the file metadata.</li>
+                        <li>The system includes the attachment metadata in the message payload.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Remove Selected Attachment)</strong>
+            <ul>
+                <li>If the Actor removes a selected attachment before sending:
+                    <ul>
+                        <li>Actor clicks the "close" icon next to the attached file name in the preview container.</li>
+                        <li>The system removes the file from the preview list.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The message record (and optional attachments) is saved in the database.</li>
+                <li>The message is broadcasted to all participants in the conversation in real time.</li>
+                <li>The unread count of the recipients is updated in the system cache.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the Actor to the login page.</li>
+                <li><strong>Empty Message:</strong> The system detects both the message text and selected attachments are empty, cancels the submission, and returns to composing the message.</li>
+                <li><strong>Unauthorized Participant:</strong> The server detects that the sender is not a participant of the chat and has no active support/moderation override, throws an access denied exception, and displays an error message regarding chat access permission.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Participant Validation:</strong> The server verifies that the message sender belongs to the conversation room before storing or broadcasting the message.</li>
+                <li><strong>Attachment Safety Validation:</strong> The system validates uploaded files for type, extension, and size limit restrictions.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

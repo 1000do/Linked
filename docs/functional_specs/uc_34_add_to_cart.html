@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-34 - Add to Cart</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-34. Add to Cart</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor clicks the "Add to Cart" button on a course details card or page.</p>
+
+    <p><strong>Function Description:</strong> Allows an authenticated user to add one or more courses to their shopping cart to purchase them together in a single transaction.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be successfully authenticated.</li>
+                <li>Actor must have a verified email status.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Access Course Details:</strong>
+                    <ul>
+                        <li>Actor accesses a course detail page.</li>
+                        <li>Actor clicks the "Add to Cart" button.</li>
+                    </ul>
+                </li>
+                <li><strong>Validate and Request:</strong>
+                    <ul>
+                        <li>The system checks for a valid authenticated session.</li>
+                        <li>The system requests the backend to add the course to the user's shopping cart.</li>
+                        <li>The server validates that the active user's email address is verified.</li>
+                        <li>The server checks if the course is already in the user's cart, already purchased, or if the user is the instructor of the course.</li>
+                    </ul>
+                </li>
+                <li><strong>Add Course:</strong>
+                    <ul>
+                        <li>The server adds the course record to the user's shopping cart in the database.</li>
+                        <li>The system displays a success message indicating the course was added to the cart.</li>
+                        <li>The system redirects the Actor to the Cart page.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Add to Cart without Redirect)</strong>
+            <ul>
+                <li>If the Actor adds a course to the cart without redirection:
+                    <ul>
+                        <li>Actor clicks the configured "Add to Cart" button.</li>
+                        <li>The system requests the backend to add the course to the cart.</li>
+                        <li>The server validates the request and adds the course record to the user's shopping cart.</li>
+                        <li>The system displays a success toast notification on the current page and updates the cart item count badge in the header.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The course is successfully added to the user's shopping cart in the database.</li>
+                <li>The system redirects the Actor to the Cart Summary page, or displays a success toast notification on the current page.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the Actor to the login page.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Session and Ownership Verification:</strong> The server verifies the active user session and validates that the user is not attempting to buy their own course or a course already in possession.</li>
+                <li><strong>Email Verification Restriction:</strong> Only users with a verified email status are allowed to perform write operations on the cart.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>
