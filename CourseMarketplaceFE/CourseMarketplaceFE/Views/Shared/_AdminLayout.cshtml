@@ -289,6 +289,72 @@
             heightAuto: false,
             scrollbarPadding: false
         });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const ADMIN_LAYOUT_TOKEN = `@Html.Raw(token)`;
+            if (ADMIN_LAYOUT_TOKEN) {
+                const connection = new signalR.HubConnectionBuilder()
+                    .withUrl("http://localhost:5207/notificationHub", {
+                        accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
+                    })
+                    .withAutomaticReconnect()
+                    .build();
+
+                connection.on("ReceiveNotification", function (noti) {
+                    // 1. Show red dot at sidebar notification menu
+                    const adminBadge = document.getElementById('admin-noti-badge');
+                    if (adminBadge) adminBadge.classList.remove('hidden');
+
+                    // Dispatch event for child views (like Notification/Admin page to reload list)
+                    document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
+
+                    // Show a premium real-time toast alert
+                    if (noti && noti.title) {
+                        const truncateText = (text, maxLength = 20) => {
+                            if (!text) return "";
+                            return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+                        };
+
+                        const displayTitle = truncateText(noti.title, 20);
+                        const displayContent = truncateText(noti.content, 20);
+
+                         const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 6000,
+                            timerProgressBar: true,
+                            didOpen: (toast) => {
+                                toast.addEventListener('mouseenter', Swal.stopTimer);
+                                toast.addEventListener('mouseleave', Swal.resumeTimer);
+                                
+                                // Make entire toast clickable
+                                toast.style.cursor = 'pointer';
+                                toast.addEventListener('click', (e) => {
+                                    if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON') {
+                                        const targetUrl = noti.linkAction || '/Notification/Admin';
+                                        window.location.href = targetUrl;
+                                    }
+                                });
+                            }
+                        });
+
+                        Toast.fire({
+                            icon: 'info',
+                            title: displayTitle,
+                            html: `
+                                <div class="text-left font-body">
+                                    <p class="text-[12px] text-slate-600 mt-1 leading-relaxed">${displayContent}</p>
+                                    ${noti.linkAction ? `<a href="${noti.linkAction}" class="inline-block mt-2 text-[12px] font-bold text-emerald-600 hover:text-emerald-700 transition-colors">View Detail &rarr;</a>` : ''}
+                                </div>
+                            `
+                        });
+                    }
+                });
+
+                connection.start().catch(err => console.error("Admin Notification Hub connection error: ", err));
+            }
+        });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

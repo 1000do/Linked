@@ -132,8 +132,8 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         [HttpPost("send-advanced")]
         public async Task<IActionResult> SendAdvanced([FromBody] NotificationAdvancedDto dto)
         {
-            if (dto.Title.Length > 100 || dto.Content.Length > 100)
-                return BadRequest("Title maximum 100 characters, content maximum 100 characters.");
+            if (dto.Title.Length > 255)
+                return BadRequest("Title maximum 255 characters.");
 
             var senderIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var senderRole = User.FindFirst(ClaimTypes.Role)?.Value;

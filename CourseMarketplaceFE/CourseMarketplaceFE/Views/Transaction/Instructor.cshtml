@@ -460,7 +460,7 @@
                         {
                             foreach (var item in Model.Transactions.Items)
                             {
-                                <tr class="hover:bg-slate-50/50 group/row border-b border-slate-100 transition-all duration-300">
+                                <tr id="tx-@item.TransactionId" class="hover:bg-slate-50/50 group/row border-b border-slate-100 transition-all duration-300">
                                     <td class="pl-6 pr-4 py-4.5 align-middle w-24">
                                         <div class="flex flex-col">
                                             <span class="text-xs font-extrabold text-slate-800 tracking-tight">@(item.Date.HasValue ? item.Date.Value.ToString("dd/MM") : "—")</span>
@@ -655,7 +655,7 @@
                             int payoutIndex = (Model.Payouts.Page - 1) * Model.Payouts.PageSize + 1;
                             @foreach (var item in Model.Payouts.Items)
                             {
-                                <tr class="hover:bg-slate-50/50 group/row border-b border-slate-100 transition-all duration-300">
+                                <tr id="po-@item.PayoutId" class="hover:bg-slate-50/50 group/row border-b border-slate-100 transition-all duration-300">
                                     <td class="pl-6 pr-4 py-4.5 align-middle w-16">
                                         <span class="text-xs font-bold text-slate-600 font-mono">#@(payoutIndex++)</span>
                                     </td>
@@ -1549,5 +1549,18 @@
                 setTimeout(() => loader.remove(), 300);
             }
         }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.location.hash && window.location.hash.startsWith('#tx-')) {
+                const target = document.querySelector(window.location.hash);
+                if (target) {
+                    setTimeout(() => {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        target.classList.add('bg-emerald-50');
+                        setTimeout(() => target.classList.remove('bg-emerald-50'), 3000);
+                    }, 500);
+                }
+            }
+        });
     </script>
 }
