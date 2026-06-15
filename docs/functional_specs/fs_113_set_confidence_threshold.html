@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-113 - Set Confidence Threshold</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-113 - Set Confidence Threshold</strong></p>
+    <p><strong>Function Trigger:</strong> Admin modifies one or more threshold values and clicks the "Save Changes" button in the threshold configuration form.</p>
+    <p><strong>Function Description:</strong> Allows an Admin to configure the spam confidence, toxicity confidence, and similarity score thresholds used by the automated AI moderation system. The current threshold values are pre-filled from the database on page load. If no configuration exists, system defaults are applied.</p>
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+    <p><strong>Function Details</strong></p>
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Admin must be successfully authenticated.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Set Confidence Threshold Successfully:</strong>
+                    <ul>
+                        <li>Admin accesses the AI Service management page.</li>
+                        <li>The system validates the Admin's access authorization.</li>
+                        <li>The system retrieves and displays the current threshold configuration values in the configuration form.</li>
+                        <li>Admin modifies one or more threshold values in the configuration form.</li>
+                        <li>Admin clicks the "Save Changes" button.</li>
+                        <li>The system displays a confirmation dialog.</li>
+                        <li>Admin confirms the action.</li>
+                        <li>The system validates the form inputs.</li>
+                        <li>The system updates the threshold configuration in the database.</li>
+                        <li>The system displays a success notification.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (No Threshold Configuration Found)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>The system detects no threshold configuration exists in the database.</li>
+                        <li>The system populates the form with system default threshold values.</li>
+                        <li>Back to step 4.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Admin Cancels Confirmation)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>Admin clicks the cancel button on the confirmation dialog.</li>
+                        <li>Back to step 4.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Form Validation Failed)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>The system detects one or more submitted values fail validation constraints.</li>
+                        <li>The system displays a validation error message.</li>
+                        <li>Back to step 4.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The confidence threshold configuration is updated in the database.</li>
+                <li>The updated threshold values are displayed in the configuration form in place of the old values.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+                <li><strong>Unauthorized Access:</strong> The system detects the current user does not have Admin authorization. The system displays an unauthorized access error message. The system redirects the user to the login page.</li>
+                <li><strong>Database Save Failed:</strong> The system fails to persist the threshold configuration to the database. The system displays an error message regarding the database save failure. Back to step 4.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Universal Form Data Validation:</strong> All submitted form fields must pass strict data type, format, length, and value constraints (e.g., report descriptions must be at least 20 characters, and confidence thresholds must be decimals between 0.01 and 1.0) before the system processes the submission.</li>
+                <li><strong>Admin Authorization for AI Services:</strong> Only authenticated Admin actors are authorized to access and perform actions within the AI Service and Model Management module (including adding/updating models, toggling status, viewing details/list, configuring thresholds, and viewing activity logs).</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

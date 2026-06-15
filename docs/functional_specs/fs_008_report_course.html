@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-ReportCourse - Report a course</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-ReportCourse - Report a course</strong></p>
+    <p><strong>Function Trigger:</strong> User clicks the "Report this course" button on the course details page.</p>
+    <p><strong>Function Description:</strong> Allows a user to report a course for violations (e.g., misleading content, copyright violation, spam, adult content). The system allows adding multiple reasons, validates the input, and submits the report to the server for moderation.</p>
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+    <p><strong>Function Details</strong></p>
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>User must be successfully authenticated.</li>
+                <li>User must be enrolled in the course.</li>
+                <li>User must not be the course owner or a manager.</li>
+                <li>The course must be in a reportable state (not pending, draft, or permanently locked).</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Report Course Successfully:</strong>
+                    <ul>
+                        <li>User accesses the course details page.</li>
+                        <li>User clicks the "Report this course" button.</li>
+                        <li>The system checks authentication.</li>
+                        <li>The system displays the report course form.</li>
+                        <li>User inputs the report details (reason and description).</li>
+                        <li>User clicks the Submit Report button.</li>
+                        <li>The system validates the report details.</li>
+                        <li>The system submits the report data to the server.</li>
+                        <li>The system saves the report in the database.</li>
+                        <li>The system displays a success message regarding report submission.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Add another reason)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>User clicks the Add another reason button.</li>
+                        <li>The system adds another reason and description field to the form.</li>
+                        <li>Back to step 5.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Remove a reason)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>User clicks the remove icon for a specific reason field.</li>
+                        <li>The system removes the reason and description field from the form.</li>
+                        <li>Back to step 5.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Cancel reporting)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>User clicks the Cancel button.</li>
+                        <li>The system closes the report course form.</li>
+                        <li>Back to step 2.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Invalid form input)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>The system detects invalid input in the report form.</li>
+                        <li>The system displays a validation error message.</li>
+                        <li>Back to step 5.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The report is recorded in the database for moderation.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+                <li><strong>Database Save Failed:</strong> The system fails to save the report to the database. The system displays an error message regarding report submission failure. Back to step 2.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Universal Form Data Validation:</strong> All submitted form fields must pass strict data type, format, length, and value constraints (e.g., report descriptions must be at least 20 characters, and confidence thresholds must be decimals between 0.01 and 1.0) before the system processes the submission.</li>
+                <li><strong>Unique Reasons:</strong> The user cannot select the same report reason more than once in a single submission.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

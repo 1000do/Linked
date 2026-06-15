@@ -116,7 +116,7 @@ namespace CourseMarketplaceFE.Controllers
             }
             return View(new List<PublicCourseViewModel>());
         }
-
+        
         [HttpGet]
         public async Task<IActionResult> SearchCoursesJson(string query)
         {

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-107 - Resolve Report</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-107 - Resolve Report</strong></p>
+    <p><strong>Function Trigger:</strong> Staff or Admin clicks the "Moderate" button on a pending, under review, or escalated report row.</p>
+    <p><strong>Function Description:</strong> Resolves a report by taking moderation action (e.g., removing content) and updating status.</p>
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+    <p><strong>Function Details</strong></p>
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>The actor must be authenticated.</li>
+                <li>The actor must have Staff or Admin role.</li>
+                <li>The selected report must be in a resolvable state ("Pending", "Under Review", or "Escalated").</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Resolve Report Successfully:</strong>
+                    <ul>
+                        <li>Staff or Admin accesses the Report Center page.</li>
+                        <li>The system validates the actor's authentication and authorization.</li>
+                        <li>Staff or Admin clicks the "Moderate" button on a report row (course report, course review report, or lesson review report).</li>
+                        <li>The system displays the Moderate Report popup containing report details, resolution status options, content removal checkbox, and note textarea.</li>
+                        <li>The actor selects the "Accept Report (Valid / Policy Violation)" status.</li>
+                        <li>The actor enters internal moderation notes.</li>
+                        <li>The actor clicks "Submit Decision".</li>
+                        <li>The system validates the actor's authentication and authorization.</li>
+                        <li>The system processes the moderation decision, updates the report, and applies any penalties or notifications.</li>
+                        <li>The system displays a success confirmation message.</li>
+                        <li>The system refreshes the report list and overall statistics.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Select Non-resolved Status)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>The actor selects a status other than "Accept Report" (e.g., Dismiss Report, Under Review, Escalate).</li>
+                        <li>The system automatically unchecks and disables the "Flag Course / Remove content" checkbox.</li>
+                        <li>Back to step 6.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Toggle Content Removal Checkbox)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>The actor checks the "Flag Course / Remove content" checkbox.</li>
+                        <li>The system displays a secondary confirmation popup warning about the consequences of removing or flagging the content.</li>
+                        <li>The actor confirms the action.</li>
+                        <li>The system updates the checkbox state to checked.</li>
+                        <li>Back to step 6.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Cancel Content Removal)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>The actor clicks "Cancel" on the secondary confirmation popup.</li>
+                        <li>The system keeps the checkbox unchecked.</li>
+                        <li>Back to step 6.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The system updates the report with the selected status and resolution note.</li>
+                <li>If content removal was checked, the system increments the content's violation flag count and applies penalties (e.g., warning notifications, hiding content).</li>
+                <li>If a course accumulates 3 strikes (flags), the system applies permanent course discontinuation and instructor lockouts as defined in the business rules.</li>
+                <li>The system sends relevant notifications to the reporter regarding the report outcome, and to the content owner regarding policy violations or lockouts.</li>
+                <li>If a review is removed, the system soft-deletes the review, marks it as violating, increments the author's account flag count, and applies progressing account lockouts as defined in the business rules.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+                <li><strong>Unauthorized Access:</strong> The system detects the actor does not have the Staff or Admin role. The system redirects the actor to the home page or access denied page.</li>
+                <li><strong>Moderation Action Rejected:</strong> The server rejects the moderation action (e.g., business rule violation, lack of permissions to perform specific actions). The system displays an error popup with the failure message. Use case ends.</li>
+                <li><strong>Database Save Failure:</strong> The system encounters an error while saving the moderation changes to the database. The system displays an error message regarding the data update failure. Use case ends.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Adaptive Moderation/Detail Popup UI:</strong> The moderation and detail popups dynamically adjust titles, fields, labels, and action terminologies (e.g., "Flag Course" vs "Remove content") depending on whether a course or a review is being viewed/moderated.</li>
+                <li><strong>Escalation Restriction:</strong> Staff may select the "Escalate to Senior Admin" option. Admins do not see this option, as they are the highest escalation tier.</li>
+                <li><strong>Action Limitations:</strong> The "Flag Course / Remove content" checkbox is enabled exclusively when the Resolution Status is set to "Accept Report". Changing the status automatically clears and disables the checkbox.</li>
+                <li><strong>Course Strike System:</strong> When a course report is accepted with the "Flag Course" toggle checked: Strike 1–2 sends a warning to the instructor; Strike 3 permanently archives the course and applies a 30-day severe instructor lockout.</li>
+                <li><strong>Review Penalty System:</strong> When a review report is accepted with "Remove content" checked: Strike 1 sends a warning; Strike 2 applies a 7-day moderate review lockout; Strike 3 applies a 30-day severe full account ban and terminates active sessions.</li>
+                <li><strong>Implicit Refresh:</strong> A successful moderation action automatically triggers a silent refresh of the current report list and overall statistics.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-ReportReview - Report a review</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-ReportReview - Report a review</strong></p>
+    <p><strong>Function Trigger:</strong> User clicks the "Report" button on a course review in the course details page.</p>
+    <p><strong>Function Description:</strong> Allows a user to report a course or lesson review for violations such as spam, offensive content, or fake reviews. The system prompts the user to select a reason and optionally provide a description before submitting the report for moderation.</p>
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+    <p><strong>Function Details</strong></p>
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>User must be successfully authenticated.</li>
+                <li>User must have completed the course or lesson to be able to report the review.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Report Course Review Successfully:</strong>
+                    <ul>
+                        <li>User accesses the course details page.</li>
+                        <li>User locates a course review and clicks the Report button.</li>
+                        <li>The system checks authentication.</li>
+                        <li>The system displays the report review form modal.</li>
+                        <li>User selects a violation reason from the dropdown.</li>
+                        <li>User optionally inputs additional description details.</li>
+                        <li>User clicks the Submit Report button.</li>
+                        <li>The system validates the report details and checks for duplicate pending reports.</li>
+                        <li>The system submits the course review report data to the server.</li>
+                        <li>The system saves the report in the database.</li>
+                        <li>The system displays a success message regarding report submission.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Report Lesson Review Successfully)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>User accesses the course learning page.</li>
+                        <li>User locates a lesson review and clicks the Report button.</li>
+                        <li>Back to step 3.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Cancel reporting)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>User clicks the Cancel button.</li>
+                        <li>The system closes the report review modal.</li>
+                        <li>Back to step 2.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The review report is recorded in the database for moderation.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+                <li><strong>Duplicate Pending Report:</strong> The system detects that the user has already reported this review with the exact same reason and the report is still pending. The system displays a duplicate report error message preventing submission. Back to step 4.</li>
+                <li><strong>Database Save Failed:</strong> The system fails to save the report to the database. The system displays an error message regarding report submission failure. Back to step 4.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Reason Selection:</strong> A valid violation reason (Spam, Offensive, Fake, Other) must be selected before submission.</li>
+                <li><strong>Duplicate Report Prevention:</strong> A user cannot report the same review with the same reason if their previous report is still pending.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

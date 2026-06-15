@@ -1,0 +1,506 @@
+accounts
+account_id SERIAL PK
+--
+email VARCHAR
+username VARCHAR
+password_hash TEXT
+phone_number VARCHAR
+account_status VARCHAR
+account_flag_count INT
+auth_provider VARCHAR
+avatar_url TEXT
+refresh_token TEXT
+refresh_token_expiry_time TIMESTAMP
+is_verified BOOLEAN
+account_created_at TIMESTAMP
+account_updated_at TIMESTAMP
+account_last_login_at TIMESTAMP
+
+lockouts
+lockout_id SERIAL PK
+account_id INT FK
+--
+lockout_type VARCHAR
+lockout_level VARCHAR
+lockout_start TIMESTAMP
+lockout_end TIMESTAMP
+
+users
+user_id INT PK
+user_id INT FK
+--
+full_name VARCHAR
+bio TEXT
+date_of_birth DATE
+
+managers
+manager_id INT PK
+manager_id INT FK
+--
+role VARCHAR
+display_name VARCHAR
+full_name VARCHAR
+phone_number VARCHAR
+avatar_url TEXT
+bio TEXT
+
+avatar_frames
+id SERIAL PK
+--
+name VARCHAR
+image_url TEXT
+description TEXT
+requirement_type VARCHAR
+requirement_value INT
+is_active BOOLEAN
+created_at TIMESTAMP
+
+user_avatar_frames
+user_id INT PK
+user_id INT FK
+frame_id INT PK
+frame_id INT FK
+--
+unlocked_at TIMESTAMP
+is_equipped BOOLEAN
+
+instructors
+instructor_id INT PK
+instructor_id INT FK
+--
+stripe_account_id VARCHAR
+stripe_onboarding_status VARCHAR
+payouts_enabled BOOLEAN
+charges_enabled BOOLEAN
+professional_title VARCHAR
+expertise_categories VARCHAR
+linkedin_url TEXT
+youtube_url TEXT
+facebook_url TEXT
+document_url TEXT
+approval_status VARCHAR
+stripe_country VARCHAR
+rejection_reason TEXT
+
+categories
+category_id SERIAL PK
+--
+categories_name VARCHAR
+description TEXT
+created_at TIMESTAMP
+updated_at TIMESTAMP
+category_status VARCHAR
+
+coupons
+coupon_id SERIAL PK
+manager_id INT FK
+--
+coupon_code VARCHAR
+coupon_type VARCHAR
+discount_value NUMERIC
+min_order_value NUMERIC
+start_date TIMESTAMP
+end_date TIMESTAMP
+usage_limit INT
+used_count INT
+is_active BOOLEAN
+
+courses
+course_id SERIAL PK
+instructor_id INT FK
+category_id INT FK
+coupon_id INT FK
+--
+title VARCHAR
+description TEXT
+price NUMERIC
+course_thumbnail_url TEXT
+created_at TIMESTAMP
+updated_at TIMESTAMP
+course_status VARCHAR
+course_flag_count INT
+what_you_will_learn TEXT
+requirements TEXT
+moderation_feedback TEXT
+last_approved_at TIMESTAMP
+is_removed BOOLEAN
+threat_level INT
+
+lessons
+lesson_id SERIAL PK
+course_id INT FK
+--
+title VARCHAR
+description TEXT
+thumbnail_url TEXT
+created_at TIMESTAMP
+updated_at TIMESTAMP
+lesson_status VARCHAR
+is_removed BOOLEAN
+
+learning_materials
+material_id SERIAL PK
+lesson_id INT FK
+--
+title VARCHAR
+description TEXT
+created_at TIMESTAMP
+updated_at TIMESTAMP
+learning_status VARCHAR
+moderation_feedback TEXT
+material_url TEXT
+material_metadata JSONB
+cloud_public_id TEXT
+
+course_exts
+course_id INT PK
+course_id INT FK
+--
+title_hash CHAR
+description_hash CHAR
+what_you_will_learn_hash CHAR
+requirements_hash CHAR
+thumbnail_hash CHAR
+
+text_embeddings
+text_embedding_id SERIAL PK
+material_id INT FK
+--
+text_embedding vector
+created_at TIMESTAMP
+
+media_embeddings
+media_embedding_id SERIAL PK
+material_id INT FK
+--
+media_embedding vector
+created_at TIMESTAMP
+
+enrollments
+enrollment_id SERIAL PK
+user_id INT FK
+course_id INT FK
+--
+title VARCHAR
+description TEXT
+completed_date DATE
+is_completed BOOLEAN
+enroll_date DATE
+last_accessed_at TIMESTAMP
+enrollment_status VARCHAR
+
+material_completions
+id SERIAL PK
+enrollment_id INT FK
+material_id INT FK
+--
+completed_at TIMESTAMP
+
+wishlist_items
+id SERIAL PK
+user_id INT FK
+course_id INT FK
+--
+added_date TIMESTAMP
+
+course_reviews
+course_review_id SERIAL PK
+enrollment_id INT FK
+--
+rating NUMERIC
+comment TEXT
+course_review_status TEXT
+created_at TIMESTAMP
+updated_at TIMESTAMP
+is_removed BOOLEAN
+
+lesson_reviews
+lesson_review_id SERIAL PK
+enrollment_id INT FK
+lesson_id INT FK
+--
+rating NUMERIC
+comment TEXT
+lesson_review_status TEXT
+created_at TIMESTAMP
+updated_at TIMESTAMP
+is_removed BOOLEAN
+
+cart_items
+id SERIAL PK
+user_id INT FK
+course_id INT FK
+--
+added_date TIMESTAMP
+price NUMERIC
+
+order_info
+order_id SERIAL PK
+user_id INT FK
+--
+order_date TIMESTAMP
+order_status VARCHAR
+payment_method VARCHAR
+
+order_items
+id SERIAL PK
+order_id INT FK
+course_id INT FK
+--
+purchase_price NUMERIC
+coupon_used BOOLEAN
+original_price NUMERIC
+coupon_code VARCHAR
+coupon_type VARCHAR
+discount_amount NUMERIC
+
+transactions
+transaction_id SERIAL PK
+order_item_id INT FK
+account_from INT FK
+account_to INT FK
+--
+amount NUMERIC
+transfer_rate NUMERIC
+stripe_session_id VARCHAR
+stripe_paymentintent_id VARCHAR
+currency VARCHAR
+transactions_status VARCHAR
+transaction_type VARCHAR
+transaction_created_at TIMESTAMP
+
+transaction_exts
+transaction_id INT PK
+transaction_id INT FK
+--
+refund_reason TEXT
+refund_admin_note TEXT
+refund_requested_at TIMESTAMP
+
+gifts
+gift_id SERIAL PK
+order_item_id INT FK
+sender_id INT FK
+claimed_by_user_id INT FK
+--
+recipient_email VARCHAR
+recipient_name VARCHAR
+gift_message TEXT
+card_theme VARCHAR
+redemption_token VARCHAR
+is_claimed BOOLEAN
+claimed_at TIMESTAMP
+delivery_status VARCHAR
+created_at TIMESTAMP
+updated_at TIMESTAMP
+
+instructor_payouts
+payout_id SERIAL PK
+transaction_id INT FK
+instructor_id INT FK
+--
+payout_amount NUMERIC
+payout_date TIMESTAMP
+is_paid BOOLEAN
+payout_status VARCHAR
+stripe_transfer_id VARCHAR
+stripe_payout_id VARCHAR
+paid_to_bank_at TIMESTAMP
+
+platform_withdrawals
+withdrawal_id SERIAL PK
+manager_id INT FK
+--
+amount NUMERIC
+currency VARCHAR
+stripe_payout_id VARCHAR
+status VARCHAR
+description TEXT
+created_at TIMESTAMP
+arrived_at TIMESTAMP
+
+chats
+chat_id SERIAL PK
+--
+chat_name VARCHAR
+chat_type VARCHAR
+context_type VARCHAR
+context_id INT
+created_at TIMESTAMP
+last_message_at TIMESTAMP
+
+chat_participants
+chat_id INT PK
+chat_id INT FK
+account_id INT PK
+account_id INT FK
+--
+role VARCHAR
+unread_count INT
+last_read_at TIMESTAMP
+joined_at TIMESTAMP
+cleared_at TIMESTAMP
+
+messages
+message_id SERIAL PK
+chat_id INT FK
+sender_id INT FK
+--
+content TEXT
+is_seen BOOLEAN
+message_status VARCHAR
+sent_at TIMESTAMP
+received_at TIMESTAMP
+
+message_attachments
+attachment_id SERIAL PK
+message_id INT FK
+--
+file_url TEXT
+file_name VARCHAR
+file_type VARCHAR
+file_size BIGINT
+created_at TIMESTAMP
+
+notifications
+notification_id SERIAL PK
+sender_id INT FK
+receiver_id INT FK
+--
+title VARCHAR
+content TEXT
+link_action TEXT
+is_read BOOLEAN
+is_removed BOOLEAN
+created_at TIMESTAMP
+
+course_reports
+course_report_id SERIAL PK
+reporter_id INT FK
+course_id INT FK
+resolver_id INT FK
+--
+reason VARCHAR
+description TEXT
+course_reports_status VARCHAR
+resolution_note TEXT
+resolved_at TIMESTAMP
+access_granted_until TIMESTAMP
+created_at TIMESTAMP
+
+course_review_reports
+course_review_report_id SERIAL PK
+reporter_id INT FK
+course_review_id INT FK
+resolver_id INT FK
+--
+reason VARCHAR
+description TEXT
+user_reports_status VARCHAR
+resolution_note TEXT
+resolved_at TIMESTAMP
+access_granted_until TIMESTAMP
+created_at TIMESTAMP
+
+lesson_review_reports
+lesson_review_report_id SERIAL PK
+reporter_id INT FK
+lesson_review_id INT FK
+resolver_id INT FK
+--
+reason VARCHAR
+description TEXT
+user_reports_status VARCHAR
+resolution_note TEXT
+resolved_at TIMESTAMP
+access_granted_until TIMESTAMP
+created_at TIMESTAMP
+
+audit_logs
+log_id SERIAL PK
+actor_id INT FK
+--
+action_type VARCHAR
+target_type VARCHAR
+target_id INT
+details TEXT
+ip_address VARCHAR
+created_at TIMESTAMP
+
+system_configs
+config_id SERIAL PK
+manager_id INT FK
+--
+config_key VARCHAR
+config_value TEXT
+description TEXT
+updated_at TIMESTAMP
+
+ai_models
+model_id SERIAL PK
+--
+model_name VARCHAR
+model_type VARCHAR
+model_provider VARCHAR
+model_version VARCHAR
+model_status VARCHAR
+description TEXT
+model_created_at TIMESTAMP
+model_updated_at TIMESTAMP
+model_path VARCHAR
+process_type VARCHAR
+
+courses_ai_integrations
+id SERIAL PK
+model_id INT FK
+course_id INT FK
+--
+role VARCHAR
+is_enabled BOOLEAN
+config_json JSONB
+assigned_at TIMESTAMP
+
+course_ai_usage_logs
+log_id SERIAL PK
+integration_id INT FK
+--
+interaction_type VARCHAR
+input_json JSONB
+output_json JSONB
+latency_ms REAL
+token_usage REAL
+error_message TEXT
+log_created_at TIMESTAMP
+
+message_moderation_logs
+log_id SERIAL PK
+model_id INT FK
+message_id INT FK
+--
+input_json JSONB
+output_json JSONB
+latency_ms REAL
+error_message TEXT
+log_created_at TIMESTAMP
+
+course_review_moderation_logs
+log_id SERIAL PK
+model_id INT FK
+course_review_id INT FK
+--
+input_json JSONB
+output_json JSONB
+latency_ms REAL
+error_message TEXT
+log_created_at TIMESTAMP
+
+lesson_review_moderation_logs
+log_id SERIAL PK
+model_id INT FK
+lesson_review_id INT FK
+--
+input_json JSONB
+output_json JSONB
+latency_ms REAL
+error_message TEXT
+log_created_at TIMESTAMP
