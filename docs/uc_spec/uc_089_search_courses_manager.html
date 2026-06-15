@@ -1,0 +1,154 @@
+﻿<div class="uc-container"
+    style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <style>
+        .uc-container,
+        .uc-container table,
+        .uc-container tr,
+        .uc-container td,
+        .uc-container p,
+        .uc-container ol,
+        .uc-container ul,
+        .uc-container li,
+        .uc-container span,
+        .uc-container strong,
+        .uc-container b {
+            font-family: 'Times New Roman', serif !important;
+            font-size: 12pt !important;
+            color: black !important;
+        }
+    </style>
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">UC ID
+                and Name</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                UC-89-Search Courses</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Created By:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Truong Phuoc Tai
+            </td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Date
+                Created:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">13/06/2026</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Primary Actor:
+            </td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Staff, Admin</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">
+                Secondary Actors:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Trigger:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Actor
+                enters search keywords in the "search" input box on the Course Moderation Page.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Description:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                Searches course list by title or instructor name for moderation purposes.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Preconditions:
+            </td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>PRE-1.</b> Actor must be authenticated.</p>
+                <p style="margin: 5px 0 0 0;"><b>PRE-2.</b> Actor must have staff or admin role.</p>
+                <p style="margin: 5px 0 0 0;"><b>PRE-3.</b> Actor must be on the Course Moderation Page.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Post-conditions:
+            </td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>POST-1.</b> The system displays the course moderation list matching the search
+                    keywords and any active filters.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Normal Flow:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A. Search Courses Successfully</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>Actor enters search keywords in the "search" input box.</li>
+                    <li>The system retrieves the courses list filtered by the search keywords and other active filters.
+                    </li>
+                    <li>The system updates the course moderation table and statistics cards.</li>
+                    <li>The system displays the filtered course list.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Alternative
+                Flows:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A.1.1 Clear Search Keyword</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>Actor clears the search keywords in the "search" input box.</li>
+                    <li>The system retrieves the courses list using default parameters (and active filters).</li>
+                    <li>The system updates the course moderation table and statistics cards.</li>
+                    <li>The system displays the default list of courses.</li>
+                    <li>Back to step 1.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Exceptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>EX-1 Session Invalid (Not Logged In)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system displays an authentication error message.</li>
+                    <li>The system redirects the actor to the login page.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-2 Unauthorized Access</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects that the actor does not have staff or admin roles.</li>
+                    <li>The system displays an access denied page or error message.</li>
+                    <li>The flow terminates.</li>
+                </ol>
+
+                <p style="margin: 0; padding-left: 20px;"><strong>EX-3 API Call Failed</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>The system fails to retrieve the filtered course list or stats from the API.</li>
+                    <li>The system displays an error message regarding search failure.</li>
+                    <li>The system renders the Course Moderation page with an empty list.</li>
+                    <li>The flow terminates.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Priority:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Frequency of Use:
+            </td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Business Rules:
+            </td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                BR-120, BR-124, BR-125, BR-126
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Other
+                Information:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">N/A
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Assumptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;">Staff has stable internet connection.</p>
+                <p style="margin: 5px 0 0 0;">Admin has stable internet connection.</p>
+            </td>
+        </tr>
+    </table>
+</div>

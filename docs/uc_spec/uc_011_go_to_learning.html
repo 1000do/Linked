@@ -1,0 +1,142 @@
+﻿<div class="uc-container" style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <style>
+        .uc-container, .uc-container table, .uc-container tr, .uc-container td, .uc-container p, .uc-container ol, .uc-container ul, .uc-container li, .uc-container span, .uc-container strong, .uc-container b {
+            font-family: 'Times New Roman', serif !important;
+            font-size: 12pt !important;
+            color: black !important;
+        }
+    </style>
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">UC ID and Name</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">UC-11-Go To Learning</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Created By:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Truong Phuoc Tai</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Date Created:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">12/06/2026</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Primary Actor:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">User, Instructor</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Secondary Actors:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Trigger:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Actor clicks the "Go to learning" button (or "Preview your course" button) on the course details page, or clicks the "Continue learning" button (or "Review" button) on the enrolled courses page.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Description:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Opens the course player to watch video lectures, read text content, and view course slides.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Preconditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>PRE-1.</b> Actor must be authenticated.</p>
+                <p style="margin: 5px 0 0 0;"><b>PRE-2.</b> Actor must be enrolled in the course, or be the owner (Instructor) of the course.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Post-conditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>POST-1.</b> Course player page is displayed successfully, rendering the video player or document viewer, the list of lessons, and the overall course progress bar.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Normal Flow:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A. Go To Learning Successfully</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>Actor accesses the Course Details page or the "My Enrolled Courses" page.</li>
+                    <li>Actor clicks the "Go to learning" button (or "Preview your course", "Continue learning", "Review" buttons).</li>
+                    <li>The system checks the actor's session authentication.</li>
+                    <li>The system validates the actor's enrollment status or course ownership.</li>
+                    <li>The system retrieves the course structure, including lessons, lectures, videos, text content, and downloadable slides.</li>
+                    <li>The system retrieves the actor's learning progress (completed materials list).</li>
+                    <li>The system retrieves the rating average and total reviews count for each lesson section.</li>
+                    <li>The system displays the course player view, showing the media area (with the first or last-viewed video lecture loaded), overall progress bar, and the curriculum list.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Alternative Flows:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A.8.1 Play Video Lecture</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks on a video-based material in the curriculum sidebar.</li>
+                    <li>The system pauses the current media playback.</li>
+                    <li>The system retrieves the video file source URL.</li>
+                    <li>The system renders the video player.</li>
+                    <li>The system automatically plays the video lecture.</li>
+                    <li>Back to step 8.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.8.2 Read Text Document</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks on a text-based material in the curriculum sidebar.</li>
+                    <li>The system pauses the current media playback.</li>
+                    <li>The system retrieves the text file content.</li>
+                    <li>The system renders the text content in the document viewer.</li>
+                    <li>Back to step 8.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.8.3 Download Course Slides / Resources</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks on a non-viewable resource or slide in the curriculum sidebar.</li>
+                    <li>The system retrieves the attachment download URL.</li>
+                    <li>The browser triggers the file download.</li>
+                    <li>Back to step 8.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.8.4 View Course Warning Banner</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>The system detects the course status is not published.</li>
+                    <li>The system displays a warning banner indicating the course's unpublished state.</li>
+                    <li>Back to step 8.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Exceptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>EX-3 Session Invalid (Not Logged In)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system displays an authentication error message.</li>
+                    <li>The system redirects the actor to the login page.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-4 Access Denied (Not Enrolled)</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>The system detects the actor is not enrolled in the course and is not the course owner.</li>
+                    <li>The system redirects the actor to the error page.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Priority:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Frequency of Use:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Business Rules:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                BR-84, BR-10, BR-85, BR-86
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Other Information:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Assumptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;">User, Instructor has stable internet connection.</p>
+            </td>
+        </tr>
+    </table>
+</div>
