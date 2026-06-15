@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-60 - Remove Courses</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.19. Remove Courses</strong></p>
+
+    <p><strong>Function Trigger:</strong> Instructor clicks the "Delete course" button for a course in the dashboard list view.</p>
+
+    <p><strong>Function Description:</strong> Allows an instructor to remove an existing course. The system requires confirmation, validates instructor rights and status, verifies that the course is not pending review and has no active student enrollments, soft deletes the course and all associated lessons, and invalidates the cached course data.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>User must be successfully authenticated as an approved instructor.</li>
+            <li>The course must exist and belong to the active instructor.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Remove Course Successfully:</strong>
+                <ul>
+                    <li>Instructor accesses the instructor dashboard.</li>
+                    <li>Instructor clicks the "Delete course" button for a course.</li>
+                    <li>The system displays a deletion confirmation modal.</li>
+                    <li>Instructor clicks the "Delete" button.</li>
+                    <li>The system validates the instructor's rights.</li>
+                    <li>The system validates the course status.</li>
+                    <li>The system checks if the course has active student enrollments.</li>
+                    <li>The system marks the course as removed in the database.</li>
+                    <li>The system marks all associated lessons as removed in the database.</li>
+                    <li>The system invalidates the cached course data.</li>
+                    <li>The system reloads the page to update the course list.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The course is marked as removed in the database.</li>
+            <li>All lessons associated with the course are marked as removed in the database.</li>
+            <li>Cached course detail data is cleared.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+            <li><strong>Invalid Instructor Rights:</strong> The system detects the instructor is unauthorized to delete this course or has an active lockout status. The system displays an error message regarding invalid instructor rights. Back to step 2.</li>
+            <li><strong>Invalid Course Status:</strong> The system detects the course does not exist, is pending review, or is permanently discontinued due to policy violations. The system displays an error message regarding invalid course status. Back to step 2.</li>
+            <li><strong>Course Has Enrolled Students (Backend check):</strong> The system detects that the course has active student enrollments. The system displays a failure message stating the course cannot be deleted with active students. Back to step 2.</li>
+            <li><strong>Database Save Failed:</strong> The system fails to save the course changes to the database. The system displays a database transaction failure message. Back to step 2.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Locked Out Instructor Rights:</strong> Instructors with an active lockout status are prohibited from submitting courses for review or changing course status.</li>
+            <li><strong>Permanently Discontinued Block:</strong> A course that is 'archived' and has 3 or more flags is considered permanently discontinued due to policy violations and cannot have its status changed or be edited.</li>
+            <li><strong>Pending Review Modification Lock:</strong> Learning materials and lessons cannot be added, edited, or removed if the course is currently in 'Pending' review status.</li>
+            <li><strong>Active Student Deletion Restriction:</strong> Courses with active student enrollments cannot be deleted and must be archived instead.</li>
+            <li><strong>Course Soft Deletion:</strong> Deleting a course soft-deletes both the course and all its associated lessons and materials (IsRemoved = true) in the database, rather than permanently destroying the records.</li>
+            <li><strong>Cache Eviction:</strong> The Redis cache for the course details must be evicted immediately upon approval to ensure users see the updated content.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

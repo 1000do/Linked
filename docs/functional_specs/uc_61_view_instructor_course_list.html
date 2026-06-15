@@ -1,0 +1,75 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-61 - View Instructor's Course List</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.20. View Instructor's Course List</strong></p>
+
+    <p><strong>Function Trigger:</strong> Instructor navigates to the Instructor Dashboard.</p>
+
+    <p><strong>Function Description:</strong> Allows an approved instructor to view their course portfolio, overall performance statistics, and manage individual courses from a centralized dashboard. The system ensures only fully approved instructors can access this view, redirecting others to appropriate application workflows.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>The actor must be authenticated.</li>
+            <li>The actor must have an approved instructor profile.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>View Dashboard Successfully:</strong>
+                <ul>
+                    <li>Instructor accesses the Instructor Dashboard page.</li>
+                    <li>The system validates the instructor's authentication and approval status.</li>
+                    <li>The system retrieves the instructor's overall performance statistics (e.g., total enrollment, average rating, active courses, total revenue).</li>
+                    <li>The system retrieves the instructor's paginated course list.</li>
+                    <li>The system displays the Instructor Dashboard, rendering the performance statistics and the course list.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The system returns a paginated list of the instructor's courses along with their performance statistics.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>.1 Unauthenticated Access:</strong> The system detects the actor is not authenticated. The system redirects the actor to the Login page.</li>
+            <li><strong>.2 Instructor Application Pending or Rejected:</strong> The system detects the actor's instructor profile is not approved (e.g., pending or rejected). The system redirects the actor to the Application Status page.</li>
+            <li><strong>.3 Instructor Profile Not Found:</strong> The system detects the actor does not have an instructor profile. The system redirects the actor to the Instructor Application page.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Instructor Dashboard Access Restriction:</strong> Only fully approved instructors are allowed to access the Instructor Dashboard; other states trigger redirects to application status or creation workflows.</li>
+            <li><strong>Course Status Badging:</strong> The system visually distinguishes courses on the instructor dashboard using specific badges based on their current status (e.g., Published, Pending Review, Draft, Rejected, Archived, Removed, Permanently Locked).</li>
+            <li><strong>Contextual Dashboard Actions:</strong> Course management actions on the instructor dashboard are determined dynamically based on course status; permanently locked or removed courses have severely restricted action sets.</li>
+            <li><strong>Instructor Data Isolation:</strong> Instructors can only view statistics, revenue, and courses associated with their own account.</li>
+            <li><strong>Universal Empty State Display:</strong> Whenever a list retrieval operation yields no records (either due to an empty database or active filter criteria), the system displays a user-friendly empty state message instead of a blank table or list container.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

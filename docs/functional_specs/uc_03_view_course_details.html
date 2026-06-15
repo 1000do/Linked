@@ -1,0 +1,81 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-03 - View Course Detail</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.2. View Course Detail</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor clicks on a course from the public course list, category page, or search results.</p>
+
+    <p><strong>Function Description:</strong> Allows Guests and Users to view the detailed information of a course, including its description, curriculum, instructor profile, and student reviews. The system determines the visibility of course content and available actions (e.g., "Add to cart", "Enroll Now", "Go to learning") based on the actor's authentication and enrollment status.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>None.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>View Course Details Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the course details page.</li>
+                    <li>The system retrieves the course details.</li>
+                    <li>The system retrieves the active instructor's statistics and biography.</li>
+                    <li>The system retrieves the default course review statistics.</li>
+                    <li>The system retrieves the first page of course reviews.</li>
+                    <li>The system checks the actor's authentication status.</li>
+                    <li>The system retrieves the actor's wishlist status for this course (if authenticated).</li>
+                    <li>The system retrieves the actor's enrollment status for this course (if authenticated).</li>
+                    <li>The system retrieves the actor's review eligibility (if authenticated).</li>
+                    <li>The system displays the course details page, showing the categories, metadata, curriculum, and reviews.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>Detailed course details, including landing section, pricing actions, curriculum accordion, instructor bio, and rating statistics are displayed matching the selected course.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+            <li><strong>Course Not Found:</strong> The system detects the course does not exist. The system redirects the actor to the Not Found page.</li>
+            <li><strong>Unauthorized Access (Unpublished Course):</strong> The system detects the course is not published. The system detects the actor is not the course owner, a system manager, or an enrolled student. The system redirects the actor to the Error page.</li>
+            <li><strong>.14.1 Delete Review Blocked (Under Moderation):</strong> The system detects the review is under moderation. The system displays a warning message stating the review cannot be deleted. Back to step 10.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Curriculum Locking:</strong> Only the first material of the first lesson of the first section is available for preview to non-enrolled actors. All subsequent materials are visually locked (showing a lock icon) and cannot be accessed from the details page.</li>
+            <li><strong>Unpublished Course Access Restrictions:</strong> Courses with statuses other than "published" (e.g., draft, pending, archived) are strictly hidden from the public and can only be viewed by the original instructor, system administrators, or students who were previously enrolled.</li>
+            <li><strong>Review Visibility:</strong> Course reviews and rating statistics are publicly visible to all actors.</li>
+            <li><strong>Wishlist State:</strong> The wishlist toggle option is only displayed to Users. Instructors viewing their own course and system administrators cannot add courses to their wishlist.</li>
+            <li><strong>Course Reporting:</strong> The option to report a course is only visible to enrolled students. It is hidden from the course owner, administrators, and for courses that are pending or already permanently archived with 3 or more flags.</li>
+            <li><strong>Review Eligibility:</strong> The ability to write and submit a course review is strictly limited to authenticated Users who are enrolled in the course and have completed 100% of the lessons.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

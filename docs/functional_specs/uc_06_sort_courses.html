@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-06 - Sort Courses</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.5. Sort Courses</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor selects a sorting option from the sort by dropdown list on the explore courses page.</p>
+
+    <p><strong>Function Description:</strong> Allows Guests and Users to order the displayed courses by Newest, Highest Rated, Price: Low to High, or Price: High to Low.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>None.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Sort Courses Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the explore courses page.</li>
+                    <li>Actor clicks the "Sort By" dropdown.</li>
+                    <li>Actor selects a sorting parameter (e.g., "Newest", "Highest Rated", "Price: Low to High", or "Price: High to Low").</li>
+                    <li>The system updates the sort parameter.</li>
+                    <li>The system retrieves the paginated list of courses ordered by the selected sort parameter.</li>
+                    <li>The system displays the sorted courses in the catalog grid.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>List of courses is displayed ordered by the selected sorting parameter.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li>None.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Newest Ordering:</strong> Courses are sorted by their creation date in descending order.</li>
+            <li><strong>Highest Rated Ordering:</strong> Courses are sorted by their average rating in descending order.</li>
+            <li><strong>Price Low-to-High Ordering:</strong> Courses are sorted by their price in ascending order.</li>
+            <li><strong>Price High-to-Low Ordering:</strong> Courses are sorted by their price in descending order.</li>
+            <li><strong>Sort Order Persistence:</strong> The selected sorting parameter is saved in the browser's local storage and persists across page reloads.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

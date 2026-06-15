@@ -1,0 +1,93 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-64 - Restore learning materials</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.23. Restore learning materials</strong></p>
+
+    <p><strong>Function Trigger:</strong> Instructor clicks the "Restore" button next to a removed material on the Trash Bin page.</p>
+
+    <p><strong>Function Description:</strong> Restores deleted learning materials back to active lessons.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Instructor must be authenticated.</li>
+            <li>Instructor's status must be "Approved".</li>
+            <li>The material must be currently in the trash bin (soft-deleted status is "removed").</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Restore Learning Material Successfully:</strong>
+                <ul>
+                    <li>Instructor accesses the Trash Bin page (displays the list of removed learning materials).</li>
+                    <li>Instructor locates the removed material they wish to restore.</li>
+                    <li>Instructor clicks the "Restore" button on the corresponding material row.</li>
+                    <li>The system displays a confirmation popup dialog.</li>
+                    <li>Instructor clicks the "Yes, restore" button.</li>
+                    <li>The system checks the instructor's session authentication.</li>
+                    <li>The system checks if the instructor's rights are locked.</li>
+                    <li>The system checks if the parent course containing the lesson is pending review.</li>
+                    <li>The system checks if the parent course is permanently discontinued.</li>
+                    <li>The system checks the instructor's ownership of the material.</li>
+                    <li>The system checks if the restored material is a video and the target lesson already has an active video.</li>
+                    <li>The system moves the existing active video to the trash (if step 11 is true).</li>
+                    <li>The system restores the material file in cloud storage.</li>
+                    <li>The system updates the material status to "active" in the database.</li>
+                    <li>The system clears the course details cache.</li>
+                    <li>The system displays a success confirmation message.</li>
+                    <li>The system dynamically removes the restored material row from the list.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The learning material status is updated to "active" in the database.</li>
+            <li>The material file is restored to its original prefix path in cloud storage.</li>
+            <li>The material is immediately visible to enrolled students on the course player page.</li>
+            <li>The parent course status is updated to "Draft" if it was previously "Published".</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            <li><strong>Instructor Rights Locked:</strong> The system detects that the instructor's account rights are locked due to policy violations. The system displays an error message indicating their rights are locked and changes cannot be saved. The flow terminates.</li>
+            <li><strong>Course Pending Review:</strong> The system detects the course containing the lesson is currently pending review. The system displays an error message indicating curriculum changes are blocked during review. The flow terminates.</li>
+            <li><strong>Course Permanently Discontinued:</strong> The system detects the course is permanently discontinued due to policy violations (3 or more flags). The system displays an error message indicating modifications are blocked. The flow terminates.</li>
+            <li><strong>Unauthorized Access:</strong> The system detects that the instructor does not own the course/material. The system displays an error message indicating permission denied. The flow terminates.</li>
+            <li><strong>Database Save Failure:</strong> The database fails to commit changes. The system displays a system error message. The flow terminates.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Video Swap Constraint:</strong> Restoring a video material to a lesson that already contains an active video will automatically move the current active video to the trash bin, replacing it with the restored video.</li>
+            <li><strong>Draft Demotion Rule:</strong> If the parent course is currently "Published", restoring any curriculum material will automatically update the course status to "Draft" and clear the moderation feedback, requiring the instructor to re-submit it for review.</li>
+            <li><strong>Rights & Mod Lockouts:</strong> Restoration is locked if the instructor is under active suspension/lockout, or if the parent course is pending review, or if the parent course is permanently discontinued due to 3 or more flags.</li>
+            <li><strong>Cloud Storage Synchronization:</strong> Restoring a file dynamically renames it in Cloudinary to remove the `trash/` prefix, syncing the physical path with the database status.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

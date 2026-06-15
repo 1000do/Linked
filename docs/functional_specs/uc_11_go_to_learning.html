@@ -1,0 +1,76 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-11 - Go To Learning</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.8. Go To Learning</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor clicks the "Go to learning" button (or "Preview your course" button) on the course details page, or clicks the "Continue learning" button (or "Review" button) on the enrolled courses page.</p>
+
+    <p><strong>Function Description:</strong> Opens the course player to watch video lectures, read text content, and view course slides.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be authenticated.</li>
+            <li>Actor must be enrolled in the course, or be the owner (Instructor) of the course.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Go To Learning Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the Course Details page or the "My Enrolled Courses" page.</li>
+                    <li>Actor clicks the "Go to learning" button (or "Preview your course", "Continue learning", "Review" buttons).</li>
+                    <li>The system checks the actor's session authentication.</li>
+                    <li>The system validates the actor's enrollment status or course ownership.</li>
+                    <li>The system retrieves the course structure, including lessons, lectures, videos, text content, and downloadable slides.</li>
+                    <li>The system retrieves the actor's learning progress (completed materials list).</li>
+                    <li>The system retrieves the rating average and total reviews count for each lesson section.</li>
+                    <li>The system displays the course player view, showing the media area (with the first or last-viewed video lecture loaded), overall progress bar, and the curriculum list.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>Course player page is displayed successfully, rendering the video player or document viewer, the list of lessons, and the overall course progress bar.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            <li><strong>Access Denied (Not Enrolled):</strong> The system detects the actor is not enrolled in the course and is not the course owner. The system redirects the actor to the error page.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Dynamic Button Update:</strong> For free courses, when an un-enrolled User clicks "Enroll Now", the page successfully processes the enrollment and dynamically updates the button to "Go to learning" without a full page reload.</li>
+            <li><strong>Access Control Ã¢â‚¬â€ Report Center:</strong> Only authenticated Staff and Admin actors are permitted to access the Report Center.</li>
+            <li><strong>Unpublished Course Warning:</strong> If the course is not in the published state, a warning banner is displayed at the top of the course player, but access remains permitted for owners and managers.</li>
+            <li><strong>Protected Media:</strong> Video lectures are served with playback controls only; direct download option is disabled (utilizing "controlsList" attribute set to "nodownload").</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>
