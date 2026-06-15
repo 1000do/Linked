@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-114 - View Activity Log</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-114 - View Activity Log</strong></p>
+    <p><strong>Function Trigger:</strong> Admin clicks the "AI Activity Logs" tab on the AI Service management page.</p>
+    <p><strong>Function Description:</strong> Displays chronological paginated logs of AI moderation events across three categories: course moderation, course review moderation, and lesson review moderation. All category logs are loaded at page load; Admin can switch between category subtabs without a page reload.</p>
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+    <p><strong>Function Details</strong></p>
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Admin must be successfully authenticated.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>View Activity Log Successfully:</strong>
+                    <ul>
+                        <li>Admin accesses the AI Service management page.</li>
+                        <li>The system validates the Admin's access authorization.</li>
+                        <li>The system retrieves the paginated activity logs for all three moderation categories.</li>
+                        <li>Admin clicks the "AI Activity Logs" tab.</li>
+                        <li>The system displays the activity log list under the course moderation subtab by default.</li>
+                        <li>Admin views the activity log entries.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (No Logs Found)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>The system detects no activity logs exist for one or more moderation categories.</li>
+                        <li>The system displays an empty state message in the affected category's log list.</li>
+                        <li>Back to step 6.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Admin Switches Category Subtab)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>Admin clicks a different category subtab.</li>
+                        <li>The system displays the activity log list for the selected category.</li>
+                        <li>Back to step 6.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Admin Navigates to Another Page)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>Admin clicks the "Next" or "Previous" pagination button.</li>
+                        <li>The system reloads the page with the requested page of logs for the active category.</li>
+                        <li>Back to step 1.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The activity log list for the selected category is displayed to the Admin.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+                <li><strong>Unauthorized Access:</strong> The system detects the current user does not have Admin authorization. The system displays an unauthorized access error message. The system redirects the user to the login page.</li>
+                <li><strong>Database Query Failed:</strong> The system fails to retrieve activity logs from the database. The system displays an error message regarding the retrieval failure. Back to step 1.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Universal Empty State Display:</strong> Whenever a list retrieval operation yields no records (either due to an empty database or active filter criteria), the system displays a user-friendly empty state message instead of a blank table or list container.</li>
+                <li><strong>Admin Authorization for AI Services:</strong> Only authenticated Admin actors are authorized to access and perform actions within the AI Service and Model Management module (including adding/updating models, toggling status, viewing details/list, configuring thresholds, and viewing activity logs).</li>
+                <li><strong>List Sorting and Ordering:</strong> Administrative lists (such as the AI model list and activity logs) are sorted in descending order of their latest timestamp (last modified date for models, creation date for logs), ensuring that the most recent entries are displayed first.</li>
+                <li><strong>Universal List Pagination:</strong> All list retrieval operations displaying tabular or grid data must display a limited number of entries per page with pagination controls.</li>
+                <li><strong>Default Subtab — Activity Log:</strong> The course moderation category is displayed by default when the logs tab is opened.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

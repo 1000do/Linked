@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body { font-family: "Times New Roman", Times, serif; font-size: 12pt; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid black; padding: 5px 8px; }
+    th { background-color: #fce4d6; font-weight: bold; }
+    .text-center { text-align: center; }
+    .text-left { text-align: left; }
+    .valign-middle { vertical-align: middle; }
+</style>
+</head>
+<body>
+<table>
+    <thead>
+        <tr>
+            <th class="text-center" style="width: 5%;">#</th>
+            <th class="text-left" style="width: 25%;">Feature</th>
+            <th class="text-left" style="width: 25%;">Screen / Popup</th>
+            <th class="text-center" style="width: 10%;">Type</th>
+            <th class="text-left" style="width: 35%;">Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="text-center valign-middle">1</td>
+            <td class="valign-middle">Public / Open Access</td>
+            <td class="valign-middle">Home</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Landing page for discovering featured courses, global announcements, and entry points.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">2</td>
+            <td class="valign-middle">Public / Open Access</td>
+            <td class="valign-middle">Course Collection</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Catalog page allowing users to browse, filter, and search through all available courses.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">3</td>
+            <td class="valign-middle">Public / Open Access</td>
+            <td class="valign-middle">Course Details</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Publicly accessible landing page for a specific course displaying curriculum, reviews, and pricing.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">4</td>
+            <td class="valign-middle">Public / Open Access</td>
+            <td class="valign-middle">Course Video Preview Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Floating video player allowing users to watch free promotional lessons before purchasing.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">5</td>
+            <td class="valign-middle">Public / Open Access</td>
+            <td class="valign-middle">Login</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Authentication portal for returning users, instructors, and system staff.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">6</td>
+            <td class="valign-middle">Public / Open Access</td>
+            <td class="valign-middle">Register</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Onboarding page for new users to create an account.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">7</td>
+            <td class="valign-middle">Public / Open Access</td>
+            <td class="valign-middle">Forgot Password</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Recovery page to initiate the password reset process via email.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">8</td>
+            <td class="valign-middle">Public / Open Access</td>
+            <td class="valign-middle">Reset Password</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Secure form to input a new password after successful identity verification.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">9</td>
+            <td class="valign-middle">Public / Open Access</td>
+            <td class="valign-middle">Verify OTP</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Security checkpoint to verify one-time passwords during authentication flows.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">10</td>
+            <td class="valign-middle">Public / Open Access</td>
+            <td class="valign-middle">Instructor Public Profile</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Public-facing portfolio displaying an instructor's bio, ratings, and published courses.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">11</td>
+            <td class="valign-middle">Public / Open Access</td>
+            <td class="valign-middle">Gift Claim</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Redemption interface where users can apply a gift card code to their account.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">12</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Global Support Chat Widget</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Floating chat interface enabling instant communication with support staff from the homepage.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">13</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Course Report Submission Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Form allowing authenticated users to flag a course for inappropriate content or policy violations.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">14</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Course Review Report Submission Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Form for reporting a specific user's course review as spam or inappropriate.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">15</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">User Profile</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Personal dashboard for users to view their learning statistics and public information.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">16</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Edit User Profile</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Form for users to update their personal details, avatar, and preferences.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">17</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Change Password</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Secure form for authenticated users to update their current password.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">18</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Cart</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Staging area reviewing selected courses before proceeding to payment.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">19</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Coupon Application Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Input interface for users to validate and apply a discount code to their cart.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">20</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Checkout</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Secure payment gateway interface for finalizing course purchases.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">21</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">My Courses</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Library of all courses currently owned or enrolled in by the user.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">22</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Course Learning</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Dedicated video player and interactive interface for consuming course lessons.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">23</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Lesson Review Report Submission Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Form for reporting a specific user's lesson review as spam or inappropriate.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">24</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Wishlist</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Collection of courses the user has saved for future consideration.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">25</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">User Chat</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Direct messaging interface for users to communicate with instructors.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">26</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Personal Notifications</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Inbox for users to view alerts regarding their account, courses, and purchases.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">27</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Personal Notification Details Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Expanded view displaying the full context and text of a personal user alert.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">28</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Purchase History</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Chronological log of all past financial transactions and course enrollments.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">29</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Refund Request Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Form for users to submit a justification and initiate a refund for a recent purchase.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">30</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Invoice Details</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Detailed receipt and billing information for a specific transaction.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">31</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Instructor Application Form</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Submission form for users wishing to upgrade their account to an instructor.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">32</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Instructor Application Status</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Tracking page showing the current review state of a submitted instructor application.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">33</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Gift Card Setup</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Configuration page for users to generate a gift card for another user.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">34</td>
+            <td class="valign-middle">General Authenticated</td>
+            <td class="valign-middle">Gift Checkout</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Payment gateway specifically tailored for purchasing gift cards.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">35</td>
+            <td class="valign-middle">Instructor Exclusive</td>
+            <td class="valign-middle">Instructor Chat</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Messaging dashboard for instructors to manage student inquiries.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">36</td>
+            <td class="valign-middle">Instructor Exclusive</td>
+            <td class="valign-middle">Instructor Transaction Details</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Breakdown of individual sales and payouts for an instructor.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">37</td>
+            <td class="valign-middle">Instructor Exclusive</td>
+            <td class="valign-middle">Instructor Notifications</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Dedicated inbox for alerts regarding student interactions, course reviews, and system announcements.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">38</td>
+            <td class="valign-middle">Instructor Exclusive</td>
+            <td class="valign-middle">Instructor Notification Details Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Expanded view displaying the full context of an instructor-specific alert.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">39</td>
+            <td class="valign-middle">Instructor Exclusive</td>
+            <td class="valign-middle">Instructor Dashboard</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Command center for instructors to overview their course performance, ratings, and revenue.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">40</td>
+            <td class="valign-middle">Instructor Exclusive</td>
+            <td class="valign-middle">Course Editor Space</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Comprehensive workspace for instructors to assemble modules, lessons, and course assets.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">41</td>
+            <td class="valign-middle">Instructor Exclusive</td>
+            <td class="valign-middle">Lesson Addition Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Form for instructors to define the title, type, and media for a new course lesson.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">42</td>
+            <td class="valign-middle">Instructor Exclusive</td>
+            <td class="valign-middle">Coupon Selection Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Interface for instructors to attach or detach specific premium coupons to their course.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">43</td>
+            <td class="valign-middle">Instructor Exclusive</td>
+            <td class="valign-middle">Course Creation Form</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Initial setup wizard for establishing a new course's core metadata.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">44</td>
+            <td class="valign-middle">Instructor Exclusive</td>
+            <td class="valign-middle">Coupon Selection Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Interface for instructors to attach or detach specific premium coupons to their course.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">45</td>
+            <td class="valign-middle">Instructor Exclusive</td>
+            <td class="valign-middle">Course Recycle Bin</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Recovery interface for restoring or permanently deleting drafted courses.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">46</td>
+            <td class="valign-middle">Instructor Exclusive</td>
+            <td class="valign-middle">Instructor Earnings</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Financial dashboard displaying revenue metrics, payout schedules, and lifetime earnings.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">47</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Manager Profile</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Internal profile view for staff and administrators.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">48</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Edit Manager Profile</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Form for staff and administrators to update their internal profiles.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">49</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">System Chat</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Internal communication tool for staff and administrative coordination.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">50</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Instructor Application Management</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Administrative queue for staff to review pending instructor applications.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">51</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Instructor Application Approval Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Confirmation dialogue for staff to officially grant instructor privileges to an applicant.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">52</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Instructor Application Rejection Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Form for staff to deny an instructor application, including a required field for rejection reasoning.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">53</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Instructor Application Details</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">In-depth review page for a specific instructor application including credentials and portfolios.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">54</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Instructor Application Approval Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Confirmation dialogue for staff to officially grant instructor privileges to an applicant.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">55</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Instructor Application Rejection Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Form for staff to deny an instructor application, including a required field for rejection reasoning.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">56</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Course Moderation</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Administrative interface for reviewing flagged or newly submitted courses for platform compliance.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">57</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Course Approval Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Confirmation dialogue for staff to officially publish a moderated course to the marketplace.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">58</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Course Rejection Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Form for staff to deny a course publication, requiring feedback on what needs fixing.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">59</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Course Flagging Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Form for staff to temporarily suspend a live course pending further investigation.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">60</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Report Center</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Centralized dashboard for staff to handle user-submitted reports regarding content or behavior.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">61</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Report Details Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Comprehensive view of a submitted report including evidence, reporter details, and timestamps.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">62</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Report Resolution Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Form for staff to document the final outcome and actions taken to close a user report.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">63</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">System Notification Management</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Administrative tool for broadcasting global or targeted platform announcements.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">64</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">Notification Creation Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Drafting interface for administrators to compose and target a new system-wide broadcast.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">65</td>
+            <td class="valign-middle">Internal Operations</td>
+            <td class="valign-middle">System Notification Details Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Expanded view displaying the full context of an administrative system alert.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">66</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">System Transaction Details</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Comprehensive audit view of a specific platform transaction for finance staff.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">67</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">Account Management</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Administrative dashboard for controlling staff access, roles, and platform permissions.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">68</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">Staff Account Addition Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Form for administrators to create a new internal account and assign role permissions.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">69</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">Staff Account Modification Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Interface for administrators to alter an existing staff member's roles or details.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">70</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">Staff Account Flagging Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Form for administrators to suspend or restrict an internal staff account.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">71</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">Account Details</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">In-depth profile view of a specific staff or administrative account.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">72</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">System Finance Management</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">High-level overview of platform revenue, pending refunds, and financial health.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">73</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">Refund Request Approval Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Confirmation dialogue for finance staff to authorize and process a user refund.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">74</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">Refund Request Rejection Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Form for finance staff to deny a refund request with an accompanying explanation.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">75</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">Coupon Management</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Administrative interface for creating and distributing platform-wide promotional discounts.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">76</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">Coupon Creation Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Form for administrators to define a new system-wide promotion, including rules and expiration.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">77</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">Coupon Modification Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Interface for administrators to alter the rules or validity of an existing system promotion.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">78</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">AI Service Management</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Administrative console for configuring and monitoring integrated AI model endpoints.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">79</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">AI Model Addition Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Form for configuring the endpoint, API keys, and parameters of a new AI integration.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">80</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">AI Model Modification Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Interface for updating the configuration or keys of an existing AI model.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">81</td>
+            <td class="valign-middle">System Administration</td>
+            <td class="valign-middle">AI Model Details Modal</td>
+            <td class="text-center valign-middle">Popup</td>
+            <td class="valign-middle">Read-only view displaying the health, usage metrics, and configuration of an AI model.</td>
+        </tr>
+        <tr>
+            <td class="text-center valign-middle">82</td>
+            <td class="valign-middle">Public / Open Access</td>
+            <td class="valign-middle">Email Verification Recommendation</td>
+            <td class="text-center valign-middle">Page</td>
+            <td class="valign-middle">Encourage guest to verify their account immediately after successful registration, they can opt-out and verify later in profile</td>
+        </tr>
+    </tbody>
+</table>
+</body>
+</html>

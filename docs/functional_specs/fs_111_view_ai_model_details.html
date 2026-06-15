@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-111 - View AI Model Details</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-111 - View AI Model Details</strong></p>
+    <p><strong>Function Trigger:</strong> Admin clicks the "Details" icon button on a model entry in the AI model list.</p>
+    <p><strong>Function Description:</strong> Displays the full configuration details of a selected AI model in a details dialog. The detail data is pre-loaded with the page and presented client-side without an additional server request.</p>
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+    <p><strong>Function Details</strong></p>
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Admin must be successfully authenticated.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>View AI Model Details Successfully:</strong>
+                    <ul>
+                        <li>Admin accesses the AI Service management page.</li>
+                        <li>The system validates the Admin's access authorization.</li>
+                        <li>The system retrieves and displays the list of AI models.</li>
+                        <li>Admin clicks the "Details" icon button on a model entry.</li>
+                        <li>The system displays the model details in a popup.</li>
+                        <li>Admin reviews the model details.</li>
+                        <li>Admin clicks the "Close" button.</li>
+                        <li>The system closes the popup.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The selected AI model's details are displayed to the Admin.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+                <li><strong>Unauthorized Access:</strong> The system detects the current user does not have Admin authorization. The system displays an unauthorized access error message. The system redirects the user to the login page.</li>
+                <li><strong>Database Query Failed:</strong> The system fails to retrieve AI model data from the database. The system displays an error message regarding the retrieval failure. Back to step 1.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Admin Authorization for AI Services:</strong> Only authenticated Admin actors are authorized to access and perform actions within the AI Service and Model Management module (including adding/updating models, toggling status, viewing details/list, configuring thresholds, and viewing activity logs).</li>
+                <li><strong>Pre-populated Data:</strong> Model details displayed in the popup are sourced from data embedded in the page during the initial render; no additional server request is made on click.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

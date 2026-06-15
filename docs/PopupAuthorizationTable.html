@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body { font-family: "Times New Roman", Times, serif; font-size: 12pt; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid black; padding: 5px 8px; }
+    th { background-color: #fce4d6; font-weight: bold; }
+    .text-center { text-align: center; }
+    .text-left { text-align: left; }
+    .valign-middle { vertical-align: middle; }
+</style>
+</head>
+<body>
+<table>
+    <thead>
+        <tr>
+            <th class="text-center" style="width: 5%;">No</th>
+            <th class="text-left" style="width: 35%;">Screen / Page</th>
+            <th class="text-center">Guest</th>
+            <th class="text-center">User</th>
+            <th class="text-center">Instructor</th>
+            <th class="text-center">Staff</th>
+            <th class="text-center">Admin</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>1</strong></td>
+            <td><strong>Home</strong></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>Global Support Chat Widget</td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>2</strong></td>
+            <td><strong>Course Collection</strong></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="4" class="text-center valign-middle"><strong>3</strong></td>
+            <td><strong>Course Details</strong></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Course Video Preview Modal</td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Course Report Submission Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>Course Review Report Submission Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>4</strong></td>
+            <td><strong>Login</strong></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>5</strong></td>
+            <td><strong>Register</strong></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>6</strong></td>
+            <td><strong>Forgot Password</strong></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>7</strong></td>
+            <td><strong>Reset Password</strong></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>8</strong></td>
+            <td><strong>Verify OTP</strong></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>9</strong></td>
+            <td><strong>User Profile</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>10</strong></td>
+            <td><strong>Edit User Profile</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>11</strong></td>
+            <td><strong>Manager Profile</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>12</strong></td>
+            <td><strong>Edit Manager Profile</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>13</strong></td>
+            <td><strong>Change Password</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>14</strong></td>
+            <td><strong>Cart</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>Coupon Application Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>15</strong></td>
+            <td><strong>Checkout</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>16</strong></td>
+            <td><strong>My Courses</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>17</strong></td>
+            <td><strong>Course Learning</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Lesson Review Report Submission Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>18</strong></td>
+            <td><strong>Wishlist</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>19</strong></td>
+            <td><strong>User Chat</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>20</strong></td>
+            <td><strong>Instructor Chat</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>21</strong></td>
+            <td><strong>System Chat</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>22</strong></td>
+            <td><strong>Personal Notifications</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>Personal Notification Details Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>23</strong></td>
+            <td><strong>Purchase History</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>Refund Request Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>24</strong></td>
+            <td><strong>Invoice Details</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>25</strong></td>
+            <td><strong>Instructor Transaction Details</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>26</strong></td>
+            <td><strong>System Transaction Details</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>27</strong></td>
+            <td><strong>Instructor Application Form</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>28</strong></td>
+            <td><strong>Instructor Application Status</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>29</strong></td>
+            <td><strong>Instructor Notifications</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>Instructor Notification Details Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>31</strong></td>
+            <td><strong>Instructor Public Profile</strong></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>32</strong></td>
+            <td><strong>Instructor Dashboard</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="3" class="text-center valign-middle"><strong>33</strong></td>
+            <td><strong>Course Editor Space</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>Lesson Addition Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>Coupon Selection Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>34</strong></td>
+            <td><strong>Course Creation Form</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>Coupon Selection Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>35</strong></td>
+            <td><strong>Course Recycle Bin</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>36</strong></td>
+            <td><strong>Instructor Earnings</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="3" class="text-center valign-middle"><strong>37</strong></td>
+            <td><strong>Instructor Application Management</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Instructor Application Approval Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Instructor Application Rejection Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td rowspan="3" class="text-center valign-middle"><strong>38</strong></td>
+            <td><strong>Instructor Application Details</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Instructor Application Approval Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Instructor Application Rejection Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td rowspan="4" class="text-center valign-middle"><strong>39</strong></td>
+            <td><strong>Course Moderation</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Course Approval Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Course Rejection Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Course Flagging Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td rowspan="3" class="text-center valign-middle"><strong>40</strong></td>
+            <td><strong>Report Center</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Report Details Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Report Resolution Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td rowspan="3" class="text-center valign-middle"><strong>41</strong></td>
+            <td><strong>System Notification Management</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Notification Creation Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>System Notification Details Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td rowspan="4" class="text-center valign-middle"><strong>42</strong></td>
+            <td><strong>Account Management</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Staff Account Addition Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Staff Account Modification Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Staff Account Flagging Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>43</strong></td>
+            <td><strong>Account Details</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="3" class="text-center valign-middle"><strong>44</strong></td>
+            <td><strong>System Finance Management</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Refund Request Approval Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Refund Request Rejection Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td rowspan="3" class="text-center valign-middle"><strong>45</strong></td>
+            <td><strong>Coupon Management</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Coupon Creation Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>Coupon Modification Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>46</strong></td>
+            <td><strong>Gift Card Setup</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>47</strong></td>
+            <td><strong>Gift Checkout</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>48</strong></td>
+            <td><strong>Gift Claim</strong></td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td rowspan="4" class="text-center valign-middle"><strong>49</strong></td>
+            <td><strong>AI Service Management</strong></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>AI Model Addition Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>AI Model Modification Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td>AI Model Details Modal</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">X</td>
+        </tr>
+        <tr>
+            <td rowspan="2" class="text-center valign-middle"><strong>50</strong></td>
+            <td><strong>Email Verification Recommendation</strong></td>
+            <td class="text-center">X</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+        <tr>
+            <td>(No popups)</td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+        </tr>
+    </tbody>
+</table>
+</body>
+</html>
