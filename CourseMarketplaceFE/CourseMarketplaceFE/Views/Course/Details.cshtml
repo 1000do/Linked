@@ -177,7 +177,7 @@
                         }
                         else
                         {
-                            <button onclick="addToCart(@Model.CourseId)" class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                            <button onclick="addToCart(@Model.CourseId, this)" class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
                                 <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
                                 Add to cart
                             </button>
@@ -731,65 +731,7 @@
         }
     }
 
-    async function addToCart(courseId) {
-        if (!currentToken) {
-            Swal.fire({
-                title: 'Login Required',
-                text: 'You need to log in to add this course to your cart.',
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonText: 'Log In Now',
-                cancelButtonText: 'Later'
-            }).then((res) => { if (res.isConfirmed) window.location.href = '/Account/Login'; });
-            return;
-        }
-        const btn = event.currentTarget;
-        const originalHtml = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="animate-spin material-symbols-outlined">sync</span> Adding...';
 
-        try {
-            const response = await fetch('/Cart/AddToCartAjax/' + courseId, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            if (response.status === 401) {
-                Swal.fire('Login Required', 'Please log in to continue.', 'warning')
-                    .then(() => { window.location.href = '/Account/Login'; });
-                return;
-            }
-            const result = await response.json();
-            
-            if (result.success) {
-                // Update cart badge in header
-                if (typeof initCartBadge === "function") initCartBadge();
-                
-                Swal.fire({
-                    title: 'Added Successfully!',
-                    text: 'The course has been added to your cart.',
-                    icon: 'success',
-                    showCancelButton: true,
-                    confirmButtonText: 'Go to Cart',
-                    cancelButtonText: 'Continue Browsing'
-                }).then((res) => {
-                    if (res.isConfirmed) {
-                        window.location.href = '/Cart';
-                    }
-                });
-            } else {
-                Swal.fire('Error', result.message, 'error');
-            }
-        } catch (error) {
-            if (error.status === 401) {
-                Swal.fire('Session Expired', 'Please log in again to continue.', 'warning')
-                    .then(() => { window.location.href = '/Account/Login'; });
-            }
-            else Swal.fire('Error', 'An error occurred while adding to cart.', 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-        }
-    }
 
     async function loadReviewStats() {
         try {

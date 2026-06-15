@@ -63,7 +63,11 @@ public class ChatService : IChatService
                     ContextType = p.Chat.ContextType,
                     ContextId = p.Chat.ContextId,
                     UnreadCount = unreadFromRedis > 0 ? unreadFromRedis : p.UnreadCount,
-                    PartnerName = partner?.Account.User?.FullName ?? partner?.Account.Manager?.DisplayName ?? partner?.Account.Email,
+                    PartnerName = partner?.Account.User?.FullName 
+                        ?? partner?.Account.Manager?.DisplayName 
+                        ?? partner?.Account.Username 
+                        ?? partner?.Account.Email 
+                        ?? "Support Team",
                     PartnerAvatar = partner?.Account.AvatarUrl,
                     PartnerId = partnerId,
                     IsOnline = isOnline
@@ -103,7 +107,11 @@ public class ChatService : IChatService
                 ContextType = p.Chat.ContextType,
                 ContextId = p.Chat.ContextId,
                 UnreadCount = unreadFromRedis > 0 ? unreadFromRedis : p.UnreadCount,
-                PartnerName = partner?.Account.User?.FullName ?? partner?.Account.Manager?.DisplayName ?? partner?.Account.Email,
+                PartnerName = partner?.Account.User?.FullName 
+                    ?? partner?.Account.Manager?.DisplayName 
+                    ?? partner?.Account.Username 
+                    ?? partner?.Account.Email 
+                    ?? "Support Team",
                 PartnerAvatar = partner?.Account.AvatarUrl,
                 PartnerId = partnerId,
                 IsOnline = isOnline

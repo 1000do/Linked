@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-37 - View Cart Items</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-37. View Cart Items</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor clicks the "Shopping Cart" icon in the navigation bar header.</p>
+
+    <p><strong>Function Description:</strong> Displays the list of courses added to the active user's shopping cart, calculates the pricing summary (subtotal, coupon discounts, final payable amount), and lists available checkout coupon options.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be successfully authenticated.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Access Cart:</strong>
+                    <ul>
+                        <li>Actor clicks the "Cart" icon on the navigation header.</li>
+                        <li>The system verifies the active session and navigates the user to the Shopping Cart page.</li>
+                    </ul>
+                </li>
+                <li><strong>Load Items:</strong>
+                    <ul>
+                        <li>The system displays the detailed list of courses (title, instructor, thumbnail, price) currently in the cart.</li>
+                        <li>The system calculates and displays the Subtotal, applied Discount Amount (if any), and the final Payable Total.</li>
+                        <li>Actor views the detailed shopping cart workspace and reviews their items.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Active Coupon Applied)</strong>
+            <ul>
+                <li>If a coupon code was previously applied to this order:
+                    <ul>
+                        <li>The system detects that a coupon code was previously applied to this order.</li>
+                        <li>The system recalculates the discount and updates the final Payable Total.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The Actor views the detailed list of cart items and the finalized calculated total amount.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> If the session has expired, the user is redirected to the login page before the cart can be viewed.</li>
+                <li><strong>Empty Cart:</strong> If there are no courses currently in the cart, the system displays an empty notice: "Your cart is empty" with the description "Explore interesting courses and add them to your cart!" and an "Explore Courses" button.</li>
+                <li><strong>Invalid Coupon in Cart:</strong> If any applied coupon is detected as invalid, expired, or doesn't meet minimum requirements, the system automatically removes that invalid coupon code from the user's coupon cookie map, recalculates the pricing summary, updates the cart display, and displays a specific error message indicating the coupon is invalid or expired.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Authentication Enforcement:</strong> Access to the cart details is restricted strictly to authenticated users.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

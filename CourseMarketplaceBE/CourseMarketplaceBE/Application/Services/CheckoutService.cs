@@ -758,7 +758,7 @@ public class CheckoutService : ICheckoutService
                             instructorId.Value,
                             "You have a new order",
                             $"The course '{courseTitle}' has been successfully sold. Expected revenue: ${payoutAmount:N2} USD.",
-                            $"/Instructor/Payouts"
+                            $"/Transaction/Instructor#tx-{transaction.TransactionId}"
                         );
                     }
                 }
@@ -1213,7 +1213,7 @@ public class CheckoutService : ICheckoutService
                             instructorId.Value,
                             "You have a new order",
                             $"The course '{courseTitle}' has been successfully sold. Expected revenue: ${payoutAmount:N2} USD.",
-                            $"/Instructor/Payouts"
+                            $"/Transaction/Instructor#tx-{transaction.TransactionId}"
                         );
                     }
                 }

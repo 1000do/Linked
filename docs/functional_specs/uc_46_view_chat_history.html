@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-46 - View Chat History</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-46. View Chat History</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor clicks on a conversation card in the sidebar.</p>
+
+    <p><strong>Function Description:</strong> Allows the Actor to view the entire message exchange history of a selected conversation, which automatically marks unread messages in the room as read.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be successfully authenticated.</li>
+                <li>Actor must have access to the selected chat.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Select Conversation:</strong>
+                    <ul>
+                        <li>Actor accesses the messages page.</li>
+                        <li>Actor clicks a conversation card in the sidebar chat list.</li>
+                        <li>The system hides the empty chat state panel.</li>
+                        <li>The system displays the chat room panel.</li>
+                        <li>The system updates the chat header with partner name, avatar, and online status.</li>
+                    </ul>
+                </li>
+                <li><strong>Retrieve History:</strong>
+                    <ul>
+                        <li>The system requests the backend to retrieve the chat history.</li>
+                        <li>The server verifies that the active Actor has permission to access the chat.</li>
+                        <li>The server marks all unread messages in the chat for the active participant as read in the database.</li>
+                        <li>The server clears the unread count for the active participant in the cache.</li>
+                        <li>The server retrieves the conversation messages from the database.</li>
+                        <li>The server filters out messages sent before or on the participant's cleared timestamp.</li>
+                    </ul>
+                </li>
+                <li><strong>Render History:</strong>
+                    <ul>
+                        <li>The system receives the message history payload.</li>
+                        <li>The system renders the messages in the message list viewport.</li>
+                        <li>The system scrolls the message list viewport to the bottom.</li>
+                        <li>The system broadcasts a read notification to other participants.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Render Empty Chat Room)</strong>
+            <ul>
+                <li>If the message history payload is empty:
+                    <ul>
+                        <li>The system receives an empty message list payload.</li>
+                        <li>The system displays a start-chatting message in the viewport.</li>
+                        <li>The system scrolls the message list viewport to the bottom.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The chat history is displayed to the Actor.</li>
+                <li>All unread messages in the conversation for this participant are marked as read in the database and cache.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the Actor to the login page.</li>
+                <li><strong>Unauthorized Access:</strong> The server detects the active Actor is not a participant of the chat room, throws an unauthorized access exception, displays an error message regarding chat access permission, and halts execution.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Access Permission Verification:</strong> The server verifies that the requesting Actor is an authorized participant in the conversation before returning the message logs.</li>
+                <li><strong>Message Temporal Filtering:</strong> The system filters out any messages sent before or on the participant's cleared timestamp to maintain privacy boundary integrity.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

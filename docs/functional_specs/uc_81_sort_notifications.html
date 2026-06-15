@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-81 - Sort Notifications</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-81. Sort Notifications</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor selects a sorting option from the sort selector on the System Notifications page.</p>
+
+    <p><strong>Function Description:</strong> Allows the Actor to sort the system notifications log by timestamp, title, or recipient name.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be successfully authenticated as a Staff member or Admin.</li>
+                <li>Actor is on the System Notifications page.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Select Sorting Option:</strong>
+                    <ul>
+                        <li>Actor accesses the System Notifications page.</li>
+                        <li>Actor selects a sorting option (such as "Title (A - Z)") from the sort dropdown list.</li>
+                    </ul>
+                </li>
+                <li><strong>Sort List:</strong>
+                    <ul>
+                        <li>The system sorts the notification list in real time as the selection changes.</li>
+                        <li>The system displays the sorted notifications list in the table, preserving any active role tab filters, status filters, or search keywords.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Clear Sorting)</strong>
+            <ul>
+                <li>If the Actor resets the sorting selector:
+                    <ul>
+                        <li>Actor clicks the Reset button.</li>
+                        <li>The system resets the sort selector to its default ("Newest First").</li>
+                        <li>The system displays the sorted notifications list in the table.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The system displays the notifications in the table sorted according to the selected sorting option.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the Actor to the login page.</li>
+                <li><strong>Unauthorized Access:</strong> The system detects that the Actor is not a Staff or Admin, displays an access denied error page, and terminates the flow.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Role-based Access Control:</strong> Access to sort system notifications is restricted strictly to authenticated users with Staff or Admin roles.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

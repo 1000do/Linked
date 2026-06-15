@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-43 - View Chat List</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-43. View Chat List</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor accesses the Chat page.</p>
+
+    <p><strong>Function Description:</strong> Allows the Actor to view their list of active conversations, including partner avatar, partner name, last message snippet, timestamp, online status, and unread message count badge.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be successfully authenticated.</li>
+                <li>If the Actor is an Instructor, they must be approved to access the instructor chat view.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Access Page:</strong>
+                    <ul>
+                        <li>Actor accesses the Chat page.</li>
+                        <li>The system sends a request to retrieve the list of active conversations.</li>
+                    </ul>
+                </li>
+                <li><strong>Retrieve Conversations:</strong>
+                    <ul>
+                        <li>The system validates that the active user is authenticated.</li>
+                        <li>The system queries the database for active chat rooms where the user is a participant.</li>
+                    </ul>
+                </li>
+                <li><strong>Display List:</strong>
+                    <ul>
+                        <li>The system displays the list of conversations in the chat sidebar, showing partner details, last message content, last message timestamp, unread message count, and online status.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Filter by Unread)</strong>
+            <ul>
+                <li>If the Actor filters by unread messages:
+                    <ul>
+                        <li>Actor selects "Unread" from the message filter dropdown.</li>
+                        <li>The system filters the chat sidebar list to show only conversations with an unread message count greater than zero.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Sort Conversations)</strong>
+            <ul>
+                <li>If the Actor sorts conversations:
+                    <ul>
+                        <li>Actor selects a sorting option (such as "Name (A-Z)" or "Unread First") from the sort dropdown.</li>
+                        <li>The system re-orders the conversation cards in the sidebar accordingly.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The system displays the list of active conversations in the sidebar.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the Actor to the login page.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Authentication Verification:</strong> The system validates that only authenticated users can fetch chat lists.</li>
+                <li><strong>Instructor Status Validation:</strong> The system restricts instructor-specific chat views to approved instructors.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>
