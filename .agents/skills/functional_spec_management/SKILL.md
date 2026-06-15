@@ -89,6 +89,7 @@ Every functional specification MUST follow this exact structure using valid HTML
 *   **Bold Text:** Use `<strong>` for the main field headers (`<strong>Function Trigger:</strong>`, `<strong>Function Details</strong>`, etc.), process step titles, and error names.
 *   **No Markdown:** Since the output must be an HTML file, do not use Markdown syntax (like `**bold**` or `# heading`) in the generated result.
 *   **Alternative Flow Labeling:** If the alternative flow is triggered by a specific condition, append it to the label (e.g., `<strong>Alternative Flow (Invalid Email)</strong>`).
+*   **Drop Identifiers:** Ensure the output DOES NOT contain any original identifiers from the use case (e.g., drop prefixes like `PRE-1.`, `POST-1.`, `EX-3`, `BR-1`, and flow alphanumeric identifiers like `A.5.1`). Only output the raw textual details for Preconditions, Postconditions, Error Handling, Alternative Flow titles, and Security Measures.
 
 ## 4. Tone and Style
 *   **Action-Oriented:** Use active voice (e.g., "The system redirects...", "The user enters...").
