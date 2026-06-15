@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-87 - Search Chat History</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-87. Search Chat History</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor enters a search query in the search input field of the chat sidebar.</p>
+
+    <p><strong>Function Description:</strong> Allows the Actor to search their conversation list by sending a query to the backend, which searches participant profiles and returns matching conversation rooms.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be successfully authenticated as a Staff member or Admin.</li>
+                <li>Actor is on the Chat page under the Admin Panel dashboard.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Enter Query:</strong>
+                    <ul>
+                        <li>Actor accesses the Chat page.</li>
+                        <li>Actor types a search query in the "Search users..." input box.</li>
+                    </ul>
+                </li>
+                <li><strong>Request Search:</strong>
+                    <ul>
+                        <li>The system detects the input change and waits for a typing pause.</li>
+                        <li>The system requests the backend to search conversations matching the query.</li>
+                    </ul>
+                </li>
+                <li><strong>Process Search:</strong>
+                    <ul>
+                        <li>The server validates that the active Staff or Admin is authenticated.</li>
+                        <li>The server queries the database for chat rooms where the current Staff or Admin is a participant and the other participant's name matches the search query.</li>
+                        <li>The server returns the matching conversation list.</li>
+                    </ul>
+                </li>
+                <li><strong>Display Results:</strong>
+                    <ul>
+                        <li>The system displays the matching conversations in the sidebar.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Clear Search Query)</strong>
+            <ul>
+                <li>If the Actor clears the search query:
+                    <ul>
+                        <li>Actor clears the search query text box.</li>
+                        <li>The system restores the full list of active conversations from the local cache.</li>
+                        <li>The system displays the full active conversation list.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (No Matching Results)</strong>
+            <ul>
+                <li>If no matching results are found:
+                    <ul>
+                        <li>The server returns an empty list.</li>
+                        <li>The system displays a message in the sidebar indicating "No conversations found."</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The sidebar chat list displays only conversations matching the search query.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the Actor to the login page.</li>
+                <li><strong>Unauthorized Access:</strong> The system detects that the Actor is not a Staff or Admin, redirects the Actor to the access denied error page, and terminates the flow.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Role Verification:</strong> Access to search conversations is restricted strictly to authenticated Staff or Admin users.</li>
+                <li><strong>Input Sanitization:</strong> The system sanitizes search input text to prevent injection vulnerabilities.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>
