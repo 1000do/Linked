@@ -130,11 +130,8 @@
 
             <div class="space-y-1.5">
                 <label class="text-xs font-medium text-slate-700">Message Details</label>
-                <input type="text" id="title" maxlength="100" required class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow mb-3" placeholder="Message Title...">
-                <textarea id="content" rows="4" maxlength="100" required class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow resize-none" placeholder="Write message details..."></textarea>
-                <div class="flex justify-end mt-1">
-                    <span class="text-[10px] text-slate-400 font-medium"><span id="char-count">0</span> / 100</span>
-                </div>
+                <input type="text" id="title" maxlength="255" required class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow mb-3" placeholder="Message Title...">
+                <textarea id="content" rows="4" required class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow resize-none" placeholder="Write message details..."></textarea>
             </div>
 
             <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
@@ -211,9 +208,7 @@
             });
         }
 
-        document.getElementById('content').addEventListener('input', (e) => {
-            document.getElementById('char-count').innerText = e.target.value.length;
-        });
+
 
         async function loadHistory() {
             try {
@@ -416,7 +411,7 @@
             selectedEmails = [];
             renderTags();
             toggleEmailInput();
-            document.getElementById('char-count').innerText = "0";
+
 
             const modal = document.getElementById('modal-send');
             modal.classList.remove('hidden');
@@ -584,11 +579,7 @@
             btn.disabled = false; btn.innerText = originalText;
         };
 
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl("http://localhost:5207/notificationHub", { accessTokenFactory: () => TOKEN })
-            .withAutomaticReconnect().build();
-        connection.on("ReceiveNotification", () => loadHistory());
-        connection.start().catch(err => console.error(err));
+        document.addEventListener("ReceiveNotificationEvent", () => loadHistory());
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('search-input').addEventListener('input', applyFilters);

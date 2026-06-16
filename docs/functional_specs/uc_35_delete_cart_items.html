@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-35 - Delete Cart Items</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-35. Delete Cart Items</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor clicks the delete button next to a course item on the Cart page.</p>
+
+    <p><strong>Function Description:</strong> Allows authenticated Users or Instructors to remove a course from their shopping cart.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be successfully authenticated.</li>
+                <li>Actor has at least one course item in their shopping cart.</li>
+                <li>Actor is on the Cart page.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Trigger Deletion:</strong>
+                    <ul>
+                        <li>Actor accesses the Cart page.</li>
+                        <li>Actor clicks the delete icon button next to the target course item.</li>
+                    </ul>
+                </li>
+                <li><strong>Remove Course:</strong>
+                    <ul>
+                        <li>The system requests the backend to remove the course from the user's shopping cart.</li>
+                        <li>The server validates that the active Actor session is valid.</li>
+                        <li>The server deletes the course record from the user's shopping cart in the database.</li>
+                        <li>The server returns a success response.</li>
+                        <li>The system displays a success notification indicating the course was removed.</li>
+                        <li>The system recalculates the cart summary prices and re-renders the Cart page.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The course item is permanently removed from the user's shopping cart in the database.</li>
+                <li>The system recalculates the cart summary prices and refreshes the Cart page.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system redirects the Actor to the login page.</li>
+                <li><strong>Course Not in Cart:</strong> The server detects that the course is not present in the user's shopping cart, and the system displays an error message indicating that the course was not found in the cart or cannot be removed.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Session Verification:</strong> The server validates that only the owner of the cart can remove items from it.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

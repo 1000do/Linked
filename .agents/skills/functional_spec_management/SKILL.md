@@ -8,6 +8,7 @@ description: Specializes in creating, formatting, and editing Functional Specifi
 This skill provides comprehensive instructions for formatting, writing, and editing Functional Specification documents based on the provided standard format. The output MUST be a valid HTML document using Times New Roman font, size 12pt.
 
 ## 1. Output Format and Styling
+*   **Create New File:** You MUST create a new `.html` file (e.g., `fs_add_lesson.html` in the appropriate directory) for the functional specification. Do NOT edit, overwrite, or replace the contents of the existing use case file.
 *   **Format:** The final output MUST be an `.html` file. Do NOT output Markdown.
 *   **Font and Styling:** Use `font-family: 'Times New Roman', serif;` and `font-size: 12pt;`.
 *   **No Headings Allowed:** DO NOT use any HTML heading tags (`<h1>`, `<h2>`, `<h3>`, etc.). Instead of headings, use normal `<p>` tags with `<strong>` or `<b>` for emphasis.
@@ -89,6 +90,7 @@ Every functional specification MUST follow this exact structure using valid HTML
 *   **Bold Text:** Use `<strong>` for the main field headers (`<strong>Function Trigger:</strong>`, `<strong>Function Details</strong>`, etc.), process step titles, and error names.
 *   **No Markdown:** Since the output must be an HTML file, do not use Markdown syntax (like `**bold**` or `# heading`) in the generated result.
 *   **Alternative Flow Labeling:** If the alternative flow is triggered by a specific condition, append it to the label (e.g., `<strong>Alternative Flow (Invalid Email)</strong>`).
+*   **Drop Identifiers:** Ensure the output DOES NOT contain any original identifiers from the use case (e.g., drop prefixes like `PRE-1.`, `POST-1.`, `EX-3`, `BR-1`, and flow alphanumeric identifiers like `A.5.1`). Only output the raw textual details for Preconditions, Postconditions, Error Handling, Alternative Flow titles, and Security Measures.
 
 ## 4. Tone and Style
 *   **Action-Oriented:** Use active voice (e.g., "The system redirects...", "The user enters...").

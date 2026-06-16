@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-52 - Create Courses</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.11. Create Courses</strong></p>
+
+    <p><strong>Function Trigger:</strong> Instructor clicks the "Create New Course" button (or similar) on the Instructor Studio dashboard.</p>
+
+    <p><strong>Function Description:</strong> Drafts basic details for a new course, including title, pricing, description, and curriculum outline.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Instructor must be authenticated.</li>
+            <li>Instructor's application status must be "Approved".</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Create Course Successfully:</strong>
+                <ul>
+                    <li>Instructor clicks the "Create New Course" button on the Instructor Studio dashboard.</li>
+                    <li>The system checks the instructor's session authentication.</li>
+                    <li>The system checks the instructor's approval status.</li>
+                    <li>The system retrieves the available course categories.</li>
+                    <li>The system displays Step 1 (Core Identity) of the creation wizard, showing the "Course Title" input and "Category" dropdown.</li>
+                    <li>Instructor enters a title, selects a category, and clicks the "Next" button.</li>
+                    <li>The system validates the inputs for Step 1.</li>
+                    <li>The system displays Step 2 (Description & Curriculum) of the creation wizard, showing the rich text editors for Course Description, What You Will Learn, and Requirements.</li>
+                    <li>Instructor enters the description, learning achievements, and requirements, then clicks the "Next" button.</li>
+                    <li>The system validates the rich text fields.</li>
+                    <li>The system displays Step 3 (Course Thumbnail) of the creation wizard, showing the "drop-area" file upload zone.</li>
+                    <li>Instructor uploads a course thumbnail image.</li>
+                    <li>The system uploads the image to the cloud storage service.</li>
+                    <li>The system retrieves the returned image URL.</li>
+                    <li>The system stores the URL in the "CourseThumbnailUrl" variable.</li>
+                    <li>Instructor clicks the "Next" button.</li>
+                    <li>The system validates that the thumbnail URL is present.</li>
+                    <li>The system displays Step 4 (Access & Pricing) of the creation wizard, showing the "Price" input and "Apply coupon to this course" switch.</li>
+                    <li>Instructor enters the price and toggles the coupon switch.</li>
+                    <li>Instructor clicks the "Select System Voucher" button.</li>
+                    <li>The system displays the platform coupons list in the "coupon-modal".</li>
+                    <li>Instructor selects a platform coupon and clicks the "Create Course" button.</li>
+                    <li>The system validates Step 4 price inputs.</li>
+                    <li>The system sends the course creation payload to the backend server.</li>
+                    <li>The backend server validates the request model state.</li>
+                    <li>The backend server checks the instructor's creation rights.</li>
+                    <li>The backend server checks for duplicate course content.</li>
+                    <li>The backend server inserts the draft course record into the database.</li>
+                    <li>The backend server saves the changes.</li>
+                    <li>The system displays a success confirmation popup dialog.</li>
+                    <li>The system redirects the instructor to the Course Editor page.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The draft course record is created in the database with status set to "Draft".</li>
+            <li>The system redirects the Instructor to the Course Editor page.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            <li><strong>Account Not Approved:</strong> The system detects the actor's instructor approval status is not "Approved". The system redirects the actor to the application status or apply page. The flow terminates.</li>
+            <li><strong>Backend Connection Failure / System Error:</strong> The backend server returns a connection failure or server error. The system displays a system error alert box detailing the failure. The flow terminates.</li>
+            <li><strong>Invalid Backend Request State:</strong> The backend server returns a bad request status code (400). The system displays a validation warning alert box with the validation details. Back to step 22.</li>
+            <li><strong>Unauthorized Instructor Rights:</strong> The backend server returns a bad request status code (400) due to invalid instructor rights. The system displays an error message indicating unauthorized creation. The flow terminates.</li>
+            <li><strong>Duplicate Course Content:</strong> The database throws a uniqueness/duplicate content exception. The backend server handles the database error and returns a bad request status code (400) with a duplicate content warning. The system displays a system error alert box indicating duplicate course content is detected. Back to step 6.</li>
+            <li><strong>Database Insertion Failure:</strong> The backend server throws an invalid operation exception. The backend server returns a bad request status code (400). The system displays a system error alert box detailing the insertion failure. The flow terminates.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Title Length Constraints:</strong> The course title must be between 5 and 100 characters in length.</li>
+            <li><strong>Text Constraints:</strong> What You Will Learn and Requirements descriptions must each be at least 20 characters in length (excluding HTML tags).</li>
+            <li><strong>Stripe Payout Connectivity:</strong> Instructors must connect and activate their Stripe accounts to set premium prices. If Stripe is disconnected or inactive, the course price is locked to 0.00 (Free).</li>
+            <li><strong>Voucher Validation:</strong> Platform sponsored discount vouchers cannot be applied to free courses.</li>
+            <li><strong>Draft Initial State:</strong> All newly created courses are saved with a status of "Draft" and must go through moderation before being published.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

@@ -1,0 +1,155 @@
+﻿<div class="uc-container" style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <style>
+        .uc-container, .uc-container table, .uc-container tr, .uc-container td, .uc-container p, .uc-container ol, .uc-container ul, .uc-container li, .uc-container span, .uc-container strong, .uc-container b {
+            font-family: 'Times New Roman', serif !important;
+            font-size: 12pt !important;
+            color: black !important;
+        }
+    </style>
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">UC ID and Name</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">UC-93-Reject Course Submission</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Created By:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Truong Phuoc Tai</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Date Created:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">13/06/2026</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Primary Actor:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Staff, Admin</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Secondary Actors:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Trigger:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Actor clicks the "Reject" button on a course row in the moderation list.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Description:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Rejects a submitted course with reasons and feedback for the instructor.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Preconditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>PRE-1.</b> Actor must be authenticated.</p>
+                <p style="margin: 5px 0 0 0;"><b>PRE-2.</b> Actor must have staff or admin role.</p>
+                <p style="margin: 5px 0 0 0;"><b>PRE-3.</b> The course status must be pending review (or approved/published if rejecting an active course).</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Post-conditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>POST-1.</b> The course status is set to "rejected" in the database.</p>
+                <p style="margin: 5px 0 0 0;"><b>POST-2.</b> Tagged lessons and materials (if any) are set to "rejected" in the database.</p>
+                <p style="margin: 5px 0 0 0;"><b>POST-3.</b> The instructor receives a notification of the rejection.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Normal Flow:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A. Reject Course Submission Successfully</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>Actor accesses the Course Moderation Page.</li>
+                    <li>Actor locates the pending course in the moderation list.</li>
+                    <li>Actor clicks the "Reject" button on the corresponding course row.</li>
+                    <li>The system retrieves the course details (lessons and materials).</li>
+                    <li>The system displays a detailed reject modal containing tagged element selectors and reason text fields.</li>
+                    <li>Actor clicks the "Add Rejection Item" button to add a new violation tag row.</li>
+                    <li>Actor selects a violating element from the dropdown (e.g. course title, course description, course thumbnail, specific lesson, or specific material file).</li>
+                    <li>Actor enters a rejection reason for the selected element.</li>
+                    <li>Actor clicks the "Submit Rejection" button.</li>
+                    <li>The system updates the status of tagged lessons and materials to "rejected" and saves their specific rejection feedback in the database.</li>
+                    <li>The system updates the course status to "rejected" and saves the combined moderation feedback in the database.</li>
+                    <li>The system sends a rejection notification message to the instructor.</li>
+                    <li>The system clears the course details cache.</li>
+                    <li>The system updates the moderation page stats and dims the rejected course row.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Alternative Flows:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A.5.1 Cancel Rejection</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks the "Cancel" button on the reject modal.</li>
+                    <li>The system closes the reject modal.</li>
+                    <li>Back to step 2.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.6.1 Remove Rejection Item Row</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>Actor clicks the "delete" icon button next to a rejection item row.</li>
+                    <li>The system removes the rejection item row from the modal.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Exceptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>EX-1 Session Invalid (Not Logged In)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system displays an authentication error message.</li>
+                    <li>The system redirects the actor to the login page.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-2 Unauthorized Access</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects that the actor does not have staff or admin roles.</li>
+                    <li>The system displays an access denied page or error message.</li>
+                    <li>The flow terminates.</li>
+                </ol>
+                <p style="margin: 0 0 5px 0;"><strong>EX-4.1 Course Metadata Fetch Failed</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system fails to retrieve course details from the API.</li>
+                    <li>The system displays an error message indicating failure to load course details.</li>
+                    <li>The reject modal shows a connection failure message.</li>
+                    <li>The flow terminates.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-9.1 Form Incomplete Validation</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects that a tagged element dropdown is unselected or a reason text field is empty.</li>
+                    <li>The system displays a warning message indicating information is missing.</li>
+                    <li>The system halts submission.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+
+                <p style="margin: 0; padding-left: 20px;"><strong>EX-10 Database Save Failure</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>The database fails to commit changes.</li>
+                    <li>The system displays a system error message.</li>
+                    <li>The flow terminates.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Priority:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Frequency of Use:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Medium</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Business Rules:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                BR-133, BR-135, BR-136
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Other Information:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Assumptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;">Staff has stable internet connection.</p>
+                <p style="margin: 5px 0 0 0;">Admin has stable internet connection.</p>
+            </td>
+        </tr>
+    </table>
+</div>

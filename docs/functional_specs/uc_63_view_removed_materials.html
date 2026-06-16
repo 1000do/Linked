@@ -1,0 +1,82 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-63 - View list of removed learning materials</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.22. View list of removed learning materials</strong></p>
+
+    <p><strong>Function Trigger:</strong> Instructor clicks the "Trash" button (or similar) on the Instructor Studio dashboard.</p>
+
+    <p><strong>Function Description:</strong> Displays a list of deleted learning materials (instructor's trash bin).</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Instructor must be authenticated.</li>
+            <li>Instructor's status must be "Approved".</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>View Removed Learning Materials Successfully:</strong>
+                <ul>
+                    <li>Instructor accesses the Instructor Studio dashboard page.</li>
+                    <li>The system checks the instructor's session authentication.</li>
+                    <li>The system checks the instructor's approval status.</li>
+                    <li>Instructor clicks the "Trash" button.</li>
+                    <li>The system checks the instructor's session authentication.</li>
+                    <li>The system retrieves the list of soft-deleted learning materials for the instructor.</li>
+                    <li>The system calculates the remaining days before auto-deletion for each material.</li>
+                    <li>The system displays the trash bin page, showing the list of removed learning materials, their title, source lesson title, source course title, deleted timestamp, and remaining days.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The system displays a list of soft-deleted learning materials belonging to the instructor's courses.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            <li><strong>Account Not Approved:</strong> The system detects the actor's instructor approval status is not "Approved". The system redirects the actor to the application status or apply page. The flow terminates.</li>
+            <li><strong>.1 Restore/Delete Rights Locked:</strong> The system detects that the instructor's account rights are locked due to policy violations. The system displays an error message indicating their rights are locked and changes cannot be saved. The flow terminates.</li>
+            <li><strong>.2 Course Pending Review:</strong> The system detects the course containing the lesson is currently pending review. The system displays an error message indicating curriculum changes are blocked during review. The flow terminates.</li>
+            <li><strong>.3 Course Permanently Discontinued:</strong> The system detects the course is permanently discontinued due to policy violations (3 or more flags). The system displays an error message indicating modifications are blocked. The flow terminates.</li>
+            <li><strong>.4 Unauthorized Access:</strong> The system detects that the instructor does not own the course/material. The system displays an error message indicating permission denied. The flow terminates.</li>
+            <li><strong>.5 Database Save Failure:</strong> The database fails to commit changes. The system displays a system error message. The flow terminates.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Auto-Purge Policy:</strong> Learning materials placed in the trash bin are automatically and permanently deleted after 30 days by a background cleanup service.</li>
+            <li><strong>Cloud Storage Virtual Directory:</strong> Moving a file to the trash bin renames the file prefix on Cloudinary to `trash/` and updates its status to "removed" in the database, hiding it from the public display while retaining the database record.</li>
+            <li><strong>Video Swap Constraint:</strong> Restoring a video material to a lesson that already contains an active video will automatically move the current active video to the trash bin, replacing it with the restored video.</li>
+            <li><strong>Discontinued & Pending Locking:</strong> Learning materials cannot be restored or permanently deleted if the parent course is pending review or is permanently discontinued due to policy violations.</li>
+            <li><strong>Unpublish Trigger:</strong> Restoring a learning material to a published course will automatically update the course status back to "Draft" to force re-moderation of the updated curriculum.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-91 - Filter Courses</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.4.4. Filter Courses</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor
+                selects a category from the "category" dropdown or a status from the "status" dropdown on the Course
+                Moderation Page.</p>
+
+    <p><strong>Function Description:</strong> Filters courses by categories or moderation status (Pending, Approved, Rejected).</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be authenticated.</li>
+            <li>Actor must have staff or admin role.</li>
+            <li>Actor must be on the Course Moderation Page.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Filter Courses Successfully:</strong>
+                <ul>
+                    <li>Actor selects a category from the "category" dropdown, or a status from the "status" dropdown.</li>
+                    <li>The system retrieves the courses list matching the selected criteria and other active search
+                        keywords or sorting options.</li>
+                    <li>The system updates the course moderation table and statistics cards.</li>
+                    <li>The system displays the filtered course list.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The system displays the course moderation list filtered by the
+                    selected criteria.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            <li><strong>Unauthorized Access:</strong> The system detects that the actor does not have staff or admin roles. The system displays an access denied page or error message. The flow terminates.</li>
+            <li><strong>API Call Failed:</strong> The system fails to retrieve the filtered course list or stats from the API. The system displays an error message regarding filtering failure. The system renders the Course Moderation page with an empty list. The flow terminates.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Exclusion of Drafts:</strong> Courses with status "Draft" are never retrieved or displayed in the moderation queues.</li>
+            <li><strong>Category Filter:</strong> Matches the Category ID or Name against the course's category. If "All
+                        Categories" is selected, no category filtering is applied.</li>
+            <li><strong>Independent Status Filters:</strong> The status filter in the Course Reports tab maintains its own independent state from the status filter in the Review Reports tab.</li>
+            <li><strong>Preservation of Other Criteria:</strong> Filtering preserves active search keywords and sorting
+                        options.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

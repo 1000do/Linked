@@ -1,0 +1,91 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-93 - Reject Course Submission</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.4.6. Reject Course Submission</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor clicks the "Reject" button on a course row in the moderation list.</p>
+
+    <p><strong>Function Description:</strong> Rejects a submitted course with reasons and feedback for the instructor.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be authenticated.</li>
+            <li>Actor must have staff or admin role.</li>
+            <li>The course status must be pending review (or approved/published if rejecting an active course).</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Reject Course Submission Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the Course Moderation Page.</li>
+                    <li>Actor locates the pending course in the moderation list.</li>
+                    <li>Actor clicks the "Reject" button on the corresponding course row.</li>
+                    <li>The system retrieves the course details (lessons and materials).</li>
+                    <li>The system displays a detailed reject modal containing tagged element selectors and reason text fields.</li>
+                    <li>Actor clicks the "Add Rejection Item" button to add a new violation tag row.</li>
+                    <li>Actor selects a violating element from the dropdown (e.g. course title, course description, course thumbnail, specific lesson, or specific material file).</li>
+                    <li>Actor enters a rejection reason for the selected element.</li>
+                    <li>Actor clicks the "Submit Rejection" button.</li>
+                    <li>The system updates the status of tagged lessons and materials to "rejected" and saves their specific rejection feedback in the database.</li>
+                    <li>The system updates the course status to "rejected" and saves the combined moderation feedback in the database.</li>
+                    <li>The system sends a rejection notification message to the instructor.</li>
+                    <li>The system clears the course details cache.</li>
+                    <li>The system updates the moderation page stats and dims the rejected course row.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The course status is set to "rejected" in the database.</li>
+            <li>Tagged lessons and materials (if any) are set to "rejected" in the database.</li>
+            <li>The instructor receives a notification of the rejection.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            <li><strong>Unauthorized Access:</strong> The system detects that the actor does not have staff or admin roles. The system displays an access denied page or error message. The flow terminates.</li>
+            <li><strong>.1 Course Metadata Fetch Failed:</strong> The system fails to retrieve course details from the API. The system displays an error message indicating failure to load course details. The reject modal shows a connection failure message. The flow terminates.</li>
+            <li><strong>.1 Form Incomplete Validation:</strong> The system detects that a tagged element dropdown is unselected or a reason text field is empty. The system displays a warning message indicating information is missing. The system halts submission. Back to step 7.</li>
+            <li><strong>Database Save Failure:</strong> The database fails to commit changes. The system displays a system error message. The flow terminates.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Violation Element Tagging:</strong> <ul>
+                            <li>Course-level targets correspond to: title ("course.title"), description ("course.description"), thumbnail ("course.thumbnail"), what you will learn ("course.what_you_will_learn"), requirements ("course.requirements").</li>
+                            <li>Lesson-level targets correspond to "lesson.title".</li>
+                            <li>Material-level targets correspond to "file".</li>
+                        </ul></li>
+            <li><strong>Combined Feedback:</strong> The course's "ModerationFeedback" is updated by combining all tagged element reasons (e.g. "[@Title] Reason" or "[Lesson: Title] Reason" separated by newlines).</li>
+            <li><strong>Notification Link:</strong> The rejection notification sent to the instructor contains a link redirecting to the course editor "/InstructorCourse/Editor?id={courseId}".</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

@@ -16,7 +16,11 @@ namespace CourseMarketplaceFE.Controllers
         public async Task<IActionResult> Index(int page = 1)
         {
             var userRole = Request.Cookies["UserRole"]?.ToLower();
-            if (userRole == "admin" || userRole == "staff")
+            if (userRole == "admin")
+            {
+                return RedirectToAction("Index", "AdminFinance");
+            }
+            else if (userRole == "staff")
             {
                 return RedirectToAction("Admin", "Notification");
             }

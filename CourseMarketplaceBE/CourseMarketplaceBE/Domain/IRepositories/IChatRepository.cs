@@ -28,4 +28,5 @@ public interface IChatRepository
     Task<(List<UserReport> Items, int TotalCount)> GetAllReportsAsync(int page = 1, int pageSize = 10);
     Task<UserReport?> GetReportByIdAsync(int reportId);
     Task<int> SaveChangesAsync();
+    Task<int> GetActiveChatsCountAsync(int accountId);
 }

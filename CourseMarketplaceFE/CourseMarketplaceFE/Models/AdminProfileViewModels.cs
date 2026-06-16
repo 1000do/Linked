@@ -26,4 +26,11 @@ namespace CourseMarketplaceFE.Models
         public string? Bio { get; set; }
         public IFormFile? AvatarFile { get; set; }
     }
+
+    public class ChangePasswordFERequest
+    {
+        public string CurrentPassword { get; set; } = null!;
+        public string NewPassword { get; set; } = null!;
+        public string ConfirmNewPassword { get; set; } = null!;
+    }
 }

@@ -1,0 +1,71 @@
+<div style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+
+<p><strong>UC-75 - View Profile (For Manager)</strong></p>
+
+<p><strong>Primary Actor:</strong><br>
+Manager</p>
+
+<p><strong>Secondary Actors:</strong><br>
+None</p>
+
+<p><strong>Trigger:</strong><br>
+Manager accesses the profile page.</p>
+
+<p><strong>Description:</strong><br>
+Allows managers (Super Admin or Staff Support) to view their profile details, including system account information.</p>
+
+<p><strong>Preconditions:</strong></p>
+<p><b>PRE-1.</b> Manager must be successfully authenticated as an approved administrator or staff support account.</p>
+
+<p><strong>Post-conditions:</strong></p>
+<p><b>POST-1.</b> The system displays the manager's profile, system account information, and status.</p>
+
+<hr>
+
+<p><strong>Normal Flow</strong></p>
+
+<p><strong>A. View Profile Successfully</strong></p>
+<ol>
+    <li>Manager accesses the profile page.</li>
+    <li>The system validates the login session and retrieves the manager's profile data.</li>
+    <li>The system displays the manager profile details and system information (profile picture, verification status, name, email, biography, phone number, creation date, and suspension details if active).</li>
+</ol>
+
+<hr>
+
+<p><strong>Alternative Flows</strong></p>
+
+<p>None</p>
+
+<hr>
+
+<p><strong>Exceptions</strong></p>
+
+<p><strong>EX-2 Session Invalid (Not Logged In)</strong></p>
+<ol>
+    <li>The system displays an authentication error message.</li>
+    <li>The system redirects the user to the login page.</li>
+</ol>
+
+<p><strong>EX-3 Manager Profile Not Found</strong></p>
+<ol>
+    <li>The system fails to retrieve the manager profile.</li>
+    <li>The system displays an error message regarding profile retrieval failure.</li>
+    <li>The system redirects the manager to the login page.</li>
+</ol>
+
+<hr>
+
+<p><strong>Business Rules</strong></p>
+<ol>
+    <li><strong>Lockout Status Monitoring:</strong> The profile displays any active suspension records (start and end times) for the manager account, keeping administrative users informed of active lockout configurations.</li>
+    <li><strong>Role-based Labeling:</strong> The interface shows "Super Admin" if the manager's role is "ADMIN", and "Staff Support" otherwise.</li>
+    <li><strong>Information Display Isolation:</strong> The profile page is strictly isolated to the authenticated manager account's details.</li>
+</ol>
+
+<hr>
+
+<p><strong>Assumptions</strong></p>
+<p>Manager has stable internet connection.</p>
+
+</div>

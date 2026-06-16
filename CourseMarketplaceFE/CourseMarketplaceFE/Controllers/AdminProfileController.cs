@@ -66,12 +66,17 @@ namespace CourseMarketplaceFE.Controllers
         [HttpPost]
         public async Task<IActionResult> Edit(UpdateAdminProfileViewModel model)
         {
-            if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login", "Account");
+            if (!Request.Cookies.ContainsKey("AccessToken")) 
+                return Json(new { success = false, message = "Session expired. Please login again." });
 
             if (string.IsNullOrWhiteSpace(model.DisplayName))
             {
-                ModelState.AddModelError("DisplayName", "Display Name is required.");
-                return View(model);
+                return Json(new { success = false, message = "Display Name is required." });
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.PhoneNumber) && model.PhoneNumber.Length > 50)
+            {
+                return Json(new { success = false, message = "Contact number cannot exceed 50 characters." });
             }
 
             using var content = new MultipartFormDataContent();
@@ -90,7 +95,9 @@ namespace CourseMarketplaceFE.Controllers
             var response = await _api.PutAsync("admin/profile/update", content);
             if (response.IsSuccessStatusCode)
             {
-                // Sync display cookies
+                string? avatarUrl = null;
+                string? userName = null;
+                // Đồng bộ cookie hiển thị
                 var profileResponse = await _api.GetAsync("admin/profile");
                 if (profileResponse.IsSuccessStatusCode)
                 {
@@ -100,43 +107,75 @@ namespace CourseMarketplaceFE.Controllers
                     var updated = JsonSerializer.Deserialize<AdminProfileViewModel>(dataEl.GetRawText(), _jsonOptions);
 
                     var cookieOptions = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7), Path = "/" };
-                    Response.Cookies.Append("UserName", updated?.FullName ?? updated?.DisplayName ?? "Admin", cookieOptions);
+                    userName = updated?.FullName ?? updated?.DisplayName ?? "Admin";
+                    Response.Cookies.Append("UserName", userName, cookieOptions);
                     Response.Cookies.Append("AvatarUrl", updated?.AvatarUrl ?? "", cookieOptions);
+                    avatarUrl = updated?.AvatarUrl;
                 }
 
-                TempData["SuccessMessage"] = "Profile updated successfully!";
-                return RedirectToAction("Index");
+                return Json(new { success = true, message = "Profile updated successfully!", avatarUrl, userName });
             }
 
-            TempData["ErrorMessage"] = "Failed to update profile.";
-            return View(model);
+            var errContent = await response.Content.ReadAsStringAsync();
+            string errMsg = "Failed to update profile.";
+            try
+            {
+                using var doc = JsonDocument.Parse(errContent);
+                if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                {
+                    errMsg = msgEl.GetString() ?? errMsg;
+                }
+            }
+            catch { }
+
+            return Json(new { success = false, message = errMsg });
         }
 
         [HttpPost]
-        public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmNewPassword)
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordFERequest model)
         {
-            if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login", "Account");
+            if (!Request.Cookies.ContainsKey("AccessToken")) 
+                return Json(new { success = false, message = "Session expired. Please login again." });
 
-            if (newPassword != confirmNewPassword)
+            if (model == null || string.IsNullOrWhiteSpace(model.CurrentPassword) || string.IsNullOrWhiteSpace(model.NewPassword))
             {
-                TempData["ErrorMessage"] = "Password confirmation does not match.";
-                return RedirectToAction("Index");
+                return Json(new { success = false, message = "All password fields are required." });
+            }
+
+            if (model.NewPassword.Length < 6)
+            {
+                return Json(new { success = false, message = "New password must be at least 6 characters long." });
+            }
+
+            if (model.NewPassword != model.ConfirmNewPassword)
+            {
+                return Json(new { success = false, message = "Password confirmation does not match." });
             }
 
             var response = await _api.PostJsonAsync("admin/profile/change-password", new
             {
-                CurrentPassword = currentPassword,
-                NewPassword = newPassword
+                CurrentPassword = model.CurrentPassword,
+                NewPassword = model.NewPassword
             });
 
             if (response.IsSuccessStatusCode)
             {
-                TempData["SuccessMessage"] = "Password changed successfully!";
-                return RedirectToAction("Index");
+                return Json(new { success = true, message = "Password changed successfully!" });
             }
 
-            TempData["ErrorMessage"] = "Failed to change password. Make sure current password is correct.";
-            return RedirectToAction("Index");
+            var errContent = await response.Content.ReadAsStringAsync();
+            string errMsg = "Failed to change password. Make sure current password is correct.";
+            try
+            {
+                using var doc = JsonDocument.Parse(errContent);
+                if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                {
+                    errMsg = msgEl.GetString() ?? errMsg;
+                }
+            }
+            catch { }
+
+            return Json(new { success = false, message = errMsg });
         }
     }
 }

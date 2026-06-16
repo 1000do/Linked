@@ -1,0 +1,79 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Sort Payout History
+actor Instructor as act
+
+participant "Transaction/Instructor.cshtml" as view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "InstructorController" as be_ctrl <<backend controller>>
+participant ":InstructorService" as sv
+participant ":InstructorRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Select sort option and click "Filter"
+view->fe_ctrl++: Send GET /Transaction/Instructor?tab=po&payoutSortBy=amount_desc&payoutPage=1
+
+fe_ctrl->be_ctrl++: Send GET /api/instructor/payouts?page=1&pageSize=20&sortBy=amount_desc&year=... (with Bearer Token)
+
+be_ctrl->sv++: Call GetPayoutsAsync(..., sortBy: "amount_desc", ...)
+sv->repo++: Call GetPayoutsAsync(..., sortBy: "amount_desc", ...)
+
+repo->repo++: Construct EF Core IQueryable for InstructorPayouts
+repo--
+
+alt [sortBy == "amount_desc"]
+    repo->repo++: Apply .OrderByDescending(p => p.PayoutAmount)
+    repo--
+else [sortBy == "amount_asc"]
+    repo->repo++: Apply .OrderBy(p => p.PayoutAmount)
+    repo--
+else [sortBy == "date_desc" (Default)]
+    repo->repo++: Apply .OrderByDescending(p => p.PayoutDate)
+    repo--
+else [sortBy == "date_asc"]
+    repo->repo++: Apply .OrderBy(p => p.PayoutDate)
+    repo--
+end
+
+repo->ctx++: Query InstructorPayouts
+ctx->db++: Execute ordered query with Skip() and Take()
+db-->>ctx--: Return ordered payouts list & total count
+ctx-->>repo--: Return payouts list and count
+
+repo-->>sv--: Return PagedResult<InstructorPayoutDto>
+sv-->>be_ctrl--: Return PagedResult<InstructorPayoutDto>
+be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with sorted Payouts JSON
+
+fe_ctrl-->>view--: Return View(vm)
+view->view++: Re-render Payout History table
+view--
+view-->>act--: Display payout list sorted by amount
+@enduml

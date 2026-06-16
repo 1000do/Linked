@@ -1,0 +1,87 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Cart Items
+actor User as act
+
+participant "Cart/Index.cshtml" as view
+participant "CartController" as fe_ctrl <<frontend controller>>
+participant "CartController" as be_ctrl <<backend controller>>
+participant ":CartService" as sv
+participant ":CartRepository" as repo
+participant ":CouponRepository" as couponRepo
+participant ":CourseRepository" as courseRepo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Access Shopping Cart page
+view->fe_ctrl++: Send GET request to /Cart
+
+fe_ctrl->fe_ctrl++: Get applied coupon map from cookies
+fe_ctrl--
+
+fe_ctrl->be_ctrl++: Send GET /api/cart/summary?couponCode=... (with Bearer Token)
+
+be_ctrl->sv++: Call GetCartSummaryAsync(userId, couponCode)
+sv->repo++: Call GetCartItemsWithDetailsAsync(userId)
+repo->ctx++: Query CartItems joined with Course details
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return CartItems list
+ctx-->>repo--: Return CartItems list
+repo-->>sv--: Return CartItems list
+
+alt [Coupon code is provided]
+    sv->couponRepo++: Call GetByCodeAsync(couponCode)
+    couponRepo->ctx++: Query Coupon details
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return Coupon entity
+    ctx-->>couponRepo--: Return Coupon entity
+    couponRepo-->>sv--: Return Coupon entity
+end
+
+loop For each CartItem
+    sv->courseRepo++: Call IsEnrolledAsync(userId, courseId)
+    courseRepo->ctx++: Check enrollment status
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return enrollment boolean
+    ctx-->>courseRepo--: Return result
+    courseRepo-->>sv--: Return result
+end
+
+sv->sv++: Calculate SubTotal, DiscountAmount, and Total
+sv--
+
+sv-->>be_ctrl--: Return CartSummaryResponse
+be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with JSON data
+
+fe_ctrl->fe_ctrl++: Map response to CartViewModel
+fe_ctrl--
+fe_ctrl-->>view--: Return View(vm)
+view-->>act--: Display cart items, prices, and coupon details
+@enduml

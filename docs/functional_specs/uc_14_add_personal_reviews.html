@@ -1,0 +1,103 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-14 - Add Personal Reviews</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.17.1. Add Personal Reviews</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor submits a rating and comment for a course (or lesson) they are enrolled in or own.</p>
+
+    <p><strong>Function Description:</strong> Allows learners to submit reviews and star ratings for courses (or lessons) they are enrolled in, enforcing learning progress checks.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be authenticated.</li>
+            <li>Actor must be enrolled in the course, or be the owner (Instructor) of the course.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Submit Course Review from Course Details Page Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the Course Details page of a course.</li>
+                    <li>The system checks the actor's session authentication.</li>
+                    <li>The system checks if the actor is the owner of the course.</li>
+                    <li>The system retrieves the course structure statistics.</li>
+                    <li>The system retrieves the actor's completed materials count.</li>
+                    <li>The system validates that the actor's learning progress is 100%.</li>
+                    <li>The system displays the write review form.</li>
+                    <li>Actor clicks the desired "star" icon to select a rating and enters comments in the review comment input.</li>
+                    <li>Actor clicks the "Submit Review" button.</li>
+                    <li>The system validates that a star rating is selected.</li>
+                    <li>The system validates that the comment content is not empty.</li>
+                    <li>The system checks if the actor's account has an active review posting restriction.</li>
+                    <li>The system saves the course review in the database.</li>
+                    <li>The system displays a success message.</li>
+                    <li>The system dynamically updates and reloads the reviews list and rating statistics.</li>
+                    <li>The system sends a new review notification to the course instructor.</li>
+                    <li>Actor accesses the Course Player page (Go to learning).</li>
+                    <li>The system checks the actor's session authentication.</li>
+                    <li>The system checks if the actor is the owner of the course.</li>
+                    <li>The system retrieves the course structure statistics.</li>
+                    <li>The system retrieves the actor's completed materials count.</li>
+                    <li>The system validates that the actor has completed at least 1 lesson.</li>
+                    <li>The system displays the write review form in the Reviews tab.</li>
+                    <li>Actor clicks the desired "star" icon to select a rating and enters comments in the review comment input.</li>
+                    <li>Actor clicks the "Submit Review" button.</li>
+                    <li>The system validates that a star rating is selected.</li>
+                    <li>The system validates that the comment content is not empty.</li>
+                    <li>The system checks if the actor's account has an active review posting restriction.</li>
+                    <li>The system saves the lesson review in the database.</li>
+                    <li>The system displays a success message.</li>
+                    <li>The system dynamically updates and reloads the reviews list, overall rating statistics, and lesson rating statistics.</li>
+                    <li>The system sends a new review notification to the course instructor.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The review record (either Course Review or Lesson Review) is successfully created and saved in the database.</li>
+            <li>If the reviewer is not the course owner, a notification is sent to the course instructor.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            <li><strong>Restricted Account:</strong> The system detects that the actor's account has an active review posting restriction. The system displays an error message indicating that their account is restricted from posting comments or reviews and states the restriction end time. The flow terminates.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Completion Check for Course Review:</strong> Non-owner students must have 100% course progress (completed all materials) to write a review on the Course Details page.</li>
+            <li><strong>Minimal Progress for Lesson Review:</strong> Non-owner students must have completed at least 1 lesson/material to write a review on the Course Player page.</li>
+            <li><strong>Instructor Bypass:</strong> Course owners/instructors can access the Course Player ("Learn" page) for preview, and their progress is treated as 100% completed virtual progress without writing completions to the database.</li>
+            <li><strong>Rating Restrictions:</strong> Star ratings must be between 1 and 5 stars (inclusive).</li>
+            <li><strong>Account Restrictions (Lockout):</strong> Users with active comment/review restrictions are blocked from submitting new reviews. The system checks this validation at submission time.</li>
+            <li><strong>Instructor Notification:</strong> Upon successful submission, a notification is sent to the course instructor with a link pointing directly to the review card.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

@@ -1,0 +1,88 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-59 - Remove Learning Materials</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.18. Remove Learning Materials</strong></p>
+
+    <p><strong>Function Trigger:</strong> Instructor clicks the "Remove" icon button next to a specific resource material, or clicks the "Replace Video" button for an existing active video.</p>
+
+    <p><strong>Function Description:</strong> Allows an instructor to remove an existing learning material (such as a video or document) from a lesson. The system soft-deletes the material by moving the physical file to the cloud storage trash folder, updates the material's status to removed, and reverts the course status to draft if it was previously published. This use case also encompasses the automatic removal of an active video when a new video is uploaded to replace it.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>User must be successfully authenticated as an approved instructor.</li>
+            <li>The material must exist and belong to a course owned by the active instructor.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Remove Material Manually Successfully:</strong>
+                <ul>
+                    <li>Instructor accesses the course edit page.</li>
+                    <li>Instructor selects a specific lesson from the curriculum list.</li>
+                    <li>Instructor clicks the "Remove" icon button next to a specific resource material.</li>
+                    <li>The system displays a removal confirmation dialog.</li>
+                    <li>Instructor confirms the removal.</li>
+                    <li>The system validates the instructor's rights.</li>
+                    <li>The system validates the course status.</li>
+                    <li>The system moves the physical file to the Cloud Storage Service's trash folder.</li>
+                    <li>The system updates the material record's learning status to removed in the database.</li>
+                    <li>The system updates the course status to draft and clears previous moderation feedback (if previously published).</li>
+                    <li>The system invalidates the cached course data.</li>
+                    <li>The system displays a success message.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The physical file is moved to the Cloud Storage Service's trash folder.</li>
+            <li>The material record in the database is updated with a removed learning status.</li>
+            <li>If the course was previously published, its status is reverted to draft and moderation feedback is cleared.</li>
+            <li>Stale cache data is cleared.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>.1 Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+            <li><strong>.2 Material Not Found:</strong> The system halts execution and displays a material not found error message.</li>
+            <li><strong>Invalid Instructor Rights:</strong> The system detects the instructor is unauthorized to remove this material or has an active lockout status. The system displays an error message regarding invalid instructor rights. Back to step 3.</li>
+            <li><strong>Invalid Course Status:</strong> The system detects the course is pending review or is permanently archived due to policy violations. The system displays an error message regarding invalid course status. Back to step 3.</li>
+            <li><strong>Database Save Failed:</strong> The system fails to save the material changes to the database. The system displays a database transaction failure message. Back to step 3.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Locked Out Instructor Rights:</strong> Instructors with an active lockout status are prohibited from submitting courses for review or changing course status.</li>
+            <li><strong>Pending Review Modification Lock:</strong> Learning materials and lessons cannot be added, edited, or removed if the course is currently in 'Pending' review status.</li>
+            <li><strong>Permanently Discontinued Block:</strong> A course that is 'archived' and has 3 or more flags is considered permanently discontinued due to policy violations and cannot have its status changed or be edited.</li>
+            <li><strong>Material Soft Deletion:</strong> Removing a material does not permanently delete the file; the physical file is moved to the Cloud Storage Service's trash folder and its database status is updated to 'Removed'.</li>
+            <li><strong>Video Swap Constraint:</strong> Restoring a video material to a lesson that already contains an active video will automatically move the current active video to the trash bin, replacing it with the restored video.</li>
+            <li><strong>Syllabus Change Reversion:</strong> Adding or removing lessons and materials, or editing their content, in a 'Published' course automatically changes the course status back to 'Draft' and clears any existing moderation feedback.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

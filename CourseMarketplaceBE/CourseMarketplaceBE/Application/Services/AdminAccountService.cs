@@ -1,9 +1,8 @@
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
-using CourseMarketplaceBE.Infrastructure.Data;
 using CourseMarketplaceBE.Domain.Constants;
-using Microsoft.EntityFrameworkCore;
+using CourseMarketplaceBE.Domain.IRepositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,68 +12,41 @@ namespace CourseMarketplaceBE.Application.Services
 {
     public class AdminAccountService : IAdminAccountService
     {
-        private readonly AppDbContext _context;
+        private readonly IUserRepository _userRepository;
+        private readonly IReportRepository _reportRepository;
+        private readonly INotificationRepository _notificationRepository;
+        private readonly IChatRepository _chatRepository;
+        private readonly ITransactionRepository _transactionRepository;
+        private readonly ILockoutRepository _lockoutRepository;
+        private readonly IEnrollmentRepository _enrollmentRepository;
+        private readonly IManagerRepository _managerRepository;
         private readonly INotificationService _notificationService;
 
-        public AdminAccountService(AppDbContext context, INotificationService notificationService)
+        public AdminAccountService(
+            IUserRepository userRepository,
+            IReportRepository reportRepository,
+            INotificationRepository notificationRepository,
+            IChatRepository chatRepository,
+            ITransactionRepository transactionRepository,
+            ILockoutRepository lockoutRepository,
+            IEnrollmentRepository enrollmentRepository,
+            IManagerRepository managerRepository,
+            INotificationService notificationService)
         {
-            _context = context;
+            _userRepository = userRepository;
+            _reportRepository = reportRepository;
+            _notificationRepository = notificationRepository;
+            _chatRepository = chatRepository;
+            _transactionRepository = transactionRepository;
+            _lockoutRepository = lockoutRepository;
+            _enrollmentRepository = enrollmentRepository;
+            _managerRepository = managerRepository;
             _notificationService = notificationService;
         }
 
         public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<AdminAccountListDto>> GetAccountsPagedAsync(string? keyword, string? role, int page, int pageSize)
         {
-            if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 10;
-
-            var query = _context.Accounts
-                .Include(a => a.Manager)
-                .Include(a => a.User)
-                    .ThenInclude(u => u!.Instructor)
-                .AsQueryable();
-
-            // Lọc theo vai trò (Role)
-            if (!string.IsNullOrWhiteSpace(role) && role.ToLower() != "all")
-            {
-                var roleLower = role.ToLower();
-                if (roleLower == "staff")
-                {
-                    query = query.Where(a => a.Manager != null && a.Manager.Role == "staff");
-                }
-                else if (roleLower == "registered_staff")
-                {
-                    // Lấy toàn bộ staff đã được kích hoạt hoặc đã login ít nhất 1 lần
-                    query = query.Where(a => a.Manager != null && a.Manager.Role == "staff" && a.IsVerified);
-                }
-                else if (roleLower == "user")
-                {
-                    // Học viên hoặc giảng viên (Không có bản ghi Manager)
-                    query = query.Where(a => a.Manager == null);
-                }
-                else if (roleLower == "instructor")
-                {
-                    query = query.Where(a => a.User != null && a.User.Instructor != null);
-                }
-            }
-
-            // Tìm kiếm keyword (Email, Name, Phone)
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                var kw = keyword.ToLower();
-                query = query.Where(a =>
-                    a.Email.ToLower().Contains(kw) ||
-                    (a.PhoneNumber != null && a.PhoneNumber.Contains(kw)) ||
-                    (a.Manager != null && a.Manager.DisplayName.ToLower().Contains(kw)) ||
-                    (a.User != null && a.User.FullName.ToLower().Contains(kw))
-                );
-            }
-
-            var totalCount = await query.CountAsync();
-            var items = await query
-                .OrderByDescending(a => a.AccountCreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            var (items, totalCount) = await _userRepository.GetAccountsPagedAsync(keyword, role, page, pageSize);
 
             var dtos = items.Select(a =>
             {
@@ -111,13 +83,7 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task<AdminAccountDetailDto?> GetAccountDetailAsync(int id)
         {
-            var account = await _context.Accounts
-                .Include(a => a.Manager)
-                .Include(a => a.User)
-                    .ThenInclude(u => u!.Instructor)
-                .Include(a => a.Lockouts)
-                .FirstOrDefaultAsync(a => a.AccountId == id);
-
+            var account = await _userRepository.GetAccountByIdAsync(id);
             if (account == null) return null;
 
             string? roleName = "user";
@@ -133,10 +99,7 @@ namespace CourseMarketplaceBE.Application.Services
                 roleName = "instructor";
             }
 
-            var activeLockout = account.Lockouts
-                .Where(l => l.LockoutType == "account")
-                .OrderByDescending(l => l.LockoutEnd)
-                .FirstOrDefault();
+            var activeLockout = await _lockoutRepository.GetActiveLockoutAsync(id, "account");
 
             var dto = new AdminAccountDetailDto
             {
@@ -155,16 +118,19 @@ namespace CourseMarketplaceBE.Application.Services
                 LockoutEnd = activeLockout?.LockoutEnd
             };
 
+            // Nếu là Staff hoặc Admin (Manager)
+            if (account.Manager != null)
+            {
+                dto.ResolvedReportsCount = await _reportRepository.GetResolvedReportsCountAsync(id);
+                dto.SentNotificationsCount = await _notificationRepository.GetSentNotificationsCountAsync(id);
+                dto.ActiveChatsCount = await _chatRepository.GetActiveChatsCountAsync(id);
+            }
+
             // Nếu là Học viên
             if (account.User != null)
             {
-                // Tính tổng tiền chi tiêu mua khóa học (Chỉ lấy giao dịch Thành công của User này)
-                dto.TotalSpent = await _context.Transactions
-                    .Where(t => t.AccountFrom == account.AccountId && t.TransactionsStatus == TransactionStatus.Succeeded.ToValue())
-                    .SumAsync(t => t.Amount);
-
-                dto.EnrolledCoursesCount = await _context.Enrollments
-                    .CountAsync(e => e.UserId == account.AccountId);
+                dto.TotalSpent = await _transactionRepository.GetTotalSpentAsync(id);
+                dto.EnrolledCoursesCount = (await _enrollmentRepository.GetMyEnrolledCoursesAsync(id)).Count;
 
                 // Nếu là Giảng viên
                 var inst = account.User.Instructor;
@@ -179,16 +145,8 @@ namespace CourseMarketplaceBE.Application.Services
                     dto.PayoutsEnabled = inst.PayoutsEnabled;
                     dto.ChargesEnabled = inst.ChargesEnabled;
 
-                    // Doanh thu giảng viên: Tổng tiền các Transactions thành công được chuyển cho giảng viên này
-                    dto.TotalRevenue = await _context.Transactions
-                        .Where(t => t.AccountTo == account.AccountId && t.TransactionsStatus == TransactionStatus.Succeeded.ToValue())
-                        .SumAsync(t => t.Amount);
-
-                    // Số tiền đã rút (payout): Tổng tiền InstructorPayouts có PayoutStatus == "paid"
-                    dto.TotalWithdrawn = await _context.InstructorPayouts
-                        .Where(p => p.InstructorId == account.AccountId && p.PayoutStatus == PayoutStatus.Paid.ToValue())
-                        .SumAsync(p => p.PayoutAmount);
-
+                    dto.TotalRevenue = await _transactionRepository.GetInstructorTotalRevenueAsync(id);
+                    dto.TotalWithdrawn = await _transactionRepository.GetInstructorTotalWithdrawnAsync(id);
                     dto.AvailableBalance = dto.TotalRevenue - dto.TotalWithdrawn;
                 }
             }
@@ -198,82 +156,28 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task<AccountTransactionSummaryDto?> GetAccountTransactionsAsync(int id)
         {
-            var account = await _context.Accounts
-                .Include(a => a.User)
-                .FirstOrDefaultAsync(a => a.AccountId == id);
-
+            var account = await _userRepository.GetAccountByIdAsync(id);
             if (account == null) return null;
 
-            var summary = new AccountTransactionSummaryDto();
-
-            // 1. Payments: Giao dịch thanh toán mua hàng của học viên (hoặc mua khóa học của giảng viên)
-            var payments = await _context.Transactions
-                .Include(t => t.OrderItem)
-                    .ThenInclude(oi => oi!.Course)
-                .Include(t => t.AccountFromNavigation)
-                    .ThenInclude(af => af!.User)
-                .Where(t => (t.AccountFrom == id || t.AccountTo == id) && (t.TransactionType == "payment" || t.TransactionType == null))
-                .OrderByDescending(t => t.TransactionCreatedAt)
-                .ToListAsync();
-
-            summary.Payments = payments.Select(t => new PaymentDto
-            {
-                TransactionId = t.TransactionId,
-                Amount = t.Amount,
-                Status = t.TransactionsStatus,
-                CreatedAt = t.TransactionCreatedAt,
-                StudentName = t.AccountFromNavigation?.User?.FullName ?? t.AccountFromNavigation?.Email ?? "System/Guest",
-                CourseTitle = t.OrderItem?.Course?.Title ?? "Direct / Platform Deposit"
-            }).ToList();
-
-            // 2. Transfers: Giao dịch chuyển đổi nội bộ (sàn chia doanh thu cho giảng viên)
-            var transfers = await _context.Transactions
-                .Include(t => t.OrderItem)
-                    .ThenInclude(oi => oi!.Course)
-                .Where(t => t.AccountTo == id && t.TransactionType == "transfer")
-                .OrderByDescending(t => t.TransactionCreatedAt)
-                .ToListAsync();
-
-            summary.Transfers = transfers.Select(t => new TransferDto
-            {
-                TransactionId = t.TransactionId,
-                Amount = t.Amount,
-                Status = t.TransactionsStatus,
-                CreatedAt = t.TransactionCreatedAt,
-                TransferRate = t.TransferRate,
-                CourseTitle = t.OrderItem?.Course?.Title ?? "Platform Split Share"
-            }).ToList();
-
-            // 3. Payouts: Lịch sử rút tiền về tài khoản ngân hàng của giảng viên (instructor)
-            var payouts = await _context.InstructorPayouts
-                .Where(p => p.InstructorId == id)
-                .OrderByDescending(p => p.PayoutDate)
-                .ToListAsync();
-
-            summary.Payouts = payouts.Select(p => new PayoutDto
-            {
-                PayoutId = p.PayoutId,
-                PayoutAmount = p.PayoutAmount,
-                PayoutStatus = p.PayoutStatus,
-                PayoutDate = p.PayoutDate,
-                StripeTransferId = p.StripeTransferId,
-                StripePayoutId = p.StripePayoutId,
-                PaidToBankAt = p.PaidToBankAt
-            }).ToList();
-
-            return summary;
+            return await _transactionRepository.GetAccountTransactionsSummaryAsync(id);
         }
 
         public async Task<bool> IsEmailExistsAsync(string email)
         {
-            return await _context.Accounts.AnyAsync(a => a.Email.ToLower() == email.ToLower());
+            return await _userRepository.IsEmailExistsAsync(email);
+        }
+
+        public async Task<bool> IsUsernameExistsAsync(string username)
+        {
+            return await _userRepository.IsUsernameExistsAsync(username);
         }
 
         public async Task CreateStaffAsync(CreateStaffRequest request)
         {
             var newAccount = new Account
             {
-                Email = request.Email,
+                Username = request.Username,
+                Email = request.Username, // Use username as email placeholder for staff
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 PhoneNumber = request.PhoneNumber,
                 AvatarUrl = request.AvatarUrl,
@@ -282,14 +186,8 @@ namespace CourseMarketplaceBE.Application.Services
                 IsVerified = true // Auto-verify admin-created staff
             };
 
-            await _context.Accounts.AddAsync(newAccount);
-            int rows1 = await _context.SaveChangesAsync();
-            if (rows1 <= 0)
-                throw new InvalidOperationException("Failed to save changes when creating staff account.");
-
             var newManager = new Manager
             {
-                ManagerId = newAccount.AccountId,
                 Role = "staff",
                 DisplayName = request.DisplayName,
                 FullName = request.FullName,
@@ -298,18 +196,14 @@ namespace CourseMarketplaceBE.Application.Services
                 Bio = request.Bio
             };
 
-            await _context.Managers.AddAsync(newManager);
-            int rows2 = await _context.SaveChangesAsync();
-            if (rows2 <= 0)
-                throw new InvalidOperationException("Failed to save changes when creating staff manager record.");
+            bool success = await _userRepository.RegisterManagerAsync(newAccount, newManager);
+            if (!success)
+                throw new InvalidOperationException("Failed to save changes when creating staff account.");
         }
 
         public async Task<bool> UpdateStaffAsync(int id, UpdateStaffRequest request)
         {
-            var account = await _context.Accounts
-                .Include(a => a.Manager)
-                .FirstOrDefaultAsync(a => a.AccountId == id);
-
+            var account = await _userRepository.GetAccountByIdAsync(id);
             if (account == null || account.Manager == null || account.Manager.Role != "staff")
             {
                 return false;
@@ -346,18 +240,15 @@ namespace CourseMarketplaceBE.Application.Services
                         LockoutStart = DateTime.UtcNow,
                         LockoutEnd = DateTime.UtcNow.AddYears(100)
                     };
-                    await _context.Lockouts.AddAsync(lockout);
+                    await _lockoutRepository.AddAsync(lockout);
                 }
                 else if (request.AccountStatus != AccountStatus.Banned.ToValue() && oldStatus == AccountStatus.Banned.ToValue())
                 {
-                    var activeLockouts = await _context.Lockouts
-                        .Where(l => l.AccountId == account.AccountId && l.LockoutType == "account")
-                        .ToListAsync();
-                    _context.Lockouts.RemoveRange(activeLockouts);
+                    await _lockoutRepository.RemoveAccountLockoutsAsync(account.AccountId);
                 }
             }
 
-            int rows3 = await _context.SaveChangesAsync();
+            int rows3 = await _userRepository.SaveChangesAsync();
             if (rows3 <= 0)
                 throw new InvalidOperationException("Failed to save changes when updating staff.");
             return true;
@@ -365,10 +256,7 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task<string?> ToggleBanAsync(int id, int adminId)
         {
-            var account = await _context.Accounts
-                .Include(a => a.Manager)
-                .FirstOrDefaultAsync(a => a.AccountId == id);
-
+            var account = await _userRepository.GetAccountByIdAsync(id);
             if (account == null) return null;
 
             // Không cho phép tự ban chính mình (Super Admin)
@@ -380,10 +268,7 @@ namespace CourseMarketplaceBE.Application.Services
             if (account.AccountStatus == AccountStatus.Banned.ToValue())
             {
                 account.AccountStatus = AccountStatus.Active.ToValue();
-                var activeLockouts = await _context.Lockouts
-                    .Where(l => l.AccountId == account.AccountId && l.LockoutType == "account")
-                    .ToListAsync();
-                _context.Lockouts.RemoveRange(activeLockouts);
+                await _lockoutRepository.RemoveAccountLockoutsAsync(account.AccountId);
             }
             else
             {
@@ -396,10 +281,10 @@ namespace CourseMarketplaceBE.Application.Services
                     LockoutStart = DateTime.UtcNow,
                     LockoutEnd = DateTime.UtcNow.AddYears(100)
                 };
-                await _context.Lockouts.AddAsync(lockout);
+                await _lockoutRepository.AddAsync(lockout);
             }
 
-            int rows4 = await _context.SaveChangesAsync();
+            int rows4 = await _userRepository.SaveChangesAsync();
             if (rows4 <= 0)
                 throw new InvalidOperationException("Failed to save changes when toggling ban status.");
             return account.AccountStatus;
@@ -407,9 +292,7 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task<(bool Success, int CurrentFlags, string? NewStatus, string? ErrorMessage)> FlagAccountAsync(int id, string reason)
         {
-            var account = await _context.Accounts
-                .Include(a => a.Manager)
-                .FirstOrDefaultAsync(a => a.AccountId == id);
+            var account = await _userRepository.GetAccountByIdAsync(id);
             if (account == null)
             {
                 return (false, 0, null, "Account not found.");
@@ -443,10 +326,10 @@ namespace CourseMarketplaceBE.Application.Services
                     LockoutStart = DateTime.UtcNow,
                     LockoutEnd = DateTime.UtcNow.AddDays(30)
                 };
-                await _context.Lockouts.AddAsync(lockout);
+                await _lockoutRepository.AddAsync(lockout);
             }
 
-            int rows5 = await _context.SaveChangesAsync();
+            int rows5 = await _userRepository.SaveChangesAsync();
             if (rows5 <= 0)
                 throw new InvalidOperationException("Failed to save changes when flagging account.");
 

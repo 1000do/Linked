@@ -98,11 +98,14 @@
                             <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
 
                             @* Wishlist Toggle (Always filled red here) *@
-                            <button type="button" 
-                                    class="absolute top-3 right-3 z-30 w-9 h-9 rounded-full bg-white/90 text-red-500 flex items-center justify-center hover:bg-white hover:scale-110 shadow-sm transition-all duration-300"
-                                    onclick="event.stopPropagation(); toggleWishlist(this, @item.CourseId);">
-                                <span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "FILL" 1;'>favorite</span>
-                            </button>
+                            @if (item.Price > 0)
+                            {
+                                <button type="button" 
+                                        class="absolute top-3 right-3 z-30 w-9 h-9 rounded-full bg-white/90 text-red-500 flex items-center justify-center hover:bg-white hover:scale-110 shadow-sm transition-all duration-300"
+                                        onclick="event.stopPropagation(); toggleWishlist(this, @item.CourseId);">
+                                    <span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "FILL" 1;'>favorite</span>
+                                </button>
+                            }
                         </div>
 
                         @* Card Content *@
@@ -144,18 +147,23 @@
                                         <span class="material-symbols-outlined text-[18px]">check_circle</span>
                                     </div>
                                 }
+                                else if (item.Price == 0)
+                                {
+                                    <button type="button" 
+                                            class="px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:bg-emerald-700 hover:scale-105 active:scale-95 shadow-sm transition-all duration-300 z-20 flex items-center gap-1"
+                                            onclick="event.stopPropagation(); enrollFree(@item.CourseId, this);">
+                                        <span class="material-symbols-outlined text-sm">person_add</span>
+                                        Enroll
+                                    </button>
+                                }
                                 else
                                 {
-                                    <form asp-action="AddToCart" asp-controller="Cart" method="post" class="m-0 z-20">
-                                        <input type="hidden" name="courseId" value="@item.CourseId" />
-                                        <input type="hidden" name="returnUrl" value="/Wishlist" />
-                                        <button type="submit" 
-                                                class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all duration-300"
-                                                onclick="event.stopPropagation();"
-                                                title="Add to Cart">
-                                            <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
-                                        </button>
-                                    </form>
+                                    <button type="button" 
+                                            class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all duration-300 z-20"
+                                            onclick="event.stopPropagation(); addToCart(@item.CourseId, this);"
+                                            title="Add to Cart">
+                                        <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
+                                    </button>
                                 }
                             </div>
                         </div>
@@ -222,16 +230,27 @@
                     ? `<div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm" title="Enrolled">
                             <span class="material-symbols-outlined text-[18px]">check_circle</span>
                        </div>`
-                    : `<form action="/Cart/AddToCart" method="post" class="m-0 z-20">
-                            <input type="hidden" name="courseId" value="${item.CourseId}" />
-                            <input type="hidden" name="returnUrl" value="/Wishlist" />
-                            <button type="submit" 
-                                    class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all duration-300"
-                                    onclick="event.stopPropagation();"
-                                    title="Add to Cart">
-                                <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
-                            </button>
-                       </form>`;
+                    : (item.Price === 0
+                        ? `<button type="button" 
+                                   class="px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:bg-emerald-700 hover:scale-105 active:scale-95 shadow-sm transition-all duration-300 z-20 flex items-center gap-1"
+                                   onclick="event.stopPropagation(); enrollFree(${item.CourseId}, this);">
+                               <span class="material-symbols-outlined text-sm">person_add</span>
+                               Enroll
+                           </button>`
+                        : `<button type="button" 
+                                   class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white hover:scale-110 active:scale-95 shadow-sm transition-all duration-300 z-20"
+                                   onclick="event.stopPropagation(); addToCart(${item.CourseId}, this);"
+                                   title="Add to Cart">
+                               <span class="material-symbols-outlined text-[18px]" style='font-variation-settings:"FILL" 1;'>add_shopping_cart</span>
+                           </button>`);
+
+                const wishlistHtml = item.Price > 0
+                    ? `<button type="button" 
+                               class="absolute top-3 right-3 z-30 w-9 h-9 rounded-full bg-white/90 text-red-500 flex items-center justify-center hover:bg-white hover:scale-110 shadow-sm transition-all duration-300"
+                               onclick="event.stopPropagation(); toggleWishlist(this, ${item.CourseId});">
+                           <span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "FILL" 1;'>favorite</span>
+                       </button>`
+                    : '';
 
                 return `
                     <div class="flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 ease-out-expo group cursor-pointer" 
@@ -243,12 +262,7 @@
                                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out-expo" 
                                  alt="${item.Title}" loading="lazy" />
                             <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
-
-                            <button type="button" 
-                                    class="absolute top-3 right-3 z-30 w-9 h-9 rounded-full bg-white/90 text-red-500 flex items-center justify-center hover:bg-white hover:scale-110 shadow-sm transition-all duration-300"
-                                    onclick="event.stopPropagation(); toggleWishlist(this, ${item.CourseId});">
-                                <span class="material-symbols-outlined text-[20px]" style='font-variation-settings: "FILL" 1;'>favorite</span>
-                            </button>
+                            ${wishlistHtml}
                         </div>
 
                         <div class="p-6 flex flex-col flex-grow">
@@ -276,8 +290,11 @@
                             </div>
                         </div>
                     </div>
-                `;
             }).join('');
+
+            if (typeof updateCartButtons === 'function') {
+                updateCartButtons();
+            }
         }
 
         function applyWishlistFilters() {

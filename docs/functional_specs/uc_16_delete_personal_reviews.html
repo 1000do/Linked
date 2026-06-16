@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-16 - Delete Personal Reviews</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.17.3. Delete Personal Reviews</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor clicks the "Delete" button on a review they previously submitted.</p>
+
+    <p><strong>Function Description:</strong> Allows users to delete the course reviews they have previously submitted.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be authenticated.</li>
+            <li>Actor must be the author of the review.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Delete Personal Review Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the Course Details page (or Course Player page) where their review is displayed.</li>
+                    <li>Actor clicks the "Delete" button on their own review card.</li>
+                    <li>The system displays a confirmation popup dialog.</li>
+                    <li>Actor clicks the "Yes, delete it" button.</li>
+                    <li>The system checks the actor's session authentication.</li>
+                    <li>The system checks if the review is currently under moderation review.</li>
+                    <li>The system checks if the actor is the owner of the review.</li>
+                    <li>The system soft-deletes the review in the database.</li>
+                    <li>The system displays a success notification indicating the review has been deleted.</li>
+                    <li>The system dynamically reloads the reviews list and updates rating statistics.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The review is soft-deleted in the database.</li>
+            <li>The reviews list and rating statistics are updated dynamically.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            <li><strong>Review Under Moderation:</strong> The system detects that the review has an active pending moderation report. The system displays an alert message indicating that the review is currently under moderation review and cannot be deleted. The flow terminates.</li>
+            <li><strong>Unauthorized Access:</strong> The system detects that the actor is not the author of the review. The system displays an error message indicating that they can only delete their own reviews. The flow terminates.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Self-Ownership Only:</strong> An actor can only delete reviews they have authored.</li>
+            <li><strong>Moderation Block:</strong> If a review has an active pending moderation report, deletion is blocked until the moderation report is resolved.</li>
+            <li><strong>Soft Delete:</strong> Deletion is implemented as a soft-delete (setting `IsRemoved = true` and updating status to "removed" in the database). It does not permanently delete the record.</li>
+            <li><strong>Rating Statistics Recalculation:</strong> Upon successful deletion, the overall rating average and counts are dynamically recalculated to exclude the deleted review.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

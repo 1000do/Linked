@@ -1,0 +1,151 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Setup Payout (Stripe Onboarding)
+actor Instructor as act
+
+participant "ApplicationStatus.cshtml" as view
+participant "InstructorController" as fe_ctrl <<frontend controller>>
+participant "InstructorController" as be_ctrl <<backend controller>>
+participant ":InstructorService" as sv
+participant ":InstructorRepository" as repo
+participant "Stripe API" as stripe
+participant ":AppDbContext" as ctx
+database Database as db
+
+== Phase 1: Request Setup and Redirect ==
+act++
+act->view++: Click "Setup Stripe Payout" button
+view->fe_ctrl++: Send POST /Instructor/SetupPayout
+
+fe_ctrl->be_ctrl++: Send POST /api/instructor/setup-payout (with Bearer Token)
+
+be_ctrl->sv++: Call SetupStripePayoutAsync(userId)
+sv->repo++: Call GetByIdAsync(userId)
+repo->ctx++: Query Instructor details
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return Instructor
+ctx-->>repo--: Return Instructor
+repo-->>sv--: Return Instructor
+
+alt [Instructor StripeAccountId is empty]
+    sv->stripe++: Create Stripe Custom Express Account
+    stripe-->>sv--: Return Stripe Account ID
+    sv->repo++: Call UpdateInstructorAsync(instructor)
+    repo->ctx++: Mark Instructor as modified
+    ctx-->>repo--: Return
+    repo-->>sv--: Return
+end
+
+sv->stripe++: Create Stripe Account Link (Onboarding URL)
+stripe-->>sv--: Return Stripe Account Link Object
+
+sv->repo++: Call SaveChangesAsync()
+repo->ctx++: Call SaveChangesAsync()
+ctx->db++: Execute UPDATE statement
+db-->>ctx--: Return result
+ctx-->>repo--: Return numberOfRowsAffected
+repo-->>sv--: Return numberOfRowsAffected
+
+repo->repo++: Check numberOfRowsAffected
+repo--
+
+alt [numberOfRowsAffected > 0]
+    repo-->>sv: Return true
+    sv-->>be_ctrl--: Return onboarding link & account details
+    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with url JSON
+    fe_ctrl-->>view--: Redirect User to Stripe Onboarding Url
+    view-->>act--: Redirected to Stripe setup page
+else [numberOfRowsAffected = 0]
+    repo-->>sv--: Return false
+    sv->sv++: throw InvalidOperationException
+    sv--
+    sv-->>be_ctrl--: throw InvalidOperationException
+    be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view--: Return statusCode 400
+    view-->>act--: Display setup payout failed error message
+end
+
+== Phase 2: Setup Callback (Return) ==
+stripe->act++: Fills details and submits Stripe form
+act->fe_ctrl++: Redirected to GET /Instructor/StripeReturn?instructorId=...
+
+fe_ctrl->be_ctrl++: Send GET /api/instructor/stripe-return?instructorId=... (with Bearer Token)
+
+be_ctrl->sv++: Call VerifyStripeOnboardingAsync(instructorId)
+sv->stripe++: Retrieve Stripe Account details
+stripe-->>sv--: Return Account object (payouts_enabled, charges_enabled)
+
+sv->sv++: Check if payouts_enabled && charges_enabled
+sv--
+
+alt [Onboarding Complete]
+    sv->repo++: Update Instructor (StripeOnboardingStatus = "Active", PayoutsEnabled = true)
+    repo->ctx++: Mark Instructor as modified
+    ctx-->>repo--: Return
+    repo-->>sv--: Return
+else [Onboarding Incomplete]
+    sv->repo++: Update Instructor (StripeOnboardingStatus = "Pending", PayoutsEnabled = false)
+    repo->ctx++: Mark Instructor as modified
+    ctx-->>repo--: Return
+    repo-->>sv--: Return
+end
+
+sv->repo++: Call SaveChangesAsync()
+repo->ctx++: Call SaveChangesAsync()
+ctx->db++: Execute UPDATE statement
+db-->>ctx--: Return result
+ctx-->>repo--: Return numberOfRowsAffected
+repo-->>sv--: Return numberOfRowsAffected
+
+repo->repo++: Check numberOfRowsAffected
+repo--
+
+alt [numberOfRowsAffected > 0]
+    repo-->>sv: Return true
+    sv-->>be_ctrl--: Return stripeStatus
+    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+    
+    alt [stripeStatus == "Active"]
+        fe_ctrl->fe_ctrl++: Save Cookie "UserRole" = "instructor"
+        fe_ctrl--
+        fe_ctrl-->>view: Redirect to ApplicationStatus with Success message
+    else [stripeStatus == "Pending"]
+        fe_ctrl-->>view: Redirect to ApplicationStatus with Error message
+    end
+    view-->>act--: Display updated payout status on Dashboard
+else [numberOfRowsAffected = 0]
+    repo-->>sv--: Return false
+    sv->sv++: throw InvalidOperationException
+    sv--
+    sv-->>be_ctrl--: throw InvalidOperationException
+    be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view--: Return statusCode 400
+    view-->>act--: Display Stripe callback failed error message
+end
+@enduml

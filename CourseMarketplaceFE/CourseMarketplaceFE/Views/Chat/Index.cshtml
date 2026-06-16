@@ -227,7 +227,7 @@
         // 2. Load danh sách chat
         let allChats = [];
         let defaultChats = [];
-        let searchDebounceTimer;
+        let chatSearchDebounceTimer;
 
         function renderChatList(chats) {
             const container = document.getElementById('chat-list');
@@ -244,14 +244,14 @@
 
             container.innerHTML = chats.map(c => `
                 <div class="chat-card ${activeChatId === c.chatId ? 'active' : ''}" 
-                     onclick="selectChat(${c.chatId}, '${c.partnerName.replace(/'/g, "\\'")}', '${c.partnerAvatar}', ${c.isOnline})">
+                     onclick="selectChat(${c.chatId}, '${(c.partnerName || 'Support Team').replace(/'/g, "\\'")}', '${c.partnerAvatar || ''}', ${c.isOnline})">
                     <div class="avatar-wrapper">
                         <img src="${c.partnerAvatar || '/img/default-avatar.png'}" class="avatar-img" onerror="this.src='/img/default-avatar.png'">
                         ${c.isOnline ? '<div class="status-dot" style="background: #10b981"></div>' : ''}
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="text-sm font-bold m-0 truncate">${c.partnerName}</h6>
+                            <h6 class="text-sm font-bold m-0 truncate">${c.partnerName || 'Support Team'}</h6>
                             <span class="text-[10px] text-slate-400">${c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-1">
@@ -312,8 +312,8 @@
                 return;
             }
             
-            clearTimeout(searchDebounceTimer);
-            searchDebounceTimer = setTimeout(async () => {
+            clearTimeout(chatSearchDebounceTimer);
+            chatSearchDebounceTimer = setTimeout(async () => {
                 const currentQuery = document.getElementById('search-chats').value.trim();
                 if (!currentQuery) return;
                 

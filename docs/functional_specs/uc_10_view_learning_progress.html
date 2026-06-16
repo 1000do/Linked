@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-10 - View Learning Progress</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.7. View Learning Progress</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor accesses the enrolled courses page or accesses the course player/learning page.</p>
+
+    <p><strong>Function Description:</strong> Allows Users and Instructors to track learning progress for enrolled or owned courses. Actors can view progress percentages on their enrolled courses dashboard, continue learning in the course player, view videos, read text documents, download learning materials, and automatically update their progress checks. When all materials are completed, the course is marked as completed.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be authenticated.</li>
+            <li>Actor must be enrolled in the course, or be the owner (Instructor) of the course.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>View Course Progress Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the "My Enrolled Courses" page.</li>
+                    <li>The system checks the actor's session authentication.</li>
+                    <li>The system retrieves the list of courses the actor is enrolled in.</li>
+                    <li>For each course, the system retrieves the total material count and the completed material count.</li>
+                    <li>For each course, the system calculates the progress percentage.</li>
+                    <li>The system displays the enrolled courses page showing the course title, instructor, thumbnail, progress percentage, completion status, and action buttons.</li>
+                    <li>Actor clicks the "Continue learning" button (or "Review" button if the course is completed) on a course card.</li>
+                    <li>The system retrieves the course details (lessons and learning materials).</li>
+                    <li>The system validates the actor's enrollment status or course ownership.</li>
+                    <li>The system retrieves the actor's learning progress for this course, including completed material IDs.</li>
+                    <li>The system calculates the overall completion percentage.</li>
+                    <li>The system displays the course player showing the media viewer, the overall progress percentage and progress bar in the header, and checkmarks next to completed items in the syllabus sidebar.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>Detailed course list with progress percentage, completion status, and navigation controls is displayed.</li>
+            <li>Overall progress percentage and completion bar are rendered in the course player header.</li>
+            <li>Checkmark icons are displayed next to completed learning materials in the player's curriculum sidebar.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            <li><strong>Access Denied (Not Enrolled):</strong> The system detects the actor is not enrolled in the course and is not the course owner. The system redirects the actor to the error page.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Progress Calculation:</strong> Course progress percentage is calculated as (Completed Materials / Total Materials) * 100, rounded to 1 decimal place.</li>
+            <li><strong>Video Completion Trigger:</strong> A video material is marked as completed only when the video playback reaches the end ("onended" event).</li>
+            <li><strong>Document/Text Completion Trigger:</strong> A text document (".txt") is marked as completed immediately upon viewing. Other downloadable resources are marked as completed when the User clicks the download button.</li>
+            <li><strong>Course Completion State:</strong> When all learning materials in a course are marked as completed, the system automatically sets the enrollment status IsCompleted = true and updates the completion date in the database.</li>
+            <li><strong>Instructor Bypass:</strong> Course owners/instructors can access the Course Player ("Learn" page) for preview, and their progress is treated as 100% completed virtual progress without writing completions to the database.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>
