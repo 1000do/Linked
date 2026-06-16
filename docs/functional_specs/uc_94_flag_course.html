@@ -1,0 +1,93 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-94 - Flag Course for Content Violation</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.4.7. Flag Course for Content Violation</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor clicks the "Flag" button on a course row in the moderation list.</p>
+
+    <p><strong>Function Description:</strong> Flags a course for content or policy violations, hiding it from public display.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be authenticated.</li>
+            <li>Actor must have staff or admin role.</li>
+            <li>The course status must be pending, approved/published, rejected, or archived.</li>
+            <li>The course's current flag count must be less than 3.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Flag Course for Content Violation Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the Course Moderation Page.</li>
+                    <li>Actor locates the course in the moderation list.</li>
+                    <li>Actor clicks the "Flag" button on the corresponding course row.</li>
+                    <li>The system displays a flag violation warning dialog containing a text field for the violation description.</li>
+                    <li>Actor enters the violation description.</li>
+                    <li>Actor clicks the "Confirm Flag" button.</li>
+                    <li>The system checks the course's current flag count.</li>
+                    <li>The system increments the flag count by 1 in the database.</li>
+                    <li>The system sets the course's "ModerationFeedback" containing the flag count and the violation description.</li>
+                    <li>The system updates the course's modified date.</li>
+                    <li>The system checks if the new flag count has reached 3.</li>
+                    <li>The system sends a policy warning notification (Strike 1 or 2) to the instructor.</li>
+                    <li>The system saves the changes in the database.</li>
+                    <li>The system clears the course details cache.</li>
+                    <li>The system updates the moderation page stats and dims the flagged course row.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The course's flag count is incremented by 1 in the database.</li>
+            <li>The instructor receives a warning or discontinuation notification.</li>
+            <li>If flag count reaches 3, the course status is updated to "archived" (Permanently Locked).</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            <li><strong>Unauthorized Access:</strong> The system detects that the actor does not have staff or admin roles. The system displays an access denied page or error message. The flow terminates.</li>
+            <li><strong>.1 Empty Input Validation:</strong> The system detects that the violation description text field is empty. The system displays an error message indicating a violation reason is required. The system halts submission. Back to step 5.</li>
+            <li><strong>Flag Lockout:</strong> The system detects that the course's flag count is already 3 or more. The system displays an error message indicating the course is already permanently locked. The flow terminates.</li>
+            <li><strong>Database Save Failure:</strong> The database fails to commit changes. The system displays a system error message. The flow terminates.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Flag Count Limit:</strong> A course can have a maximum of 3 flags. Flag count cannot exceed 3.</li>
+            <li><strong>Strike Warnings:</strong> <ul>
+                            <li><b>Strike 1 (1st Flag):</b> Sends notification "Course Violation Reminder (1st Time)". The course is temporarily hidden. Instructor is reminded to review and comply.</li>
+                            <li><b>Strike 2 (2nd Flag):</b> Sends notification "Severe Violation Warning (2nd Time)". Course remains hidden. Warning that 3rd flag leads to permanent lock.</li>
+                            <li><b>Strike 3 (3rd Flag):</b> Sends notice "Permanent Course Discontinuation Notice (3rd Time)". Status changes to "archived" (Permanently Locked). Instructor is blocked from editing, and no new enrollments are allowed.</li>
+                        </ul></li>
+            <li><strong>Notification Link:</strong> The rejection notification sent to the instructor contains a link redirecting to the course editor "/InstructorCourse/Editor?id={courseId}".</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

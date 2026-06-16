@@ -1,0 +1,87 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-56 - Remove Lessons</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.15. Remove Lessons</strong></p>
+
+    <p><strong>Function Trigger:</strong> Instructor clicks the "Remove Lesson" icon for a lesson in the course syllabus.</p>
+
+    <p><strong>Function Description:</strong> Allows an instructor to remove an existing lesson from a course. The system requires confirmation, validates business rules (such as pending or archived statuses), soft deletes the lesson and its associated materials, and moves any cloud materials to the trash folder.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>User must be successfully authenticated as an approved instructor.</li>
+            <li>The course must exist and belong to the active instructor.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Remove Lesson Successfully:</strong>
+                <ul>
+                    <li>Instructor accesses the course editor.</li>
+                    <li>Instructor clicks the "Remove Lesson" icon for a lesson.</li>
+                    <li>The system displays a confirmation modal.</li>
+                    <li>Instructor clicks the "Delete" button.</li>
+                    <li>The system validates the instructor's rights.</li>
+                    <li>The system validates the course status.</li>
+                    <li>The system moves associated cloud materials to the trash folder.</li>
+                    <li>The system updates the materials' learning status to removed.</li>
+                    <li>The system updates the lesson status to removed, updates the course status to draft, and clears previous moderation feedback in the database.</li>
+                    <li>The system invalidates the cached course data.</li>
+                    <li>The system displays a success message.</li>
+                    <li>The system removes the lesson from the UI curriculum list.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The lesson and its associated materials are marked as removed.</li>
+            <li>Associated cloud materials are moved to the trash folder.</li>
+            <li>If the course was previously published, its status is reverted to draft and moderation feedback is cleared.</li>
+            <li>Stale cache data is cleared.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>.1 Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+            <li><strong>.2 Lesson Not Found:</strong> The system halts execution and displays a lesson not found error message.</li>
+            <li><strong>Invalid Instructor Rights:</strong> The system detects the instructor is unauthorized to modify this lesson or has an active lockout status. The system displays an error message regarding invalid instructor rights. Back to step 2.</li>
+            <li><strong>Invalid Course Status:</strong> The system detects the course is pending review or is permanently archived due to policy violations. The system displays an error message regarding invalid course status. Back to step 2.</li>
+            <li><strong>Database Save Failed:</strong> The system fails to save the lesson changes to the database. The system displays a database transaction failure message. Back to step 2.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Locked Out Instructor Rights:</strong> Instructors with an active lockout status are prohibited from submitting courses for review or changing course status.</li>
+            <li><strong>Pending Review Modification Lock:</strong> Learning materials and lessons cannot be added, edited, or removed if the course is currently in 'Pending' review status.</li>
+            <li><strong>Permanently Discontinued Block:</strong> A course that is 'archived' and has 3 or more flags is considered permanently discontinued due to policy violations and cannot have its status changed or be edited.</li>
+            <li><strong>Lesson Soft Deletion:</strong> Deleting a lesson soft-deletes the lesson record and all its associated materials (IsRemoved = true) in the database, and moves physical cloud files to the trash.</li>
+            <li><strong>Syllabus Change Reversion:</strong> Adding or removing lessons and materials, or editing their content, in a 'Published' course automatically changes the course status back to 'Draft' and clears any existing moderation feedback.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

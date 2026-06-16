@@ -1,0 +1,87 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-53 - Edit Courses</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.12. Edit Courses</strong></p>
+
+    <p><strong>Function Trigger:</strong> Instructor clicks the "edit" icon of a course from his/her course list.</p>
+
+    <p><strong>Function Description:</strong> Allows instructors to modify details of their courses (title, description, category, price, requirements, and promotional thumbnails) with integrated automatic debounced saving and content security hashing.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>User must be successfully authenticated as an approved Instructor.</li>
+            <li>The course must exist in the database and belong to the active Instructor's Account ID.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Edit Course Details Successfully:</strong>
+                <ul>
+                    <li>Instructor accesses the course editor.</li>
+                    <li>Instructor modifies the course details.</li>
+                    <li>The system triggers a brief debounce delay.</li>
+                    <li>The system validates the form inputs.</li>
+                    <li>The system validates the instructor's rights.</li>
+                    <li>The system validates the course status.</li>
+                    <li>The system retrieves the thumbnail from the Cloud Storage Service.</li>
+                    <li>The system computes the course fingerprint hashes.</li>
+                    <li>The system saves the updated course details and fingerprint hashes in the database.</li>
+                    <li>The system invalidates the cached course data.</li>
+                    <li>The system displays a success message.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>Course details are updated in the primary course tables.</li>
+            <li>Content hashes are computed and updated in the secondary table.</li>
+            <li>The stale Redis cache for this course is invalidated.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>.1 Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+            <li><strong>.2 Course Not Found:</strong> The system displays a course not found error message. The system redirects the user back to the course list page.</li>
+            <li><strong>Invalid Instructor Rights:</strong> The system detects the instructor is unauthorized to edit this course or has an active lockout status. The system displays an error message regarding invalid instructor rights. Back to step 1.</li>
+            <li><strong>Invalid Course Status:</strong> The system detects the course is pending review or is permanently discontinued due to policy violations. The system displays an error message regarding invalid course status. Back to step 1.</li>
+            <li><strong>File Upload Failed:</strong> The system fails to upload the thumbnail file to the Cloud Storage Service. The system displays a file upload error message. Back to step 2.</li>
+            <li><strong>Duplicate Course Content Detected:</strong> The system detects a duplication in course content using the computed fingerprint. The system displays an error message regarding content duplication. Back to step 2.</li>
+            <li><strong>Database Save Failed:</strong> The system fails to save the course updates or fingerprint hashes to the database. The system displays a database transaction failure message. Back to step 2.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Debounce Optimization:</strong> Auto-saving uses a 1.5-second debounce delay to prevent database spamming during rapid typing.</li>
+            <li><strong>Draft Reversion:</strong> To ensure content integrity, any edits made to an already "published" course will automatically degrade its status back to "draft", requiring a new moderation review submission and clearing previous moderation feedback.</li>
+            <li><strong>Stripe Payout Connectivity:</strong> Instructors must connect and activate their Stripe accounts to set premium prices. If Stripe is disconnected or inactive, the course price is locked to 0.00 (Free).</li>
+            <li><strong>Locked Out Instructor Rights:</strong> Instructors with an active lockout status are prohibited from submitting courses for review or changing course status.</li>
+            <li><strong>Content Integrity Hashing:</strong> Textual details and the thumbnail file are hashed using MD5 and stored as a unique fingerprint to prevent duplication and support anti-plagiarism tracking.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

@@ -1,0 +1,664 @@
+<div class="uc-container" style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <style>
+        .uc-container, .uc-container table, .uc-container tr, .uc-container td, .uc-container th, .uc-container p, .uc-container span, .uc-container strong, .uc-container b {
+            font-family: 'Times New Roman', serif !important;
+            font-size: 12pt !important;
+            color: black !important;
+        }
+    </style>
+    <p style="margin: 0 0 10px 0;"><strong>Business Rules Summary (Bản tiếng Việt)</strong></p>
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <thead>
+            <tr style="background-color: #f2f2f2;">
+                <th style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top; width: 15%;"><strong>ID</strong></th>
+                <th style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top; width: 85%;"><strong>Rule Definition</strong></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-1</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Universal Form Data Validation:</strong> Tất cả các trường dữ liệu biểu mẫu được gửi lên phải vượt qua các ràng buộc nghiêm ngặt về kiểu dữ liệu, định dạng, độ dài và giá trị (ví dụ: mô tả báo cáo vi phạm phải có ít nhất 20 ký tự, và ngưỡng tin cậy phải là số thập phân nằm trong khoảng từ 0.01 đến 1.0) trước khi hệ thống xử lý yêu cầu gửi.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-2</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unique Reasons:</strong> Người dùng không thể chọn cùng một lý do báo cáo vi phạm nhiều hơn một lần trong một lần gửi duy nhất.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-3</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Reason Selection:</strong> Một lý do vi phạm hợp lệ (Spam, Offensive, Fake, Other) phải được chọn trước khi gửi.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-4</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Duplicate Report Prevention:</strong> Người dùng không thể báo cáo vi phạm cùng một đánh giá với cùng một lý do nếu báo cáo trước đó của họ vẫn đang trong trạng thái chờ xử lý (pending).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-5</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Stripe Link Limits:</strong> Giảng viên chưa kích hoạt hồ sơ Stripe Connect chỉ được phép xuất bản tối đa 2 khóa học với tổng thời lượng nội dung video không quá 30 phút.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-6</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Free Course Video Ceiling:</strong> Các khóa học có giá bằng 0 giới hạn tối đa 60 phút nội dung video. Khóa học trả phí yêu cầu cấu hình Stripe Connect đang hoạt động.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-7</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Content Re-activation:</strong> Khi gửi lại khóa học, hệ thống sẽ tự động đặt lại trạng thái của các bài học và tài liệu đã bị từ chối trước đó về trạng thái hoạt động (active) để quản trị viên duyệt lại.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-8</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Locked Out Instructor Rights:</strong> Giảng viên đang trong trạng thái bị khóa tài khoản (lockout) bị cấm gửi khóa học để kiểm duyệt hoặc thay đổi trạng thái khóa học.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-9</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default View — Course Reports:</strong> Trung tâm Báo cáo (Report Center) luôn mở với tab Báo cáo Khóa học (Course Reports) và bộ lọc trạng thái "Chờ xử lý" (Pending) được chọn làm mặc định.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-10</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Access Control — Report Center:</strong> Chỉ các tác nhân Nhân viên (Staff) và Quản trị viên (Admin) đã xác thực mới được phép truy cập Trung tâm Báo cáo.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-11</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Status Badges:</strong> Các trạng thái báo cáo (Pending, Resolved, Rejected, Escalated) được phân biệt trực quan bằng các nhãn trạng thái cụ thể.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-12</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Action Availability:</strong> Nút hành động "Moderate" (Kiểm duyệt) chỉ hiển thị cho các báo cáo ở trạng thái Pending, Under Review hoặc Escalated. Tất cả các trạng thái khác sẽ hiển thị nút "Info" (Thông tin) để thay thế.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-13</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Staff Escalation Limitation:</strong> Nhân viên (Staff) không thể kiểm duyệt các báo cáo đã chuyển cấp (Escalated). Chỉ có Quản trị viên (Admin) mới có quyền kiểm duyệt các báo cáo ở trạng thái Escalated.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-14</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default View — Course Reviews Subtab:</strong> Khi truy cập vào tab Báo cáo Đánh giá (Review Reports), hệ thống sẽ mặc định hiển thị tab phụ "Đánh giá Khóa học" (Course Reviews) kèm theo bộ lọc trạng thái "Chờ xử lý" (Pending) được áp dụng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-15</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Adaptive Moderation/Detail Popup UI:</strong> Cửa sổ kiểm duyệt và thông tin chi tiết sẽ tự động điều chỉnh tiêu đề, các trường dữ liệu, nhãn và thuật ngữ hành động (ví dụ: "Flag Course" so với "Remove content") tùy thuộc vào việc đối tượng đang xem/kiểm duyệt là một khóa học hay một đánh giá.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-16</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Resolution Visibility:</strong> Chi tiết giải quyết (Người kiểm duyệt, Thời gian giải quyết, Ghi chú giải quyết) chỉ hiển thị đối với các báo cáo có trạng thái đã giải quyết (resolved) hoặc bị từ chối (rejected).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-17</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Independent Status Filters:</strong> Bộ lọc trạng thái trong tab Báo cáo Khóa học duy trì trạng thái độc lập của riêng nó so với bộ lọc trạng thái trong tab Báo cáo Đánh giá.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-18</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Subtab Filter Retention:</strong> Khi chuyển đổi giữa các tab phụ "Đánh giá Khóa học" (Course Reviews) và "Đánh giá Bài học" (Lesson Reviews), bộ lọc trạng thái đang hoạt động sẽ được giữ lại và áp dụng cho loại phụ mới được chọn.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-19</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Universal Empty State Display:</strong> Bất cứ khi nào thao tác tải danh sách không trả về bản ghi nào (do cơ sở dữ liệu trống hoặc do điều kiện lọc đang áp dụng), hệ thống sẽ hiển thị một thông báo danh sách trống thân thiện với người dùng thay vì một bảng trống hoặc một khung chứa danh sách trống.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-20</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Escalation Restriction:</strong> Nhân viên (Staff) có thể chọn tùy chọn "Chuyển cấp lên Quản trị viên cấp cao" (Escalate to Senior Admin). Quản trị viên (Admin) không thấy tùy chọn này vì họ đã là cấp xử lý cao nhất.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-21</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Action Limitations:</strong> Hộp kiểm "Đánh dấu Khóa học / Gỡ bỏ nội dung" (Flag Course / Remove content) chỉ được kích hoạt khi Trạng thái Giải quyết (Resolution Status) được đặt thành "Chấp nhận Báo cáo" (Accept Report). Việc thay đổi trạng thái sẽ tự động xóa và vô hiệu hóa hộp kiểm này.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-22</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Strike System:</strong> Khi một báo cáo khóa học được chấp nhận với nút bật "Đánh dấu Khóa học" (Flag Course) được chọn: Vi phạm (Strike) lần 1-2 sẽ gửi cảnh báo đến giảng viên; Vi phạm lần 3 sẽ lưu trữ vĩnh viễn khóa học và áp dụng lệnh khóa tài khoản giảng viên nghiêm ngặt trong 30 ngày.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-23</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Review Penalty System:</strong> Khi một báo cáo đánh giá được chấp nhận với tùy chọn "Gỡ bỏ nội dung" (Remove content) được chọn: Vi phạm (Strike) lần 1 sẽ gửi cảnh báo; Vi phạm lần 2 áp dụng lệnh cấm đánh giá vừa phải trong 7 ngày; Vi phạm lần 3 áp dụng lệnh cấm toàn bộ tài khoản nghiêm ngặt trong 30 ngày và chấm dứt các phiên đăng nhập đang hoạt động.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-24</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Implicit Refresh:</strong> Hành động kiểm duyệt thành công sẽ tự động kích hoạt tính năng làm mới ngầm danh sách báo cáo hiện tại và số liệu thống kê tổng thể.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-25</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Admin Authorization for AI Services:</strong> Chỉ có tác nhân Quản trị viên (Admin) đã được xác thực mới được ủy quyền truy cập và thực hiện hành động trong phân hệ Quản lý Mô hình và Dịch vụ AI (bao gồm thêm/cập nhật mô hình, bật/tắt trạng thái, xem chi tiết/danh sách, định cấu hình ngưỡng và xem nhật ký hoạt động).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-26</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>List Sorting and Ordering:</strong> Các danh sách quản trị (chẳng hạn như danh sách mô hình AI và nhật ký hoạt động) được sắp xếp theo thứ tự giảm dần của mốc thời gian mới nhất (ngày sửa đổi cuối cùng đối với mô hình, ngày tạo đối với nhật ký), đảm bảo hiển thị các mục mới nhất trước.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-27</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Pre-populated Data:</strong> Chi tiết mô hình hiển thị trong cửa sổ bật lên (popup) được lấy từ dữ liệu được tích hợp sẵn trong trang trong lần kết xuất (render) ban đầu; không có yêu cầu bổ sung nào được gửi lên máy chủ khi nhấp chuột.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-28</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Universal List Pagination:</strong> Tất cả các thao tác lấy danh sách hiển thị dữ liệu dạng bảng hoặc dạng lưới phải hiển thị số lượng mục giới hạn trên mỗi trang kèm theo các nút điều khiển phân trang.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-29</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Subtab — Activity Log:</strong> Danh mục kiểm duyệt khóa học được hiển thị mặc định khi tab nhật ký được mở.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-30</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Status Default:</strong> Trạng thái mô hình mặc định là hoạt động (active) khi được tạo mới.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-31</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Status Toggle:</strong> Chuyển đổi một mô hình đang hoạt động sẽ chuyển trạng thái của nó thành không hoạt động (inactive); chuyển đổi một mô hình không hoạt động sẽ khôi phục nó về trạng thái hoạt động.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-32</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Read Status Sync:</strong> Việc xem cửa sổ chi tiết của thông báo sẽ tự động đánh dấu thông báo đó là đã đọc trong cơ sở dữ liệu và cập nhật trạng thái trên giao diện người dùng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-33</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Ownership Constraint:</strong> Người dùng hoặc giảng viên chỉ có thể đánh dấu các thông báo do chính họ nhận được là đã đọc.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-34</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Confirmation Prompt:</strong> Việc xóa thông báo yêu cầu xác nhận qua một hộp thoại để tránh việc vô tình xóa.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-35</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Cart in list:</strong> Giá các mặt hàng trong giỏ hàng phải phản ánh đúng giá hiện tại trong cơ sở dữ liệu, bao gồm cả bất kỳ chương trình giảm giá đang hoạt động nào của nền tảng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-36</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default View:</strong> Theo mặc định, tất cả các cuộc trò chuyện đang hoạt động sẽ được tải và hiển thị theo thứ tự sắp xếp "Hoạt động gần đây" (tin nhắn cuối cùng mới nhất nằm ở trên cùng).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-37</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Online Status Indicator:</strong> Một chấm xanh lá cây được hiển thị trên ảnh đại diện của đối phương nếu họ hiện đang kết nối với trung tâm trò chuyện (chat hub).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-38</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Sender Peer Constraint:</strong> Nhân viên (Staff) và Quản trị viên (Admin) không thể gửi thông báo cho chính họ. Thành viên nhân viên bị chặn gửi thông báo cho nhân viên hoặc quản trị viên khác.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-39</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Recipient Selection Required:</strong> Nếu nhóm đối tượng nhận là "Người dùng cụ thể" (Specific User), phải chỉ định ít nhất một thẻ email hợp lệ.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-40</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto Read State Synchronization:</strong> Nếu một nhân viên (Staff) xem một thông báo chưa đọc được gửi riêng cho họ, hệ thống phải kích hoạt chuyển đổi trạng thái thành "Đã đọc" (Read). Quản trị viên hoặc nhân viên khác khi xem thông báo đó sẽ không kích hoạt quá trình chuyển đổi này.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-41</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Verified Email Constraint:</strong> Chỉ các tác nhân có địa chỉ email đã được xác minh mới được phép thêm sản phẩm vào giỏ hàng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-42</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Purchase and Ownership Restrictions:</strong> Một tác nhân không thể thêm các khóa học của chính họ (nơi họ là giảng viên) hoặc đã</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-43</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Item Uniqueness:</strong> Một khóa học chỉ có thể được thêm vào giỏ hàng của tác nhân một lần.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-44</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Price Recalculation:</strong> Việc xóa một mặt hàng phải ngay lập tức kích hoạt tính toán lại giá tạm tính, chiết khấu và tổng cộng của giỏ hàng, đồng thời cập nhật mọi phiếu giảm giá đã áp dụng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-45</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Personal Cleared History:</strong> Việc xóa lịch sử trò chuyện chỉ đặt mốc thời gian đã xóa cho người tham gia đang thao tác. Lịch sử cuộc trò chuyện vẫn được giữ nguyên vẹn và hiển thị đối với những người tham gia khác.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-46</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Real-Time Synchronization:</strong> Trạng thái nhập tin nhắn (typing), trạng thái trực tuyến và việc truyền tin nhắn được cập nhật tức thì qua các hàm gọi lại (callback) SignalR.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-47</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Role promotion:</strong> Việc phê duyệt đơn đăng ký sẽ kích hoạt nâng cấp vai trò của người dùng mục tiêu từ "Người dùng" (User) lên "Giảng viên" (Instructor).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-48</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Rejection Reason Required:</strong> Bắt buộc phải điền lý do từ chối bằng văn bản không trống trước khi có thể từ chối đơn đăng ký làm giảng viên.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-49</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Public Visibility:</strong> Danh sách khóa học chỉ hiển thị các khóa học hiện đang được xuất bản (published). Các khóa học nháp (draft), đang chờ duyệt (pending), bị từ chối (rejected), đã lưu trữ (archived) hoặc bị khóa (locked) đều bị loại khỏi danh sách công khai.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-50</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Wishlist Sync:</strong> Biểu tượng trái tim trong danh sách yêu thích phản ánh trạng thái danh sách yêu thích hiện tại của Người dùng đã đăng nhập theo thời gian thực, hiển thị một trái tim màu đỏ được tô đầy cho các khóa học có trong danh sách yêu thích và ngược lại là biểu tượng chưa được tô.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-51</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Cart Status Integration:</strong> Nếu Người dùng đã đăng nhập đã mua/đăng ký một khóa học, nút "Thêm vào giỏ hàng" (Add to cart) sẽ được thay thế bằng biểu tượng dấu tích để tránh việc mua trùng lặp.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-52</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Debounced Live Search:</strong> Việc lọc từ khóa theo thời gian thực được trì hoãn (debounced) 350 mili giây để giảm thiểu các lượt gọi API trong quá trình gõ liên tục.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-53</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>View Mode Retention:</strong> Sở thích bố cục của người dùng (Xem dạng lưới so với Xem dạng danh sách) được lưu trữ trong bộ nhớ cục bộ (local storage) của trình duyệt và tiếp tục được duy trì giữa các phiên làm việc.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-54</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>State Persistence:</strong> Các tham số bộ lọc đang hoạt động được lưu trữ trong bộ nhớ cục bộ của trình duyệt và tự động được áp dụng khi người dùng quay lại trang mà không có các tham số trên URL.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-55</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Curriculum Locking:</strong> Chỉ tài liệu đầu tiên của bài học đầu tiên trong phần đầu tiên là có sẵn để xem trước đối với các tác nhân chưa đăng ký học. Tất cả các tài liệu sau đó đều bị khóa trực quan (hiển thị biểu tượng ổ khóa) và không thể truy cập từ trang chi tiết.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-56</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unpublished Course Access Restrictions:</strong> Các khóa học có trạng thái khác ngoài "đã xuất bản" (ví dụ: bản nháp, đang chờ duyệt, đã lưu trữ) hoàn toàn bị ẩn khỏi công chúng và chỉ có thể được xem bởi giảng viên gốc, quản trị viên hệ thống hoặc những học viên đã đăng ký trước đó.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-57</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Review Visibility:</strong> Các đánh giá khóa học và số liệu thống kê xếp hạng được hiển thị công khai cho tất cả các tác nhân.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-58</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Wishlist State:</strong> Tùy chọn chuyển đổi danh sách yêu thích chỉ hiển thị với Người dùng (Users). Giảng viên khi xem khóa học của chính mình và quản trị viên hệ thống không thể thêm khóa học vào danh sách yêu thích.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-59</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Reporting:</strong> Tùy chọn báo cáo vi phạm khóa học chỉ hiển thị với học viên đã đăng ký học. Tùy chọn này bị ẩn đối với chủ sở hữu khóa học, quản trị viên và đối với các khóa học đang chờ duyệt hoặc đã bị lưu trữ vĩnh viễn với từ 3 cờ báo vi phạm trở lên.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-60</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Review Eligibility:</strong> Khả năng viết và gửi đánh giá khóa học bị giới hạn nghiêm ngặt đối với Người dùng đã xác thực, những người đã đăng ký khóa học và hoàn thành 100% các bài học.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-61</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Debounced Query Execution:</strong> Việc lọc từ khóa theo thời gian thực được trì hoãn (debounced) 350 mili giây để giảm thiểu các lượt gọi API trong quá trình gõ liên tục.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-62</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Keyword Match Scope:</strong> Truy vấn tìm kiếm kiểm tra đối sánh với tiêu đề khóa học, tên giảng viên, mô tả ngắn và danh mục khóa học.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-63</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Published Status Only:</strong> Chỉ các khóa học có trạng thái "đã xuất bản" (published) mới được trả về trong kết quả tìm kiếm.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-64</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Filter Combinability:</strong> Nhiều bộ lọc (danh mục, giá, xếp hạng, từ khóa) có thể được áp dụng đồng thời, thu hẹp kết quả tìm kiếm theo phép toán logic AND.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-65</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Rating Filter Bounds:</strong> Bộ lọc xếp hạng chọn các khóa học có xếp hạng trung bình lớn hơn hoặc bằng ngưỡng được chọn (ví dụ: >= 4.5, >= 4.0, >= 3.5).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-66</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Price Filter Bounds:</strong> Các tùy chọn bộ lọc giá phân loại các khóa học thành "Miễn phí" (Free - Giá bằng 0) hoặc "Trả phí" (Paid - Giá lớn hơn 0).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-67</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Newest Ordering:</strong> Các khóa học được sắp xếp theo ngày tạo của chúng theo thứ tự giảm dần.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-68</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Highest Rated Ordering:</strong> Các khóa học được sắp xếp theo điểm xếp hạng trung bình của chúng theo thứ tự giảm dần.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-69</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Price Low-to-High Ordering:</strong> Các khóa học được sắp xếp theo giá của chúng theo thứ tự tăng dần.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-70</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Price High-to-Low Ordering:</strong> Các khóa học được sắp xếp theo giá của chúng theo thứ tự giảm dần.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-71</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Sort Order Persistence:</strong> Tham số sắp xếp được chọn sẽ được lưu trong bộ nhớ cục bộ của trình duyệt và tiếp tục duy trì khi tải lại trang.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-72</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Visibility:</strong> Chỉ những khóa học có trạng thái "đã xuất bản" (Published) mới được hiển thị trên hồ sơ công khai. Các khóa học nháp, đang chờ duyệt, bị từ chối hoặc đã lưu trữ hoàn toàn bị loại trừ.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-73</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Profile Access:</strong> Một hồ sơ công khai chỉ có thể truy cập được nếu trạng thái hồ sơ đăng ký giảng viên của tài khoản đó là "Đã phê duyệt" (Approved).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-74</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Social Links:</strong> Các liên kết mạng xã hội ("LinkedIn", "YouTube", "Facebook") chỉ được hiển thị dưới dạng các nút/liên kết có thể nhấp nếu giảng viên đã cung cấp các URL tương ứng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-75</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Anonymous Access:</strong> Bất kỳ ai (kèm cả Khách) đều có thể xem các đánh giá và số liệu thống kê công khai của khóa học.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-76</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Review Masking (Removed Reviews):</strong> Nếu một đánh giá đã bị gỡ bỏ bởi người kiểm duyệt (trạng thái "vi phạm" - violating), nội dung của nó sẽ được thay thế bằng một thông báo cảnh báo: "Đánh giá này đã bị quản trị viên gỡ bỏ vì vi phạm tiêu chuẩn cộng đồng." và số sao xếp hạng được đặt về 0. Nếu đánh giá do người dùng tự xóa, nó sẽ bị loại bỏ hoàn toàn khỏi danh sách chi tiết của khóa học.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-77</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Paging Size:</strong> Danh sách đánh giá trên trang chi tiết được phân trang với giới hạn 5 đánh giá trên mỗi trang.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-78</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>General vs Lesson Badges:</strong> Các đánh giá chung ở cấp độ khóa học được gắn nhãn "General review" (Đánh giá chung), trong khi các đánh giá ở cấp độ bài học (ban đầu được gửi trong trình phát video học) được gắn nhãn bằng tiêu đề bài học tương ứng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-79</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Progress Calculation:</strong> Tỷ lệ phần trăm tiến độ khóa học được tính bằng (Tài liệu đã hoàn thành / Tổng số tài liệu) * 100, làm tròn đến 1 chữ số thập phân.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-80</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Video Completion Trigger:</strong> Một tài liệu video chỉ được đánh dấu là hoàn thành khi video phát đến cuối (sự kiện "onended").</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-81</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Document/Text Completion Trigger:</strong> Một tài liệu văn bản (".txt") được đánh dấu là hoàn thành ngay khi xem. Các tài liệu có thể tải xuống khác được đánh dấu là hoàn thành khi Người dùng nhấp vào nút tải xuống.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-82</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Completion State:</strong> Khi tất cả các tài liệu học tập trong một khóa học được đánh dấu là đã hoàn thành, hệ thống sẽ tự động đặt trạng thái đăng ký học IsCompleted = true và cập nhật ngày hoàn thành trong cơ sở dữ liệu.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-83</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Bypass:</strong> Chủ sở hữu/giảng viên khóa học có thể truy cập Trình phát khóa học (trang "Learn") để xem trước và tiến độ của họ được coi là tiến độ ảo đã hoàn thành 100% mà không ghi nhận thông tin hoàn thành vào cơ sở dữ liệu.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-84</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Dynamic Button Update:</strong> Đối với các khóa học miễn phí, khi Người dùng chưa đăng ký nhấp vào "Đăng ký ngay" (Enroll Now), trang sẽ xử lý việc đăng ký thành công và cập nhật nút bấm thành "Đi tới bài học" (Go to learning) một cách linh hoạt mà không cần tải lại toàn bộ trang.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-85</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unpublished Course Warning:</strong> Nếu khóa học không ở trạng thái đã xuất bản, một biểu ngữ cảnh báo sẽ được hiển thị ở đầu trình phát khóa học, nhưng quyền truy cập vẫn được cho phép đối với chủ sở hữu và người quản lý.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-86</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Protected Media:</strong> Các bài giảng video chỉ được cung cấp cùng với các nút điều khiển trình phát; tùy chọn tải xuống trực tiếp bị vô hiệu hóa (sử dụng thuộc tính "controlsList" được đặt thành "nodownload").</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-87</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Completed Badge Display:</strong> Một thẻ khóa học đã hoàn thành hiển thị một huy hiệu đè lên rõ ràng với văn bản "Completed" và biểu tượng "check_circle".</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-88</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Progress Bar Color Coding:</strong> Thanh tiến độ có màu xanh ngọc bảo (emerald green) nếu khóa học đã hoàn thành 100%, và có màu chủ đạo (teal) nếu ngược lại.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-89</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Dynamic Actions based on Completion:</strong> Văn bản nút hành động được đặt thành "Review" (Đánh giá) với biểu tượng "replay" cho các khóa học đã hoàn thành, và "Continue learning" (Tiếp tục học) với biểu tượng "play_arrow" cho các khóa học chưa hoàn thành.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-90</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>No Self-Enrollment:</strong> Giảng viên bị chặn đăng ký vào các khóa học của chính họ (cả khóa học miễn phí và trả phí). Họ được bỏ qua các bước kiểm tra đăng ký khi truy cập trình phát bài học cho các khóa học của chính mình.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-91</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Double Purchase Prevention:</strong> Hệ thống chặn việc mua/thanh toán các khóa học mà người dùng đã đăng ký trước đó, yêu cầu họ xóa khóa học đó khỏi giỏ hàng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-92</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Stripe Integration:</strong> Việc đăng ký khóa học có phí được hoàn thành bất đồng bộ hoặc thông qua xác thực chuyển hướng quay lại sau khi cổng thanh toán Stripe xử lý giao dịch thành công.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-93</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Completion Check for Course Review:</strong> Các học viên không phải là chủ sở hữu khóa học phải đạt tiến trình khóa học 100% (hoàn thành tất cả các tài liệu) mới có thể viết đánh giá trên trang Chi tiết Khóa học.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-94</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Minimal Progress for Lesson Review:</strong> Các học viên không phải chủ sở hữu khóa học phải hoàn thành nhất 1 bài học/tài liệu mới được viết đánh giá trên trang Trình phát Khóa học.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-95</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Rating Restrictions:</strong> Số sao xếp hạng phải nằm trong khoảng từ 1 đến 5 sao (bao gồm cả hai giá trị đầu cuối).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-96</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Account Restrictions (Lockout):</strong> Người dùng có các hạn chế bình luận/đánh giá đang có hiệu lực sẽ bị chặn gửi các đánh giá mới. Hệ thống sẽ kiểm tra xác thực này tại thời điểm gửi.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-97</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Notification:</strong> Sau khi gửi thành công, một thông báo sẽ được gửi tới giảng viên khóa học kèm theo một đường liên kết trỏ thẳng tới thẻ đánh giá đó.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-98</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Self-Ownership Only:</strong> Một tác nhân chỉ có thể xóa các đánh giá mà do chính họ đã tạo.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-99</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Moderation Block:</strong> Nếu một đánh giá đang có báo cáo kiểm duyệt ở trạng thái chờ xử lý, việc xóa đánh giá đó sẽ bị chặn cho đến khi báo cáo kiểm duyệt được giải quyết.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-100</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Soft Delete:</strong> Việc xóa được thực hiện dưới dạng xóa mềm (soft-delete, bằng cách thiết lập `IsRemoved = true` và cập nhật trạng thái thành "removed" trong cơ sở dữ liệu). Điều này không xóa vĩnh viễn bản ghi.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-101</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Rating Statistics Recalculation:</strong> Khi xóa thành công, điểm trung bình và số lượng xếp hạng tổng thể sẽ được tính toán lại một cách linh hoạt để loại trừ đánh giá đã bị xóa.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-102</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Title Length Constraints:</strong> Tiêu đề khóa học phải có độ dài từ 5 đến 100 ký tự.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-103</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Text Constraints:</strong> Các phần mô tả "Bạn sẽ học được gì" (What You Will Learn) và "Yêu cầu" (Requirements) mỗi phần phải có độ dài ít nhất 20 ký tự (không tính các thẻ HTML).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-104</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Stripe Payout Connectivity:</strong> Giảng viên phải kết nối và kích hoạt tài khoản Stripe của họ để thiết lập mức giá trả phí. Nếu Stripe bị ngắt kết nối hoặc không hoạt động, giá khóa học sẽ bị khóa ở mức 0.00 (Miễn phí).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-105</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Voucher Validation:</strong> Các phiếu giảm giá do nền tảng tài trợ không thể áp dụng cho các khóa học miễn phí.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-106</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Draft Initial State:</strong> Tất cả các khóa học mới tạo đều được lưu với trạng thái "Nháp" (Draft) và phải trải qua quá trình kiểm duyệt trước khi được xuất bản.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-107</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Status Transition Restrictions:</strong> Giảng viên chỉ có thể đặt khóa học sang trạng thái 'pending' (chờ kiểm duyệt), 'archived' (lưu trữ/ẩn), hoặc 'published' (chỉ khi hoàn tác lưu trữ từ trạng thái 'archived').</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-108</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Permanently Discontinued Block:</strong> Một khóa học ở trạng thái 'archived' và có từ 3 cờ báo vi phạm trở lên được coi là đã ngừng cung cấp vĩnh viễn do vi phạm chính sách, và không thể thay đổi trạng thái hoặc chỉnh sửa.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-109</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Active Enrollment Preservation:</strong> Việc lưu trữ một khóa học không xóa khóa học đó hoặc ảnh hưởng đến các học viên đang học; các học viên đã đăng ký khóa học vẫn tiếp tục có toàn quyền truy cập vào nội dung khóa học trên trang tổng quan (dashboard) của họ.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-110</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Purge Policy:</strong> Các tài liệu học tập được đưa vào thùng rác sẽ tự động bị xóa vĩnh viễn sau 30 ngày bởi một dịch vụ dọn dẹp chạy nền.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-111</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Cloud Storage Virtual Directory:</strong> Việc chuyển một tệp vào thùng rác sẽ đổi tên tiền tố của tệp trên Cloudinary thành `trash/` và cập nhật trạng thái của nó thành "removed" trong cơ sở dữ liệu, ẩn nó khỏi hiển thị công khai trong khi vẫn giữ nguyên bản ghi cơ sở dữ liệu.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-112</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Video Swap Constraint:</strong> Khôi phục một tài liệu video vào bài học đã chứa sẵn một video đang hoạt động sẽ tự động chuyển video đang hoạt động hiện tại vào thùng rác, thay thế nó bằng video được khôi phục.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-113</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Discontinued & Pending Locking:</strong> Tài liệu học tập không thể khôi phục hoặc xóa vĩnh viễn nếu khóa học cha đang trong trạng thái chờ duyệt hoặc đã bị dừng cung cấp vĩnh viễn do vi phạm chính sách.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-114</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unpublish Trigger:</strong> Việc khôi phục một tài liệu học tập vào một khóa học đã xuất bản sẽ tự động cập nhật trạng thái khóa học trở lại thành "Nháp" (Draft) để buộc kiểm duyệt lại khung chương trình học được cập nhật.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-115</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Draft Demotion Rule:</strong> Nếu khóa học cha hiện đang ở trạng thái "Published" (Đã xuất bản), việc khôi phục bất kỳ tài liệu học tập nào cũng sẽ tự động chuyển trạng thái khóa học về "Draft" (Nháp) và xóa phản hồi kiểm duyệt trước đó, yêu cầu giảng viên phải gửi lại để kiểm duyệt.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-116</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Rights & Mod Lockouts:</strong> Việc khôi phục bị khóa nếu giảng viên đang trong thời gian bị đình chỉ/khóa tài khoản, hoặc nếu khóa học cha đang chờ kiểm duyệt, hoặc nếu khóa học cha đã bị dừng cung cấp vĩnh viễn do có từ 3 cờ báo vi phạm trở lên.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-117</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Cloud Storage Synchronization:</strong> Việc khôi phục một tệp sẽ đổi tên của nó trên Cloudinary một cách linh hoạt để loại bỏ tiền tố `trash/`, đồng bộ hóa đường dẫn vật lý với trạng thái trong cơ sở dữ liệu.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-118</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Irreversible Deletion:</strong> Việc xóa vĩnh viễn sẽ xóa cả bản ghi cơ sở dữ liệu và tệp tài nguyên được lưu trữ trên kho lưu trữ đám mây (Cloudinary) và không thể khôi phục hoặc hoàn tác.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-119</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Cloud Storage Prefix:</strong> Tệp được xóa khỏi đường dẫn thùng rác ảo (tiền tố `trash/`) trong kho lưu trữ đám mây bằng cách sử dụng `CloudPublicId` của nó.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-120</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Exclusion of Drafts:</strong> Các khóa học có trạng thái "Nháp" (Draft) sẽ không bao giờ được truy vấn hoặc hiển thị trong hàng đợi kiểm duyệt.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-121</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Urgency Level Calculation:</strong> Đối với các khóa học đang chờ duyệt, màu sắc cảnh báo mức độ khẩn cấp được tính dựa trên ngày tạo:
+                        <ul>
+                            <li>Đỏ / Mức khẩn cấp "High": chờ duyệt &gt; 72 giờ.</li>
+                            <li>Hổ phách (Vàng cam) / Mức khẩn cấp "Medium": chờ duyệt &gt; 24 giờ.</li>
+                            <li>Xám đá / Mức khẩn cấp "Normal": chờ duyệt &lt;= 24 giờ.</li>
+                        </ul></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-122</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Threat Levels:</strong> Mức độ đe dọa tương ứng với phản hồi từ kiểm tra AI:
+                        <ul>
+                            <li>Mối đe dọa nghiêm trọng - Critical Threat (FlaggedOrRejected): khóa học vi phạm nghiêm trọng các điều khoản chính sách.</li>
+                            <li>Mối đe dọa cao - High Threat (ManualAudit): khóa học cần phải được kiểm duyệt thủ công.</li>
+                            <li>An toàn - Clean (Approved): khóa học đã được phê duyệt bằng kiểm tra tự động.</li>
+                            <li>Đang chờ / Không có - Pending / None: mặc định.</li>
+                        </ul></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-123</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Infraction Flags:</strong> Một khóa học theo dõi tối đa 3 cờ báo vi phạm. Nếu số lượng cờ đạt đến 3, trạng thái sẽ được chuyển thành "Lưu trữ" (Archived) và trạng thái khóa học sẽ chuyển sang "Khóa vĩnh viễn" (Permanently Locked).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-124</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Search Criteria:</strong> Từ khóa tìm kiếm được so khớp (không phân biệt chữ hoa chữ thường, khớp chuỗi con) với:
+                        <ul>
+                            <li>Tiêu đề khóa học</li>
+                            <li>Tên giảng viên (Họ và tên đầy đủ)</li>
+                        </ul></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-125</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Preservation of Filters:</strong> Việc tìm kiếm bảo toàn tất cả các bộ lọc đang hoạt động khác (Danh mục, Trạng thái, Tùy chọn Sắp xếp).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-126</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Debounce Time:</strong> Để ngăn chặn các yêu cầu máy chủ quá mức, việc thực hiện tìm kiếm sẽ trì hoãn (debounced) 300 mili giây kể từ lần nhấn phím cuối cùng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-127</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Sorting Options:</strong> <ul>
+                            <li>"Mức độ đe dọa (Từ cao đến thấp)" ("threat_desc"): Sắp xếp giảm dần theo mức độ đe dọa (Critical Threat &gt; High Threat &gt; Clean &gt; None), sau đó sắp xếp tăng dần theo ngày tạo. Đây là kiểu sắp xếp mặc định.</li>
+                            <li>"Mức độ đe dọa (Từ thấp đến cao)" ("threat_asc"): Sắp xếp tăng dần theo mức độ đe dọa, sau đó sắp xếp tăng dần theo ngày tạo.</li>
+                            <li>"Cũ nhất (Ưu tiên)" ("oldest"): Sắp xếp tăng dần theo ngày tạo/ngày gửi duyệt (cũ nhất hiển thị trước).</li>
+                            <li>"Mới nhất" ("newest"): Sắp xếp giảm dần theo ngày tạo/ngày gửi duyệt (mới nhất hiển thị trước).</li>
+                        </ul></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-128</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Category Filter:</strong> So khớp ID hoặc Tên danh mục với danh mục của khóa học. Nếu chọn "Tất cả danh mục" (All Categories), bộ lọc danh mục sẽ không được áp dụng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-129</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Preservation of Other Criteria:</strong> Việc lọc bảo toàn các từ khóa tìm kiếm và tùy chọn sắp xếp đang hoạt động.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-130</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Re-approval Rule:</strong> Nếu trạng thái của khóa học là bị từ chối, lưu trữ hoặc bị khóa vĩnh viễn, nút hành động sẽ được gắn nhãn "Phê duyệt lại" (Re-approve) nhưng tuân theo cùng một logic phê duyệt.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-131</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Notification Content:</strong> Thông báo phê duyệt gửi tới giảng viên sẽ bao gồm các ý kiến phản hồi tùy chọn được nhập bởi tác nhân kiểm duyệt.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-132</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Cache Eviction:</strong> Bộ nhớ đệm (cache) Redis cho thông tin chi tiết khóa học phải được xóa bỏ ngay lập tức sau khi phê duyệt để đảm bảo người dùng nhìn thấy nội dung được cập nhật.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-133</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Violation Element Tagging:</strong> <ul>
+                            <li>Các mục tiêu cấp độ khóa học tương ứng với: tiêu đề ("course.title"), mô tả ("course.description"), ảnh thu nhỏ ("course.thumbnail"), nội dung sẽ học ("course.what_you_will_learn"), yêu cầu ("course.requirements").</li>
+                            <li>Mục tiêu cấp độ bài học tương ứng với "lesson.title".</li>
+                            <li>Mục tiêu cấp độ tài liệu tương ứng với "file".</li>
+                        </ul></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-134</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Guest Login Prompt:</strong> Hệ thống nhắc người dùng Khách (Guest) đăng nhập khi họ nhấp vào các phần tử tương tác trên trang chủ.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-135</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Combined Feedback:</strong> Trường phản hồi kiểm duyệt "ModerationFeedback" của khóa học được cập nhật bằng cách kết hợp tất cả lý do của các phần tử được gắn thẻ (ví dụ: "[@Title] Reason" hoặc "[Lesson: Title] Reason" cách nhau bằng các dòng mới).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-136</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Notification Link:</strong> Thông báo từ chối gửi tới giảng viên chứa một đường liên kết chuyển hướng đến trình chỉnh sửa khóa học "/InstructorCourse/Editor?id={courseId}".</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-137</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Flag Count Limit:</strong> Một khóa học có thể có tối đa 3 cờ báo vi phạm. Số lượng cờ không thể vượt quá 3.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-138</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Strike Warnings:</strong> <ul>
+                            <li><b>Vi phạm 1 (Cờ thứ 1):</b> Gửi thông báo "Course Violation Reminder (1st Time)". Khóa học tạm thời bị ẩn. Giảng viên được nhắc nhở để xem xét và tuân thủ.</li>
+                            <li><b>Vi phạm 2 (Cờ thứ 2):</b> Gửi thông báo "Severe Violation Warning (2nd Time)". Khóa học tiếp tục bị ẩn. Cảnh báo rằng cờ thứ 3 sẽ dẫn đến việc khóa vĩnh viễn.</li>
+                            <li><b>Vi phạm 3 (Cờ thứ 3):</b> Gửi thông báo "Permanent Course Discontinuation Notice (3rd Time)". Trạng thái chuyển thành "archived" (Khóa vĩnh viễn). Giảng viên bị chặn chỉnh sửa và không cho phép học viên mới đăng ký.</li>
+                        </ul></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-139</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Debounce Optimization:</strong> Việc tự động lưu sử dụng khoảng trễ (debounce) 1.5 giây để ngăn chặn việc gửi dữ liệu dồn dập vào cơ sở dữ liệu khi đang gõ phím nhanh.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-140</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Draft Reversion:</strong> Để đảm bảo tính toàn vẹn của nội dung, mọi chỉnh sửa được thực hiện đối với một khóa học đã được "xuất bản" (published) sẽ tự động hạ trạng thái của nó trở lại thành "nháp" (draft), yêu cầu phải gửi duyệt kiểm duyệt mới và xóa các phản hồi kiểm duyệt trước đó.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-141</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Content Integrity Hashing:</strong> Các chi tiết văn bản và tệp ảnh thu nhỏ (thumbnail) được băm bằng thuật toán MD5 và lưu trữ dưới dạng dấu vân tay độc nhất để tránh trùng lặp nội dung và hỗ trợ theo dõi chống đạo văn.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-142</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Lesson Limit for Unlinked Stripe Accounts:</strong> Giảng viên chưa liên kết cấu hình Stripe Connect đang hoạt động chỉ được phép tạo tối đa 5 bài học cho mỗi khóa học.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-143</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Lesson Title Uniqueness:</strong> Tiêu đề bài học phải là duy nhất trong phạm vi khóa học (không phân biệt chữ hoa chữ thường).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-144</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Pending Review Modification Lock:</strong> Không thể thêm, sửa hoặc xóa các tài liệu học tập và bài học nếu khóa học hiện đang ở trạng thái chờ duyệt 'Pending'.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-145</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Syllabus Change Reversion:</strong> Việc thêm hoặc xóa các bài học và tài liệu học tập, hoặc chỉnh sửa nội dung của chúng trong một khóa học đang ở trạng thái 'Published' sẽ tự động thay đổi trạng thái khóa học trở lại thành 'Draft' (Nháp) và xóa mọi phản hồi kiểm duyệt hiện có.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-146</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Lesson Soft Deletion:</strong> Việc xóa một bài học sẽ thực hiện xóa mềm bản ghi bài học và tất cả các tài liệu học tập liên quan của nó (IsRemoved = true) trong cơ sở dữ liệu, đồng thời chuyển các tệp vật lý trên đám mây vào thùng rác.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-147</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Supplementary Document Limits:</strong> Giảng viên chưa liên kết cấu hình Stripe Connect đang hoạt động chỉ được phép đính kèm tối đa 2 tài liệu bổ sung cho mỗi bài học.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-148</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Material Soft Deletion:</strong> Việc xóa một tài liệu học tập không xóa vĩnh viễn tệp tin; tệp vật lý được chuyển vào thư mục thùng rác của Dịch vụ Lưu trữ Đám mây và trạng thái trong cơ sở dữ liệu của nó được cập nhật thành 'Removed'.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-149</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Active Student Deletion Restriction:</strong> Các khóa học đã có học viên đăng ký học đang hoạt động thì không thể xóa và thay vào đó phải lưu trữ (archive).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-150</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Soft Deletion:</strong> Việc xóa một khóa học thực hiện xóa mềm cả khóa học và tất cả các bài học cũng như tài liệu học tập liên quan của nó (IsRemoved = true) trong cơ sở dữ liệu, thay vì hủy bỏ vĩnh viễn các bản ghi.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-151</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Dashboard Access Restriction:</strong> Chỉ những giảng viên đã được phê duyệt hoàn toàn mới được phép truy cập Bảng quản trị của Giảng viên (Instructor Dashboard); các trạng thái khác sẽ kích hoạt việc chuyển hướng đến trạng thái đơn đăng ký hoặc quy trình tạo giảng viên.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-152</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Status Badging:</strong> Hệ thống phân biệt trực quan các khóa học trên bảng quản trị giảng viên bằng các nhãn (badge) cụ thể dựa trên trạng thái hiện tại của chúng (ví dụ: Published, Pending Review, Draft, Rejected, Archived, Removed, Permanently Locked).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-153</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Contextual Dashboard Actions:</strong> Các hành động quản lý khóa học trên bảng quản trị giảng viên được xác định động dựa trên trạng thái của khóa học; các khóa học bị khóa vĩnh viễn hoặc bị xóa sẽ có bộ hành động bị hạn chế nghiêm ngặt.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-154</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Data Isolation:</strong> Giảng viên chỉ có thể xem số liệu thống kê, doanh thu và các khóa học liên quan đến tài khoản của chính họ.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

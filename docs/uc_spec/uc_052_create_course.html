@@ -1,0 +1,224 @@
+﻿<div class="uc-container" style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <style>
+        .uc-container, .uc-container table, .uc-container tr, .uc-container td, .uc-container p, .uc-container ol, .uc-container ul, .uc-container li, .uc-container span, .uc-container strong, .uc-container b {
+            font-family: 'Times New Roman', serif !important;
+            font-size: 12pt !important;
+            color: black !important;
+        }
+    </style>
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">UC ID and Name</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">UC-52-Create Courses</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Created By:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Truong Phuoc Tai</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Date Created:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">13/06/2026</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Primary Actor:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Instructor</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Secondary Actors:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Trigger:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Instructor clicks the "Create New Course" button (or similar) on the Instructor Studio dashboard.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Description:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Drafts basic details for a new course, including title, pricing, description, and curriculum outline.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Preconditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>PRE-1.</b> Instructor must be authenticated.</p>
+                <p style="margin: 5px 0 0 0;"><b>PRE-2.</b> Instructor's application status must be "Approved".</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Post-conditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>POST-1.</b> The draft course record is created in the database with status set to "Draft".</p>
+                <p style="margin: 5px 0 0 0;"><b>POST-2.</b> The system redirects the Instructor to the Course Editor page.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Normal Flow:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A. Create Course Successfully</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>Instructor clicks the "Create New Course" button on the Instructor Studio dashboard.</li>
+                    <li>The system checks the instructor's session authentication.</li>
+                    <li>The system checks the instructor's approval status.</li>
+                    <li>The system retrieves the available course categories.</li>
+                    <li>The system displays Step 1 (Core Identity) of the creation wizard, showing the "Course Title" input and "Category" dropdown.</li>
+                    <li>Instructor enters a title, selects a category, and clicks the "Next" button.</li>
+                    <li>The system validates the inputs for Step 1.</li>
+                    <li>The system displays Step 2 (Description & Curriculum) of the creation wizard, showing the rich text editors for Course Description, What You Will Learn, and Requirements.</li>
+                    <li>Instructor enters the description, learning achievements, and requirements, then clicks the "Next" button.</li>
+                    <li>The system validates the rich text fields.</li>
+                    <li>The system displays Step 3 (Course Thumbnail) of the creation wizard, showing the "drop-area" file upload zone.</li>
+                    <li>Instructor uploads a course thumbnail image.</li>
+                    <li>The system uploads the image to the cloud storage service.</li>
+                    <li>The system retrieves the returned image URL.</li>
+                    <li>The system stores the URL in the "CourseThumbnailUrl" variable.</li>
+                    <li>Instructor clicks the "Next" button.</li>
+                    <li>The system validates that the thumbnail URL is present.</li>
+                    <li>The system displays Step 4 (Access & Pricing) of the creation wizard, showing the "Price" input and "Apply coupon to this course" switch.</li>
+                    <li>Instructor enters the price and toggles the coupon switch.</li>
+                    <li>Instructor clicks the "Select System Voucher" button.</li>
+                    <li>The system displays the platform coupons list in the "coupon-modal".</li>
+                    <li>Instructor selects a platform coupon and clicks the "Create Course" button.</li>
+                    <li>The system validates Step 4 price inputs.</li>
+                    <li>The system sends the course creation payload to the backend server.</li>
+                    <li>The backend server validates the request model state.</li>
+                    <li>The backend server checks the instructor's creation rights.</li>
+                    <li>The backend server checks for duplicate course content.</li>
+                    <li>The backend server inserts the draft course record into the database.</li>
+                    <li>The backend server saves the changes.</li>
+                    <li>The system displays a success confirmation popup dialog.</li>
+                    <li>The system redirects the instructor to the Course Editor page.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Alternative Flows:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A.6.1 Cancel Creation</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Instructor clicks the "Cancel" button on the floating action bar.</li>
+                    <li>The system redirects the instructor back to the Instructor Studio dashboard.</li>
+                    <li>The flow terminates.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.1 Step 1 Validation Failure</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects one or more inputs in Step 1 are invalid (Title is empty, Title is under 5 characters, Title exceeds 100 characters, or Category is not selected).</li>
+                    <li>The system displays a validation warning alert box detailing the issues.</li>
+                    <li>Instructor resolves the issues.</li>
+                    <li>Back to step 6.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.10.1 Step 2 Validation Failure</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects one or more inputs in Step 2 are invalid (Description is empty, What You Will Learn is empty/under 20 characters, or Requirements is empty/under 20 characters).</li>
+                    <li>The system displays a validation warning alert box detailing the issues.</li>
+                    <li>Instructor resolves the issues.</li>
+                    <li>Back to step 9.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.17.1 Thumbnail Missing</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects that the course thumbnail has not been uploaded.</li>
+                    <li>The system displays a validation warning alert box.</li>
+                    <li>Instructor uploads a thumbnail.</li>
+                    <li>Back to step 16.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.18.1 Stripe Payments Not Active</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects that the instructor has not connected Stripe payments.</li>
+                    <li>The system disables premium pricing tier inputs, setting the price default to "0.00 â€” Free".</li>
+                    <li>The system displays a warning message advising that connecting Stripe is required to unlock premium paid tiers, along with a link to connect Stripe.</li>
+                    <li>Back to step 19.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.19.1 Disable Platform Vouchers</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Instructor disables the "coupon-toggle" switch.</li>
+                    <li>The system hides the voucher selection container and sets the Coupon ID to null.</li>
+                    <li>Back to step 22.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.23.1 Step 4 Validation Failure</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>The system detects that the price is invalid (Price is empty, negative, or exceeds 10000 USD).</li>
+                    <li>The system displays a validation warning alert box.</li>
+                    <li>Instructor resolves the price.</li>
+                    <li>Back to step 19.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Exceptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>EX-2 Session Invalid (Not Logged In)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system displays an authentication error message.</li>
+                    <li>The system redirects the actor to the login page.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-3 Account Not Approved</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects the actor's instructor approval status is not "Approved".</li>
+                    <li>The system redirects the actor to the application status or apply page.</li>
+                    <li>The flow terminates.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-24 Backend Connection Failure / System Error</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The backend server returns a connection failure or server error.</li>
+                    <li>The system displays a system error alert box detailing the failure.</li>
+                    <li>The flow terminates.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-25 Invalid Backend Request State</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The backend server returns a bad request status code (400).</li>
+                    <li>The system displays a validation warning alert box with the validation details.</li>
+                    <li>Back to step 22.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-26 Unauthorized Instructor Rights</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The backend server returns a bad request status code (400) due to invalid instructor rights.</li>
+                    <li>The system displays an error message indicating unauthorized creation.</li>
+                    <li>The flow terminates.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-27 Duplicate Course Content</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The database throws a uniqueness/duplicate content exception.</li>
+                    <li>The backend server handles the database error and returns a bad request status code (400) with a duplicate content warning.</li>
+                    <li>The system displays a system error alert box indicating duplicate course content is detected.</li>
+                    <li>Back to step 6.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-29 Database Insertion Failure</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>The backend server throws an invalid operation exception.</li>
+                    <li>The backend server returns a bad request status code (400).</li>
+                    <li>The system displays a system error alert box detailing the insertion failure.</li>
+                    <li>The flow terminates.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Priority:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Frequency of Use:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Medium</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Business Rules:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                BR-102, BR-103, BR-104, BR-105, BR-106
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Other Information:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Assumptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;">Instructor has stable internet connection.</p>
+            </td>
+        </tr>
+    </table>
+</div>

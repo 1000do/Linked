@@ -49,11 +49,11 @@
             </tr>
             <tr>
                 <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-9</td>
-                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default View — Course Reports:</strong> The Report Center always opens with the Course Reports tab and the "Pending" status filter selected by default.</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default View â€” Course Reports:</strong> The Report Center always opens with the Course Reports tab and the "Pending" status filter selected by default.</td>
             </tr>
             <tr>
                 <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-10</td>
-                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Access Control — Report Center:</strong> Only authenticated Staff and Admin actors are permitted to access the Report Center.</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Access Control â€” Report Center:</strong> Only authenticated Staff and Admin actors are permitted to access the Report Center.</td>
             </tr>
             <tr>
                 <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-11</td>
@@ -69,7 +69,7 @@
             </tr>
             <tr>
                 <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-14</td>
-                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default View — Course Reviews Subtab:</strong> When the Review Reports tab is accessed, the system defaults to the "Course Reviews" subtab with the "Pending" status filter applied.</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default View â€” Course Reviews Subtab:</strong> When the Review Reports tab is accessed, the system defaults to the "Course Reviews" subtab with the "Pending" status filter applied.</td>
             </tr>
             <tr>
                 <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-15</td>
@@ -101,7 +101,7 @@
             </tr>
             <tr>
                 <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-22</td>
-                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Strike System:</strong> When a course report is accepted with the "Flag Course" toggle checked: Strike 1–2 sends a warning to the instructor; Strike 3 permanently archives the course and applies a 30-day severe instructor lockout.</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Strike System:</strong> When a course report is accepted with the "Flag Course" toggle checked: Strike 1â€“2 sends a warning to the instructor; Strike 3 permanently archives the course and applies a 30-day severe instructor lockout.</td>
             </tr>
             <tr>
                 <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-23</td>
@@ -129,7 +129,7 @@
             </tr>
             <tr>
                 <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-29</td>
-                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Subtab — Activity Log:</strong> The course moderation category is displayed by default when the logs tab is opened.</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Subtab â€” Activity Log:</strong> The course moderation category is displayed by default when the logs tab is opened.</td>
             </tr>
             <tr>
                 <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-30</td>
@@ -139,6 +139,546 @@
                 <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-31</td>
                 <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Status Toggle:</strong> Toggling an active model sets its status to inactive; toggling an inactive model restores it to active.</td>
             </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-32</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Read Status Sync:</strong> Viewing a notification's details modal automatically marks it as read in the database and updates the UI state.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-33</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Ownership Constraint:</strong> A user or instructor can only mark their own received notifications as read.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-34</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Confirmation Prompt:</strong> Deleting a notification requires confirmation via a dialog to prevent accidental deletion.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-35</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Cart in list:</strong> Cart item prices must reflect the current database prices including any active platform discounts.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-36</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default View:</strong> By default, all active conversations are retrieved and displayed in "Recently Active" sorting order (newest last message at the top).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-37</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Online Status Indicator:</strong> A green dot is displayed on the partner's avatar if the partner is currently connected to the chat hub.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-38</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Sender Peer Constraint:</strong> Staff and Admin users cannot send notifications to themselves. Staff members are blocked from sending notifications to other Staff or Admin users.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-39</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Recipient Selection Required:</strong> If the target group is "Specific User", at least one valid email tag must be specified</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-40</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto Read State Synchronization:</strong> If a Staff user views a notification specifically addressed to them that is unread, the system must trigger a status transition to "Read". Admins or other Staff users viewing the notification do not trigger this transition.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-41</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Verified Email Constraint:</strong> Only Actors with a verified email address are allowed to add items to their cart.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-42</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Purchase and Ownership Restrictions:</strong> An Actor cannot add their own courses (where they are the instructor) or already</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-43</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Item Uniqueness:</strong> A course can only be added to an Actor's cart once.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-44</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Price Recalculation:</strong> Deleting an item must immediately trigger a recalculation of the cart's subtotal, discount, and grand total, and update any applied coupons.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-45</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Personal Cleared History:</strong> Clearing chat history only sets the cleared timestamp for the active participant. The conversation history remains intact and visible to other participants.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-46</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Real-Time Synchronization:</strong> Typing state, online status, and message transmission are updated instantly via SignalR callbacks.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-47</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Role promotion:</strong> Approving an application triggers a role promotion for the target user from "User" to "Instructor".</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-48</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Rejection Reason Required:</strong> A non-empty text justification is mandatory before an instructor application can be rejected.</td>
+            </tr>
+<tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-49</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Public Visibility:</strong> The course list displays only courses that are currently published. Draft, pending, rejected, archived, or locked courses are excluded from the public list.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-50</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Wishlist Sync:</strong> Wishlist heart icons reflect the current wishlist status of the logged-in User in real-time, displaying a filled red heart for wishlisted courses and an unfilled icon otherwise.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-51</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Cart Status Integration:</strong> If a logged-in User has already purchased/enrolled in a course, the "Add to cart" button is replaced by a checkmark icon to prevent double purchases.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-52</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Debounced Live Search:</strong> Real-time keyword filtering is debounced by 350ms to minimize API calls during continuous typing.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-53</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>View Mode Retention:</strong> User layout preference (Grid vs. List view) is stored in the browser's local storage and persists across sessions.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-54</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>State Persistence:</strong> Active filter parameters are stored in the browser's local storage and are automatically applied when the user returns to the page without URL parameters.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-55</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Curriculum Locking:</strong> Only the first material of the first lesson of the first section is available for preview to non-enrolled actors. All subsequent materials are visually locked (showing a lock icon) and cannot be accessed from the details page.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-56</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unpublished Course Access Restrictions:</strong> Courses with statuses other than "published" (e.g., draft, pending, archived) are strictly hidden from the public and can only be viewed by the original instructor, system administrators, or students who were previously enrolled.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-57</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Review Visibility:</strong> Course reviews and rating statistics are publicly visible to all actors.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-58</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Wishlist State:</strong> The wishlist toggle option is only displayed to Users. Instructors viewing their own course and system administrators cannot add courses to their wishlist.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-59</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Reporting:</strong> The option to report a course is only visible to enrolled students. It is hidden from the course owner, administrators, and for courses that are pending or already permanently archived with 3 or more flags.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-60</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Review Eligibility:</strong> The ability to write and submit a course review is strictly limited to authenticated Users who are enrolled in the course and have completed 100% of the lessons.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-61</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Debounced Query Execution:</strong> Real-time keyword filtering is debounced by 350ms to minimize API calls during continuous typing.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-62</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Keyword Match Scope:</strong> Search query checks against course titles, instructor names, short descriptions, and categories.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-63</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Published Status Only:</strong> Only courses with "published" status are returned in the search results.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-64</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Filter Combinability:</strong> Multiple filters (category, price, rating, keyword) can be applied simultaneously, narrowing the results conjunctively (AND operation).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-65</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Rating Filter Bounds:</strong> Rating filters select courses with average rating greater than or equal to the selected threshold (e.g., >= 4.5, >= 4.0, >= 3.5).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-66</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Price Filter Bounds:</strong> Price filter options classify courses as "Free" (Price == 0) or "Paid" (Price > 0).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-67</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Newest Ordering:</strong> Courses are sorted by their creation date in descending order.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-68</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Highest Rated Ordering:</strong> Courses are sorted by their average rating in descending order.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-69</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Price Low-to-High Ordering:</strong> Courses are sorted by their price in ascending order.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-70</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Price High-to-Low Ordering:</strong> Courses are sorted by their price in descending order.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-71</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Sort Order Persistence:</strong> The selected sorting parameter is saved in the browser's local storage and persists across page reloads.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-72</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Visibility:</strong> Only courses with status "Published" are displayed on the public profile. Draft, pending, rejected, or archived courses are strictly excluded.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-73</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Profile Access:</strong> A public profile is only accessible if the instructor's account application status is "Approved".</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-74</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Social Links:</strong> Social media links ("LinkedIn", "YouTube", "Facebook") are only rendered as clickable buttons/links if the instructor has provided the respective URLs.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-75</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Anonymous Access:</strong> Anyone (including Guests) can view public course reviews and
+                        statistics.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-76</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Review Masking (Removed Reviews):</strong> If a review has been removed by the moderator (status
+                        "violating"), the content is replaced with a warning notification: "This review was removed by a
+                        moderator for violating community standards." and the rating stars are set to 0. If a review has
+                        been self-deleted by the user, it is omitted from the course details list.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-77</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Paging Size:</strong> The reviews list on the details page is paginated with a limit of 5 reviews
+                        per page.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-78</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>General vs Lesson Badges:</strong> General course-level reviews are flagged with a "General
+                        review" badge, while lesson-level reviews (originally submitted in the player) are flagged with
+                        the corresponding lesson title.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-79</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Progress Calculation:</strong> Course progress percentage is calculated as (Completed Materials / Total Materials) * 100, rounded to 1 decimal place.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-80</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Video Completion Trigger:</strong> A video material is marked as completed only when the video playback reaches the end ("onended" event).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-81</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Document/Text Completion Trigger:</strong> A text document (".txt") is marked as completed immediately upon viewing. Other downloadable resources are marked as completed when the User clicks the download button.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-82</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Completion State:</strong> When all learning materials in a course are marked as completed, the system automatically sets the enrollment status IsCompleted = true and updates the completion date in the database.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-83</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Bypass:</strong> Course owners/instructors can access the Course Player ("Learn" page) for preview, and their progress is treated as 100% completed virtual progress without writing completions to the database.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-84</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Dynamic Button Update:</strong> For free courses, when an un-enrolled User clicks "Enroll Now", the page successfully processes the enrollment and dynamically updates the button to "Go to learning" without a full page reload.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-85</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unpublished Course Warning:</strong> If the course is not in the published state, a warning banner is displayed at the top of the course player, but access remains permitted for owners and managers.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-86</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Protected Media:</strong> Video lectures are served with playback controls only; direct download option is disabled (utilizing "controlsList" attribute set to "nodownload").</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-87</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Completed Badge Display:</strong> A completed course card displays a distinct completed overlay badge with the text "Completed" and a "check_circle" icon.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-88</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Progress Bar Color Coding:</strong> The progress bar is colored emerald green if the course is 100% completed, and the primary color (teal) otherwise.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-89</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Dynamic Actions based on Completion:</strong> The action button text is set to "Review" with a "replay" icon for completed courses, and "Continue learning" with a "play_arrow" icon for incomplete courses.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-90</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>No Self-Enrollment:</strong> Instructors are blocked from enrolling in their own courses (both free and paid). They bypass enrollment checks when accessing the player for their own courses.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-91</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Double Purchase Prevention:</strong> The system blocks purchase/checkout of courses that the user is already enrolled in, prompting them to remove it from their cart.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-92</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Stripe Integration:</strong> Paid course enrollment is completed asynchronously or upon return redirect validation after Stripe gateway processes the successful payment.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-93</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Completion Check for Course Review:</strong> Non-owner students must have 100% course progress (completed all materials) to write a review on the Course Details page.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-94</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Minimal Progress for Lesson Review:</strong> Non-owner students must have completed at least 1 lesson/material to write a review on the Course Player page.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-95</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Rating Restrictions:</strong> Star ratings must be between 1 and 5 stars (inclusive).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-96</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Account Restrictions (Lockout):</strong> Users with active comment/review restrictions are blocked from submitting new reviews. The system checks this validation at submission time.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-97</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Notification:</strong> Upon successful submission, a notification is sent to the course instructor with a link pointing directly to the review card.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-98</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Self-Ownership Only:</strong> An actor can only delete reviews they have authored.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-99</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Moderation Block:</strong> If a review has an active pending moderation report, deletion is blocked until the moderation report is resolved.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-100</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Soft Delete:</strong> Deletion is implemented as a soft-delete (setting `IsRemoved = true` and updating status to "removed" in the database). It does not permanently delete the record.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-101</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Rating Statistics Recalculation:</strong> Upon successful deletion, the overall rating average and counts are dynamically recalculated to exclude the deleted review.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-102</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Title Length Constraints:</strong> The course title must be between 5 and 100 characters in length.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-103</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Text Constraints:</strong> What You Will Learn and Requirements descriptions must each be at least 20 characters in length (excluding HTML tags).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-104</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Stripe Payout Connectivity:</strong> Instructors must connect and activate their Stripe accounts to set premium prices. If Stripe is disconnected or inactive, the course price is locked to 0.00 (Free).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-105</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Voucher Validation:</strong> Platform sponsored discount vouchers cannot be applied to free courses.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-106</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Draft Initial State:</strong> All newly created courses are saved with a status of "Draft" and must go through moderation before being published.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-107</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Status Transition Restrictions:</strong> An instructor can only set a course to status 'pending' (moderation), 'archived' (hidden), or 'published' (only when unarchiving from status 'archived').</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-108</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Permanently Discontinued Block:</strong> A course that is 'archived' and has 3 or more flags is considered permanently discontinued due to policy violations and cannot have its status changed or be edited.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-109</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Active Enrollment Preservation:</strong> Archiving a course does not delete it or impact active student enrollments; active students enrolled in the course continue to have full access to its contents on their dashboards.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-110</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Purge Policy:</strong> Learning materials placed in the trash bin are automatically and permanently deleted after 30 days by a background cleanup service.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-111</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Cloud Storage Virtual Directory:</strong> Moving a file to the trash bin renames the file prefix on Cloudinary to `trash/` and updates its status to "removed" in the database, hiding it from the public display while retaining the database record.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-112</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Video Swap Constraint:</strong> Restoring a video material to a lesson that already contains an active video will automatically move the current active video to the trash bin, replacing it with the restored video.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-113</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Discontinued & Pending Locking:</strong> Learning materials cannot be restored or permanently deleted if the parent course is pending review or is permanently discontinued due to policy violations.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-114</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unpublish Trigger:</strong> Restoring a learning material to a published course will automatically update the course status back to "Draft" to force re-moderation of the updated curriculum.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-115</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Draft Demotion Rule:</strong> If the parent course is currently "Published", restoring any curriculum material will automatically update the course status to "Draft" and clear the moderation feedback, requiring the instructor to re-submit it for review.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-116</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Rights & Mod Lockouts:</strong> Restoration is locked if the instructor is under active suspension/lockout, or if the parent course is pending review, or if the parent course is permanently discontinued due to 3 or more flags.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-117</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Cloud Storage Synchronization:</strong> Restoring a file dynamically renames it in Cloudinary to remove the `trash/` prefix, syncing the physical path with the database status.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-118</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Irreversible Deletion:</strong> Permanent deletion removes both the database record and the asset hosted on cloud storage (Cloudinary) and cannot be recovered or restored.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-119</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Cloud Storage Prefix:</strong> The file is deleted from the virtual trash path (prefix `trash/`) in cloud storage using its `CloudPublicId`.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-120</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Exclusion of Drafts:</strong> Courses with status "Draft" are never retrieved or displayed in the moderation queues.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-121</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Urgency Level Calculation:</strong> For pending courses, the urgency color is calculated based on creation date:
+                        <ul>
+                            <li>Red / "High" urgency: pending &gt; 72 hours.</li>
+                            <li>Amber / "Medium" urgency: pending &gt; 24 hours.</li>
+                            <li>Slate / "Normal" urgency: pending &lt;= 24 hours.</li>
+                        </ul></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-122</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Threat Levels:</strong> Threat levels correspond to AI check feedback:
+                        <ul>
+                            <li>Critical Threat (FlaggedOrRejected): course hits critical policy violations.</li>
+                            <li>High Threat (ManualAudit): course needs manual audit.</li>
+                            <li>Clean (Approved): course is approved by automated check.</li>
+                            <li>Pending / None: default.</li>
+                        </ul></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-123</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Infraction Flags:</strong> A course tracks up to 3 flags. If flag count reaches 3, status is changed to "Archived" and course status maps to "Permanently Locked".</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-124</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Search Criteria:</strong> Search keywords are matched (case-insensitively, substring match)
+                        against:
+                        <ul>
+                            <li>Course Title</li>
+                            <li>Instructor Name (Full Name)</li>
+                        </ul></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-125</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Preservation of Filters:</strong> Searching preserves all other active filters (Category, Status,
+                        Sort Option).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-126</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Debounce Time:</strong> To prevent excessive server requests, the search execution is debounced by
+                        300 milliseconds from the last keystroke.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-127</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Sorting Options:</strong> <ul>
+                            <li>"Threat Level (High to Low)" ("threat_desc"): Sorts descending by threat level (Critical
+                                Threat &gt; High Threat &gt; Clean &gt; None), then ascending by creation date. This is
+                                the default sort.</li>
+                            <li>"Threat Level (Low to High)" ("threat_asc"): Sorts ascending by threat level, then
+                                ascending by creation date.</li>
+                            <li>"Oldest (Priority)" ("oldest"): Sorts ascending by creation/submission date (oldest
+                                first).</li>
+                            <li>"Newest" ("newest"): Sorts descending by creation/submission date (newest first).</li>
+                        </ul></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-128</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Category Filter:</strong> Matches the Category ID or Name against the course's category. If "All
+                        Categories" is selected, no category filtering is applied.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-129</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Preservation of Other Criteria:</strong> Filtering preserves active search keywords and sorting
+                        options.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-130</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Re-approval Rule:</strong> If the course status is rejected, archived, or permanently locked, the action button is labeled "Re-approve" but follows the same approval logic.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-131</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Notification Content:</strong> The approval notification sent to the instructor includes the optional feedback entered by the actor.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-132</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Cache Eviction:</strong> The Redis cache for the course details must be evicted immediately upon approval to ensure users see the updated content.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-133</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Violation Element Tagging:</strong> <ul>
+                            <li>Course-level targets correspond to: title ("course.title"), description ("course.description"), thumbnail ("course.thumbnail"), what you will learn ("course.what_you_will_learn"), requirements ("course.requirements").</li>
+                            <li>Lesson-level targets correspond to "lesson.title".</li>
+                            <li>Material-level targets correspond to "file".</li>
+                        </ul></td>
+            </tr>
+                        <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-134</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Guest Login Prompt:</strong> System prompts Guest users to log in when clicking on interactive elements on the homepage.</td>
+            </tr>
+<tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-135</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Combined Feedback:</strong> The course's "ModerationFeedback" is updated by combining all tagged element reasons (e.g. "[@Title] Reason" or "[Lesson: Title] Reason" separated by newlines).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-136</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Notification Link:</strong> The rejection notification sent to the instructor contains a link redirecting to the course editor "/InstructorCourse/Editor?id={courseId}".</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-137</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Flag Count Limit:</strong> A course can have a maximum of 3 flags. Flag count cannot exceed 3.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-138</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Strike Warnings:</strong> <ul>
+                            <li><b>Strike 1 (1st Flag):</b> Sends notification "Course Violation Reminder (1st Time)". The course is temporarily hidden. Instructor is reminded to review and comply.</li>
+                            <li><b>Strike 2 (2nd Flag):</b> Sends notification "Severe Violation Warning (2nd Time)". Course remains hidden. Warning that 3rd flag leads to permanent lock.</li>
+                            <li><b>Strike 3 (3rd Flag):</b> Sends notice "Permanent Course Discontinuation Notice (3rd Time)". Status changes to "archived" (Permanently Locked). Instructor is blocked from editing, and no new enrollments are allowed.</li>
+                        </ul></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-139</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Debounce Optimization:</strong> Auto-saving uses a 1.5-second debounce delay to prevent database spamming during rapid typing.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-140</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Draft Reversion:</strong> To ensure content integrity, any edits made to an already "published" course will automatically degrade its status back to "draft", requiring a new moderation review submission and clearing previous moderation feedback.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-141</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Content Integrity Hashing:</strong> Textual details and the thumbnail file are hashed using MD5 and stored as a unique fingerprint to prevent duplication and support anti-plagiarism tracking.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-142</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Lesson Limit for Unlinked Stripe Accounts:</strong> Instructors who have not linked an active Stripe Connect profile are only allowed to create up to 5 lessons per course.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-143</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Lesson Title Uniqueness:</strong> Lesson titles must be unique within a course (case-insensitive).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-144</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Pending Review Modification Lock:</strong> Learning materials and lessons cannot be added, edited, or removed if the course is currently in 'Pending' review status.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-145</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Syllabus Change Reversion:</strong> Adding or removing lessons and materials, or editing their content, in a 'Published' course automatically changes the course status back to 'Draft' and clears any existing moderation feedback.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-146</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Lesson Soft Deletion:</strong> Deleting a lesson soft-deletes the lesson record and all its associated materials (IsRemoved = true) in the database, and moves physical cloud files to the trash.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-147</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Supplementary Document Limits:</strong> Instructors who have not linked an active Stripe Connect profile are only allowed to attach up to 2 supplementary documents per lesson.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-148</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Material Soft Deletion:</strong> Removing a material does not permanently delete the file; the physical file is moved to the Cloud Storage Service's trash folder and its database status is updated to 'Removed'.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-149</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Active Student Deletion Restriction:</strong> Courses with active student enrollments cannot be deleted and must be archived instead.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-150</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Soft Deletion:</strong> Deleting a course soft-deletes both the course and all its associated lessons and materials (IsRemoved = true) in the database, rather than permanently destroying the records.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-151</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Dashboard Access Restriction:</strong> Only fully approved instructors are allowed to access the Instructor Dashboard; other states trigger redirects to application status or creation workflows.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-152</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Status Badging:</strong> The system visually distinguishes courses on the instructor dashboard using specific badges based on their current status (e.g., Published, Pending Review, Draft, Rejected, Archived, Removed, Permanently Locked).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-153</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Contextual Dashboard Actions:</strong> Course management actions on the instructor dashboard are determined dynamically based on course status; permanently locked or removed courses have severely restricted action sets.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-154</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Data Isolation:</strong> Instructors can only view statistics, revenue, and courses associated with their own account.</td>
+            </tr>
         </tbody>
     </table>
 </div>
+
+
+
+

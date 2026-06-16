@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-07 - View Instructor Profile</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.6. View Instructor Profile</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor clicks on the instructor's name or profile link.</p>
+
+    <p><strong>Function Description:</strong> Displays the public profile page of an instructor along with their list of created courses.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>The instructor's application must be approved.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>View Instructor Profile Successfully:</strong>
+                <ul>
+                    <li>Actor clicks on an instructor's name or profile link.</li>
+                    <li>The system retrieves the instructor's ID from the URL request.</li>
+                    <li>The system retrieves the instructor's profile details (avatar, full name, professional title, expertise categories, biography, and social links).</li>
+                    <li>The system retrieves the instructor's statistical information (total students, average rating).</li>
+                    <li>The system counts the instructor's active courses.</li>
+                    <li>The system retrieves the instructor's published courses.</li>
+                    <li>The system displays the public profile page containing the instructor's avatar, full name, professional title, expertise categories, biography, social links ("LinkedIn", "YouTube", "Facebook"), and statistics (total students, active courses, average rating, total reviews).</li>
+                    <li>The system displays a list of course card items for each published course, showing the course thumbnail, title, rating, price, and enrollment count.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The instructor's public profile page is rendered, displaying their biography, social links, statistical information, and a list of published courses.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Instructor Not Found or Not Approved:</strong> The system detects that the instructor does not exist or has not been approved. The system redirects the actor to the home page.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Course Visibility:</strong> Only courses with status "Published" are displayed on the public profile. Draft, pending, rejected, or archived courses are strictly excluded.</li>
+            <li><strong>Profile Access:</strong> A public profile is only accessible if the instructor's account application status is "Approved".</li>
+            <li><strong>Social Links:</strong> Social media links ("LinkedIn", "YouTube", "Facebook") are only rendered as clickable buttons/links if the instructor has provided the respective URLs.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>
