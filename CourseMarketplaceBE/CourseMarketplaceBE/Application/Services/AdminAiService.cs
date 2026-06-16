@@ -8,6 +8,7 @@ using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using AutoMapper;
+using CourseMarketplaceBE.Application.DTOs.Common;
 
 namespace CourseMarketplaceBE.Application.Services
 {
@@ -43,12 +44,15 @@ namespace CourseMarketplaceBE.Application.Services
             return _mapper.Map<List<AiModelAdminDto>>(models);
         }
 
-        public async Task<(List<AiModelAdminDto> Items, int TotalCount)> GetPagedModelsAsync(int page, int pageSize)
+        public async Task<PagedResult<AiModelAdminDto>> GetPagedModelsAsync(PagedRequestDto req)
         {
-            var (items, totalCount) = await _aiModelRepo.GetPagedAdminAsync(page, pageSize);
+            if (req.Page <= 0) req.Page = 1;
+            if (req.PageSize <= 0) req.PageSize = 10;
+
+            var (items, totalCount) = await _aiModelRepo.GetPagedAdminAsync(req.Page, req.PageSize);
             if (items == null || items.Count == 0) throw new KeyNotFoundException("No AI models found.");
             var dtos = _mapper.Map<List<AiModelAdminDto>>(items);
-            return (dtos, totalCount);
+            return new PagedResult<AiModelAdminDto>(dtos, totalCount, req.Page, req.PageSize);
         }
 
         public async Task<AiModelAdminDto> GetModelByIdAsync(int id)
@@ -168,11 +172,15 @@ namespace CourseMarketplaceBE.Application.Services
             return true;
         }
 
-        public async Task<(List<CourseModerationLogAdminDto> Items, int TotalCount)> GetCourseModerationLogsAsync(int page, int pageSize)
+        public async Task<PagedResult<CourseModerationLogAdminDto>> GetCourseModerationLogsAsync(PagedRequestDto req)
         {
-            var (items, totalCount) = await _courseLogRepo.GetPagedAdminAsync(page, pageSize);
+            if (req.Page <= 0) req.Page = 1;
+            if (req.PageSize <= 0) req.PageSize = 10;
+
+            var (items, totalCount) = await _courseLogRepo.GetPagedAdminAsync(req.Page, req.PageSize);
             if (items == null || items.Count == 0) throw new KeyNotFoundException("No course moderation logs found.");
-            return (_mapper.Map<List<CourseModerationLogAdminDto>>(items), totalCount);
+            var dtos =  _mapper.Map<List<CourseModerationLogAdminDto>>(items);
+            return new PagedResult<CourseModerationLogAdminDto>(dtos,totalCount,req.Page,req.PageSize);
         }
 
         public async Task<CourseModerationLogAdminDto?> GetCourseModerationLogDetailAsync(int logId)
@@ -182,11 +190,15 @@ namespace CourseMarketplaceBE.Application.Services
             return _mapper.Map<CourseModerationLogAdminDto>(entity);
         }
 
-        public async Task<(List<ReviewModerationLogAdminDto> Items, int TotalCount)> GetCourseReviewModerationLogsAsync(int page, int pageSize)
+        public async Task<PagedResult<ReviewModerationLogAdminDto>> GetCourseReviewModerationLogsAsync(PagedRequestDto req)
         {
-            var (items, totalCount) = await _courseReviewLogRepo.GetPagedAdminAsync(page, pageSize);
+            if (req.Page <= 0) req.Page = 1;
+            if (req.PageSize <= 0) req.PageSize = 10;
+
+            var (items, totalCount) = await _courseReviewLogRepo.GetPagedAdminAsync(req.Page, req.PageSize);
             if (items == null || items.Count == 0) throw new KeyNotFoundException("No course review moderation logs found.");
-            return (_mapper.Map<List<ReviewModerationLogAdminDto>>(items), totalCount);
+            var dtos = _mapper.Map<List<ReviewModerationLogAdminDto>>(items);
+            return new PagedResult<ReviewModerationLogAdminDto>(dtos,totalCount,req.Page,req.PageSize);
         }
 
         public async Task<ReviewModerationLogAdminDto?> GetCourseReviewModerationLogDetailAsync(int logId)
@@ -196,11 +208,15 @@ namespace CourseMarketplaceBE.Application.Services
             return _mapper.Map<ReviewModerationLogAdminDto>(entity);
         }
 
-        public async Task<(List<ReviewModerationLogAdminDto> Items, int TotalCount)> GetLessonReviewModerationLogsAsync(int page, int pageSize)
+        public async Task<PagedResult<ReviewModerationLogAdminDto>> GetLessonReviewModerationLogsAsync(PagedRequestDto req)
         {
-            var (items, totalCount) = await _lessonReviewLogRepo.GetPagedAdminAsync(page, pageSize);
+            if (req.Page <= 0) req.Page = 1;
+            if (req.PageSize <= 0) req.PageSize = 10;
+
+            var (items, totalCount) = await _lessonReviewLogRepo.GetPagedAdminAsync(req.Page, req.PageSize);
             if (items == null || items.Count == 0) throw new KeyNotFoundException("No lesson review moderation logs found.");
-            return (_mapper.Map<List<ReviewModerationLogAdminDto>>(items), totalCount);
+            var dtos = _mapper.Map<List<ReviewModerationLogAdminDto>>(items);
+            return new PagedResult<ReviewModerationLogAdminDto>(dtos,totalCount,req.Page,req.PageSize);
         }
 
         public async Task<ReviewModerationLogAdminDto?> GetLessonReviewModerationLogDetailAsync(int logId)
