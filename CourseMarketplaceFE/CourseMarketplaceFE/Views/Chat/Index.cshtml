@@ -122,8 +122,8 @@
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <script>
-        const API_URL = "http://localhost:5207";
-        const token = "@token";
+        const CHAT_API_URL = "http://localhost:5207";
+        const chatPageToken = "@token";
 
         // ★ Lấy AccountId từ JWT token (đáng tin hơn cookie UserId)
         function getAccountIdFromToken(jwt) {
@@ -141,10 +141,10 @@
         }
 
         // Fallback: cookie
-        const cookieUserId = parseInt("@currentAccountId", 10) || 0;
-        const myAccountId = getAccountIdFromToken(token) || cookieUserId;
+        const chatCookieUserId = parseInt("@currentAccountId", 10) || 0;
+        const chatMyAccountId = getAccountIdFromToken(chatPageToken) || chatCookieUserId;
 
-        console.log('[Chat Debug] myAccountId =', myAccountId, '| cookieUserId =', cookieUserId);
+        console.log('[Chat Debug] chatMyAccountId =', chatMyAccountId, '| chatCookieUserId =', chatCookieUserId);
 
         function senderIdOf(m) {
             const v = m.senderId ?? m.SenderId;
@@ -153,36 +153,36 @@
         }
 
         let activeChatId = null;
-        let connection = null;
+        let chatPageConnection = null;
         let selectedFiles = []; // Danh sách file đang chờ gửi
 
         // 1. Khởi tạo SignalR
         async function initSignalR() {
-            if (!token) return;
+            if (!chatPageToken) return;
 
-            connection = new signalR.HubConnectionBuilder()
-                .withUrl(`${API_URL}/chatHub`, {
-                    accessTokenFactory: () => token
+            chatPageConnection = new signalR.HubConnectionBuilder()
+                .withUrl(`${CHAT_API_URL}/chatHub`, {
+                    accessTokenFactory: () => chatPageToken
                 })
                 .withAutomaticReconnect()
                 .build();
 
-            connection.on("ReceiveMessage", (msg) => {
+            chatPageConnection.on("ReceiveMessage", (msg) => {
                 if (activeChatId === msg.chatId) {
                     appendMessage(msg);
                 }
                 loadChats(); 
             });
 
-            connection.on("UserTyping", (data) => {
+            chatPageConnection.on("UserTyping", (data) => {
                 const typingBox = document.getElementById('typing-box');
-                if (activeChatId === data.chatId && data.accountId !== myAccountId) {
+                if (activeChatId === data.chatId && data.accountId !== chatMyAccountId) {
                     typingBox.innerText = `${data.name} is typing...`;
                     typingBox.style.display = data.isTyping ? 'block' : 'none';
                 }
             });
 
-            connection.on("UserOnlineStatus", (data) => {
+            chatPageConnection.on("UserOnlineStatus", (data) => {
                 // Update specific chat list items
                 const chatCard = allChats.find(c => c.partnerId === data.accountId);
                 if (chatCard) {
@@ -205,8 +205,8 @@
                 }
             });
 
-            connection.on("MessageRead", (data) => {
-                if (activeChatId === data.chatId && data.accountId !== myAccountId) {
+            chatPageConnection.on("MessageRead", (data) => {
+                if (activeChatId === data.chatId && data.accountId !== chatMyAccountId) {
                     // Update all my sent messages in this chat to show double blue ticks
                     const ticks = document.querySelectorAll('.msg-row.me .read-receipt');
                     ticks.forEach(tick => {
@@ -217,7 +217,7 @@
             });
 
             try {
-                await connection.start();
+                await chatPageConnection.start();
                 console.log("SignalR Connected.");
             } catch (err) {
                 console.error("SignalR Connection Error: ", err);
@@ -288,8 +288,8 @@
 
         async function loadChats() {
             try {
-                const res = await fetch(`${API_URL}/api/chat/list`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                const res = await fetch(`${CHAT_API_URL}/api/chat/list`, {
+                    headers: { 'Authorization': `Bearer ${chatPageToken}` }
                 });
                 defaultChats = await res.json();
                 
@@ -318,8 +318,8 @@
                 if (!currentQuery) return;
                 
                 try {
-                    const res = await fetch(`${API_URL}/api/chat/search?q=${encodeURIComponent(currentQuery)}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
+                    const res = await fetch(`${CHAT_API_URL}/api/chat/search?q=${encodeURIComponent(currentQuery)}`, {
+                        headers: { 'Authorization': `Bearer ${chatPageToken}` }
                     });
                     allChats = await res.json();
                     applyChatFilters();
@@ -358,8 +358,8 @@
             loadChats(); // Update active class
 
             try {
-                const res = await fetch(`${API_URL}/api/chat/history?roomId=${chatId}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                const res = await fetch(`${CHAT_API_URL}/api/chat/history?roomId=${chatId}`, {
+                    headers: { 'Authorization': `Bearer ${chatPageToken}` }
                 });
                 const messages = await res.json();
                 
@@ -369,7 +369,7 @@
                 scrollToBottom();
 
                 // Broadcast read receipt
-                connection.invoke("MarkAsRead", chatId);
+                chatPageConnection.invoke("MarkAsRead", chatId);
             } catch (err) {
                 console.error("Load history error:", err);
             }
@@ -378,7 +378,7 @@
         function appendMessage(m) {
             const list = document.getElementById('message-list');
             const sid = senderIdOf(m);
-            const isMe = sid === myAccountId && myAccountId > 0;
+            const isMe = sid === chatMyAccountId && chatMyAccountId > 0;
             const attachments = m.attachments || m.Attachments || [];
             
             let attachmentHtml = "";
@@ -466,7 +466,7 @@
             }
 
             try {
-                await connection.invoke("SendMessage", {
+                await chatPageConnection.invoke("SendMessage", {
                     chatId: activeChatId,
                     content: content || (attachments.length > 0 ? "Sent an attachment" : ""),
                     attachments: attachments
@@ -474,7 +474,7 @@
                 input.value = "";
                 selectedFiles = [];
                 renderAttachmentPreview();
-                await connection.invoke("Typing", activeChatId, false);
+                await chatPageConnection.invoke("Typing", activeChatId, false);
             } catch (err) {
                 console.error("Send message error:", err);
             }
@@ -484,9 +484,9 @@
             const formData = new FormData();
             formData.append('file', file);
             try {
-                const res = await fetch(`${API_URL}/api/chatattachment/upload`, {
+                const res = await fetch(`${CHAT_API_URL}/api/chatattachment/upload`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
+                    headers: { 'Authorization': `Bearer ${chatPageToken}` },
                     body: formData
                 });
                 if (!res.ok) throw new Error("Upload failed");
@@ -533,9 +533,9 @@
             
             if (confirm("Are you sure you want to clear this chat history? This cannot be undone.")) {
                 try {
-                    const res = await fetch(`${API_URL}/api/chat/${activeChatId}/clear`, {
+                    const res = await fetch(`${CHAT_API_URL}/api/chat/${activeChatId}/clear`, {
                         method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${token}` }
+                        headers: { 'Authorization': `Bearer ${chatPageToken}` }
                     });
                     
                     if (res.ok) {
@@ -561,7 +561,7 @@
 
         // Typing & Auto-resize logic
         const msgInput = document.getElementById('msg-input');
-        let typingTimeout;
+        let chatPageTypingTimeout;
 
         msgInput.addEventListener('input', function() {
             // Auto resize
@@ -569,11 +569,11 @@
             this.style.height = (this.scrollHeight) + 'px';
 
             if (!activeChatId) return;
-            connection.invoke("Typing", activeChatId, true);
+            chatPageConnection.invoke("Typing", activeChatId, true);
             
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                connection.invoke("Typing", activeChatId, false);
+            clearTimeout(chatPageTypingTimeout);
+            chatPageTypingTimeout = setTimeout(() => {
+                chatPageConnection.invoke("Typing", activeChatId, false);
             }, 3000);
         });
 
