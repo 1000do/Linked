@@ -531,7 +531,20 @@
         async function confirmDeleteChat() {
             if (!activeChatId) return;
             
-            if (confirm("Are you sure you want to clear this chat history? This cannot be undone.")) {
+            const confirmResult = await Swal.fire({
+                title: 'Confirm Clear Chat',
+                text: "Are you sure you want to clear this chat history? This cannot be undone.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Clear',
+                cancelButtonText: 'Cancel',
+                background: '#ffffff',
+                customClass: { popup: 'rounded-2xl shadow-xl' }
+            });
+
+            if (confirmResult.isConfirmed) {
                 try {
                     const res = await fetch(`${CHAT_API_URL}/api/chat/${activeChatId}/clear`, {
                         method: 'DELETE',
@@ -549,12 +562,22 @@
                         
                         // Refresh sidebar
                         loadChats();
+
+                        Swal.fire({
+                            title: 'Cleared!',
+                            text: 'The chat history was successfully cleared.',
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false,
+                            background: '#ffffff',
+                            customClass: { popup: 'rounded-2xl shadow-xl' }
+                        });
                     } else {
-                        alert("Failed to clear chat history.");
+                        Swal.fire('Error', 'Failed to clear chat history.', 'error');
                     }
                 } catch (err) {
                     console.error("Clear chat error:", err);
-                    alert("An error occurred while clearing chat history.");
+                    Swal.fire('Error', 'An error occurred while clearing chat history.', 'error');
                 }
             }
         }
