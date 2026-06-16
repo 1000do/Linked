@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-08 - View Review List</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.17.2. View Review List</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor
+                accesses the Course Details page and scrolls to the reviews section.</p>
+
+    <p><strong>Function Description:</strong> Displays the list of public course reviews, star ratings, and statistics, allowing sorting/filtering by
+                star rating and pagination.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Course details must be accessible.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>View Review List Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the Course Details page of a course.</li>
+                    <li>The system retrieves the overall review statistics.</li>
+                    <li>The system retrieves the first page of course reviews.</li>
+                    <li>The system displays the average rating, star rating icons, total review count, and percentage
+                        distribution bars.</li>
+                    <li>The system displays the list of reviews, showing each reviewer's avatar/initial, name, role
+                        badge, review date, star rating, course/lesson badge, and comment content.</li>
+                    <li>The system displays the pagination controls containing "Prev" and "Next" buttons.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>Rating statistics and reviews list are displayed successfully.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>System Error Loading Reviews:</strong> The system displays an error message indicating that reviews could not be loaded. The flow terminates.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Anonymous Access:</strong> Anyone (including Guests) can view public course reviews and
+                        statistics.</li>
+            <li><strong>Review Masking (Removed Reviews):</strong> If a review has been removed by the moderator (status
+                        "violating"), the content is replaced with a warning notification: "This review was removed by a
+                        moderator for violating community standards." and the rating stars are set to 0. If a review has
+                        been self-deleted by the user, it is omitted from the course details list.</li>
+            <li><strong>Paging Size:</strong> The reviews list on the details page is paginated with a limit of 5 reviews
+                        per page.</li>
+            <li><strong>General vs Lesson Badges:</strong> General course-level reviews are flagged with a "General
+                        review" badge, while lesson-level reviews (originally submitted in the player) are flagged with
+                        the corresponding lesson title.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

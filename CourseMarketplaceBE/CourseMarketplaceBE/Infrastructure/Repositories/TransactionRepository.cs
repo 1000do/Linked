@@ -394,4 +394,87 @@ public class TransactionRepository : ITransactionRepository
         }
         return false;
     }
+
+    public async Task<decimal> GetTotalSpentAsync(int accountId)
+    {
+        return await _context.Transactions
+            .Where(t => t.AccountFrom == accountId && 
+                        (t.TransactionsStatus == TransactionStatus.Succeeded.ToValue() || 
+                         t.TransactionsStatus == TransactionStatus.RefundPending.ToValue()))
+            .SumAsync(t => t.Amount);
+    }
+
+    public async Task<decimal> GetInstructorTotalRevenueAsync(int instructorId)
+    {
+        return await _context.Transactions
+            .Where(t => t.AccountTo == instructorId && t.TransactionsStatus == TransactionStatus.Succeeded.ToValue())
+            .SumAsync(t => t.Amount);
+    }
+
+    public async Task<decimal> GetInstructorTotalWithdrawnAsync(int instructorId)
+    {
+        return await _context.InstructorPayouts
+            .Where(p => p.InstructorId == instructorId && p.PayoutStatus == PayoutStatus.Paid.ToValue())
+            .SumAsync(p => p.PayoutAmount);
+    }
+
+    public async Task<AccountTransactionSummaryDto> GetAccountTransactionsSummaryAsync(int accountId)
+    {
+        var summary = new AccountTransactionSummaryDto();
+
+        var payments = await _context.Transactions
+            .Include(t => t.OrderItem)
+                .ThenInclude(oi => oi!.Course)
+            .Include(t => t.AccountFromNavigation)
+                .ThenInclude(af => af!.User)
+            .Where(t => (t.AccountFrom == accountId || t.AccountTo == accountId) && (t.TransactionType == "payment" || t.TransactionType == null))
+            .OrderByDescending(t => t.TransactionCreatedAt)
+            .ToListAsync();
+
+        summary.Payments = payments.Select(t => new PaymentDto
+        {
+            TransactionId = t.TransactionId,
+            Amount = t.Amount,
+            Status = t.TransactionsStatus,
+            CreatedAt = t.TransactionCreatedAt,
+            StudentName = t.AccountFromNavigation?.User?.FullName ?? t.AccountFromNavigation?.Email ?? "System/Guest",
+            CourseTitle = t.OrderItem?.Course?.Title ?? "Direct / Platform Deposit"
+        }).ToList();
+
+        var transfers = await _context.Transactions
+            .Include(t => t.OrderItem)
+                .ThenInclude(oi => oi!.Course)
+            .Where(t => t.AccountTo == accountId && t.TransactionType == "transfer")
+            .OrderByDescending(t => t.TransactionCreatedAt)
+            .ToListAsync();
+
+        summary.Transfers = transfers.Select(t => new TransferDto
+        {
+            TransactionId = t.TransactionId,
+            Amount = t.Amount,
+            Status = t.TransactionsStatus,
+            CreatedAt = t.TransactionCreatedAt,
+            TransferRate = t.TransferRate,
+            CourseTitle = t.OrderItem?.Course?.Title ?? "Platform Split Share"
+        }).ToList();
+
+        var payouts = await _context.InstructorPayouts
+            .Where(p => p.InstructorId == accountId)
+            .OrderByDescending(p => p.PayoutDate)
+            .ToListAsync();
+
+        summary.Payouts = payouts.Select(p => new PayoutDto
+        {
+            PayoutId = p.PayoutId,
+            PayoutAmount = p.PayoutAmount,
+            PayoutStatus = p.PayoutStatus,
+            PayoutDate = p.PayoutDate,
+            StripeTransferId = p.StripeTransferId,
+            StripePayoutId = p.StripePayoutId,
+            PaidToBankAt = p.PaidToBankAt,
+            IsPaid = p.IsPaid
+        }).ToList();
+
+        return summary;
+    }
 }

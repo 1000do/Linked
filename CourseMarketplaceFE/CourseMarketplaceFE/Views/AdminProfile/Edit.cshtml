@@ -16,8 +16,16 @@
             </a>
         </div>
 
+        <!-- Alert Container -->
+        <div class="px-6 pt-5">
+            <div id="alertContainer" class="hidden flex items-center gap-3 p-4 rounded-xl text-sm font-semibold shadow-sm">
+                <span id="alertIcon" class="material-symbols-outlined text-[20px]"></span>
+                <span id="alertMessage"></span>
+            </div>
+        </div>
+
         <!-- Form -->
-        <form action="@Url.Action("Edit", "AdminProfile")" method="post" enctype="multipart/form-data" class="p-6 flex flex-col gap-5">
+        <form id="editProfileForm" onsubmit="submitEditProfile(event)" enctype="multipart/form-data" class="p-6 flex flex-col gap-5">
             <!-- Avatar Section -->
             <div class="flex items-center gap-4.5 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
                 <div class="relative shrink-0">
@@ -35,36 +43,35 @@
             <!-- Display Name -->
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs font-bold text-slate-700">Display Name <span class="text-rose-500">*</span></label>
-                <input type="text" name="DisplayName" value="@Model.DisplayName" required placeholder="Manager nickname"
+                <input type="text" id="displayNameInput" name="DisplayName" value="@Model.DisplayName" required placeholder="Manager nickname"
                        class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
-                <span asp-validation-for="DisplayName" class="text-xs text-rose-500"></span>
             </div>
 
             <!-- Full Name -->
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs font-bold text-slate-700">Full Name</label>
-                <input type="text" name="FullName" value="@Model.FullName" placeholder="Họ và tên"
+                <input type="text" id="fullNameInput" name="FullName" value="@Model.FullName" placeholder="Họ và tên"
                        class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
             </div>
 
             <!-- Contact Number -->
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs font-bold text-slate-700">Contact Number</label>
-                <input type="text" name="PhoneNumber" value="@Model.PhoneNumber" placeholder="e.g. +84912345678"
+                <input type="text" id="phoneInput" name="PhoneNumber" value="@Model.PhoneNumber" placeholder="e.g. +84912345678"
                        class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
             </div>
 
             <!-- Bio -->
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs font-bold text-slate-700">Biography / About Me</label>
-                <textarea name="Bio" rows="4" placeholder="Brief description about your administrative role..."
+                <textarea id="bioInput" name="Bio" rows="4" placeholder="Brief description about your administrative role..."
                           class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors resize-none">@Model.Bio</textarea>
             </div>
 
             <!-- Buttons -->
             <div class="flex items-center gap-3.5 border-t border-slate-100 pt-5 mt-2">
                 <a href="@Url.Action("Index", "AdminProfile")" class="w-full py-2.5 text-center text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">
-                    Cancel
+                    Back to Profile
                 </a>
                 <button type="submit" class="w-full py-2.5 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors shadow-sm active:scale-[0.98]">
                     Save Profile
@@ -87,5 +94,137 @@
                 reader.readAsDataURL(file);
             }
         });
+
+        // Show alert message function
+        function showAlert(isSuccess, message) {
+            const container = document.getElementById('alertContainer');
+            const icon = document.getElementById('alertIcon');
+            const msgSpan = document.getElementById('alertMessage');
+
+            container.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-100', 'text-emerald-800', 'bg-rose-50', 'border-rose-100', 'text-rose-800');
+            icon.textContent = '';
+            
+            if (isSuccess) {
+                container.classList.add('bg-emerald-50', 'border-emerald-100', 'text-emerald-800');
+                icon.classList.remove('text-rose-600');
+                icon.classList.add('text-emerald-600');
+                icon.textContent = 'check_circle';
+            } else {
+                container.classList.add('bg-rose-50', 'border-rose-100', 'text-rose-800');
+                icon.classList.remove('text-emerald-600');
+                icon.classList.add('text-rose-600');
+                icon.textContent = 'error';
+            }
+            msgSpan.textContent = message;
+            container.classList.remove('hidden');
+        }
+
+        async function submitEditProfile(event) {
+            event.preventDefault();
+
+            const displayName = document.getElementById('displayNameInput').value.trim();
+            const fullName = document.getElementById('fullNameInput').value.trim();
+            const phone = document.getElementById('phoneInput').value.trim();
+            const bio = document.getElementById('bioInput').value.trim();
+
+            // Client-side validations
+            if (!displayName) {
+                showAlert(false, "Display name is required.");
+                return;
+            }
+
+            if (displayName.length > 255) {
+                showAlert(false, "Display name cannot exceed 255 characters.");
+                return;
+            }
+
+            if (fullName.length > 255) {
+                showAlert(false, "Full name cannot exceed 255 characters.");
+                return;
+            }
+
+            if (phone) {
+                const phoneRegex = /^\+?[0-9\s-]{9,15}$/;
+                if (!phoneRegex.test(phone)) {
+                    showAlert(false, "Invalid phone number format. Allowed characters: digits, space, -, + and length 9-15.");
+                    return;
+                }
+            }
+
+            if (bio.length > 1000) {
+                showAlert(false, "Bio cannot exceed 1000 characters.");
+                return;
+            }
+
+            // Confirm Popup with SweetAlert2
+            const confirmResult = await Swal.fire({
+                title: 'Save Profile Changes?',
+                text: 'Are you sure you want to update your profile information?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#0f172a',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, Save Changes',
+                cancelButtonText: 'Cancel',
+                background: '#ffffff',
+                customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' }
+            });
+
+            if (!confirmResult.isConfirmed) return;
+
+            try {
+                const form = document.getElementById('editProfileForm');
+                const formData = new FormData(form);
+
+                const response = await fetch('@Url.Action("Edit", "AdminProfile")', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData
+                });
+
+                const res = await response.json();
+                if (res.success) {
+                    showAlert(true, res.message);
+                    Swal.fire({
+                        title: 'Profile Updated!',
+                        text: res.message,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl border border-slate-100' }
+                    });
+
+                    // Update Top bar layout values dynamically if applicable
+                    if (res.avatarUrl) {
+                        const layoutAvatars = document.querySelectorAll('img[src*="avatar"], img[src*="default"]');
+                        layoutAvatars.forEach(img => {
+                            if (img.id !== 'avatarPreview') {
+                                img.src = res.avatarUrl;
+                            }
+                        });
+                    }
+                    if (res.userName) {
+                        const layoutNames = document.querySelectorAll('.layout-manager-name');
+                        layoutNames.forEach(el => {
+                            el.textContent = res.userName;
+                        });
+                    }
+                } else {
+                    showAlert(false, res.message);
+                    Swal.fire({
+                        title: 'Failed to update',
+                        text: res.message,
+                        icon: 'error',
+                        confirmButtonColor: '#0f172a',
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl' }
+                    });
+                }
+            } catch (err) {
+                showAlert(false, "Connection error. Could not save changes.");
+                Swal.fire({ title: 'Connection Failure', text: 'Could not contact server.', icon: 'error', confirmButtonColor: '#0f172a' });
+            }
+        }
     </script>
 }

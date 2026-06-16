@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-88 - View Course Moderation List</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.4.1. View Course Moderation List</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor accesses the Course Moderation Page.</p>
+
+    <p><strong>Function Description:</strong> Displays all courses submitted by instructors that are pending review.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be authenticated.</li>
+            <li>Actor must have staff or admin role.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>View Course Moderation List Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the Course Moderation Page.</li>
+                    <li>The system retrieves all categories.</li>
+                    <li>The system retrieves the pending/under-review courses list matching current filters, sorting, and pagination parameters.</li>
+                    <li>The system calculates the urgency level and urgency color for each pending course.</li>
+                    <li>The system retrieves the course moderation statistics.</li>
+                    <li>The system displays the moderation page containing stats cards, filters, and the course moderation table.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The system displays the pending courses list and moderation stats.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            <li><strong>Unauthorized Access:</strong> The system detects that the actor does not have staff or admin roles. The system displays an access denied page or error message. The flow terminates.</li>
+            <li><strong>API Call Failed:</strong> The system fails to retrieve categories, pending courses list, or stats from the API. The system displays an error message regarding API call failure. The system renders the Course Moderation page with an empty list and stats reset to zero. The flow terminates.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Exclusion of Drafts:</strong> Courses with status "Draft" are never retrieved or displayed in the moderation queues.</li>
+            <li><strong>Urgency Level Calculation:</strong> For pending courses, the urgency color is calculated based on creation date:
+                        <ul>
+                            <li>Red / "High" urgency: pending &gt; 72 hours.</li>
+                            <li>Amber / "Medium" urgency: pending &gt; 24 hours.</li>
+                            <li>Slate / "Normal" urgency: pending &lt;= 24 hours.</li>
+                        </ul></li>
+            <li><strong>Threat Levels:</strong> Threat levels correspond to AI check feedback:
+                        <ul>
+                            <li>Critical Threat (FlaggedOrRejected): course hits critical policy violations.</li>
+                            <li>High Threat (ManualAudit): course needs manual audit.</li>
+                            <li>Clean (Approved): course is approved by automated check.</li>
+                            <li>Pending / None: default.</li>
+                        </ul></li>
+            <li><strong>Infraction Flags:</strong> A course tracks up to 3 flags. If flag count reaches 3, status is changed to "Archived" and course status maps to "Permanently Locked".</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

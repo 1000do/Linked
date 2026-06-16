@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-89 - Search Courses</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.4.2. Search Courses</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor
+                enters search keywords in the "search" input box on the Course Moderation Page.</p>
+
+    <p><strong>Function Description:</strong> Searches course list by title or instructor name for moderation purposes.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be authenticated.</li>
+            <li>Actor must have staff or admin role.</li>
+            <li>Actor must be on the Course Moderation Page.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Search Courses Successfully:</strong>
+                <ul>
+                    <li>Actor enters search keywords in the "search" input box.</li>
+                    <li>The system retrieves the courses list filtered by the search keywords and other active filters.</li>
+                    <li>The system updates the course moderation table and statistics cards.</li>
+                    <li>The system displays the filtered course list.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The system displays the course moderation list matching the search
+                    keywords and any active filters.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            <li><strong>Unauthorized Access:</strong> The system detects that the actor does not have staff or admin roles. The system displays an access denied page or error message. The flow terminates.</li>
+            <li><strong>API Call Failed:</strong> The system fails to retrieve the filtered course list or stats from the API. The system displays an error message regarding search failure. The system renders the Course Moderation page with an empty list. The flow terminates.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Exclusion of Drafts:</strong> Courses with status "Draft" are never retrieved or displayed in the moderation queues.</li>
+            <li><strong>Search Criteria:</strong> Search keywords are matched (case-insensitively, substring match)
+                        against:
+                        <ul>
+                            <li>Course Title</li>
+                            <li>Instructor Name (Full Name)</li>
+                        </ul></li>
+            <li><strong>Preservation of Filters:</strong> Searching preserves all other active filters (Category, Status,
+                        Sort Option).</li>
+            <li><strong>Debounce Time:</strong> To prevent excessive server requests, the search execution is debounced by
+                        300 milliseconds from the last keystroke.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

@@ -1,0 +1,75 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-02 - View Course List</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.1. View Course List</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor accesses the explore courses page or searches for courses.</p>
+
+    <p><strong>Function Description:</strong> Allows Guests and Users to browse, search, filter, and sort the public list of courses on the marketplace. Authenticated Users can toggle course wishlist status, add courses to their shopping cart, or view their enrollment status directly from the course cards.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>None.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Explore Courses Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the explore courses page.</li>
+                    <li>The system retrieves the active filter categories.</li>
+                    <li>The system retrieves the default paginated course list.</li>
+                    <li>The system checks the actor's authentication status.</li>
+                    <li>The system retrieves the actor's wishlist (if authenticated).</li>
+                    <li>The system maps wishlist status to each course in the list.</li>
+                    <li>The system displays the explore courses page showing the categories, filter options, and the course list.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>Detailed course card catalog, including thumbnail, title, category, instructor name, rating average, price, wishlist toggle, and cart action controls, is rendered successfully matching the active filter criteria.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Public Visibility:</strong> The course list displays only courses that are currently published. Draft, pending, rejected, archived, or locked courses are excluded from the public list.</li>
+            <li><strong>Wishlist Sync:</strong> Wishlist heart icons reflect the current wishlist status of the logged-in User in real-time, displaying a filled red heart for wishlisted courses and an unfilled icon otherwise.</li>
+            <li><strong>Cart Status Integration:</strong> If a logged-in User has already purchased/enrolled in a course, the "Add to cart" button is replaced by a checkmark icon to prevent double purchases.</li>
+            <li><strong>Debounced Query Execution:</strong> Real-time keyword filtering is debounced by 350ms to minimize API calls during continuous typing.</li>
+            <li><strong>View Mode Retention:</strong> User layout preference (Grid vs. List view) is stored in the browser's local storage and persists across sessions.</li>
+            <li><strong>State Persistence:</strong> Active filter parameters are stored in the browser's local storage and are automatically applied when the user returns to the page without URL parameters.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

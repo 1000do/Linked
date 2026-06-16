@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-65 - Permanently delete learning materials</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.24. Permanently delete learning materials</strong></p>
+
+    <p><strong>Function Trigger:</strong> Instructor clicks the "Delete Forever" button next to a removed material on the Trash Bin page.</p>
+
+    <p><strong>Function Description:</strong> Permanently deletes files from the storage server.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Instructor must be authenticated.</li>
+            <li>Instructor's status must be "Approved".</li>
+            <li>The material must be currently in the trash bin (soft-deleted status is "removed").</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Permanently Delete Learning Material Successfully:</strong>
+                <ul>
+                    <li>Instructor accesses the Trash Bin page (displays the list of removed learning materials).</li>
+                    <li>Instructor locates the removed material they wish to delete forever.</li>
+                    <li>Instructor clicks the "Delete Forever" button on the corresponding material row.</li>
+                    <li>The system displays a confirmation popup dialog warning of irreversible deletion.</li>
+                    <li>Instructor clicks the "Yes, delete forever" button.</li>
+                    <li>The system checks the instructor's session authentication.</li>
+                    <li>The system checks if the instructor's rights are locked.</li>
+                    <li>The system checks if the parent course containing the lesson is pending review.</li>
+                    <li>The system checks if the parent course is permanently discontinued.</li>
+                    <li>The system checks the instructor's ownership of the material.</li>
+                    <li>The system deletes the material file from cloud storage.</li>
+                    <li>The system deletes the material record from the database.</li>
+                    <li>The system clears the course details cache.</li>
+                    <li>The system displays a success confirmation message.</li>
+                    <li>The system dynamically removes the deleted material row from the list.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The learning material record is permanently deleted from the database.</li>
+            <li>The material file is permanently deleted from cloud storage (Cloudinary).</li>
+            <li>The material is no longer retrievable by the instructor or any other user.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            <li><strong>Instructor Rights Locked:</strong> The system detects that the instructor's account rights are locked due to policy violations. The system displays an error message indicating their rights are locked and changes cannot be saved. The flow terminates.</li>
+            <li><strong>Course Pending Review:</strong> The system detects the course containing the lesson is currently pending review. The system displays an error message indicating curriculum changes are blocked during review. The flow terminates.</li>
+            <li><strong>Course Permanently Discontinued:</strong> The system detects the course is permanently discontinued due to policy violations (3 or more flags). The system displays an error message indicating modifications are blocked. The flow terminates.</li>
+            <li><strong>Unauthorized Access:</strong> The system detects that the instructor does not own the course/material. The system displays an error message indicating permission denied. The flow terminates.</li>
+            <li><strong>Database Save Failure:</strong> The database fails to commit changes. The system displays a system error message. The flow terminates.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Irreversible Deletion:</strong> Permanent deletion removes both the database record and the asset hosted on cloud storage (Cloudinary) and cannot be recovered or restored.</li>
+            <li><strong>Cloud Storage Prefix:</strong> The file is deleted from the virtual trash path (prefix `trash/`) in cloud storage using its `CloudPublicId`.</li>
+            <li><strong>Rights & Mod Lockouts:</strong> Restoration is locked if the instructor is under active suspension/lockout, or if the parent course is pending review, or if the parent course is permanently discontinued due to 3 or more flags.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

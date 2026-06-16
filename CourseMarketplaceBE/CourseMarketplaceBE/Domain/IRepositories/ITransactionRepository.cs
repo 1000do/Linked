@@ -33,4 +33,8 @@ public interface ITransactionRepository
     Task<(List<TransactionListDto> Items, int TotalCount)> GetUserTransactionsAsync(int userId, int page, int pageSize, string? keyword = null, string? sortBy = "date_desc", string? status = null);
 
     Task<bool> RejectPendingRefundForGiftClaimedAsync(int orderItemId);
+    Task<decimal> GetTotalSpentAsync(int accountId);
+    Task<decimal> GetInstructorTotalRevenueAsync(int instructorId);
+    Task<decimal> GetInstructorTotalWithdrawnAsync(int instructorId);
+    Task<AccountTransactionSummaryDto> GetAccountTransactionsSummaryAsync(int accountId);
 }

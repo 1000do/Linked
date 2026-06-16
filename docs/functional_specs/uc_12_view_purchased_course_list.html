@@ -1,0 +1,71 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-12 - View purchased course list</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.9. View purchased course list</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor accesses the enrolled courses page.</p>
+
+    <p><strong>Function Description:</strong> Displays all courses successfully purchased or enrolled in by the user.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be authenticated.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>View Purchased Course List Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the enrolled courses page.</li>
+                    <li>The system checks the actor's session authentication.</li>
+                    <li>The system retrieves the list of courses the actor is enrolled in.</li>
+                    <li>For each course, the system retrieves the total material count and the completed material count.</li>
+                    <li>For each course, the system calculates the progress percentage.</li>
+                    <li>The system displays the enrolled courses page showing the course title, instructor, thumbnail, progress percentage, completion status, and action buttons.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>Detailed list of enrolled courses is rendered successfully showing the thumbnail, title, instructor name, progress bar, completion status, and learning actions.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Completed Badge Display:</strong> A completed course card displays a distinct completed overlay badge with the text "Completed" and a "check_circle" icon.</li>
+            <li><strong>Progress Bar Color Coding:</strong> The progress bar is colored emerald green if the course is 100% completed, and the primary color (teal) otherwise.</li>
+            <li><strong>Dynamic Actions based on Completion:</strong> The action button text is set to "Review" with a "replay" icon for completed courses, and "Continue learning" with a "play_arrow" icon for incomplete courses.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

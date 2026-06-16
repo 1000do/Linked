@@ -1,0 +1,70 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-04 - Search Courses</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.3. Search Courses</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor enters a search term in the keyword input field on the explore courses page.</p>
+
+    <p><strong>Function Description:</strong> Allows Guests and Users to search for courses by entering keywords that match titles, descriptions, and skills. The search is executed in real-time with a brief debounce delay, presenting matching results in the course catalog.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>None.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Search Courses Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the explore courses page.</li>
+                    <li>Actor enters a search term in the "Search Keyword" input field.</li>
+                    <li>The system triggers the search query after a 350ms debounce delay.</li>
+                    <li>The system retrieves the paginated list of courses matching the keyword.</li>
+                    <li>The system displays the search results in the catalog grid.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>Paginated list of courses matching the keyword search criteria is displayed successfully in the catalog grid.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li>None.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Debounced Query Execution:</strong> Real-time keyword filtering is debounced by 350ms to minimize API calls during continuous typing.</li>
+            <li><strong>Keyword Match Scope:</strong> Search query checks against course titles, instructor names, short descriptions, and categories.</li>
+            <li><strong>Published Status Only:</strong> Only courses with "published" status are returned in the search results.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

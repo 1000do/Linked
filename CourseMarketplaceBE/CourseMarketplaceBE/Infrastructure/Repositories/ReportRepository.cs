@@ -180,4 +180,16 @@ public class ReportRepository : IReportRepository
 
     public async Task<int> SaveChangesAsync()
         => await _context.SaveChangesAsync();
+
+    public async Task<int> GetResolvedReportsCountAsync(int resolverId)
+    {
+        var resolvedCourseReports = await _context.CourseReports
+            .CountAsync(r => r.ResolverId == resolverId && (r.CourseReportsStatus == "resolved" || r.CourseReportsStatus == "rejected"));
+        var resolvedCourseReviewReports = await _context.CourseReviewReports
+            .CountAsync(r => r.ResolverId == resolverId && (r.UserReportsStatus == "resolved" || r.UserReportsStatus == "rejected"));
+        var resolvedLessonReviewReports = await _context.LessonReviewReports
+            .CountAsync(r => r.ResolverId == resolverId && (r.UserReportsStatus == "resolved" || r.UserReportsStatus == "rejected"));
+
+        return resolvedCourseReports + resolvedCourseReviewReports + resolvedLessonReviewReports;
+    }
 }

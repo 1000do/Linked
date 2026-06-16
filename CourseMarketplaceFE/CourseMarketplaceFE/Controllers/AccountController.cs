@@ -60,9 +60,20 @@ namespace CourseMarketplaceFE.Controllers
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
-            // Đã login (có AccessToken) → về Home/returnUrl
+            // Đã login (có AccessToken) → về Home/returnUrl/AdminFinance
             if (Request.Cookies.ContainsKey("AccessToken"))
             {
+                var role = Request.Cookies["UserRole"];
+                var roleLower = role?.Trim().ToLower();
+                if (roleLower == "admin")
+                {
+                    return RedirectToAction("Index", "AdminFinance");
+                }
+                else if (roleLower == "staff")
+                {
+                    return RedirectToAction("Admin", "Notification");
+                }
+
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     return Redirect(returnUrl);
                 return RedirectToAction("Index", "Home");
@@ -140,8 +151,14 @@ namespace CourseMarketplaceFE.Controllers
 
                 // ── 4. Redirect theo role ──────────────────────────────────────────
                 var roleLower = result.Role.Trim().ToLower();
-                if (roleLower == "admin" || roleLower == "staff")
+                if (roleLower == "admin")
+                {
+                    return RedirectToAction("Index", "AdminFinance");
+                }
+                else if (roleLower == "staff")
+                {
                     return RedirectToAction("Admin", "Notification");
+                }
 
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     return Redirect(returnUrl);

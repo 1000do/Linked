@@ -193,7 +193,7 @@
                 <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
             </div>
             <div class="flex flex-col flex-1 overflow-hidden">
-                <span class="text-xs font-bold text-slate-800 truncate">@managerName</span>
+                <span class="layout-manager-name text-xs font-bold text-slate-800 truncate">@managerName</span>
                 <span class="text-[10px] text-slate-400 font-medium truncate uppercase tracking-wider mt-0.5">@(isStaff ? "Support Staff" : "Super Admin")</span>
                 <form method="post" action="/Account/Logout" class="m-0 mt-1.5" onclick="event.stopPropagation();">
                     @Html.AntiForgeryToken()
@@ -219,7 +219,7 @@
                 
                 <div class="flex items-center gap-3 pl-5 border-l border-slate-200">
                     <div class="flex flex-col items-end">
-                        <span class="text-xs font-bold text-slate-900">@managerName</span>
+                        <span class="layout-manager-name text-xs font-bold text-slate-900">@managerName</span>
                         <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">@(isStaff ? "Support Staff" : "Super Admin")</span>
                     </div>
                     @await Html.PartialAsync("_UserAvatar", new { 

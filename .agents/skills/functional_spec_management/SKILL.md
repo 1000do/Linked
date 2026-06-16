@@ -8,6 +8,7 @@ description: Specializes in creating, formatting, and editing Functional Specifi
 This skill provides comprehensive instructions for formatting, writing, and editing Functional Specification documents based on the provided standard format. The output MUST be a valid HTML document using Times New Roman font, size 12pt.
 
 ## 1. Output Format and Styling
+*   **Create New File:** You MUST create a new `.html` file (e.g., `fs_add_lesson.html` in the appropriate directory) for the functional specification. Do NOT edit, overwrite, or replace the contents of the existing use case file.
 *   **Format:** The final output MUST be an `.html` file. Do NOT output Markdown.
 *   **Font and Styling:** Use `font-family: 'Times New Roman', serif;` and `font-size: 12pt;`.
 *   **No Headings Allowed:** DO NOT use any HTML heading tags (`<h1>`, `<h2>`, `<h3>`, etc.). Instead of headings, use normal `<p>` tags with `<strong>` or `<b>` for emphasis.

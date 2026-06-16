@@ -50,4 +50,7 @@ public interface IUserRepository
     Task<string?> GetUserEmailAsync(int userId);
     Task<string?> GetInstructorStripeAccountIdAsync(int instructorId);
     Task<string?> GetInstructorStripeCountryAsync(int instructorId);
+    Task<(List<Account> Items, int TotalCount)> GetAccountsPagedAsync(string? keyword, string? role, int page, int pageSize);
+    Task<bool> RegisterManagerAsync(Account account, Manager manager);
+    Task<int> SaveChangesAsync();
 }

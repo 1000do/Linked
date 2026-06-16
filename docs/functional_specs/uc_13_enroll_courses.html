@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-13 - Enroll courses</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.10. Enroll courses</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor clicks the "Enroll Now" button on the course details page (for free courses), or completes checkout payment (for paid courses).</p>
+
+    <p><strong>Function Description:</strong> Grants immediate course access (for free courses) or updates status after payment confirmation (for paid courses).</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be authenticated.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Enroll in Free Course Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the Course Details page of a free course.</li>
+                    <li>Actor clicks the "Enroll Now" button.</li>
+                    <li>The system checks the actor's session authentication.</li>
+                    <li>The system validates that the course price is zero.</li>
+                    <li>The system validates that the actor is not the course owner.</li>
+                    <li>The system checks if the actor is already enrolled.</li>
+                    <li>The system creates a new active enrollment record for the actor.</li>
+                    <li>The system displays a success message.</li>
+                    <li>The system dynamically updates the course details page layout (replaces "Enroll Now" with "Go to learning" button and unlocks lectures).</li>
+                    <li>Actor accesses the Course Details page of a paid course.</li>
+                    <li>Actor clicks the "Add to cart" button.</li>
+                    <li>The system checks the actor's session authentication.</li>
+                    <li>The system validates that the actor is not the course owner.</li>
+                    <li>The system validates that the actor is not already enrolled.</li>
+                    <li>The system adds the course to the actor's shopping cart.</li>
+                    <li>Actor clicks the "Proceed to Checkout" button in the shopping cart.</li>
+                    <li>The system retrieves a secure checkout secret from the payment gateway.</li>
+                    <li>The system displays the secure payment form.</li>
+                    <li>Actor enters card details and clicks the "Pay" button.</li>
+                    <li>The payment gateway confirms the successful payment.</li>
+                    <li>The system creates the transaction, order, and active enrollment records.</li>
+                    <li>The system clears the actor's shopping cart.</li>
+                    <li>The system redirects the actor to the enrolled courses page with a success message.</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>Actor's active enrollment record is created and saved in the database.</li>
+            <li>Actor's shopping cart is cleared (if checked out from cart).</li>
+            <li>Course content access is unlocked for the actor.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            <li><strong>Own Course Enrollment:</strong> The system detects the actor is the course owner (Instructor). The system displays an error message indicating that instructors cannot enroll in their own courses. Back to step 1.</li>
+            <li><strong>Already Enrolled:</strong> The system detects the actor is already enrolled. The system displays an error message indicating that the actor is already enrolled. Back to step 1.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>No Self-Enrollment:</strong> Instructors are blocked from enrolling in their own courses (both free and paid). They bypass enrollment checks when accessing the player for their own courses.</li>
+            <li><strong>Double Purchase Prevention:</strong> The system blocks purchase/checkout of courses that the user is already enrolled in, prompting them to remove it from their cart.</li>
+            <li><strong>Stripe Integration:</strong> Paid course enrollment is completed asynchronously or upon return redirect validation after Stripe gateway processes the successful payment.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

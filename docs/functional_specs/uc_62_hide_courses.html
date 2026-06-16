@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-62 - Hide courses</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>4.10.21. Hide courses</strong></p>
+
+    <p><strong>Function Trigger:</strong> Instructor clicks the "archive" icon button on a published course.</p>
+
+    <p><strong>Function Description:</strong> Temporarily hides a course from public display on the marketplace.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Instructor must be authenticated.</li>
+            <li>Instructor must be the owner of the course.</li>
+            <li>Course status must be "Published".</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                            <li><strong>Hide Course Successfully:</strong>
+                <ul>
+                    <li>Instructor accesses the Instructor Studio dashboard page.</li>
+                    <li>The system checks the instructor's session authentication.</li>
+                    <li>The system checks the instructor's approval status.</li>
+                    <li>The system retrieves the instructor's courses list.</li>
+                    <li>The system displays the courses list on the dashboard.</li>
+                    <li>Instructor locates the published course they wish to hide.</li>
+                    <li>Instructor clicks the "archive" icon button on the corresponding course card.</li>
+                    <li>The system displays a confirmation popup dialog prompting the instructor to confirm hiding the course.</li>
+                    <li>Instructor clicks the "Yes" button on the popup dialog.</li>
+                    <li>The system checks the instructor's session authentication.</li>
+                    <li>The system checks if the instructor's rights are locked.</li>
+                    <li>The system checks if the course is permanently discontinued.</li>
+                    <li>The system checks if the instructor is the owner of the course.</li>
+                    <li>The system updates the course status to "archived" in the database.</li>
+                    <li>The system clears the cache for the course details.</li>
+                    <li>The system displays a success notification indicating the course has been hidden.</li>
+                    <li>The system reloads the page dynamically, showing the updated course status badge as "Archived".</li>
+                </ul>
+            </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The course status is updated to "Archived" in the database.</li>
+            <li>The course is no longer visible to guests/learners to buy on the public marketplace.</li>
+            <li>Active student enrollments are preserved, allowing enrolled students to continue accessing the course.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the actor to the login page.</li>
+            <li><strong>Account Not Approved:</strong> The system detects the actor's instructor approval status is not "Approved". The system redirects the actor to the application status or apply page. The flow terminates.</li>
+            <li><strong>Instructor Rights Locked:</strong> The system detects that the instructor's account rights are locked due to policy violations. The system displays an error message indicating their rights are locked and status cannot be changed. The flow terminates.</li>
+            <li><strong>Course Permanently Discontinued:</strong> The system detects the course status is "archived" and it has 3 or more flags. The system displays an error message indicating the course has been permanently discontinued due to policy violations and status cannot be changed. The flow terminates.</li>
+            <li><strong>Unauthorized Access:</strong> The system detects that the instructor is not the owner of the course. The system displays an error message indicating they do not have permission to modify this course. The flow terminates.</li>
+            <li><strong>Database Update Failure:</strong> The database fails to save the status change (0 rows affected). The system displays a system error message detailing the status update failure. The flow terminates.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Status Transition Restrictions:</strong> An instructor can only set a course to status 'pending' (moderation), 'archived' (hidden), or 'published' (only when unarchiving from status 'archived').</li>
+            <li><strong>Permanently Discontinued Block:</strong> A course that is 'archived' and has 3 or more flags is considered permanently discontinued due to policy violations and cannot have its status changed or be edited.</li>
+            <li><strong>Active Enrollment Preservation:</strong> Archiving a course does not delete it or impact active student enrollments; active students enrolled in the course continue to have full access to its contents on their dashboards.</li>
+            <li><strong>Public Visibility:</strong> The course list displays only courses that are currently published. Draft, pending, rejected, archived, or locked courses are excluded from the public list.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>
