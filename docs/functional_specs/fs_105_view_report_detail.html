@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-105 - View Report Detail</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-105 - View Report Detail</strong></p>
+    <p><strong>Function Trigger:</strong> Staff or Admin clicks on a specific report row in the Report Center (applies to course reports, course review reports, and lesson review reports).</p>
+    <p><strong>Function Description:</strong> Displays details and evidence of a reported violation.</p>
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+    <p><strong>Function Details</strong></p>
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>The actor must be authenticated.</li>
+                <li>The actor must have Staff or Admin role.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>View Report Detail Successfully:</strong>
+                    <ul>
+                        <li>Staff or Admin accesses the Report Center page.</li>
+                        <li>The system validates the actor's authentication and authorization.</li>
+                        <li>Staff or Admin clicks on a report row (course report, course review report, or lesson review report) in the report list.</li>
+                        <li>The system retrieves the selected report details.</li>
+                        <li>The system determines the report status does not contain resolution details.</li>
+                        <li>The system displays a popup containing the report details (Reporter, Submitted At, Status, Reported Content, Reason, and Description).</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (View Resolved/Rejected Report Detail)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>The system determines the report status contains resolution details (e.g., resolved, rejected).</li>
+                        <li>The system appends the Resolution Details (Moderator, Resolved At, Resolution Note) to the report details.</li>
+                        <li>Back to step 6.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The system displays a popup containing the detailed information of the selected report.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+                <li><strong>Unauthorized Access:</strong> The system detects the actor does not have the Staff or Admin role. The system redirects the actor to the home page or access denied page.</li>
+                <li><strong>Database Query Failure:</strong> The system encounters an error while retrieving the report details from the database. The system displays an error message regarding the data retrieval failure. Use case ends.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Adaptive Moderation/Detail Popup UI:</strong> The moderation and detail popups dynamically adjust titles, fields, labels, and action terminologies (e.g., "Flag Course" vs "Remove content") depending on whether a course or a review is being viewed/moderated.</li>
+                <li><strong>Resolution Visibility:</strong> Resolution details (Moderator, Resolved At, Resolution Note) are visible only for reports with a resolved or rejected status.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

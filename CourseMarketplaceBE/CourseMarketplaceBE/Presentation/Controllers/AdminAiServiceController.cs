@@ -25,12 +25,11 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         // ==========================
 
         [HttpGet("models")]
-        public async Task<IActionResult> GetPagedModels([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetPagedModels([FromQuery] PagedRequestDto request)
         {
             try
             {
-                var (items, totalCount) = await _adminAiService.GetPagedModelsAsync(page, pageSize);
-                var pagedResult = new PagedResult<AiModelAdminDto>(items, totalCount, page, pageSize);
+                var pagedResult = await _adminAiService.GetPagedModelsAsync(request);
                 return Ok(ApiResponse<object>.SuccessResponse(pagedResult, "Models retrieved successfully"));
             }
             catch (KeyNotFoundException ex)
@@ -193,12 +192,11 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         // ==========================
 
         [HttpGet("logs/course")]
-        public async Task<IActionResult> GetCourseModerationLogs([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetCourseModerationLogs([FromQuery] PagedRequestDto request)
         {
             try
             {
-                var (items, totalCount) = await _adminAiService.GetCourseModerationLogsAsync(page, pageSize);
-                var pagedResult = new PagedResult<CourseModerationLogAdminDto>(items, totalCount, page, pageSize);
+                var pagedResult = await _adminAiService.GetCourseModerationLogsAsync(request);
                 return Ok(ApiResponse<object>.SuccessResponse(pagedResult, "Course logs retrieved"));
             }
             catch (KeyNotFoundException ex)
@@ -230,12 +228,11 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpGet("logs/course-review")]
-        public async Task<IActionResult> GetCourseReviewModerationLogs([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetCourseReviewModerationLogs([FromQuery] PagedRequestDto request)
         {
             try
             {
-                var (items, totalCount) = await _adminAiService.GetCourseReviewModerationLogsAsync(page, pageSize);
-                var pagedResult = new PagedResult<ReviewModerationLogAdminDto>(items, totalCount, page, pageSize);
+                var pagedResult = await _adminAiService.GetCourseReviewModerationLogsAsync(request);
                 return Ok(ApiResponse<object>.SuccessResponse(pagedResult, "Course review logs retrieved"));
             }
             catch (KeyNotFoundException ex)
@@ -267,12 +264,11 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpGet("logs/lesson-review")]
-        public async Task<IActionResult> GetLessonReviewModerationLogs([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetLessonReviewModerationLogs([FromQuery] PagedRequestDto request)
         {
             try
             {
-                var (items, totalCount) = await _adminAiService.GetLessonReviewModerationLogsAsync(page, pageSize);
-                var pagedResult = new PagedResult<ReviewModerationLogAdminDto>(items, totalCount, page, pageSize);
+                var pagedResult = await _adminAiService.GetLessonReviewModerationLogsAsync(request);
                 return Ok(ApiResponse<object>.SuccessResponse(pagedResult, "Lesson review logs retrieved"));
             }
             catch (KeyNotFoundException ex)

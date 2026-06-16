@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-110 - Delete AI Model</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-110 - Delete AI Model</strong></p>
+    <p><strong>Function Trigger:</strong> Admin clicks the status toggle button on a model entry in the AI model list.</p>
+    <p><strong>Function Description:</strong> Allows an Admin to soft-delete an AI model by toggling its status between active and inactive. No data is permanently removed; an active model is set to inactive and an inactive model is restored to active.</p>
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+    <p><strong>Function Details</strong></p>
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Admin must be successfully authenticated.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Toggle AI Model Status Successfully:</strong>
+                    <ul>
+                        <li>Admin accesses the AI Service management page.</li>
+                        <li>The system validates the Admin's access authorization.</li>
+                        <li>Admin clicks the status toggle button on a model entry.</li>
+                        <li>The system displays a confirmation dialog.</li>
+                        <li>Admin confirms the action.</li>
+                        <li>The system updates the model status in the database.</li>
+                        <li>The system displays a success notification.</li>
+                        <li>The system reloads the page.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Admin Cancels Confirmation)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>Admin clicks the cancel button on the confirmation dialog.</li>
+                        <li>Back to step 3.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The selected AI model's status is updated in the database.</li>
+                <li>The model list on the UI reflects the updated status after page reload.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+                <li><strong>Unauthorized Access:</strong> The system detects the current user does not have Admin authorization. The system displays an unauthorized access error message. The system redirects the user to the login page.</li>
+                <li><strong>Model Not Found:</strong> The system cannot locate the target model record during the status update operation. The system displays a model not found error message. Back to step 3.</li>
+                <li><strong>Database Save Failed:</strong> The system fails to persist the status change to the database. The system displays an error message regarding the database save failure. Back to step 3.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Admin Authorization for AI Services:</strong> Only authenticated Admin actors are authorized to access and perform actions within the AI Service and Model Management module (including adding/updating models, toggling status, viewing details/list, configuring thresholds, and viewing activity logs).</li>
+                <li><strong>List Sorting and Ordering:</strong> Administrative lists (such as the AI model list and activity logs) are sorted in descending order of their latest timestamp (last modified date for models, creation date for logs), ensuring that the most recent entries are displayed first.</li>
+                <li><strong>Status Toggle:</strong> Toggling an active model sets its status to inactive; toggling an inactive model restores it to active.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

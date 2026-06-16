@@ -99,7 +99,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mapperMock.Map<List<AiModelAdminDto>>(models).Returns(dtos);
 
             //Act
-            var result = await _sut.GetPagedModelsAsync(page, pageSize);
+            var result = await _sut.GetPagedModelsAsync(new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = page, PageSize = pageSize });
 
             //Assert
             result.Items.Should().BeEquivalentTo(dtos);
@@ -110,27 +110,28 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetPagedModelsAsync_WhenEmpty_ShouldThrowKeyNotFoundException()
+        public async Task GetPagedModelsAsync_WhenPageOrPageSizeIsInvalid_ShouldUseDefaults()
         {
             //Arrange 1
-            int page = 1;
-            int pageSize = 10;
-            var emptyModels = new List<AiModel>();
+            var req = new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = 0, PageSize = -5 };
+            var models = new List<AiModel> { new AiModel() };
+            var dtos = new List<AiModelAdminDto> { new AiModelAdminDto() };
 
             //Arrange 2
-            _aiModelRepoMock.GetPagedAdminAsync(page, pageSize).Returns((emptyModels, 0));
-            
+            _aiModelRepoMock.GetPagedAdminAsync(1, 10).Returns((models, 1));
+            _mapperMock.Map<List<AiModelAdminDto>>(models).Returns(dtos);
+
             //Act
-            Func<Task> act = async () => await _sut.GetPagedModelsAsync(page, pageSize);
+            var result = await _sut.GetPagedModelsAsync(req);
 
             //Assert
-            await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("No AI models found.");
-            
-            await _aiModelRepoMock.Received(1).GetPagedAdminAsync(page, pageSize);
-            _mapperMock.DidNotReceive().Map<List<AiModelAdminDto>>(Arg.Any<List<AiModel>>());
+            result.Items.Should().BeEquivalentTo(dtos);
+            result.TotalCount.Should().Be(1);
+
+            await _aiModelRepoMock.Received(1).GetPagedAdminAsync(1, 10);
+            _mapperMock.Received(1).Map<List<AiModelAdminDto>>(models);
         }
 
-        // GetModelByIdAsync
         [Fact]
         public async Task GetModelByIdAsync_WhenExists_ShouldReturnModel()
         {
@@ -538,7 +539,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mapperMock.Map<List<CourseModerationLogAdminDto>>(logs).Returns(dtos);
 
             //Act
-            var result = await _sut.GetCourseModerationLogsAsync(page, pageSize);
+            var result = await _sut.GetCourseModerationLogsAsync(new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = page, PageSize = pageSize });
 
             //Assert
             result.Items.Should().BeEquivalentTo(dtos);
@@ -549,27 +550,28 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetCourseModerationLogsAsync_WhenEmpty_ShouldThrowKeyNotFoundException()
+        public async Task GetCourseModerationLogsAsync_WhenPageOrPageSizeIsInvalid_ShouldUseDefaults()
         {
             //Arrange 1
-            int page = 1;
-            int pageSize = 10;
-            var emptyLogs = new List<CourseAiUsageLog>();
+            var req = new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = 0, PageSize = -5 };
+            var logs = new List<CourseAiUsageLog> { new CourseAiUsageLog() };
+            var dtos = new List<CourseModerationLogAdminDto> { new CourseModerationLogAdminDto() };
 
             //Arrange 2
-            _courseLogRepoMock.GetPagedAdminAsync(page, pageSize).Returns((emptyLogs, 0));
-            
+            _courseLogRepoMock.GetPagedAdminAsync(1, 10).Returns((logs, 1));
+            _mapperMock.Map<List<CourseModerationLogAdminDto>>(logs).Returns(dtos);
+
             //Act
-            Func<Task> act = async () => await _sut.GetCourseModerationLogsAsync(page, pageSize);
+            var result = await _sut.GetCourseModerationLogsAsync(req);
 
             //Assert
-            await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("No course moderation logs found.");
+            result.Items.Should().BeEquivalentTo(dtos);
+            result.TotalCount.Should().Be(1);
 
-            await _courseLogRepoMock.Received(1).GetPagedAdminAsync(page, pageSize);
-            _mapperMock.DidNotReceive().Map<List<CourseModerationLogAdminDto>>(Arg.Any<List<CourseAiUsageLog>>());
+            await _courseLogRepoMock.Received(1).GetPagedAdminAsync(1, 10);
+            _mapperMock.Received(1).Map<List<CourseModerationLogAdminDto>>(logs);
         }
 
-        // GetCourseModerationLogDetailAsync
         [Fact]
         public async Task GetCourseModerationLogDetailAsync_WhenExists_ShouldReturnMappedLog()
         {
@@ -627,7 +629,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mapperMock.Map<List<ReviewModerationLogAdminDto>>(logs).Returns(dtos);
 
             //Act
-            var result = await _sut.GetCourseReviewModerationLogsAsync(page, pageSize);
+            var result = await _sut.GetCourseReviewModerationLogsAsync(new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = page, PageSize = pageSize });
 
             //Assert
             result.Items.Should().BeEquivalentTo(dtos);
@@ -638,27 +640,28 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetCourseReviewModerationLogsAsync_WhenEmpty_ShouldThrowKeyNotFoundException()
+        public async Task GetCourseReviewModerationLogsAsync_WhenPageOrPageSizeIsInvalid_ShouldUseDefaults()
         {
             //Arrange 1
-            int page = 1;
-            int pageSize = 10;
-            var emptyLogs = new List<CourseReviewModerationLog>();
+            var req = new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = 0, PageSize = -5 };
+            var logs = new List<CourseReviewModerationLog> { new CourseReviewModerationLog() };
+            var dtos = new List<ReviewModerationLogAdminDto> { new ReviewModerationLogAdminDto() };
 
             //Arrange 2
-            _courseReviewLogRepoMock.GetPagedAdminAsync(page, pageSize).Returns((emptyLogs, 0));
-            
+            _courseReviewLogRepoMock.GetPagedAdminAsync(1, 10).Returns((logs, 1));
+            _mapperMock.Map<List<ReviewModerationLogAdminDto>>(logs).Returns(dtos);
+
             //Act
-            Func<Task> act = async () => await _sut.GetCourseReviewModerationLogsAsync(page, pageSize);
+            var result = await _sut.GetCourseReviewModerationLogsAsync(req);
 
             //Assert
-            await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("No course review moderation logs found.");
+            result.Items.Should().BeEquivalentTo(dtos);
+            result.TotalCount.Should().Be(1);
 
-            await _courseReviewLogRepoMock.Received(1).GetPagedAdminAsync(page, pageSize);
-            _mapperMock.DidNotReceive().Map<List<ReviewModerationLogAdminDto>>(Arg.Any<List<CourseReviewModerationLog>>());
+            await _courseReviewLogRepoMock.Received(1).GetPagedAdminAsync(1, 10);
+            _mapperMock.Received(1).Map<List<ReviewModerationLogAdminDto>>(logs);
         }
 
-        // GetCourseReviewModerationLogDetailAsync
         [Fact]
         public async Task GetCourseReviewModerationLogDetailAsync_WhenExists_ShouldReturnMappedLog()
         {
@@ -716,7 +719,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mapperMock.Map<List<ReviewModerationLogAdminDto>>(logs).Returns(dtos);
 
             //Act
-            var result = await _sut.GetLessonReviewModerationLogsAsync(page, pageSize);
+            var result = await _sut.GetLessonReviewModerationLogsAsync(new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = page, PageSize = pageSize });
 
             //Assert
             result.Items.Should().BeEquivalentTo(dtos);
@@ -727,27 +730,28 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetLessonReviewModerationLogsAsync_WhenEmpty_ShouldThrowKeyNotFoundException()
+        public async Task GetLessonReviewModerationLogsAsync_WhenPageOrPageSizeIsInvalid_ShouldUseDefaults()
         {
             //Arrange 1
-            int page = 1;
-            int pageSize = 10;
-            var emptyLogs = new List<LessonReviewModerationLog>();
+            var req = new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = 0, PageSize = -5 };
+            var logs = new List<LessonReviewModerationLog> { new LessonReviewModerationLog() };
+            var dtos = new List<ReviewModerationLogAdminDto> { new ReviewModerationLogAdminDto() };
 
             //Arrange 2
-            _lessonReviewLogRepoMock.GetPagedAdminAsync(page, pageSize).Returns((emptyLogs, 0));
-            
+            _lessonReviewLogRepoMock.GetPagedAdminAsync(1, 10).Returns((logs, 1));
+            _mapperMock.Map<List<ReviewModerationLogAdminDto>>(logs).Returns(dtos);
+
             //Act
-            Func<Task> act = async () => await _sut.GetLessonReviewModerationLogsAsync(page, pageSize);
+            var result = await _sut.GetLessonReviewModerationLogsAsync(req);
 
             //Assert
-            await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("No lesson review moderation logs found.");
+            result.Items.Should().BeEquivalentTo(dtos);
+            result.TotalCount.Should().Be(1);
 
-            await _lessonReviewLogRepoMock.Received(1).GetPagedAdminAsync(page, pageSize);
-            _mapperMock.DidNotReceive().Map<List<ReviewModerationLogAdminDto>>(Arg.Any<List<LessonReviewModerationLog>>());
+            await _lessonReviewLogRepoMock.Received(1).GetPagedAdminAsync(1, 10);
+            _mapperMock.Received(1).Map<List<ReviewModerationLogAdminDto>>(logs);
         }
 
-        // GetLessonReviewModerationLogDetailAsync
         [Fact]
         public async Task GetLessonReviewModerationLogDetailAsync_WhenExists_ShouldReturnMappedLog()
         {
@@ -790,3 +794,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
     }
 }
+
+
+
+
+
