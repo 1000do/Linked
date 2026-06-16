@@ -166,7 +166,8 @@ namespace CourseMarketplaceBE.Application.Services
                     ReceiverRole = role,
                     ReceiverId = n.ReceiverId,
                     SenderId = n.SenderId,
-                    SenderRole = senderRole
+                    SenderRole = senderRole,
+                    LinkAction = n.LinkAction
                 };
             }).ToList();
         }
@@ -243,6 +244,7 @@ namespace CourseMarketplaceBE.Application.Services
                 ReceiverId = uid,
                 Title = dto.Title,
                 Content = dto.Content,
+                LinkAction = dto.LinkAction,
                 CreatedAt = now,
                 IsRead = false
             }).ToList();
@@ -261,7 +263,7 @@ namespace CourseMarketplaceBE.Application.Services
                     notificationId = 0,
                     title = dto.Title,
                     content = dto.Content,
-                    linkAction = (string?)null,
+                    linkAction = dto.LinkAction,
                     createdAt = now,
                     isRead = false,
                     receiverId = uid,

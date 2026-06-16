@@ -14,5 +14,6 @@ namespace CourseMarketplaceBE.Application.DTOs
         public int? ReceiverId { get; set; }
         public int? SenderId { get; set; }
         public string? SenderRole { get; set; }
+        public string? LinkAction { get; set; }
     }
 }
