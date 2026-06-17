@@ -17,7 +17,7 @@ public class ReviewService : IReviewService
     private readonly IEnrollmentRepository _enrollmentRepo;
     private readonly ICourseRepository _courseRepo;
     private readonly INotificationService _notificationService;
-    private readonly IReportService _reportService;
+    private readonly IReportSubmissionService _reportService;
     private readonly IUserRepository _userRepo;
     private readonly ILockoutRepository _lockoutRepo;
 
@@ -26,7 +26,7 @@ public class ReviewService : IReviewService
         IEnrollmentRepository enrollmentRepo,
         ICourseRepository courseRepo,
         INotificationService notificationService,
-        IReportService reportService,
+        IReportSubmissionService reportService,
         IUserRepository userRepo,
         ILockoutRepository lockoutRepo)
     {

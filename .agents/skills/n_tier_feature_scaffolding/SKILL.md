@@ -36,18 +36,25 @@ This skill enforces the exact N-tier architectural pattern used in the Course Ma
 - **Return Types**:
   - Always return Domain Entities, **never** DTOs.
   - **List Retrievals**: Return `Task<(List<Entity> Items, int TotalCount)>`.
-  - **Write Operations**: Explicitly call `await _context.SaveChangesAsync()` and return its result (`Task<int>`), representing the number of rows affected. Do not return void.
+  - **Write Operations**: 
+    - Explicitly call `await _context.SaveChangesAsync()` and return its result (`Task<int>`), representing the number of rows affected. Do not return void.
+    - Wrap `SaveChangesAsync()` in `try/catch` blocks. Catch Entity Framework's `DbUpdateException` (from constraint violations) and re-throw it as a custom Domain Exception (e.g., `AiModelException`, `CourseException`) with a clear error message. 
+    - Explicitly add new custom exception files to `Domain/Exceptions` if the domain exception class doesn't already exist.
 
 ### 2. Backend: Application (Services)
 - **Responsibility**: Orchestrate logic, perform business validations, and map Entities to DTOs using AutoMapper (`IMapper`).
+- **Early Exit Pattern (Guard Clauses)**: Enforce the use of early exits for validation. Null checks, state validations (e.g., explicit `.HasValue` checks on nullable foreign keys), and authorization checks must be performed at the very beginning of the method. Throw exceptions immediately (e.g., `BadRequestException` for missing keys). Do not wrap the main "happy path" logic in `if` blocks.
+- **Testability**: All scaffolded or refactored service methods must be designed for testability. Consult the `/service_unit_testing_4_steps` skill for rules and structural expectations regarding test generation.
 - **Return Types**:
   - **List Retrievals**: Check if the list is empty and throw `KeyNotFoundException`. Map the tuple from the repository into a `PagedResult<Dto>` and return the `PagedResult<Dto>` to the controller.
-  - **Write Operations**: Check the rows affected returned by the repository. If `rows == 0`, throw an `InvalidOperationException`.
+  - **Write Operations**: 
+    - Check the rows affected returned by the repository. If `rows == 0`, throw an `InvalidOperationException`.
+    - Wrap repository write operations in a `try/catch` block. Catch custom Domain Exceptions thrown by the Repository and re-throw them as an Application-level `BadRequestException` to ensure the controller knows the operation failed due to invalid state/data.
 
 ### 3. Backend: Presentation (API Controllers)
 - **Responsibility**: Handle HTTP routing, Authorization, and payload deserialization.
 - **Form/Payload Binding**: The payload from the frontend (ViewModel/DTO) should be automatically parsed as a DTO argument in the controller method by the ASP.NET Core framework.
-- **Error Handling**: Use explicit `try/catch` blocks. Translate `KeyNotFoundException` to 404 Not Found, `InvalidOperationException` to 400 Bad Request, etc.
+- **Error Handling**: Use explicit `try/catch` blocks. Translate `KeyNotFoundException` to 404 Not Found, `InvalidOperationException` to 400 Bad Request, and `BadRequestException` to 400 Bad Request.
 - **Response Format**: Always wrap responses in the standardized generic API response envelope (e.g., `ApiResp<T>` or `ApiResponse<T>`).
 
 ### 4. Backend: DTOs & Mappings
@@ -78,6 +85,11 @@ This skill enforces the exact N-tier architectural pattern used in the Course Ma
 - **References**: Consider all references to the target (method calls, variable references, etc.). Changes should generally be isolated to the refactoring target.
 - **Wrapper Methods**: Introduce wrapper methods if needed to preserve existing references.
 - **Explicit Notification**: If you MUST make changes to the references outside the target, you must explicitly inform the user and get permission first.
+- **Helper Extraction**: Require the extraction of private helper methods for logic such as fetching and validating multiple related entities or consolidated authorization logic (e.g., role checks combined with resource ownership). Explicitly consult the `/method_extraction` skill for rules and strategies on this.
+- **Safe File Management**: NEVER permanently delete files when refactoring or replacing legacy code. Instead, rename them with a `.bak` extension to preserve them for backup and reference.
+
+### 9. Coding Conventions
+- **Import First, Use Later**: Forbid the use of inline, fully qualified namespace strings (e.g., `return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult...`). Require adding `using` directives at the top of the file and using the short class names in the code logic.
 
 ---
 

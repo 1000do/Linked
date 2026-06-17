@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.DTOs.Common;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
 
 namespace CourseMarketplaceBE.Presentation.Controllers
@@ -13,11 +14,18 @@ namespace CourseMarketplaceBE.Presentation.Controllers
     [Authorize(Roles = "admin")]
     public class AdminAiServiceController : ControllerBase
     {
-        private readonly IAdminAiService _adminAiService;
+        private readonly IAiModelManagementService _aiModelService;
+        private readonly IAiConfigurationService _aiConfigService;
+        private readonly IAiModerationLogService _aiLogService;
 
-        public AdminAiServiceController(IAdminAiService adminAiService)
+        public AdminAiServiceController(
+            IAiModelManagementService aiModelService,
+            IAiConfigurationService aiConfigService,
+            IAiModerationLogService aiLogService)
         {
-            _adminAiService = adminAiService;
+            _aiModelService = aiModelService;
+            _aiConfigService = aiConfigService;
+            _aiLogService = aiLogService;
         }
 
         // ==========================
@@ -29,7 +37,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             try
             {
-                var pagedResult = await _adminAiService.GetPagedModelsAsync(request);
+                var pagedResult = await _aiModelService.GetPagedModelsAsync(request);
                 return Ok(ApiResponse<object>.SuccessResponse(pagedResult, "Models retrieved successfully"));
             }
             catch (KeyNotFoundException ex)
@@ -47,7 +55,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             try
             {
-                var models = await _adminAiService.GetAllModelsAsync();
+                var models = await _aiModelService.GetAllModelsAsync();
                 return Ok(ApiResponse<object>.SuccessResponse(models, "Models retrieved successfully"));
             }
             catch (KeyNotFoundException ex)
@@ -65,7 +73,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             try
             {
-                var model = await _adminAiService.GetModelByIdAsync(id);
+                var model = await _aiModelService.GetModelByIdAsync(id);
                 return Ok(ApiResponse<object>.SuccessResponse(model, "Model retrieved successfully"));
             }
             catch (KeyNotFoundException ex)
@@ -83,10 +91,14 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             try
             {
-                var model = await _adminAiService.AddModelAsync(req);
+                var model = await _aiModelService.AddModelAsync(req);
                 return Ok(ApiResponse<object>.SuccessResponse(model, "Model added successfully"));
             }
             catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+            }
+            catch (BadRequestException ex)
             {
                 return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
             }
@@ -101,7 +113,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             try
             {
-                var model = await _adminAiService.UpdateModelAsync(id, req);
+                var model = await _aiModelService.UpdateModelAsync(id, req);
                 return Ok(ApiResponse<object>.SuccessResponse(model, "Model updated successfully"));
             }
             catch (KeyNotFoundException ex)
@@ -109,6 +121,10 @@ namespace CourseMarketplaceBE.Presentation.Controllers
                 return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
             }
             catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+            }
+            catch (BadRequestException ex)
             {
                 return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
             }
@@ -123,7 +139,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             try
             {
-                await _adminAiService.ToggleModelStatusAsync(id);
+                await _aiModelService.ToggleModelStatusAsync(id);
                 return Ok(ApiResponse<object>.SuccessResponse(null, "Model status toggled successfully"));
             }
             catch (KeyNotFoundException ex)
@@ -131,6 +147,10 @@ namespace CourseMarketplaceBE.Presentation.Controllers
                 return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
             }
             catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+            }
+            catch (BadRequestException ex)
             {
                 return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
             }
@@ -147,7 +167,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         [HttpGet("configs")]
         public async Task<IActionResult> GetConfigurations()
         {
-            var configs = await _adminAiService.GetConfigurationsAsync();
+            var configs = await _aiConfigService.GetConfigurationsAsync();
             return Ok(ApiResponse<object>.SuccessResponse(configs, "Configurations retrieved successfully"));
         }
 
@@ -156,10 +176,14 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             try
             {
-                await _adminAiService.UpdateThresholdsAsync(req);
+                await _aiConfigService.UpdateThresholdsAsync(req);
                 return Ok(ApiResponse<object>.SuccessResponse(null, "Thresholds updated successfully"));
             }
             catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+            }
+            catch (BadRequestException ex)
             {
                 return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
             }
@@ -174,10 +198,14 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             try
             {
-                await _adminAiService.UpdateIntegrationAsync(req);
+                await _aiConfigService.UpdateIntegrationAsync(req);
                 return Ok(ApiResponse<object>.SuccessResponse(null, "Integration updated successfully"));
             }
             catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+            }
+            catch (BadRequestException ex)
             {
                 return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
             }
@@ -196,7 +224,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             try
             {
-                var pagedResult = await _adminAiService.GetCourseModerationLogsAsync(request);
+                var pagedResult = await _aiLogService.GetCourseModerationLogsAsync(request);
                 return Ok(ApiResponse<object>.SuccessResponse(pagedResult, "Course logs retrieved"));
             }
             catch (KeyNotFoundException ex)
@@ -214,7 +242,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             try
             {
-                var log = await _adminAiService.GetCourseModerationLogDetailAsync(id);
+                var log = await _aiLogService.GetCourseModerationLogDetailAsync(id);
                 return Ok(ApiResponse<object>.SuccessResponse(log, "Log detail retrieved"));
             }
             catch (KeyNotFoundException ex)
@@ -232,7 +260,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             try
             {
-                var pagedResult = await _adminAiService.GetCourseReviewModerationLogsAsync(request);
+                var pagedResult = await _aiLogService.GetCourseReviewModerationLogsAsync(request);
                 return Ok(ApiResponse<object>.SuccessResponse(pagedResult, "Course review logs retrieved"));
             }
             catch (KeyNotFoundException ex)
@@ -250,7 +278,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             try
             {
-                var log = await _adminAiService.GetCourseReviewModerationLogDetailAsync(id);
+                var log = await _aiLogService.GetCourseReviewModerationLogDetailAsync(id);
                 return Ok(ApiResponse<object>.SuccessResponse(log, "Log detail retrieved"));
             }
             catch (KeyNotFoundException ex)
@@ -268,7 +296,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             try
             {
-                var pagedResult = await _adminAiService.GetLessonReviewModerationLogsAsync(request);
+                var pagedResult = await _aiLogService.GetLessonReviewModerationLogsAsync(request);
                 return Ok(ApiResponse<object>.SuccessResponse(pagedResult, "Lesson review logs retrieved"));
             }
             catch (KeyNotFoundException ex)
@@ -286,7 +314,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         {
             try
             {
-                var log = await _adminAiService.GetLessonReviewModerationLogDetailAsync(id);
+                var log = await _aiLogService.GetLessonReviewModerationLogDetailAsync(id);
                 return Ok(ApiResponse<object>.SuccessResponse(log, "Log detail retrieved"));
             }
             catch (KeyNotFoundException ex)

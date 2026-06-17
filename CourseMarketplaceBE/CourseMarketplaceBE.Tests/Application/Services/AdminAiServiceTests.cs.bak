@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.Services;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Exceptions;
 using CourseMarketplaceBE.Domain.IRepositories;
 using FluentAssertions;
 using NSubstitute;
@@ -223,6 +225,27 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             await _aiModelRepoMock.Received(1).SaveChangesAsync();
         }
 
+        [Fact]
+        public async Task AddModelAsync_WhenDbConstraintViolated_ShouldThrowBadRequestException()
+        {
+            //Arrange 1
+            var req = new CreateAiModelRequest { ModelName = "Test" };
+            var addedModel = new AiModel {ModelId = 1, ModelName = req.ModelName};
+
+            //Arrange 2
+            _aiModelRepoMock.Add(Arg.Any<AiModel>()).Returns(addedModel);
+            _aiModelRepoMock.SaveChangesAsync().Returns<int>(x => throw new AiModelException("Db constraint violated"));
+
+            //Act
+            Func<Task> act = async () => await _sut.AddModelAsync(req);
+
+            //Assert
+            await act.Should().ThrowAsync<BadRequestException>().WithMessage("Db constraint violated");
+
+            _aiModelRepoMock.Received(1).Add(Arg.Is<AiModel>(m => m.ModelName == req.ModelName));
+            await _aiModelRepoMock.Received(1).SaveChangesAsync();
+        }
+
         // UpdateModelAsync
         [Fact]
         public async Task UpdateModelAsync_WhenExists_ShouldReturnUpdatedModel()
@@ -298,6 +321,31 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("No changes were saved to the database.");
+
+            await _aiModelRepoMock.Received(1).GetByIdAsync(mockId);
+            _aiModelRepoMock.Received(1).Update(Arg.Is<AiModel>(m => m.ModelProvider == req.ModelProvider));
+            await _aiModelRepoMock.Received(1).SaveChangesAsync();
+        }
+
+        [Fact]
+        public async Task UpdateModelAsync_WhenDbConstraintViolated_ShouldThrowBadRequestException()
+        {
+            //Arrange 1
+            var mockId = 1;
+            var req = new UpdateAiModelRequest { ModelProvider = "New" };
+            var existingModel = new AiModel { ModelId = mockId };
+            var updatedModel = new AiModel { ModelId = mockId, ModelProvider = req.ModelProvider };
+
+            //Arrange 2
+            _aiModelRepoMock.GetByIdAsync(mockId).Returns(existingModel);
+            _aiModelRepoMock.Update(Arg.Any<AiModel>()).Returns(updatedModel);
+            _aiModelRepoMock.SaveChangesAsync().Returns<int>(x => throw new AiModelException("Db constraint violated"));
+
+            //Act
+            Func<Task> act = async () => await _sut.UpdateModelAsync(mockId, req);
+
+            //Assert
+            await act.Should().ThrowAsync<BadRequestException>().WithMessage("Db constraint violated");
 
             await _aiModelRepoMock.Received(1).GetByIdAsync(mockId);
             _aiModelRepoMock.Received(1).Update(Arg.Is<AiModel>(m => m.ModelProvider == req.ModelProvider));
@@ -384,6 +432,27 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("No changes were saved to the database.");
+
+            await _aiModelRepoMock.Received(1).GetByIdAsync(mockId);
+            await _aiModelRepoMock.Received(1).SaveChangesAsync();
+        }
+
+        [Fact]
+        public async Task ToggleModelStatusAsync_WhenDbConstraintViolated_ShouldThrowBadRequestException()
+        {
+            //Arrange 1
+            var mockId = 1;
+            var existingModel = new AiModel { ModelId = mockId, ModelStatus = AiModelConst.Active };
+
+            //Arrange 2
+            _aiModelRepoMock.GetByIdAsync(mockId).Returns(existingModel);
+            _aiModelRepoMock.SaveChangesAsync().Returns<int>(x => throw new AiModelException("Db constraint violated"));
+
+            //Act
+            Func<Task> act = async () => await _sut.ToggleModelStatusAsync(mockId);
+
+            //Assert
+            await act.Should().ThrowAsync<BadRequestException>().WithMessage("Db constraint violated");
 
             await _aiModelRepoMock.Received(1).GetByIdAsync(mockId);
             await _aiModelRepoMock.Received(1).SaveChangesAsync();
@@ -486,6 +555,25 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             await _configRepoMock.Received(1).UpsertConfigAsync(SystemConfigKeys.ModerationThreshold, Arg.Any<string>(), Arg.Any<string>());
         }
 
+        [Fact]
+        public async Task UpdateThresholdsAsync_WhenDbConstraintViolated_ShouldThrowBadRequestException()
+        {
+            //Arrange 1
+            var req = new UpdateThresholdsRequest { SpamConfidenceThreshold = 0.5f, ToxicityConfidenceThreshold = 0.6f, SimilarityScoreThreshold = 0.7f };
+
+            //Arrange 2
+            _configRepoMock.UpsertConfigAsync(SystemConfigKeys.ModerationThreshold, Arg.Any<string>(), Arg.Any<string>())
+                .Returns<int>(x => throw new SystemConfigException("Db constraint violated"));
+
+            //Act
+            Func<Task> act = async () => await _sut.UpdateThresholdsAsync(req);
+
+            //Assert
+            await act.Should().ThrowAsync<BadRequestException>().WithMessage("Db constraint violated");
+
+            await _configRepoMock.Received(1).UpsertConfigAsync(SystemConfigKeys.ModerationThreshold, Arg.Any<string>(), Arg.Any<string>());
+        }
+
         // UpdateIntegrationAsync
         [Fact]
         public async Task UpdateIntegrationAsync_ShouldReturnTrue()
@@ -519,6 +607,25 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage($"Failed to update {req.ConfigKey}: No changes were saved to the database.");
+
+            await _configRepoMock.Received(1).UpsertConfigAsync(req.ConfigKey, req.ConfigValue, Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task UpdateIntegrationAsync_WhenDbConstraintViolated_ShouldThrowBadRequestException()
+        {
+            //Arrange 1
+            var req = new UpdateIntegrationRequest { ConfigKey = "key", ConfigValue = "value" };
+
+            //Arrange 2
+            _configRepoMock.UpsertConfigAsync(req.ConfigKey, req.ConfigValue, Arg.Any<string>())
+                .Returns<int>(x => throw new SystemConfigException("Db constraint violated"));
+
+            //Act
+            Func<Task> act = async () => await _sut.UpdateIntegrationAsync(req);
+
+            //Assert
+            await act.Should().ThrowAsync<BadRequestException>().WithMessage("Db constraint violated");
 
             await _configRepoMock.Received(1).UpsertConfigAsync(req.ConfigKey, req.ConfigValue, Arg.Any<string>());
         }
