@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,9 +21,9 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 [Authorize]
 public class ReportController : ControllerBase
 {
-    private readonly IReportService _reportService;
+    private readonly IReportSubmissionService _reportService;
 
-    public ReportController(IReportService reportService)
+    public ReportController(IReportSubmissionService reportService)
     {
         _reportService = reportService;
     }
@@ -32,14 +34,13 @@ public class ReportController : ControllerBase
         return int.TryParse(str, out int id) ? id : null;
     }
 
-    private bool IsInstructor()
-        => User.IsInRole("instructor") || User.IsInRole("admin") || User.IsInRole("staff");
+
 
     // ── Tạo report khóa học ─────────────────────────────────────────────────
 
     /// <summary>
     /// Tạo báo cáo cho một khóa học.
-    /// User: cần đã enrolled. Instructor: không cần enrolled (không thể report course của mình).
+    /// User/Instructor: cần đã enrolled (không thể report course của mình).
     /// </summary>
     [HttpPost("courses")]
     public async Task<IActionResult> ReportCourse([FromBody] CreateCourseReportRequest request)
@@ -49,9 +50,16 @@ public class ReportController : ControllerBase
 
         try
         {
-            bool isInstructor = IsInstructor();
-            await _reportService.CreateCourseReportAsync(userId.Value, request, isInstructor);
+            await _reportService.CreateCourseReportAsync(userId.Value, request);
             return Ok(ApiResponse<string>.SuccessResponse("Your report has been submitted and will be reviewed shortly."));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (InvalidOperationException ex)
         {
@@ -77,6 +85,14 @@ public class ReportController : ControllerBase
             await _reportService.CreateCourseReviewReportAsync(userId.Value, request);
             return Ok(ApiResponse<string>.SuccessResponse("Your course review report has been submitted."));
         }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
         catch (InvalidOperationException ex)
         {
             return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
@@ -100,6 +116,14 @@ public class ReportController : ControllerBase
         {
             await _reportService.CreateLessonReviewReportAsync(userId.Value, request);
             return Ok(ApiResponse<string>.SuccessResponse("Your lesson review report has been submitted."));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (InvalidOperationException ex)
         {

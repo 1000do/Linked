@@ -8,6 +8,7 @@ using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.IRepositories;
+using Microsoft.Extensions.Logging;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -114,7 +115,7 @@ public class CourseQueryService : ICourseQueryService
         int finalPageSize = pageSize ?? 12;
         int totalPages = (int)Math.Ceiling(totalCount / (double)finalPageSize);
 
-        return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.CourseResponse>
+        return new PagedResult<CourseResponse>
         {
             Items = courseResponses,
             TotalCount = totalCount,

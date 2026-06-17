@@ -8,6 +8,9 @@ using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using AutoMapper;
+using CourseMarketplaceBE.Application.DTOs.Common;
+using CourseMarketplaceBE.Application.Exceptions;
+using CourseMarketplaceBE.Domain.Exceptions;
 
 namespace CourseMarketplaceBE.Application.Services
 {
@@ -43,12 +46,15 @@ namespace CourseMarketplaceBE.Application.Services
             return _mapper.Map<List<AiModelAdminDto>>(models);
         }
 
-        public async Task<(List<AiModelAdminDto> Items, int TotalCount)> GetPagedModelsAsync(int page, int pageSize)
+        public async Task<PagedResult<AiModelAdminDto>> GetPagedModelsAsync(PagedRequestDto req)
         {
-            var (items, totalCount) = await _aiModelRepo.GetPagedAdminAsync(page, pageSize);
+            if (req.Page <= 0) req.Page = 1;
+            if (req.PageSize <= 0) req.PageSize = 10;
+
+            var (items, totalCount) = await _aiModelRepo.GetPagedAdminAsync(req.Page, req.PageSize);
             if (items == null || items.Count == 0) throw new KeyNotFoundException("No AI models found.");
             var dtos = _mapper.Map<List<AiModelAdminDto>>(items);
-            return (dtos, totalCount);
+            return new PagedResult<AiModelAdminDto>(dtos, totalCount, req.Page, req.PageSize);
         }
 
         public async Task<AiModelAdminDto> GetModelByIdAsync(int id)
@@ -76,7 +82,15 @@ namespace CourseMarketplaceBE.Application.Services
             };
 
             var addedModel = _aiModelRepo.Add(model);
-            var affected = await _aiModelRepo.SaveChangesAsync();
+            int affected;
+            try
+            {
+                affected = await _aiModelRepo.SaveChangesAsync();
+            }
+            catch (AiModelException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
             if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
             Console.WriteLine($"New Model Id {addedModel.ModelId}");
             return _mapper.Map<AiModelAdminDto>(addedModel);
@@ -94,7 +108,15 @@ namespace CourseMarketplaceBE.Application.Services
             model.ModelUpdatedAt = DateTime.UtcNow;
 
             var updatedModel = _aiModelRepo.Update(model);
-            var affected = await _aiModelRepo.SaveChangesAsync();
+            int affected;
+            try
+            {
+                affected = await _aiModelRepo.SaveChangesAsync();
+            }
+            catch (AiModelException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
             if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
 
             return _mapper.Map<AiModelAdminDto>(updatedModel);
@@ -109,7 +131,15 @@ namespace CourseMarketplaceBE.Application.Services
             model.ModelUpdatedAt = DateTime.UtcNow;
 
             _aiModelRepo.Update(model);
-            var affected = await _aiModelRepo.SaveChangesAsync();
+            int affected;
+            try
+            {
+                affected = await _aiModelRepo.SaveChangesAsync();
+            }
+            catch (AiModelException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
             if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
             return true;
         }
@@ -156,23 +186,43 @@ namespace CourseMarketplaceBE.Application.Services
                 toxic = req.ToxicityConfidenceThreshold
             };
             var jsonString = System.Text.Json.JsonSerializer.Serialize(newThresholds);
-            var affected = await _configRepo.UpsertConfigAsync(SystemConfigKeys.ModerationThreshold, jsonString, "system config of AI moderation threshold");
+            int affected;
+            try
+            {
+                affected = await _configRepo.UpsertConfigAsync(SystemConfigKeys.ModerationThreshold, jsonString, "system config of AI moderation threshold");
+            }
+            catch (SystemConfigException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
             if (affected == 0) throw new InvalidOperationException("Failed to update moderation thresholds: No changes were saved to the database.");
             return true;
         }
 
         public async Task<bool> UpdateIntegrationAsync(UpdateIntegrationRequest req)
         {
-            var affected = await _configRepo.UpsertConfigAsync(req.ConfigKey, req.ConfigValue, $"system config of {req.ConfigKey}");
+            int affected;
+            try
+            {
+                affected = await _configRepo.UpsertConfigAsync(req.ConfigKey, req.ConfigValue, $"system config of {req.ConfigKey}");
+            }
+            catch (SystemConfigException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
             if (affected == 0) throw new InvalidOperationException($"Failed to update {req.ConfigKey}: No changes were saved to the database.");
             return true;
         }
 
-        public async Task<(List<CourseModerationLogAdminDto> Items, int TotalCount)> GetCourseModerationLogsAsync(int page, int pageSize)
+        public async Task<PagedResult<CourseModerationLogAdminDto>> GetCourseModerationLogsAsync(PagedRequestDto req)
         {
-            var (items, totalCount) = await _courseLogRepo.GetPagedAdminAsync(page, pageSize);
+            if (req.Page <= 0) req.Page = 1;
+            if (req.PageSize <= 0) req.PageSize = 10;
+
+            var (items, totalCount) = await _courseLogRepo.GetPagedAdminAsync(req.Page, req.PageSize);
             if (items == null || items.Count == 0) throw new KeyNotFoundException("No course moderation logs found.");
-            return (_mapper.Map<List<CourseModerationLogAdminDto>>(items), totalCount);
+            var dtos =  _mapper.Map<List<CourseModerationLogAdminDto>>(items);
+            return new PagedResult<CourseModerationLogAdminDto>(dtos,totalCount,req.Page,req.PageSize);
         }
 
         public async Task<CourseModerationLogAdminDto?> GetCourseModerationLogDetailAsync(int logId)
@@ -182,11 +232,15 @@ namespace CourseMarketplaceBE.Application.Services
             return _mapper.Map<CourseModerationLogAdminDto>(entity);
         }
 
-        public async Task<(List<ReviewModerationLogAdminDto> Items, int TotalCount)> GetCourseReviewModerationLogsAsync(int page, int pageSize)
+        public async Task<PagedResult<ReviewModerationLogAdminDto>> GetCourseReviewModerationLogsAsync(PagedRequestDto req)
         {
-            var (items, totalCount) = await _courseReviewLogRepo.GetPagedAdminAsync(page, pageSize);
+            if (req.Page <= 0) req.Page = 1;
+            if (req.PageSize <= 0) req.PageSize = 10;
+
+            var (items, totalCount) = await _courseReviewLogRepo.GetPagedAdminAsync(req.Page, req.PageSize);
             if (items == null || items.Count == 0) throw new KeyNotFoundException("No course review moderation logs found.");
-            return (_mapper.Map<List<ReviewModerationLogAdminDto>>(items), totalCount);
+            var dtos = _mapper.Map<List<ReviewModerationLogAdminDto>>(items);
+            return new PagedResult<ReviewModerationLogAdminDto>(dtos,totalCount,req.Page,req.PageSize);
         }
 
         public async Task<ReviewModerationLogAdminDto?> GetCourseReviewModerationLogDetailAsync(int logId)
@@ -196,11 +250,15 @@ namespace CourseMarketplaceBE.Application.Services
             return _mapper.Map<ReviewModerationLogAdminDto>(entity);
         }
 
-        public async Task<(List<ReviewModerationLogAdminDto> Items, int TotalCount)> GetLessonReviewModerationLogsAsync(int page, int pageSize)
+        public async Task<PagedResult<ReviewModerationLogAdminDto>> GetLessonReviewModerationLogsAsync(PagedRequestDto req)
         {
-            var (items, totalCount) = await _lessonReviewLogRepo.GetPagedAdminAsync(page, pageSize);
+            if (req.Page <= 0) req.Page = 1;
+            if (req.PageSize <= 0) req.PageSize = 10;
+
+            var (items, totalCount) = await _lessonReviewLogRepo.GetPagedAdminAsync(req.Page, req.PageSize);
             if (items == null || items.Count == 0) throw new KeyNotFoundException("No lesson review moderation logs found.");
-            return (_mapper.Map<List<ReviewModerationLogAdminDto>>(items), totalCount);
+            var dtos = _mapper.Map<List<ReviewModerationLogAdminDto>>(items);
+            return new PagedResult<ReviewModerationLogAdminDto>(dtos,totalCount,req.Page,req.PageSize);
         }
 
         public async Task<ReviewModerationLogAdminDto?> GetLessonReviewModerationLogDetailAsync(int logId)

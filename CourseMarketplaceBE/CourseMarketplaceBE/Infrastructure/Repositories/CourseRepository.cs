@@ -383,20 +383,20 @@ public class CourseRepository : ICourseRepository
         // 4. Sorting (Urgency/Threat Level)
         if (filter.SortBy == "newest")
         {
-            query = query.OrderByDescending(c => c.CreatedAt);
+            query = query.OrderByDescending(c => c.UpdatedAt);
         }
         else if (filter.SortBy == "threat_asc")
         {
-            query = query.OrderBy(c => c.ThreatLevel).ThenBy(c => c.CreatedAt);
+            query = query.OrderBy(c => c.ThreatLevel).ThenBy(c => c.UpdatedAt);
         }
         else if (filter.SortBy == "oldest")
         {
-            query = query.OrderBy(c => c.CreatedAt);
+            query = query.OrderBy(c => c.UpdatedAt);
         }
         else
         {
             // default (threat_desc): Threat Level descending
-            query = query.OrderByDescending(c => c.ThreatLevel).ThenBy(c => c.CreatedAt);
+            query = query.OrderByDescending(c => c.ThreatLevel).ThenBy(c => c.UpdatedAt);
         }
 
         var totalCount = await query.CountAsync();
@@ -416,7 +416,7 @@ public class CourseRepository : ICourseRepository
                 InstructorName = c.Instructor?.InstructorNavigation?.FullName ?? "Unknown",
                 CategoryName = c.Category?.CategoriesName,
                 Price = c.Price,
-                CreatedAt = c.CreatedAt,
+                CreatedAt = c.UpdatedAt,
                 CourseStatus = (c.CourseStatus == CourseStatus.Archived.ToValue() && c.CourseFlagCount >= 3) ? CourseStatus.PermanentlyLocked.ToValue() : c.CourseStatus,
                 CourseThumbnailUrl = c.CourseThumbnailUrl,
                 FlagCount = c.CourseFlagCount ?? 0,
@@ -425,9 +425,9 @@ public class CourseRepository : ICourseRepository
             };
 
             // Calculate Urgency
-            if (c.CreatedAt.HasValue && c.CourseStatus == CourseStatus.Pending.ToValue())
+            if (c.UpdatedAt.HasValue && c.CourseStatus == CourseStatus.Pending.ToValue())
             {
-                var diff = now - c.CreatedAt.Value;
+                var diff = now - c.UpdatedAt.Value;
                 if (diff.TotalHours > 72)
                 {
                     dto.UrgencyLevel = "High";

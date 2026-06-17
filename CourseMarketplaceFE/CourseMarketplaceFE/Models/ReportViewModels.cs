@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace CourseMarketplaceFE.Models
@@ -11,17 +12,25 @@ namespace CourseMarketplaceFE.Models
     // Model gửi yêu cầu báo cáo khóa học
     public class CreateCourseReportViewModel
     {
+        [Required]
         public int CourseId { get; set; }
+        [Required]
+        [MaxLength(255)]
         public string Reason { get; set; } = null!;
+        [MaxLength(1000)]
         public string? Description { get; set; }
     }
 
     // Model gửi yêu cầu báo cáo đánh giá khóa học / bài học (dùng chung)
     public class CreateReviewReportViewModel
     {
+        [Required]
         public int ReviewId { get; set; }
         public string ReviewType { get; set; } = "course_review"; // "course_review" hoặc "lesson_review"
+        [Required]
+        [MaxLength(255)]
         public string Reason { get; set; } = null!;
+        [MaxLength(1000)]
         public string? Description { get; set; }
     }
 
@@ -32,7 +41,10 @@ namespace CourseMarketplaceFE.Models
     // Model gửi yêu cầu giải quyết report
     public class ResolveReportViewModel
     {
+        [Required]
+        [MaxLength(50)]
         public string Status { get; set; } = null!; // resolved | rejected | escalated | under_review
+        [MaxLength(1000)]
         public string? ResolutionNote { get; set; }
         public bool RemoveContent { get; set; } = false;
     }

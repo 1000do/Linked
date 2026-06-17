@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-112 - View AI Model List</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-112 - View AI Model List</strong></p>
+    <p><strong>Function Trigger:</strong> Admin accesses the AI Service management page.</p>
+    <p><strong>Function Description:</strong> Displays a paginated list of all registered AI moderation models, showing each model's name, version, type, process type, status, and last modified date. Admin can navigate between pages using pagination controls.</p>
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+    <p><strong>Function Details</strong></p>
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Admin must be successfully authenticated.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>View AI Model List Successfully:</strong>
+                    <ul>
+                        <li>Admin accesses the AI Service management page.</li>
+                        <li>The system validates the Admin's access authorization.</li>
+                        <li>The system retrieves the paginated list of AI models from the database.</li>
+                        <li>The system displays the AI model list under the model management tab.</li>
+                        <li>Admin views the AI model list.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (No AI Models Registered)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>The system detects no AI models are registered in the database.</li>
+                        <li>The system displays an empty state message in the model list area.</li>
+                        <li>Back to step 5.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Admin Navigates to Another Page)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>Admin clicks the "Next" or "Previous" pagination button.</li>
+                        <li>The system reloads the page with the requested page of AI models.</li>
+                        <li>Back to step 1.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The AI model list is displayed to the Admin in paginated form.</li>
+                <li>The model list is ordered by last modified date in descending order.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+                <li><strong>Unauthorized Access:</strong> The system detects the current user does not have Admin authorization. The system displays an unauthorized access error message. The system redirects the user to the login page.</li>
+                <li><strong>Database Query Failed:</strong> The system fails to retrieve the AI model list from the database. The system displays an error message regarding the retrieval failure. Back to step 1.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Universal Empty State Display:</strong> Whenever a list retrieval operation yields no records (either due to an empty database or active filter criteria), the system displays a user-friendly empty state message instead of a blank table or list container.</li>
+                <li><strong>Admin Authorization for AI Services:</strong> Only authenticated Admin actors are authorized to access and perform actions within the AI Service and Model Management module (including adding/updating models, toggling status, viewing details/list, configuring thresholds, and viewing activity logs).</li>
+                <li><strong>List Sorting and Ordering:</strong> Administrative lists (such as the AI model list and activity logs) are sorted in descending order of their latest timestamp (last modified date for models, creation date for logs), ensuring that the most recent entries are displayed first.</li>
+                <li><strong>Universal List Pagination:</strong> All list retrieval operations displaying tabular or grid data must display a limited number of entries per page with pagination controls.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>
