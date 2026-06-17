@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-122 - Flag Accounts for Violation</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-122. Flag Accounts for Violation</strong></p>
+
+    <p><strong>Function Trigger:</strong> Admin clicks the "Flag Account" button and enters a violation reason.</p>
+
+    <p><strong>Function Description:</strong> Allows an Admin to flag a user account for a policy violation. The flag count increments, and the account status transitions through warning levels. On the 3rd flag, the account is automatically banned for 30 days. The system also sends a notification alert to the user.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Admin must be logged in with Admin role privileges.</li>
+                <li>The target account must exist and not be currently banned or already at the max flag limit.</li>
+                <li>Admin has stable internet connection.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Flag Account Successfully:</strong>
+                    <ul>
+                        <li>Admin accesses the Account Management page.</li>
+                        <li>Admin clicks the Flag Account button next to the target account.</li>
+                        <li>The system displays a dialog box asking for a violation reason.</li>
+                        <li>Admin enters the reason and clicks Submit.</li>
+                        <li>The system verifies that the Admin is authenticated.</li>
+                        <li>The system retrieves the target account and checks that it is eligible for flagging (not banned and flags < 3).</li>
+                        <li>The system increments the account flag count by 1 and updates the account status (to flagged_1, flagged_2, or banned).</li>
+                        <li>The system saves the changes to the database.</li>
+                        <li>The system sends a notification (warning or ban notice depending on flag level) to the target user.</li>
+                        <li>The system displays the updated flag count and account status to the Admin.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The account's flag count and status are updated in the database.</li>
+                <li>If the flag count reaches 3, a 30-day lockout record is created in the database.</li>
+                <li>A notification (warning or ban notice) is sent to the target user account.</li>
+                <li>The updated flag count and status are rendered to the Admin.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system detects that the Admin is not authenticated or lacks admin privileges. The system redirects the Admin to the Login page.</li>
+                <li><strong>Account Not Found:</strong> The system detects that the target account ID does not exist. The system displays the error message: "Account not found."</li>
+                <li><strong>Account Ineligible:</strong> The system detects that the account is already banned or has reached the maximum flag limit of 3. The system displays an error message indicating that the account cannot be flagged.</li>
+                <li><strong>Database Save Failure:</strong> The system detects that saving the flag update to the database failed (rows affected <= 0). The system displays the error message: "Failed to flag account."</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Flag Thresholds and Status Progression:</strong>
+                    <ul>
+                        <li>1st Flag: Status updates to "flagged_1" (warning level 1).</li>
+                        <li>2nd Flag: Status updates to "flagged_2" (warning level 2).</li>
+                        <li>3rd Flag: Status updates to "banned" and triggers an automatic 30-day lockout suspension.</li>
+                    </ul>
+                </li>
+                <li><strong>Non-Blocking Notifications:</strong> The notification delivery process is executed inside a try-catch block. A notification dispatch error must not block or roll back the flagging transaction under the database.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

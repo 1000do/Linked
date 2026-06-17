@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-118 - View Account Detail</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-118. View Account Detail</strong></p>
+
+    <p><strong>Function Trigger:</strong> Admin clicks on a specific account in the account list.</p>
+
+    <p><strong>Function Description:</strong> Allows an Admin to view detailed profile information of any account in the system. The details retrieved dynamically vary depending on the account's role (User, Instructor, Staff, or Admin), showing custom personal, academic, and financial/Stripe statistics.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Admin must be logged in with Admin role privileges.</li>
+                <li>Admin has stable internet connection.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>View Account Detail Successfully:</strong>
+                    <ul>
+                        <li>Admin accesses the Account Management page.</li>
+                        <li>Admin clicks on a specific account in the list.</li>
+                        <li>The system verifies that the Admin is authenticated.</li>
+                        <li>The system queries the database to retrieve the account, associated manager, user, instructor, and lockout details.</li>
+                        <li>The system determines the role of the account.</li>
+                        <li>For User (learner) accounts, the system calculates total spent on courses and total enrollment counts.</li>
+                        <li>For Instructor accounts, the system retrieves title, expertise categories, Stripe credentials, and calculates total revenue, processed payouts, and available balance.</li>
+                        <li>The system checks and retrieves the most recent active lockout timestamps.</li>
+                        <li>The system renders and displays the account details page.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The account details are successfully retrieved and displayed on the screen.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system detects that the Admin is not authenticated or lacks admin privileges. The system redirects the Admin to the Login page.</li>
+                <li><strong>Account Not Found:</strong> The system detects that the target account ID does not exist in the database. The system displays the error message: "Account not found."</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Role-Specific Data Aggregation:</strong>
+                    <ul>
+                        <li>Users/Students: Shows total purchase sum from successful payment transactions and enrolled course counts.</li>
+                        <li>Instructors: Displays Stripe integration details, title, and calculates total revenues from platform split transactions minus completed withdrawals to yield the available balance.</li>
+                        <li>Managers/Staff: Displays display name, role, and manager bio.</li>
+                    </ul>
+                </li>
+                <li><strong>Lockout Detection:</strong> The system displays active lockout periods (lockout start and end timestamps) if the account has been banned.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>
