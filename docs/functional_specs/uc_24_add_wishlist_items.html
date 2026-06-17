@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Functional Specification - Add Wishlist Items</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>1. Add Wishlist Items</strong></p>
+<p><strong>Function Trigger:</strong> User clicks the "Add to Wishlist" button (Heart Icon) on the Course Details page.</p>
+<p><strong>Function Description:</strong> Allows an authenticated User to add a course to their personal wishlist. The system checks if the course is already in the wishlist, creates a wishlist record, saves it to the database, and updates the heart icon state dynamically via AJAX.</p>
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+<p><strong>Function Details</strong></p>
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>User must be logged in.</li>
+            <li>The target course must exist in the system and not already be in the User's wishlist.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Add Wishlist Item Successfully:</strong>
+                <ul>
+                    <li>User accesses the Course Details page.</li>
+                    <li>User clicks the Add to Wishlist button (Heart Icon).</li>
+                    <li>The system checks if the course is already in the User's wishlist.</li>
+                    <li>The system detects that the course is not in the wishlist.</li>
+                    <li>The system extracts the user ID from the session claims.</li>
+                    <li>The system verifies that the course is unique in the User's wishlist.</li>
+                    <li>The system instantiates a new wishlist item.</li>
+                    <li>The system saves the wishlist item to the database.</li>
+                    <li>The system displays a success message and updates the wishlist indicator on the screen.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>A new wishlist item record is successfully saved in the database.</li>
+            <li>The system updates the wishlist heart icon to an active state on the frontend.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Session Invalid (Not Logged In):</strong> The system detects that the User is not authenticated and redirects the User to the Login page.</li>
+            <li><strong>Course Already in Wishlist:</strong> The system detects that the course is already in the User's wishlist, displays an error message, and returns the user to the initial step.</li>
+            <li><strong>Database Save Failure:</strong> The system detects that saving the changes failed, displays an error message, and returns the user to the initial step.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>User must be logged in.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

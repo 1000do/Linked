@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Functional Specifications</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>a. Verify Email</strong></p>
+
+<p><strong>Function Trigger:</strong> User enters the OTP code received in email and clicks the "Verify" / "Submit" button on the OTP verification form.</p>
+
+<p><strong>Function Description:</strong> Allows a User to verify their email address by submitting the One-Time Password (OTP) sent to their registered email. Upon validation, the system marks the account as verified and updates user session state.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>An OTP has been generated and sent to the User's email.</li>
+            <li>The User's email is stored in TempData.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Verify Email Successfully:</strong>
+                <ul>
+                    <li>User enters the OTP code received in email on the Verify OTP form.</li>
+                    <li>User clicks the Verify button.</li>
+                    <li>The system validates the OTP input form format.</li>
+                    <li>The system retrieves the user's email from TempData.</li>
+                    <li>The system submits a verification request with the email and OTP.</li>
+                    <li>The system consumes and validates the OTP code.</li>
+                    <li>The system retrieves the account by email and updates IsVerified = true in the database.</li>
+                    <li>The system removes the verification flags from TempData.</li>
+                    <li>The system updates the frontend IsVerified cookie to "true".</li>
+                    <li>The system displays a verification success message and redirects the User to the Profile page.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>The account's verification state is updated to true (IsVerified = true) in the database.</li>
+            <li>The system sets the IsVerified cookie to "true" and redirects the User to their Profile page with a success message.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Email Session Expired:</strong> The system detects that the email in TempData is empty or null, and redirects the User to the Login page.</li>
+            <li><strong>Invalid OTP Format:</strong> The system detects that the entered OTP format is invalid, displays validation error messages, and returns to step 1.</li>
+            <li><strong>Invalid Request State:</strong> The system detects that the verification payload is invalid or malformed, displays a request error message, and returns to step 1.</li>
+            <li><strong>Incorrect or Expired OTP:</strong> The system detects that the OTP is incorrect or has expired, keeps the email and verification flags in TempData, displays the error message "Incorrect or expired OTP", and returns to step 1.</li>
+            <li><strong>Account Not Found:</strong> The system detects that the account associated with the email does not exist in the database, displays an error message, and redirects the User to the Login page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>OTP Life Cycle: The OTP code must be consumed upon validation (one-time use only) and expires within 2 minutes of generation.</li>
+            <li>Session Cookie Sync: The system must update the IsVerified cookie to "true" immediately on successful verification to dynamically unlock shopping and checkout permissions without requiring a re-login.</li>
+        </ul>
+    </li>
+</ul>
+
+<hr>
+
+<p><strong>b. Change Password</strong></p>
+
+<p><strong>Function Trigger:</strong> User enters current password, new password, and confirms the new password, then clicks the "Change Password" button.</p>
+
+<p><strong>Function Description:</strong> Allows an authenticated User to update their password. The system verifies the current password, validates the new password, hashes it using BCrypt, saves it to the database, and forces a logout so the user must log in again with their new credentials.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>User must be logged in with a valid session (AccessToken).</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Change Password Successfully:</strong>
+                <ul>
+                    <li>User accesses the Change Password page.</li>
+                    <li>User enters current password, new password, and confirm new password.</li>
+                    <li>User clicks the Change Password button.</li>
+                    <li>The system validates the input formats.</li>
+                    <li>The system verifies that the User has a valid AccessToken cookie.</li>
+                    <li>The system validates that the new password matches the confirm new password.</li>
+                    <li>The system retrieves the user's account details and checks that it is not an OAuth-linked account (has a non-empty password hash).</li>
+                    <li>The system verifies that the current password matches the hashed password in the database.</li>
+                    <li>The system hashes the new password using BCrypt and updates the account's password hash field.</li>
+                    <li>The system saves the updated account details to the database.</li>
+                    <li>The system calls the logout endpoint to revoke tokens.</li>
+                    <li>The system deletes all local authentication cookies.</li>
+                    <li>The system redirects the User to the Login page with a success message.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>The user's account password hash is successfully updated in the database.</li>
+            <li>The user is logged out (all authentication cookies deleted) and redirected to the Login page with a success message.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Passwords Do Not Match:</strong> The system detects that the new password and confirm new password fields do not match, displays the error message "Password confirmation does not match", and returns to step 2.</li>
+            <li><strong>OAuth Account Modification Denied:</strong> The system detects that the account lacks a password hash (registered via Google OAuth), displays an error message indicating that password change is not supported for external accounts, and returns to step 1.</li>
+            <li><strong>Incorrect Current Password:</strong> The system detects that the entered current password does not match the stored hashed password, displays the error message "Current password is incorrect", and returns to step 2.</li>
+            <li><strong>Database Update Failure:</strong> The system detects that saving the updated password hash failed (rows affected <= 0), displays an error message, and returns to step 2.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>External Account Prevention: Users who registered using third-party auth (Google OAuth) are prohibited from changing password as they do not have a password hash stored locally.</li>
+            <li>Forced Logout: On a successful password change, the system must immediately revoke the refresh token, delete client-side cookies, and force the User to authenticate again to prevent active hijacked sessions.</li>
+        </ul>
+    </li>
+</ul>
+
+<hr>
+
+<p><strong>c. Forget Password</strong></p>
+
+<p><strong>Function Trigger:</strong> Actor accesses the Forgot Password page, enters their email, and clicks the "Submit" button.</p>
+
+<p><strong>Function Description:</strong> Allows an unauthenticated actor (User or Instructor) who has forgotten their password to perform a secure password reset. The system verifies the email, generates a 6-digit OTP code, sends it to the email, validates the entered OTP, and saves the new BCrypt-hashed password to the database.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>Actor must not be currently authenticated in the system.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Reset Password Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the Forgot Password page.</li>
+                    <li>Actor enters their registered Email address and clicks the Submit button.</li>
+                    <li>The system queries the database to find the account by email.</li>
+                    <li>The system validates that the account email exists, is verified, and is not linked to Google OAuth.</li>
+                    <li>The system generates a 6-digit OTP code, stores it in the database with a 2-minute expiration, and sends it via email.</li>
+                    <li>The system redirects the Actor to the Verify OTP page.</li>
+                    <li>Actor enters the OTP code received in email and clicks the Verify button.</li>
+                    <li>The system validates the OTP state in the database.</li>
+                    <li>The system redirects the Actor to the Reset Password page.</li>
+                    <li>Actor enters a new password and clicks the Reset button.</li>
+                    <li>The system consumes (validates and deletes) the OTP code record.</li>
+                    <li>The system hashes the new password using BCrypt and updates the password hash in the database.</li>
+                    <li>The system redirects the Actor to the Login page with a "Password changed successfully" message.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>A 6-digit OTP code is generated and emailed to the actor.</li>
+            <li>The account's password hash is successfully updated in the database and the OTP is consumed.</li>
+            <li>The system redirects the actor to the Login page with a success message.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Email Not Found:</strong> The system detects that the email does not exist in the database, displays the error message "Email not found", and returns to step 2.</li>
+            <li><strong>Google Account Password Reset Denied:</strong> The system detects that the account is linked to Google OAuth, displays the error message "This account uses Google login", and returns to step 2.</li>
+            <li><strong>Email Not Verified:</strong> The system detects that the account email has not been verified, displays the error message "Email is not verified", and returns to step 2.</li>
+            <li><strong>Incorrect or Expired OTP:</strong> The system detects that the entered OTP is incorrect or has expired, displays the error message "Incorrect or expired OTP", and returns to step 7.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>Verified Email Requirement: Only accounts that have completed email verification are permitted to use the forget password reset feature.</li>
+            <li>Google OAuth Lockout: Resetting passwords locally is blocked for accounts registered via Google OAuth because they authenticate externally and do not store a local password hash.</li>
+            <li>OTP Life Cycle: The reset password OTP expires within 2 minutes of generation and must be consumed (invalidated) immediately upon successful password modification to prevent reuse.</li>
+        </ul>
+    </li>
+</ul>
+
+<hr>
+
+<p><strong>d. Logout</strong></p>
+
+<p><strong>Function Trigger:</strong> Actor clicks the "Logout" button.</p>
+
+<p><strong>Function Description:</strong> Allows an authenticated actor (User, Instructor, Staff, or Admin) to safely terminate their session. The system invalidates the refresh token in the database, removes all local browser session cookies, and redirects the actor to the homepage in an unauthenticated state.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>Actor must be currently logged in and authenticated.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Logout Successfully:</strong>
+                <ul>
+                    <li>Actor clicks the Logout button.</li>
+                    <li>The system sends a log out request to the frontend controller.</li>
+                    <li>The frontend controller sends a POST request to the backend log out API with the active AccessToken.</li>
+                    <li>The backend controller extracts the account ID from the token claims.</li>
+                    <li>The system revokes the active RefreshToken for the account in the database.</li>
+                    <li>The system clears backend API cookies.</li>
+                    <li>The system deletes all frontend cookies.</li>
+                    <li>The system redirects the Actor to the Homepage.</li>
+                    <li>The system displays the homepage in an unauthenticated state showing Login and Register buttons.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>The actor's refresh token is revoked in the database.</li>
+            <li>All local browser authentication and session cookies are deleted.</li>
+            <li>The system redirects the actor to the homepage.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>Token Invalidation: Upon logout, the backend must immediately nullify/revoke the stored RefreshToken in the database to prevent token reuse attacks.</li>
+            <li>Cookie Clearance: Client-side cookies containing session context must be completely cleared.</li>
+        </ul>
+    </li>
+</ul>
+
+<hr>
+
+<p><strong>e. Login with Google</strong></p>
+
+<p><strong>Function Trigger:</strong> Actor clicks the "Sign in with Google" button on the Login page.</p>
+
+<p><strong>Function Description:</strong> Allows a User or Instructor to log in using their Google credentials via OAuth 2.0. If the email is logging in for the first time, a new account is registered automatically with default user privileges, auto-verified, and no password hash. Suspended accounts are blocked.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>Actor is on the Login page and not currently authenticated.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Login with Google Successfully:</strong>
+                <ul>
+                    <li>Actor clicks the “Sign in with Google” button.</li>
+                    <li>The system triggers Google Identity authentication and opens the OAuth popup.</li>
+                    <li>The Google Service returns the verified IdToken credential.</li>
+                    <li>The system validates the Google IdToken structure and signature.</li>
+                    <li>The system extracts the user profile: Email, Name, and Picture URL.</li>
+                    <li>The system queries the database to find the account by email.</li>
+                    <li>[Existing User] The system retrieves the account role.</li>
+                    <li>The system verifies that the account does not have an active lockout.</li>
+                    <li>The system generates a JWT AccessToken and RefreshToken.</li>
+                    <li>The system appends HttpOnly cookies (AccessToken, RefreshToken) and client-readable cookies (UserName, AvatarUrl, UserRole, UserId, IsVerified = true).</li>
+                    <li>The system redirects the Actor based on their role.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (First Time Login - New User)</strong>
+        <ul>
+            <li>The system detects that the email does not exist in the database.
+                <ul>
+                    <li>The system generates a unique username from the email prefix (appending numbers if the username is already taken).</li>
+                    <li>The system instantiates a new Account and User entity.</li>
+                    <li>The system saves the Account and User entities to the database.</li>
+                    <li>The system retrieves the account role (returns to normal flow).</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>Authentication tokens and session cookies are set on the actor's browser.</li>
+            <li>If new, a verified Account and User record are saved to the database.</li>
+            <li>The system redirects the actor to the home page depending on their role.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Token Validation Failed:</strong> The system detects that the IdToken is invalid, malformed, or has expired, displays an authentication error message, and returns to step 1.</li>
+            <li><strong>Account Suspended:</strong> The system detects that the account is suspended (has an active lockout), throws an UnauthorizedAccessException, displays a suspension warning indicating the lockout expiry date/time, and returns to step 1.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>Unique Username Generation: For new Google sign-ups, the username is extracted from the email prefix. If the username is already taken, the system appends a numeric counter sequentially (e.g. johndoe1, johndoe2) until it is unique.</li>
+            <li>Auto-Verification: Accounts registered via Google OAuth are flagged as verified (IsVerified = true) immediately upon creation because Google has verified the email ownership.</li>
+            <li>Null Password Hash: Google OAuth accounts are initialized with no password hash (PasswordHash = null), bypassing local password authentication.</li>
+            <li>Suspension Block: If an active lockout exists for the account, the system denies login and prints the suspension lockout end date in the error message.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>
