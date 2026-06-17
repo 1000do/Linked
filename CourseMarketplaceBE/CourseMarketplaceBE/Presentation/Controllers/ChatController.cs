@@ -33,6 +33,15 @@ public class ChatController : ControllerBase
         return Ok(support);
     }
 
+    [HttpGet("admin-account")]
+    public async Task<IActionResult> GetAdminAccount()
+    {
+        var admin = await _chatService.GetAdminAccountAsync();
+        if (admin == null) return NotFound(new { message = "No admin available." });
+        
+        return Ok(admin);
+    }
+
     [HttpGet("list")]
     public async Task<IActionResult> GetMyChats()
     {

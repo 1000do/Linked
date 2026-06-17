@@ -45,6 +45,12 @@ public class ChatService : IChatService
                 continue;
             }
 
+            // Bỏ qua các chat chưa có tin nhắn nào để tránh hiện rỗng cho người nhận
+            if (!p.Chat.Messages.Any())
+            {
+                continue;
+            }
+
             var unreadFromRedis = await _redisService.GetUnreadCountAsync(accountId, p.ChatId);
             
                 var partner = p.Chat.ChatParticipants.FirstOrDefault(cp => cp.AccountId != accountId);
@@ -85,6 +91,12 @@ public class ChatService : IChatService
         {
             // Bỏ qua nếu tin nhắn cuối cùng nhỏ hơn hoặc bằng ClearedAt (đã xóa)
             if (p.ClearedAt.HasValue && p.Chat.LastMessageAt.HasValue && p.Chat.LastMessageAt.Value <= p.ClearedAt.Value)
+            {
+                continue;
+            }
+
+            // Bỏ qua các chat chưa có tin nhắn nào
+            if (!p.Chat.Messages.Any())
             {
                 continue;
             }
@@ -307,6 +319,11 @@ public class ChatService : IChatService
         return false;
     }
 
+    public async Task<List<int>> GetParticipantIdsAsync(int chatId)
+    {
+        return await _chatRepository.GetParticipantIdsAsync(chatId);
+    }
+
     public async Task<bool> GrantAdminAccessAsync(int chatId, int hours)
     {
         var expiry = DateTime.Now.AddHours(hours);
@@ -392,6 +409,20 @@ public class ChatService : IChatService
             AccountId = staffId.Value,
             FullName = staff?.User?.FullName ?? "Support Team",
             AvatarUrl = staff?.AvatarUrl ?? ""
+        };
+    }
+
+    public async Task<SupportAccountDto?> GetAdminAccountAsync()
+    {
+        var adminId = await _userRepository.GetAdminIdAsync();
+        if (adminId == null) return null;
+        
+        var admin = await _userRepository.GetAccountByIdAsync(adminId.Value);
+        return new SupportAccountDto
+        { 
+            AccountId = adminId.Value,
+            FullName = admin?.User?.FullName ?? admin?.Manager?.DisplayName ?? "Administrator",
+            AvatarUrl = admin?.AvatarUrl ?? ""
         };
     }
 

@@ -25,6 +25,14 @@
         <div class="sidebar-header flex flex-col gap-3">
             <div class="d-flex justify-content-between align-items-center">
                 <h4 class="m-0 font-bold text-slate-800">Chats</h4>
+                @{ var roleCheck = Context.Request.Cookies["UserRole"]?.ToLower(); }
+                @if (roleCheck == "staff")
+                {
+                    <button onclick="contactAdmin()" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2 py-1.5 rounded-lg flex items-center gap-1 transition-colors" title="Chat with Admin">
+                        <span class="material-symbols-outlined text-[16px]">admin_panel_settings</span>
+                        <span class="text-[11px] font-bold">Contact Admin</span>
+                    </button>
+                }
             </div>
             
             <div class="search-box">
@@ -386,6 +394,37 @@
                 console.error('Accept support error:', err);
             }
         }
+
+        async function contactAdmin() {
+            try {
+                const res = await fetch("/Chat/GetAdminAccount");
+                if (!res.ok) {
+                    Swal.fire('Error', 'Admin account is currently unavailable.', 'error');
+                    return;
+                }
+                const admin = await res.json();
+                
+                const createRes = await fetch("/Chat/CreateDirectChat", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        targetAccountId: admin.accountId,
+                        contextType: 'system'
+                    })
+                });
+                
+                if (createRes.ok) {
+                    const data = await createRes.json();
+                    await loadChats();
+                    selectChat(data.chatId, admin.fullName, admin.avatarUrl, true);
+                } else {
+                    const err = await createRes.json();
+                    Swal.fire('Error', err.message || 'Failed to connect with Admin.', 'error');
+                }
+            } catch (err) {
+                console.error("Contact admin error:", err);
+            }
+        }
         // ------------------------------ //
 
         function handleSearchInput() {
@@ -415,8 +454,37 @@
         // 3. Chọn cuộc hội thoại
         async function selectChat(chatId, name, avatar, isOnline = true) {
             if (activeChatId === chatId) return;
+            
+            // Clear typing state for previous chat if any
+            if (activeChatId && typeof chatPageTypingTimeout !== 'undefined') {
+                try {
+                    chatPageConnection.invoke("Typing", activeChatId, false);
+                    clearTimeout(chatPageTypingTimeout);
+                } catch(e) {}
+            }
+            
             activeChatId = chatId;
             
+            // Reset input box
+            const msgInput = document.getElementById('msg-input');
+            if (msgInput) {
+                msgInput.value = "";
+                msgInput.style.height = 'auto';
+            }
+            
+            // Reset attachments
+            if (typeof selectedFiles !== 'undefined') {
+                selectedFiles = [];
+                if (typeof renderAttachmentPreview === 'function') renderAttachmentPreview();
+            }
+
+            // Join SignalR group to receive typing and read events for newly created chats
+            if (chatPageConnection && chatPageConnection.state === signalR.HubConnectionState.Connected) {
+                try {
+                    await chatPageConnection.invoke("JoinChat", chatId);
+                } catch (e) { console.error("JoinChat error:", e); }
+            }
+
             document.getElementById('empty-state').style.display = 'none';
             document.getElementById('chat-content').style.display = 'flex';
             document.getElementById('header-name').innerText = name;

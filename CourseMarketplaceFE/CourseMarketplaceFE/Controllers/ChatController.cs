@@ -108,6 +108,15 @@ public class ChatController : Controller
         return BadRequest();
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetAdminAccount()
+    {
+        var response = await _api.GetAsync("chat/admin-account");
+        if (response.IsSuccessStatusCode)
+            return Content(await response.Content.ReadAsStringAsync(), "application/json");
+        return NotFound();
+    }
+
     [HttpPost]
     public async Task<IActionResult> RequestSupport([FromBody] dynamic dto)
     {
