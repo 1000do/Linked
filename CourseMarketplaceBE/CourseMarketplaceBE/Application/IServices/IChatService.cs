@@ -19,4 +19,9 @@ public interface IChatService
     Task<int> GetTotalUnreadCountAsync(int accountId);
     Task LogActionAsync(int actorId, string action, string targetType, int? targetId, string details);
     Task<SupportAccountDto?> GetSupportAccountAsync();
+
+    // Ticket-Based Support Flow
+    Task<SupportTicketDto> CreateSupportRequestAsync(int senderId, SupportRequestDto dto);
+    Task<int> AcceptSupportRequestAsync(int acceptorId, string ticketId);
+    Task<List<SupportTicketDto>> GetPendingRequestsAsync(int accountId, string currentRole);
 }

@@ -394,4 +394,91 @@ public class ChatService : IChatService
             AvatarUrl = staff?.AvatarUrl ?? ""
         };
     }
+
+    // --- Ticket-Based Support Flow ---
+
+    public async Task<SupportTicketDto> CreateSupportRequestAsync(int senderId, SupportRequestDto dto)
+    {
+        var sender = await _userRepository.GetAccountByIdAsync(senderId);
+        if (sender == null) throw new InvalidOperationException("Sender not found");
+
+        var ticketId = Guid.NewGuid().ToString("N");
+        var ticket = new SupportTicketDto
+        {
+            TicketId = ticketId,
+            SenderId = senderId,
+            SenderName = sender.User?.FullName ?? sender.Manager?.DisplayName ?? sender.Username ?? sender.Email ?? "Unknown",
+            SenderAvatar = sender.AvatarUrl,
+            InitialMessage = dto.Content,
+            RequestedAt = DateTime.UtcNow,
+            TargetRole = dto.TargetRole
+        };
+
+        // Manage a global list of active tickets
+        var tickets = await _redisService.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets") ?? new List<SupportTicketDto>();
+        tickets.Add(ticket);
+        await _redisService.SetCacheAsync("ActiveSupportTickets", tickets, TimeSpan.FromDays(7));
+        
+        return ticket;
+    }
+
+    public async Task<int> AcceptSupportRequestAsync(int acceptorId, string ticketId)
+    {
+        var tickets = await _redisService.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets") ?? new List<SupportTicketDto>();
+        var ticket = tickets.FirstOrDefault(t => t.TicketId == ticketId);
+        
+        if (ticket == null) throw new InvalidOperationException("This support request has already been accepted or expired.");
+
+        // Check acceptor role
+        var role = await _userRepository.GetRoleByAccountIdAsync(acceptorId);
+        if (ticket.TargetRole == "admin" && role != "admin")
+            throw new UnauthorizedAccessException("Only admins can accept this request.");
+        if (ticket.TargetRole == "staff" && role != "staff" && role != "admin")
+            throw new UnauthorizedAccessException("Only staff or admins can accept this request.");
+
+        // Remove the ticket from the list
+        tickets.RemoveAll(t => t.TicketId == ticketId);
+        await _redisService.SetCacheAsync("ActiveSupportTickets", tickets, TimeSpan.FromDays(7));
+
+        // Create Chat using GetOrCreateChatAsync
+        var createDto = new CreateChatDto
+        {
+            TargetAccountId = acceptorId,
+            ContextType = "system"
+        };
+        var chatId = await GetOrCreateChatAsync(ticket.SenderId, createDto);
+
+        // Save the initial message from the sender
+        var msgDto = new SendMessageDto
+        {
+            ChatId = chatId,
+            Content = ticket.InitialMessage
+        };
+        await SaveMessageAsync(ticket.SenderId, msgDto);
+
+        return chatId;
+    }
+
+    public async Task<List<SupportTicketDto>> GetPendingRequestsAsync(int accountId, string currentRole)
+    {
+        var tickets = await _redisService.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets") ?? new List<SupportTicketDto>();
+        var targetRole = currentRole.ToLower();
+        
+        // Remove old tickets (> 24 hours) as a cleanup measure
+        var originalCount = tickets.Count;
+        tickets.RemoveAll(t => (DateTime.UtcNow - t.RequestedAt).TotalHours > 24);
+        if (tickets.Count < originalCount)
+        {
+            await _redisService.SetCacheAsync("ActiveSupportTickets", tickets, TimeSpan.FromDays(7));
+        }
+
+        if (targetRole == "admin")
+            return tickets.Where(t => t.TargetRole == "admin").ToList();
+            
+        if (targetRole == "staff")
+            return tickets.Where(t => t.TargetRole == "staff").ToList();
+            
+        // For User/Instructor, show only their own requests
+        return tickets.Where(t => t.SenderId == accountId).ToList();
+    }
 }

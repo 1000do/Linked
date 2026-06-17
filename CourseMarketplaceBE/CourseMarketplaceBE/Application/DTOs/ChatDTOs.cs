@@ -77,3 +77,20 @@ public class SupportAccountDto
     public string FullName { get; set; } = null!;
     public string AvatarUrl { get; set; } = null!;
 }
+
+public class SupportRequestDto
+{
+    public string Content { get; set; } = null!;
+    public string TargetRole { get; set; } = "staff"; // "staff" or "admin"
+}
+
+public class SupportTicketDto
+{
+    public string TicketId { get; set; } = null!;
+    public int SenderId { get; set; }
+    public string SenderName { get; set; } = null!;
+    public string? SenderAvatar { get; set; }
+    public string InitialMessage { get; set; } = null!;
+    public DateTime RequestedAt { get; set; }
+    public string TargetRole { get; set; } = null!;
+}

@@ -52,6 +52,16 @@
                 </div>
             </div>
         </div>
+        <div id="pending-requests-container" class="px-3 pt-2 pb-0" style="display: none;">
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex justify-between items-center">
+                <span>Pending Requests</span>
+                <span id="pending-count" class="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-[10px]">0</span>
+            </div>
+            <div id="pending-requests-list" class="flex flex-col gap-2 mb-3">
+                <!-- Render JS -->
+            </div>
+            <hr class="border-slate-100 m-0">
+        </div>
         <div id="chat-list" class="chat-list-container custom-scroll">
             <!-- Render JS -->
         </div>
@@ -216,6 +226,14 @@
                 }
             });
 
+            chatPageConnection.on("NewSupportRequest", (ticket) => {
+                loadPendingRequests();
+            });
+
+            chatPageConnection.on("RemoveSupportRequest", (ticketId) => {
+                loadPendingRequests();
+            });
+
             try {
                 await chatPageConnection.start();
                 console.log("SignalR Connected.");
@@ -288,9 +306,7 @@
 
         async function loadChats() {
             try {
-                const res = await fetch(`${CHAT_API_URL}/api/chat/list`, {
-                    headers: { 'Authorization': `Bearer ${chatPageToken}` }
-                });
+                const res = await fetch(`/Chat/GetList`);
                 defaultChats = await res.json();
                 
                 const query = document.getElementById('search-chats').value.trim();
@@ -302,6 +318,75 @@
                 console.error("Load chats error:", err);
             }
         }
+
+        // --- Pending Requests Logic --- //
+        let pendingRequests = [];
+
+        async function loadPendingRequests() {
+            try {
+                const res = await fetch(`/Chat/GetPendingRequests`);
+                pendingRequests = await res.json();
+                renderPendingRequests();
+            } catch (err) {
+                console.error("Load pending requests error:", err);
+            }
+        }
+
+        function renderPendingRequests() {
+            const container = document.getElementById('pending-requests-container');
+            const list = document.getElementById('pending-requests-list');
+            const count = document.getElementById('pending-count');
+
+            if (!pendingRequests || pendingRequests.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            count.innerText = pendingRequests.length;
+
+            const actor = '@actor'; // From Razor view
+            const isStaffOrAdmin = actor === 'Admin' || actor === 'Staff';
+
+            list.innerHTML = pendingRequests.map(t => `
+                <div class="bg-orange-50 border border-orange-100 rounded-xl p-2 cursor-pointer hover:bg-orange-100 transition-colors">
+                    <div class="flex items-center gap-2 mb-1">
+                        <img src="${t.senderAvatar || '/img/default-avatar.png'}" class="w-6 h-6 rounded-full object-cover" onerror="this.src='/img/default-avatar.png'" />
+                        <span class="text-xs font-bold text-slate-700 truncate flex-1">${t.senderName || 'User'}</span>
+                        <span class="text-[9px] text-slate-400">${new Date(t.requestedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                    <div class="text-[11px] text-slate-600 line-clamp-1 mb-2">${t.initialMessage}</div>
+                    ${isStaffOrAdmin ? `
+                        <button onclick="acceptSupport('${t.ticketId}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold py-1.5 rounded-lg transition-colors">
+                            Accept Request
+                        </button>
+                    ` : `
+                        <div class="text-[10px] text-orange-600 font-semibold italic text-center w-full py-1">Waiting for support staff...</div>
+                    `}
+                </div>
+            `).join('');
+        }
+
+        async function acceptSupport(ticketId) {
+            try {
+                const res = await fetch(`/Chat/AcceptSupport?ticketId=${ticketId}`, {
+                    method: 'POST'
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    await loadChats();
+                    selectChat(data.chatId, "Support Session", "/img/default-avatar.png", true);
+                    loadPendingRequests(); // Refresh the list to remove the accepted ticket
+                } else {
+                    const error = await res.json();
+                    Swal.fire('Error', error.message || 'Failed to accept request.', 'error');
+                }
+            } catch (err) {
+                console.error('Accept support error:', err);
+            }
+        }
+        // ------------------------------ //
 
         function handleSearchInput() {
             const query = document.getElementById('search-chats').value.trim();
@@ -318,9 +403,7 @@
                 if (!currentQuery) return;
                 
                 try {
-                    const res = await fetch(`${CHAT_API_URL}/api/chat/search?q=${encodeURIComponent(currentQuery)}`, {
-                        headers: { 'Authorization': `Bearer ${chatPageToken}` }
-                    });
+                    const res = await fetch(`/Chat/Search?q=${encodeURIComponent(currentQuery)}`);
                     allChats = await res.json();
                     applyChatFilters();
                 } catch (err) {
@@ -358,9 +441,7 @@
             loadChats(); // Update active class
 
             try {
-                const res = await fetch(`${CHAT_API_URL}/api/chat/history?roomId=${chatId}`, {
-                    headers: { 'Authorization': `Bearer ${chatPageToken}` }
-                });
+                const res = await fetch(`/Chat/GetHistory?roomId=${chatId}`);
                 const messages = await res.json();
                 
                 const list = document.getElementById('message-list');
@@ -484,9 +565,8 @@
             const formData = new FormData();
             formData.append('file', file);
             try {
-                const res = await fetch(`${CHAT_API_URL}/api/chatattachment/upload`, {
+                const res = await fetch(`/Chat/UploadAttachment`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${chatPageToken}` },
                     body: formData
                 });
                 if (!res.ok) throw new Error("Upload failed");
@@ -546,9 +626,8 @@
 
             if (confirmResult.isConfirmed) {
                 try {
-                    const res = await fetch(`${CHAT_API_URL}/api/chat/${activeChatId}/clear`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${chatPageToken}` }
+                    const res = await fetch(`/Chat/ClearHistory?chatId=${activeChatId}`, {
+                        method: 'DELETE'
                     });
                     
                     if (res.ok) {
@@ -612,6 +691,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await initSignalR();
             await loadChats();
+            await loadPendingRequests();
 
             // Hook up event listeners for instant chat filtering
             const searchChats = document.getElementById('search-chats');

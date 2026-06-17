@@ -28,6 +28,8 @@ public class ChatHub : Hub
     public override async Task OnConnectedAsync()
     {
         var accountIdStr = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = Context.User?.FindFirst(ClaimTypes.Role)?.Value?.ToLower() ?? "user";
+
         if (int.TryParse(accountIdStr, out int accountId))
         {
             await _redisService.SetUserOnlineAsync(accountId, Context.ConnectionId);
@@ -39,6 +41,10 @@ public class ChatHub : Hub
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, $"Chat_{chat.ChatId}");
             }
+
+            // Ticket-based support groups
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"Role_{role}");
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{accountId}");
         }
         await base.OnConnectedAsync();
     }

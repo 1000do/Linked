@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
+using Microsoft.AspNetCore.SignalR;
+using CourseMarketplaceBE.Hubs;
+
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
 [Authorize]
@@ -13,10 +16,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class ChatController : ControllerBase
 {
     private readonly IChatService _chatService;
+    private readonly IHubContext<ChatHub> _hubContext;
 
-    public ChatController(IChatService chatService)
+    public ChatController(IChatService chatService, IHubContext<ChatHub> hubContext)
     {
         _chatService = chatService;
+        _hubContext = hubContext;
     }
 
     [HttpGet("support-account")]
@@ -166,5 +171,70 @@ public class ChatController : ControllerBase
         {
             return BadRequest(new { message = "Failed to mark chat as read" });
         }
+    }
+
+    [HttpPost("request-support")]
+    public async Task<IActionResult> RequestSupport([FromBody] SupportRequestDto dto)
+    {
+        var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        try
+        {
+            var ticket = await _chatService.CreateSupportRequestAsync(accountId, dto);
+            
+            // Broadcast to the target role group
+            await _hubContext.Clients.Group($"Role_{dto.TargetRole.ToLower()}").SendAsync("NewSupportRequest", ticket);
+            
+            return Ok(ticket);
+        }
+        catch (System.InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("accept-support/{ticketId}")]
+    public async Task<IActionResult> AcceptSupport(string ticketId)
+    {
+        var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        try
+        {
+            // Get ticket details to know the sender before we accept (and consume) it
+            var tickets = await _chatService.GetPendingRequestsAsync(accountId, "admin");
+            if (tickets == null || tickets.Count == 0) tickets = await _chatService.GetPendingRequestsAsync(accountId, "staff");
+            
+            var ticket = tickets?.FirstOrDefault(t => t.TicketId == ticketId);
+            
+            // Broadcast to remove from lists
+            await _hubContext.Clients.Group("Role_staff").SendAsync("RemoveSupportRequest", ticketId);
+            await _hubContext.Clients.Group("Role_admin").SendAsync("RemoveSupportRequest", ticketId);
+
+            var chatId = await _chatService.AcceptSupportRequestAsync(accountId, ticketId);
+            
+            if (ticket != null)
+            {
+                // Notify the sender that their request was accepted
+                await _hubContext.Clients.Group($"User_{ticket.SenderId}").SendAsync("SupportRequestAccepted", new { ChatId = chatId, TicketId = ticketId });
+            }
+            
+            return Ok(new { ChatId = chatId });
+        }
+        catch (System.UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { message = ex.Message });
+        }
+        catch (System.InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("pending-requests")]
+    public async Task<IActionResult> GetPendingRequests()
+    {
+        var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "User";
+        
+        var tickets = await _chatService.GetPendingRequestsAsync(accountId, role);
+        return Ok(tickets);
     }
 }
