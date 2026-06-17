@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-86 - Delete Chats</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-86. Delete Chats</strong></p>
+
+    <p><strong>Function Trigger:</strong> Actor clicks the delete icon in the active chat header.</p>
+
+    <p><strong>Function Description:</strong> Allows the Actor to clear their personal chat history of a conversation. Clearing history only removes the messages from the active participant's perspective by updating their participant cleared timestamp.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Actor must be successfully authenticated as a Staff member or Admin.</li>
+                <li>Actor must have an active conversation open.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Trigger Deletion:</strong>
+                    <ul>
+                        <li>Actor accesses the messages page under the Admin Panel dashboard.</li>
+                        <li>Actor clicks the "delete" icon in the active conversation header.</li>
+                        <li>The system displays a confirmation dialog.</li>
+                    </ul>
+                </li>
+                <li><strong>Confirm Deletion:</strong>
+                    <ul>
+                        <li>Actor clicks the "OK" button.</li>
+                        <li>The system requests the backend to clear the chat history.</li>
+                        <li>The server validates that the active user possesses a Staff or Admin role.</li>
+                        <li>The server updates the cleared timestamp of the participant to the current time.</li>
+                        <li>The server saves the participant record changes to the database.</li>
+                        <li>The system clears the message list from the viewport.</li>
+                        <li>The system displays the empty chat state.</li>
+                        <li>The system updates the active chat list in the sidebar.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Cancel Chat Deletion)</strong>
+            <ul>
+                <li>If the Actor cancels the chat deletion:
+                    <ul>
+                        <li>Actor clicks the "Cancel" button.</li>
+                        <li>The system closes the confirmation dialog.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The participant's cleared timestamp is updated in the database.</li>
+                <li>The message viewport is cleared.</li>
+                <li>The active chat list is refreshed in the sidebar.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the Actor to the login page.</li>
+                <li><strong>Unauthorized Access:</strong> The system detects that the Actor is not a Staff or Admin, redirects the Actor to the access denied error page, and terminates the flow.</li>
+                <li><strong>Participant Not Found:</strong> The system displays an error message regarding chat access permission and halts execution.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Role Verification:</strong> The server validates that the requesting Actor possesses a Staff or Admin role.</li>
+                <li><strong>Participant Ownership Verification:</strong> The server validates that the requesting Actor is an authorized participant of the chat before modifying any participant records.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>
