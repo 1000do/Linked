@@ -9,6 +9,8 @@ using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using AutoMapper;
 using CourseMarketplaceBE.Application.DTOs.Common;
+using CourseMarketplaceBE.Application.Exceptions;
+using CourseMarketplaceBE.Domain.Exceptions;
 
 namespace CourseMarketplaceBE.Application.Services
 {
@@ -80,7 +82,15 @@ namespace CourseMarketplaceBE.Application.Services
             };
 
             var addedModel = _aiModelRepo.Add(model);
-            var affected = await _aiModelRepo.SaveChangesAsync();
+            int affected;
+            try
+            {
+                affected = await _aiModelRepo.SaveChangesAsync();
+            }
+            catch (AiModelException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
             if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
             Console.WriteLine($"New Model Id {addedModel.ModelId}");
             return _mapper.Map<AiModelAdminDto>(addedModel);
@@ -98,7 +108,15 @@ namespace CourseMarketplaceBE.Application.Services
             model.ModelUpdatedAt = DateTime.UtcNow;
 
             var updatedModel = _aiModelRepo.Update(model);
-            var affected = await _aiModelRepo.SaveChangesAsync();
+            int affected;
+            try
+            {
+                affected = await _aiModelRepo.SaveChangesAsync();
+            }
+            catch (AiModelException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
             if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
 
             return _mapper.Map<AiModelAdminDto>(updatedModel);
@@ -113,7 +131,15 @@ namespace CourseMarketplaceBE.Application.Services
             model.ModelUpdatedAt = DateTime.UtcNow;
 
             _aiModelRepo.Update(model);
-            var affected = await _aiModelRepo.SaveChangesAsync();
+            int affected;
+            try
+            {
+                affected = await _aiModelRepo.SaveChangesAsync();
+            }
+            catch (AiModelException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
             if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
             return true;
         }
@@ -160,14 +186,30 @@ namespace CourseMarketplaceBE.Application.Services
                 toxic = req.ToxicityConfidenceThreshold
             };
             var jsonString = System.Text.Json.JsonSerializer.Serialize(newThresholds);
-            var affected = await _configRepo.UpsertConfigAsync(SystemConfigKeys.ModerationThreshold, jsonString, "system config of AI moderation threshold");
+            int affected;
+            try
+            {
+                affected = await _configRepo.UpsertConfigAsync(SystemConfigKeys.ModerationThreshold, jsonString, "system config of AI moderation threshold");
+            }
+            catch (SystemConfigException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
             if (affected == 0) throw new InvalidOperationException("Failed to update moderation thresholds: No changes were saved to the database.");
             return true;
         }
 
         public async Task<bool> UpdateIntegrationAsync(UpdateIntegrationRequest req)
         {
-            var affected = await _configRepo.UpsertConfigAsync(req.ConfigKey, req.ConfigValue, $"system config of {req.ConfigKey}");
+            int affected;
+            try
+            {
+                affected = await _configRepo.UpsertConfigAsync(req.ConfigKey, req.ConfigValue, $"system config of {req.ConfigKey}");
+            }
+            catch (SystemConfigException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
             if (affected == 0) throw new InvalidOperationException($"Failed to update {req.ConfigKey}: No changes were saved to the database.");
             return true;
         }

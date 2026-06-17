@@ -29,6 +29,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .Where(am => am.ModelType == modelType && am.ModelStatus == AiModelConst.Active)
                 .Select(am => am.ModelId)
                 .ToListAsync();
+            
         }
 
         public async Task<AiModel?> GetByIdAsync(int modelId)
@@ -93,7 +94,14 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
 
         public async Task<int> SaveChangesAsync()
         {
-            return await _context.SaveChangesAsync();
+            try
+            {
+                return await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new CourseMarketplaceBE.Domain.Exceptions.AiModelException("Database operation failed due to a constraint violation or data issue.", ex);
+            }
         }
 
         public async Task<List<AiModel>> GetAllAdminAsync()
