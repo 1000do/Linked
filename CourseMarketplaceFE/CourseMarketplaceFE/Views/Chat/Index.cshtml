@@ -192,11 +192,17 @@
                 .withAutomaticReconnect()
                 .build();
 
-            chatPageConnection.on("ReceiveMessage", (msg) => {
+            chatPageConnection.on("ReceiveMessage", async (msg) => {
                 if (activeChatId === msg.chatId) {
                     appendMessage(msg);
+                    try {
+                        await chatPageConnection.invoke("MarkAsRead", activeChatId);
+                    } catch (err) {
+                        console.error("MarkAsRead error:", err);
+                    }
                 }
-                loadChats(); 
+                await loadChats(); 
+                if (typeof loadUnreadSummary === 'function') loadUnreadSummary();
             });
 
             chatPageConnection.on("UserTyping", (data) => {
@@ -527,7 +533,8 @@
                 // Broadcast read receipt
                 chatPageConnection.invoke("MarkAsRead", chatId);
                 
-                // Update global sidebar unread badge
+                // Refresh local chat list and global sidebar unread badge
+                await loadChats();
                 if (typeof loadUnreadSummary === 'function') loadUnreadSummary();
             } catch (err) {
                 console.error("Load history error:", err);

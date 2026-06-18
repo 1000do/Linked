@@ -139,6 +139,9 @@ public class ChatHub : Hub
     {
         var accountId = GetAccountId();
         
+        // Actually reset unread count in DB and Redis
+        await _chatService.MarkChatAsReadAsync(chatId, accountId);
+        
         var participantIds = await _chatService.GetParticipantIdsAsync(chatId);
         foreach (var pId in participantIds)
         {
