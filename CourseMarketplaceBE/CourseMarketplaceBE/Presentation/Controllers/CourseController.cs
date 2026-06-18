@@ -79,12 +79,13 @@ public class CourseController : ControllerBase
         try
         {
             var instructorId = GetInstructorId();
-            var course = await _courseQueryService.GetCourseWithDetailsAsync(id, instructorId);
-            if (course == null)
-            {
-                return NotFound(ApiResponse<object>.ErrorResponse("Course not found."));
-            }
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            var course = await _courseQueryService.GetCourseWithDetailsAsync(id, instructorId, role);
             return Ok(ApiResponse<object>.SuccessResponse(course, "Retrieved course successfully."));
+        }
+        catch (System.Collections.Generic.KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (UnauthorizedAccessException ex)
         {

@@ -10,6 +10,7 @@ using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.Enums;
 using CourseMarketplaceBE.Domain.IRepositories;
 using Microsoft.Extensions.Logging;
+using AutoMapper;
 
 namespace CourseMarketplaceBE.Application.Services
 {
@@ -26,6 +27,8 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly ISystemConfigRepository _systemConfigRepository;
         private readonly ICourseModerationService _courseModerationService;
         private readonly ILogger<CourseAiModerationService> _logger;
+        private readonly ICourseRepository _courseRepository;
+        private readonly IMapper _mapper;
 
         public CourseAiModerationService(
             IContentHashService contentHashService,
@@ -38,7 +41,9 @@ namespace CourseMarketplaceBE.Application.Services
             IAiModelRepository aiModelRepository,
             ISystemConfigRepository systemConfigRepository,
             ICourseModerationService courseModerationService,
-            ILogger<CourseAiModerationService> logger)
+            ILogger<CourseAiModerationService> logger,
+            ICourseRepository courseRepository,
+            IMapper mapper)
         {
             _contentHashService = contentHashService;
             _aiModerationService = aiModerationService;
@@ -51,8 +56,28 @@ namespace CourseMarketplaceBE.Application.Services
             _systemConfigRepository = systemConfigRepository;
             _courseModerationService = courseModerationService;
             _logger = logger;
+            _courseRepository = courseRepository;
+            _mapper = mapper;
         }
 
+        public async Task<CourseModerationDetailResponse?> GetCourseForModerationAsync(int courseId)
+        {
+            string cacheKey = CacheKeys.CourseModerationDetail.GetKey(courseId);
+            _logger.LogInformation("GetCourseForModerationAsync: {CacheKey}", cacheKey);
+            var response = await _redisService.GetCacheAsync<CourseModerationDetailResponse>(cacheKey);
+            
+            if (response == null)
+            {
+                var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
+                if (course == null) return null;
+
+                response = _mapper.Map<CourseModerationDetailResponse>(course);
+                await _redisService.SetCacheAsync(cacheKey, response, CacheTtl.Short.GetTtl());
+                _logger.LogInformation("Cached moderation course {CourseId} with key {CacheKey}", courseId, cacheKey);
+            }
+
+            return response;
+        }
 
         private async Task<ExactDuplicationResult> GetExactDuplicationResult(ExactDuplicationCommand command)
         {
@@ -244,7 +269,7 @@ namespace CourseMarketplaceBE.Application.Services
 
         private async Task<List<int>> GetCourseMaterialIdsAsync(int courseId)
         {
-            var course = await _courseQueryService.GetCourseWithDetailsAsync(courseId, 0); // Cache course
+            var course = await GetCourseForModerationAsync(courseId); // Cache course
             var materialIds = course?.Lessons?
                 .SelectMany(lesson => lesson.LearningMaterials?.Select(material => material.MaterialId) ?? [])
                 .ToList() ?? [];

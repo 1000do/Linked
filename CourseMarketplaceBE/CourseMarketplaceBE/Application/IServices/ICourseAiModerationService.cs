@@ -14,5 +14,6 @@ namespace CourseMarketplaceBE.Application.IServices
         // Task LogCourseAiModeration(LogCourseAiModerationCommand command);
         // Task<CourseModerationResult> HandleCourseModerationWithAIAsync(CouresModerationRequest request);
         Task<CourseModerationResult> HandleCourseModerationAsync(CouresModerationRequest request);
+        Task<CourseModerationDetailResponse?> GetCourseForModerationAsync(int courseId);
     }
 }
