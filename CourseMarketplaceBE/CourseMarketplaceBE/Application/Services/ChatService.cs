@@ -340,10 +340,13 @@ public class ChatService : IChatService
         if (participant == null) return false;
 
         participant.ClearedAt = DateTime.UtcNow;
+        participant.UnreadCount = 0;
         await _chatRepository.UpdateParticipantAsync(participant);
         int rows = await _chatRepository.SaveChangesAsync();
         if (rows <= 0)
             throw new InvalidOperationException("Failed to clear chat history");
+            
+        await _redisService.ClearUnreadCountAsync(accountId, chatId);
         return true;
     }
 

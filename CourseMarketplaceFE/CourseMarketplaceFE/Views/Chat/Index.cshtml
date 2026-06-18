@@ -526,6 +526,9 @@
 
                 // Broadcast read receipt
                 chatPageConnection.invoke("MarkAsRead", chatId);
+                
+                // Update global sidebar unread badge
+                if (typeof loadUnreadSummary === 'function') loadUnreadSummary();
             } catch (err) {
                 console.error("Load history error:", err);
             }
@@ -781,6 +784,9 @@
                         
                         // Refresh sidebar
                         loadChats();
+                        
+                        // Update global sidebar unread badge
+                        if (typeof loadUnreadSummary === 'function') loadUnreadSummary();
 
                         Swal.fire({
                             title: 'Cleared!',
