@@ -1030,10 +1030,36 @@
                     const sid = getMiniSenderId(m);
                     const isMe = sid === currentUserId && currentUserId > 0;
                     const name = getMiniSenderName(m);
+                    const attachments = m.attachments || m.Attachments || [];
+                    let attachmentHtml = "";
+                    if (attachments.length > 0) {
+                        attachmentHtml = `
+                            <div class="mt-1.5 flex flex-col gap-1.5">
+                                ${attachments.map(a => {
+                                    const fType = a.fileType || a.FileType;
+                                    const fUrl = a.fileUrl || a.FileUrl;
+                                    const fName = a.fileName || a.FileName || 'Document';
+                                    
+                                    if (fType === 'image') {
+                                        return `<a href="${fUrl}" target="_blank" class="block rounded-lg overflow-hidden border ${isMe ? 'border-emerald-400' : 'border-slate-200'} shadow-sm max-w-[150px]">
+                                                    <img src="${fUrl}" class="w-full h-auto" />
+                                                </a>`;
+                                    } else {
+                                        return `<a href="${fUrl}" target="_blank" class="flex items-center gap-1.5 p-1.5 ${isMe ? 'bg-black/10 hover:bg-black/20 text-white' : 'bg-slate-50 hover:bg-slate-100 text-slate-700'} rounded-lg border border-transparent transition-colors text-[11px] max-w-[180px]">
+                                                    <span class="material-symbols-outlined text-[14px]">description</span>
+                                                    <span class="truncate flex-1">${fName}</span>
+                                                </a>`;
+                                    }
+                                }).join('')}
+                            </div>
+                        `;
+                    }
                     return `
                         <div class="flex flex-col w-fit max-w-[85%] ${isMe ? 'self-end' : 'self-start'} relative z-10 mb-1">
                             <div class="text-[10px] font-bold text-slate-400 mb-1 px-1 ${isMe ? 'text-right' : 'text-left'}">${isMe ? 'You' : name}</div>
-                            <div class="text-[13.5px] px-4 py-2.5 rounded-2xl leading-relaxed shadow-sm ${isMe ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white rounded-br-sm' : 'bg-white border border-slate-100 text-slate-700 rounded-bl-sm'}">${m.content}</div>
+                            <div class="text-[13.5px] px-4 py-2.5 rounded-2xl leading-relaxed shadow-sm ${isMe ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white rounded-br-sm' : 'bg-white border border-slate-100 text-slate-700 rounded-bl-sm'}">
+                                ${m.content}${attachmentHtml}
+                            </div>
                         </div>`;
                 }).join('');
                 
@@ -1159,10 +1185,37 @@
             const sid = getMiniSenderId(m);
             const isMe = sid === currentUserId && currentUserId > 0;
             const name = getMiniSenderName(m);
+            const attachments = m.attachments || m.Attachments || [];
+            let attachmentHtml = "";
+            if (attachments.length > 0) {
+                attachmentHtml = `
+                    <div class="mt-1.5 flex flex-col gap-1.5">
+                        ${attachments.map(a => {
+                            const fType = a.fileType || a.FileType;
+                            const fUrl = a.fileUrl || a.FileUrl;
+                            const fName = a.fileName || a.FileName || 'Document';
+                            
+                            if (fType === 'image') {
+                                return `<a href="${fUrl}" target="_blank" class="block rounded-lg overflow-hidden border ${isMe ? 'border-emerald-400' : 'border-slate-200'} shadow-sm max-w-[150px]">
+                                            <img src="${fUrl}" class="w-full h-auto" />
+                                        </a>`;
+                            } else {
+                                return `<a href="${fUrl}" target="_blank" class="flex items-center gap-1.5 p-1.5 ${isMe ? 'bg-black/10 hover:bg-black/20 text-white' : 'bg-slate-50 hover:bg-slate-100 text-slate-700'} rounded-lg border border-transparent transition-colors text-[11px] max-w-[180px]">
+                                            <span class="material-symbols-outlined text-[14px]">description</span>
+                                            <span class="truncate flex-1">${fName}</span>
+                                        </a>`;
+                            }
+                        }).join('')}
+                    </div>
+                `;
+            }
+
             const html = `
                 <div class="flex flex-col w-fit max-w-[85%] ${isMe ? 'self-end' : 'self-start'} relative z-10 mb-1">
                     <div class="text-[10px] font-bold text-slate-400 mb-1 px-1 ${isMe ? 'text-right' : 'text-left'}">${isMe ? 'You' : name}</div>
-                    <div class="text-[13.5px] px-4 py-2.5 rounded-2xl leading-relaxed shadow-sm ${isMe ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white rounded-br-sm' : 'bg-white border border-slate-100 text-slate-700 rounded-bl-sm'}">${m.content}</div>
+                    <div class="text-[13.5px] px-4 py-2.5 rounded-2xl leading-relaxed shadow-sm ${isMe ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white rounded-br-sm' : 'bg-white border border-slate-100 text-slate-700 rounded-bl-sm'}">
+                        ${m.content}${attachmentHtml}
+                    </div>
                 </div>`;
             const indicator = document.getElementById('typing-indicator');
             if (indicator) {

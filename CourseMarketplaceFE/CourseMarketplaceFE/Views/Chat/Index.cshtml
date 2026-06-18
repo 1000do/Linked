@@ -110,8 +110,8 @@
 
             <div id="typing-box" class="px-4 py-2 text-[11px] text-emerald-600 italic" style="display:none;">...</div>
 
-            <footer class="chat-footer">
-                <div class="input-group-premium">
+            <footer class="chat-footer flex flex-col">
+                <div class="input-group-premium relative">
                     @if (ViewBag.EnableAttachments == true)
                     {
                         <input type="file" id="file-input" style="display:none;" onchange="handleFileSelect(this)" />
@@ -123,13 +123,20 @@
                     {
                         <span class="material-symbols-outlined text-slate-200 cursor-not-allowed" title="File sharing is currently disabled">attach_file</span>
                     }
-                    <div id="attachment-preview" class="hidden absolute bottom-full left-0 right-0 bg-white border-t border-slate-100 p-2 flex gap-2 overflow-x-auto shadow-lg rounded-t-xl">
-                        <!-- Preview selected files -->
-                    </div>
                     <textarea id="msg-input" class="chat-input-area custom-scroll" placeholder="Type a message..." rows="1"></textarea>
                     <button id="btn-send" class="btn-chat-send">
                         <span class="material-symbols-outlined">send</span>
                     </button>
+                </div>
+
+                <div id="attachment-preview" class="hidden flex-col gap-2 w-full pt-3 mt-2 border-t border-slate-100">
+                    <div class="flex justify-between items-center px-1">
+                        <span id="attachment-count-text" class="text-[14px] font-bold text-slate-800"></span>
+                        <button onclick="removeAllFiles()" class="text-[13px] text-slate-500 hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer">Clear all</button>
+                    </div>
+                    <div id="attachment-thumbnails" class="flex gap-3 overflow-x-auto px-1 pb-2 custom-scroll">
+                        <!-- JS injected thumbnails -->
+                    </div>
                 </div>
             </footer>
         </div>
@@ -525,6 +532,7 @@
         }
 
         function appendMessage(m) {
+            console.log('appendMessage received:', m);
             const list = document.getElementById('message-list');
             const sid = senderIdOf(m);
             const isMe = sid === chatMyAccountId && chatMyAccountId > 0;
@@ -535,14 +543,18 @@
                 attachmentHtml = `
                     <div class="msg-attachments mt-2 flex flex-col gap-2">
                         ${attachments.map(a => {
-                            if (a.fileType === 'image') {
-                                return `<a href="${a.fileUrl}" target="_blank" class="block rounded-lg overflow-hidden border border-slate-100 shadow-sm max-w-[200px]">
-                                            <img src="${a.fileUrl}" class="w-full h-auto" />
+                            const fType = a.fileType || a.FileType;
+                            const fUrl = a.fileUrl || a.FileUrl;
+                            const fName = a.fileName || a.FileName || 'Document';
+                            
+                            if (fType === 'image') {
+                                return `<a href="${fUrl}" target="_blank" class="block rounded-lg overflow-hidden border border-slate-100 shadow-sm max-w-[200px]">
+                                            <img src="${fUrl}" class="w-full h-auto" />
                                         </a>`;
                             } else {
-                                return `<a href="${a.fileUrl}" target="_blank" class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100 hover:bg-slate-100 transition-colors text-xs text-slate-700 max-w-[250px]">
+                                return `<a href="${fUrl}" target="_blank" class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100 hover:bg-slate-100 transition-colors text-xs text-slate-700 max-w-[250px]">
                                             <span class="material-symbols-outlined text-slate-400">description</span>
-                                            <span class="truncate flex-1">${a.fileName || 'Document'}</span>
+                                            <span class="truncate flex-1">${fName}</span>
                                             <span class="material-symbols-outlined text-slate-400 text-sm">download</span>
                                         </a>`;
                             }
@@ -604,21 +616,36 @@
         async function sendMsg() {
             const input = document.getElementById('msg-input');
             const content = input.value.trim();
-            if (!activeChatId) return;
+            if (!activeChatId) {
+                Swal.fire('Error', 'Please select a valid chat first.', 'error');
+                return;
+            }
             if (!content && selectedFiles.length === 0) return;
+            
+            // Disable button during upload
+            const sendBtn = document.getElementById('btn-send');
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span>';
 
             // 1. Upload files trước nếu có
             const attachments = [];
             for (const file of selectedFiles) {
                 const uploaded = await uploadFile(file);
-                if (uploaded) attachments.push(uploaded);
+                if (uploaded) {
+                    attachments.push({
+                        FileUrl: uploaded.fileUrl || uploaded.FileUrl,
+                        FileName: uploaded.fileName || uploaded.FileName,
+                        FileType: uploaded.fileType || uploaded.FileType,
+                        FileSize: uploaded.fileSize || uploaded.FileSize
+                    });
+                }
             }
 
             try {
                 await chatPageConnection.invoke("SendMessage", {
-                    chatId: activeChatId,
-                    content: content || (attachments.length > 0 ? "Sent an attachment" : ""),
-                    attachments: attachments
+                    ChatId: activeChatId,
+                    Content: content || (attachments.length > 0 ? "Sent an attachment" : ""),
+                    Attachments: attachments
                 });
                 input.value = "";
                 selectedFiles = [];
@@ -626,6 +653,10 @@
                 await chatPageConnection.invoke("Typing", activeChatId, false);
             } catch (err) {
                 console.error("Send message error:", err);
+                Swal.fire('Error', 'Failed to send message.', 'error');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<span class="material-symbols-outlined">send</span>';
             }
         }
 
@@ -648,31 +679,72 @@
         function handleFileSelect(input) {
             if (input.files && input.files[0]) {
                 selectedFiles.push(input.files[0]);
+                console.log('In handleFileSelect, selectedFiles',selectedFiles);  
                 renderAttachmentPreview();
                 input.value = ""; // Reset để chọn lại cùng file
             }
         }
 
+        function removeAllFiles() {
+            selectedFiles = [];
+            renderAttachmentPreview();
+        }
+
         function renderAttachmentPreview() {
-            const preview = document.getElementById('attachment-preview');
+            const previewContainer = document.getElementById('attachment-preview');
+            const countText = document.getElementById('attachment-count-text');
+            const thumbnailsContainer = document.getElementById('attachment-thumbnails');
+            
             if (selectedFiles.length === 0) {
-                preview.classList.add('hidden');
+                previewContainer.classList.add('hidden');
+                previewContainer.classList.remove('flex');
                 return;
             }
-            preview.classList.remove('hidden');
-            preview.innerHTML = selectedFiles.map((f, i) => `
-                <div class="relative bg-slate-50 p-2 pr-8 rounded-lg border border-slate-200 text-xs flex items-center gap-2 min-w-[120px]">
-                    <span class="material-symbols-outlined text-slate-400">description</span>
-                    <span class="truncate max-w-[100px]">${f.name}</span>
-                    <button onclick="removeSelectedFile(${i})" class="absolute top-1 right-1 text-slate-400 hover:text-red-500">
-                        <span class="material-symbols-outlined text-sm">close</span>
-                    </button>
-                </div>
-            `).join('');
+            
+            previewContainer.classList.remove('hidden');
+            previewContainer.classList.add('flex');
+            
+            const imgCount = selectedFiles.filter(f => f.type.startsWith('image/')).length;
+            const docCount = selectedFiles.length - imgCount;
+            let title = [];
+            if (imgCount > 0) title.push(`${imgCount} ${imgCount === 1 ? 'image' : 'images'}`);
+            if (docCount > 0) title.push(`${docCount} ${docCount === 1 ? 'file' : 'files'}`);
+            countText.textContent = title.join(', ');
+
+            thumbnailsContainer.innerHTML = selectedFiles.map((f, i) => {
+                const isImage = f.type.startsWith('image/');
+                const previewUrl = isImage ? URL.createObjectURL(f) : '';
+                
+                if (isImage) {
+                    return `
+                        <div class="relative w-[60px] h-[60px] flex-shrink-0 rounded-lg border border-slate-200 overflow-hidden group">
+                            <img src="${previewUrl}" class="w-full h-full object-cover" />
+                            <button onclick="removeSelectedFile(${i})" class="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span class="material-symbols-outlined text-[14px]">close</span>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="relative w-[60px] h-[60px] flex-shrink-0 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center p-1 group">
+                            <span class="material-symbols-outlined text-slate-400 text-[24px]">description</span>
+                            <span class="text-[9px] text-slate-500 truncate w-full text-center mt-1 px-1">${f.name}</span>
+                            <button onclick="removeSelectedFile(${i})" class="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span class="material-symbols-outlined text-[14px]">close</span>
+                            </button>
+                        </div>
+                    `;
+                }
+            }).join('') + `
+                <button onclick="document.getElementById('file-input').click()" class="w-[60px] h-[60px] flex-shrink-0 bg-slate-50 hover:bg-slate-100 transition-colors rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+            `;
         }
 
         function removeSelectedFile(index) {
             selectedFiles.splice(index, 1);
+            console.log('In removeSelectedFile, selectedFiles',selectedFiles); 
             renderAttachmentPreview();
         }
 

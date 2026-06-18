@@ -83,6 +83,8 @@ public class ChatHub : Hub
 
         try
         {
+            Console.WriteLine($"[ChatHub] SendMessage received: Content='{dto.Content}', Attachments count={(dto.Attachments?.Count ?? 0)}");
+            
             // 1. Lưu tin nhắn vào DB
             var messageDto = await _chatService.SaveMessageAsync(accountId, dto);
 

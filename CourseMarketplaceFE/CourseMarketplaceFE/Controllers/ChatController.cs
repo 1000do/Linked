@@ -87,7 +87,9 @@ public class ChatController : Controller
         var response = await _api.GetAsync($"chat/history?roomId={roomId}");
         if (response.IsSuccessStatusCode)
             return Content(await response.Content.ReadAsStringAsync(), "application/json");
-        return BadRequest();
+            
+        var errorContent = await response.Content.ReadAsStringAsync();
+        return StatusCode((int)response.StatusCode, errorContent);
     }
 
     [HttpGet]
@@ -167,7 +169,13 @@ public class ChatController : Controller
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
 
-        var baseUrl = _configuration.GetValue<string>("ApiSettings:BaseUrl") ?? "http://localhost:5207/api/";
+        var baseUrl = _configuration.GetValue<string>("BackendApiUrl") 
+            ?? _configuration.GetValue<string>("ApiSettings:BaseUrl") 
+            ?? "http://localhost:5207/api/";
+            
+        // Ensure trailing slash
+        if (!baseUrl.EndsWith("/")) baseUrl += "/";
+            
         var response = await httpClient.PostAsync(baseUrl + "chatattachment/upload", content);
 
         if (response.IsSuccessStatusCode)
