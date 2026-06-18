@@ -237,7 +237,7 @@
     {
         <div id="support-chat-popup" class="support-popup bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] border border-slate-100 overflow-hidden flex-col" style="display: none;">
             <!-- Header -->
-            <div class="bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-4 text-white flex items-center justify-between shadow-md relative z-10">
+            <div class="bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-4 text-white flex items-center justify-between shadow-md relative z-50">
                 <div class="flex items-center gap-3">
                     <div class="relative">
                         <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm overflow-hidden">
@@ -246,9 +246,25 @@
                         </div>
                         <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-emerald-600 rounded-full"></div>
                     </div>
-                    <div>
-                        <h6 id="support-name" class="font-display font-bold text-[15px] leading-tight m-0 text-white">Online Support</h6>
-                        <p class="text-[11px] font-medium text-emerald-50 m-0 opacity-90">Typically replies instantly</p>
+                    <div class="relative">
+                        <button id="mini-chat-selector-btn" class="flex items-center gap-1 bg-transparent border-0 text-white hover:bg-white/10 rounded-lg px-2 py-1 -ml-2 transition-colors cursor-pointer" onclick="document.getElementById('mini-chat-dropdown').classList.toggle('hidden')">
+                            <div class="text-left">
+                                <h6 id="support-name" class="font-display font-bold text-[15px] leading-tight m-0 text-white">Online Support</h6>
+                                <p class="text-[11px] font-medium text-emerald-50 m-0 opacity-90">Typically replies instantly</p>
+                            </div>
+                            <span class="material-symbols-outlined text-[20px]">expand_more</span>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div id="mini-chat-dropdown" class="hidden absolute top-[calc(100%+8px)] left-[-50px] w-[260px] bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-[1001]">
+                            <div class="p-2 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                                <h6 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider m-0 px-2">Your Conversations</h6>
+                                <button onclick="location.href='/Chat'" class="text-[10px] text-emerald-600 hover:text-emerald-700 font-bold bg-transparent border-0 cursor-pointer">View All</button>
+                            </div>
+                            <div id="mini-chat-list" class="max-h-60 overflow-y-auto">
+                                <!-- Chat items injected via JS -->
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <button onclick="toggleSupportPopup()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors text-white border-0 bg-transparent">
@@ -838,6 +854,74 @@
         }
 
         let isWaitingForSupport = false;
+        let allMiniChats = [];
+
+        function toggleMiniChatDropdown() {
+            const dd = document.getElementById('mini-chat-dropdown');
+            if (dd) dd.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            const btn = document.getElementById('mini-chat-selector-btn');
+            const dd = document.getElementById('mini-chat-dropdown');
+            if (btn && dd && !btn.contains(e.target) && !dd.contains(e.target)) {
+                dd.classList.add('hidden');
+            }
+        });
+
+        async function selectMiniChat(chatId, toggleDropdown = true) {
+            if (toggleDropdown) toggleMiniChatDropdown();
+            
+            const chat = allMiniChats.find(c => c.chatId === chatId);
+            if (!chat) return;
+
+            miniChatId = chat.chatId;
+            isWaitingForSupport = false;
+
+            document.getElementById('support-name').innerText = chat.partnerName || 'Support Team';
+            if (chat.partnerAvatar) {
+                const img = document.getElementById('support-avatar');
+                img.src = chat.partnerAvatar;
+                img.classList.remove('hidden');
+                document.getElementById('support-icon').classList.add('hidden');
+            } else {
+                document.getElementById('support-avatar').classList.add('hidden');
+                document.getElementById('support-icon').classList.remove('hidden');
+            }
+            
+            renderMiniChatDropdown(); // update active styling
+            
+            // Join SignalR group
+            if (miniChatConn && miniChatConn.state === signalR.HubConnectionState.Connected) {
+                try { await miniChatConn.invoke("JoinChat", miniChatId); } catch(e) {}
+            }
+            
+            await loadMiniHistory();
+        }
+
+        function renderMiniChatDropdown() {
+            const list = document.getElementById('mini-chat-list');
+            if (!list) return;
+            if (allMiniChats.length === 0) {
+                list.innerHTML = `<div class="p-4 text-center text-xs text-slate-500">No conversations yet</div>`;
+                return;
+            }
+            
+            list.innerHTML = allMiniChats.map(c => `
+                <button onclick="selectMiniChat(${c.chatId})" class="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors border-0 bg-transparent border-b border-slate-50 cursor-pointer ${c.chatId === miniChatId ? 'bg-emerald-50/50' : ''}">
+                    <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden">
+                        ${c.partnerAvatar ? `<img src="${c.partnerAvatar}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-[16px] text-slate-500">support_agent</span>`}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center mb-0.5">
+                            <h6 class="text-xs font-bold text-slate-800 m-0 truncate ${c.unreadCount > 0 ? 'text-emerald-600' : ''}">${c.partnerName || 'Support Team'}</h6>
+                            ${c.unreadCount > 0 ? `<span class="w-2 h-2 bg-red-500 rounded-full"></span>` : ''}
+                        </div>
+                        <p class="text-[10px] text-slate-500 m-0 truncate">${c.lastMessage || (c.contextType==='system'?'Support Session':'Conversation')}</p>
+                    </div>
+                </button>
+            `).join('');
+        }
 
         async function initMiniChat() {
             if (!currentToken) {
@@ -863,27 +947,18 @@
                     });
                 }
 
-                // Check if there is an active system chat via BFF Proxy
+                // Fetch chats via BFF Proxy
                 const res = await fetch("/Chat/GetList");
                 if (res.ok) {
                     const chats = await res.json();
-                    const systemChat = chats.find(c => c.contextType === 'system');
-                    if (systemChat) {
-                        miniChatId = systemChat.chatId;
-                        document.getElementById('support-name').innerText = systemChat.partnerName || 'Support Team';
-                        if (systemChat.partnerAvatar) {
-                            const img = document.getElementById('support-avatar');
-                            img.src = systemChat.partnerAvatar;
-                            img.classList.remove('hidden');
-                            document.getElementById('support-icon').classList.add('hidden');
-                        }
-                        
-                        // Join SignalR group
-                        if (miniChatConn && miniChatConn.state === signalR.HubConnectionState.Connected) {
-                            await miniChatConn.invoke("JoinChat", miniChatId);
-                        }
-                        
-                        await loadMiniHistory();
+                    allMiniChats = chats;
+                    renderMiniChatDropdown();
+                    
+                    let targetChat = chats.find(c => c.chatId === miniChatId) || chats.find(c => c.contextType === 'system');
+                    if (!targetChat && chats.length > 0) targetChat = chats[0];
+
+                    if (targetChat) {
+                        await selectMiniChat(targetChat.chatId, false);
                         return;
                     }
                 }
@@ -1233,6 +1308,23 @@
                 miniChatConn.on("ReceiveMessage", function (message) {
                     const popup = document.getElementById('support-chat-popup');
                     const msgChatId = message.chatId ?? message.ChatId;
+                    
+                    // Update allMiniChats list for dropdown
+                    if (typeof allMiniChats !== 'undefined') {
+                        const existingChat = allMiniChats.find(c => c.chatId == msgChatId);
+                        if (existingChat) {
+                            existingChat.lastMessage = message.content;
+                            // move to top
+                            allMiniChats = [existingChat, ...allMiniChats.filter(c => c.chatId != msgChatId)];
+                            if (typeof renderMiniChatDropdown === 'function') renderMiniChatDropdown();
+                        } else {
+                            fetch("/Chat/GetList").then(res => res.json()).then(chats => {
+                                allMiniChats = chats;
+                                if (typeof renderMiniChatDropdown === 'function') renderMiniChatDropdown();
+                            }).catch(e=>{});
+                        }
+                    }
+
                     if (popup && popup.style.display === 'flex' && msgChatId == miniChatId) {
                         appendMiniMsg(message);
                     } else if (window.location.pathname.toLowerCase() !== "/chat") {
@@ -1267,6 +1359,25 @@
                     if (miniChatConn && miniChatConn.state === signalR.HubConnectionState.Connected) {
                         await miniChatConn.invoke("JoinChat", miniChatId);
                     }
+                    
+                    // Refresh dropdown
+                    try {
+                        const res = await fetch("/Chat/GetList");
+                        if (res.ok) {
+                            allMiniChats = await res.json();
+                            const activeChat = allMiniChats.find(c => c.chatId == miniChatId);
+                            if (activeChat) {
+                                document.getElementById('support-name').innerText = activeChat.partnerName || 'Support Team';
+                                if (activeChat.partnerAvatar) {
+                                    const img = document.getElementById('support-avatar');
+                                    img.src = activeChat.partnerAvatar;
+                                    img.classList.remove('hidden');
+                                    document.getElementById('support-icon').classList.add('hidden');
+                                }
+                            }
+                            if (typeof renderMiniChatDropdown === 'function') renderMiniChatDropdown();
+                        }
+                    } catch(e) {}
                     
                     await loadMiniHistory();
                 });
