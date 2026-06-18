@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.132 Filter transactions (For System)</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.132. Filter transactions (For System)</strong></p>
+
+<p><strong>Function Trigger:</strong> Admin selects filter criteria (status, month, or year) and submits the filter form.</p>
+
+<p><strong>Function Description:</strong> Allows authenticated Admin users to filter the system-wide transaction history by transaction status and date period (month and year).</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- User must be successfully authenticated as an Admin.</li>
+            <li>- Admin is on the Financial Management dashboard under the Transaction History tab.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Filter Transactions Successfully:</strong>
+                <ul>
+                    <li>1. Admin accesses the Financial Management page.</li>
+                    <li>2. Admin selects the "Transaction History" tab.</li>
+                    <li>3. Admin selects a status option (e.g. "Succeeded") from the status dropdown menu.</li>
+                    <li>4. Admin clicks the "Filter" button.</li>
+                    <li>5. The system requests the transaction list matching the selected status filter from the server, while preserving active search keywords and date period filters.</li>
+                    <li>6. The server validates that the active user possesses an Admin role.</li>
+                    <li>7. The server queries the database for transactions matching the status within the selected year and month.</li>
+                    <li>8. The server returns the filtered results.</li>
+                    <li>9. The system displays the filtered transactions in the table.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Filter by date period)</strong>
+        <ul>
+            <li>1. Admin selects a month and/or year from the top period filter selectors.</li>
+            <li>2. Admin clicks the period "Filter" button.</li>
+            <li>3. The system requests all page data (including transactions) for the selected period from the server.</li>
+            <li>4. Back to step 6.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Clear filters)</strong>
+        <ul>
+            <li>1. Admin clicks the "Clear Filters" button inside the transaction filter form.</li>
+            <li>2. The system resets the status filter, sorting order, and search keyword parameters to their defaults.</li>
+            <li>3. The system requests the transaction list for the active period from the server.</li>
+            <li>4. Back to step 6.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (No matching transactions found)</strong>
+        <ul>
+            <li>1. The server returns an empty list of transactions matching the filters.</li>
+            <li>2. The system displays a message indicating "No transactions matched your criteria".</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- The system displays only those transactions in the list that match the selected filter criteria.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+            <li>- <strong>Unauthorized Access:</strong> The server detects that the user is not an Admin. The system redirects the user to the access denied error page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- N/A</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

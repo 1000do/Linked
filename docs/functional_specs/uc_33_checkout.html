@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.33 Checkout</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.33. Checkout</strong></p>
+
+<p><strong>Function Trigger:</strong> The user navigates to the checkout page.</p>
+
+<p><strong>Function Description:</strong> This use case facilitates the secure payment process for one or more courses using the Stripe payment gateway, resulting in course enrollment upon successful transaction.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- User must be authenticated.</li>
+            <li>- Cart must contain at least one course (or a single course selected for Direct Buy).</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Process Checkout Successfully:</strong>
+                <ul>
+                    <li>1. The user reviews the shopping cart and clicks the "Checkout" button.</li>
+                    <li>2. The system calls the Stripe API to create a Payment Request and directly displays the secure card information form (Stripe elements) on the Checkout page instead of redirecting the user away from the website.</li>
+                    <li>3. Stripe displays the secure payment form containing the following fields: Contact Email (pre-filled with the user's email), Card Information (Card number with network logo, Expiration Date, CVC code), Cardholder Name, Country/Region (default is the user's current location).</li>
+                    <li>4. The users enters valid Stripe payment card information and clicks the checkout button.</li>
+                    <li>5. Stripe processes the payment successfully; the system validates the transaction, records the order and enrollment, calculates/deducts gateway and commission fees, holds the instructor's payout, and sends a sales notification.</li>
+                    <li>6. The system will delete the student's shopping cart and display a successful payment notification.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Coupon Application)</strong>
+        <ul>
+            <li>1. The system detects that a coupon code is attached to the checkout request and validates its eligibility (checks active status, expiration date, usage limit, and minimum order value).</li>
+            <li>2. If the coupon is valid, the system calculates the discount amount and applies the discounted prices to the checkout session line items.</li>
+            <li>3. If the coupon is invalid or expired, the system ignores the discount and prepares the checkout session using the original course prices.</li>
+            <li>4. Return to step 2.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Incorrect Card Information / Payment Declined)</strong>
+        <ul>
+            <li>1. The student enters incorrect card details or the payment is declined on the Stripe page.</li>
+            <li>2. Stripe displays an error message directly on the payment form (e.g., "Incorrect card number" or "Your card was declined").</li>
+            <li>3. Return to step 5.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Payment Cancellation)</strong>
+        <ul>
+            <li>1. The user cancels the payment on the secure Stripe payment page.</li>
+            <li>2. Stripe redirects the user back to the shopping cart page.</li>
+            <li>3. The system displays a payment cancellation notice and restores the cart contents.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- Payment is successfully processed and recorded.</li>
+            <li>- User is enrolled in the purchased courses.</li>
+            <li>- Cart is cleared and payouts for instructors are scheduled.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Payment Declined:</strong> Stripe reports a failed transaction. The system notifies the user and allows them to retry with a different payment method.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Instructor Payout Calculation:</strong> Stripe payment gateway fees and the system commission rate are deducted from the actual selling price to calculate the instructor's payout amount.</li>
+            <li>- <strong>Payout Holding Period:</strong> The instructor's payout is held in a "Pending" status for 14 days to accommodate student refund policies or dispute claims.</li>
+            <li>- <strong>Dynamic Currency Selection:</strong> The payment currency is dynamically set based on the country of the instructor's Stripe account (e.g., USD, VND, GBP, EUR).</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.67 View Instructor's Transaction History</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.67. View Instructor's Transaction History</strong></p>
+
+<p><strong>Function Trigger:</strong> Instructors click the "Revenue &amp; Payouts" link in their dashboard navigation.</p>
+
+<p><strong>Function Description:</strong> Displays a detailed list of course purchases made by learners for courses owned by the active instructor. Provides search, filtering, sorting, and direct links to view the financial breakdown of each transaction.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The instructor must be logged in.</li>
+            <li>- The user's account must be active as an approved Instructor with a linked Stripe Connect account.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>View Transaction History Successfully:</strong>
+                <ul>
+                    <li>1. The user navigates to the Earning.</li>
+                    <li>2. The system displays and defaults to the "Learner Purchases" tab.</li>
+                    <li>3. The system displays the total count of transaction records (e.g., "Total: 1 records").</li>
+                    <li>4. The system displays the course purchase transaction table with the following columns: Date (The date and time of the transaction formatted as dd/MM and HH:mm), Course / Purchaser (The title of the purchased course, the full name of the buyer, and the Transaction ID prefixed with #), Net Earnings (The actual amount received by the instructor for the sale after platform revenue share deductions), Status (The colored status badge of the transaction: Completed - Green, Pending - Amber, Failed - Red, Refunded - Light Red, Refund Pending - Orange), Actions (A button with an eyeball/Visibility icon to view the invoice details).</li>
+                    <li>5. The instructor reviews the list of transactions.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Empty History Display)</strong>
+        <ul>
+            <li>1. The system detects that the instructor has no sales.</li>
+            <li>2. The system displays an empty state screen with the message: "No transactions yet. Revenue data will appear here as soon as students purchase your courses."</li>
+            <li>3. The profit chart displays a flat line showing zero profits.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Filtering Balances by Month and Year)</strong>
+        <ul>
+            <li>1. The instructor selects a specific month and year from the period filter dropdown menu.</li>
+            <li>2. The instructor clicks the "Filter" button.</li>
+            <li>3. The page reloads and displays the balance corresponding to the selected period.</li>
+            <li>4. Return step 4.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- The instructor views the history of course purchase transactions including the actual Net Earnings and transaction statuses.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Expired / Unauthorized Access:</strong> The instructor's session is expired, or they attempt to access /Transaction/Instructor without logging in. The system redirects the instructor to /Account/Login.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Negative Payout Display for Refunded Status:</strong> If a transaction status is "refunded", the instructor's Net Earnings must display as a negative value prefixed with a minus - sign in red (e.g., - $15.29).</li>
+            <li>- <strong>Transaction Access Control:</strong> Instructors can only view details of transactions related to courses they own. Attempts to access other instructors' transaction details will be blocked and redirected.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

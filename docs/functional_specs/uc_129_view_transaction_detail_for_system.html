@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.129 View transaction detail (For System)</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.129. View transaction detail (For System)</strong></p>
+
+<p><strong>Function Trigger:</strong> Admin clicks the "View" button next to a transaction row in the transaction list, or clicks the "Details" button in the pending refund requests list.</p>
+
+<p><strong>Function Description:</strong> Allows administrators to view the detailed information of a specific transaction, including the buyer profile, course information, financial split figures, and any associated refund logs.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The administrator must be successfully logged into the system.</li>
+            <li>- The administrator account must have platform-wide financial management permissions.</li>
+            <li>- The user must have at least one transaction record.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>View Transaction Detail Successfully:</strong>
+                <ul>
+                    <li>1. Admin accesses the admin finance dashboard page AdminFinance.</li>
+                    <li>2. Admin clicks the "Details" button next to a transaction row.</li>
+                    <li>3. The system queries the database for the transaction, order item, buyer, instructor payout, and refund extensions.</li>
+                    <li>4. The system displays the Transaction Details page containing: Transaction ID, creation timestamp, and current status badge; Gross purchase amount and payment currency; Course title, thumbnail, and instructor name; Buyer's full name, email, and registration details; Financial split card showing the calculation: Stripe processing fee, net price, instructor payout, and platform share; Refund log panel (showing request date, reason, and admin feedback note) if a refund request exists.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- Admin views the detailed course information, buyer profile, financial split figures, and refund logs.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+            <li>- <strong>Transaction Not Found:</strong> The system displays a transaction not found error message. Back to step 1.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Double-entry Negation Display:</strong> If the transaction status is refunded, the gross payment amount, Stripe fee, and instructor payout are formatted and displayed as negative values.</li>
+            <li>- <strong>Refund Actions Visibility:</strong> The "Approve Refund" and "Reject" buttons are conditionally rendered on the details page only if the transaction status is exactly refund_pending.</li>
+            <li>- <strong>Refund Info Retrieval:</strong> If a refund request was ever made, the student's submitted refund reason and the request date are fetched from TransactionExt and displayed. If rejected, the Admin's rejection note is also shown.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

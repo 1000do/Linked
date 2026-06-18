@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.49 Setup payout</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.49. Setup payout</strong></p>
+
+<p><strong>Function Trigger:</strong> Instructors click the "Setup Payout" or "Payout Settings" button in their instructor dashboard workspace.</p>
+
+<p><strong>Function Description:</strong> Allows approved instructors to link their financial profiles with Stripe Connect or enter manual banking credentials to receive earned course purchase commissions.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- User must be successfully authenticated (logged in).</li>
+            <li>- The user's account must be approved as an Instructor by the system.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Link Payout with Stripe Connect Successfully:</strong>
+                <ul>
+                    <li>1. Instructor accesses the Application Status page.</li>
+                    <li>2. The system retrieves the instructor's application status from the database.</li>
+                    <li>3. The system displays the approved application status along with the "Setup Payout" button.</li>
+                    <li>4. Instructor clicks the "Setup Payout" button.</li>
+                    <li>5. The system redirects the instructor to the Stripe onboarding page.</li>
+                    <li>6. On the Stripe onboarding page, the instructor completes the verification and banking setup: The instructor enters their contact details and inputs the OTP verification code; Instructor enters basic personal details; Instructor enters receiving bank details; Instructor reviews details and clicks the "Agree and submit" button.</li>
+                    <li>7. Stripe redirects the instructor back to the system's platform.</li>
+                    <li>8. The system displays a success message indicating that Stripe setup is completed.</li>
+                    <li>9. The system updates the instructor's payout status to active in the database.</li>
+                    <li>10. The system displays the active payout status along with the "Access Stripe Dashboard" button.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (User Cancels Onboarding Mid-process)</strong>
+        <ul>
+            <li>1. The user cancels the onboarding process on the Stripe page.</li>
+            <li>2. The system redirects the instructor back to the platform.</li>
+            <li>3. The system displays a warning message indicating that Stripe setup is not completed.</li>
+            <li>4. The system displays the inactive payout status along with the "Setup Payout" button.</li>
+            <li>5. Back to step 1.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- The instructor's bank account is successfully linked, and the payout status is displayed as "Active".</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Invalid (Not Logged In):</strong> Display the message: "Please login to view payout settings". Redirect to the login page.</li>
+            <li>- <strong>Stripe Onboarding Connection Failed:</strong> The system detects a connection failure with the payment gateway. The system displays an error message regarding connection failure. Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Direct Edit Lockout:</strong> Once the bank account is successfully linked and status is "Active", the system hides the "Setup Payout" button. Instructors are locked out from editing bank details directly on the platform and must click the "Access Stripe Dashboard" button to edit directly on Stripe's secure portal.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>
