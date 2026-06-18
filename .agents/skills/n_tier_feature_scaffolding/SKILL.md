@@ -7,6 +7,8 @@ description: Guides the agent to implement or refactor a feature using the stric
 
 This skill enforces the exact N-tier architectural pattern used in the Course Marketplace project. When asked to create, refactor, or validate a functionality (CRUD, workflow) or a full feature, you must rigorously apply these rules and generate an Implementation Plan before writing code.
 
+**Important**: Consult the `references/n_tier_examples.md` file in this skill's directory for full-stack code examples demonstrating how these rules are applied across the entire call hierarchy.
+
 ## The Architecture Pattern Rules
 
 ### 0. General Components, Locations & Dependency Chain

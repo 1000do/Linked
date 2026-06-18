@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.19 Receive a gift</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.19. Receive a gift</strong></p>
+
+<p><strong>Function Trigger:</strong> The user clicks the claim link from their email or in-app notification.</p>
+
+<p><strong>Function Description:</strong> Allows the recipient to view the gift card and redeem the gifted course. If the user is not logged in, the system prompts them to log in or register. Once authenticated, the user clicks the claim button to enroll in the course and mark the gift as claimed, which also automatically cancels any pending refund requests for that gift.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The redemption token must be valid and exist in the system.</li>
+            <li>- The gift must not be already claimed or refunded.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Receive a Gift Successfully:</strong>
+                <ul>
+                    <li>1. The user clicks the redemption link in their email or in-app notification.</li>
+                    <li>2. The system validates the redemption token.</li>
+                    <li>3. The system verifies that the user is authenticated.</li>
+                    <li>4. The system displays the customized gift card preview, course information, and the "Claim Your Gift" button.</li>
+                    <li>5. The user clicks the "Claim Your Gift" button.</li>
+                    <li>6. The system verifies that the user does not already own the course.</li>
+                    <li>7. The system creates an active enrollment record for the user.</li>
+                    <li>8. The system updates the gift record as claimed and links it to the user's account in a single database transaction.</li>
+                    <li>9. The system rejects any pending refund request for this gift transaction.</li>
+                    <li>10. The system displays a claim success message and redirects the user to the course study page.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (User is not logged in)</strong>
+        <ul>
+            <li>1. The system displays the gift card preview and hides the claim button, showing "Login" and "Register" buttons instead.</li>
+            <li>2. User clicks the "Login" or "Register" button.</li>
+            <li>3. The system redirects the user to the login/registration page, passing the gift token as a return URL parameter.</li>
+            <li>4. User logs in or registers successfully.</li>
+            <li>5. The system redirects the user back to the Gift Claim page.</li>
+            <li>6. Back to step 4.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Recipient already enrolled)</strong>
+        <ul>
+            <li>1. The system detects that the claiming user is already enrolled in the course.</li>
+            <li>2. The system displays an error message: "You already own this course in your library."</li>
+            <li>3. The system disables the "Claim Your Gift" button.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- The user is enrolled in the gifted course with active status.</li>
+            <li>- The gift record is marked as claimed and associated with the claiming user's ID.</li>
+            <li>- Any pending refund request for the gift transaction is rejected.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Invalid or Expired Token:</strong> The system detects that the redemption token does not exist. The system displays a token invalid error message. The system redirects the user to the Claim Error page.</li>
+            <li>- <strong>Refunded Gift:</strong> The system detects that the gift has been refunded. The system displays an error message indicating the gift is refunded. The system redirects the user to the Claim Error page.</li>
+            <li>- <strong>Gift Already Claimed:</strong> The system detects that the gift has already been claimed. The system displays a message indicating the gift is already claimed. The system disables the claiming options.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Unclaimed Refund Restriction:</strong> Gifts can only be claimed if they have not been refunded. A refund reverses the redemption token validity.</li>
+            <li>- <strong>Claim and Refund Mutual Exclusion:</strong> Once a gift is successfully claimed, any pending refund request for that transaction is automatically rejected and the transaction status remains locked.</li>
+            <li>- <strong>No Double Enrollment:</strong> A user cannot claim a gift course if they already possess an active enrollment in that course.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

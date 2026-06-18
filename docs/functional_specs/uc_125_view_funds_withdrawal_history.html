@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.125 View Funds Withdrawal History</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.125. View Funds Withdrawal History</strong></p>
+
+<p><strong>Function Trigger:</strong> The administrator clicks the "Manager Bank Withdrawals" tab in the Admin Finance dashboard.</p>
+
+<p><strong>Function Description:</strong> Allows administrators to track payout records generated for instructors from course sales, including split rates, payout amounts, and Stripe transfer statuses.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The administrator must be successfully logged into the system.</li>
+            <li>- The administrator account must have platform-wide financial management permissions.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>View Platform Funds Withdrawal History Successfully:</strong>
+                <ul>
+                    <li>1. Administrator accesses the Admin Finance dashboard page.</li>
+                    <li>2. The system retrieves the list of platform withdrawals from the database.</li>
+                    <li>3. Administrator clicks the "Manager Bank Withdrawals" tab.</li>
+                    <li>4. The system displays the withdrawals table containing the following columns:
+                        <ul>
+                            <li>- Reference ID: Sequential withdrawal ID prefixed with # (and the name of the initiating manager).</li>
+                            <li>- Amount: The withdrawn amount.</li>
+                            <li>- Status: The colored status badge representing the withdrawal state (Paid, In Transit, Pending, Failed, Canceled).</li>
+                            <li>- Initiated Date: The timestamp when the withdrawal request was created (formatted as dd/MM/yyyy and HH:mm).</li>
+                        </ul>
+                    </li>
+                    <li>5. Administrator reviews the list of bank withdrawals.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- The administrator views the platform bank withdrawal history table containing withdrawal reference IDs, amounts, statuses, and initiation dates.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Withdrawal Representation:</strong> The withdrawal amount is displayed as a deduction (colored in red, e.g. $32.28 representing the debit from the Stripe balance).</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

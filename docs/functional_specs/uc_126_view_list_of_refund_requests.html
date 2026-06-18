@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.126 View List of Refund Requests</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.126. View List of Refund Requests</strong></p>
+
+<p><strong>Function Trigger:</strong> The administrator clicks the "Refund Requests" tab in the Admin Finance dashboard.</p>
+
+<p><strong>Function Description:</strong> Allows administrators to view the list of pending refund requests submitted by learners within the 14-day window. Shows purchase and request details, and provides actionable links and decision triggers.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The administrator must be successfully logged into the system.</li>
+            <li>- The administrator account must have platform-wide financial management permissions.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>View and Approve Refund Requests Successfully:</strong>
+                <ul>
+                    <li>1. Administrator accesses the Admin Finance dashboard page.</li>
+                    <li>2. The system retrieves the list of pending refund requests from the database.</li>
+                    <li>3. Administrator clicks the "Refund Requests" tab.</li>
+                    <li>4. The system displays the refund requests table containing the following columns:
+                        <ul>
+                            <li>- ID: The sequential identifier for the refund request.</li>
+                            <li>- Course: The title of the requested course.</li>
+                            <li>- Student: The name of the student requesting the refund.</li>
+                            <li>- Amount: The refund amount.</li>
+                            <li>- Purchase Date: The date and time of the original purchase.</li>
+                            <li>- Request Date: The date and time the refund was requested.</li>
+                            <li>- Refund Reason: The reason provided by the student for the refund.</li>
+                            <li>- Actions: Buttons to view "Details", "Approve", or "Reject" the request.</li>
+                        </ul>
+                    </li>
+                    <li>5. Administrator reviews the list of pending refund requests.</li>
+                    <li>6. Administrator clicks the "Approve" button for a specific refund request.</li>
+                    <li>7. The system displays a confirmation popup asking the administrator to confirm the approval.</li>
+                    <li>8. Administrator clicks "Confirm" on the popup.</li>
+                    <li>9. The system processes the approval, initiates the refund via Stripe, and revokes the student's course access.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- The administrator views the list of pending refund requests including the transaction ID, course title, student name, amount, purchase date, request date, and student refund reason.</li>
+            <li>- If approved, the refund is processed, and the student's course access is revoked.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Action Confirmation:</strong> The system requires a confirmation popup when approving or rejecting a refund request to prevent accidental actions.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

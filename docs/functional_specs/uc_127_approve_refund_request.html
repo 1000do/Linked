@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.127 Approve Refund Request</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.127. Approve Refund Request</strong></p>
+
+<p><strong>Function Trigger:</strong> Administrator clicks the "Approve" button next to a pending refund request in the Refund Requests list.</p>
+
+<p><strong>Function Description:</strong> Allows administrators to approve a learner's pending refund request. The system automatically performs a Stripe refund, reverses the instructor's payout (if already transferred), updates the database ledger status, and revokes the student's course access.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The administrator must be successfully logged into the system.</li>
+            <li>- The administrator account must have platform-wide financial management permissions.</li>
+            <li>- The user must have at least one refund request record.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>View List of Refund Requests Successfully:</strong>
+                <ul>
+                    <li>1. Admin accesses the admin finance dashboard page AdminFinance.</li>
+                    <li>2. Admin selects the "Refund Requests" tab.</li>
+                    <li>3. Admin clicks the "Approve" button on the pending refund request row.</li>
+                    <li>4. The system displays the "Approve Refund" confirmation dialog containing a feedback input field.</li>
+                    <li>5. Admin inputs optional feedback and clicks the "Approve & Refund" button.</li>
+                    <li>6. The system reverses the instructor's earnings transfer via Stripe Connect.</li>
+                    <li>7. The system refunds the transaction amount to the student via Stripe API.</li>
+                    <li>8. The system updates the transaction status and instructor payout status to "refunded" and negates their amounts in the database.</li>
+                    <li>9. The system revokes the student's enrollment access to the course.</li>
+                    <li>10. The system sends a notification to the student about the approved refund.</li>
+                    <li>11. The system broadcasts real-time SignalR notifications to update the dashboard balances.</li>
+                    <li>12. The system closes the confirmation dialog and displays a success notification.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Click Cancel)</strong>
+        <ul>
+            <li>1. Admin clicks the "Cancel" button on the confirmation dialog.</li>
+            <li>2. The system closes the confirmation dialog.</li>
+            <li>3. Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- The student's course access is successfully revoked.</li>
+            <li>- The purchase amount is refunded to the student via Stripe Connect, and the payout reversal is initiated.</li>
+            <li>- The transaction and payout record statuses are updated to be refunded in the database.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+            <li>- <strong>Transaction Not Found:</strong> The system displays a transaction not found error message. Back to step 1.</li>
+            <li>- <strong>Status is Not Pending:</strong> The system displays an error message indicating the transaction is not in a pending status. Back to step 2.</li>
+            <li>- <strong>Transfer Reversal Failed:</strong> The system displays an error message regarding the failure to reverse the instructor's transfer. Back to step 3.</li>
+            <li>- <strong>Stripe Refund Failed:</strong> The system displays an error message regarding the failure to process the refund on Stripe. Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>14-Day Limit:</strong> Refund requests are only valid within 14 days (336 hours) of the original transaction date. After 14 days, the refund option is disabled in the student UI and blocked by the backend.</li>
+            <li>- <strong>Full Customer Refund:</strong> The customer is refunded 100% of the original purchase amount via the Stripe Refund API.</li>
+            <li>- <strong>Amount Negation:</strong> The transaction Amount and the instructor's PayoutAmount are updated to negative numbers in the database to maintain double-entry accounting integrity.</li>
+            <li>- <strong>Access Revocation:</strong> The student's EnrollmentStatus is changed to revoked, immediately disabling course access.</li>
+            <li>- <strong>Claw Back Instructor Earnings (Transfer Reversal):</strong> The system reverses the exact payout amount originally transferred to the instructor's Connected Account: PayoutAmount = Round((GrossAmount - StripeFee) * (TransferRate / 100), 2) where: StripeFee = Min(Round(GrossAmount * 0.029 + 0.30, 2), GrossAmount).</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>
