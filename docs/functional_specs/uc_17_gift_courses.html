@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.17 Gift Courses</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.17. Gift Courses</strong></p>
+
+<p><strong>Function Trigger:</strong> The user clicks the "Gift this course" button on the course details page.</p>
+
+<p><strong>Function Description:</strong> Allows the user to configure gift details—including the recipient's name, email, card theme, and a personal message with a live preview—before proceeding to the checkout page.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The user must be authenticated.</li>
+            <li>- The target course must be retrievable from the system.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Configure Gift Details Successfully:</strong>
+                <ul>
+                    <li>1. The user accesses the Gift Setup page.</li>
+                    <li>2. The system displays the gift setup form, the course summary card, and the live gift card preview.</li>
+                    <li>3. User fills in the Recipient's Email, Recipient's Name (Optional), Choose Card Theme, and Gift Message (Optional) fields.</li>
+                    <li>4. User clicks the "Proceed to Payment" button.</li>
+                    <li>5. The system validates all form inputs.</li>
+                    <li>6. The server queries the database to verify the recipient's enrollment status for the selected course.</li>
+                    <li>7. The system redirects the user to the Gift Checkout page.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Invalid form inputs)</strong>
+        <ul>
+            <li>1. The system highlights the invalid fields and displays inline validation error messages.</li>
+            <li>2. Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Recipient already enrolled)</strong>
+        <ul>
+            <li>1. The system displays a validation error on the recipient email field indicating the recipient already owns the course.</li>
+            <li>2. Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- The user is redirected to the Gift Checkout page with all gift details passed as parameters.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+            <li>- <strong>Course Not Found:</strong> The system fails to retrieve course information from the backend. The system displays an error message. The system redirects the user to the home page.</li>
+            <li>- <strong>Recipient Already Enrolled:</strong> The system detects via real-time API check that the recipient already has an active enrollment in the course. The system highlights the recipient email field with an error message indicating the recipient already owns the course. The system disables the "Proceed to Payment" button. Back to step 4.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Enrollment Pre-check:</strong> The system checks recipient enrollment as the user types in the email field (debounced). The "Proceed to Payment" button is disabled until the check confirms the recipient is not enrolled.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

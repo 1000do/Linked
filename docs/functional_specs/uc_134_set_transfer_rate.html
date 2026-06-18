@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.134 Set Transfer Rate</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.134. Set Transfer Rate</strong></p>
+
+<p><strong>Function Trigger:</strong> Admin clicks the "Save Rate" button on the settings card.</p>
+
+<p><strong>Function Description:</strong> Allows administrators to update the percentage of course purchase revenue allocated to instructors. The new rate is stored in system configurations, applied to all future transactions, and broadcasted to onboarded instructors.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The administrator must be successfully logged into the system.</li>
+            <li>- The system configuration repository is accessible.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Set Revenue Share Split Rate Successfully:</strong>
+                <ul>
+                    <li>1. Admin accesses the admin finance dashboard page AdminFinance.</li>
+                    <li>2. Admin locates the "Revenue Share Split Rate" setting card.</li>
+                    <li>3. Admin enters the target percentage rate in the "Instructor Share (%)" input field.</li>
+                    <li>4. Admin clicks the "Save Rate" button.</li>
+                    <li>5. The system displays the "Confirm Rate Change" dialog.</li>
+                    <li>6. Admin clicks the "Save Rate" confirmation button.</li>
+                    <li>7. The system updates the transfer rate configuration key in the database.</li>
+                    <li>8. The system retrieves the list of instructors with onboarded Stripe Connect accounts.</li>
+                    <li>9. The system triggers background notifications about the policy update to the retrieved instructors.</li>
+                    <li>10. The system refreshes the dashboard view displaying the newly saved rate.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Click Cancel)</strong>
+        <ul>
+            <li>1. Admin clicks the "Cancel" button on the confirmation dialog.</li>
+            <li>2. The system closes the confirmation dialog.</li>
+            <li>3. Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Invalid Rate Entered)</strong>
+        <ul>
+            <li>1. Admin enters a rate outside the permitted range or a non-numeric value in the input field.</li>
+            <li>2. Admin clicks the "Save Rate" button.</li>
+            <li>3. The system displays the "Invalid Split Rate" error dialog indicating that the rate must be between 30% and 95%.</li>
+            <li>4. Admin clicks the "Understood" button.</li>
+            <li>5. Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- The updated transfer rate is saved in the database system configurations.</li>
+            <li>- Active instructors with linked Stripe Connect accounts receive notifications regarding the updated split policy.</li>
+            <li>- All transactions processed after the change calculate payouts using the new split rate.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Permitted Splitting Range:</strong> The split rate must be a numeric value between 30.00% and 95.00% (inclusive).</li>
+            <li>- <strong>Non-Retroactivity:</strong> Changing the configuration only applies to transactions created after the change. Existing payouts and past transaction records preserve their original split rate values.</li>
+            <li>- <strong>Instructor Policy Notifications:</strong> The system sends an automated real-time notification to all active instructors who have connected Stripe accounts. Re-notification is bypassed for non-Stripe linked accounts.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

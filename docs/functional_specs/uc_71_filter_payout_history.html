@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.71 Filter payout History</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.71. Filter payout History</strong></p>
+
+<p><strong>Function Trigger:</strong> Instructor enters or selects filter parameters and clicks the "Filter" button.</p>
+
+<p><strong>Function Description:</strong> Allows an instructor to search and filter their payout history list ("Payout History" tab) by course title, Stripe ID, status, month, and year.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The instructor is successfully authenticated.</li>
+            <li>- The instructor is on the instructor transaction history page.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Filter Payout History Successfully:</strong>
+                <ul>
+                    <li>1. Instructor accesses the instructor transaction page.</li>
+                    <li>2. Instructor selects the "Payout History" tab.</li>
+                    <li>3. Instructor enters a search query in the payout search field.</li>
+                    <li>4. Instructor selects a filter status from the payout status dropdown.</li>
+                    <li>5. Instructor selects a transaction status from the period dropdowns.</li>
+                    <li>6. Instructor clicks the "Filter" button.</li>
+                    <li>7. The system validates the filter inputs.</li>
+                    <li>8. The system requests the payout history filtered by the search query, status, month, and year from the server.</li>
+                    <li>9. The server queries the matching payouts from the database.</li>
+                    <li>10. The system displays the filtered list of payouts to the instructor.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Reset filter)</strong>
+        <ul>
+            <li>1. Instructor clicks the "Reset" link.</li>
+            <li>2. The system resets the payout search query, payout status dropdown, month, and year to their default values.</li>
+            <li>3. The system requests the default payout history from the server.</li>
+            <li>4. The server queries the default payouts from the database.</li>
+            <li>5. The system displays the default list of payouts.</li>
+            <li>6. Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (No matching results found)</strong>
+        <ul>
+            <li>1. The server returns an empty list of payouts.</li>
+            <li>2. The system displays a message indicating that no payouts were recorded for this period.</li>
+            <li>3. Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- The system displays the list of payouts matching the specified filter criteria.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Default Period:</strong> If no month and year are specified, the system defaults to the current UTC calendar month and year.</li>
+            <li>- <strong>Pagination Reset:</strong> Modifying any filter criteria and applying it resets the payout pagination back to page 1.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

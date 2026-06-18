@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.73 View Instructor's Transaction History Detail</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.73. View Instructor's Transaction History Detail</strong></p>
+
+<p><strong>Function Trigger:</strong> Instructor clicks the "View" button next to a transaction row in the Learner Purchases list of the Earnings dashboard.</p>
+
+<p><strong>Function Description:</strong> Allows instructors to view the comprehensive financial ledger breakdown, coupon usage, Stripe gateway references, purchaser info, and refund dispute details for a specific transaction.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The instructor must be logged in.</li>
+            <li>- The transaction record must belong to a course owned by the logged-in instructor.</li>
+            <li>- There is at least one transaction in the record.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>View Instructor's Transaction History Detail Successfully:</strong>
+                <ul>
+                    <li>1. Instructor accesses the Earnings dashboard page.</li>
+                    <li>2. The system retrieves the list of course transactions from the database.</li>
+                    <li>3. The system displays the list of transactions under the Learner Purchases tab.</li>
+                    <li>4. Instructor clicks the "View" button next to a transaction row.</li>
+                    <li>5. The system requests transaction details from the database based on the selected transaction ID.</li>
+                    <li>6. The system retrieves the transaction details from the database.</li>
+                    <li>7. The system displays the transaction details page containing the Transaction Overview, Product Details, Purchaser Details, Stripe secure references, and Split Summary Card.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Refund Request Pending Banner)</strong>
+        <ul>
+            <li>1. The system detects that the transaction has a refund pending status.</li>
+            <li>2. The system displays a top warning banner showing the refund request date and the student's stated refund reason.</li>
+            <li>3. Back to step 7.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Refund Approved Banner)</strong>
+        <ul>
+            <li>1. The system detects that the transaction has a refunded status.</li>
+            <li>2. The system displays a top alert banner showing the student's refund reason and the administrator's settlement note.</li>
+            <li>3. The system displays the ledger values with negative deductions highlighted in red in the Split Summary Card.</li>
+            <li>4. Back to step 7.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Refund Request Rejected Banner)</strong>
+        <ul>
+            <li>1. The system detects that the transaction has a completed status and a refund rejection note is present.</li>
+            <li>2. The system displays a top informational banner showing the student's original refund reason and the administrator's rejection note.</li>
+            <li>3. Back to step 7.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- The instructor views the full transaction breakdown and split details.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+            <li>- <strong>Transaction Not Found:</strong> The system detects that the transaction ID does not exist in the database. The system displays a warning message regarding transaction not found. The system redirects the instructor to the Earnings dashboard page.</li>
+            <li>- <strong>Unauthorized Transaction Access:</strong> The system detects that the transaction record does not belong to a course owned by the logged-in instructor. The system displays an authorization error message. The system redirects the instructor to the Earnings dashboard page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Locked Currency and Split Rates:</strong> All split rates (Transfer Rate) and conversion rates are locked at the time of purchase to guarantee stable revenues and prevent exchange rate fluctuations.</li>
+            <li>- <strong>Stripe Fee Calculation:</strong> Stripe processing fee is calculated exactly as GrossAmount * 0.029 + 0.30 (capped at the gross amount to avoid negative ledger balances).</li>
+            <li>- <strong>Split Summary Ledger Formulas:</strong> The Split Summary Card calculates and displays values according to the following formulas: Gross Amount = Original Course Price - Coupon Discount (if coupon is applied); Net Course Revenue to Split = Gross Amount - Stripe Processing Fee; Platform Net Profit = Net Course Revenue to Split * (100% - Transfer Rate %); Instructor Net Income = Net Course Revenue to Split * Transfer Rate %.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>
