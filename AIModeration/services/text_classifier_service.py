@@ -2,17 +2,15 @@
 
 import json
 import logging
-import sys
 import os
 import time
 import torch
 from typing import Tuple, Dict, List, Any
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch.nn.functional as F
-import numpy as np
 
 from config.settings import Settings, get_settings
-from core.exceptions import ModelInferenceException, TimeoutException
+from core.exceptions import ModelInferenceException
 from services.base_service import BaseService
 
 logger = logging.getLogger(__name__)

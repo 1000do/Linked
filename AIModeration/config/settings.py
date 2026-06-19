@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     # Device config
     DEVICE: str = os.getenv("DEVICE", "cuda" if torch.cuda.is_available() else "cpu")
     
+    
     class Config:
         env_file = ".env"
         case_sensitive = True

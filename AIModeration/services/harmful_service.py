@@ -141,9 +141,9 @@ class HarmfulService(BaseService):
         candidates_pending = 0
 
         for alias, value in candidates.items():
-            logger.info(f'Checking media text on {alias}...')
             file_type = value.get('file_type')
             file_bytes = value.get('file_bytes')
+            logger.info(f'Checking media text on {alias} (file type: {file_type})...')
 
             if not file_bytes:
                 continue

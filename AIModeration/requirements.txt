@@ -19,7 +19,7 @@ python-multipart
 # File Processing
 pillow
 opencv-python
-pytesseract
+easyocr
 pdf2image
 python-pptx
 openpyxl

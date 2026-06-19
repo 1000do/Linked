@@ -4,14 +4,22 @@ import logging
 import io
 import tempfile
 import os
-from typing import Tuple, Optional, AsyncIterator, Dict, Any
+from typing import Tuple, AsyncIterator, Dict, Any
 from PIL import Image
 import cv2
-import pytesseract
-import json
+import easyocr
+import torch
+from difflib import SequenceMatcher
+from faster_whisper import WhisperModel
+from pdf2image import convert_from_bytes
+from docx import Document
+from pptx import Presentation
+from openpyxl import load_workbook
+import numpy as np
 
 from core.exceptions import FileProcessingException
 from services.base_service import BaseService
+from config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +27,44 @@ logger = logging.getLogger(__name__)
 class TextExtractionService(BaseService):
     """Extract text from media files using OCR and Whisper."""
     
+    # Class-level model cache (singleton pattern)
+    _whisper_model = None
+    _ocr_reader = None
+    _models_loaded = False
+    
     def __init__(self):
         """Initialize text extraction service."""
         super().__init__("TextExtractionService")
+        
+        if not TextExtractionService._models_loaded:
+            self._load_models()
+            
+    @classmethod
+    def _load_models(cls):
+        """Load models once (class-level cache)."""
+        if cls._models_loaded:
+            return
+            
+        logger.info("Loading text extraction models...")
+        
+        try:
+            settings = get_settings()
+            whisper_model_name = settings.WHISPER_MODEL_NAME
+            
+            device = settings.DEVICE
+            compute_type = "float16" if torch.cuda.is_available() else "int8"
+            
+            logger.info(f"Loading Whisper model {whisper_model_name} on {device}...")
+            cls._whisper_model = WhisperModel(whisper_model_name, device=device, compute_type=compute_type)
+            
+            logger.info("Loading EasyOCR model...")
+            cls._ocr_reader = easyocr.Reader(['en'], gpu=torch.cuda.is_available())
+            
+            cls._models_loaded = True
+            logger.info("✓ All text extraction models loaded successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to load text extraction models: {e}")
 
     def get_file_type_for_text_extraction(self, file_extension: str) -> str:
         """
@@ -59,9 +102,13 @@ class TextExtractionService(BaseService):
                 image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
                 
                 # Run OCR
-                text = pytesseract.image_to_string(image)
+                # EasyOCR expects a numpy array, byte content, or filepath
+                # Since image is loaded as PIL, we convert to numpy array
+                image_np = np.array(image)
+                results = self._ocr_reader.readtext(image_np, detail=0, paragraph=True)
+                text = "\n".join(results)
                 
-                # Estimate confidence (pytesseract can provide per-line confidence)
+                # Estimate confidence
                 # For simplicity, use 0.8 as default if text extracted
                 confidence = 0.8 if text.strip() else 0.0
                 
@@ -88,14 +135,14 @@ class TextExtractionService(BaseService):
         try:
             with self.time_operation("extract_from_pdf", size=len(pdf_bytes)):
                 # pdf2image to convert PDF to images
-                from pdf2image import convert_from_bytes
-                
                 images = convert_from_bytes(pdf_bytes, first_page=1, last_page=5)  # First 5 pages
                 
                 all_text = []
                 
                 for image in images:
-                    text = pytesseract.image_to_string(image)
+                    image_np = np.array(image)
+                    results = self._ocr_reader.readtext(image_np, detail=0, paragraph=True)
+                    text = "\n".join(results)
                     if text.strip():
                         all_text.append(text)
                 
@@ -116,10 +163,10 @@ class TextExtractionService(BaseService):
             logger.error(f"PDF extraction failed: {e}")
             raise FileProcessingException("pdf", f"Extraction failed: {e}")
     
-    async def extract_from_video(
+    async def extract_from_video_legacy(
         self,
         video_bytes: bytes,
-        sample_every_n_frames: int = 30,
+        sample_interval_seconds: float = 3.0,
     ) -> Tuple[str, float, dict]:
         """
         Extract text from video frames and audio using OCR and Whisper.
@@ -140,9 +187,12 @@ class TextExtractionService(BaseService):
                     # Extract text from frames
                     cap = cv2.VideoCapture(tmp_path)
                     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-                    frame_idx = 0
+                    fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+                    sample_every_n_frames = max(1, int(fps * sample_interval_seconds))
                     
+                    frame_idx = 0
                     frames_processed = 0
+                    last_text = ""
                     
                     while True:
                         ret, frame = cap.read()
@@ -151,11 +201,16 @@ class TextExtractionService(BaseService):
                         
                         if frame_idx % sample_every_n_frames == 0:
                             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                            image = Image.fromarray(rgb_frame)
                             
-                            text = pytesseract.image_to_string(image)
-                            if text.strip():
-                                all_text.append(text)
+                            results = self._ocr_reader.readtext(rgb_frame, detail=0, paragraph=True)
+                            text = "\n".join(results).strip()
+                            
+                            if text:
+                                # Deduplication logic
+                                similarity = SequenceMatcher(None, last_text, text).ratio()
+                                if similarity < 0.8: # Only add if it's less than 80% similar to previous frame
+                                    all_text.append(text)
+                                    last_text = text
                             
                             frames_processed += 1
                         
@@ -165,24 +220,13 @@ class TextExtractionService(BaseService):
                     
                     # Extract audio using Whisper (faster-whisper for efficiency)
                     try:
-                        from faster_whisper import WhisperModel
-                        import torch
-                        
                         # Save audio track
                         audio_path = tmp_path.replace(".mp4", ".wav")
                         # Extract as 16kHz mono WAV for optimal Whisper quality
                         os.system(f"ffmpeg -i {tmp_path} -vn -acodec pcm_s16le -ar 16000 -ac 1 -y {audio_path} 2>/dev/null")
                         
-                        if os.path.exists(audio_path):
-                            from config.settings import get_settings
-                            whisper_model = get_settings().WHISPER_MODEL_NAME
-                            
-                            device = "cuda" if torch.cuda.is_available() else "cpu"
-                            compute_type = "float16" if torch.cuda.is_available() else "int8"
-                            
-                            model = WhisperModel(whisper_model, device=device, compute_type=compute_type)
-                            
-                            segments, _ = model.transcribe(
+                        if os.path.exists(audio_path) and self._whisper_model:
+                            segments, _ = self._whisper_model.transcribe(
                                 audio_path,
                                 beam_size=5,
                                 condition_on_previous_text=False
@@ -229,8 +273,6 @@ class TextExtractionService(BaseService):
         
         try:
             with self.time_operation("extract_from_word", size=len(docx_bytes)):
-                from docx import Document
-                
                 # Load from bytes
                 doc = Document(io.BytesIO(docx_bytes))
                 
@@ -266,8 +308,6 @@ class TextExtractionService(BaseService):
         
         try:
             with self.time_operation("extract_from_powerpoint", size=len(pptx_bytes)):
-                from pptx import Presentation
-                
                 # Load from bytes
                 prs = Presentation(io.BytesIO(pptx_bytes))
                 
@@ -305,8 +345,6 @@ class TextExtractionService(BaseService):
         
         try:
             with self.time_operation("extract_from_excel", size=len(xlsx_bytes)):
-                from openpyxl import load_workbook
-                
                 # Load from bytes
                 wb = load_workbook(io.BytesIO(xlsx_bytes))
                 
@@ -337,7 +375,7 @@ class TextExtractionService(BaseService):
             logger.error(f"Excel extraction failed: {e}")
             raise FileProcessingException("excel", f"Extraction failed: {e}")
     
-    async def extract_generic(
+    async def extract_generic_legacy(
         self,
         content: bytes,
         material_type: str,
@@ -361,7 +399,7 @@ class TextExtractionService(BaseService):
             return await self.extract_from_pdf(content)
         
         elif material_type in ["video", "mp4", "avi", "mov"]:
-            return await self.extract_from_video(content)
+            return await self.extract_from_video_legacy(content)
         
         elif material_type in ["word", "docx", "doc"]:
             return await self.extract_from_word(content)
@@ -378,7 +416,7 @@ class TextExtractionService(BaseService):
     async def extract_from_video_stream(
         self,
         video_bytes: bytes,
-        sample_every_n_frames: int = 30,
+        sample_interval_seconds: float = 3.0,
     ) -> AsyncIterator[Tuple[str, float, Dict[str, Any]]]:
         """
         Extract text from video frames (OCR) and audio (Whisper) as a stream of segments.
@@ -401,8 +439,12 @@ class TextExtractionService(BaseService):
                 ocr_text_list = []
                 cap = cv2.VideoCapture(tmp_path)
                 frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+                sample_every_n_frames = max(1, int(fps * sample_interval_seconds))
+                
                 frame_idx = 0
                 frames_processed = 0
+                last_text = ""
                 
                 while True:
                     ret, frame = cap.read()
@@ -411,10 +453,16 @@ class TextExtractionService(BaseService):
                     
                     if frame_idx % sample_every_n_frames == 0:
                         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                        image = Image.fromarray(rgb_frame)
-                        text = pytesseract.image_to_string(image)
-                        if text.strip():
-                            ocr_text_list.append(text)
+                        results = self._ocr_reader.readtext(rgb_frame, detail=0, paragraph=True)
+                        text = "\n".join(results).strip()
+                        
+                        if text:
+                            # Deduplication logic
+                            similarity = SequenceMatcher(None, last_text, text).ratio()
+                            if similarity < 0.8:
+                                ocr_text_list.append(text)
+                                last_text = text
+                                
                         frames_processed += 1
                     frame_idx += 1
                 
@@ -433,23 +481,12 @@ class TextExtractionService(BaseService):
                 
                 # 2. Whisper audio text extraction
                 try:
-                    from faster_whisper import WhisperModel
-                    import torch
-                    
                     # Save audio track
                     audio_path = tmp_path.replace(".mp4", ".wav")
                     os.system(f"ffmpeg -i {tmp_path} -vn -acodec pcm_s16le -ar 16000 -ac 1 -y {audio_path} 2>/dev/null")
                     
-                    if os.path.exists(audio_path):
-                        from config.settings import get_settings
-                        whisper_model = get_settings().WHISPER_MODEL_NAME
-                        
-                        device = "cuda" if torch.cuda.is_available() else "cpu"
-                        compute_type = "float16" if torch.cuda.is_available() else "int8"
-                        
-                        model = WhisperModel(whisper_model, device=device, compute_type=compute_type)
-                        
-                        segments, _ = model.transcribe(
+                    if os.path.exists(audio_path) and self._whisper_model:
+                        segments, _ = self._whisper_model.transcribe(
                             audio_path,
                             beam_size=5,
                             condition_on_previous_text=False
@@ -514,7 +551,7 @@ class TextExtractionService(BaseService):
             yield text, conf, log
             
         elif material_type in ["video", "mp4", "avi", "mov"]:
-            async for text, conf, log in self.extract_from_video_stream(content, sample_every_n_frames=30):
+            async for text, conf, log in self.extract_from_video_stream(content, sample_interval_seconds=3.0):
                 yield text, conf, log
                 
         elif material_type in ["word", "docx", "doc"]:
