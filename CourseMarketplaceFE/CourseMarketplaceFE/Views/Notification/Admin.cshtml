@@ -225,7 +225,8 @@
             try {
                 const res = await fetch(`${API_URL}/all`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
                 if (res.ok) {
-                    allNotifications = await res.json();
+                    const apiResp = await res.json();
+                    allNotifications = apiResp.data || [];
                     applyFilters();
                 }
             } catch (err) { console.error(err); }
@@ -381,7 +382,8 @@
             if (query.length < 1) { suggestions.classList.add('hidden'); return; }
             try {
                 const res = await fetch(`${API_URL}/search-emails?query=${query}`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
-                const data = await res.json();
+                const apiResp = await res.json();
+                const data = apiResp.data || [];
                 if (data.length > 0) {
                     suggestions.innerHTML = data.filter(m => !selectedEmails.includes(m))
                         .map(m => `<div class="px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer" onclick="addTag('${m}')">${m}</div>`).join('');

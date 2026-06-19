@@ -46,38 +46,33 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
         public async Task AddRangeAsync(IEnumerable<Notification> notifications) =>
             await _context.Notifications.AddRangeAsync(notifications);
 
+        public void Update(Notification notification)
+        {
+            _context.Notifications.Update(notification);
+        }
+
+        public void UpdateRange(IEnumerable<Notification> notifications)
+        {
+            _context.Notifications.UpdateRange(notifications);
+        }
+
         public async Task<int> SaveChangesAsync()
         {
-            return await _context.SaveChangesAsync();
+            try
+            {
+                return await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new CourseMarketplaceBE.Domain.Exceptions.NotificationException("A database error occurred while saving notifications.", ex);
+            }
         }
 
-        public async Task<bool> MarkAsReadAsync(int notificationId, int userId)
+        public async Task<List<Notification>> GetUnreadByReceiverIdAsync(int userId)
         {
-            var notification = await _context.Notifications
-                .FirstOrDefaultAsync(n => n.NotificationId == notificationId && n.ReceiverId == userId);
-
-            if (notification == null) return false;
-
-            notification.IsRead = true;
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<bool> MarkAllAsReadAsync(int userId)
-        {
-            var unreadNotifications = await _context.Notifications
+            return await _context.Notifications
                 .Where(n => n.ReceiverId == userId && (n.IsRead == false || n.IsRead == null))
                 .ToListAsync();
-
-            if (!unreadNotifications.Any()) return true;
-
-            foreach (var notification in unreadNotifications)
-            {
-                notification.IsRead = true;
-            }
-
-            await _context.SaveChangesAsync();
-            return true;
         }
 
         public async Task<int> GetUnreadCountAsync(int userId)
@@ -86,7 +81,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .CountAsync(n => n.ReceiverId == userId && (n.IsRead == false || n.IsRead == null));
         }
 
-        public async Task AutoCleanupAdminNotificationsAsync()
+        public async Task<int> AutoCleanupAdminNotificationsAsync()
         {
             var cutoffDate = DateTime.UtcNow.AddDays(-90);
             var oldNotifications = await _context.Notifications
@@ -99,8 +94,9 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 {
                     n.IsRemoved = true;
                 }
-                await _context.SaveChangesAsync();
+                return await SaveChangesAsync();
             }
+            return 0;
         }
 
         public async Task<int> GetSentNotificationsCountAsync(int senderId)

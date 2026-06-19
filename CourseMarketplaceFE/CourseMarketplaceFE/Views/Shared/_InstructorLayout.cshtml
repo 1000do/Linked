@@ -391,7 +391,8 @@
                     headers: { 'Authorization': `Bearer ${LAYOUT_TOKEN}` }
                 });
                 if (response.ok) {
-                    const data = await response.json();
+                    const apiResp = await response.json();
+                    const data = apiResp.data || {};
                     
                     // Cập nhật Sidebar Notification Badge
                     const sidebarNotiBadge = document.getElementById('sidebar-noti-badge');
@@ -434,7 +435,8 @@
                 });
 
                 if (response.ok) {
-                    const data = await response.json();
+                    const apiResp = await response.json();
+                    const data = apiResp.data || [];
                     const top3 = data.slice(0, 3);
 
                     if (top3.length === 0) {

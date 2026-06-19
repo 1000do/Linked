@@ -115,7 +115,8 @@
                 headers: { 'Authorization': `Bearer ${TOKEN_USER}` }
             });
             if (response.ok) {
-                allNotifications = await response.json();
+                const apiResult = await response.json();
+                allNotifications = Array.isArray(apiResult) ? apiResult : (apiResult.data || []);
                 applyNotificationFilters();
             }
         } catch (e) {

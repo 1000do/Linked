@@ -1,4 +1,4 @@
-﻿using CourseMarketplaceFE.Models;
+using CourseMarketplaceFE.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
@@ -6,6 +6,13 @@ namespace CourseMarketplaceFE.Controllers
 {
     public class NotificationController : Controller
     {
+        private class ApiResp<T>
+        {
+            public bool Success { get; set; }
+            public T? Data { get; set; }
+            public string? Message { get; set; }
+        }
+
         private readonly HttpClient _client;
 
         public NotificationController(IHttpClientFactory factory)
@@ -20,8 +27,8 @@ namespace CourseMarketplaceFE.Controllers
             {
                 var json = await response.Content.ReadAsStringAsync();
                 // Map vào NotificationViewModel của FE
-                var notifications = JsonConvert.DeserializeObject<List<NotificationViewModel>>(json);
-                return View(notifications);
+                var apiResp = JsonConvert.DeserializeObject<ApiResp<List<NotificationViewModel>>>(json);
+                return View(apiResp?.Data ?? new List<NotificationViewModel>());
             }
             return View(new List<NotificationViewModel>());
         }
@@ -33,8 +40,8 @@ namespace CourseMarketplaceFE.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();
-                var list = JsonConvert.DeserializeObject<List<NotificationViewModel>>(json);
-                return Json(list?.Take(5).ToList());
+                var apiResp = JsonConvert.DeserializeObject<ApiResp<List<NotificationViewModel>>>(json);
+                return Json(apiResp?.Data?.Take(5).ToList() ?? new List<NotificationViewModel>());
             }
             return Json(new object[] { });
         }

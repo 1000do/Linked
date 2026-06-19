@@ -2,8 +2,11 @@ using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Domain.Exceptions;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using AutoMapper;
 
 namespace CourseMarketplaceBE.Application.Services
 {
@@ -12,22 +15,31 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly INotificationRepository _repo;
         private readonly IUserRepository _userRepo;
         private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly IMapper _mapper;
 
         public NotificationService(
             INotificationRepository repo,
             IUserRepository userRepo,
-            IHubContext<NotificationHub> hubContext)
+            IHubContext<NotificationHub> hubContext,
+            IMapper mapper)
         {
             _repo = repo;
             _userRepo = userRepo;
             _hubContext = hubContext;
+            _mapper = mapper;
         }
 
-        public async Task<List<Notification>> GetNotificationsForUserAsync(int userId)
-            => await _repo.GetByReceiverIdAsync(userId);
+        public async Task<List<NotificationResponseDto>> GetNotificationsForUserAsync(int userId)
+        {
+            var entities = await _repo.GetByReceiverIdAsync(userId);
+            return _mapper.Map<List<NotificationResponseDto>>(entities);
+        }
 
-        public async Task<List<Notification>> GetAllNotificationsAsync()
-            => await _repo.GetAllAsync();
+        public async Task<List<NotificationResponseDto>> GetAllNotificationsAsync()
+        {
+            var entities = await _repo.GetAllAsync();
+            return _mapper.Map<List<NotificationResponseDto>>(entities);
+        }
 
         public async Task SendNotificationAsync(int receiverId, string title, string content, string? linkAction)
         {
@@ -44,9 +56,10 @@ namespace CourseMarketplaceBE.Application.Services
             };
 
             await _repo.AddAsync(noti);
-            int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            if (numberOfRowsAffected > 0)
+            try
             {
+                int numberOfRowsAffected = await _repo.SaveChangesAsync();
+                if (numberOfRowsAffected == 0) throw new InvalidOperationException("Failed to send notification.");
 
                 await _hubContext.Clients.User(receiverId.ToString())
                     .SendAsync("ReceiveNotification", new
@@ -61,56 +74,78 @@ namespace CourseMarketplaceBE.Application.Services
                     });
                 await _hubContext.Clients.Group("managers").SendAsync("ReceiveNotification");
             }
-            else
+            catch (NotificationException ex)
             {
-                throw new InvalidOperationException("Falied to send notification!");
+                throw new BadRequestException(ex.Message);
             }
         }
 
         public async Task<bool> DeleteNotificationAsync(int notiId, int userId)
         {
             var noti = await _repo.GetByIdAsync(notiId);
-            if (noti == null || noti.ReceiverId != userId) return false;
+            if (noti == null || noti.ReceiverId != userId)
+                throw new KeyNotFoundException("Notification not found.");
 
             _repo.Delete(noti);
-            int n = await _repo.SaveChangesAsync();
-
-            if (n > 0)
+            try
             {
+                int n = await _repo.SaveChangesAsync();
+                if (n == 0) throw new InvalidOperationException("Failed to delete notification.");
 
-                // Bổ sung dòng này: Báo cho Admin biết để xóa dòng đó khỏi bảng lịch sử
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification");
-
                 return true;
             }
-            else
+            catch (NotificationException ex)
             {
-                throw new InvalidOperationException("Failed to delete notification");
+                throw new BadRequestException(ex.Message);
             }
-
-            await _hubContext.Clients.All.SendAsync("ReceiveNotification");
-            return true;
         }
 
         public async Task<bool> MarkAsReadAsync(int notificationId, int userId)
         {
-            var result = await _repo.MarkAsReadAsync(notificationId, userId);
-            if (result)
+            var noti = await _repo.GetByIdAsync(notificationId);
+            if (noti == null || noti.ReceiverId != userId)
+                throw new KeyNotFoundException("Notification not found.");
+
+            noti.IsRead = true;
+            _repo.Update(noti);
+
+            try
             {
+                int n = await _repo.SaveChangesAsync();
+                if (n == 0) throw new InvalidOperationException("Failed to mark as read.");
+
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification");
+                return true;
             }
-            return result;
+            catch (NotificationException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
         }
 
         public async Task<bool> MarkAllAsReadAsync(int userId)
         {
-            var result = await _repo.MarkAllAsReadAsync(userId);
-            if (result)
+            var unreads = await _repo.GetUnreadByReceiverIdAsync(userId);
+            if (!unreads.Any()) return true;
+
+            foreach (var noti in unreads)
             {
+                noti.IsRead = true;
+            }
+            _repo.UpdateRange(unreads);
+
+            try
+            {
+                await _repo.SaveChangesAsync();
                 await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", null);
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification");
+                return true;
             }
-            return result;
+            catch (NotificationException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
         }
 
         public async Task<List<NotificationAdminResponseDto>> GetAllNotificationsForAdminAsync()

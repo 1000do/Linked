@@ -491,11 +491,18 @@ public class InstructorController : Controller
 
             // Đọc thẳng thành List giống hệt cách làm của bên User
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var list = JsonSerializer.Deserialize<List<NotificationViewModel>>(json, options);
+            var apiResp = JsonSerializer.Deserialize<ApiResponseWrapper<List<NotificationViewModel>>>(json, options);
 
-            return View(list ?? new List<NotificationViewModel>());
+            return View(apiResp?.Data ?? new List<NotificationViewModel>());
         }
         return View(new List<NotificationViewModel>());
+    }
+
+    private class ApiResponseWrapper<T>
+    {
+        public bool Success { get; set; }
+        public T? Data { get; set; }
+        public string? Message { get; set; }
     }
     [HttpPost]
     [IgnoreAntiforgeryToken] // Diệt lỗi 400 khi gọi AJAX
