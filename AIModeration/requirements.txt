@@ -27,7 +27,7 @@ python-docx
 
 # Audio
 
-openai-whisper
+faster-whisper
 
 
 # Utilities

@@ -4,7 +4,7 @@ import logging
 import io
 import tempfile
 import os
-from typing import Tuple, Optional
+from typing import Tuple, Optional, AsyncIterator, Dict, Any
 from PIL import Image
 import cv2
 import pytesseract
@@ -163,19 +163,33 @@ class TextExtractionService(BaseService):
                     
                     cap.release()
                     
-                    # Extract audio using Whisper (if available)
+                    # Extract audio using Whisper (faster-whisper for efficiency)
                     try:
-                        import whisper
+                        from faster_whisper import WhisperModel
+                        import torch
                         
                         # Save audio track
-                        audio_path = tmp_path.replace(".mp4", ".m4a")
-                        os.system(f"ffmpeg -i {tmp_path} -q:a 9 -n {audio_path} 2>/dev/null")
+                        audio_path = tmp_path.replace(".mp4", ".wav")
+                        # Extract as 16kHz mono WAV for optimal Whisper quality
+                        os.system(f"ffmpeg -i {tmp_path} -vn -acodec pcm_s16le -ar 16000 -ac 1 -y {audio_path} 2>/dev/null")
                         
                         if os.path.exists(audio_path):
-                            model = whisper.load_model("base")
-                            result = model.transcribe(audio_path)
-                            audio_text = result.get("text", "")
+                            from config.settings import get_settings
+                            whisper_model = get_settings().WHISPER_MODEL_NAME
                             
+                            device = "cuda" if torch.cuda.is_available() else "cpu"
+                            compute_type = "float16" if torch.cuda.is_available() else "int8"
+                            
+                            model = WhisperModel(whisper_model, device=device, compute_type=compute_type)
+                            
+                            segments, _ = model.transcribe(
+                                audio_path,
+                                beam_size=5,
+                                condition_on_previous_text=False
+                            )
+                            
+                            audio_text = "".join([segment.text for segment in segments])
+                            logger.info(f'Audio text: {audio_text}')
                             if audio_text.strip():
                                 all_text.append(audio_text)
                             
@@ -358,5 +372,162 @@ class TextExtractionService(BaseService):
         elif material_type in ["xlsx", "xls"]:
             return await self.extract_from_excel(content)
         
+        else:
+            raise FileProcessingException(material_type, f"Unsupported file type: {material_type}")
+
+    async def extract_from_video_stream(
+        self,
+        video_bytes: bytes,
+        sample_every_n_frames: int = 30,
+    ) -> AsyncIterator[Tuple[str, float, Dict[str, Any]]]:
+        """
+        Extract text from video frames (OCR) and audio (Whisper) as a stream of segments.
+        Yields Tuple[text, confidence, details_dict].
+        """
+        if not video_bytes:
+            raise FileProcessingException("video", "Empty video provided")
+        
+        tmp_path = None
+        audio_path = None
+        
+        try:
+            with self.time_operation("extract_from_video_stream", size=len(video_bytes)):
+                # Write to temp file
+                with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
+                    tmp.write(video_bytes)
+                    tmp_path = tmp.name
+                
+                # 1. OCR text extraction
+                ocr_text_list = []
+                cap = cv2.VideoCapture(tmp_path)
+                frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                frame_idx = 0
+                frames_processed = 0
+                
+                while True:
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
+                    
+                    if frame_idx % sample_every_n_frames == 0:
+                        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        image = Image.fromarray(rgb_frame)
+                        text = pytesseract.image_to_string(image)
+                        if text.strip():
+                            ocr_text_list.append(text)
+                        frames_processed += 1
+                    frame_idx += 1
+                
+                cap.release()
+                
+                if ocr_text_list:
+                    combined_ocr = "\n".join(ocr_text_list)
+                    logger.info(f'OCR on video: {combined_ocr}')
+                    yield combined_ocr, 0.7, {
+                        "source": "video_ocr",
+                        "success": True,
+                        "total_frames": frame_count,
+                        "frames_sampled": frames_processed,
+                        "text_length": len(combined_ocr),
+                    }
+                
+                # 2. Whisper audio text extraction
+                try:
+                    from faster_whisper import WhisperModel
+                    import torch
+                    
+                    # Save audio track
+                    audio_path = tmp_path.replace(".mp4", ".wav")
+                    os.system(f"ffmpeg -i {tmp_path} -vn -acodec pcm_s16le -ar 16000 -ac 1 -y {audio_path} 2>/dev/null")
+                    
+                    if os.path.exists(audio_path):
+                        from config.settings import get_settings
+                        whisper_model = get_settings().WHISPER_MODEL_NAME
+                        
+                        device = "cuda" if torch.cuda.is_available() else "cpu"
+                        compute_type = "float16" if torch.cuda.is_available() else "int8"
+                        
+                        model = WhisperModel(whisper_model, device=device, compute_type=compute_type)
+                        
+                        segments, _ = model.transcribe(
+                            audio_path,
+                            beam_size=5,
+                            condition_on_previous_text=False
+                        )
+                        
+                        for idx,segment in enumerate(segments):
+                            audio_text = segment.text
+                            duration = segment.end - segment.start
+                            logger.info(f'Audio transcription on Segment {idx+1} (Duration: {duration:.2f}s, [{segment.start:.2f}s - {segment.end:.2f}s]): {audio_text}')
+                            if audio_text.strip():
+                                yield segment.text, 0.7, {
+                                    "source": "video_whisper_segment",
+                                    "success": True,
+                                    "segment_start": segment.start,
+                                    "segment_end": segment.end,
+                                    "text_length": len(segment.text),
+                                }
+                
+                except Exception as e:
+                    logger.warning(f"Audio extraction failed (continuing with OCR only): {e}")
+        
+        except Exception as e:
+            logger.error(f"Video extraction failed: {e}")
+            raise FileProcessingException("video", f"Extraction failed: {e}")
+            
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                except Exception as ex:
+                    logger.warning(f"Failed to delete temp video file {tmp_path}: {ex}")
+            if audio_path and os.path.exists(audio_path):
+                try:
+                    os.unlink(audio_path)
+                except Exception as ex:
+                    logger.warning(f"Failed to delete temp audio file {audio_path}: {ex}")
+
+    async def extract_generic_stream(
+        self,
+        content: bytes,
+        material_type: str,
+    ) -> AsyncIterator[Tuple[str, float, Dict[str, Any]]]:
+        """
+        Extract text from generic material type as a stream of segments.
+        Yields Tuple[text, confidence, details_dict].
+        """
+        material_type = material_type.lower().strip()
+        
+        if material_type in ["text", "txt"]:
+            try:
+                text = content.decode("utf-8")
+                yield text, 1.0, {"source": "text_native", "success": True}
+            except UnicodeDecodeError:
+                raise FileProcessingException("text", "Invalid UTF-8 encoding")
+        
+        elif material_type in ["image", "jpg", "jpeg", "png"]:
+            text, conf, log = await self.extract_from_image(content)
+            yield text, conf, log
+            
+        elif material_type in ["pdf"]:
+            text, conf, log = await self.extract_from_pdf(content)
+            yield text, conf, log
+            
+        elif material_type in ["video", "mp4", "avi", "mov"]:
+            async for text, conf, log in self.extract_from_video_stream(content, sample_every_n_frames=30):
+                yield text, conf, log
+                
+        elif material_type in ["word", "docx", "doc"]:
+            text, conf, log = await self.extract_from_word(content)
+            yield text, conf, log
+            
+        elif material_type in ["pptx", "ppt"]:
+            text, conf, log = await self.extract_from_powerpoint(content)
+            yield text, conf, log
+            
+        elif material_type in ["xlsx", "xls"]:
+            text, conf, log = await self.extract_from_excel(content)
+            yield text, conf, log
+            
         else:
             raise FileProcessingException(material_type, f"Unsupported file type: {material_type}")

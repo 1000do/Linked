@@ -2,6 +2,7 @@ from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import Optional
 import os
+import torch
 
 
 class Settings(BaseSettings):
@@ -28,6 +29,7 @@ class Settings(BaseSettings):
     CLIP_MODEL_NAME: str = os.getenv("CLIP_MODEL_NAME", "openai/clip-vit-base-patch32")
     DISTILBERT_MODEL_NAME: str = os.getenv("DISTILBERT_MODEL_NAME", "distilbert-base-multilingual-cased")
     # DISTILBERT_MODEL_NAME: str = os.getenv("DISTILBERT_MODEL_NAME", "distilbert-base-uncased")
+    WHISPER_MODEL_NAME: str = os.getenv("WHISPER_MODEL_NAME", "small")
     
     # Processing config
     TEXT_BATCH_SIZE: int = int(os.getenv("TEXT_BATCH_SIZE", 32))
@@ -47,7 +49,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = os.getenv("AI_LOG_LEVEL", "INFO")
     
     # Device config
-    DEVICE: str = os.getenv("DEVICE", "cpu")  # "cpu", "cuda", "mps"
+    DEVICE: str = os.getenv("DEVICE", "cuda" if torch.cuda.is_available() else "cpu")
     
     class Config:
         env_file = ".env"

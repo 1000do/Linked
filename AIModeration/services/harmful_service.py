@@ -141,6 +141,7 @@ class HarmfulService(BaseService):
         candidates_pending = 0
 
         for alias, value in candidates.items():
+            logger.info(f'Checking media text on {alias}...')
             file_type = value.get('file_type')
             file_bytes = value.get('file_bytes')
 
@@ -153,26 +154,69 @@ class HarmfulService(BaseService):
                 continue
 
             try:
-                extracted_text, extraction_conf, extraction_log = await self.text_extractor.extract_generic(
+                candidates_checked += 1
+                
+                final_action = "APPROVED"
+                final_conf = 1.0
+                final_details = {"status": "APPROVED", "reason": "No segments processed"}
+                
+                segment_count = 0
+                all_segment_details = []
+                all_segment_scores = []
+                
+                async for chunk_text, extraction_conf, extraction_log in self.text_extractor.extract_generic_stream(
                     content=file_bytes,
                     material_type=file_type
-                )
-                
-                if not extracted_text or not extracted_text.strip():
+                ):
+                    if not chunk_text or not chunk_text.strip():
+                        continue
+                        
+                    segment_count += 1
+                    result_action, conf, details = self.text_classifier.classify_text(
+                        chunk_text,
+                        spam_threshold=spam_threshold,
+                        toxic_threshold=toxic_threshold
+                    )
+                    
+                    all_segment_details.append({
+                        "segment": segment_count,
+                        "source": extraction_log.get("source", "unknown"),
+                        "text_snippet": chunk_text[:60] + "..." if len(chunk_text) > 60 else chunk_text,
+                        "classification": details
+                    })
+                    all_segment_scores.append(conf)
+                    
+                    if result_action == ModerationStatus.FLAGGED.value:
+                        final_action = "FLAGGED"
+                        final_conf = conf
+                        final_details = details
+                        logger.warning(f"Fail-fast triggered for {alias}. Segment {segment_count} was FLAGGED: {chunk_text}")
+                        break
+                        # logger.warning(f"Harmful content detected on  {alias}. Segment {segment_count} was FLAGGED: {chunk_text}")
+                    elif result_action == "MANUAL_AUDIT" and final_action != "FLAGGED":
+                        final_action = "MANUAL_AUDIT"
+                        final_conf = conf
+                        final_details = details
+
+                if segment_count == 0:
                     overall_details[alias] = {"status": "SKIPPED", "reason": "No text extracted"}
                     continue
 
-                candidates_checked += 1
-                result_action, conf, details = self.text_classifier.classify_text(
-                    extracted_text,
-                    spam_threshold=spam_threshold,
-                    toxic_threshold=toxic_threshold
-                )
-                overall_details[alias] = details
+                if final_action == "APPROVED":
+                    avg_conf = float(np.mean(all_segment_scores)) if all_segment_scores else 1.0
+                    overall_details[alias] = {
+                        "action": "APPROVED",
+                        "score": avg_conf,
+                        "raw_label": "SAFE",
+                        "segments_processed": segment_count,
+                        "details": all_segment_details
+                    }
+                else:
+                    overall_details[alias] = final_details
                 
-                if result_action == ModerationStatus.FLAGGED.value:
+                if final_action == ModerationStatus.FLAGGED.value:
                     flagged_content.append(alias)
-                    aggregate_scores.append(conf)
+                    aggregate_scores.append(final_conf)
 
             except Exception as e:
                 self.logger.warning(f"Error extracting/classifying media {alias}: {e}")
