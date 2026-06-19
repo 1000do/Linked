@@ -4,7 +4,7 @@ namespace CourseMarketplaceBE.Domain.IRepositories
 {
     public interface INotificationRepository
     {
-        Task<List<Notification>> GetByReceiverIdAsync(int userId);
+        Task<(List<Notification> Items, int TotalCount)> GetByReceiverIdAsync(int userId, int page = 1, int pageSize = int.MaxValue);
         Task<Notification?> GetByIdAsync(int id);
 
         // THÊM DÒNG NÀY VÀO
@@ -14,7 +14,7 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         void Update(Notification notification);
         void UpdateRange(IEnumerable<Notification> notifications);
         Task<int> SaveChangesAsync();
-        Task<List<Notification>> GetAllAsync();
+        Task<(List<Notification> Items, int TotalCount)> GetAllAsync(int page = 1, int pageSize = int.MaxValue);
         Task<List<Notification>> GetUnreadByReceiverIdAsync(int userId);
         Task<int> GetUnreadCountAsync(int userId);
         Task<int> AutoCleanupAdminNotificationsAsync();

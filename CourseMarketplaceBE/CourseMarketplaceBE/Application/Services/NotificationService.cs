@@ -1,4 +1,5 @@
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
@@ -29,19 +30,23 @@ namespace CourseMarketplaceBE.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<List<NotificationResponseDto>> GetNotificationsForUserAsync(int userId)
+        public async Task<PagedResult<NotificationResponseDto>> GetNotificationsForUserAsync(int userId, int page = 1, int pageSize = int.MaxValue)
         {
-            var entities = await _repo.GetByReceiverIdAsync(userId);
-            return _mapper.Map<List<NotificationResponseDto>>(entities);
+            var (entities, count) = await _repo.GetByReceiverIdAsync(userId, page, pageSize);
+            if (!entities.Any()) throw new KeyNotFoundException("No notifications found.");
+            var dtos = _mapper.Map<List<NotificationResponseDto>>(entities);
+            return new PagedResult<NotificationResponseDto> { Items = dtos, TotalCount = count };
         }
 
-        public async Task<List<NotificationResponseDto>> GetAllNotificationsAsync()
+        public async Task<PagedResult<NotificationResponseDto>> GetAllNotificationsAsync(int page = 1, int pageSize = int.MaxValue)
         {
-            var entities = await _repo.GetAllAsync();
-            return _mapper.Map<List<NotificationResponseDto>>(entities);
+            var (entities, count) = await _repo.GetAllAsync(page, pageSize);
+            if (!entities.Any()) throw new KeyNotFoundException("No notifications found.");
+            var dtos = _mapper.Map<List<NotificationResponseDto>>(entities);
+            return new PagedResult<NotificationResponseDto> { Items = dtos, TotalCount = count };
         }
 
-        public async Task SendNotificationAsync(int receiverId, string title, string content, string? linkAction)
+        public async Task<bool> SendNotificationAsync(int receiverId, string title, string content, string? linkAction)
         {
             var now = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(7), DateTimeKind.Unspecified);
 
@@ -73,6 +78,7 @@ namespace CourseMarketplaceBE.Application.Services
                         receiverId = noti.ReceiverId
                     });
                 await _hubContext.Clients.Group("managers").SendAsync("ReceiveNotification");
+                return true;
             }
             catch (NotificationException ex)
             {
@@ -137,7 +143,8 @@ namespace CourseMarketplaceBE.Application.Services
 
             try
             {
-                await _repo.SaveChangesAsync();
+                int n = await _repo.SaveChangesAsync();
+                if (n == 0) throw new InvalidOperationException("Failed to save changes.");
                 await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", null);
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification");
                 return true;
@@ -148,13 +155,14 @@ namespace CourseMarketplaceBE.Application.Services
             }
         }
 
-        public async Task<List<NotificationAdminResponseDto>> GetAllNotificationsForAdminAsync()
+        public async Task<PagedResult<NotificationAdminResponseDto>> GetAllNotificationsForAdminAsync(int page = 1, int pageSize = int.MaxValue)
         {
             await _repo.AutoCleanupAdminNotificationsAsync();
 
-            var notifications = await _repo.GetAllAsync();
+            var (notifications, count) = await _repo.GetAllAsync(page, pageSize);
+            if (!notifications.Any()) throw new KeyNotFoundException("No notifications found.");
 
-            return notifications.Select(n => {
+            var dtos = notifications.Select(n => {
                 string role = "broadcast";
                 if (n.Receiver != null)
                 {
@@ -205,6 +213,7 @@ namespace CourseMarketplaceBE.Application.Services
                     LinkAction = n.LinkAction
                 };
             }).ToList();
+            return new PagedResult<NotificationAdminResponseDto> { Items = dtos, TotalCount = count };
         }
 
         public async Task<List<string>> SearchEmailsAsync(string query, int senderId, string senderRole)
@@ -312,9 +321,9 @@ namespace CourseMarketplaceBE.Application.Services
             return targetUserIds.Count;
         }
 
-        public async Task SendBulkNotificationsAsync(IEnumerable<NotificationBulkDto> dtos)
+        public async Task<bool> SendBulkNotificationsAsync(IEnumerable<NotificationBulkDto> dtos)
         {
-            if (dtos == null || !dtos.Any()) return;
+            if (dtos == null || !dtos.Any()) return true;
 
             var now = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(7), DateTimeKind.Unspecified);
 
@@ -351,6 +360,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             await _hubContext.Clients.Group("managers").SendAsync("ReceiveNotification");
+            return true;
         }
     }
 }

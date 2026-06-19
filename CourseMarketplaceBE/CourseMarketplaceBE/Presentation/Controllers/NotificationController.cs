@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,22 +22,30 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetMyNotifications()
+        public async Task<IActionResult> GetMyNotifications([FromQuery] int page = 1, [FromQuery] int pageSize = int.MaxValue)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim)) return Unauthorized();
 
             var userId = int.Parse(userIdClaim);
-            var data = await _notiService.GetNotificationsForUserAsync(userId);
-            return Ok(ApiResponse<List<NotificationResponseDto>>.SuccessResponse(data));
+            try {
+                var data = await _notiService.GetNotificationsForUserAsync(userId, page, pageSize);
+                return Ok(ApiResponse<PagedResult<NotificationResponseDto>>.SuccessResponse(data));
+            } catch (KeyNotFoundException) {
+                return Ok(ApiResponse<PagedResult<NotificationResponseDto>>.SuccessResponse(new PagedResult<NotificationResponseDto> { Items = new List<NotificationResponseDto>(), TotalCount = 0 }));
+            }
         }
 
         [HttpGet("all")]
         [Authorize(Roles = "admin,staff")]
-        public async Task<IActionResult> GetAllNotifications()
+        public async Task<IActionResult> GetAllNotifications([FromQuery] int page = 1, [FromQuery] int pageSize = int.MaxValue)
         {
-            var data = await _notiService.GetAllNotificationsForAdminAsync();
-            return Ok(ApiResponse<List<NotificationAdminResponseDto>>.SuccessResponse(data));
+            try {
+                var data = await _notiService.GetAllNotificationsForAdminAsync(page, pageSize);
+                return Ok(ApiResponse<PagedResult<NotificationAdminResponseDto>>.SuccessResponse(data));
+            } catch (KeyNotFoundException) {
+                return Ok(ApiResponse<PagedResult<NotificationAdminResponseDto>>.SuccessResponse(new PagedResult<NotificationAdminResponseDto> { Items = new List<NotificationAdminResponseDto>(), TotalCount = 0 }));
+            }
         }
 
         [HttpPut("mark-all-as-read")]

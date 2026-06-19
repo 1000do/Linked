@@ -200,7 +200,7 @@
 
 @section Scripts {
     <script>
-        const API_URL = "http://localhost:5207/api/Notification";
+        const API_URL = "/Notification";
         const TOKEN = `@Html.Raw(token)`;
 
         let currentPage = 1;
@@ -223,10 +223,10 @@
 
         async function loadHistory() {
             try {
-                const res = await fetch(`${API_URL}/all`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
+                const res = await fetch(`${API_URL}/GetAllAdmin`);
                 if (res.ok) {
                     const apiResp = await res.json();
-                    allNotifications = apiResp.data || [];
+                    allNotifications = apiResp.data?.items || [];
                     applyFilters();
                 }
             } catch (err) { console.error(err); }
@@ -381,7 +381,7 @@
             const query = e.target.value.trim();
             if (query.length < 1) { suggestions.classList.add('hidden'); return; }
             try {
-                const res = await fetch(`${API_URL}/search-emails?query=${query}`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
+                const res = await fetch(`${API_URL}/SearchEmails?query=${query}`);
                 const apiResp = await res.json();
                 const data = apiResp.data || [];
                 if (data.length > 0) {
@@ -490,11 +490,8 @@
                 !noti.isRead) {
                 
                 try {
-                    const res = await fetch(`${API_URL}/mark-as-read/${id}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `Bearer ${TOKEN}`
-                        }
+                    const res = await fetch(`${API_URL}/MarkAsRead/${id}`, {
+                        method: 'PUT'
                     });
                     if (res.ok) {
                         noti.isRead = true;
@@ -546,9 +543,9 @@
             btn.disabled = true; btn.innerText = "Sending...";
 
             try {
-                const res = await fetch(`${API_URL}/send-advanced`, {
+                const res = await fetch(`${API_URL}/SendAdvanced`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         targetType: type,
                         emails: selectedEmails,

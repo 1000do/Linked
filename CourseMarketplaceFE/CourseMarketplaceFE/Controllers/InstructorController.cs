@@ -491,9 +491,9 @@ public class InstructorController : Controller
 
             // Đọc thẳng thành List giống hệt cách làm của bên User
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var apiResp = JsonSerializer.Deserialize<ApiResponseWrapper<List<NotificationViewModel>>>(json, options);
+            var apiResp = JsonSerializer.Deserialize<ApiResponseWrapper<PagedResult<NotificationViewModel>>>(json, options);
 
-            return View(apiResp?.Data ?? new List<NotificationViewModel>());
+            return View(apiResp?.Data?.Items ?? new List<NotificationViewModel>());
         }
         return View(new List<NotificationViewModel>());
     }

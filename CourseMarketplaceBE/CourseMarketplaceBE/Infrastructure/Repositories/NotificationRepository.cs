@@ -10,14 +10,19 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
         private readonly AppDbContext _context;
         public NotificationRepository(AppDbContext context) => _context = context;
 
-        public async Task<List<Notification>> GetByReceiverIdAsync(int userId) =>
-            await _context.Notifications
+        public async Task<(List<Notification> Items, int TotalCount)> GetByReceiverIdAsync(int userId, int page = 1, int pageSize = int.MaxValue)
+        {
+            var query = _context.Notifications
                 .Where(n => n.ReceiverId == userId)
-                .OrderByDescending(n => n.CreatedAt)
-                .ToListAsync();
+                .OrderByDescending(n => n.CreatedAt);
+            var totalCount = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            return (items, totalCount);
+        }
 
-        public async Task<List<Notification>> GetAllAsync() =>
-            await _context.Notifications
+        public async Task<(List<Notification> Items, int TotalCount)> GetAllAsync(int page = 1, int pageSize = int.MaxValue)
+        {
+            var query = _context.Notifications
                 .Include(n => n.Receiver)
                     .ThenInclude(a => a.User)
                         .ThenInclude(u => u.Instructor)
@@ -28,8 +33,11 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                         .ThenInclude(u => u.Instructor)
                 .Include(n => n.Sender)
                     .ThenInclude(a => a.Manager)
-                .OrderByDescending(n => n.CreatedAt)
-                .ToListAsync();
+                .OrderByDescending(n => n.CreatedAt);
+            var totalCount = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            return (items, totalCount);
+        }
 
         public async Task<Notification?> GetByIdAsync(int id) =>
             await _context.Notifications

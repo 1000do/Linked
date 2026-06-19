@@ -1308,12 +1308,10 @@
             if (!container || !currentToken) return;
 
             try {
-                const response = await fetch("http://localhost:5207/api/Notification", {
-                    headers: { 'Authorization': `Bearer ${currentToken}` }
-                });
+                const response = await fetch("/Notification/GetMyNotifications");
                 if (response.ok) {
                     const result = await response.json();
-                    const notifications = Array.isArray(result) ? result : (result.data || []);
+                    const notifications = result.data?.items || [];
                     const hasUnread = notifications.some(n => n.isRead === false);
                     if (badge) hasUnread ? badge.classList.remove('hidden') : badge.classList.add('hidden');
 
