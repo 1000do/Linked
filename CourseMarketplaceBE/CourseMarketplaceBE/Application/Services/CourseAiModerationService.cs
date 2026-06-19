@@ -79,6 +79,12 @@ namespace CourseMarketplaceBE.Application.Services
             return response;
         }
 
+        public async Task UpdateCourseStatusAndClearCacheAsync(int courseId, string status, int instructorId)
+        {
+            await _courseCommandService.UpdateCourseStatusAsync(courseId, status, instructorId);
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseModerationDetail.GetKey(courseId));
+        }
+
         private async Task<ExactDuplicationResult> GetExactDuplicationResult(ExactDuplicationCommand command)
         {
             var res = new ExactDuplicationResult { CourseId = command.CourseExt.CourseId, IsDup = false };

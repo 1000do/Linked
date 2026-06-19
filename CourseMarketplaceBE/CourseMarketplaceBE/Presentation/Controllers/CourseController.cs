@@ -214,7 +214,7 @@ public class CourseController : ControllerBase
             request.InstructorId = instructorId;
 
             // Enforce all business validation checks, lockouts, and reset rejected statuses
-            await _courseCommandService.UpdateCourseStatusAsync(request.CourseId, CourseStatus.Pending.ToValue(), instructorId);
+            await _courseAiModerationService.UpdateCourseStatusAndClearCacheAsync(request.CourseId, CourseStatus.Pending.ToValue(), instructorId);
 
             // Run AI moderation in a background fire-and-forget task
             _ = Task.Run(async () =>
