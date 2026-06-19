@@ -14,6 +14,8 @@
 		<PackageReference Include="CloudinaryDotNet" Version="1.28.0" />
 		<PackageReference Include="DotNetEnv" Version="3.1.1" />
 		<PackageReference Include="Google.Apis.Auth" Version="1.73.0" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
+		<PackageReference Include="HtmlSanitizer" Version="9.0.892" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.25" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.25" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.25">

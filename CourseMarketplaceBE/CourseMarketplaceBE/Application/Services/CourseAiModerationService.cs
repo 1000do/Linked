@@ -29,6 +29,7 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly ILogger<CourseAiModerationService> _logger;
         private readonly ICourseRepository _courseRepository;
         private readonly IMapper _mapper;
+        private readonly IHtmlTextManipulationService _htmlTextManipulationService;
 
         public CourseAiModerationService(
             IContentHashService contentHashService,
@@ -43,7 +44,8 @@ namespace CourseMarketplaceBE.Application.Services
             ICourseModerationService courseModerationService,
             ILogger<CourseAiModerationService> logger,
             ICourseRepository courseRepository,
-            IMapper mapper)
+            IMapper mapper,
+            IHtmlTextManipulationService htmlTextManipulationService)
         {
             _contentHashService = contentHashService;
             _aiModerationService = aiModerationService;
@@ -58,6 +60,7 @@ namespace CourseMarketplaceBE.Application.Services
             _logger = logger;
             _courseRepository = courseRepository;
             _mapper = mapper;
+            _htmlTextManipulationService = htmlTextManipulationService;
         }
 
         public async Task<CourseModerationDetailResponse?> GetCourseForModerationAsync(int courseId)
@@ -72,6 +75,9 @@ namespace CourseMarketplaceBE.Application.Services
                 if (course == null) return null;
 
                 response = _mapper.Map<CourseModerationDetailResponse>(course);
+
+                ExtractPlainTextForModerationResponse(response);
+
                 await _redisService.SetCacheAsync(cacheKey, response, CacheTtl.Short.GetTtl());
                 _logger.LogInformation("Cached moderation course {CourseId} with key {CacheKey}", courseId, cacheKey);
             }
@@ -83,6 +89,27 @@ namespace CourseMarketplaceBE.Application.Services
         {
             await _courseCommandService.UpdateCourseStatusAsync(courseId, status, instructorId);
             await _redisService.RemoveCacheAsync(CacheKeys.CourseModerationDetail.GetKey(courseId));
+        }
+
+        private void ExtractPlainTextForModerationResponse(CourseModerationDetailResponse response)
+        {
+            response.Description = _htmlTextManipulationService.ExtractPlainText(response.Description ?? "");
+            response.WhatYouWillLearn = _htmlTextManipulationService.ExtractPlainText(response.WhatYouWillLearn ?? "");
+            response.Requirements = _htmlTextManipulationService.ExtractPlainText(response.Requirements ?? "");
+
+            if (response.Lessons != null)
+            {
+                foreach (var lesson in response.Lessons)
+                {
+                    if (lesson.LearningMaterials != null)
+                    {
+                        foreach (var material in lesson.LearningMaterials)
+                        {
+                            material.Description = _htmlTextManipulationService.ExtractPlainText(material.Description ?? "");
+                        }
+                    }
+                }
+            }
         }
 
         private async Task<ExactDuplicationResult> GetExactDuplicationResult(ExactDuplicationCommand command)
