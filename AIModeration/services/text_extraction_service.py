@@ -4,6 +4,8 @@ import logging
 import io
 import tempfile
 import os
+import math
+import fitz
 from typing import Tuple, AsyncIterator, Dict, Any
 from PIL import Image
 import cv2
@@ -58,7 +60,7 @@ class TextExtractionService(BaseService):
             cls._whisper_model = WhisperModel(whisper_model_name, device=device, compute_type=compute_type)
             
             logger.info("Loading EasyOCR model...")
-            cls._ocr_reader = easyocr.Reader(['en'], gpu=torch.cuda.is_available())
+            cls._ocr_reader = easyocr.Reader(['en','vi'], gpu=torch.cuda.is_available())
             
             cls._models_loaded = True
             logger.info("✓ All text extraction models loaded successfully")
@@ -73,20 +75,20 @@ class TextExtractionService(BaseService):
         if not file_extension:
             return "text"
         ext = file_extension.lower().replace(".", "").strip()
-        if ext in ["txt", "text"]:
+        if ext in ["txt", "text","csv"]:
             return "text"
-        elif ext in ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp"]:
+        elif ext in ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp","image"]:
             return "image"
-        elif ext in ["mp4", "avi", "mov", "mkv", "webm", "flv", "wmv", "3gp"]:
+        elif ext in ["mp4", "avi", "mov", "mkv", "webm", "flv", "wmv", "3gp","video"]:
             return "video"
         elif ext in ["pdf"]:
             return "pdf"
-        elif ext in ["docx", "doc", "odt", "rtf"]:
+        elif ext in ["docx", "doc", "odt", "rtf","word"]:
             return "word"
-        elif ext in ["pptx", "ppt"]:
-            return "pptx"
-        elif ext in ["xlsx", "xls", "csv"]:
-            return "xlsx"
+        elif ext in ["pptx", "ppt","powerpoint"]:
+            return "powerpoint"
+        elif ext in ["xlsx", "xls","excel"]:
+            return "excel"
         return "text"
     
     async def extract_from_image(self, image_bytes: bytes) -> Tuple[str, float, dict]:
@@ -105,12 +107,19 @@ class TextExtractionService(BaseService):
                 # EasyOCR expects a numpy array, byte content, or filepath
                 # Since image is loaded as PIL, we convert to numpy array
                 image_np = np.array(image)
-                results = self._ocr_reader.readtext(image_np, detail=0, paragraph=True)
-                text = "\n".join(results)
+                results = self._ocr_reader.readtext(image_np, detail=1, paragraph=False)
                 
-                # Estimate confidence
-                # For simplicity, use 0.8 as default if text extracted
-                confidence = 0.8 if text.strip() else 0.0
+                texts = []
+                confidences = []
+                for res in results:
+                    if len(res) == 3:
+                        _, t, prob = res
+                        if t.strip():
+                            texts.append(t)
+                            confidences.append(float(prob))
+                            
+                text = "\n".join(texts)
+                confidence = sum(confidences) / len(confidences) if confidences else 0.0
                 
                 log_entry = {
                     "source": "image_ocr",
@@ -119,13 +128,14 @@ class TextExtractionService(BaseService):
                     "confidence": confidence,
                 }
                 
+                logger.info(f"Extracted OCR text from image: {text[:100]}...")
                 return text, confidence, log_entry
         
         except Exception as e:
             logger.error(f"Image OCR failed: {e}")
             raise FileProcessingException("image", f"OCR failed: {e}")
     
-    async def extract_from_pdf(self, pdf_bytes: bytes) -> Tuple[str, float, dict]:
+    async def extract_from_pdf_legacy(self, pdf_bytes: bytes) -> Tuple[str, float, dict]:
         """
         Extract text from PDF using OCR on rendered images.
         """
@@ -138,16 +148,20 @@ class TextExtractionService(BaseService):
                 images = convert_from_bytes(pdf_bytes, first_page=1, last_page=5)  # First 5 pages
                 
                 all_text = []
+                all_confidences = []
                 
                 for image in images:
                     image_np = np.array(image)
-                    results = self._ocr_reader.readtext(image_np, detail=0, paragraph=True)
-                    text = "\n".join(results)
-                    if text.strip():
-                        all_text.append(text)
+                    results = self._ocr_reader.readtext(image_np, detail=1, paragraph=False)
+                    for res in results:
+                        if len(res) == 3:
+                            _, t, prob = res
+                            if t.strip():
+                                all_text.append(t)
+                                all_confidences.append(float(prob))
                 
                 combined_text = "\n".join(all_text)
-                confidence = 0.75 if combined_text.strip() else 0.0
+                confidence = sum(all_confidences) / len(all_confidences) if all_confidences else 0.0
                 
                 log_entry = {
                     "source": "pdf_ocr",
@@ -182,6 +196,7 @@ class TextExtractionService(BaseService):
                     tmp_path = tmp.name
                 
                 all_text = []
+                all_confidences = []
                 
                 try:
                     # Extract text from frames
@@ -202,14 +217,25 @@ class TextExtractionService(BaseService):
                         if frame_idx % sample_every_n_frames == 0:
                             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                             
-                            results = self._ocr_reader.readtext(rgb_frame, detail=0, paragraph=True)
-                            text = "\n".join(results).strip()
+                            results = self._ocr_reader.readtext(rgb_frame, detail=1, paragraph=False)
+                            frame_texts = []
+                            frame_confs = []
+                            for res in results:
+                                if len(res) == 3:
+                                    _, t, prob = res
+                                    if t.strip():
+                                        frame_texts.append(t)
+                                        frame_confs.append(float(prob))
+                                        
+                            text = "\n".join(frame_texts).strip()
+                            frame_conf = sum(frame_confs) / len(frame_confs) if frame_confs else 0.0
                             
                             if text:
                                 # Deduplication logic
                                 similarity = SequenceMatcher(None, last_text, text).ratio()
-                                if similarity < 0.8: # Only add if it's less than 80% similar to previous frame
+                                if similarity < 0.9: # Only add if it's less than 80% similar to previous frame
                                     all_text.append(text)
+                                    all_confidences.append(frame_conf)
                                     last_text = text
                             
                             frames_processed += 1
@@ -232,7 +258,12 @@ class TextExtractionService(BaseService):
                                 condition_on_previous_text=False
                             )
                             
-                            audio_text = "".join([segment.text for segment in segments])
+                            segment_texts = []
+                            for segment in segments:
+                                segment_texts.append(segment.text)
+                                all_confidences.append(math.exp(segment.avg_logprob))
+                                
+                            audio_text = "".join(segment_texts)
                             logger.info(f'Audio text: {audio_text}')
                             if audio_text.strip():
                                 all_text.append(audio_text)
@@ -243,7 +274,7 @@ class TextExtractionService(BaseService):
                         logger.warning(f"Audio extraction failed (continuing with OCR): {e}")
                     
                     combined_text = "\n".join(all_text)
-                    confidence = 0.7 if combined_text.strip() else 0.0
+                    confidence = sum(all_confidences) / len(all_confidences) if all_confidences else 0.0
                     
                     log_entry = {
                         "source": "video_ocr_whisper",
@@ -264,7 +295,7 @@ class TextExtractionService(BaseService):
             logger.error(f"Video extraction failed: {e}")
             raise FileProcessingException("video", f"Extraction failed: {e}")
     
-    async def extract_from_word(self, docx_bytes: bytes) -> Tuple[str, float, dict]:
+    async def extract_from_word_legacy(self, docx_bytes: bytes) -> Tuple[str, float, dict]:
         """
         Extract text from Word document.
         """
@@ -283,7 +314,7 @@ class TextExtractionService(BaseService):
                         all_text.append(para.text)
                 
                 combined_text = "\n".join(all_text)
-                confidence = 0.95 if combined_text.strip() else 0.0  # High confidence for text extraction
+                confidence = 1.0 if combined_text.strip() else 0.0  # High confidence for text extraction
                 
                 log_entry = {
                     "source": "word_native",
@@ -299,7 +330,7 @@ class TextExtractionService(BaseService):
             logger.error(f"Word extraction failed: {e}")
             raise FileProcessingException("word", f"Extraction failed: {e}")
     
-    async def extract_from_powerpoint(self, pptx_bytes: bytes) -> Tuple[str, float, dict]:
+    async def extract_from_powerpoint_legacy(self, pptx_bytes: bytes) -> Tuple[str, float, dict]:
         """
         Extract text from PowerPoint presentation.
         """
@@ -319,24 +350,23 @@ class TextExtractionService(BaseService):
                             all_text.append(shape.text)
                 
                 combined_text = "\n".join(all_text)
+                confidence = 1.0 if combined_text.strip() else 0.0
                 
                 log_entry = {
                     "source": "powerpoint_native",
-                    "status": "PENDING_MODEL",  # Vision model not trained yet
                     "success": True,
                     "slides": len(prs.slides),
                     "text_length": len(combined_text),
-                    "confidence": 0.0,
-                    "note": "Text extraction complete, but visual content requires vision model (not yet trained)",
+                    "confidence": confidence,
                 }
                 
-                return combined_text, 0.0, log_entry
+                return combined_text, confidence, log_entry
         
         except Exception as e:
             logger.error(f"PowerPoint extraction failed: {e}")
             raise FileProcessingException("powerpoint", f"Extraction failed: {e}")
     
-    async def extract_from_excel(self, xlsx_bytes: bytes) -> Tuple[str, float, dict]:
+    async def extract_from_excel_legacy(self, xlsx_bytes: bytes) -> Tuple[str, float, dict]:
         """
         Extract text from Excel spreadsheet.
         """
@@ -358,18 +388,17 @@ class TextExtractionService(BaseService):
                                 all_text.append(str(cell))
                 
                 combined_text = " ".join(all_text)
+                confidence = 1.0 if combined_text.strip() else 0.0
                 
                 log_entry = {
                     "source": "excel_native",
-                    "status": "PENDING_MODEL",  # Visual layout analysis not available
                     "success": True,
                     "sheets_processed": min(5, len(wb.sheetnames)),
                     "text_length": len(combined_text),
-                    "confidence": 0.0,
-                    "note": "Cell values extracted, but visual layout analysis requires vision model (not yet trained)",
+                    "confidence": confidence,
                 }
                 
-                return combined_text, 0.0, log_entry
+                return combined_text, confidence, log_entry
         
         except Exception as e:
             logger.error(f"Excel extraction failed: {e}")
@@ -396,19 +425,19 @@ class TextExtractionService(BaseService):
             return await self.extract_from_image(content)
         
         elif material_type in ["pdf"]:
-            return await self.extract_from_pdf(content)
+            return await self.extract_from_pdf_legacy(content)
         
         elif material_type in ["video", "mp4", "avi", "mov"]:
             return await self.extract_from_video_legacy(content)
         
         elif material_type in ["word", "docx", "doc"]:
-            return await self.extract_from_word(content)
+            return await self.extract_from_word_legacy(content)
         
         elif material_type in ["pptx", "ppt"]:
-            return await self.extract_from_powerpoint(content)
+            return await self.extract_from_powerpoint_legacy(content)
         
         elif material_type in ["xlsx", "xls"]:
-            return await self.extract_from_excel(content)
+            return await self.extract_from_excel_legacy(content)
         
         else:
             raise FileProcessingException(material_type, f"Unsupported file type: {material_type}")
@@ -436,7 +465,6 @@ class TextExtractionService(BaseService):
                     tmp_path = tmp.name
                 
                 # 1. OCR text extraction
-                ocr_text_list = []
                 cap = cv2.VideoCapture(tmp_path)
                 frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
                 fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
@@ -445,6 +473,7 @@ class TextExtractionService(BaseService):
                 frame_idx = 0
                 frames_processed = 0
                 last_text = ""
+                last_frame = 0
                 
                 while True:
                     ret, frame = cap.read()
@@ -453,31 +482,40 @@ class TextExtractionService(BaseService):
                     
                     if frame_idx % sample_every_n_frames == 0:
                         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                        results = self._ocr_reader.readtext(rgb_frame, detail=0, paragraph=True)
-                        text = "\n".join(results).strip()
+                        results = self._ocr_reader.readtext(rgb_frame, detail=1, paragraph=False)
+                        
+                        frame_texts = []
+                        frame_confs = []
+                        for res in results:
+                            if len(res) == 3:
+                                _, t, prob = res
+                                if t.strip():
+                                    frame_texts.append(t)
+                                    frame_confs.append(float(prob))
+                                    
+                        text = "\n".join(frame_texts).strip()
+                        frame_conf = sum(frame_confs) / len(frame_confs) if frame_confs else 0.0
                         
                         if text:
                             # Deduplication logic
                             similarity = SequenceMatcher(None, last_text, text).ratio()
                             if similarity < 0.8:
-                                ocr_text_list.append(text)
+                                logger.info(f"OCR similarity score of frame {frame_idx} vs frame {last_frame}: {similarity}")
                                 last_text = text
+                                last_frame = frame_idx
+                                logger.info(f'OCR on video frame {frame_idx}: {text}')
+                                yield text, frame_conf, {
+                                    "source": "video_ocr_frame",
+                                    "success": True,
+                                    "frame_index": frame_idx,
+                                    "total_frames": frame_count,
+                                    "text_length": len(text),
+                                }
                                 
                         frames_processed += 1
                     frame_idx += 1
                 
                 cap.release()
-                
-                if ocr_text_list:
-                    combined_ocr = "\n".join(ocr_text_list)
-                    logger.info(f'OCR on video: {combined_ocr}')
-                    yield combined_ocr, 0.7, {
-                        "source": "video_ocr",
-                        "success": True,
-                        "total_frames": frame_count,
-                        "frames_sampled": frames_processed,
-                        "text_length": len(combined_ocr),
-                    }
                 
                 # 2. Whisper audio text extraction
                 try:
@@ -495,9 +533,10 @@ class TextExtractionService(BaseService):
                         for idx,segment in enumerate(segments):
                             audio_text = segment.text
                             duration = segment.end - segment.start
+                            segment_conf = math.exp(segment.avg_logprob)
                             logger.info(f'Audio transcription on Segment {idx+1} (Duration: {duration:.2f}s, [{segment.start:.2f}s - {segment.end:.2f}s]): {audio_text}')
                             if audio_text.strip():
-                                yield segment.text, 0.7, {
+                                yield segment.text, segment_conf, {
                                     "source": "video_whisper_segment",
                                     "success": True,
                                     "segment_start": segment.start,
@@ -524,6 +563,139 @@ class TextExtractionService(BaseService):
                 except Exception as ex:
                     logger.warning(f"Failed to delete temp audio file {audio_path}: {ex}")
 
+    
+    async def extract_from_pdf_stream(self, pdf_bytes: bytes) -> AsyncIterator[Tuple[str, float, Dict[str, Any]]]:
+        if not pdf_bytes:
+            raise FileProcessingException("pdf", "Empty PDF provided")
+        try:
+            with self.time_operation("extract_from_pdf_stream", size=len(pdf_bytes)):
+                doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+                total_pages = len(doc)
+                has_native_text = False
+                
+                for idx in range(total_pages):
+                    page = doc.load_page(idx)
+                    text = page.get_text().strip()
+                    if text:
+                        has_native_text = True
+                        logger.info(f"Extracted native text from PDF page {idx + 1}: {text[:100]}...")
+                        yield text, 1.0, {
+                            "source": "pdf_native_page",
+                            "success": True,
+                            "page": idx + 1,
+                            "total_pages": total_pages,
+                            "text_length": len(text),
+                        }
+                
+                doc.close()
+                
+                if not has_native_text:
+                    logger.info("No native text found in PDF, falling back to OCR")
+                    images = convert_from_bytes(pdf_bytes)
+                    total_pages = len(images)
+                    for idx, image in enumerate(images):
+                        image_np = np.array(image)
+                        results = self._ocr_reader.readtext(image_np, detail=1, paragraph=False)
+                        page_texts = []
+                        page_confs = []
+                        for res in results:
+                            if len(res) == 3:
+                                _, t, prob = res
+                                if t.strip():
+                                    page_texts.append(t)
+                                    page_confs.append(float(prob))
+                        text = "\n".join(page_texts).strip()
+                        confidence = sum(page_confs) / len(page_confs) if page_confs else 0.0
+                        if text:
+                            logger.info(f"Extracted OCR text from PDF page {idx + 1}: {text[:100]}...")
+                            yield text, confidence, {
+                                "source": "pdf_ocr_page",
+                                "success": True,
+                                "page": idx + 1,
+                                "total_pages": total_pages,
+                                "text_length": len(text),
+                            }
+        except Exception as e:
+            logger.error(f"PDF extraction failed: {e}")
+            raise FileProcessingException("pdf", f"Extraction failed: {e}")
+
+    async def extract_from_word_stream(self, docx_bytes: bytes) -> AsyncIterator[Tuple[str, float, Dict[str, Any]]]:
+        if not docx_bytes:
+            raise FileProcessingException("word", "Empty DOCX provided")
+        try:
+            with self.time_operation("extract_from_word_stream", size=len(docx_bytes)):
+                doc = Document(io.BytesIO(docx_bytes))
+                total_paras = len(doc.paragraphs)
+                for idx, para in enumerate(doc.paragraphs):
+                    text = para.text.strip()
+                    if text:
+                        logger.info(f"Extracted native text from Word paragraph {idx + 1}: {text[:100]}...")
+                        yield text, 1.0, {
+                            "source": "word_native_paragraph",
+                            "success": True,
+                            "paragraph_index": idx + 1,
+                            "total_paragraphs": total_paras,
+                            "text_length": len(text),
+                        }
+        except Exception as e:
+            logger.error(f"Word extraction failed: {e}")
+            raise FileProcessingException("word", f"Extraction failed: {e}")
+
+    async def extract_from_powerpoint_stream(self, pptx_bytes: bytes) -> AsyncIterator[Tuple[str, float, Dict[str, Any]]]:
+        if not pptx_bytes:
+            raise FileProcessingException("powerpoint", "Empty PPTX provided")
+        try:
+            with self.time_operation("extract_from_powerpoint_stream", size=len(pptx_bytes)):
+                prs = Presentation(io.BytesIO(pptx_bytes))
+                total_slides = len(prs.slides)
+                for slide_idx, slide in enumerate(prs.slides):
+                    slide_texts = []
+                    for shape in slide.shapes:
+                        if hasattr(shape, "text") and shape.text.strip():
+                            slide_texts.append(shape.text.strip())
+                    text = "\n".join(slide_texts).strip()
+                    if text:
+                        logger.info(f"Extracted native text from PowerPoint slide {slide_idx + 1}: {text[:100]}...")
+                        yield text, 1.0, {
+                            "source": "powerpoint_native_slide",
+                            "success": True,
+                            "slide_index": slide_idx + 1,
+                            "total_slides": total_slides,
+                            "text_length": len(text),
+                        }
+        except Exception as e:
+            logger.error(f"PowerPoint extraction failed: {e}")
+            raise FileProcessingException("powerpoint", f"Extraction failed: {e}")
+
+    async def extract_from_excel_stream(self, xlsx_bytes: bytes) -> AsyncIterator[Tuple[str, float, Dict[str, Any]]]:
+        if not xlsx_bytes:
+            raise FileProcessingException("excel", "Empty XLSX provided")
+        try:
+            with self.time_operation("extract_from_excel_stream", size=len(xlsx_bytes)):
+                wb = load_workbook(io.BytesIO(xlsx_bytes))
+                total_sheets = len(wb.sheetnames)
+                for sheet_idx, sheet in enumerate(wb.sheetnames):
+                    ws = wb[sheet]
+                    sheet_texts = []
+                    for row in ws.iter_rows(values_only=True):
+                        for cell in row:
+                            if cell and str(cell).strip():
+                                sheet_texts.append(str(cell).strip())
+                    text = " ".join(sheet_texts).strip()
+                    if text:
+                        logger.info(f"Extracted native text from Excel sheet '{sheet}': {text[:100]}...")
+                        yield text, 1.0, {
+                            "source": "excel_native_sheet",
+                            "success": True,
+                            "sheet_name": sheet,
+                            "sheet_index": sheet_idx + 1,
+                            "total_sheets": total_sheets,
+                            "text_length": len(text),
+                        }
+        except Exception as e:
+            logger.error(f"Excel extraction failed: {e}")
+            raise FileProcessingException("excel", f"Extraction failed: {e}")
+
     async def extract_generic_stream(
         self,
         content: bytes,
@@ -535,36 +707,37 @@ class TextExtractionService(BaseService):
         """
         material_type = material_type.lower().strip()
         
-        if material_type in ["text", "txt"]:
+        if material_type in ["text"]:
             try:
                 text = content.decode("utf-8")
+                logger.info(f"Extracted text from generic text: {text[:100]}...")
                 yield text, 1.0, {"source": "text_native", "success": True}
             except UnicodeDecodeError:
                 raise FileProcessingException("text", "Invalid UTF-8 encoding")
         
-        elif material_type in ["image", "jpg", "jpeg", "png"]:
+        elif material_type in ["image"]:
             text, conf, log = await self.extract_from_image(content)
             yield text, conf, log
             
         elif material_type in ["pdf"]:
-            text, conf, log = await self.extract_from_pdf(content)
-            yield text, conf, log
+            async for text, conf, log in self.extract_from_pdf_stream(content):
+                yield text, conf, log
             
-        elif material_type in ["video", "mp4", "avi", "mov"]:
+        elif material_type in ["video"]:
             async for text, conf, log in self.extract_from_video_stream(content, sample_interval_seconds=3.0):
                 yield text, conf, log
                 
-        elif material_type in ["word", "docx", "doc"]:
-            text, conf, log = await self.extract_from_word(content)
-            yield text, conf, log
+        elif material_type in ["word"]:
+            async for text, conf, log in self.extract_from_word_stream(content):
+                yield text, conf, log
             
-        elif material_type in ["pptx", "ppt"]:
-            text, conf, log = await self.extract_from_powerpoint(content)
-            yield text, conf, log
+        elif material_type in ["powerpoint"]:
+            async for text, conf, log in self.extract_from_powerpoint_stream(content):
+                yield text, conf, log
             
-        elif material_type in ["xlsx", "xls"]:
-            text, conf, log = await self.extract_from_excel(content)
-            yield text, conf, log
+        elif material_type in ["excel"]:
+            async for text, conf, log in self.extract_from_excel_stream(content):
+                yield text, conf, log
             
         else:
             raise FileProcessingException(material_type, f"Unsupported file type: {material_type}")

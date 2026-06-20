@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     SPAM_MODEL_PATH: str = os.getenv("SPAM_MODEL_PATH", "app/models/spam_1")
     TOXIC_MODEL_PATH: str = os.getenv("TOXIC_MODEL_PATH", "app/models/toxic_3")
     CLIP_MODEL_NAME: str = os.getenv("CLIP_MODEL_NAME", "openai/clip-vit-base-patch32")
-    DISTILBERT_MODEL_NAME: str = os.getenv("DISTILBERT_MODEL_NAME", "distilbert-base-multilingual-cased")
+    TEXT_EMBEDDING_MODEL_NAME: str = os.getenv("TEXT_EMBEDDING_MODEL_NAME", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
     # DISTILBERT_MODEL_NAME: str = os.getenv("DISTILBERT_MODEL_NAME", "distilbert-base-uncased")
     WHISPER_MODEL_NAME: str = os.getenv("WHISPER_MODEL_NAME", "small")
     
@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     TEXT_STRIDE: int = int(os.getenv("TEXT_STRIDE", 64))
     
     # Embedding config
-    EMBEDDING_DIMENSION: int = int(os.getenv("EMBEDDING_DIMENSION", 768))
+    EMBEDDING_DIMENSION: int = int(os.getenv("EMBEDDING_DIMENSION", 384))
     COSINE_SIMILARITY_THRESHOLD: float = float(os.getenv("COSINE_SIMILARITY_THRESHOLD", 0.85))
     
     # Timeout config (in seconds)

@@ -148,11 +148,6 @@ class HarmfulService(BaseService):
             if not file_bytes:
                 continue
 
-            if file_type in ["pptx", "ppt", "xlsx", "xls"]:
-                candidates_pending += 1
-                overall_details[alias] = {"status": "PENDING_MODEL", "reason": "PPT/Excel extraction not supported"}
-                continue
-
             try:
                 candidates_checked += 1
                 
@@ -187,12 +182,18 @@ class HarmfulService(BaseService):
                     all_segment_scores.append(conf)
                     
                     if result_action == ModerationStatus.FLAGGED.value:
+                        console_log = f'''
+                        {alias}
+                        Source: {extraction_log.get("source", "unknown")} 
+                        Segment {segment_count} was FLAGGED
+                        First 100 characters: {chunk_text[:100]}
+                        '''
                         final_action = "FLAGGED"
                         final_conf = conf
                         final_details = details
-                        logger.warning(f"Fail-fast triggered for {alias}. Segment {segment_count} was FLAGGED: {chunk_text}")
+                        logger.warning(f'Fail-fast triggered for {console_log}')
                         break
-                        # logger.warning(f"Harmful content detected on  {alias}. Segment {segment_count} was FLAGGED: {chunk_text}")
+                        # logger.warning(f"Harmful content detected on {console_log}")
                     elif result_action == "MANUAL_AUDIT" and final_action != "FLAGGED":
                         final_action = "MANUAL_AUDIT"
                         final_conf = conf

@@ -21,6 +21,7 @@ pillow
 opencv-python
 easyocr
 pdf2image
+PyMuPDF
 python-pptx
 openpyxl
 python-docx
