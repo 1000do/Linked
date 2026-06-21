@@ -1,11 +1,19 @@
 ---
-name: plantuml_class_diagram
-description: Guides the generation and modification of standardized, high-quality PlantUML class diagrams for application modules following strict project design and styling guidelines.
+name: mermaid_class_diagram
+description: Guides the generation, modification, and translation (from PlantUML) of standardized, high-quality Mermaid class diagrams for application modules following strict project design and styling guidelines.
 ---
 
-# PlantUML Class Diagram Generation Skill
+# Mermaid Class Diagram Generation Skill
 
-This skill provides comprehensive instructions, architectural guidelines, styling rules, and concrete examples for creating and refactoring PlantUML class diagrams. It ensures diagrams are technically accurate, visually consistent, and represent class definitions (fields, properties, methods, interfaces, and database contexts) according to the project's class diagram standard.
+This skill provides comprehensive instructions, architectural guidelines, styling rules, and concrete examples for creating and refactoring Mermaid class diagrams. It ensures diagrams are technically accurate, visually consistent, and represent class definitions (fields, properties, methods, interfaces, and database contexts) according to the project's class diagram standard.
+
+> [!IMPORTANT]
+> **PlantUML Translation Requirement**
+> If the user's input contains a PlantUML class diagram (either via a tagged file or directly pasted code), your primary task is to **translate the PlantUML diagram into the Mermaid format**. You **MUST** ensure the translated Mermaid diagram strictly adheres to **ALL** the rules, styling, and formatting guidelines defined in this skill document (e.g., using `~` for generics, formatting interfaces with asterisks, applying allowed relationships, and using the minimalist style definition). Do not perform a mere 1-to-1 syntax swap; adapt the diagram to fully comply with this skill's standards.
+
+> [!IMPORTANT]
+> **Output Location and Naming Convention**
+> All generated Mermaid class diagrams **MUST** be exported and saved to the `diagrams/class_mermaid` directory within the workspace. The file naming convention must follow the format `cls_mm_use_case_name` or `cls_mm_functionality_name` with a `.mmd` extension. For example, a diagram for creating a course must be named `cls_mm_create_course.mmd`.
 
 ---
 
@@ -28,18 +36,18 @@ Depending on the specific use case, a class diagram may include:
 
 Use **ONLY** the following relationship connections. Do not use any custom or standard notations not listed here:
 
-| Relationship Type | PlantUML Syntax | Direction/Meaning |
+| Relationship Type | Mermaid Syntax | Direction/Meaning |
 | :--- | :---: | :--- |
 | **Dependency** | `..>` | Points *towards* the class being depended on (e.g., `A ..> B`) |
 | **Unidirectional Association** | `-->` | Points *towards* the reference target (e.g., `A --> B`) |
 | **Bidirectional Association** | `--` | Standard reference link with no specific arrow direction |
-| **Aggregation** | `o--` | Part-of relationship; hollow diamond on the container side |
-| **Composition** | `*--` | Strong ownership; filled diamond on the owner/container side |
-| **Realization (Implementation)**| `..|>` | Standard interface implementation; hollow arrow pointing to interface |
-| **Inheritance** | `--|>` | Standard class inheritance; hollow arrow pointing to base class |
+| **Aggregation** | `o--` | Part-of relationship; hollow diamond on the container side (e.g., `Container o-- Part`) |
+| **Composition** | `*--` | Strong ownership; filled diamond on the owner/container side (e.g., `Owner *-- Component`) |
+| **Realization (Implementation)**| `..\|>` | Standard interface implementation; hollow arrow pointing to interface (e.g., `Implementation ..\|> IInterface`) |
+| **Inheritance** | `--\|>` | Standard class inheritance; hollow arrow pointing to base class (e.g., `Child --\|> Base`) |
 
 > [!IMPORTANT]
-> - **Multiplicity / Cardinality**: DO NOT include any multiplicity labels or cardinality text on relationships (e.g., do not use `class1 "1" --> "*" class2`). Leave relationships clean of cardinality.
+> - **Multiplicity / Cardinality**: DO NOT include any multiplicity labels or cardinality text on relationships. Leave relationships clean of cardinality.
 > - **No Relationship Labels / Text**: DO NOT include any text, description, or label on relationship lines (e.g., do not use `: uses`, `: calls`, `: creates`, `: queries`, etc.). Leave all relationships completely clean of text.
 > - **No PK / FK Markers**: DO NOT include database key markers like `<<PK>>` or `<<FK>>` in entity classes.
 
@@ -73,7 +81,7 @@ To maintain consistency across diagrams, assign relationships strictly according
 - *Triggers*: A controller, service, or repository holds an instance of `IService`, `IRepository`, or `AppDbContext` as a member field.
 - *Example*: `CourseController --> ICourseService` (Controller references its service interface).
 
-### D. Realization (`..|>`) and Inheritance (`--|>`):
+### D. Realization (`..|>`) and Inheritance (`--|>`)
 - Apply standard object-oriented rules:
   - Use `..|>` when a class implements an interface (e.g., `CourseService ..|> ICourseService`).
   - Use `--|>` when a class inherits from a base class (e.g., `InstructorCourseController --|> Controller`).
@@ -82,79 +90,46 @@ To maintain consistency across diagrams, assign relationships strictly according
 
 ## 4. Best Practices & Styling
 
-- **Modern Clean Theme**: Use standard PlantUML styling directives at the top of the file for professional aesthetics:
-  ```plantuml
-  ' Styling & Settings
-  skinparam style strictuml
-  skinparam shadowing false
-  skinparam classAttributeIconSize 0
-  skinparam class {
-      BackgroundColor White
-      BorderColor #1A73E8
-      ArrowColor #5F6368
-  }
-  ```
+- **Standard Layout**: Start your diagram with `classDiagram` or `classDiagram-v2` followed by `direction LR` on the next line to render the diagram from left to right.
 - **Namespaces / Packages**: Do not use namespaces/packages.
 - **Members Representation & Signatures**:
   - **Field Attributes**: Include private field attributes related to the functionalities, formatted as `visibility attributeName : Interface/Class/Data Type` (e.g., `- _courseRepository : ICourseRepository`).
-  - **Full Method Signatures**: Provide complete signatures for methods, specifying visibility (`+` for public, `-` for private, `#` for protected), arguments with their types, and the return type (e.g., `+ CreateCourseAsync(request: CourseCreateRequest, instructorId: int): Task<CourseResponse>`).
-  - **Interface Content Styling**: For interfaces, write all internal contents (methods, properties, attributes) entirely in italics. In PlantUML, format them with double slashes (e.g., `//+ CreateCourseAsync(request: CourseCreateRequest, instructorId: int): Task<CourseResponse>//`).
+  - **Full Method Signatures**: Provide complete signatures for methods, specifying visibility (`+` for public, `-` for private, `#` for protected), arguments with their types, and the return type (e.g., `+ CreateCourseAsync(request: CourseCreateRequest, instructorId: int) Task~CourseResponse~`).
+  - **Generics**: In Mermaid, you **MUST** use tildes (`~`) instead of angle brackets (`<` `>`) for generic types to avoid parsing errors. For example, use `Task~CourseResponse~` instead of `Task<CourseResponse>`, and `List~CategoryViewModel~` instead of `List<CategoryViewModel>`.
+  - **Interface Stereotype & Methods**: For interfaces, you **MUST** include the `<<interface>>` stereotype annotation on the first line inside the class block. Additionally, all methods inside an interface **MUST** be explicitly marked as abstract by appending an asterisk (`*`) at the end of the signature to render them in italics (e.g., `+ CreateCourseAsync(...) Task~CourseResponse~ *`). Note that Mermaid natively italicizes the interface name when `<<interface>>` is used.
   - **Relevance**: For Controllers, Services, Repositories, and AppDbContext, keep attributes and methods clean and relevant to the specific use case to avoid clutter.
     - Identify methods that contain the main execution flow (usually public methods defined in the interface contracts).
     - Only include dependencies and their corresponding private fields if they are directly implemented or referenced in these main public methods.
     - If the main public methods use private helper methods, and there are dependencies or fields abstracted behind these private helpers, **skip them** for simplicity.
   - **Data Models (ViewModels, DTOs, Entities)**: If a participant is a ViewModel, DTO, or Entity, you **MUST include ALL of its fields and properties** in the class block. Furthermore, if any of those properties map to another ViewModel, DTO, or Entity that is ALSO present in the diagram, you **MUST explicitly connect them** in the Relationships section using an appropriate relationship (e.g., `Account -- Lockout`).
-- **Standard Colors**:
-  - Abstract/Interface: `ABSTRACT_COLOR` `#FFE6CC`
-  - Service Implementation: `SERVICE_COLOR` `#CCE5FF`
-  - ViewModel/DTO: `DTO_COLOR` `#E6CCFF`
-  - Domain Entity: `ENTITY_COLOR` `#CCFFE6`
-  - Repository Implementation: `REPOSITORY_COLOR` `#FFFFCC`
-  - Controller: `CONTROLLER_COLOR` `#FFE6E6`
-  - DbContext: `DbContext` `#E6F3FF`
+- **Styling and Colors**:
+  - The diagram should have a simplified, minimalist aesthetic: white background, white fill, black borders, and black text.
+  - At the end of the diagram, define a single default style:
+    ```mermaid
+    classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
+    ```
 
 ---
 
-## 5. Complete Reference Template (`create_course.plantuml`)
+## 5. Complete Reference Template (`create_course.mermaid`)
 
-Below is the standard, working PlantUML class diagram depicting the "Create Course" structure:
+Below is the standard, working Mermaid class diagram depicting the "Create Course" structure:
 
-```plantuml
-@startuml CreateCourse_ClassDiagram
+```mermaid
+classDiagram
+direction LR
 
-' Styling & Settings
-skinparam style strictuml
-skinparam shadowing false
-skinparam classAttributeIconSize 0
-skinparam class {
-    BackgroundColor White
-    BorderColor #1A73E8
-    ArrowColor #5F6368
+%% ==================== FRONTEND ====================
+
+class InstructorCourseController {
+    + Create() Task~IActionResult~
+    + Create(model: CreateCourseViewModel) Task~IActionResult~
+    - GetCategoriesAsync() Task~List~CategoryViewModel~~
+    - LoadStripeStatusAsync() void
+    - LoadTransferRateAsync() void
 }
 
-!define ABSTRACT_COLOR #FFE6CC
-!define SERVICE_COLOR #CCE5FF
-!define DTO_COLOR #E6CCFF
-!define ENTITY_COLOR #CCFFE6
-!define REPOSITORY_COLOR #FFFFCC
-!define CONTROLLER_COLOR #FFE6E6
-
-skinparam backgroundColor #FFFFFF
-skinparam classBackgroundColor #F9F9F9
-skinparam classBorderColor #333333
-skinparam arrowColor #333333
-
-' ==================== FRONTEND ====================
-
-class InstructorCourseController #FFE6E6 {
-    + Create() : Task<IActionResult>
-    + Create(model: CreateCourseViewModel) : Task<IActionResult>
-    - GetCategoriesAsync() : Task<List<CategoryViewModel>>
-    - LoadStripeStatusAsync() : Task<void>
-    - LoadTransferRateAsync() : Task<void>
-}
-
-class CreateCourseViewModel #E6CCFF {
+class CreateCourseViewModel {
     + Title : string
     + CategoryId : int
     + Description : string
@@ -163,28 +138,28 @@ class CreateCourseViewModel #E6CCFF {
     + WhatYouWillLearn : string
     + Requirements : string
     + CouponId : int?
-    + AvailableCategories : List<CategoryViewModel>
+    + AvailableCategories : List~CategoryViewModel~
 }
 
-class CategoryViewModel #E6CCFF {
+class CategoryViewModel {
     + CategoryId : int
     + CategoriesName : string
 }
 
-' ==================== BACKEND - CONTROLLER ====================
+%% ==================== BACKEND - CONTROLLER ====================
 
-class CourseController #FFE6E6 {
+class CourseController {
     - _courseQueryService : ICourseQueryService
     - _courseCommandService : ICourseCommandService
     - _aiModerationService : ICourseAiModerationService
     
-    + CreateCourse(request: CourseCreateRequest) : Task<IActionResult>
-    - GetInstructorId() : int
+    + CreateCourse(request: CourseCreateRequest) Task~IActionResult~
+    - GetInstructorId() int
 }
 
-' ==================== BACKEND - DTOs ====================
+%% ==================== BACKEND - DTOs ====================
 
-class CourseCreateRequest #E6CCFF {
+class CourseCreateRequest {
     + CategoryId : int
     + Title : string
     + Description : string?
@@ -195,7 +170,7 @@ class CourseCreateRequest #E6CCFF {
     + ThumbnailFile : IFormFile?
 }
 
-class CourseResponse #E6CCFF {
+class CourseResponse {
     + CourseId : int
     + InstructorId : int?
     + CategoryId : int?
@@ -229,9 +204,9 @@ class CourseResponse #E6CCFF {
     + IsInAnyCart : bool
 }
 
-' ==================== BACKEND - DOMAIN ENTITIES ====================
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
 
-class Course #CCFFE6 {
+class Course {
     + CourseId : int
     + InstructorId : int?
     + CategoryId : int?
@@ -244,15 +219,15 @@ class Course #CCFFE6 {
     + UpdatedAt : DateTime?
     + CourseStatus : string?
     + CourseFlagCount : int?
-    + CourseAiIntegrations : ICollection<CourseAiIntegration>
-    + CartItems : ICollection<CartItem>
+    + CourseAiIntegrations : ICollection~CourseAiIntegration~
+    + CartItems : ICollection~CartItem~
     + Category : Category?
     + Coupon : Coupon?
-    + Enrollments : ICollection<Enrollment>
+    + Enrollments : ICollection~Enrollment~
     + Instructor : Instructor?
-    + Lessons : ICollection<Lesson>
-    + OrderItems : ICollection<OrderItem>
-    + WishlistItems : ICollection<WishlistItem>
+    + Lessons : ICollection~Lesson~
+    + OrderItems : ICollection~OrderItem~
+    + WishlistItems : ICollection~WishlistItem~
     + CourseExt : CourseExt?
     + WhatYouWillLearn : string?
     + Requirements : string?
@@ -262,17 +237,17 @@ class Course #CCFFE6 {
     + ThreatLevel : AiThreatLevel
 }
 
-class Category #CCFFE6 {
+class Category {
     + CategoryId : int
     + CategoriesName : string
     + Description : string?
     + CreatedAt : DateTime?
     + UpdatedAt : DateTime?
     + CategoryStatus : string?
-    + Courses : ICollection<Course>
+    + Courses : ICollection~Course~
 }
 
-class Instructor #CCFFE6 {
+class Instructor {
     + InstructorId : int
     + ProfessionalTitle : string?
     + ExpertiseCategories : string?
@@ -287,12 +262,12 @@ class Instructor #CCFFE6 {
     + PayoutsEnabled : bool?
     + ChargesEnabled : bool?
     + StripeCountry : string?
-    + Courses : ICollection<Course>
-    + InstructorPayouts : ICollection<InstructorPayout>
+    + Courses : ICollection~Course~
+    + InstructorPayouts : ICollection~InstructorPayout~
     + InstructorNavigation : User
 }
 
-class Coupon #CCFFE6 {
+class Coupon {
     + CouponId : int
     + ManagerId : int?
     + CouponCode : string
@@ -304,89 +279,96 @@ class Coupon #CCFFE6 {
     + UsageLimit : int?
     + UsedCount : int?
     + IsActive : bool?
-    + Courses : ICollection<Course>
+    + Courses : ICollection~Course~
     + Manager : Manager?
 }
 
-' ==================== BACKEND - SERVICE INTERFACES ====================
+%% ==================== BACKEND - SERVICE INTERFACES ====================
 
-interface ICourseCommandService #FFE6CC {
-    //+ CreateCourseAsync(request: CourseCreateRequest, instructorId: int) : Task<CourseResponse>//
+class ICourseCommandService {
+    <<interface>>
+    + CreateCourseAsync(request: CourseCreateRequest, instructorId: int) Task~CourseResponse~ *
 }
 
-interface ICourseQueryService #FFE6CC {
-    //+ GetCategoriesAsync() : Task<IEnumerable<CategoryResponse>>//
+class ICourseQueryService {
+    <<interface>>
+    + GetCategoriesAsync() Task~IEnumerable~CategoryResponse~~ *
 }
 
-interface IInstructorRepository #FFE6CC {
-    //+ GetByIdAsync(id: int) : Task<Instructor?>//
-    //+ SaveChangesAsync() : Task<int>//
+class IInstructorRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~Instructor?~ *
+    + SaveChangesAsync() Task~int~ *
 }
 
-interface ICourseRepository #FFE6CC {
-    //+ AddAsync(course: Course) : Task<void>//
-    //+ SaveChangesAsync() : Task<int>//
+class ICourseRepository {
+    <<interface>>
+    + AddAsync(course: Course) void *
+    + SaveChangesAsync() Task~int~ *
 }
 
-interface IFileUploadService #FFE6CC {
-    //+ UploadImageAsync(file: IFormFile) : Task<string?>//
-    //+ UploadVideoAsync(file: IFormFile) : Task<string?>//
+class IFileUploadService {
+    <<interface>>
+    + UploadImageAsync(file: IFormFile) Task~string?~ *
+    + UploadVideoAsync(file: IFormFile) Task~string?~ *
 }
 
-interface IContentHashService #FFE6CC {
-    //+ ComputeCourseHashAsync(text: string) : Task<string>//
-    //+ SaveCourseHashesAsync(command: SaveCourseHashesCommand) : Task<void>//
+class IContentHashService {
+    <<interface>>
+    + ComputeCourseHashAsync(text: string) Task~string~ *
+    + SaveCourseHashesAsync(command: SaveCourseHashesCommand) void *
 }
 
-interface IRedisService #FFE6CC {
-    //+ RemoveCacheAsync(key: string) : Task<void>//
+class IRedisService {
+    <<interface>>
+    + RemoveCacheAsync(key: string) void *
 }
 
-' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
-class CourseCommandService #CCE5FF {
+class CourseCommandService {
     - _courseRepository : ICourseRepository
     - _instructorRepository : IInstructorRepository
     - _uploadService : IFileUploadService
     - _redisService : IRedisService
     - _contentHashService : IContentHashService
     
-    + CreateCourseAsync(request: CourseCreateRequest, instructorId: int) : Task<CourseResponse>
-    - UpdateCourseHashesAsync(course: Course) : Task<void>
+    + CreateCourseAsync(request: CourseCreateRequest, instructorId: int) Task~CourseResponse~
+    - UpdateCourseHashesAsync(course: Course) Task~void~
 }
 
-' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
-class CourseRepository #FFFFCC {
+class CourseRepository {
     - _context : AppDbContext
     
-    + AddAsync(course: Course) : Task<void>
-    + SaveChangesAsync() : Task<int>
+    + AddAsync(course: Course) void
+    + SaveChangesAsync() Task~int~
 }
 
-' ==================== BACKEND - DbContext ====================
+%% ==================== BACKEND - DbContext ====================
 
-class AppDbContext #E6F3FF {
-    + Categories : DbSet<Category>
-    + Coupons : DbSet<Coupon>
-    + Courses : DbSet<Course>
-    + Instructors : DbSet<Instructor>
-    ---
-    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) : void
-    # OnModelCreating(modelBuilder: ModelBuilder) : void
+class AppDbContext {
+    + Categories : DbSet~Category~
+    + Coupons : DbSet~Coupon~
+    + Courses : DbSet~Course~
+    + Instructors : DbSet~Instructor~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
 }
 
-' ==================== RELATIONSHIPS ====================
+%% ==================== RELATIONSHIPS ====================
 
-' === COMPOSITION (filled diamond) ===
+%% === COMPOSITION (filled diamond) ===
 Instructor *-- Course
 
-' === AGGREGATION (hollow diamond) ===
+%% === AGGREGATION (hollow diamond) ===
 CreateCourseViewModel o-- CategoryViewModel
 Category o-- Course
 Course -- Coupon
 
-' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 CourseController --> ICourseCommandService
 CourseController --> ICourseQueryService
 CourseCommandService --> ICourseRepository
@@ -396,11 +378,11 @@ CourseCommandService --> IContentHashService
 CourseCommandService --> IRedisService
 CourseRepository --> AppDbContext
 
-' === INTERFACE REALIZATION ===
+%% === INTERFACE REALIZATION ===
 CourseCommandService ..|> ICourseCommandService
 CourseRepository ..|> ICourseRepository
 
-' === DEPENDENCY (dashed arrows) ===
+%% === DEPENDENCY (dashed arrows) ===
 InstructorCourseController ..> CourseController
 InstructorCourseController ..> CreateCourseViewModel
 CourseController ..> CourseCreateRequest
@@ -409,5 +391,8 @@ CourseCommandService ..> CourseResponse
 CourseCommandService ..> Course
 CourseRepository ..> Course
 
-@enduml
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
+```
 ```
