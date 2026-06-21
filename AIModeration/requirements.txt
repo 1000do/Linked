@@ -19,15 +19,16 @@ python-multipart
 # File Processing
 pillow
 opencv-python
-pytesseract
+easyocr
 pdf2image
+PyMuPDF
 python-pptx
 openpyxl
 python-docx
 
 # Audio
 
-openai-whisper
+faster-whisper
 
 
 # Utilities

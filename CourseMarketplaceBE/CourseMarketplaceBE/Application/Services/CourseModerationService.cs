@@ -249,16 +249,16 @@ namespace CourseMarketplaceBE.Application.Services
             var rejectedLessonIds = new HashSet<int>();
 
             course.ModerationFeedback = null;
-            var allMaterials = await _materialRepository.GetByCourseIdAsync(request.CourseId);
-            if (allMaterials != null)
-            {
-                foreach (var m in allMaterials)
-                {
-                    m.ModerationFeedback = null;
-                    m.LearningStatus = LearningStatus.Active.ToValue();
-                    _materialRepository.Update(m);
-                }
-            }
+            // var allMaterials = await _materialRepository.GetByCourseIdAsync(request.CourseId);
+            // if (allMaterials != null)
+            // {
+            //     foreach (var m in allMaterials)
+            //     {
+            //         m.ModerationFeedback = null;
+            //         m.LearningStatus = LearningStatus.Active.ToValue();
+            //         _materialRepository.Update(m);
+            //     }
+            // }
 
             var lessons = await _lessonRepository.GetByCourseIdAsync(request.CourseId);
             if (lessons != null)

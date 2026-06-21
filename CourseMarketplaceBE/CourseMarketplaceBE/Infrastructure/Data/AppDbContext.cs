@@ -1093,7 +1093,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.TextEmbeddingId).HasColumnName("text_embedding_id");
             entity.Property(e => e.MaterialId).HasColumnName("material_id");
             entity.Property(e => e.Embedding)
-                .HasColumnType("vector(768)")
+                .HasColumnType("vector(384)")
                 .HasColumnName("text_embedding")
                 .HasConversion(
                       v => v != null ? new Vector(v.ToArray()) : null,

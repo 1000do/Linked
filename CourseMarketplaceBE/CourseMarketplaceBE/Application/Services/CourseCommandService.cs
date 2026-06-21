@@ -33,6 +33,7 @@ public class CourseCommandService : ICourseCommandService
     private readonly IMapper _mapper;
     private readonly ILockoutRepository _lockoutRepo;
     private readonly ICourseExtRepository _courseExtRepo;
+    private readonly IHtmlTextManipulationService _htmlTextManipulationService;
 
     public CourseCommandService(
         ICourseRepository courseRepository,
@@ -48,7 +49,8 @@ public class CourseCommandService : ICourseCommandService
         // IMapper mapper)
         IMapper mapper,
         ILockoutRepository lockoutRepo,
-        ICourseExtRepository courseExtRepo)
+        ICourseExtRepository courseExtRepo,
+        IHtmlTextManipulationService htmlTextManipulationService)
     {
         _courseRepository = courseRepository;
         _instructorRepository = instructorRepository;
@@ -63,6 +65,7 @@ public class CourseCommandService : ICourseCommandService
         _mapper = mapper;
         _lockoutRepo = lockoutRepo;
         _courseExtRepo = courseExtRepo;
+        _htmlTextManipulationService = htmlTextManipulationService;
     }
 
     private async Task<(int, bool)> CheckInstructorRights(int instructorId)
@@ -122,11 +125,11 @@ public class CourseCommandService : ICourseCommandService
             InstructorId = validInstructorId,
             CategoryId = request.CategoryId,
             Title = request.Title,
-            Description = request.Description,
+            Description = _htmlTextManipulationService.SanitizeHtml(request.Description),
             Price = coursePrice,
             CourseThumbnailUrl = thumbnailUrl,
-            WhatYouWillLearn = request.WhatYouWillLearn,
-            Requirements = request.Requirements,
+            WhatYouWillLearn = _htmlTextManipulationService.SanitizeHtml(request.WhatYouWillLearn),
+            Requirements = _htmlTextManipulationService.SanitizeHtml(request.Requirements),
             CourseStatus = CourseStatus.Draft.ToValue(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -222,6 +225,10 @@ public class CourseCommandService : ICourseCommandService
                 thumbnailUrl = uploadedUrl;
             }
         }
+
+        request.Description = _htmlTextManipulationService.SanitizeHtml(request.Description);
+        request.WhatYouWillLearn = _htmlTextManipulationService.SanitizeHtml(request.WhatYouWillLearn);
+        request.Requirements = _htmlTextManipulationService.SanitizeHtml(request.Requirements);
 
         bool isChanged = false;
 

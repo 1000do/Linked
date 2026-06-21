@@ -16,7 +16,7 @@ class CacheRepository:
     """Single data access layer for Redis cache."""
     
     # Key prefixes
-    COURSE_PREFIX = "course:detail:"
+    COURSE_PREFIX = "course_moderation:detail:"
     EMBEDDING_PREFIX = "material_embedding:"
     LOG_PREFIX = "mod:log:"
     AI_MODEL_PREFIX = "ai_models:"

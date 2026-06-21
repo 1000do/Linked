@@ -90,6 +90,10 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.InstructorStudentsCount, opt => opt.Ignore())
             .ForMember(dest => dest.Lessons, opt => opt.MapFrom(src => src.Lessons));
 
+        CreateMap<Course, CourseModerationDetailResponse>()
+            .ForMember(dest => dest.CourseThumbnailUrl, opt => opt.MapFrom(src => src.CourseThumbnailUrl))
+            .ForMember(dest => dest.Lessons, opt => opt.MapFrom(src => src.Lessons));
+
         CreateMap<Lesson, LessonResponse>()
             .ForMember(dest => dest.LearningMaterials, opt => opt.MapFrom(src => src.LearningMaterials));
 

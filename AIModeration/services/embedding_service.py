@@ -13,6 +13,7 @@ from config.settings import Settings, get_settings
 from core.exceptions import EmbeddingException
 from core.models import EmbeddingGenerationCommand, EmbeddingGenerationResult
 from services.base_service import BaseService
+from services.text_extraction_service import TextExtractionService
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +22,8 @@ class EmbeddingService(BaseService):
     """Generate embeddings for semantic deduplication."""
     
     # Class-level model cache (singleton pattern)
-    _distilbert_model = None
-    _distilbert_tokenizer = None
+    _text_embedding_model = None
+    _text_embedding_tokenizer = None
     _clip_model = None
     _clip_processor = None
     _models_loaded = False
@@ -32,6 +33,7 @@ class EmbeddingService(BaseService):
         super().__init__("EmbeddingService")
         self.settings = settings or get_settings()
         self.device = torch.device(self.settings.DEVICE)
+        self.text_extraction_service = TextExtractionService()
         
         if not EmbeddingService._models_loaded:
             self._load_models()
@@ -41,16 +43,20 @@ class EmbeddingService(BaseService):
         if not file_extension:
             return "text"
         ext = file_extension.lower().replace(".", "").strip()
-        if ext in ["txt", "text"]:
+        if ext in ["txt", "text", "csv"]:
             return "text"
+        elif ext in ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp","image"]:
+            return "image"
+        elif ext in ["mp4", "avi", "mov", "mkv", "webm", "flv", "wmv", "3gp","video"]:
+            return "video"
         elif ext in ["pdf"]:
             return "pdf"
-        elif ext in ["docx", "doc", "odt", "rtf"]:
+        elif ext in ["docx", "doc", "odt", "rtf","word"]:
             return "word"
-        elif ext in ["jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp"]:
-            return "image"
-        elif ext in ["mp4", "avi", "mov", "mkv", "webm"]:
-            return "video"
+        elif ext in ["pptx", "ppt","powerpoint"]:
+            return "powerpoint"
+        elif ext in ["xlsx", "xls","excel"]:
+            return "excel"
         return "text"
     
     @classmethod
@@ -65,13 +71,13 @@ class EmbeddingService(BaseService):
             settings = get_settings()
             device = torch.device(settings.DEVICE)
             
-            # Load DistilBert for text embeddings
-            logger.info(f"Loading DistilBert from {settings.DISTILBERT_MODEL_NAME}...")
-            cls._distilbert_tokenizer = AutoTokenizer.from_pretrained(settings.DISTILBERT_MODEL_NAME)
-            cls._distilbert_model = AutoModel.from_pretrained(settings.DISTILBERT_MODEL_NAME)
-            cls._distilbert_model.to(device)
-            cls._distilbert_model.eval()
-            logger.info("✓ DistilBert loaded")
+            # Load Sequence Transformer for text embeddings
+            logger.info(f"Loading Text Embedding Model from {settings.TEXT_EMBEDDING_MODEL_NAME}...")
+            cls._text_embedding_tokenizer = AutoTokenizer.from_pretrained(settings.TEXT_EMBEDDING_MODEL_NAME)
+            cls._text_embedding_model = AutoModel.from_pretrained(settings.TEXT_EMBEDDING_MODEL_NAME)
+            cls._text_embedding_model.to(device)
+            cls._text_embedding_model.eval()
+            logger.info("✓ Text Embedding Model loaded")
             
             # Load CLIP for vision embeddings
             logger.info(f"Loading CLIP from {settings.CLIP_MODEL_NAME}...")
@@ -105,7 +111,7 @@ class EmbeddingService(BaseService):
         try:
             with self.time_operation("embed_text", text_length=len(text)):
                 # Tokenize
-                inputs = self._distilbert_tokenizer(
+                inputs = self._text_embedding_tokenizer(
                     text[:max_length * 4],  # Approximate char-to-token ratio
                     return_tensors="pt",
                     truncation=True,
@@ -117,9 +123,14 @@ class EmbeddingService(BaseService):
                 
                 # Get embeddings
                 with torch.no_grad():
-                    outputs = self._distilbert_model(**inputs)
-                    # Use [CLS] token embedding (first token)
-                    embedding = outputs.last_hidden_state[:, 0, :].cpu().numpy()[0]
+                    outputs = self._text_embedding_model(**inputs)
+                    # Mean pooling for sentence-transformers
+                    token_embeddings = outputs.last_hidden_state
+                    attention_mask = inputs['attention_mask']
+                    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+                    sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
+                    sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+                    embedding = (sum_embeddings / sum_mask).cpu().numpy()[0]
                 
                 return embedding.tolist()
         
@@ -248,8 +259,7 @@ class EmbeddingService(BaseService):
         """
         content = command.content
         material_type = command.material_type.lower().strip()
-        
-        if material_type in ["text", "pdf", "word"]:
+        if material_type in ["text"]:
             # Decode text
             try:
                 text = content.decode("utf-8")
@@ -258,11 +268,33 @@ class EmbeddingService(BaseService):
                 # If decode fails, treat as binary embedding
                 text_repr = f"Binary content {len(content)} bytes"
                 emb = await self.embed_text(text_repr)
+                
+        elif material_type in ["pdf", "word","powerpoint", "excel"]:
+            embeddings_list = []
+            chunk_count = 0
+            
+            material_type = self.text_extraction_service.get_file_type_for_text_extraction(material_type)
+            async for text_chunk, conf, log in self.text_extraction_service.extract_generic_stream(content, material_type):
+                if text_chunk and text_chunk.strip():
+                    chunk_emb = await self.embed_text(text_chunk)
+                    embeddings_list.append(chunk_emb)
+                    chunk_count += 1
+                
+                source = log.get("source", "")
+                if "ocr" in source and chunk_count >= 5:
+                    logger.info(f"Early exit for OCR stream at chunk {chunk_count}")
+                    break
+                    
+            if embeddings_list:
+                avg_embedding = np.mean(embeddings_list, axis=0)
+                emb = avg_embedding.tolist()
+            else:
+                emb = await self.embed_text(f"Empty {material_type} document")
         
-        elif material_type in ["image", "jpg", "png", "jpeg"]:
+        elif material_type in ["image"]:
             emb = await self.embed_image(content)
         
-        elif material_type in ["video", "mp4", "avi", "mov"]:
+        elif material_type in ["video"]:
             emb = await self.embed_video_frame(content)
         
         else:

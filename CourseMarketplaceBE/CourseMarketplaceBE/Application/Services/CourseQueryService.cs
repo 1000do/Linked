@@ -189,7 +189,7 @@ public class CourseQueryService : ICourseQueryService
         };
     }
 
-    public async Task<CourseDetailResponse?> GetCourseWithDetailsAsync(int courseId, int instructorId, int? userId = null)
+    public async Task<CourseDetailResponse> GetCourseWithDetailsAsync(int courseId, int? userId = null, string? userRole = null)
     {
         string cacheKey = CacheKeys.CourseDetail.GetKey(courseId);
         _logger.LogInformation("GetCourseWithDetailsAsync: {CacheKey}", cacheKey);
@@ -199,7 +199,10 @@ public class CourseQueryService : ICourseQueryService
         {
             var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
             _logger.LogInformation("GetCourseWithDetailsAsync: {Course}", course);
-            if (course == null) return null;
+            if (course == null) 
+            {
+                throw new KeyNotFoundException("Course not found.");
+            }
 
             var courseStats = await _courseRepository.GetCourseStatsAsync(courseId);
             var instructorStats = course.InstructorId.HasValue
@@ -231,8 +234,26 @@ public class CourseQueryService : ICourseQueryService
             response.IsOwner = false;
         }
 
+        if (!string.Equals(response.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
+        {
+            bool isStaffOrAdmin = false;
+
+            if (userRole != null && (string.Equals(userRole, "admin", StringComparison.OrdinalIgnoreCase) || 
+                                     string.Equals(userRole, "staff", StringComparison.OrdinalIgnoreCase)))
+            {
+                isStaffOrAdmin = true;
+            }
+
+            if (!response.IsOwner && !response.IsEnrolled && !isStaffOrAdmin)
+            {
+                throw new UnauthorizedAccessException("You do not have permission to view this course.");
+            }
+        }
+
         return response;
     }
+
+
 
     public async Task<IEnumerable<CategoryResponse>> GetCategoriesAsync()
     {

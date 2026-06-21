@@ -7,6 +7,7 @@ namespace CourseMarketplaceBE.Domain.Constants
         UserOnline,
         UserUnread,
         CourseDetail,
+        CourseModerationDetail,
         AiModelType,
         MaterialEmbedding,
         MaterialEmbeddingInitialized
@@ -21,6 +22,7 @@ namespace CourseMarketplaceBE.Domain.Constants
                 CacheKeys.UserOnline => $"user:{param1}:online",
                 CacheKeys.UserUnread => $"user:{param1}:unread",
                 CacheKeys.CourseDetail => $"course:detail:{param1}",
+                CacheKeys.CourseModerationDetail => $"course_moderation:detail:{param1}",
                 CacheKeys.AiModelType => $"ai_models:type:{param1}",
                 CacheKeys.MaterialEmbedding => $"material_embedding:{param1}",
                 CacheKeys.MaterialEmbeddingInitialized => "material_embedding:initialized",
