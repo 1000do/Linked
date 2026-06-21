@@ -73,6 +73,16 @@ public class ReportRepository : IReportRepository
     public void UpdateCourseReport(CourseReport report)
         => _context.CourseReports.Update(report);
 
+    public async Task<int> CountCourseReportsByStatusAsync(string status, DateTime? resolvedAtDate)
+    {
+        var query = _context.CourseReports.Where(r => r.CourseReportsStatus == status);
+        if (resolvedAtDate.HasValue)
+        {
+            query = query.Where(r => r.ResolvedAt != null && r.ResolvedAt.Value.Date == resolvedAtDate.Value.Date);
+        }
+        return await query.CountAsync();
+    }
+
     // ── Course Review Reports ───────────────────────────────────────────────
 
     public async Task<CourseReviewReport?> GetCourseReviewReportByIdAsync(int reportId)
@@ -125,6 +135,16 @@ public class ReportRepository : IReportRepository
     public void UpdateCourseReviewReport(CourseReviewReport report)
         => _context.CourseReviewReports.Update(report);
 
+    public async Task<int> CountCourseReviewReportsByStatusAsync(string status, DateTime? resolvedAtDate)
+    {
+        var query = _context.CourseReviewReports.Where(r => r.UserReportsStatus == status);
+        if (resolvedAtDate.HasValue)
+        {
+            query = query.Where(r => r.ResolvedAt != null && r.ResolvedAt.Value.Date == resolvedAtDate.Value.Date);
+        }
+        return await query.CountAsync();
+    }
+
     // ── Lesson Review Reports ───────────────────────────────────────────────
 
     public async Task<LessonReviewReport?> GetLessonReviewReportByIdAsync(int reportId)
@@ -176,6 +196,16 @@ public class ReportRepository : IReportRepository
 
     public void UpdateLessonReviewReport(LessonReviewReport report)
         => _context.LessonReviewReports.Update(report);
+
+    public async Task<int> CountLessonReviewReportsByStatusAsync(string status, DateTime? resolvedAtDate)
+    {
+        var query = _context.LessonReviewReports.Where(r => r.UserReportsStatus == status);
+        if (resolvedAtDate.HasValue)
+        {
+            query = query.Where(r => r.ResolvedAt != null && r.ResolvedAt.Value.Date == resolvedAtDate.Value.Date);
+        }
+        return await query.CountAsync();
+    }
 
     // ── Shared ──────────────────────────────────────────────────────────────
 

@@ -185,31 +185,20 @@ public class ReportModerationServiceTests
     public async Task GetReportStatsAsync_ShouldReturnAccurateStats()
     {
         //Arrange 1
-        var pendingCourses = new List<CourseReport> { new CourseReport(), new CourseReport() };
-        var pendingCourseReviews = new List<CourseReviewReport> { new CourseReviewReport() };
-        var pendingLessonReviews = new List<LessonReviewReport> { new LessonReviewReport(), new LessonReviewReport(), new LessonReviewReport() };
-        
         var today = DateTime.Today;
-        var allCourses = new List<CourseReport> { 
-            new CourseReport { ResolvedAt = today, CourseReportsStatus = ReportStatus.Resolved.ToValue() },
-            new CourseReport { ResolvedAt = today, CourseReportsStatus = ReportStatus.Rejected.ToValue() }
-        };
-        var allCourseReviews = new List<CourseReviewReport> {
-            new CourseReviewReport { ResolvedAt = today, UserReportsStatus = ReportStatus.Resolved.ToValue() }
-        };
-        var allLessonReviews = new List<LessonReviewReport> {
-            new LessonReviewReport { ResolvedAt = today.AddDays(-1), UserReportsStatus = ReportStatus.Resolved.ToValue() },
-            new LessonReviewReport { ResolvedAt = today, UserReportsStatus = ReportStatus.Rejected.ToValue() }
-        };
 
         //Arrange 2
-        _reportRepoMock.GetAllCourseReportsAsync("pending", 1, 100000).Returns((pendingCourses, 2));
-        _reportRepoMock.GetAllCourseReviewReportsAsync("pending", 1, 100000).Returns((pendingCourseReviews, 1));
-        _reportRepoMock.GetAllLessonReviewReportsAsync("pending", 1, 100000).Returns((pendingLessonReviews, 3));
+        _reportRepoMock.CountCourseReportsByStatusAsync(ReportStatus.Pending.ToValue(), null).Returns(2);
+        _reportRepoMock.CountCourseReviewReportsByStatusAsync(ReportStatus.Pending.ToValue(), null).Returns(1);
+        _reportRepoMock.CountLessonReviewReportsByStatusAsync(ReportStatus.Pending.ToValue(), null).Returns(3);
 
-        _reportRepoMock.GetAllCourseReportsAsync(null, 1, 100000).Returns((allCourses, 2));
-        _reportRepoMock.GetAllCourseReviewReportsAsync(null, 1, 100000).Returns((allCourseReviews, 1));
-        _reportRepoMock.GetAllLessonReviewReportsAsync(null, 1, 100000).Returns((allLessonReviews, 2));
+        _reportRepoMock.CountCourseReportsByStatusAsync(ReportStatus.Resolved.ToValue(), today).Returns(1);
+        _reportRepoMock.CountCourseReviewReportsByStatusAsync(ReportStatus.Resolved.ToValue(), today).Returns(1);
+        _reportRepoMock.CountLessonReviewReportsByStatusAsync(ReportStatus.Resolved.ToValue(), today).Returns(0);
+
+        _reportRepoMock.CountCourseReportsByStatusAsync(ReportStatus.Rejected.ToValue(), today).Returns(1);
+        _reportRepoMock.CountCourseReviewReportsByStatusAsync(ReportStatus.Rejected.ToValue(), today).Returns(0);
+        _reportRepoMock.CountLessonReviewReportsByStatusAsync(ReportStatus.Rejected.ToValue(), today).Returns(1);
 
         //Act
         var result = await _sut.GetReportStatsAsync();
@@ -221,7 +210,17 @@ public class ReportModerationServiceTests
         result.TotalResolvedToday.Should().Be(2); // 1 course + 1 course review
         result.TotalRejectedToday.Should().Be(2); // 1 course + 1 lesson review
 
-        await _reportRepoMock.Received(2).GetAllCourseReportsAsync(Arg.Any<string?>(), 1, 100000);
+        await _reportRepoMock.Received(1).CountCourseReportsByStatusAsync(ReportStatus.Pending.ToValue(), null);
+        await _reportRepoMock.Received(1).CountCourseReviewReportsByStatusAsync(ReportStatus.Pending.ToValue(), null);
+        await _reportRepoMock.Received(1).CountLessonReviewReportsByStatusAsync(ReportStatus.Pending.ToValue(), null);
+
+        await _reportRepoMock.Received(1).CountCourseReportsByStatusAsync(ReportStatus.Resolved.ToValue(), today);
+        await _reportRepoMock.Received(1).CountCourseReviewReportsByStatusAsync(ReportStatus.Resolved.ToValue(), today);
+        await _reportRepoMock.Received(1).CountLessonReviewReportsByStatusAsync(ReportStatus.Resolved.ToValue(), today);
+
+        await _reportRepoMock.Received(1).CountCourseReportsByStatusAsync(ReportStatus.Rejected.ToValue(), today);
+        await _reportRepoMock.Received(1).CountCourseReviewReportsByStatusAsync(ReportStatus.Rejected.ToValue(), today);
+        await _reportRepoMock.Received(1).CountLessonReviewReportsByStatusAsync(ReportStatus.Rejected.ToValue(), today);
     }
 
     // ── ResolveCourseReportAsync ─────────────────────────────────────────────
