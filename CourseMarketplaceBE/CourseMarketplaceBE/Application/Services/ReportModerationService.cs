@@ -71,29 +71,28 @@ public class ReportModerationService : IReportModerationService
 
     public async Task<ReportStatsResponse> GetReportStatsAsync()
     {
-        var (pendingCourse, _) = await _reportRepo.GetAllCourseReportsAsync("pending", 1, 100000);
-        var (pendingCourseReview, _) = await _reportRepo.GetAllCourseReviewReportsAsync("pending", 1, 100000);
-        var (pendingLessonReview, _) = await _reportRepo.GetAllLessonReviewReportsAsync("pending", 1, 100000);
-
         var today = DateTime.Today;
 
-        var (allCourse, _) = await _reportRepo.GetAllCourseReportsAsync(null, 1, 100000);
-        var (allCourseReview, _) = await _reportRepo.GetAllCourseReviewReportsAsync(null, 1, 100000);
-        var (allLessonReview, _) = await _reportRepo.GetAllLessonReviewReportsAsync(null, 1, 100000);
+        int pendingCourseCount = await _reportRepo.CountCourseReportsByStatusAsync(ReportStatus.Pending.ToValue(), null);
+        int pendingCourseReviewCount = await _reportRepo.CountCourseReviewReportsByStatusAsync(ReportStatus.Pending.ToValue(), null);
+        int pendingLessonReviewCount = await _reportRepo.CountLessonReviewReportsByStatusAsync(ReportStatus.Pending.ToValue(), null);
 
-        int resolvedToday = allCourse.Count(r => r.ResolvedAt?.Date == today && r.CourseReportsStatus == ReportStatus.Resolved.ToValue())
-                          + allCourseReview.Count(r => r.ResolvedAt?.Date == today && r.UserReportsStatus == ReportStatus.Resolved.ToValue())
-                          + allLessonReview.Count(r => r.ResolvedAt?.Date == today && r.UserReportsStatus == ReportStatus.Resolved.ToValue());
+        int resolvedCourseToday = await _reportRepo.CountCourseReportsByStatusAsync(ReportStatus.Resolved.ToValue(), today);
+        int resolvedCourseReviewToday = await _reportRepo.CountCourseReviewReportsByStatusAsync(ReportStatus.Resolved.ToValue(), today);
+        int resolvedLessonReviewToday = await _reportRepo.CountLessonReviewReportsByStatusAsync(ReportStatus.Resolved.ToValue(), today);
 
-        int rejectedToday = allCourse.Count(r => r.ResolvedAt?.Date == today && r.CourseReportsStatus == ReportStatus.Rejected.ToValue())
-                          + allCourseReview.Count(r => r.ResolvedAt?.Date == today && r.UserReportsStatus == ReportStatus.Rejected.ToValue())
-                          + allLessonReview.Count(r => r.ResolvedAt?.Date == today && r.UserReportsStatus == ReportStatus.Rejected.ToValue());
+        int rejectedCourseToday = await _reportRepo.CountCourseReportsByStatusAsync(ReportStatus.Rejected.ToValue(), today);
+        int rejectedCourseReviewToday = await _reportRepo.CountCourseReviewReportsByStatusAsync(ReportStatus.Rejected.ToValue(), today);
+        int rejectedLessonReviewToday = await _reportRepo.CountLessonReviewReportsByStatusAsync(ReportStatus.Rejected.ToValue(), today);
+
+        int resolvedToday = resolvedCourseToday + resolvedCourseReviewToday + resolvedLessonReviewToday;
+        int rejectedToday = rejectedCourseToday + rejectedCourseReviewToday + rejectedLessonReviewToday;
 
         return new ReportStatsResponse
         {
-            TotalPendingCourseReports = pendingCourse.Count,
-            TotalPendingCourseReviewReports = pendingCourseReview.Count,
-            TotalPendingLessonReviewReports = pendingLessonReview.Count,
+            TotalPendingCourseReports = pendingCourseCount,
+            TotalPendingCourseReviewReports = pendingCourseReviewCount,
+            TotalPendingLessonReviewReports = pendingLessonReviewCount,
             TotalResolvedToday = resolvedToday,
             TotalRejectedToday = rejectedToday
         };
@@ -123,9 +122,7 @@ public class ReportModerationService : IReportModerationService
             await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(course.CourseId));
         }
 
-        string linkAction = await ResolveLinkActionAsync("course", report.CourseId);
-        await NotifyReporterOfOutcomeAsync(report.ReporterId, linkAction, request.Status, "course");
-        await NotifyAdminOnEscalationAsync(request.Status, reportId, "course");
+        await SendResolutionNotificationsAsync(request.Status, reportId, report.ReporterId, "course", report.CourseId);
 
         return true;
     }
@@ -149,9 +146,7 @@ public class ReportModerationService : IReportModerationService
         _reportRepo.UpdateCourseReviewReport(report);
         await SaveReportChangesAsync();
 
-        string linkAction = await ResolveLinkActionAsync("course review", report.CourseReviewId);
-        await NotifyReporterOfOutcomeAsync(report.ReporterId, linkAction, request.Status, "course review");
-        await NotifyAdminOnEscalationAsync(request.Status, reportId, "course review");
+        await SendResolutionNotificationsAsync(request.Status, reportId, report.ReporterId, "course review", report.CourseReviewId);
 
         return true;
     }
@@ -175,9 +170,7 @@ public class ReportModerationService : IReportModerationService
         _reportRepo.UpdateLessonReviewReport(report);
         await SaveReportChangesAsync();
 
-        string linkAction = await ResolveLinkActionAsync("lesson review", report.LessonReviewId);
-        await NotifyReporterOfOutcomeAsync(report.ReporterId, linkAction, request.Status, "lesson review");
-        await NotifyAdminOnEscalationAsync(request.Status, reportId, "lesson review");
+        await SendResolutionNotificationsAsync(request.Status, reportId, report.ReporterId, "lesson review", report.LessonReviewId);
 
         return true;
     }
@@ -343,18 +336,7 @@ public class ReportModerationService : IReportModerationService
         course.CourseStatus = CourseStatus.Archived.ToValue();
         course.UpdatedAt = DateTime.Now;
 
-        int rowsAffected;
-        try
-        {
-            rowsAffected = await _reportRepo.SaveChangesAsync();
-        }
-        catch (ReportException ex)
-        {
-            throw new BadRequestException(ex.Message);
-        }
-
-        if (rowsAffected == 0)
-            throw new InvalidOperationException("Failed to save changes.");
+        await SaveReportChangesAsync();
         
         await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
         return true;
@@ -400,5 +382,13 @@ public class ReportModerationService : IReportModerationService
             message,
             linkAction
         );
+    }
+
+
+    private async Task SendResolutionNotificationsAsync(string status, int reportId, int? reporterId, string reportType, int? targetId)
+    {
+        string linkAction = await ResolveLinkActionAsync(reportType, targetId);
+        await NotifyReporterOfOutcomeAsync(reporterId, linkAction, status, reportType);
+        await NotifyAdminOnEscalationAsync(status, reportId, reportType);
     }
 }

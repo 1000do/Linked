@@ -1,0 +1,110 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminAiServiceControllerFE["AdminAiServiceController"] {
+    <<frontend controller>>
+    + UpdateThresholds(req: UpdateThresholdsRequest) Task~IActionResult~
+}
+
+class UpdateThresholdsRequestVM["UpdateThresholdsRequest"] {
+    <<view model>>
+    + SpamConfidenceThreshold : float
+    + ToxicityConfidenceThreshold : float
+    + SimilarityScoreThreshold : float
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AdminAiServiceControllerBE["AdminAiServiceController"] {
+    <<backend controller>>
+    - _aiConfigService : IAiConfigurationService
+    
+    + UpdateThresholds(req: UpdateThresholdsRequest) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class UpdateThresholdsRequestDTO["UpdateThresholdsRequest"] {
+    <<dto>>
+    + SpamConfidenceThreshold : float
+    + ToxicityConfidenceThreshold : float
+    + SimilarityScoreThreshold : float
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class SystemConfig {
+    + ConfigId : int
+    + ManagerId : int?
+    + ConfigKey : string
+    + ConfigValue : string?
+    + Description : string?
+    + UpdatedAt : DateTime?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAiConfigurationService {
+    <<interface>>
+    + UpdateThresholdsAsync(req: UpdateThresholdsRequest) Task~bool~ *
+}
+
+class ISystemConfigRepository {
+    <<interface>>
+    + GetValueAsync(key: string) Task~string?~ *
+    + GetAllConfigAsync() Task~List~Dictionary~string, object~~~ *
+    + SetConfigByKeyAsync(key: string, value: Dictionary~string, object~) Task *
+    + UpsertConfigAsync(configKey: string, configValue: string, description: string?) Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AiConfigurationService {
+    - _configRepo : ISystemConfigRepository
+    
+    + UpdateThresholdsAsync(req: UpdateThresholdsRequest) Task~bool~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class SystemConfigRepository {
+    - _context : AppDbContext
+    
+    + GetValueAsync(key: string) Task~string?~
+    + GetAllConfigAsync() Task~List~Dictionary~string, object~~~
+    + SetConfigByKeyAsync(key: string, value: Dictionary~string, object~) Task
+    + UpsertConfigAsync(configKey: string, configValue: string, description: string?) Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + SystemConfigs : DbSet~SystemConfig~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+AdminAiServiceControllerBE --> IAiConfigurationService
+AiConfigurationService --> ISystemConfigRepository
+SystemConfigRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+AiConfigurationService ..|> IAiConfigurationService
+SystemConfigRepository ..|> ISystemConfigRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+AdminAiServiceControllerFE ..> AdminAiServiceControllerBE
+AdminAiServiceControllerFE ..> UpdateThresholdsRequestVM
+AdminAiServiceControllerBE ..> UpdateThresholdsRequestDTO
+AiConfigurationService ..> UpdateThresholdsRequestDTO
+SystemConfigRepository ..> SystemConfig
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
