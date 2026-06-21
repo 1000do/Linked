@@ -102,6 +102,7 @@ To maintain consistency across diagrams, assign relationships strictly according
     - Only include dependencies and their corresponding private fields if they are directly implemented or referenced in these main public methods.
     - If the main public methods use private helper methods, and there are dependencies or fields abstracted behind these private helpers, **skip them** for simplicity.
   - **Data Models (ViewModels, DTOs, Entities)**: If a participant is a ViewModel, DTO, or Entity, you **MUST include ALL of its fields and properties** in the class block. Furthermore, if any of those properties map to another ViewModel, DTO, or Entity that is ALSO present in the diagram, you **MUST explicitly connect them** in the Relationships section using an appropriate relationship (e.g., `Account -- Lockout`).
+  - **Shared Name Resolution**: If a Frontend Controller and a Backend Controller share the exact same class name, you **MUST** define them as separate blocks using an alias (e.g., `class AdminAiServiceControllerFE["AdminAiServiceController"]`) and explicitly add the stereotypes `<<frontend controller>>` and `<<backend controller>>` inside their blocks respectively to differentiate them. Similarly, if a ViewModel and a DTO share the exact same name, define them separately and add the stereotypes `<<view model>>` and `<<dto>>`.
 - **Styling and Colors**:
   - The diagram should have a simplified, minimalist aesthetic: white background, white fill, black borders, and black text.
   - At the end of the diagram, define a single default style:
