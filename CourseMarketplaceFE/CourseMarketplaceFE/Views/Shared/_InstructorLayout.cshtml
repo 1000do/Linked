@@ -387,11 +387,10 @@
         async function loadUnreadSummary() {
             if (!LAYOUT_TOKEN) return;
             try {
-                const response = await fetch("http://localhost:5207/api/Notification/unread-summary", {
-                    headers: { 'Authorization': `Bearer ${LAYOUT_TOKEN}` }
-                });
+                const response = await fetch("/Notification/GetUnreadSummary");
                 if (response.ok) {
-                    const data = await response.json();
+                    const apiResp = await response.json();
+                    const data = apiResp.data || {};
                     
                     // Cập nhật Sidebar Notification Badge
                     const sidebarNotiBadge = document.getElementById('sidebar-noti-badge');
@@ -429,12 +428,11 @@
             }
 
             try {
-                const response = await fetch("http://localhost:5207/api/Notification", {
-                    headers: { 'Authorization': `Bearer ${LAYOUT_TOKEN}` }
-                });
+                const response = await fetch("/Notification/GetMyNotifications");
 
                 if (response.ok) {
-                    const data = await response.json();
+                    const apiResp = await response.json();
+                    const data = apiResp.data?.items || [];
                     const top3 = data.slice(0, 3);
 
                     if (top3.length === 0) {

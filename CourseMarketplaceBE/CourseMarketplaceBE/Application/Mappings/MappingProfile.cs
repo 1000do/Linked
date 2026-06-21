@@ -10,6 +10,8 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
+        CreateMap<Notification, NotificationResponseDto>();
+
         // Reports Mapping
         CreateMap<CourseReport, MyCourseReportResponse>()
             .ForMember(dest => dest.ReportId, opt => opt.MapFrom(src => src.CourseReportId))

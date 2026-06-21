@@ -1,4 +1,4 @@
-@startuml ViewNotificationDetail_ClassDiagram
+@startuml SearchNotifications_ClassDiagram
 
 ' Styling & Settings
 skinparam style strictuml
@@ -16,6 +16,7 @@ skinparam class {
 !define ENTITY_COLOR #CCFFE6
 !define REPOSITORY_COLOR #FFFFCC
 !define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
 
 skinparam backgroundColor #FFFFFF
 skinparam classBackgroundColor #F9F9F9
@@ -24,9 +25,9 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class NotificationControllerFE #FFE6E6 {
-    - _client : HttpClient
-    + Details(id: int) : Task<IActionResult>
+class "NotificationController" as FrontendController <<frontend controller>> #FFE6E6 {
+    + Admin() : IActionResult
+    + GetAllAdmin() : Task<IActionResult>
 }
 
 class NotificationViewModel #E6CCFF {
@@ -46,22 +47,26 @@ class NotificationViewModel #E6CCFF {
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class NotificationController #FFE6E6 {
+class "NotificationController" as BackendController <<backend controller>> #FFE6E6 {
     - _notiService : INotificationService
-    + GetNotificationDetail(id: int) : Task<IActionResult>
+    + GetAllNotifications(page: int, pageSize: int) : Task<IActionResult>
 }
 
 ' ==================== BACKEND - DTOs ====================
 
-class NotificationResponseDto #E6CCFF {
+class NotificationAdminResponseDto #E6CCFF {
     + NotificationId : int
-    + SenderId : int
-    + ReceiverId : int
-    + Title : string
-    + Content : string
-    + LinkAction : string?
+    + Title : string?
+    + Content : string?
     + IsRead : bool?
-    + CreatedAt : DateTime
+    + CreatedAt : DateTime?
+    + ReceiverEmail : string?
+    + ReceiverFullName : string?
+    + ReceiverRole : string?
+    + ReceiverId : int?
+    + SenderId : int?
+    + SenderRole : string?
+    + LinkAction : string?
 }
 
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -103,55 +108,62 @@ class User #CCFFE6 {
     + DateOfBirth : DateOnly?
 }
 
+class Manager #CCFFE6 {
+    + ManagerId : int
+    + Role : string?
+    + DisplayName : string
+    + FullName : string?
+    + PhoneNumber : string?
+    + AvatarUrl : string?
+    + Bio : string?
+}
+
 ' ==================== BACKEND - SERVICE INTERFACES ====================
 
 interface INotificationService #FFE6CC {
-    //+ GetNotificationDetailAsync(id: int, userId: int) : Task<NotificationResponseDto?>//
-    //+ MarkAsReadAsync(notificationId: int, userId: int) : Task<bool>//
+    //+ GetAllNotificationsForAdminAsync(page: int, pageSize: int) : Task<PagedResult<NotificationAdminResponseDto>>//
 }
 
 ' ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 interface INotificationRepository #FFE6CC {
-    //+ GetByIdAsync(id: int) : Task<Notification?>//
-    //+ SaveChangesAsync() : Task<int>//
+    //+ GetAllAsync(page: int, pageSize: int) : Task<(List<Notification> Items, int TotalCount)>//
+    //+ AutoCleanupAdminNotificationsAsync() : Task<int>//
 }
 
 ' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class NotificationService #CCE5FF {
     - _repo : INotificationRepository
-    + GetNotificationDetailAsync(id: int, userId: int) : Task<NotificationResponseDto?>
-    + MarkAsReadAsync(notificationId: int, userId: int) : Task<bool>
+    + GetAllNotificationsForAdminAsync(page: int, pageSize: int) : Task<PagedResult<NotificationAdminResponseDto>>
 }
 
 ' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class NotificationRepository #FFFFCC {
     - _context : AppDbContext
-    + GetByIdAsync(id: int) : Task<Notification?>
-    + SaveChangesAsync() : Task<int>
+    + GetAllAsync(page: int, pageSize: int) : Task<(List<Notification> Items, int TotalCount)>
+    + AutoCleanupAdminNotificationsAsync() : Task<int>
 }
 
 ' ==================== BACKEND - DbContext ====================
 
 class AppDbContext #E6F3FF {
     + Accounts : DbSet<Account>
-    + Notifications : DbSet<Notification>
     + Users : DbSet<User>
-    ---
-    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) : void
-    # OnModelCreating(modelBuilder: ModelBuilder) : void
+    + Managers : DbSet<Manager>
+    + Notifications : DbSet<Notification>
 }
 
 ' ==================== RELATIONSHIPS ====================
 
 ' === COMPOSITION (filled diamond) ===
 Account *-- User
+Account *-- Manager
 Account *-- Notification
 
 ' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-NotificationController --> INotificationService
+BackendController --> INotificationService
 NotificationService --> INotificationRepository
 NotificationRepository --> AppDbContext
 
@@ -160,10 +172,10 @@ NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
 
 ' === DEPENDENCY (dashed arrows) ===
-NotificationControllerFE ..> NotificationController
-NotificationControllerFE ..> NotificationViewModel
-NotificationController ..> NotificationResponseDto
-NotificationService ..> NotificationResponseDto
+FrontendController ..> BackendController
+FrontendController ..> NotificationViewModel
+BackendController ..> NotificationAdminResponseDto
+NotificationService ..> NotificationAdminResponseDto
 NotificationRepository ..> Notification
 
 @enduml

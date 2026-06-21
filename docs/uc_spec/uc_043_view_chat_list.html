@@ -1,0 +1,197 @@
+<div class="uc-container" style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <style>
+        .uc-container, .uc-container table, .uc-container tr, .uc-container td, .uc-container p, .uc-container ol, .uc-container ul, .uc-container li, .uc-container span, .uc-container strong, .uc-container b {
+            font-family: 'Times New Roman', serif !important;
+            font-size: 12pt !important;
+            color: black !important;
+        }
+    </style>
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">UC ID and Name</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">UC-43-View Chat List</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Created By:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Antigravity</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Date Created:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">20/06/2026</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Primary Actor:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">User, Instructor</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Secondary Actors:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Trigger:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Actor accesses the Chat page.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Description:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Allows the Actor to view their list of active conversations, search for specific conversations, filter by unread status, sort the conversation list, and interact with the compact chat list through the floating mini-chat widget.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Preconditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><b>PRE-1.</b> Actor must be successfully authenticated.</p>
+                <p style="margin: 0;"><b>PRE-2.</b> If the Actor is an Instructor, their application status must be approved.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Post-conditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><b>POST-1.</b> The system renders the list of active conversations in the main chat sidebar.</p>
+                <p style="margin: 0;"><b>POST-2.</b> The system renders the compact list of active conversations in the floating mini-chat widget dropdown.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Normal Flow:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A. View Chat List Successfully</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>Actor accesses the Chat page.</li>
+                    <li>The system checks the Actor's authentication status.</li>
+                    <li>The system checks the Actor's role.</li>
+                    <li>The system validates the Actor's access permission (if Instructor, checks that the approval status is approved).</li>
+                    <li>The system requests the list of active conversations.</li>
+                    <li>The system retrieves the list of active conversations from the database.</li>
+                    <li>The system displays the Chat page with the chat sidebar containing the list of active conversations, search input, filter dropdown, and sort dropdown.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Alternative Flows:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A.7.1 Filter by Unread Messages</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor selects "Unread" from the `"chat-filter-status"` dropdown.</li>
+                    <li>The system filters the chat list to display only conversations with an unread message count greater than zero.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.2 Sort by Name (A-Z)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor selects "Name (A-Z)" from the `"chat-sort"` dropdown.</li>
+                    <li>The system sorts the list of conversations alphabetically by the partner's name.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.3 Sort by Unread First</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor selects "Unread First" from the `"chat-sort"` dropdown.</li>
+                    <li>The system sorts the list of conversations to display those with unread messages at the top.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.4 Search Users/Conversations</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor enters a search term in the `"search-chats"` input box.</li>
+                    <li>The system triggers a query after a brief debounce delay (300ms).</li>
+                    <li>The system retrieves the filtered conversation list matching the search term.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.5 Clear Search Input</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clears the text in the `"search-chats"` input box.</li>
+                    <li>The system retrieves the default active conversation list.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.6 Access Chat via Floating Mini-Chat Widget</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor accesses the Home page.</li>
+                    <li>Actor clicks the Floating Chat Button ("support_agent" icon).</li>
+                    <li>The system checks the Actor's authentication status.</li>
+                    <li>The system requests the list of active conversations.</li>
+                    <li>The system retrieves the list of active conversations from the database.</li>
+                    <li>The system displays the support chat popup, showing the active conversation details or the support welcome screen.</li>
+                    <li>Actor clicks the `"mini-chat-selector-btn"` dropdown selector.</li>
+                    <li>The system displays the `"mini-chat-dropdown"` menu containing a compact list of active conversations.</li>
+                    <li>Actor clicks a conversation card from the compact list.</li>
+                    <li>The system updates the active chat context, loads the conversation history, and closes the dropdown menu.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.7 Redirect to Main Chat Page from Mini-Chat</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks the `"View All"` link in the `"mini-chat-dropdown"` menu.</li>
+                    <li>The system redirects the Actor to the main Chat page (`/Chat`).</li>
+                    <li>Back to step 1.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.8 Request Support via Mini-Chat</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks the `"Contact Support"` button or selects a quick reply option (e.g., "Ask about course").</li>
+                    <li>The system checks if there is any pending support request.</li>
+                    <li>If there is no pending request, the system shows the welcome text and waits for message input.</li>
+                    <li>Actor enters the support request content in the `"mini-chat-input"` box and clicks the `"send"` button.</li>
+                    <li>The system saves the support request as a pending ticket in the database.</li>
+                    <li>The system displays a waiting state UI ("Your request is in queue. Waiting for support staff...") in the widget.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.7.9 View New Message Notification via Unread Preview Bubble</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>The system receives a new chat message via SignalR.</li>
+                    <li>The system displays the `"unread-preview-bubble"` containing a preview of the message next to the floating chat button.</li>
+                    <li>Actor clicks the `"unread-preview-bubble"`.</li>
+                    <li>The system opens the support chat popup, displays the conversation details, and hides the preview bubble.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Exceptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>EX-1 Session Invalid (Not Logged In)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system displays an authentication error message.</li>
+                    <li>The system redirects the user to the login page.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-4 Instructor Status Unapproved</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects the Instructor's approval status is not approved.</li>
+                    <li>The system redirects the Instructor to the application status page.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-6 Retrieval Failed</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>The system fails to retrieve the conversation list.</li>
+                    <li>The system displays a bad request error notification.</li>
+                    <li>Back to step 7.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Priority:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Frequency of Use:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Business Rules:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;">1. <strong>Unread Count Display:</strong> The unread message count is updated dynamically and displayed as a badge on both the main conversation card and the floating widget icon.</p>
+                <p style="margin: 0 0 5px 0;">2. <strong>Online Status Indicator:</strong> A green dot is displayed on the conversation card if the partner is currently online.</p>
+                <p style="margin: 0 0 5px 0;">3. <strong>Debounced Search:</strong> The search query is debounced by 300ms before sending a request to the backend.</p>
+                <p style="margin: 0 0 5px 0;">4. <strong>Widget Home-only Visibility:</strong> The floating chat widget is visible and accessible only on the Home page for logged-in Users.</p>
+                <p style="margin: 0;">5. <strong>Support Ticket Queueing:</strong> Support requests submitted via the mini-chat widget create a pending request queue entry and prevent further messages until a staff member accepts the request.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Other Information:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Assumptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;">User, Instructor has stable internet connection.</p>
+            </td>
+        </tr>
+    </table>
+</div>

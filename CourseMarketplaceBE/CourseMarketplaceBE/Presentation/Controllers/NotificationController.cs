@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,23 +22,30 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetMyNotifications()
+        public async Task<IActionResult> GetMyNotifications([FromQuery] int page = 1, [FromQuery] int pageSize = int.MaxValue)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim)) return Unauthorized();
 
             var userId = int.Parse(userIdClaim);
-            var data = await _notiService.GetNotificationsForUserAsync(userId);
-            return Ok(data);
+            try {
+                var data = await _notiService.GetNotificationsForUserAsync(userId, page, pageSize);
+                return Ok(ApiResponse<PagedResult<NotificationResponseDto>>.SuccessResponse(data));
+            } catch (KeyNotFoundException) {
+                return Ok(ApiResponse<PagedResult<NotificationResponseDto>>.SuccessResponse(new PagedResult<NotificationResponseDto> { Items = new List<NotificationResponseDto>(), TotalCount = 0 }));
+            }
         }
 
         [HttpGet("all")]
         [Authorize(Roles = "admin,staff")]
-        public async Task<IActionResult> GetAllNotifications()
+        public async Task<IActionResult> GetAllNotifications([FromQuery] int page = 1, [FromQuery] int pageSize = int.MaxValue)
         {
-            //var data = await _notiService.GetAllNotificationsAsync();
-            var data = await _notiService.GetAllNotificationsForAdminAsync();
-            return Ok(data);
+            try {
+                var data = await _notiService.GetAllNotificationsForAdminAsync(page, pageSize);
+                return Ok(ApiResponse<PagedResult<NotificationAdminResponseDto>>.SuccessResponse(data));
+            } catch (KeyNotFoundException) {
+                return Ok(ApiResponse<PagedResult<NotificationAdminResponseDto>>.SuccessResponse(new PagedResult<NotificationAdminResponseDto> { Items = new List<NotificationAdminResponseDto>(), TotalCount = 0 }));
+            }
         }
 
         [HttpPut("mark-all-as-read")]
@@ -50,11 +58,11 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             try
             {
                 var result = await _notiService.MarkAllAsReadAsync(userId);
-                return Ok(new { message = "All notifications marked as read." });
+                return Ok(ApiResponse<string>.SuccessResponse("All notifications marked as read."));
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex) when (ex is InvalidOperationException || ex is CourseMarketplaceBE.Application.Exceptions.BadRequestException)
             {
-                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to mark all notifications as read"));
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
             }
         }
 
@@ -68,15 +76,15 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             try
             {
                 var result = await _notiService.MarkAsReadAsync(id, userId);
-
-                if (!result)
-                    return NotFound(new { message = "Notification not found or access denied." });
-
-                return Ok(new { message = "Notification marked as read successfully." });
+                return Ok(ApiResponse<string>.SuccessResponse("Notification marked as read successfully."));
             }
-            catch (InvalidOperationException ex)
+            catch (KeyNotFoundException ex)
             {
-                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to mark notification as read"));
+                return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is CourseMarketplaceBE.Application.Exceptions.BadRequestException)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
             }
         }
 
@@ -90,13 +98,15 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             try
             {
                 var result = await _notiService.DeleteNotificationAsync(id, userId);
-
-                if (!result) return BadRequest("Could not delete notification.");
-                return Ok();
+                return Ok(ApiResponse<string>.SuccessResponse("Deleted successfully"));
             }
-            catch (InvalidOperationException ex)
+            catch (KeyNotFoundException ex)
             {
-                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to delete notification"));
+                return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+            }
+            catch (Exception ex) when (ex is InvalidOperationException || ex is CourseMarketplaceBE.Application.Exceptions.BadRequestException)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
             }
         }
 
@@ -112,7 +122,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
 
             var senderId = int.Parse(senderIdClaim);
             var emails = await _notiService.SearchEmailsAsync(query, senderId, senderRole);
-            return Ok(emails);
+            return Ok(ApiResponse<List<string>>.SuccessResponse(emails));
         }
         [Authorize(Roles = "admin,staff")]
         [HttpPost("send-test")]
@@ -121,20 +131,17 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             try
             {
                 await _notiService.SendNotificationAsync(dto.ReceiverId, dto.Title, dto.Content, null);
-                return Ok("Sent successfully.");
+                return Ok(ApiResponse<string>.SuccessResponse("Sent successfully."));
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex) when (ex is InvalidOperationException || ex is CourseMarketplaceBE.Application.Exceptions.BadRequestException)
             {
-                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to send notification"));
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
             }
         }
         [Authorize(Roles = "admin,staff")]
         [HttpPost("send-advanced")]
         public async Task<IActionResult> SendAdvanced([FromBody] NotificationAdvancedDto dto)
         {
-            if (dto.Title.Length > 255)
-                return BadRequest("Title maximum 255 characters.");
-
             var senderIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var senderRole = User.FindFirst(ClaimTypes.Role)?.Value;
             if (string.IsNullOrEmpty(senderIdClaim) || string.IsNullOrEmpty(senderRole))
@@ -145,10 +152,10 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             try
             {
                 var count = await _notiService.SendAdvancedAsync(dto, senderId, senderRole);
-                if (count < 0) return BadRequest("Invalid data.");
-                return Ok(new { message = "Sent successfully.", count });
+                if (count < 0) return BadRequest(ApiResponse<string>.ErrorResponse("Invalid data."));
+                return Ok(ApiResponse<object>.SuccessResponse(new { message = "Sent successfully.", count }));
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex) when (ex is InvalidOperationException || ex is CourseMarketplaceBE.Application.Exceptions.BadRequestException)
             {
                 return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
             }
@@ -164,11 +171,11 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             var notiCount = await _notiService.GetUnreadCountAsync(userId);
             var chatCount = await _chatService.GetTotalUnreadCountAsync(userId);
 
-            return Ok(new
+            return Ok(ApiResponse<object>.SuccessResponse(new
             {
                 NotificationCount = notiCount,
                 ChatCount = chatCount
-            });
+            }));
         }
     }
 }
