@@ -1,0 +1,115 @@
+@startuml DeleteChats_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "ChatController" as FrontendController <<frontend controller>> #FFE6E6 {
+    + ClearHistory(chatId: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "ChatController" as BackendController <<backend controller>> #FFE6E6 {
+    - _chatService : IChatService
+    + ClearChatHistory(chatId: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Chat #CCFFE6 {
+    + ChatId : int
+    + ChatName : string?
+    + ChatType : string
+    + ContextType : string?
+    + ContextId : int?
+    + CreatedAt : DateTime?
+    + LastMessageAt : DateTime?
+}
+
+class ChatParticipant #CCFFE6 {
+    + ChatId : int
+    + AccountId : int
+    + Role : string
+    + UnreadCount : int
+    + LastReadAt : DateTime?
+    + JoinedAt : DateTime?
+    + ClearedAt : DateTime?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IChatService #FFE6CC {
+    //+ ClearChatHistoryAsync(chatId: int, accountId: int) : Task<bool>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IChatRepository #FFE6CC {
+    //+ GetParticipantAsync(chatId: int, accountId: int) : Task<ChatParticipant?>//
+    //+ UpdateParticipantAsync(participant: ChatParticipant) : Task//
+    //+ SaveChangesAsync() : Task<int>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ChatService #CCE5FF {
+    - _repo : IChatRepository
+    + ClearChatHistoryAsync(chatId: int, accountId: int) : Task<bool>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ChatRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetParticipantAsync(chatId: int, accountId: int) : Task<ChatParticipant?>
+    + UpdateParticipantAsync(participant: ChatParticipant) : Task
+    + SaveChangesAsync() : Task<int>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Chats : DbSet<Chat>
+    + ChatParticipants : DbSet<ChatParticipant>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === COMPOSITION (filled diamond) ===
+Chat *-- ChatParticipant
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+BackendController --> IChatService
+ChatService --> IChatRepository
+ChatRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+ChatService ..|> IChatService
+ChatRepository ..|> IChatRepository
+
+' === DEPENDENCY (dashed arrows) ===
+FrontendController ..> BackendController
+ChatRepository ..> ChatParticipant
+
+@enduml
