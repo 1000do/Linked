@@ -79,12 +79,13 @@ public class CourseController : ControllerBase
         try
         {
             var instructorId = GetInstructorId();
-            var course = await _courseQueryService.GetCourseWithDetailsAsync(id, instructorId);
-            if (course == null)
-            {
-                return NotFound(ApiResponse<object>.ErrorResponse("Course not found."));
-            }
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            var course = await _courseQueryService.GetCourseWithDetailsAsync(id, instructorId, role);
             return Ok(ApiResponse<object>.SuccessResponse(course, "Retrieved course successfully."));
+        }
+        catch (System.Collections.Generic.KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -213,7 +214,7 @@ public class CourseController : ControllerBase
             request.InstructorId = instructorId;
 
             // Enforce all business validation checks, lockouts, and reset rejected statuses
-            await _courseCommandService.UpdateCourseStatusAsync(request.CourseId, CourseStatus.Pending.ToValue(), instructorId);
+            await _courseAiModerationService.UpdateCourseStatusAndClearCacheAsync(request.CourseId, CourseStatus.Pending.ToValue(), instructorId);
 
             // Run AI moderation in a background fire-and-forget task
             _ = Task.Run(async () =>

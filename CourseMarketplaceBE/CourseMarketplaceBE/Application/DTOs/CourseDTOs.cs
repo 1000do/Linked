@@ -71,6 +71,8 @@ public class CourseDetailResponse : CourseResponse
     public List<LessonResponse> Lessons { get; set; } = new List<LessonResponse>();
 }
 
+
+
 public class CategoryResponse
 {
     public int CategoryId { get; set; }

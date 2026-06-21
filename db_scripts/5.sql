@@ -264,7 +264,7 @@ CREATE TABLE course_exts (
 CREATE TABLE text_embeddings (
     text_embedding_id SERIAL PRIMARY KEY,
     material_id INT REFERENCES learning_materials(material_id) ON DELETE CASCADE,
-    text_embedding vector(768),
+    text_embedding vector(384),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

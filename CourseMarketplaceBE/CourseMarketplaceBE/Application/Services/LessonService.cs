@@ -23,6 +23,7 @@ public class LessonService : ILessonService
     private readonly IMediaEmbeddingRepository _mediaEmbeddingRepository;
     private readonly ILogger<LessonService> _logger;
     private readonly ILockoutRepository _lockoutRepo;
+    private readonly IHtmlTextManipulationService _htmlTextManipulationService;
 
     public LessonService(
         ILessonRepository lessonRepository,
@@ -34,7 +35,8 @@ public class LessonService : ILessonService
         ITextEmbeddingRepository textEmbeddingRepository,
         IMediaEmbeddingRepository mediaEmbeddingRepository,
         ILogger<LessonService> logger,
-        ILockoutRepository lockoutRepo)
+        ILockoutRepository lockoutRepo,
+        IHtmlTextManipulationService htmlTextManipulationService)
     {
         _lessonRepository = lessonRepository;
         _courseRepository = courseRepository;
@@ -46,6 +48,7 @@ public class LessonService : ILessonService
         _mediaEmbeddingRepository = mediaEmbeddingRepository;
         _logger = logger;
         _lockoutRepo = lockoutRepo;
+        _htmlTextManipulationService = htmlTextManipulationService;
     }
 
     public async Task<LessonResponse> CreateLessonAsync(LessonCreateRequest request, int instructorId)
@@ -205,6 +208,8 @@ public class LessonService : ILessonService
 
     public async Task<MaterialResponse> AddMaterialToLessonAsync(int lessonId, MaterialCreateRequest request, int instructorId)
     {
+        request.Description = _htmlTextManipulationService.SanitizeHtml(request.Description);
+
         var lesson = await _lessonRepository.GetByIdAsync(lessonId);
         if (lesson == null)
             throw new Exception("Lesson not found.");
@@ -370,6 +375,8 @@ public class LessonService : ILessonService
 
     public async Task<MaterialResponse> UpdateMaterialDetailsAsync(int materialId, MaterialUpdateRequest request, int instructorId)
     {
+        request.Description = _htmlTextManipulationService.SanitizeHtml(request.Description);
+
         var material = await _materialRepository.GetByIdAsync(materialId);
         if (material == null)
             throw new Exception("Material not found.");

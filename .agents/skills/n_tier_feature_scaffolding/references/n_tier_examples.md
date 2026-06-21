@@ -306,3 +306,54 @@ Demonstrates Rule 8 (Helper Extractions) and Rule 2 (Early exit for null checks 
         }
     }
 ```
+
+## 5. External Integration Service (Rule 0 & Rule 9)
+This example demonstrates how external integrations (like HTML manipulation using `HtmlAgilityPack` and `HtmlSanitizer`) belong in the `Infrastructure/Services` layer, and must accept their dependencies via Dependency Injection (Rule 9). The interface is declared in the Application layer.
+
+```csharp
+// CourseMarketplaceBE/Application/IServices/IHtmlTextManipulationService.cs
+namespace CourseMarketplaceBE.Application.IServices
+{
+    public interface IHtmlTextManipulationService
+    {
+        string SanitizeHtml(string rawHtml);
+        string ExtractPlainText(string rawHtml);
+    }
+}
+```
+
+```csharp
+// CourseMarketplaceBE/Infrastructure/Services/HtmlTextManipulationService.cs
+using HtmlAgilityPack;
+using Ganss.Xss; // Rule 9: Import first, use later
+using CourseMarketplaceBE.Application.IServices;
+
+namespace CourseMarketplaceBE.Infrastructure.Services
+{
+    public class HtmlTextManipulationService : IHtmlTextManipulationService
+    {
+        private readonly IHtmlSanitizer _sanitizer;
+
+        // Rule 9: Dependency Injection First - Accept external library via constructor, do not instantiate it manually here.
+        public HtmlTextManipulationService(IHtmlSanitizer sanitizer)
+        {
+            _sanitizer = sanitizer;
+        }
+
+        public string SanitizeHtml(string rawHtml)
+        {
+            if (string.IsNullOrWhiteSpace(rawHtml)) return rawHtml;
+            return _sanitizer.Sanitize(rawHtml);
+        }
+
+        public string ExtractPlainText(string rawHtml)
+        {
+            if (string.IsNullOrWhiteSpace(rawHtml)) return rawHtml;
+            var htmlDoc = new HtmlDocument();
+            htmlDoc.LoadHtml(rawHtml);
+            var plainText = htmlDoc.DocumentNode.InnerText;
+            return plainText;
+        }
+    }
+}
+```
