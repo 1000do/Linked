@@ -35,6 +35,7 @@ async def lifespan(app: FastAPI):
         # Pre-load models on startup
         from services.text_classifier_service import TextClassifierService
         from services.embedding_service import EmbeddingService
+        from services.text_extraction_service import TextExtractionService
         
         logger.info("Initializing TextClassifierService...")
         TextClassifierService()
@@ -43,6 +44,10 @@ async def lifespan(app: FastAPI):
         logger.info("Initializing EmbeddingService...")
         EmbeddingService()
         logger.info("✓ EmbeddingService ready")
+        
+        logger.info("Initializing TextExtractionService...")
+        TextExtractionService()
+        logger.info("✓ TextExtractionService ready")
         
         logger.info("✓ All models loaded successfully")
         logger.info("=" * 80)

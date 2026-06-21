@@ -23,7 +23,8 @@ public interface ICourseQueryService
         string? status = null,
         int? page = null,
         int? pageSize = null);
-    Task<CourseDetailResponse?> GetCourseWithDetailsAsync(int courseId, int instructorId, int? userId = null);
+    Task<CourseDetailResponse> GetCourseWithDetailsAsync(int courseId, int? userId = null, string? userRole = null);
+
     Task<bool> IsEnrolledAsync(int userId, int courseId);
     Task<IEnumerable<CategoryResponse>> GetCategoriesAsync();
     Task<CourseAiIntegrationResponse> GetByModelAndCourseAsync(int modelId, int courseId);

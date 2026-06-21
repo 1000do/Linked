@@ -57,7 +57,7 @@ class BaseService:
             
             def __exit__(self, exc_type, exc_val, exc_tb):
                 self.elapsed_ms = (time.time() - self.start_time) * 1000
-                if exc_type:
+                if exc_type and not issubclass(exc_type, GeneratorExit):
                     self.service.logger.error(
                         f"Operation '{self.name}' failed after {self.elapsed_ms:.2f}ms: {exc_val}"
                     )

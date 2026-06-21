@@ -54,35 +54,13 @@ public class CoursePublicController : ControllerBase
         try
         {
             var userId = GetUserId();
-            var course = await _courseQueryService.GetCourseWithDetailsAsync(id, 0, userId); 
-            if (course == null)
-            {
-                return NotFound(ApiResponse<object>.ErrorResponse("Course not found."));
-            }
-
-            if (!string.Equals(course.CourseStatus, CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
-            {
-                bool isOwner = userId.HasValue && course.InstructorId == userId.Value;
-                bool isEnrolled = course.IsEnrolled;
-                bool isStaffOrAdmin = false;
-
-                if (userId.HasValue)
-                {
-                    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
-                    if (string.Equals(role, "admin", StringComparison.OrdinalIgnoreCase) || 
-                        string.Equals(role, "staff", StringComparison.OrdinalIgnoreCase))
-                    {
-                        isStaffOrAdmin = true;
-                    }
-                }
-
-                if (!isOwner && !isEnrolled && !isStaffOrAdmin)
-                {
-                    return StatusCode(403, ApiResponse<object>.ErrorResponse("You do not have permission to view this course."));
-                }
-            }
-
+            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+            var course = await _courseQueryService.GetCourseWithDetailsAsync(id, userId, role);
             return Ok(ApiResponse<object>.SuccessResponse(course, "Retrieved course successfully."));
+        }
+        catch (System.Collections.Generic.KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (UnauthorizedAccessException ex)
         {

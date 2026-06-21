@@ -19,7 +19,7 @@ This skill enforces the exact N-tier architectural pattern used in the Course Ma
 - **Backend (BE)**:
   - `Domain/`: Contains Entities, IRepositories, Enums, Constants.
   - `Application/`: Contains IServices, Services (internal business logic), DTOs.
-  - `Infrastructure/`: Contains Repositories, Services (external integrations), Data (AppDbContext), BackgroundServices (includes scheduled tasks).
+  - `Infrastructure/`: Contains Repositories, Services (external integrations, see `references/n_tier_examples.md` Section 5), Data (AppDbContext), BackgroundServices (includes scheduled tasks).
   - `Presentation/`: Contains Backend API Controllers.
 - **Dependency Chain**:
   - `Presentation` (Backend Controllers) use `Application/IServices`.
@@ -92,6 +92,11 @@ This skill enforces the exact N-tier architectural pattern used in the Course Ma
 
 ### 9. Coding Conventions
 - **Import First, Use Later**: Forbid the use of inline, fully qualified namespace strings (e.g., `return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult...`). Require adding `using` directives at the top of the file and using the short class names in the code logic.
+- **Dependency Injection First**: Never instantiate service dependencies or external libraries using the `new` keyword inside a class. Always inject them via Constructor Dependency Injection using their Interfaces, and ensure they are registered in the DI container (`Program.cs`). Only use `new` for instantiating simple DTOs, ViewModels, or native data structures.
+- **Appropriate DI Lifecycle Registration**: When registering dependencies in `Program.cs`, you MUST explicitly evaluate and use the correct service lifetime:
+  - Use `AddScoped` for the vast majority of Application Services and Infrastructure Repositories (especially those interacting with `AppDbContext`).
+  - Use `AddSingleton` exclusively for stateless external utilities (e.g., `HtmlSanitizer`), centralized caches, or configuration wrappers. 
+  - As always, apply the "Import First, Use Later" rule inside `Program.cs`—do not register using fully-qualified inline namespaces.
 
 ---
 
@@ -108,6 +113,8 @@ When invoked to create, refactor, or validate a feature, you MUST follow these s
 4. **Authorization**: Explicitly determine or **ask the user** which roles are authorized for the feature. Determine if the rule applies to the whole controller or specific methods (for both FE and BE).
 
 ### Phase 2: Create Implementation Plan
+**MANDATORY PLANNING VALIDATION:** Before you output the `implementation_plan.md`, you MUST explicitly cross-reference your proposed folder structure, dependency registrations, and coding conventions against the rules in this skill document. If you propose an external integration in the Application layer, or use inline namespaces, you have failed.
+
 Generate an `implementation_plan.md` artifact containing:
 - **Goal & Completion Criteria**
 - **Open Questions**: Clarifications on ambiguities, UI states, details approach, or authorization roles.

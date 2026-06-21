@@ -239,6 +239,8 @@ public class Program
         builder.Services.AddScoped<IContentHashService, ContentHashService>();
         builder.Services.AddScoped<IAvatarFrameRepository, AvatarFrameRepository>();
         builder.Services.AddScoped<IAvatarFrameService, AvatarFrameService>();
+        builder.Services.AddSingleton<Ganss.Xss.IHtmlSanitizer, Ganss.Xss.HtmlSanitizer>();
+        builder.Services.AddScoped<IHtmlTextManipulationService, HtmlTextManipulationService>();
 
         // 📋 Report (User, Instructor, Staff, Admin)
         builder.Services.AddScoped<IReportRepository, ReportRepository>();
