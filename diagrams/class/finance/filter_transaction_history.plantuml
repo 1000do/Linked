@@ -3,119 +3,113 @@
 ' Styling & Settings
 skinparam style strictuml
 skinparam shadowing false
+skinparam classAttributeIconSize 0
 skinparam class {
     BackgroundColor White
-    BorderColor #1A73E8
-    ArrowColor #5F6368
+    BorderColor #333333
+    ArrowColor #333333
 }
 
-!define ABSTRACT_COLOR #FFE6CC
-!define SERVICE_COLOR #CCE5FF
-!define DTO_COLOR #E6CCFF
-!define ENTITY_COLOR #CCFFE6
-!define REPOSITORY_COLOR #FFFFCC
-!define CONTROLLER_COLOR #FFE6E6
-
 skinparam backgroundColor #FFFFFF
-skinparam classBackgroundColor #F9F9F9
+skinparam classBackgroundColor #FFFFFF
 skinparam classBorderColor #333333
 skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class TransactionControllerFE #FFE6E6 {
-    - _api : ApiClient
+class TransactionControllerFE #FFFFFF {
     + Instructor(keyword: string?, status: string?, year: int?, month: int?) : Task<IActionResult>
 }
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class TransactionControllerBE #FFE6E6 {
+class TransactionControllerBE #FFFFFF {
     - _transactionService : ITransactionService
     + GetInstructorTransactions(keyword: string?, status: string?, year: int?, month: int?) : Task<IActionResult>
 }
 
 ' ==================== BACKEND - DTOs ====================
 
-class TransactionListDto #E6CCFF {
-    + TransactionId : int
-    + Date : DateTime?
-    + Amount : decimal
-    + Status : string?
-    + BuyerName : string
-    + CourseTitle : string
+class TransactionListDto #FFFFFF {
+    - TransactionId : int
+    - StripeSessionId : string?
+    - Date : DateTime?
+    - Amount : decimal
+    - Status : string?
+    - BuyerName : string
+    - CourseTitle : string
+    - InstructorName : string
 }
 
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
-class Transaction #CCFFE6 {
-    + TransactionId : int <<PK>>
-    + OrderItemId : int? <<FK>>
-    + AccountFrom : int? <<FK>>
-    + AccountTo : int? <<FK>>
-    + Amount : decimal
-    + TransferRate : decimal
-    + StripeSessionId : string?
-    + StripePaymentintentId : string?
-    + Currency : string?
-    + TransactionsStatus : string?
-    + TransactionType : string?
-    + TransactionCreatedAt : DateTime?
-    + TransactionExt : TransactionExt?
-    + OrderItem : OrderItem?
-    + AccountFromNavigation : Account?
-    + AccountToNavigation : Account?
+class Transaction #FFFFFF {
+    - TransactionId : int
+    - OrderItemId : int?
+    - AccountFrom : int?
+    - AccountTo : int?
+    - Amount : decimal
+    - TransferRate : decimal
+    - StripeSessionId : string?
+    - StripePaymentintentId : string?
+    - Currency : string?
+    - TransactionsStatus : string?
+    - TransactionType : string?
+    - TransactionCreatedAt : DateTime?
+    - TransactionExt : TransactionExt?
+    - OrderItem : OrderItem?
+    - AccountFromNavigation : Account?
+    - AccountToNavigation : Account?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
 
-interface ITransactionService #FFE6CC {
-    //+ GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<List<TransactionListDto>>//
+interface ITransactionService #FFFFFF {
+    //+ GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<PagedResult<TransactionListDto>>//
 }
 
 ' ==================== BACKEND - REPOSITORY INTERFACES ====================
 
-interface ITransactionRepository #FFE6CC {
-    //+ GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<(IEnumerable<TransactionListDto>, int)>//
+interface ITransactionRepository #FFFFFF {
+    //+ GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<(List<TransactionListDto> Items, int TotalCount)>//
 }
 
 ' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
-class TransactionService #CCE5FF {
+class TransactionService #FFFFFF {
     - _repo : ITransactionRepository
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<List<TransactionListDto>>
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<PagedResult<TransactionListDto>>
 }
 
 ' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
-class TransactionRepository #FFFFCC {
+class TransactionRepository #FFFFFF {
     - _context : AppDbContext
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<(IEnumerable<TransactionListDto>, int)>
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<(List<TransactionListDto> Items, int TotalCount)>
 }
 
 ' ==================== BACKEND - DbContext ====================
 
-class AppDbContext #E6F3FF {
+class AppDbContext #FFFFFF {
     + Transactions : DbSet<Transaction>
 }
 
 ' ==================== RELATIONSHIPS ====================
 
-' === UNIDIRECTIONAL ASSOCIATION ===
-TransactionControllerFE ..> TransactionControllerBE : calls
-TransactionControllerBE --> ITransactionService
-TransactionService --> ITransactionRepository
-TransactionRepository --> AppDbContext
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+TransactionControllerFE -down..> TransactionControllerBE
+TransactionControllerBE -down--> ITransactionService
+TransactionService -down--> ITransactionRepository
+TransactionRepository -down--> AppDbContext
 
 ' === INTERFACE REALIZATION ===
-TransactionService ..|> ITransactionService
-TransactionRepository ..|> ITransactionRepository
+TransactionService -up..|> ITransactionService
+TransactionRepository -up..|> ITransactionRepository
 
-' === DEPENDENCY ===
-TransactionControllerBE ..> TransactionListDto : uses
-ITransactionService ..> TransactionListDto : uses
-TransactionService ..> TransactionListDto : uses
-TransactionRepository ..> TransactionListDto : projects
-TransactionRepository ..> Transaction : queries
+' === DEPENDENCY (dashed arrows) ===
+TransactionControllerBE -down..> TransactionListDto
+TransactionService -down..> TransactionListDto
+TransactionRepository -down..> TransactionListDto
+TransactionRepository -down..> Transaction
 
 @enduml

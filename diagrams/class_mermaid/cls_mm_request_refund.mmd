@@ -1,0 +1,156 @@
+    classDiagram
+    direction TB
+
+    %% ==================== FRONTEND ====================
+
+    class TransactionControllerFE["TransactionController"] {
+        <<frontend controller>>
+        + RequestRefund(transactionId: int, reason: string) Task~IActionResult~
+    }
+
+    class RefundResultDtoFE["RefundResultDto"] {
+        <<view model>>
+        - IsAutoRejected : bool
+        - RejectReason : string?
+    }
+
+    %% ==================== BACKEND - CONTROLLER ====================
+
+    class TransactionControllerBE["TransactionController"] {
+        <<backend controller>>
+        - _financeService : IAdminFinanceService
+        + RequestRefund(transactionId: int, request: StudentRefundRequest) Task~IActionResult~
+    }
+
+    %% ==================== BACKEND - DTOs ====================
+
+    class StudentRefundRequest {
+        - Reason : string
+    }
+
+    class RefundResultDtoBE["RefundResultDto"] {
+        <<dto>>
+        - IsAutoRejected : bool
+        - RejectReason : string?
+    }
+
+    class RefundEligibilityDto {
+        - AccountFlagCount : int
+        - PastRefundedCountForCourse : int
+        - RefundRequestsLast14DaysCount : int
+        - CourseTotalDurationHours : double
+        - StudentProgressPercentage : double
+        - CompletedVideoDurationHours : double
+    }
+
+    %% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+    class Transaction {
+        - TransactionId : int
+        - OrderItemId : int?
+        - AccountFrom : int?
+        - AccountTo : int?
+        - Amount : decimal
+        - TransferRate : decimal
+        - StripeSessionId : string?
+        - StripePaymentintentId : string?
+        - Currency : string?
+        - TransactionsStatus : string?
+        - TransactionType : string?
+        - TransactionCreatedAt : DateTime?
+        - TransactionExt : TransactionExt?
+        - OrderItem : OrderItem?
+        - AccountFromNavigation : Account?
+        - AccountToNavigation : Account?
+    }
+
+    class TransactionExt {
+        - TransactionId : int
+        - RefundReason : string?
+        - RefundAdminNote : string?
+        - RefundRequestedAt : DateTime?
+        - Transaction : Transaction
+    }
+
+    class OrderItem {
+        - Id : int
+        - OrderId : int?
+        - CourseId : int?
+        - PurchasePrice : decimal
+        - CouponUsed : bool?
+        - OriginalPrice : decimal?
+        - CouponCode : string?
+        - CouponType : string?
+        - DiscountAmount : decimal
+        - Course : Course?
+        - Order : OrderInfo?
+    }
+
+    %% ==================== BACKEND - SERVICE INTERFACES ====================
+
+    class IAdminFinanceService {
+        <<interface>>
+        + RequestRefundAsync(transactionId: int, studentId: int, reason: string) Task~RefundResultDto~ *
+    }
+
+    %% ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+    class IAdminFinanceRepository {
+        <<interface>>
+        + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction?~ *
+        + GetRefundEligibilityMetricsAsync(transactionId: int, studentId: int, courseId: int) Task~RefundEligibilityDto~ *
+        + SaveChangesAsync() Task~int~ *
+    }
+
+    %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+    class AdminFinanceService {
+        - _repo : IAdminFinanceRepository
+        + RequestRefundAsync(transactionId: int, studentId: int, reason: string) Task~RefundResultDto~
+    }
+
+    %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+    class AdminFinanceRepository {
+        - _context : AppDbContext
+        + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction?~
+        + GetRefundEligibilityMetricsAsync(transactionId: int, studentId: int, courseId: int) Task~RefundEligibilityDto~
+        + SaveChangesAsync() Task~int~
+    }
+
+    %% ==================== BACKEND - DbContext ====================
+
+    class AppDbContext {
+        + Transactions : DbSet~Transaction~
+        + TransactionExts : DbSet~TransactionExt~
+        + OrderItems : DbSet~OrderItem~
+    }
+
+    %% ==================== RELATIONSHIPS ====================
+
+    %% === COMPOSITION (filled diamond) ===
+    OrderItem *-- Transaction
+    Transaction *-- TransactionExt
+
+    %% === UNIDIRECTIONAL ASSOCIATION ===
+    TransactionControllerFE ..> TransactionControllerBE
+    TransactionControllerBE --> IAdminFinanceService
+    AdminFinanceService --> IAdminFinanceRepository
+    AdminFinanceRepository --> AppDbContext
+
+    %% === INTERFACE REALIZATION ===
+    AdminFinanceService ..|> IAdminFinanceService
+    AdminFinanceRepository ..|> IAdminFinanceRepository
+
+    %% === DEPENDENCY ===
+    TransactionControllerFE ..> RefundResultDtoFE
+    TransactionControllerBE ..> StudentRefundRequest
+    TransactionControllerBE ..> RefundResultDtoBE
+    AdminFinanceService ..> RefundResultDtoBE
+    AdminFinanceService ..> RefundEligibilityDto
+    AdminFinanceService ..> TransactionExt
+    AdminFinanceRepository ..> RefundEligibilityDto
+    AdminFinanceRepository ..> Transaction
+
+    %% ==================== STYLES ====================
+    classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
