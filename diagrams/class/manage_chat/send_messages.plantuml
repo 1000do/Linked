@@ -1,0 +1,178 @@
+@startuml SendMessages_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== BACKEND - SIGNALR HUB ====================
+
+class ChatHub <<signalr hub>> #FFE6E6 {
+    - _chatService : IChatService
+    + SendMessage(dto: SendMessageDto) : Task
+    - GetAccountId() : int
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class SendMessageDto #E6CCFF {
+    + ChatId : int
+    + Content : string
+    + Attachments : List<AttachmentInputDto>?
+}
+
+class AttachmentInputDto #E6CCFF {
+    + FileUrl : string
+    + FileName : string?
+    + FileType : string?
+    + FileSize : long?
+}
+
+class MessageDto #E6CCFF {
+    + MessageId : int
+    + ChatId : int
+    + SenderId : int?
+    + SenderName : string
+    + SenderAvatar : string?
+    + Content : string
+    + IsSeen : bool
+    + MessageStatus : string
+    + SentAt : DateTime?
+    + Attachments : List<AttachmentDto>
+}
+
+class AttachmentDto #E6CCFF {
+    + AttachmentId : int
+    + FileUrl : string
+    + FileName : string?
+    + FileType : string?
+    + FileSize : long?
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Chat #CCFFE6 {
+    + ChatId : int
+    + ChatName : string?
+    + ChatType : string
+    + ContextType : string?
+    + ContextId : int?
+    + CreatedAt : DateTime?
+    + LastMessageAt : DateTime?
+}
+
+class Message #CCFFE6 {
+    + MessageId : int
+    + ChatId : int
+    + SenderId : int?
+    + Content : string
+    + IsSeen : bool
+    + MessageStatus : string
+    + SentAt : DateTime?
+    + ReceivedAt : DateTime?
+}
+
+class MessageAttachment #CCFFE6 {
+    + AttachmentId : int
+    + MessageId : int
+    + FileUrl : string
+    + FileName : string?
+    + FileType : string?
+    + FileSize : long?
+    + CreatedAt : DateTime?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IChatService #FFE6CC {
+    //+ SaveMessageAsync(senderId: int, dto: SendMessageDto) : Task<MessageDto>//
+    //+ GetParticipantIdsAsync(chatId: int) : Task<List<int>>//
+}
+
+interface IRedisService #FFE6CC {
+    //+ IncrementUnreadCountAsync(accountId: int, chatId: int) : Task//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface IChatRepository #FFE6CC {
+    //+ AddMessageAsync(message: Message) : Task//
+    //+ GetChatByIdAsync(chatId: int) : Task<Chat?>//
+    //+ UpdateChatAsync(chat: Chat) : Task//
+    //+ GetParticipantIdsAsync(chatId: int) : Task<List<int>>//
+    //+ SaveChangesAsync() : Task<int>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ChatService #CCE5FF {
+    - _repo : IChatRepository
+    - _redisService : IRedisService
+    + SaveMessageAsync(senderId: int, dto: SendMessageDto) : Task<MessageDto>
+    + GetParticipantIdsAsync(chatId: int) : Task<List<int>>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ChatRepository #FFFFCC {
+    - _context : AppDbContext
+    + AddMessageAsync(message: Message) : Task
+    + GetChatByIdAsync(chatId: int) : Task<Chat?>
+    + UpdateChatAsync(chat: Chat) : Task
+    + GetParticipantIdsAsync(chatId: int) : Task<List<int>>
+    + SaveChangesAsync() : Task<int>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Chats : DbSet<Chat>
+    + Messages : DbSet<Message>
+    + MessageAttachments : DbSet<MessageAttachment>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === COMPOSITION (filled diamond) ===
+Chat *-- Message
+Message *-- MessageAttachment
+SendMessageDto *-- AttachmentInputDto
+MessageDto *-- AttachmentDto
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+ChatHub --> IChatService
+ChatService --> IChatRepository
+ChatService --> IRedisService
+ChatRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+ChatService ..|> IChatService
+ChatRepository ..|> IChatRepository
+
+' === DEPENDENCY (dashed arrows) ===
+ChatHub ..> SendMessageDto
+ChatHub ..> MessageDto
+ChatService ..> SendMessageDto
+ChatService ..> MessageDto
+ChatService ..> Message
+ChatService ..> MessageAttachment
+ChatRepository ..> Message
+
+@enduml

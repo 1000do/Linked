@@ -603,7 +603,10 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnName("requirements");
 
                     b.Property<int>("ThreatLevel")
-                        .HasColumnType("integer");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("threat_level");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -1121,6 +1124,103 @@ namespace CourseMarketplaceBE.Migrations
                     b.ToTable("enrollments", (string)null);
                 });
 
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Gift", b =>
+                {
+                    b.Property<int>("GiftId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("gift_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("GiftId"));
+
+                    b.Property<string>("CardTheme")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("classic")
+                        .HasColumnName("card_theme");
+
+                    b.Property<DateTime?>("ClaimedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("claimed_at");
+
+                    b.Property<int?>("ClaimedByUserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("claimed_by_user_id");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("DeliveryStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("pending")
+                        .HasColumnName("delivery_status");
+
+                    b.Property<string>("GiftMessage")
+                        .HasColumnType("text")
+                        .HasColumnName("gift_message");
+
+                    b.Property<bool>("IsClaimed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_claimed");
+
+                    b.Property<int>("OrderItemId")
+                        .HasColumnType("integer")
+                        .HasColumnName("order_item_id");
+
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("recipient_email");
+
+                    b.Property<string>("RecipientName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("recipient_name");
+
+                    b.Property<string>("RedemptionToken")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("redemption_token");
+
+                    b.Property<int?>("SenderId")
+                        .HasColumnType("integer")
+                        .HasColumnName("sender_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("GiftId")
+                        .HasName("gifts_pkey");
+
+                    b.HasIndex("ClaimedByUserId");
+
+                    b.HasIndex("OrderItemId");
+
+                    b.HasIndex("SenderId");
+
+                    b.HasIndex(new[] { "DeliveryStatus" }, "idx_gifts_delivery");
+
+                    b.HasIndex(new[] { "RecipientEmail" }, "idx_gifts_recipient");
+
+                    b.HasIndex(new[] { "RedemptionToken" }, "idx_gifts_token")
+                        .IsUnique();
+
+                    b.ToTable("gifts", (string)null);
+                });
+
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Instructor", b =>
                 {
                     b.Property<int>("InstructorId")
@@ -1167,6 +1267,10 @@ namespace CourseMarketplaceBE.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("professional_title");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text")
+                        .HasColumnName("rejection_reason");
 
                     b.Property<string>("StripeAccountId")
                         .HasMaxLength(255)
@@ -1623,11 +1727,29 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("manager_id");
 
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("avatar_url");
+
+                    b.Property<string>("Bio")
+                        .HasColumnType("text")
+                        .HasColumnName("bio");
+
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("display_name");
+
+                    b.Property<string>("FullName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("full_name");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("phone_number");
 
                     b.Property<string>("Role")
                         .HasMaxLength(50)
@@ -2126,7 +2248,7 @@ namespace CourseMarketplaceBE.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<Vector>("Embedding")
-                        .HasColumnType("vector(768)")
+                        .HasColumnType("vector(384)")
                         .HasColumnName("text_embedding");
 
                     b.Property<int?>("MaterialId")
@@ -2639,6 +2761,34 @@ namespace CourseMarketplaceBE.Migrations
                     b.Navigation("Course");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Gift", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.User", "ClaimedByUser")
+                        .WithMany()
+                        .HasForeignKey("ClaimedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("gifts_claimed_by_user_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.OrderItem", "OrderItem")
+                        .WithMany()
+                        .HasForeignKey("OrderItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("gifts_order_item_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Account", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("gifts_sender_id_fkey");
+
+                    b.Navigation("ClaimedByUser");
+
+                    b.Navigation("OrderItem");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Instructor", b =>

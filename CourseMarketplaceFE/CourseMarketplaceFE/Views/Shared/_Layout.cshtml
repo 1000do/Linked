@@ -237,7 +237,7 @@
     {
         <div id="support-chat-popup" class="support-popup bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] border border-slate-100 overflow-hidden flex-col" style="display: none;">
             <!-- Header -->
-            <div class="bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-4 text-white flex items-center justify-between shadow-md relative z-10">
+            <div class="bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-4 text-white flex items-center justify-between shadow-md relative z-50">
                 <div class="flex items-center gap-3">
                     <div class="relative">
                         <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm overflow-hidden">
@@ -246,9 +246,25 @@
                         </div>
                         <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-emerald-600 rounded-full"></div>
                     </div>
-                    <div>
-                        <h6 id="support-name" class="font-display font-bold text-[15px] leading-tight m-0 text-white">Online Support</h6>
-                        <p class="text-[11px] font-medium text-emerald-50 m-0 opacity-90">Typically replies instantly</p>
+                    <div class="relative">
+                        <button id="mini-chat-selector-btn" class="flex items-center gap-1 bg-transparent border-0 text-white hover:bg-white/10 rounded-lg px-2 py-1 -ml-2 transition-colors cursor-pointer" onclick="document.getElementById('mini-chat-dropdown').classList.toggle('hidden')">
+                            <div class="text-left">
+                                <h6 id="support-name" class="font-display font-bold text-[15px] leading-tight m-0 text-white">Online Support</h6>
+                                <p class="text-[11px] font-medium text-emerald-50 m-0 opacity-90">Typically replies instantly</p>
+                            </div>
+                            <span class="material-symbols-outlined text-[20px]">expand_more</span>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div id="mini-chat-dropdown" class="hidden absolute top-[calc(100%+8px)] left-[-50px] w-[260px] bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-[1001]">
+                            <div class="p-2 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                                <h6 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider m-0 px-2">Your Conversations</h6>
+                                <button onclick="location.href='/Chat'" class="text-[10px] text-emerald-600 hover:text-emerald-700 font-bold bg-transparent border-0 cursor-pointer">View All</button>
+                            </div>
+                            <div id="mini-chat-list" class="max-h-60 overflow-y-auto">
+                                <!-- Chat items injected via JS -->
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <button onclick="toggleSupportPopup()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors text-white border-0 bg-transparent">
@@ -837,11 +853,148 @@
             }
         }
 
+        let isWaitingForSupport = false;
+        let allMiniChats = [];
+
+        function toggleMiniChatDropdown() {
+            const dd = document.getElementById('mini-chat-dropdown');
+            if (dd) dd.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            const btn = document.getElementById('mini-chat-selector-btn');
+            const dd = document.getElementById('mini-chat-dropdown');
+            if (btn && dd && !btn.contains(e.target) && !dd.contains(e.target)) {
+                dd.classList.add('hidden');
+            }
+        });
+
+        async function selectMiniChat(chatId, toggleDropdown = true) {
+            if (toggleDropdown) toggleMiniChatDropdown();
+            
+            const chat = allMiniChats.find(c => c.chatId === chatId);
+            if (!chat) return;
+
+            miniChatId = chat.chatId;
+            isWaitingForSupport = false;
+
+            document.getElementById('support-name').innerText = chat.partnerName || 'Support Team';
+            
+            // Clear the input field when switching chats
+            const inputField = document.getElementById('mini-chat-input');
+            if (inputField) inputField.value = '';
+            if (chat.partnerAvatar) {
+                const img = document.getElementById('support-avatar');
+                img.src = chat.partnerAvatar;
+                img.classList.remove('hidden');
+                document.getElementById('support-icon').classList.add('hidden');
+            } else {
+                document.getElementById('support-avatar').classList.add('hidden');
+                document.getElementById('support-icon').classList.remove('hidden');
+            }
+            
+            renderMiniChatDropdown(); // update active styling
+            
+            // Join SignalR group
+            if (miniChatConn && miniChatConn.state === signalR.HubConnectionState.Connected) {
+                try { await miniChatConn.invoke("JoinChat", miniChatId); } catch(e) {}
+            }
+            
+            await loadMiniHistory();
+        }
+
+        function renderMiniChatDropdown() {
+            const list = document.getElementById('mini-chat-list');
+            if (!list) return;
+            
+            let html = '';
+            
+            if (allMiniChats.length === 0) {
+                html += `<div class="p-4 text-center text-xs text-slate-500">No conversations yet</div>`;
+            } else {
+                html += allMiniChats.map(c => `
+                    <button onclick="selectMiniChat(${c.chatId})" class="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors border-0 bg-transparent border-b border-slate-50 cursor-pointer ${c.chatId === miniChatId ? 'bg-emerald-50/50' : ''}">
+                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden">
+                            ${c.partnerAvatar ? `<img src="${c.partnerAvatar}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-[16px] text-slate-500">support_agent</span>`}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-center mb-0.5">
+                                <h6 class="text-xs font-bold text-slate-800 m-0 truncate ${c.unreadCount > 0 ? 'text-emerald-600' : ''}">${c.partnerName || 'Support Team'}</h6>
+                                ${c.unreadCount > 0 ? `<span class="w-2 h-2 bg-red-500 rounded-full"></span>` : ''}
+                            </div>
+                            <p class="text-[10px] text-slate-500 m-0 truncate">${c.lastMessage || (c.contextType==='system'?'Support Session':'Conversation')}</p>
+                        </div>
+                    </button>
+                `).join('');
+            }
+            
+            // Add a permanent button to contact support if they don't have a system chat open
+            const hasSystemChat = allMiniChats.some(c => c.contextType === 'system');
+            if (!hasSystemChat) {
+                html += `
+                    <div class="p-3 bg-slate-50 border-t border-slate-100">
+                        <button onclick="startNewSupportChat()" class="w-full bg-white border border-slate-200 text-slate-600 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50 px-3 py-2 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                            <span class="material-symbols-outlined text-[16px]">help</span>
+                            Contact Support
+                        </button>
+                    </div>
+                `;
+            }
+            
+            list.innerHTML = html;
+        }
+
+        async function startNewSupportChat() {
+            toggleMiniChatDropdown(); // Close dropdown
+            miniChatId = null; // Clear active chat ID
+            isWaitingForSupport = false;
+            
+            document.getElementById('support-name').innerText = 'Support Team';
+            document.getElementById('support-avatar').src = '/img/default-avatar.png';
+            
+            // Clear the input field when switching to new support chat
+            const inputField = document.getElementById('mini-chat-input');
+            if (inputField) inputField.value = '';
+            
+            // Check for pending requests first
+            try {
+                const pendingRes = await fetch("/Chat/GetPendingRequests");
+                if (pendingRes.ok) {
+                    const pendings = await pendingRes.json();
+                    if (pendings && pendings.length > 0) {
+                        isWaitingForSupport = true;
+                        document.getElementById('mini-chat-content').innerHTML = ''; // Clear container
+                        
+                        // Show the message we sent
+                        appendMiniMsg({ senderId: currentUserId, content: pendings[0].initialMessage });
+                        
+                        // Show waiting UI
+                        const waitingHtml = `
+                            <div class="text-center py-6 w-full relative z-10" id="waiting-support-ui">
+                                <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
+                                    <span class="material-symbols-outlined">support_agent</span>
+                                </div>
+                                <p class="text-xs font-medium text-slate-500">Your request is in queue.</p>
+                                <p class="text-[10px] text-slate-400">Waiting for support staff...</p>
+                            </div>
+                        `;
+                        document.getElementById('mini-chat-content').insertAdjacentHTML('beforeend', waitingHtml);
+                        return;
+                    }
+                }
+            } catch (err) {}
+            
+            // Show welcome state if no pending requests
+            showMiniWelcomeState();
+        }
+
         async function initMiniChat() {
             if (!currentToken) {
                 window.location.href = "/Account/Login";
                 return;
             }
+            
+            // If already connected and have chat, do nothing
             if (miniChatId) return;
 
             try {
@@ -859,106 +1012,119 @@
                     });
                 }
 
-                // Get support staff ID
-                const staffRes = await fetch("http://localhost:5207/api/chat/support-account", {
-                    headers: { 'Authorization': `Bearer ${currentToken}` }
-                });
-                
-                if (!staffRes.ok) {
-                    const errorContainer = document.getElementById('mini-chat-content');
-                    if (errorContainer) {
-                        errorContainer.innerHTML = '<div class="text-center p-4 text-red-500 text-sm mt-4">Unable to connect to support.</div>';
-                    }
-                    return;
-                }
-                
-                const staff = await staffRes.json();
-                
-                if (!staff || !staff.accountId) {
-                    const errorContainer = document.getElementById('mini-chat-content');
-                    if (errorContainer) {
-                        errorContainer.innerHTML = '<div class="text-center p-4 text-red-500 text-sm mt-4">Unable to connect to support.</div>';
-                    }
-                    return;
-                }
-                
-                document.getElementById('support-name').innerText = staff.fullName || 'Support Team';
-                if (staff.avatarUrl) {
-                    const img = document.getElementById('support-avatar');
-                    img.src = staff.avatarUrl;
-                    img.classList.remove('hidden');
-                    document.getElementById('support-icon').classList.add('hidden');
-                }
-                
-                // Create/Get chat room
-                const createRes = await fetch("http://localhost:5207/api/chat/create", {
-                    method: 'POST',
-                    headers: { 
-                        'Authorization': `Bearer ${currentToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ targetAccountId: staff.accountId, contextType: 'system' })
-                });
-                
-                if (!createRes.ok) {
-                    const errorData = await createRes.json();
-                    console.error("Create chat error", errorData);
-                    const errorContainer = document.getElementById('mini-chat-content');
-                    if (errorContainer) {
-                        errorContainer.innerHTML = `<div class="text-center p-4 text-red-500 text-sm mt-4">${errorData.message || 'Unable to connect to support.'}</div>`;
-                    }
-                    return;
-                }
-                
-                const chatData = await createRes.json();
-                miniChatId = chatData.chatId;
+                // Fetch chats via BFF Proxy
+                const res = await fetch("/Chat/GetList");
+                if (res.ok) {
+                    const chats = await res.json();
+                    allMiniChats = chats;
+                    renderMiniChatDropdown();
+                    
+                    let targetChat = chats.find(c => c.chatId === miniChatId) || chats.find(c => c.contextType === 'system');
+                    if (!targetChat && chats.length > 0) targetChat = chats[0];
 
-                // Join SignalR group
-                if (miniChatConn && miniChatConn.state === signalR.HubConnectionState.Connected) {
-                    await miniChatConn.invoke("JoinChat", miniChatId);
+                    if (targetChat) {
+                        await selectMiniChat(targetChat.chatId, false);
+                        return;
+                    }
                 }
-
-                await loadMiniHistory();
+                
+                // No active chat found. Check if there's a pending request.
+                const pendingRes = await fetch("/Chat/GetPendingRequests");
+                if (pendingRes.ok) {
+                    const pendings = await pendingRes.json();
+                    if (pendings && pendings.length > 0) {
+                        isWaitingForSupport = true;
+                        document.getElementById('support-name').innerText = 'Support Team';
+                        document.getElementById('mini-chat-content').innerHTML = ''; // Clear container
+                        
+                        // Show the message we sent
+                        appendMiniMsg({ senderId: currentUserId, content: pendings[0].initialMessage });
+                        
+                        // Show waiting UI
+                        const waitingHtml = `
+                            <div class="text-center py-6 w-full relative z-10" id="waiting-support-ui">
+                                <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
+                                    <span class="material-symbols-outlined">support_agent</span>
+                                </div>
+                                <p class="text-xs font-medium text-slate-500">Your request is in queue.</p>
+                                <p class="text-[10px] text-slate-400">Waiting for support staff...</p>
+                            </div>
+                        `;
+                        document.getElementById('mini-chat-content').insertAdjacentHTML('beforeend', waitingHtml);
+                        return;
+                    }
+                }
+                
+                // No pending request found. Show welcome state.
+                document.getElementById('support-name').innerText = 'Support Team';
+                showMiniWelcomeState();
             } catch (err) {
                 console.error("Init mini chat error:", err);
                 document.getElementById('mini-chat-content').innerHTML = `<div class="text-center py-4 text-xs text-red-500">Unable to connect to support.</div>`;
             }
         }
 
+        function showMiniWelcomeState() {
+            const container = document.getElementById('mini-chat-content');
+            let html = `
+                <div class="flex flex-col w-fit max-w-[85%] self-start relative z-10 mb-1 mt-2">
+                    <div class="text-[10px] font-bold text-slate-400 mb-1 px-1 text-left">Support Team</div>
+                    <div class="text-[13.5px] px-4 py-2.5 rounded-2xl leading-relaxed shadow-sm bg-white border border-slate-100 text-slate-700 rounded-bl-sm">
+                        Hello! 👋 Thanks for reaching out. Please send us your issue and someone will be with you shortly.
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2 mb-4" id="quick-replies">
+                    <button onclick="sendQuickReply('I need to ask about course content')" class="text-[12px] px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full hover:bg-emerald-100 transition-colors cursor-pointer">Ask about course</button>
+                    <button onclick="sendQuickReply('I encountered a payment error')" class="text-[12px] px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full hover:bg-emerald-100 transition-colors cursor-pointer">Payment error</button>
+                    <button onclick="sendQuickReply('I need more advice')" class="text-[12px] px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full hover:bg-emerald-100 transition-colors cursor-pointer">Need advice</button>
+                </div>`;
+            container.innerHTML = html;
+        }
+
         async function loadMiniHistory() {
             if (!miniChatId) return;
             try {
-                const res = await fetch(`http://localhost:5207/api/chat/history?roomId=${miniChatId}`, {
-                    headers: { 'Authorization': `Bearer ${currentToken}` }
-                });
+                // Use BFF Proxy
+                const res = await fetch(`/Chat/GetHistory?roomId=${miniChatId}`);
                 const msgs = await res.json();
                 const container = document.getElementById('mini-chat-content');
                 let html = '';
                 const staffName = document.getElementById('support-name').innerText;
                 
-                if (msgs.length === 0) {
-                    html += `
-                        <div class="flex flex-col w-fit max-w-[85%] self-start relative z-10 mb-1 mt-2">
-                            <div class="text-[10px] font-bold text-slate-400 mb-1 px-1 text-left">${staffName}</div>
-                            <div class="text-[13.5px] px-4 py-2.5 rounded-2xl leading-relaxed shadow-sm bg-white border border-slate-100 text-slate-700 rounded-bl-sm">
-                                Hello! 👋 Thanks for reaching out. How can we help you today?
-                            </div>
-                        </div>
-                        <div class="flex flex-wrap gap-2 mb-4" id="quick-replies">
-                            <button onclick="sendQuickReply('I need to ask about course content')" class="text-[12px] px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full hover:bg-emerald-100 transition-colors cursor-pointer">Ask about course</button>
-                            <button onclick="sendQuickReply('I encountered a payment error')" class="text-[12px] px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full hover:bg-emerald-100 transition-colors cursor-pointer">Payment error</button>
-                            <button onclick="sendQuickReply('I need more advice')" class="text-[12px] px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full hover:bg-emerald-100 transition-colors cursor-pointer">Need advice</button>
-                        </div>`;
-                }
-
                 html += msgs.map(m => {
                     const sid = getMiniSenderId(m);
                     const isMe = sid === currentUserId && currentUserId > 0;
                     const name = getMiniSenderName(m);
+                    const attachments = m.attachments || m.Attachments || [];
+                    let attachmentHtml = "";
+                    if (attachments.length > 0) {
+                        attachmentHtml = `
+                            <div class="mt-1.5 flex flex-col gap-1.5">
+                                ${attachments.map(a => {
+                                    const fType = a.fileType || a.FileType;
+                                    const fUrl = a.fileUrl || a.FileUrl;
+                                    const fName = a.fileName || a.FileName || 'Document';
+                                    
+                                    if (fType === 'image') {
+                                        return `<a href="${fUrl}" target="_blank" class="block rounded-lg overflow-hidden border ${isMe ? 'border-emerald-400' : 'border-slate-200'} shadow-sm max-w-[150px]">
+                                                    <img src="${fUrl}" class="w-full h-auto" />
+                                                </a>`;
+                                    } else {
+                                        return `<a href="${fUrl}" target="_blank" class="flex items-center gap-1.5 p-1.5 ${isMe ? 'bg-black/10 hover:bg-black/20 text-white' : 'bg-slate-50 hover:bg-slate-100 text-slate-700'} rounded-lg border border-transparent transition-colors text-[11px] max-w-[180px]">
+                                                    <span class="material-symbols-outlined text-[14px]">description</span>
+                                                    <span class="truncate flex-1">${fName}</span>
+                                                </a>`;
+                                    }
+                                }).join('')}
+                            </div>
+                        `;
+                    }
                     return `
                         <div class="flex flex-col w-fit max-w-[85%] ${isMe ? 'self-end' : 'self-start'} relative z-10 mb-1">
                             <div class="text-[10px] font-bold text-slate-400 mb-1 px-1 ${isMe ? 'text-right' : 'text-left'}">${isMe ? 'You' : name}</div>
-                            <div class="text-[13.5px] px-4 py-2.5 rounded-2xl leading-relaxed shadow-sm ${isMe ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white rounded-br-sm' : 'bg-white border border-slate-100 text-slate-700 rounded-bl-sm'}">${m.content}</div>
+                            <div class="text-[13.5px] px-4 py-2.5 rounded-2xl leading-relaxed shadow-sm ${isMe ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white rounded-br-sm' : 'bg-white border border-slate-100 text-slate-700 rounded-bl-sm'}">
+                                ${m.content}${attachmentHtml}
+                            </div>
                         </div>`;
                 }).join('');
                 
@@ -1002,7 +1168,69 @@
         async function sendMiniMsg() {
             const input = document.getElementById('mini-chat-input');
             const content = input.value.trim();
-            if (!content || !miniChatId || !miniChatConn) return;
+            if (!content) return;
+            
+            if (isWaitingForSupport) {
+                let warningMsg = document.getElementById('spam-warning');
+                if (!warningMsg) {
+                    warningMsg = document.createElement('div');
+                    warningMsg.id = 'spam-warning';
+                    warningMsg.className = 'text-[11px] text-red-500 font-semibold mb-2 ml-1 animate-pulse';
+                    warningMsg.innerText = '⚠️ Hang tight! Someone from our team will be right with you...';
+                    
+                    // Insert just before the input container
+                    input.parentElement.parentElement.insertBefore(warningMsg, input.parentElement);
+                    
+                    setTimeout(() => {
+                        const w = document.getElementById('spam-warning');
+                        if (w) w.remove();
+                    }, 3000);
+                }
+                return;
+            }
+
+            // If we don't have an active chat yet, we are creating a ticket
+            if (!miniChatId) {
+                try {
+                    isWaitingForSupport = true;
+                    const res = await fetch("/Chat/RequestSupport", {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: content, targetRole: 'staff' })
+                    });
+                    
+                    if (res.ok) {
+                        input.value = "";
+                        const container = document.getElementById('mini-chat-content');
+                        
+                        // Append our own message visually
+                        appendMiniMsg({ senderId: currentUserId, content: content });
+                        
+                        // Show waiting state
+                        const qr = document.getElementById('quick-replies');
+                        if (qr) qr.style.display = 'none';
+                        
+                        const waitingHtml = `
+                            <div class="text-center py-6 w-full relative z-10" id="waiting-support-ui">
+                                <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
+                                    <span class="material-symbols-outlined">support_agent</span>
+                                </div>
+                                <p class="text-xs font-medium text-slate-500">Your request has been sent.</p>
+                                <p class="text-[10px] text-slate-400">Waiting for support staff...</p>
+                            </div>
+                        `;
+                        container.insertAdjacentHTML('beforeend', waitingHtml);
+                        container.scrollTop = container.scrollHeight;
+                    }
+                } catch (err) {
+                    console.error("Request support error:", err);
+                    isWaitingForSupport = false;
+                }
+                return;
+            }
+
+            // Normal sending if chat is established
+            if (!miniChatConn) return;
 
             try {
                 await miniChatConn.invoke("SendMessage", {
@@ -1022,10 +1250,37 @@
             const sid = getMiniSenderId(m);
             const isMe = sid === currentUserId && currentUserId > 0;
             const name = getMiniSenderName(m);
+            const attachments = m.attachments || m.Attachments || [];
+            let attachmentHtml = "";
+            if (attachments.length > 0) {
+                attachmentHtml = `
+                    <div class="mt-1.5 flex flex-col gap-1.5">
+                        ${attachments.map(a => {
+                            const fType = a.fileType || a.FileType;
+                            const fUrl = a.fileUrl || a.FileUrl;
+                            const fName = a.fileName || a.FileName || 'Document';
+                            
+                            if (fType === 'image') {
+                                return `<a href="${fUrl}" target="_blank" class="block rounded-lg overflow-hidden border ${isMe ? 'border-emerald-400' : 'border-slate-200'} shadow-sm max-w-[150px]">
+                                            <img src="${fUrl}" class="w-full h-auto" />
+                                        </a>`;
+                            } else {
+                                return `<a href="${fUrl}" target="_blank" class="flex items-center gap-1.5 p-1.5 ${isMe ? 'bg-black/10 hover:bg-black/20 text-white' : 'bg-slate-50 hover:bg-slate-100 text-slate-700'} rounded-lg border border-transparent transition-colors text-[11px] max-w-[180px]">
+                                            <span class="material-symbols-outlined text-[14px]">description</span>
+                                            <span class="truncate flex-1">${fName}</span>
+                                        </a>`;
+                            }
+                        }).join('')}
+                    </div>
+                `;
+            }
+
             const html = `
                 <div class="flex flex-col w-fit max-w-[85%] ${isMe ? 'self-end' : 'self-start'} relative z-10 mb-1">
                     <div class="text-[10px] font-bold text-slate-400 mb-1 px-1 ${isMe ? 'text-right' : 'text-left'}">${isMe ? 'You' : name}</div>
-                    <div class="text-[13.5px] px-4 py-2.5 rounded-2xl leading-relaxed shadow-sm ${isMe ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white rounded-br-sm' : 'bg-white border border-slate-100 text-slate-700 rounded-bl-sm'}">${m.content}</div>
+                    <div class="text-[13.5px] px-4 py-2.5 rounded-2xl leading-relaxed shadow-sm ${isMe ? 'bg-gradient-to-br from-emerald-600 to-emerald-500 text-white rounded-br-sm' : 'bg-white border border-slate-100 text-slate-700 rounded-bl-sm'}">
+                        ${m.content}${attachmentHtml}
+                    </div>
                 </div>`;
             const indicator = document.getElementById('typing-indicator');
             if (indicator) {
@@ -1053,12 +1308,10 @@
             if (!container || !currentToken) return;
 
             try {
-                const response = await fetch("http://localhost:5207/api/Notification", {
-                    headers: { 'Authorization': `Bearer ${currentToken}` }
-                });
+                const response = await fetch("/Notification/GetMyNotifications");
                 if (response.ok) {
                     const result = await response.json();
-                    const notifications = Array.isArray(result) ? result : (result.data || []);
+                    const notifications = result.data?.items || [];
                     const hasUnread = notifications.some(n => n.isRead === false);
                     if (badge) hasUnread ? badge.classList.remove('hidden') : badge.classList.add('hidden');
 
@@ -1171,6 +1424,23 @@
                 miniChatConn.on("ReceiveMessage", function (message) {
                     const popup = document.getElementById('support-chat-popup');
                     const msgChatId = message.chatId ?? message.ChatId;
+                    
+                    // Update allMiniChats list for dropdown
+                    if (typeof allMiniChats !== 'undefined') {
+                        const existingChat = allMiniChats.find(c => c.chatId == msgChatId);
+                        if (existingChat) {
+                            existingChat.lastMessage = message.content;
+                            // move to top
+                            allMiniChats = [existingChat, ...allMiniChats.filter(c => c.chatId != msgChatId)];
+                            if (typeof renderMiniChatDropdown === 'function') renderMiniChatDropdown();
+                        } else {
+                            fetch("/Chat/GetList").then(res => res.json()).then(chats => {
+                                allMiniChats = chats;
+                                if (typeof renderMiniChatDropdown === 'function') renderMiniChatDropdown();
+                            }).catch(e=>{});
+                        }
+                    }
+
                     if (popup && popup.style.display === 'flex' && msgChatId == miniChatId) {
                         appendMiniMsg(message);
                     } else if (window.location.pathname.toLowerCase() !== "/chat") {
@@ -1182,7 +1452,7 @@
                         }
                         const bubble = document.getElementById('unread-preview-bubble');
                         const previewContent = document.getElementById('preview-content');
-                        if (bubble && previewContent && document.getElementById('support-chat-popup').style.display !== 'flex') {
+                        if (bubble && previewContent && document.getElementById('support-chat-popup') && document.getElementById('support-chat-popup').style.display !== 'flex') {
                             previewContent.innerText = message.content;
                             bubble.classList.remove('hidden');
                             bubble.classList.add('block');
@@ -1192,6 +1462,40 @@
                             }, 5000);
                         }
                     }
+                });
+
+                miniChatConn.on("SupportRequestAccepted", async function(data) {
+                    miniChatId = data.chatId ?? data.ChatId;
+                    isWaitingForSupport = false;
+                    
+                    // Remove waiting UI
+                    const waitingUi = document.getElementById('waiting-support-ui');
+                    if (waitingUi) waitingUi.remove();
+                    
+                    if (miniChatConn && miniChatConn.state === signalR.HubConnectionState.Connected) {
+                        await miniChatConn.invoke("JoinChat", miniChatId);
+                    }
+                    
+                    // Refresh dropdown
+                    try {
+                        const res = await fetch("/Chat/GetList");
+                        if (res.ok) {
+                            allMiniChats = await res.json();
+                            const activeChat = allMiniChats.find(c => c.chatId == miniChatId);
+                            if (activeChat) {
+                                document.getElementById('support-name').innerText = activeChat.partnerName || 'Support Team';
+                                if (activeChat.partnerAvatar) {
+                                    const img = document.getElementById('support-avatar');
+                                    img.src = activeChat.partnerAvatar;
+                                    img.classList.remove('hidden');
+                                    document.getElementById('support-icon').classList.add('hidden');
+                                }
+                            }
+                            if (typeof renderMiniChatDropdown === 'function') renderMiniChatDropdown();
+                        }
+                    } catch(e) {}
+                    
+                    await loadMiniHistory();
                 });
 
                 miniChatConn.on("UserTyping", function(data) {
@@ -1213,9 +1517,7 @@
                 });
 
                 miniChatConn.start().then(() => {
-                    fetch("http://localhost:5207/api/chat/unread-count", {
-                        headers: { 'Authorization': `Bearer ${currentToken}` }
-                    }).then(res => res.json()).then(data => {
+                    fetch("/Chat/GetUnreadCount").then(res => res.json()).then(data => {
                         if (data.count > 0 && window.location.pathname.toLowerCase() !== "/chat") {
                             const b = document.getElementById('global-chat-badge');
                             if (b) { b.style.display = 'block'; b.innerText = data.count; }

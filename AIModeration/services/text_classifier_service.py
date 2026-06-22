@@ -2,17 +2,15 @@
 
 import json
 import logging
-import sys
 import os
 import time
 import torch
 from typing import Tuple, Dict, List, Any
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch.nn.functional as F
-import numpy as np
 
 from config.settings import Settings, get_settings
-from core.exceptions import ModelInferenceException, TimeoutException
+from core.exceptions import ModelInferenceException
 from services.base_service import BaseService
 
 logger = logging.getLogger(__name__)
@@ -194,7 +192,7 @@ class TextClassifierService(BaseService):
         
         
         if high_conf_spams or high_conf_toxics:
-            self.logger.info(f"High confidence threats:\n {json.dumps(high_conf_spams + high_conf_toxics, indent= 4)}")
+            self.logger.info(f"High confidence threats:\n {json.dumps(high_conf_spams + high_conf_toxics, indent= 4,ensure_ascii=False)}")
             
             for threat in high_conf_spams:
                 candidates.append(
@@ -239,7 +237,7 @@ class TextClassifierService(BaseService):
         ]
         
         if low_conf_spams or low_conf_toxics:
-            self.logger.info(f"Low confidence threats:\n {json.dumps(low_conf_toxics + low_conf_spams, indent= 4)}")
+            self.logger.info(f"Low confidence threats:\n {json.dumps(low_conf_toxics + low_conf_spams, indent= 4,ensure_ascii=False)}")
             for threat in low_conf_spams:
                 candidates.append(
                     {
@@ -282,7 +280,7 @@ class TextClassifierService(BaseService):
             if (r["toxic_label"] == 'SAFE' and r['toxic_score'] < toxic_threshold)
         ]
         if low_conf_non_spams or low_conf_non_toxics:
-            self.logger.info(f"Low confidence safe:\n {json.dumps(low_conf_non_spams + low_conf_non_toxics, indent= 4)}")
+            self.logger.info(f"Low confidence safe:\n {json.dumps(low_conf_non_spams + low_conf_non_toxics, indent= 4,ensure_ascii=False)}")
             
             for threat in low_conf_non_spams:
                 candidates.append(
@@ -330,7 +328,7 @@ class TextClassifierService(BaseService):
             chunk_results = self.robust_sliding_window(text, window_size=window_size, stride=stride)
             logger.info(f"Aggregating harfum detection result with spam threshold {spam_threshold} and toxic threshold {toxic_threshold}")
             agg = self.aggregation_logic(chunk_results, spam_threshold=spam_threshold, toxic_threshold=toxic_threshold)
-            self.logger.info(f"Aggregated results:\n{json.dumps(agg)}")
+            self.logger.info(f"Aggregated results:\n{json.dumps(agg, indent=4,ensure_ascii=False)}")
             elapsed_ms = (time.time() - start_time) * 1000
             
             # Map aggregated action to return tuple format

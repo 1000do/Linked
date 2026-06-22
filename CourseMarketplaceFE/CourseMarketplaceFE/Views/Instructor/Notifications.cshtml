@@ -111,11 +111,10 @@
     async function loadNotifications() {
         if (!TOKEN_USER) return;
         try {
-            const response = await fetch("http://localhost:5207/api/notification", {
-                headers: { 'Authorization': `Bearer ${TOKEN_USER}` }
-            });
+            const response = await fetch("/Notification/GetMyNotifications");
             if (response.ok) {
-                allNotifications = await response.json();
+                const apiResult = await response.json();
+                allNotifications = apiResult.data?.items || [];
                 applyNotificationFilters();
             }
         } catch (e) {
@@ -339,9 +338,7 @@
         }
 
         try {
-            const response = await fetch(`/Instructor/${action}?id=${id}`, {
-                method: 'POST'
-            });
+            const response = await fetch(`/Notification/${action === "DeleteNotification" ? "Delete" : action}/${id}`, { method: action === "DeleteNotification" ? "DELETE" : "PUT" });
 
             if (response.ok) {
                 if (action === 'DeleteNotification') {
@@ -431,9 +428,7 @@
         }
 
         try {
-            const response = await fetch(`/Instructor/MarkAllAsRead`, {
-                method: 'POST'
-            });
+            const response = await fetch(`/Notification/MarkAllAsRead`, { method: 'PUT' });
 
             if (response.ok) {
                 allNotifications.forEach(n => {
