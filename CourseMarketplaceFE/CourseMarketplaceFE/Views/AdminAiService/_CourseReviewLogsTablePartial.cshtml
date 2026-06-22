@@ -1,0 +1,54 @@
+@model CourseMarketplaceFE.Models.AdminAiServicePageViewModel
+
+<table class="w-full text-left border-collapse">
+    <thead>
+        <tr class="border-b border-slate-100 bg-slate-50/30">
+            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Review</th>
+            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Model</th>
+            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Result</th>
+            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Latency</th>
+            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Logged At</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 text-sm">
+        @if(Model.CourseReviewLogs.Any()) {
+            @foreach(var log in Model.CourseReviewLogs) {
+                <tr onclick="navigateToLogDetail('/AdminAiService/ReviewModerationLogDetail/@log.LogId?type=course')" class="hover:bg-slate-50/50 transition-colors cursor-pointer group">
+                    <td class="px-6 py-3.5">
+                        <div class="flex flex-col">
+                            <span class="font-medium text-slate-800 group-hover:text-indigo-600 transition-colors">
+                                @(log.Comment.Length > 10 ? log.Comment.Substring(0, 10) + "..." : log.Comment)
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-mono">ID: @log.ReviewId</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-3.5 text-xs text-slate-600">@log.ModelName</td>
+                    <td class="px-6 py-3.5">
+                        @if(log.ResultStatus == "Flagged" || log.ResultStatus == "Match Found") {
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-100">@log.ResultStatus</span>
+                        } else if (log.ResultStatus == "ERROR") {
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-red-50 text-red-700 border border-red-100">ERROR</span>
+                        } else if (log.ResultStatus == "Manual Audit") {
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-100">@log.ResultStatus</span>
+                        } else {
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">@log.ResultStatus</span>
+                        }
+                    </td>
+                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.LatencyMs ms</td>
+                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.LogCreatedAt.ToString("MMM dd yyyy HH:mm:ss")</td>
+                </tr>
+            }
+        } else {
+            <tr>
+                <td colspan="5" class="px-6 py-8 text-center text-slate-500">No logs found.</td>
+            </tr>
+        }
+    </tbody>
+</table>
+@if(ViewBag.CReviewTotalPages > 1) {
+    <div class="px-6 py-4 border-t border-slate-200 flex justify-between items-center bg-slate-50">
+        <button onclick="fetchPage('course_review_logs', @(ViewBag.CReviewPage - 1))" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.CReviewPage <= 1 ? "pointer-events-none opacity-50" : "")">Previous</button>
+        <span class="text-sm text-slate-500">Page @ViewBag.CReviewPage of @ViewBag.CReviewTotalPages</span>
+        <button onclick="fetchPage('course_review_logs', @(ViewBag.CReviewPage + 1))" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.CReviewPage >= ViewBag.CReviewTotalPages ? "pointer-events-none opacity-50" : "")">Next</button>
+    </div>
+}

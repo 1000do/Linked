@@ -45,28 +45,28 @@ public class ReportModerationService : IReportModerationService
         _penaltyService = penaltyService;
     }
 
-    public async Task<PagedResult<CourseReportDetailResponse>> GetAllCourseReportsAsync(string? status = null, int page = 1, int pageSize = 10)
+    public async Task<PagedResult<CourseReportDetailResponse>> GetAllCourseReportsAsync(PagedReportRequestDto request)
     {
-        var (reports, totalCount) = await _reportRepo.GetAllCourseReportsAsync(status, page, pageSize);
+        var (reports, totalCount) = await _reportRepo.GetAllCourseReportsAsync(request.Status, request.Page, request.PageSize);
         if (totalCount == 0) throw new KeyNotFoundException("No reports found.");
         var items = _mapper.Map<IEnumerable<CourseReportDetailResponse>>(reports).ToList();
-        return new PagedResult<CourseReportDetailResponse>(items, totalCount, page, pageSize);
+        return new PagedResult<CourseReportDetailResponse>(items, totalCount, request.Page, request.PageSize);
     }
 
-    public async Task<PagedResult<ReviewReportDetailResponse>> GetAllCourseReviewReportsAsync(string? status = null, int page = 1, int pageSize = 10)
+    public async Task<PagedResult<ReviewReportDetailResponse>> GetAllCourseReviewReportsAsync(PagedReportRequestDto request)
     {
-        var (reports, totalCount) = await _reportRepo.GetAllCourseReviewReportsAsync(status, page, pageSize);
+        var (reports, totalCount) = await _reportRepo.GetAllCourseReviewReportsAsync(request.Status, request.Page, request.PageSize);
         if (totalCount == 0) throw new KeyNotFoundException("No course review reports found.");
         var items = _mapper.Map<IEnumerable<ReviewReportDetailResponse>>(reports).ToList();
-        return new PagedResult<ReviewReportDetailResponse>(items, totalCount, page, pageSize);
+        return new PagedResult<ReviewReportDetailResponse>(items, totalCount, request.Page, request.PageSize);
     }
 
-    public async Task<PagedResult<ReviewReportDetailResponse>> GetAllLessonReviewReportsAsync(string? status = null, int page = 1, int pageSize = 10)
+    public async Task<PagedResult<ReviewReportDetailResponse>> GetAllLessonReviewReportsAsync(PagedReportRequestDto request)
     {
-        var (reports, totalCount) = await _reportRepo.GetAllLessonReviewReportsAsync(status, page, pageSize);
+        var (reports, totalCount) = await _reportRepo.GetAllLessonReviewReportsAsync(request.Status, request.Page, request.PageSize);
         if (totalCount == 0) throw new KeyNotFoundException("No lesson review reports found.");
         var items = _mapper.Map<IEnumerable<ReviewReportDetailResponse>>(reports).ToList();
-        return new PagedResult<ReviewReportDetailResponse>(items, totalCount, page, pageSize);
+        return new PagedResult<ReviewReportDetailResponse>(items, totalCount, request.Page, request.PageSize);
     }
 
     public async Task<ReportStatsResponse> GetReportStatsAsync()

@@ -67,7 +67,8 @@ public class ReportModerationServiceTests
         _mapperMock.Map<IEnumerable<CourseReportDetailResponse>>(reports).Returns(dtos);
 
         //Act
-        var result = await _sut.GetAllCourseReportsAsync("pending", 1, 10);
+        var req = new PagedReportRequestDto { Status = "pending", Page = 1, PageSize = 10 };
+        var result = await _sut.GetAllCourseReportsAsync(req);
 
         //Assert
         result.Items.Should().BeEquivalentTo(dtos);
@@ -87,7 +88,8 @@ public class ReportModerationServiceTests
         _reportRepoMock.GetAllCourseReportsAsync("pending", 1, 10).Returns((empty, 0));
 
         //Act
-        Func<Task> act = async () => await _sut.GetAllCourseReportsAsync("pending", 1, 10);
+        var req = new PagedReportRequestDto { Status = "pending", Page = 1, PageSize = 10 };
+        Func<Task> act = async () => await _sut.GetAllCourseReportsAsync(req);
 
         //Assert
         await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("No reports found.");
@@ -110,7 +112,8 @@ public class ReportModerationServiceTests
         _mapperMock.Map<IEnumerable<ReviewReportDetailResponse>>(reports).Returns(dtos);
 
         //Act
-        var result = await _sut.GetAllCourseReviewReportsAsync(null, 1, 10);
+        var req = new PagedReportRequestDto { Status = null, Page = 1, PageSize = 10 };
+        var result = await _sut.GetAllCourseReviewReportsAsync(req);
 
         //Assert
         result.Items.Should().BeEquivalentTo(dtos);
@@ -129,7 +132,8 @@ public class ReportModerationServiceTests
         _reportRepoMock.GetAllCourseReviewReportsAsync(null, 1, 10).Returns((empty, 0));
 
         //Act
-        Func<Task> act = async () => await _sut.GetAllCourseReviewReportsAsync(null, 1, 10);
+        var req = new PagedReportRequestDto { Status = null, Page = 1, PageSize = 10 };
+        Func<Task> act = async () => await _sut.GetAllCourseReviewReportsAsync(req);
 
         //Assert
         await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("No course review reports found.");
@@ -152,7 +156,8 @@ public class ReportModerationServiceTests
         _mapperMock.Map<IEnumerable<ReviewReportDetailResponse>>(reports).Returns(dtos);
 
         //Act
-        var result = await _sut.GetAllLessonReviewReportsAsync(null, 1, 10);
+        var req = new PagedReportRequestDto { Status = null, Page = 1, PageSize = 10 };
+        var result = await _sut.GetAllLessonReviewReportsAsync(req);
 
         //Assert
         result.Items.Should().BeEquivalentTo(dtos);
@@ -171,7 +176,8 @@ public class ReportModerationServiceTests
         _reportRepoMock.GetAllLessonReviewReportsAsync(null, 1, 10).Returns((empty, 0));
 
         //Act
-        Func<Task> act = async () => await _sut.GetAllLessonReviewReportsAsync(null, 1, 10);
+        var req = new PagedReportRequestDto { Status = null, Page = 1, PageSize = 10 };
+        Func<Task> act = async () => await _sut.GetAllLessonReviewReportsAsync(req);
 
         //Assert
         await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("No lesson review reports found.");
