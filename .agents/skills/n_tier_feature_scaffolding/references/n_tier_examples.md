@@ -20,6 +20,16 @@ public class CreateAiModelRequest
 
     // ...
 }
+
+// Rule 4: Query DTO Inheritance over Composition for GET requests
+public class FilterAiModelsDto : PagedRequestDto 
+{
+    [StringLength(50)]
+    public string? Search { get; set; }
+    
+    [StringLength(20)]
+    public string? Status { get; set; }
+}
 ```
 
 ## 2. Frontend MVC Client Layer (Rule 6)
@@ -50,7 +60,7 @@ public class AdminAiServiceController : Controller
 
             if (modelsResp.IsSuccessStatusCode) {
                  var json = await modelsResp.Content.ReadAsStringAsync();
-                 var parsed = JsonSerializer.Deserialize<ApiResp<PagedResult<AiModelViewModel>>>(json, _jsonOpts);
+                 var parsed = JsonSerializer.Deserialize<BaseApiResponse<PagedResult<AiModelViewModel>>>(json, _jsonOpts);
                  if (parsed?.Data != null) model.AiModels = parsed.Data.Items;
             }
             // ...
@@ -97,9 +107,9 @@ Returns standard HTTP status codes/JSON for the frontend UI AJAX to consume.
 
         var res = await _api.PostJsonAsync("admin/ai-service/models", req);
         
-        // Rule 6: Check auth status
+        // Rule 6: Check auth status and centralize redirection
         if (res.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-            return Unauthorized(new { Message = "Unauthorized access." });
+            return RedirectToAction("Login", "Account");
 
         if (!res.IsSuccessStatusCode)
         {
@@ -356,4 +366,119 @@ namespace CourseMarketplaceBE.Infrastructure.Services
         }
     }
 }
+
+## 6. Modern Frontend MVC Patterns (Rules 6 & 7)
+This section demonstrates how to handle AJAX fetching, safe state mutations, and state preservation.
+
+### Isolated Partial View Fetching & Centralized Redirection (Rule 6)
+The Backend-For-Frontend handles redirection via `RedirectToAction()`, never raw `401 Unauthorized()`.
+
+```csharp
+// CourseMarketplaceFE/Controllers/AdminAiServiceController.cs
+[HttpGet]
+public async Task<IActionResult> GetModelsPartial(int page = 1)
+{
+    var model = new AdminAiServicePageViewModel();
+    ViewBag.ModelPage = page;
+    
+    try {
+        var resp = await _api.GetAsync($"admin/ai-service/models?page={page}&pageSize=10");
+        if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            return RedirectToAction("Login", "Account"); // Rule 6: Centralized Redirection
+
+        if (resp.IsSuccessStatusCode) {
+            // parse response...
+        }
+    } catch { }
+
+    // Rule 6: Return isolated partial view instead of full page
+    return PartialView("_ModelsTablePartial", model);
+}
+```
+
+### Seamless State Mutations & Fetch Redirect Handling (Rules 6 & 7)
+The frontend performs the state mutation via AJAX, and on success, seamlessly triggers an isolated refetch of the updated collection.
+
+```javascript
+// CourseMarketplaceFE/Views/AdminAiService/Index.cshtml
+async function submitAddAiModel(e) {
+    e.preventDefault();
+    // ... gather form data ...
+    
+    const res = await fetch('/AdminAiService/AddModel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+
+    // Rule 6: Handle redirect dictated by controller natively
+    if (res.redirected) {
+        window.location.href = res.url;
+        return;
+    }
+
+    if (res.ok) {
+        Swal.fire('Success', 'Model added successfully', 'success');
+        closeAddAiModelModal();
+        
+        // Rule 7: Seamlessly mutate only the target container by explicitly refetching its isolated partial
+        fetchPage('models', 1);
+    }
+}
+
+async function fetchPage(type, page) {
+    let url = `/AdminAiService/GetModelsPartial?page=${page}`;
+    
+    const res = await fetch(url);
+    if (res.redirected) { window.location.href = res.url; return; }
+
+    if (res.ok) {
+        const html = await res.text();
+        document.getElementById(`${type}TableContainer`).innerHTML = html;
+        // update URL
+    }
+}
+```
+
+### Safe JavaScript Data Passing (Rule 7)
+Dynamic variables must be safely passed into JS using `data-*` attributes to avoid unescaped quote syntax errors.
+
+```html
+<!-- CourseMarketplaceFE/Views/AdminAiService/_ModelsTablePartial.cshtml -->
+<!-- Rule 7: Use data-* attributes and 'this', NEVER use onclick="myFunc('@item.Desc')" -->
+<!-- For complex objects, serialize using CamelCase explicitly -->
+<button type="button" onclick="openEditAiModelModal(this)"
+        data-id="@item.ModelId"
+        data-desc="@item.Description"
+        data-model='@System.Text.Json.JsonSerializer.Serialize(item, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase })'
+        class="text-slate-400">
+    Edit
+</button>
+
+<script>
+    function openEditAiModelModal(btn) {
+        const id = btn.getAttribute('data-id');
+        const desc = btn.getAttribute('data-desc');
+        const fullModel = JSON.parse(btn.getAttribute('data-model'));
+        // ...
+    }
+</script>
+```
+
+### Smart State Preservation on Detail Navigation (Rule 7)
+Detail views dynamically preserve query parameters to ensure the user returns to their exact spot in a paginated list/grid.
+
+```html
+<!-- CourseMarketplaceFE/Views/AdminAiService/CourseModerationLogDetail.cshtml -->
+<div class="flex items-center gap-2">
+    @{
+        // Rule 7: Preserve state parameters from URL query string
+        var q = Context.Request.QueryString.Value;
+        var backUrl = Url.Action("Index", "AdminAiService") + (string.IsNullOrEmpty(q) ? "?tab=logs&subtab=course_logs" : q);
+    }
+    <a href="@backUrl" class="text-xs font-semibold text-slate-500">
+        Back to Activity Logs
+    </a>
+</div>
+```
 ```

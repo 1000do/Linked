@@ -1,0 +1,153 @@
+@startuml AddAiModel_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "AdminAiServiceController" as FrontendController <<frontend controller>> #FFE6E6 {
+    + AddModel(req: CreateAiModelRequest) : Task<IActionResult>
+}
+
+class "CreateAiModelRequest" as CreateAiModelRequestVM <<view model>> #E6CCFF {
+    + ModelName : string
+    + ModelVersion : string
+    + ModelPath : string
+    + ModelProvider : string
+    + ModelType : string
+    + ProcessType : string
+    + Description : string
+    + ModelStatus : string
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "AdminAiServiceController" as BackendController <<backend controller>> #FFE6E6 {
+    - _aiModelService : IAiModelManagementService
+    
+    + AddModel(req: CreateAiModelRequest) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class "CreateAiModelRequest" as CreateAiModelRequestDTO <<dto>> #E6CCFF {
+    + ModelName : string
+    + ModelVersion : string
+    + ModelPath : string
+    + ModelProvider : string
+    + ModelType : string
+    + ProcessType : string
+    + Description : string
+    + ModelStatus : string
+}
+
+class AiModelAdminDto #E6CCFF {
+    + ModelId : int
+    + ModelName : string
+    + ModelVersion : string
+    + ModelPath : string
+    + ModelProvider : string
+    + ModelType : string
+    + ProcessType : string
+    + Description : string
+    + ModelStatus : string
+    + ModelUpdatedAt : DateTime?
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class AiModel #CCFFE6 {
+    + ModelId : int
+    + ModelName : string
+    + ModelType : string?
+    + ModelProvider : string?
+    + ModelVersion : string?
+    + ModelStatus : string?
+    + Description : string?
+    + ModelCreatedAt : DateTime?
+    + ModelUpdatedAt : DateTime?
+    + ModelPath : string?
+    + ProcessType : string?
+    + CourseAiIntegrations : ICollection<CourseAiIntegration>
+    + CourseReviewModerationLogs : ICollection<CourseReviewModerationLog>
+    + LessonReviewModerationLogs : ICollection<LessonReviewModerationLog>
+    + MessageModerationLogs : ICollection<MessageModerationLog>
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface IAiModelManagementService #FFE6CC {
+    //+ AddModelAsync(req: CreateAiModelRequest) : Task<AiModelAdminDto>//
+}
+
+interface IAiModelRepository #FFE6CC {
+    //+ Add(model: AiModel) : AiModel//
+    //+ SaveChangesAsync() : Task<int>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AiModelManagementService #CCE5FF {
+    - _aiModelRepo : IAiModelRepository
+    
+    + AddModelAsync(req: CreateAiModelRequest) : Task<AiModelAdminDto>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class AiModelRepository #FFFFCC {
+    - _context : AppDbContext
+    
+    + Add(model: AiModel) : AiModel
+    + SaveChangesAsync() : Task<int>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + AiModels : DbSet<AiModel>
+    ---
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) : void
+    # OnModelCreating(modelBuilder: ModelBuilder) : void
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+BackendController --> IAiModelManagementService
+AiModelManagementService --> IAiModelRepository
+AiModelRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+AiModelManagementService ..|> IAiModelManagementService
+AiModelRepository ..|> IAiModelRepository
+
+' === DEPENDENCY (dashed arrows) ===
+FrontendController ..> BackendController
+FrontendController ..> CreateAiModelRequestVM
+BackendController ..> CreateAiModelRequestDTO
+AiModelManagementService ..> CreateAiModelRequestDTO
+AiModelManagementService ..> AiModelAdminDto
+AiModelManagementService ..> AiModel
+AiModelRepository ..> AiModel
+
+@enduml

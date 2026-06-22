@@ -56,6 +56,7 @@ This skill enforces the exact N-tier architectural pattern used in the Course Ma
 ### 3. Backend: Presentation (API Controllers)
 - **Responsibility**: Handle HTTP routing, Authorization, and payload deserialization.
 - **Form/Payload Binding**: The payload from the frontend (ViewModel/DTO) should be automatically parsed as a DTO argument in the controller method by the ASP.NET Core framework.
+- **Encapsulate GET Parameters**: Avoid parameter bloat in Service and Controller GET methods. When handling multiple filters, pagination, or search queries, consolidate them into a single unified Request DTO parameter rather than passing 3+ primitive types (e.g., use `([FromQuery] PagedReportRequestDto request)` instead of `([FromQuery] string status, [FromQuery] int page, [FromQuery] int pageSize)`).
 - **Error Handling**: Use explicit `try/catch` blocks. Translate `KeyNotFoundException` to 404 Not Found, `InvalidOperationException` to 400 Bad Request, and `BadRequestException` to 400 Bad Request.
 - **Response Format**: Always wrap responses in the standardized generic API response envelope (e.g., `ApiResp<T>` or `ApiResponse<T>`).
 
@@ -64,6 +65,7 @@ This skill enforces the exact N-tier architectural pattern used in the Course Ma
   - Strict separation of data transfer objects for requests and responses.
   - AutoMapper profiles define the explicit conversions.
   - **Data Validation**: Include data validation attributes (DataAnnotations) based on table structures in the DB.
+  - **Query DTO Inheritance over Composition**: When creating complex Request DTOs for `[FromQuery]` GET endpoints (e.g., combining custom filters with pagination), always use **Inheritance** (e.g., `class FilterDto : PagedRequestDto`) rather than **Composition** (e.g., `public PagedRequestDto Pagination { get; set; }`). This ensures ASP.NET Core's default model binder natively flattens the parameters, allowing clean URL query strings (like `?page=1&pageSize=10`) without requiring nested prefixes. *Note: Ensure that the base `PagedRequestDto` (containing Page and PageSize) is explicitly created first if it does not already exist.*
 
 ### 5. Frontend: ViewModels
 - **Models/**:
@@ -76,12 +78,20 @@ This skill enforces the exact N-tier architectural pattern used in the Course Ma
   - **Form Input Binding**: For write operations, do not parse form input fields directly to individual method arguments. Use a ViewModel object as the argument so the framework automatically maps the fields behind the scenes.
   - **Page Load (Read)**: If retrieving multiple sets of data simultaneously, use `Task.WhenAll`. If only fetching from a single endpoint, a simple `await` is sufficient. Combine them into an aggregate ViewModel.
   - **State Management**: Persist UI state (tabs, pagination) via query parameters passed into `ViewBag`.
-  - **Security**: Check for `HttpStatusCode.Unauthorized` from API responses and redirect to the Account/Login page.
+  - **Redirection**: The Frontend Controller must handle all routing logic (Unauthorized, Not Found, etc.) by returning standard `RedirectToAction()` or `Redirect()`. Client-side `fetch` handlers must not hardcode status code checks (e.g., avoid `if (res.status === 401)`). Instead, handle backend redirects natively by checking `if (res.redirected) { window.location.href = res.url; return; }`.
+  - **Isolated Partial View Fetching**: For any view containing paginated collections (Admin Tables or Public Grids/Cards), navigation must ONLY fetch the target page of the specific collection. Do not trigger a full page reload or re-fetch other independent entities. Create standalone `[HttpGet]` endpoints in the FE Controller that return Razor Partial Views (`PartialView("_CollectionPartial", model)`), and use JS to seamlessly replace the specific container's inner HTML. *(Note: Purely SEO-driven primary catalog pages may use standard full-page routing, but partial views are the standard for dashboards, admin panels, and multi-collection pages).*
   - **Write Operations**: Provide standalone actions (`[HttpPost]`/`[HttpPut]`) that proxy data to the backend and return JSON for frontend AJAX handlers.
+  - **Centralize API Response Wrappers**: Backend API response envelopes (like `ApiResponse<T>`) must be centralized in the `Models/Common` folder rather than being redefined as duplicate private wrapper classes inside each individual controller.
 
 ### 7. UI & UX Rules
 - **Form Validation**: Add standard HTML5 data validations to form inputs.
-- **Write Operations**: Every write operation (add, update, delete, status toggle) must have a confirmation popup (using SweetAlert).
+- **Safe JavaScript Data Passing (`data-*` Attributes)**: Never use Razor string interpolation directly inside inline JavaScript function arguments for dynamic strings (e.g., `onclick="edit('@item.Description')"`), as unescaped quotes break JS syntax. Instead, carefully read the JS function implementation first to decide on the appropriate safe parsing action:
+  1. If changing the function signature is acceptable, pass the DOM element (`this`) and use `element.getAttribute('data-*')` inside the JS function.
+  2. If the function signature must remain as individual primitive values, pass them securely at the call site: `onclick="myFunc(this.getAttribute('data-value'))"`.
+  3. For complex objects, serialize them to JSON in a `data-report='@JsonSerializer.Serialize(item, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })'` attribute and parse them safely inside the JS handler using `JSON.parse`. We explicitly enforce `PropertyNamingPolicy = JsonNamingPolicy.CamelCase` to guarantee consistent JavaScript naming conventions and avoid frontend errors.
+  Make sure to apply these safe parsing techniques for *all* string-type arguments.
+- **Seamless State Mutations**: All write/state mutation operations (Add, Edit, Delete, Toggle Status — anything resulting in an INSERT, UPDATE, or DELETE) must be executed via AJAX. On success, avoid full page reloads. Instead, explicitly refetch and update ONLY the view of the target collection that was mutated using its specific Partial View endpoint (or DOM manipulation), leaving all other entities and collections on the page untouched. Every write operation must also have a confirmation popup (using SweetAlert).
+- **Smart State Preservation on Detail Navigation**: When navigating from any paginated/tabbed list (Table or Grid/Card view) to a detail page, append the current `window.location.search` query parameters to the destination URL. The detail page must then dynamically read `Context.Request.QueryString.Value` and append it to its "Back" link. This ensures that clicking "Back" precisely restores the user's previous state.
 
 ### 8. Refactoring Rules
 - **References**: Consider all references to the target (method calls, variable references, etc.). Changes should generally be isolated to the refactoring target.

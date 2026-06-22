@@ -1,12 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using CourseMarketplaceBE.Application.DTOs.Common;
 
 namespace CourseMarketplaceBE.Application.DTOs;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REQUEST DTOs (User / Instructor tạo report)
 // ═══════════════════════════════════════════════════════════════════════════════
+
+public class PagedReportRequestDto : PagedRequestDto
+{
+    [MaxLength(50)]
+    public string? Status { get; set; }
+}
 
 /// <summary>User/Instructor tạo report khóa học</summary>
 public class CreateCourseReportRequest

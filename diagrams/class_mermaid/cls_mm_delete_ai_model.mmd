@@ -1,0 +1,98 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminAiServiceControllerFE["AdminAiServiceController"] {
+    <<frontend controller>>
+    + ToggleModelStatus(id: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AdminAiServiceControllerBE["AdminAiServiceController"] {
+    <<backend controller>>
+    - _aiModelService : IAiModelManagementService
+    
+    + ToggleModelStatus(id: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class AiModel {
+    + ModelId : int
+    + ModelName : string
+    + ModelType : string?
+    + ModelProvider : string?
+    + ModelVersion : string?
+    + ModelStatus : string?
+    + Description : string?
+    + ModelCreatedAt : DateTime?
+    + ModelUpdatedAt : DateTime?
+    + ModelPath : string?
+    + ProcessType : string?
+    + CourseAiIntegrations : ICollection~CourseAiIntegration~
+    + CourseReviewModerationLogs : ICollection~CourseReviewModerationLog~
+    + LessonReviewModerationLogs : ICollection~LessonReviewModerationLog~
+    + MessageModerationLogs : ICollection~MessageModerationLog~
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAiModelManagementService {
+    <<interface>>
+    + ToggleModelStatusAsync(id: int) Task~bool~ *
+}
+
+class IAiModelRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~AiModel?~ *
+    + Update(model: AiModel) AiModel *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AiModelManagementService {
+    - _aiModelRepo : IAiModelRepository
+    
+    + ToggleModelStatusAsync(id: int) Task~bool~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class AiModelRepository {
+    - _context : AppDbContext
+    
+    + GetByIdAsync(id: int) Task~AiModel?~
+    + Update(model: AiModel) AiModel
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + AiModels : DbSet~AiModel~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+AdminAiServiceControllerBE --> IAiModelManagementService
+AiModelManagementService --> IAiModelRepository
+AiModelRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+AiModelManagementService ..|> IAiModelManagementService
+AiModelRepository ..|> IAiModelRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+AdminAiServiceControllerFE ..> AdminAiServiceControllerBE
+AiModelRepository ..> AiModel
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

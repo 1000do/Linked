@@ -1,4 +1,4 @@
-@model CourseMarketplaceFE.Models.ReportStatsViewModel
+@model CourseMarketplaceFE.Models.ReportModerationPageViewModel
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Report Center";
@@ -15,7 +15,7 @@
             </div>
             <div>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Pending Course</p>
-                <h3 id="stat-pending-courses" class="text-2xl font-display font-extrabold text-slate-900">@Model.TotalPendingCourseReports</h3>
+                <h3 id="stat-pending-courses" class="text-2xl font-display font-extrabold text-slate-900">@Model.Stats.TotalPendingCourseReports</h3>
             </div>
         </div>
         <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
@@ -24,7 +24,7 @@
             </div>
             <div>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Pending Reviews</p>
-                <h3 id="stat-pending-reviews" class="text-2xl font-display font-extrabold text-slate-900">@(Model.TotalPendingCourseReviewReports + Model.TotalPendingLessonReviewReports)</h3>
+                <h3 id="stat-pending-reviews" class="text-2xl font-display font-extrabold text-slate-900">@(Model.Stats.TotalPendingCourseReviewReports + Model.Stats.TotalPendingLessonReviewReports)</h3>
             </div>
         </div>
         <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
@@ -33,7 +33,7 @@
             </div>
             <div>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Resolved Today</p>
-                <h3 id="stat-resolved-today" class="text-2xl font-display font-extrabold text-slate-900">@Model.TotalResolvedToday</h3>
+                <h3 id="stat-resolved-today" class="text-2xl font-display font-extrabold text-slate-900">@Model.Stats.TotalResolvedToday</h3>
             </div>
         </div>
         <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
@@ -42,7 +42,7 @@
             </div>
             <div>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Rejected Today</p>
-                <h3 id="stat-rejected-today" class="text-2xl font-display font-extrabold text-slate-900">@Model.TotalRejectedToday</h3>
+                <h3 id="stat-rejected-today" class="text-2xl font-display font-extrabold text-slate-900">@Model.Stats.TotalRejectedToday</h3>
             </div>
         </div>
     </div>
@@ -71,13 +71,13 @@
             <h4 class="font-display font-bold text-slate-950">Manage Course Reports</h4>
             <div class="flex items-center gap-2">
                 <label class="text-xs font-bold text-slate-400 uppercase">Filter Status:</label>
-                <select id="course-status-filter" onchange="loadCourseReports()" class="rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold py-1.5 pr-8 pl-3">
-                    <option value="pending" selected>Pending</option>
+                <select id="course-status-filter" onchange="loadCourseReports(1, this.value)" class="rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold py-1.5 pr-8 pl-3">
+                    <option value="all" selected>All Statuses</option>
+                    <option value="pending">Pending</option>
                     <option value="resolved">Resolved</option>
                     <option value="rejected">Rejected</option>
                     <option value="escalated">Escalated</option>
                     <option value="under_review">Under Review</option>
-                    <option value="all">All Statuses</option>
                 </select>
             </div>
         </div>
@@ -96,7 +96,7 @@
                         </tr>
                     </thead>
                     <tbody id="course-reports-tbody" class="divide-y divide-slate-50">
-                        <!-- Rendered via JS -->
+                        <partial name="_CourseReportsPartial" model="Model.CourseReports" />
                     </tbody>
                 </table>
             </div>
@@ -119,9 +119,9 @@
             
             <div class="flex items-center gap-2">
                 <label class="text-xs font-bold text-slate-400 uppercase">Filter Status:</label>
-                <select id="review-status-filter" onchange="loadReviewReports()" class="rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold py-1.5 pr-8 pl-3">
-                    <option value="all">All Statuses</option>
-                    <option value="pending" selected>Pending</option>
+                <select id="review-status-filter" onchange="loadReviewReports(1, this.value)" class="rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold py-1.5 pr-8 pl-3">
+                    <option value="all" selected>All Statuses</option>
+                    <option value="pending">Pending</option>
                     <option value="resolved">Resolved</option>
                     <option value="rejected">Rejected</option>
                     <option value="escalated">Escalated</option>
@@ -144,7 +144,7 @@
                         </tr>
                     </thead>
                     <tbody id="review-reports-tbody" class="divide-y divide-slate-50">
-                        <!-- Rendered via JS -->
+                        <partial name="_ReviewReportsPartial" model="Model.CourseReviewReports" />
                     </tbody>
                 </table>
             </div>
@@ -162,19 +162,19 @@
                 <div class="space-y-2 mt-4 text-sm font-semibold">
                     <div class="flex justify-between">
                         <span class="text-slate-500">Course Reports:</span>
-                        <span id="detailed-pending-courses" class="text-slate-900 font-extrabold">0</span>
+                        <span id="detailed-pending-courses" class="text-slate-900 font-extrabold">@Model.Stats.TotalPendingCourseReports</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-slate-500">Course Review Reports:</span>
-                        <span id="detailed-pending-creviews" class="text-slate-900 font-extrabold">0</span>
+                        <span id="detailed-pending-creviews" class="text-slate-900 font-extrabold">@Model.Stats.TotalPendingCourseReviewReports</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-slate-500">Lesson Review Reports:</span>
-                        <span id="detailed-pending-lreviews" class="text-slate-900 font-extrabold">0</span>
+                        <span id="detailed-pending-lreviews" class="text-slate-900 font-extrabold">@Model.Stats.TotalPendingLessonReviewReports</span>
                     </div>
                     <div class="border-t border-slate-200 my-2 pt-2 flex justify-between text-primary font-bold">
                         <span>Total Pending:</span>
-                        <span id="detailed-pending-total">0</span>
+                        <span id="detailed-pending-total">@Model.Stats.TotalPending</span>
                     </div>
                 </div>
             </div>
@@ -185,11 +185,11 @@
                 <div class="space-y-2 mt-4 text-sm font-semibold">
                     <div class="flex justify-between text-emerald-600">
                         <span>Resolved Today:</span>
-                        <span id="detailed-resolved-today">0</span>
+                        <span id="detailed-resolved-today">@Model.Stats.TotalResolvedToday</span>
                     </div>
                     <div class="flex justify-between text-slate-500">
                         <span>Rejected Today:</span>
-                        <span id="detailed-rejected-today">0</span>
+                        <span id="detailed-rejected-today">@Model.Stats.TotalRejectedToday</span>
                     </div>
                 </div>
             </div>
@@ -215,9 +215,7 @@
     const currentRole = '@userRole';
 
     document.addEventListener("DOMContentLoaded", () => {
-        loadCourseReports();
-        loadReviewReports();
-        refreshStats();
+        // Initial reports and stats are loaded via Razor Pages (Task.WhenAll)
     });
 
     function switchTab(tab) {
@@ -239,8 +237,6 @@
             loadCourseReports();
         } else if (tab === 'review-reports') {
             loadReviewReports();
-        } else if (tab === 'stats') {
-            refreshStats();
         }
     }
 
@@ -281,26 +277,21 @@
                 }
             }
         } catch (err) {
-            console.error("Failed to load stats", err);
+            console.error('Failed to load report stats', err);
         }
     }
 
     // ── Load Course Reports ──
-    async function loadCourseReports() {
+    async function loadCourseReports(page = 1, status = null) {
         const tbody = document.getElementById('course-reports-tbody');
-        const filter = document.getElementById('course-status-filter').value;
+        const filter = status || document.getElementById('course-status-filter').value;
         tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-400 font-semibold">Loading course reports...</td></tr>`;
 
         try {
-            const res = await fetch(`/AdminModeration/GetCourseReports?status=${filter}`);
+            const res = await fetch(`/AdminModeration/GetCourseReports?status=${filter}&page=${page}`);
             if (res.ok) {
-                const apiRes = await res.json();
-                if (apiRes.success && apiRes.data) {
-                    const reportsArray = Array.isArray(apiRes.data) ? apiRes.data : (apiRes.data.items || []);
-                    renderCourseReports(reportsArray);
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">Failed to parse reports.</td></tr>`;
-                }
+                const html = await res.text();
+                tbody.innerHTML = html;
             } else {
                 tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">HTTP Error loading reports.</td></tr>`;
             }
@@ -310,133 +301,21 @@
         }
     }
 
-    function renderCourseReports(reports) {
-        const tbody = document.getElementById('course-reports-tbody');
-        tbody.innerHTML = '';
-
-        if (reports.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="px-8 py-20 text-center">
-                        <div class="flex flex-col items-center">
-                            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                                <span class="material-symbols-outlined text-slate-300 text-3xl">thumb_up</span>
-                            </div>
-                            <h4 class="text-slate-900 font-display font-bold">No Course Reports Found</h4>
-                            <p class="text-slate-400 text-sm">Everything looks clean!</p>
-                        </div>
-                    </td>
-                </tr>`;
-            return;
-        }
-
-        if (!window.courseReportsMap) window.courseReportsMap = {};
-        reports.forEach(r => {
-            window.courseReportsMap[r.reportId] = r;
-            const tr = document.createElement('tr');
-            tr.className = `group hover:bg-slate-50/80 transition-colors cursor-pointer ${r.status === 'pending' ? 'bg-amber-50/20' : ''}`;
-            tr.setAttribute('onclick', `handleCourseRowClick(event, ${r.reportId})`);
-            
-            // Format date
-            const dateObj = new Date(r.createdAt);
-            const dateStr = dateObj.toLocaleDateString('en-GB');
-            const timeStr = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-
-            // Status Badges
-            let statusBadge = '';
-            if (r.status === 'pending') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[11px] font-bold uppercase tracking-wider animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Pending</span>`;
-            } else if (r.status === 'resolved') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-bold uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Resolved</span>`;
-            } else if (r.status === 'rejected') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-500 rounded-full text-[11px] font-bold uppercase tracking-wider">Rejected</span>`;
-            } else if (r.status === 'escalated') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[11px] font-bold uppercase tracking-wider">Escalated</span>`;
-            } else {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[11px] font-bold uppercase tracking-wider">${r.status}</span>`;
-            }
-
-            // Actions
-            let actionBtn = '';
-            if (r.status === 'pending' || r.status === 'under_review' || r.status === 'escalated') {
-                if (r.status === 'escalated' && currentRole === 'staff') {
-                    actionBtn = `<button disabled class="flex items-center gap-1 px-4 py-2 bg-slate-300 text-slate-500 rounded-xl text-xs font-bold transition-all cursor-not-allowed opacity-60">
-                        <span class="material-symbols-outlined text-[16px]">lock</span> Escalated
-                    </button>`;
-                } else {
-                    actionBtn = `<button onclick="moderateCourseReport(${r.reportId}, '${escapeJsString(r.courseTitle)}', ${r.courseId})" class="flex items-center gap-1 px-4 py-2 bg-primary hover:bg-secondary text-white rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95">
-                        <span class="material-symbols-outlined text-[16px]">verified_user</span> Moderate
-                    </button>`;
-                }
-            } else {
-                actionBtn = `<button onclick="showResolutionDetails('${escapeJsString(r.resolverEmail || "N/A")}', '${escapeJsString(r.resolutionNote || "No notes provided.")}', '${r.resolvedAt}')" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl">Info</button>`;
-            }
-
-            tr.innerHTML = `
-                <td class="px-8 py-6">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
-                            ${(r.reporterName || "U").charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <span class="font-bold text-slate-900 block">${escapeHtml(r.reporterName)}</span>
-                            <span class="text-[10px] text-slate-400 block">${escapeHtml(r.reporterEmail)}</span>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-6 py-6">
-                    <div class="space-y-1">
-                        <span class="font-bold text-slate-900 text-sm hover:underline cursor-pointer block">${escapeHtml(r.courseTitle)}</span>
-                        <div class="flex items-center gap-2">
-                            <span class="text-[11px] text-slate-400 font-semibold">Instructor: ${escapeHtml(r.instructorName)}</span>
-                            <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-red-50 text-red-600 rounded text-[9px] font-black"><span class="material-symbols-outlined text-[10px]">flag</span>${r.courseFlagCount} flags</span>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-6 py-6 max-w-[280px]">
-                    <div class="space-y-1">
-                        <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[9px] font-black uppercase tracking-wider">${escapeHtml(r.reason)}</span>
-                        <p class="text-xs text-slate-500 line-clamp-2">${escapeHtml(r.description || 'No description provided')}</p>
-                    </div>
-                </td>
-                <td class="px-6 py-6 text-xs text-slate-500 font-semibold">
-                    <p class="text-slate-700">${dateStr}</p>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">${timeStr}</p>
-                </td>
-                <td class="px-6 py-6">
-                    ${statusBadge}
-                </td>
-                <td class="px-8 py-6 text-right">
-                    <div class="flex items-center justify-end gap-2">
-                        ${actionBtn}
-                    </div>
-                </td>
-            `;
-
-            tbody.appendChild(tr);
-        });
-    }
-
     // ── Load Review Reports ──
-    async function loadReviewReports() {
+    async function loadReviewReports(page = 1, status = null) {
         const tbody = document.getElementById('review-reports-tbody');
-        const filter = document.getElementById('review-status-filter').value;
+        const filter = status || document.getElementById('review-status-filter').value;
         tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-400 font-semibold">Loading review reports...</td></tr>`;
 
         try {
             const apiEndpoint = activeReviewSubTab === 'course' 
-                ? `/AdminModeration/GetCourseReviewReports?status=${filter}`
-                : `/AdminModeration/GetLessonReviewReports?status=${filter}`;
+                ? `/AdminModeration/GetCourseReviewReports?status=${filter}&page=${page}`
+                : `/AdminModeration/GetLessonReviewReports?status=${filter}&page=${page}`;
 
             const res = await fetch(apiEndpoint);
             if (res.ok) {
-                const apiRes = await res.json();
-                if (apiRes.success && apiRes.data) {
-                    const reportsArray = Array.isArray(apiRes.data) ? apiRes.data : (apiRes.data.items || []);
-                    renderReviewReports(reportsArray);
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">Failed to parse reports.</td></tr>`;
-                }
+                const html = await res.text();
+                tbody.innerHTML = html;
             } else {
                 tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">HTTP Error loading reports.</td></tr>`;
             }
@@ -444,117 +323,6 @@
             console.error(err);
             tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-red-500">An unexpected error occurred. Please try again later.</td></tr>`;
         }
-    }
-
-    function renderReviewReports(reports) {
-        const tbody = document.getElementById('review-reports-tbody');
-        tbody.innerHTML = '';
-
-        if (reports.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="px-8 py-20 text-center">
-                        <div class="flex flex-col items-center">
-                            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                                <span class="material-symbols-outlined text-slate-300 text-3xl">thumb_up</span>
-                            </div>
-                            <h4 class="text-slate-900 font-display font-bold">No Review Reports Found</h4>
-                            <p class="text-slate-400 text-sm">Everything looks clean!</p>
-                        </div>
-                    </td>
-                </tr>`;
-            return;
-        }
-
-        if (!window.reviewReportsMap) window.reviewReportsMap = {};
-        reports.forEach(r => {
-            window.reviewReportsMap[r.reportId] = r;
-            const tr = document.createElement('tr');
-            tr.className = `group hover:bg-slate-50/80 transition-colors cursor-pointer ${r.status === 'pending' ? 'bg-amber-50/20' : ''}`;
-            tr.setAttribute('onclick', `handleReviewRowClick(event, ${r.reportId})`);
-            
-            // Format date
-            const dateObj = new Date(r.createdAt);
-            const dateStr = dateObj.toLocaleDateString('en-GB');
-            const timeStr = dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-
-            // Status Badges
-            let statusBadge = '';
-            if (r.status === 'pending') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[11px] font-bold uppercase tracking-wider animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Pending</span>`;
-            } else if (r.status === 'resolved') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-bold uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Resolved</span>`;
-            } else if (r.status === 'rejected') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-500 rounded-full text-[11px] font-bold uppercase tracking-wider">Rejected</span>`;
-            } else if (r.status === 'escalated') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[11px] font-bold uppercase tracking-wider">Escalated</span>`;
-            } else {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[11px] font-bold uppercase tracking-wider">${r.status}</span>`;
-            }
-
-            // Actions
-            let actionBtn = '';
-            if (r.status === 'pending' || r.status === 'under_review' || r.status === 'escalated') {
-                if (r.status === 'escalated' && currentRole === 'staff') {
-                    actionBtn = `<button disabled class="flex items-center gap-1 px-4 py-2 bg-slate-300 text-slate-500 rounded-xl text-xs font-bold transition-all cursor-not-allowed opacity-60">
-                        <span class="material-symbols-outlined text-[16px]">lock</span> Escalated
-                    </button>`;
-                } else {
-                    actionBtn = `<button onclick="moderateReviewReport(${r.reportId}, '${escapeJsString(r.reviewComment || "Review")}', '${r.reviewType}')" class="flex items-center gap-1 px-4 py-2 bg-primary hover:bg-secondary text-white rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95">
-                        <span class="material-symbols-outlined text-[16px]">verified_user</span> Moderate
-                    </button>`;
-                }
-            } else {
-                actionBtn = `<button onclick="showResolutionDetails('${escapeJsString(r.resolverEmail || "N/A")}', '${escapeJsString(r.resolutionNote || "No notes provided.")}', '${r.resolvedAt}')" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl">Info</button>`;
-            }
-
-            tr.innerHTML = `
-                <td class="px-8 py-6">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
-                            ${(r.reporterName || "U").charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <span class="font-bold text-slate-900 block">${escapeHtml(r.reporterName)}</span>
-                            <span class="text-[10px] text-slate-400 block">${escapeHtml(r.reporterEmail)}</span>
-                        </div>
-                    </div>
-                </td>
-                <td class="px-6 py-6 max-w-[280px]">
-                    <div class="space-y-1">
-                        <p class="text-xs text-slate-900 italic font-semibold line-clamp-2">"${escapeHtml(r.reviewComment || 'No comments')}"</p>
-                        <div class="flex flex-col gap-0.5 text-slate-400 text-[10px]">
-                            <div class="flex items-center gap-1">
-                                <span>Author: <span class="font-bold text-slate-700">${escapeHtml(r.reviewAuthorName || 'Unknown User')}</span></span>
-                                ${r.reviewRating ? `<span>• Rating: <span class="font-bold text-amber-500">${r.reviewRating}⭐</span></span>` : ''}
-                            </div>
-                            ${r.courseTitle ? `<div class="mt-1"><span>Course: <a href="/Course/Detail/${r.courseId}" target="_blank" class="font-bold text-primary hover:underline">${escapeHtml(r.courseTitle)}</a></span></div>` : ''}
-                            ${r.lessonTitle ? `<div><span>Lesson: <span class="font-bold text-slate-600">${escapeHtml(r.lessonTitle)}</span></span></div>` : ''}
-                        </div>
-                    </div>
-                </td>
-                <td class="px-6 py-6 max-w-[220px]">
-                    <div class="space-y-1">
-                        <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[9px] font-black uppercase tracking-wider">${escapeHtml(r.reason)}</span>
-                        <p class="text-[11px] text-slate-500 line-clamp-1">${escapeHtml(r.description || 'No description')}</p>
-                    </div>
-                </td>
-                <td class="px-6 py-6 text-xs text-slate-500 font-semibold">
-                    <p class="text-slate-700">${dateStr}</p>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">${timeStr}</p>
-                </td>
-                <td class="px-6 py-6">
-                    ${statusBadge}
-                </td>
-                <td class="px-8 py-6 text-right">
-                    <div class="flex items-center justify-end gap-2">
-                        ${actionBtn}
-                    </div>
-                </td>
-            `;
-
-            tbody.appendChild(tr);
-        });
     }
 
     // ── Moderate Course Report modal ──
@@ -585,7 +353,7 @@
                     </div>
                     <div>
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Moderator Note</label>
-                        <textarea id="swal-note" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold h-20" placeholder="Write internal moderation notes..."></textarea>
+                        <textarea id="swal-note" class="p-4 w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold h-20" placeholder="Write internal moderation notes..."></textarea>
                     </div>
                     </div>
                 </div>`,
@@ -728,7 +496,7 @@
                     </div>
                     <div>
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Moderator Note</label>
-                        <textarea id="swal-note" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold h-20" placeholder="Write internal moderation notes..."></textarea>
+                        <textarea id="swal-note" class="p-4 w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary text-xs font-semibold h-20" placeholder="Write internal moderation notes..."></textarea>
                     </div>
                 </div>`,
             focusConfirm: false,
@@ -916,9 +684,14 @@
             target = target.parentNode;
         }
         
-        const r = window.courseReportsMap[reportId];
-        if (r) {
-            showCourseReportDetail(r);
+        try {
+            const reportData = event.currentTarget.getAttribute('data-report');
+            if (reportData) {
+                const r = JSON.parse(reportData);
+                showCourseReportDetail(r);
+            }
+        } catch (e) {
+            console.error('Failed to parse report data', e);
         }
     }
 
@@ -932,10 +705,52 @@
             target = target.parentNode;
         }
         
-        const r = window.reviewReportsMap[reportId];
-        if (r) {
-            showReviewReportDetail(r);
+        try {
+            const reportData = event.currentTarget.getAttribute('data-report');
+            if (reportData) {
+                const r = JSON.parse(reportData);
+                showReviewReportDetail(r);
+            }
+        } catch (e) {
+            console.error('Failed to parse review report data', e);
         }
+    }
+
+    // ── Action Button Handlers ──
+    function handleModerateCourseClick(event) {
+        event.stopPropagation();
+        try {
+            const reportData = event.currentTarget.closest('tr').getAttribute('data-report');
+            if (reportData) {
+                const r = JSON.parse(reportData);
+                console.log("Report data:",r);
+                moderateCourseReport(r.reportId, r.courseTitle, r.courseId);
+            }
+        } catch (e) { console.error('Failed to parse report data', e); }
+    }
+
+    function handleModerateReviewClick(event) {
+        event.stopPropagation();
+        try {
+            const reportData = event.currentTarget.closest('tr').getAttribute('data-report');
+            if (reportData) {
+                const r = JSON.parse(reportData);
+                console.log("Report data:",r);
+                moderateReviewReport(r.reportId, r.reviewComment || 'Review', r.reviewType);
+            }
+        } catch (e) { console.error('Failed to parse report data', e); }
+    }
+
+    function handleInfoButtonClick(event) {
+        event.stopPropagation();
+        try {
+            const reportData = event.currentTarget.closest('tr').getAttribute('data-report');
+            if (reportData) {
+                const r = JSON.parse(reportData);
+                console.log("Report data:",r);
+                showResolutionDetails(r.resolverEmail, r.resolutionNote, r.resolvedAt);
+            }
+        } catch (e) { console.error('Failed to parse report data', e); }
     }
 
     function showCourseReportDetail(r) {
