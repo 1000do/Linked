@@ -45,7 +45,7 @@ services:
   #     SPAM_MODEL_PATH: ${SPAM_MODEL_PATH}
   #     TOXIC_MODEL_PATH: ${TOXIC_MODEL_PATH}
   #     CLIP_MODEL_NAME: ${CLIP_MODEL_NAME}
-  #     DISTILBERT_MODEL_NAME: ${DISTILBERT_MODEL_NAME}
+  #     TEXT_EMBEDDING_MODEL_NAME: ${TEXT_EMBEDDING_MODEL_NAME}
   #   volumes:
   #     - ./ai_models:/app/models
   #   ports:

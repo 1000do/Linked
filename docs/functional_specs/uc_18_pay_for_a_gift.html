@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.18 Pay for a gift</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.18. Pay for a gift</strong></p>
+
+<p><strong>Function Trigger:</strong> System requests recipient details within the Gift course configuration workspace.</p>
+
+<p><strong>Function Description:</strong> Allows the giver to enter and validate the recipient's personal identity details (full name and email address), ensuring accurate delivery coordinates for the automated redeem voucher.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The user must be authenticated.</li>
+            <li>- The gift details must have been successfully configured and passed to the checkout page.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Pay for a Gift Successfully:</strong>
+                <ul>
+                    <li>1. The user accesses the Gift Checkout page.</li>
+                    <li>2. The system displays the billing contact email, the gift card details summary, the course information, the pricing details, and the payment card entry form.</li>
+                    <li>3. The user inputs the Cardholder Name, Card Number, Expiry Date, CVC, and Country or Region.</li>
+                    <li>4. The user clicks the "Pay Securely" button.</li>
+                    <li>5. The system validates that the Cardholder Name is entered.</li>
+                    <li>6. The system communicates with the Stripe Payment Gateway to process the card transaction.</li>
+                    <li>7. The Stripe Payment Gateway confirms the payment is successful.</li>
+                    <li>8. The system inserts the order, order item, transaction, and gift records in a single database transaction.</li>
+                    <li>9. The system calculates the Stripe transaction fee and the instructor's payout amount, then saves the payout record in the database.</li>
+                    <li>10. The system triggers the background tasks to send a gift card email with the redemption link to the recipient.</li>
+                    <li>11. The system detects the recipient email is not registered in the system and skips sending an in-app notification.</li>
+                    <li>12. The system triggers the background tasks to send a sales notification to the course instructor.</li>
+                    <li>13. The system redirects the user to the course list page.</li>
+                    <li>14. The system displays a checkout success message.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Missing cardholder name)</strong>
+        <ul>
+            <li>1. The system highlights the Cardholder Name field and displays a validation error message.</li>
+            <li>2. Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Payment declined)</strong>
+        <ul>
+            <li>1. The Stripe Payment Gateway declines the payment card.</li>
+            <li>2. The system displays a payment error message.</li>
+            <li>3. Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Recipient email is registered)</strong>
+        <ul>
+            <li>1. The system triggers the background task to send an in-app notification to the recipient.</li>
+            <li>2. Back to step 12.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- Payment has been processed and successfully recorded.</li>
+            <li>- A unique redemption code has been generated and sent to the recipient's Gmail address.</li>
+            <li>- Payment schedule for the instructor has been planned.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+            <li>- <strong>Gift Details Missing:</strong> The system detects that the required gift parameters (recipient email, etc.) are missing. The system displays an error message. The system redirects the user to the home page.</li>
+            <li>- <strong>Payment Intent Creation Failed:</strong> The system fails to create the payment intent on the backend checkout service. The system displays an error message. The system redirects the user back to the gift setup page.</li>
+            <li>- <strong>Email Delivery Failed:</strong> The system logs the email delivery failure. Back to step 11.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Gift Price Restrictions:</strong> Gift purchases are always made at the course's original price. Promotional coupons and discount codes are not applicable to gift purchases.</li>
+            <li>- <strong>Claim and Refund Mutual Exclusion:</strong> Once a gift is successfully claimed by the recipient, any pending refund request for that gift transaction is automatically rejected.</li>
+            <li>- <strong>No Cart Modification:</strong> Gifting is treated as a direct purchase and does not clear or modify the items in the user's active shopping cart.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

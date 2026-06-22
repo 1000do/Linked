@@ -1,6 +1,7 @@
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Domain.Exceptions;
 using CourseMarketplaceBE.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -179,7 +180,16 @@ public class ReportRepository : IReportRepository
     // ── Shared ──────────────────────────────────────────────────────────────
 
     public async Task<int> SaveChangesAsync()
-        => await _context.SaveChangesAsync();
+    {
+        try
+        {
+            return await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new ReportException("A database error occurred while saving report changes.", ex);
+        }
+    }
 
     public async Task<int> GetResolvedReportsCountAsync(int resolverId)
     {

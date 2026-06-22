@@ -2438,6 +2438,7 @@
         };
 
         window.saveResourceMaterial = function(resourceUrl, resourceName, fileSize, fileExtension) {
+            console.log(`Saving resource material...\nURL:${resourceUrl}\nTitle:${resourceName}\nSize:${fileSize}\nFormat(extension):${fileExtension}`);
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
             const lessonId = lessonIdEl.dataset.lessonId;
@@ -2821,11 +2822,11 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         isSubmitting = true;
-                        //fetch('/InstructorCourse/ModerateCourse', {  
+                        // fetch('/InstructorCourse/ModerateCourse', {  
                         //    method: 'POST', 
                         //    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         //    body: new URLSearchParams({ courseId: courseId })
-                        //})
+                        // })
                         fetch('/InstructorCourse/UpdateCourseStatus', { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -3058,11 +3059,15 @@
                         const resUrlInput = document.getElementById('ResourceUrl');
                         resUrlInput.value = data.secure_url;
                         resUrlInput.dataset.fileSize = data.bytes || 0;
-                        resUrlInput.dataset.format = data.format || '';
+                        let fileExt = data.format;
+                        if (!fileExt && data.secure_url.includes('.')) {
+                            fileExt = data.secure_url.split('.').pop();
+                        }
+                        resUrlInput.dataset.format = fileExt || '';
                         resourceBtnEl.innerHTML = 'Change File';
                         
                         // Auto-save immediately with LATEST values
-                        saveResourceMaterial(data.secure_url, finalTitle, data.bytes || 0, data.format || '');
+                        saveResourceMaterial(data.secure_url, finalTitle, data.bytes || 0, fileExt || '');
                     }
                 })
                 .catch(err => {

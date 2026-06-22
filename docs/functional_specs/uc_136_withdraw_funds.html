@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.136 Withdraw Funds</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.136. Withdraw Funds</strong></p>
+
+<p><strong>Function Trigger:</strong> Admin clicks the "Withdraw Now" button on the withdrawal settings card.</p>
+
+<p><strong>Function Description:</strong> Allows administrators to manually transfer accumulated platform net profit from the Stripe available balance directly into the platform's corporate bank account.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The administrator must be successfully logged into the system.</li>
+            <li>- The platform's Stripe Connect available balance must be at least $0.50.</li>
+            <li>- Account successfully linked to Stripe's bank account.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Withdraw Funds Successfully:</strong>
+                <ul>
+                    <li>1. Admin accesses the admin finance dashboard page AdminFinance.</li>
+                    <li>2. Admin locates the "Withdraw Funds to Bank" settings card showing the available balance.</li>
+                    <li>3. Admin enters the target payout amount in the "Amount" input field.</li>
+                    <li>4. Admin enters an optional transfer explanation in the "Description" input field.</li>
+                    <li>5. Admin clicks the "Withdraw Now" button.</li>
+                    <li>6. The system displays the "Confirm Withdrawal" warning dialog.</li>
+                    <li>7. Admin clicks the "Confirm &amp; Initiate" button.</li>
+                    <li>8. The system requests Stripe to create a payout to the platform's registered bank account.</li>
+                    <li>9. Stripe processes the request and returns the payout transaction identifier.</li>
+                    <li>10. The system creates a withdrawal log record with a pending status in the database.</li>
+                    <li>11. The system broadcasts real-time SignalR notifications to update active dashboard balances.</li>
+                    <li>12. The system closes the confirmation dialog and displays a success notification.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Click Cancel)</strong>
+        <ul>
+            <li>1. Admin clicks the "Cancel" button on the confirmation dialog.</li>
+            <li>2. The system closes the confirmation dialog.</li>
+            <li>3. Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Invalid Amount Entered)</strong>
+        <ul>
+            <li>1. Admin enters a withdrawal value less than $0.50, a non-numeric value, or an amount exceeding the available balance.</li>
+            <li>2. Admin clicks the "Withdraw Now" button.</li>
+            <li>3. The system displays the "Invalid Withdrawal Amount" error dialog.</li>
+            <li>4. Admin clicks the "Understood" button.</li>
+            <li>5. Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- A Stripe Payout is successfully initiated to the corporate bank account.</li>
+            <li>- A withdrawal record is added to the database with a pending status.</li>
+            <li>- The dashboard balances are updated in real time via SignalR.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Minimum Withdrawal Limit:</strong> Platform withdrawals must be at least $0.50 (USD).</li>
+            <li>- <strong>Maximum Available Balance:</strong> The maximum amount allowed to be withdrawn cannot exceed the platform's current Stripe Available balance. Cents are rounded to two decimal places.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

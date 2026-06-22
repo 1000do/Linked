@@ -198,7 +198,7 @@ public class LessonController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to permanently delete material"));
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {

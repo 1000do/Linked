@@ -264,7 +264,7 @@ CREATE TABLE course_exts (
 CREATE TABLE text_embeddings (
     text_embedding_id SERIAL PRIMARY KEY,
     material_id INT REFERENCES learning_materials(material_id) ON DELETE CASCADE,
-    text_embedding vector(768),
+    text_embedding vector(384),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -761,8 +761,8 @@ ON CONFLICT (category_id) DO UPDATE SET categories_name = EXCLUDED.categories_na
 -- 9. SAMPLE DATA FOR PRIMARY ACCOUNT (phuoctai228)
 -- ==============================================================================
 
-INSERT INTO accounts (account_id, email, password_hash, account_status, auth_provider, is_verified)
-VALUES (1, 'instructor@gmail.com', '$2a$11$O7PrVmv/I5yxkexhkdrY2OB2tQf5c6Gy9P8hvqLIAF2NO34wt9C3i', 'active', 'local', TRUE)
+INSERT INTO accounts (account_id, username, email, password_hash, account_status, auth_provider, is_verified)
+VALUES (1,'instructor', 'instructor@gmail.com', '$2a$11$O7PrVmv/I5yxkexhkdrY2OB2tQf5c6Gy9P8hvqLIAF2NO34wt9C3i', 'active', 'local', TRUE)
 ON CONFLICT (account_id) DO NOTHING;
 
 INSERT INTO users (user_id, full_name)

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.74 View Instructor's Course Revenue</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.74. View Instructor's Course Revenue</strong></p>
+
+<p><strong>Function Trigger:</strong> The instructor clicks the "Course Revenues" tab in the Earnings dashboard.</p>
+
+<p><strong>Function Description:</strong> Allows instructors to view the sales breakdown and revenue statistics for each of their courses, including monthly revenue, yearly revenue, lifetime revenue, sales quantity, and growth trends.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The instructor must be logged in.</li>
+            <li>- The user's account must be active as an approved Instructor with linked Stripe settings.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>View Instructor's Course Revenue Successfully:</strong>
+                <ul>
+                    <li>1. Instructor accesses the Earnings dashboard page.</li>
+                    <li>2. The system retrieves the list of owned courses along with their corresponding sales quantity, monthly revenue, previous month's revenue, yearly revenue, and lifetime revenue from the database.</li>
+                    <li>3. The system displays the Earnings dashboard.</li>
+                    <li>4. Instructor clicks the "Course Revenues" tab.</li>
+                    <li>5. The system displays the course revenue table containing: Course Title, Sales Quantity, Monthly Revenue, Yearly Revenue, and Lifetime Revenue.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Refund Request Pending Banner)</strong>
+        <ul>
+            <li>1. The system detects that the transaction has a refund pending status.</li>
+            <li>2. The system displays a top warning banner showing the refund request date and the student's stated refund reason.</li>
+            <li>3. Back to step 7.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Refund Approved Banner)</strong>
+        <ul>
+            <li>1. The system detects that the transaction has a refunded status.</li>
+            <li>2. The system displays a top alert banner showing the student's refund reason and the administrator's settlement note.</li>
+            <li>3. The system displays the ledger values with negative deductions highlighted in red in the Split Summary Card.</li>
+            <li>4. Back to step 7.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Refund Request Rejected Banner)</strong>
+        <ul>
+            <li>1. The system detects that the transaction has a completed status and a refund rejection note is present.</li>
+            <li>2. The system displays a top informational banner showing the student's original refund reason and the administrator's rejection note.</li>
+            <li>3. Back to step 7.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- The instructor views the course-by-course revenue list and performance growth data for the selected period.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+            <li>- <strong>Transaction Not Found:</strong> The system detects that the transaction ID does not exist in the database. The system displays a warning message regarding transactions not found. The system redirects the instructor to the Earnings dashboard page.</li>
+            <li>- <strong>Unauthorized Transaction Access:</strong> The system detects that the transaction record does not belong to a course owned by the logged-in instructor. The system displays an authorization error message. The system redirects the instructor to the Earnings dashboard page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Instructor Status Constraint:</strong> Only active instructors whose registration application has been reviewed and approved by the platform administrator can access the course revenue dashboard.</li>
+            <li>- <strong>Period-Based Revenue Calculations:</strong> Monthly, yearly, and lifetime revenues are dynamically calculated and loaded based on the active month and year filter selected.</li>
+            <li>- <strong>Month-over-Month Growth Calculation:</strong> Growth percentage is calculated using the formula: Growth % = ((Current Month Revenue - Previous Month Revenue) / Previous Month Revenue) * 100. If the previous month's revenue is zero and the current month's revenue is greater than zero, it is labeled and displayed as "New Sales".</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

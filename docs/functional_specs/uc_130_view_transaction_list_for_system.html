@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.130 View transaction list (For System)</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.130. View transaction list (For System)</strong></p>
+
+<p><strong>Function Trigger:</strong> Administrator accesses the Platform Finance Dashboard page (or clicks the "Transactions" tab within the dashboard).</p>
+
+<p><strong>Function Description:</strong> Allows administrators to track all course purchase transactions across the entire platform. Provides search, filtering by status, sorting, and direct links to view the details of each transaction.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The administrator must be successfully logged into the system.</li>
+            <li>- The administrator account must have platform-wide financial management permissions.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>View Transaction History Successfully:</strong>
+                <ul>
+                    <li>1. Administrator accesses the Admin Finance dashboard page.</li>
+                    <li>2. The system retrieves the list of course transactions from the database.</li>
+                    <li>3. The system displays the Transactions tab showing the transaction table with the following columns:
+                        <ul>
+                            <li>- ID: Sequential transaction ID prefixed with #.</li>
+                            <li>- Stripe Tx ID: The secure Stripe transaction reference ID.</li>
+                            <li>- Course: The title of the purchased course.</li>
+                            <li>- Purchased By: The name of the student who made the purchase.</li>
+                            <li>- Instructor: The name of the instructor teaching the course.</li>
+                            <li>- Amount: The purchase price.</li>
+                            <li>- Date: The transaction date and time (formatted as dd/MM/yyyy HH:mm).</li>
+                            <li>- Status: The colored badge representing the transaction state (Succeeded, Failed, Pending, Refund Pending, Refunded).</li>
+                        </ul>
+                    </li>
+                    <li>4. Administrator reviews the list of transactions.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- The administrator views the platform-wide transaction history list including the Stripe Tx ID, course title, buyer, instructor, amount, date, and status.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Negative Payout Display for Refunded Status:</strong> If a transaction has a status of "refunded", the Amount column must display as a negative value prefixed with a minus - sign in red (e.g., - USD 19.99).</li>
+            <li>- <strong>Multi-Criteria Search:</strong> The search bar matches the keyword against course title, purchaser name, and instructor name in a case-insensitive manner.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

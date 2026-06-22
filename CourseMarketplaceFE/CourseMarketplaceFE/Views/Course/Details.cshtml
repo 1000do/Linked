@@ -122,6 +122,7 @@
                             var hideReportBtn = (Model.CourseStatus?.Equals("pending", StringComparison.OrdinalIgnoreCase) == true) || 
                                                 (Model.CourseStatus?.Equals("draft", StringComparison.OrdinalIgnoreCase) == true) || 
                                                 isPermanentlyLocked;
+                          
                             if (!hideReportBtn)
                             {
                                 <button type="button" 
@@ -1383,10 +1384,9 @@
                 didOpen: () => { Swal.showLoading(); }
             });
 
-            const response = await fetch('http://localhost:5207/api/chat/create', {
+            const response = await fetch('/Chat/CreateDirectChat', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({

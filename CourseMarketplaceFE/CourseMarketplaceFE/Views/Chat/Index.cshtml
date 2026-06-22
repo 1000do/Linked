@@ -25,6 +25,14 @@
         <div class="sidebar-header flex flex-col gap-3">
             <div class="d-flex justify-content-between align-items-center">
                 <h4 class="m-0 font-bold text-slate-800">Chats</h4>
+                @{ var roleCheck = Context.Request.Cookies["UserRole"]?.ToLower(); }
+                @if (roleCheck == "staff")
+                {
+                    <button onclick="contactAdmin()" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2 py-1.5 rounded-lg flex items-center gap-1 transition-colors" title="Chat with Admin">
+                        <span class="material-symbols-outlined text-[16px]">admin_panel_settings</span>
+                        <span class="text-[11px] font-bold">Contact Admin</span>
+                    </button>
+                }
             </div>
             
             <div class="search-box">
@@ -51,6 +59,16 @@
                     <span class="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[16px]">arrow_drop_down</span>
                 </div>
             </div>
+        </div>
+        <div id="pending-requests-container" class="px-3 pt-2 pb-0" style="display: none;">
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex justify-between items-center">
+                <span>Pending Requests</span>
+                <span id="pending-count" class="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-[10px]">0</span>
+            </div>
+            <div id="pending-requests-list" class="flex flex-col gap-2 mb-3">
+                <!-- Render JS -->
+            </div>
+            <hr class="border-slate-100 m-0">
         </div>
         <div id="chat-list" class="chat-list-container custom-scroll">
             <!-- Render JS -->
@@ -92,8 +110,8 @@
 
             <div id="typing-box" class="px-4 py-2 text-[11px] text-emerald-600 italic" style="display:none;">...</div>
 
-            <footer class="chat-footer">
-                <div class="input-group-premium">
+            <footer class="chat-footer flex flex-col">
+                <div class="input-group-premium relative">
                     @if (ViewBag.EnableAttachments == true)
                     {
                         <input type="file" id="file-input" style="display:none;" onchange="handleFileSelect(this)" />
@@ -105,13 +123,20 @@
                     {
                         <span class="material-symbols-outlined text-slate-200 cursor-not-allowed" title="File sharing is currently disabled">attach_file</span>
                     }
-                    <div id="attachment-preview" class="hidden absolute bottom-full left-0 right-0 bg-white border-t border-slate-100 p-2 flex gap-2 overflow-x-auto shadow-lg rounded-t-xl">
-                        <!-- Preview selected files -->
-                    </div>
                     <textarea id="msg-input" class="chat-input-area custom-scroll" placeholder="Type a message..." rows="1"></textarea>
                     <button id="btn-send" class="btn-chat-send">
                         <span class="material-symbols-outlined">send</span>
                     </button>
+                </div>
+
+                <div id="attachment-preview" class="hidden flex-col gap-2 w-full pt-3 mt-2 border-t border-slate-100">
+                    <div class="flex justify-between items-center px-1">
+                        <span id="attachment-count-text" class="text-[14px] font-bold text-slate-800"></span>
+                        <button onclick="removeAllFiles()" class="text-[13px] text-slate-500 hover:text-red-500 transition-colors bg-transparent border-none cursor-pointer">Clear all</button>
+                    </div>
+                    <div id="attachment-thumbnails" class="flex gap-3 overflow-x-auto px-1 pb-2 custom-scroll">
+                        <!-- JS injected thumbnails -->
+                    </div>
                 </div>
             </footer>
         </div>
@@ -122,8 +147,8 @@
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <script>
-        const API_URL = "http://localhost:5207";
-        const token = "@token";
+        const CHAT_API_URL = "http://localhost:5207";
+        const chatPageToken = "@token";
 
         // ★ Lấy AccountId từ JWT token (đáng tin hơn cookie UserId)
         function getAccountIdFromToken(jwt) {
@@ -141,10 +166,10 @@
         }
 
         // Fallback: cookie
-        const cookieUserId = parseInt("@currentAccountId", 10) || 0;
-        const myAccountId = getAccountIdFromToken(token) || cookieUserId;
+        const chatCookieUserId = parseInt("@currentAccountId", 10) || 0;
+        const chatMyAccountId = getAccountIdFromToken(chatPageToken) || chatCookieUserId;
 
-        console.log('[Chat Debug] myAccountId =', myAccountId, '| cookieUserId =', cookieUserId);
+        console.log('[Chat Debug] chatMyAccountId =', chatMyAccountId, '| chatCookieUserId =', chatCookieUserId);
 
         function senderIdOf(m) {
             const v = m.senderId ?? m.SenderId;
@@ -153,36 +178,42 @@
         }
 
         let activeChatId = null;
-        let connection = null;
+        let chatPageConnection = null;
         let selectedFiles = []; // Danh sách file đang chờ gửi
 
         // 1. Khởi tạo SignalR
         async function initSignalR() {
-            if (!token) return;
+            if (!chatPageToken) return;
 
-            connection = new signalR.HubConnectionBuilder()
-                .withUrl(`${API_URL}/chatHub`, {
-                    accessTokenFactory: () => token
+            chatPageConnection = new signalR.HubConnectionBuilder()
+                .withUrl(`${CHAT_API_URL}/chatHub`, {
+                    accessTokenFactory: () => chatPageToken
                 })
                 .withAutomaticReconnect()
                 .build();
 
-            connection.on("ReceiveMessage", (msg) => {
+            chatPageConnection.on("ReceiveMessage", async (msg) => {
                 if (activeChatId === msg.chatId) {
                     appendMessage(msg);
+                    try {
+                        await chatPageConnection.invoke("MarkAsRead", activeChatId);
+                    } catch (err) {
+                        console.error("MarkAsRead error:", err);
+                    }
                 }
-                loadChats(); 
+                await loadChats(); 
+                if (typeof loadUnreadSummary === 'function') loadUnreadSummary();
             });
 
-            connection.on("UserTyping", (data) => {
+            chatPageConnection.on("UserTyping", (data) => {
                 const typingBox = document.getElementById('typing-box');
-                if (activeChatId === data.chatId && data.accountId !== myAccountId) {
+                if (activeChatId === data.chatId && data.accountId !== chatMyAccountId) {
                     typingBox.innerText = `${data.name} is typing...`;
                     typingBox.style.display = data.isTyping ? 'block' : 'none';
                 }
             });
 
-            connection.on("UserOnlineStatus", (data) => {
+            chatPageConnection.on("UserOnlineStatus", (data) => {
                 // Update specific chat list items
                 const chatCard = allChats.find(c => c.partnerId === data.accountId);
                 if (chatCard) {
@@ -205,8 +236,8 @@
                 }
             });
 
-            connection.on("MessageRead", (data) => {
-                if (activeChatId === data.chatId && data.accountId !== myAccountId) {
+            chatPageConnection.on("MessageRead", (data) => {
+                if (activeChatId === data.chatId && data.accountId !== chatMyAccountId) {
                     // Update all my sent messages in this chat to show double blue ticks
                     const ticks = document.querySelectorAll('.msg-row.me .read-receipt');
                     ticks.forEach(tick => {
@@ -216,8 +247,16 @@
                 }
             });
 
+            chatPageConnection.on("NewSupportRequest", (ticket) => {
+                loadPendingRequests();
+            });
+
+            chatPageConnection.on("RemoveSupportRequest", (ticketId) => {
+                loadPendingRequests();
+            });
+
             try {
-                await connection.start();
+                await chatPageConnection.start();
                 console.log("SignalR Connected.");
             } catch (err) {
                 console.error("SignalR Connection Error: ", err);
@@ -288,9 +327,7 @@
 
         async function loadChats() {
             try {
-                const res = await fetch(`${API_URL}/api/chat/list`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await fetch(`/Chat/GetList`);
                 defaultChats = await res.json();
                 
                 const query = document.getElementById('search-chats').value.trim();
@@ -302,6 +339,106 @@
                 console.error("Load chats error:", err);
             }
         }
+
+        // --- Pending Requests Logic --- //
+        let pendingRequests = [];
+
+        async function loadPendingRequests() {
+            try {
+                const res = await fetch(`/Chat/GetPendingRequests`);
+                pendingRequests = await res.json();
+                renderPendingRequests();
+            } catch (err) {
+                console.error("Load pending requests error:", err);
+            }
+        }
+
+        function renderPendingRequests() {
+            const container = document.getElementById('pending-requests-container');
+            const list = document.getElementById('pending-requests-list');
+            const count = document.getElementById('pending-count');
+
+            if (!pendingRequests || pendingRequests.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            count.innerText = pendingRequests.length;
+
+            const actor = '@actor'; // From Razor view
+            const isStaffOrAdmin = actor === 'Admin' || actor === 'Staff';
+
+            list.innerHTML = pendingRequests.map(t => `
+                <div class="bg-orange-50 border border-orange-100 rounded-xl p-2 cursor-pointer hover:bg-orange-100 transition-colors">
+                    <div class="flex items-center gap-2 mb-1">
+                        <img src="${t.senderAvatar || '/img/default-avatar.png'}" class="w-6 h-6 rounded-full object-cover" onerror="this.src='/img/default-avatar.png'" />
+                        <span class="text-xs font-bold text-slate-700 truncate flex-1">${t.senderName || 'User'}</span>
+                        <span class="text-[9px] text-slate-400">${new Date(t.requestedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                    <div class="text-[11px] text-slate-600 line-clamp-1 mb-2">${t.initialMessage}</div>
+                    ${isStaffOrAdmin ? `
+                        <button onclick="acceptSupport('${t.ticketId}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold py-1.5 rounded-lg transition-colors">
+                            Accept Request
+                        </button>
+                    ` : `
+                        <div class="text-[10px] text-orange-600 font-semibold italic text-center w-full py-1">Waiting for support staff...</div>
+                    `}
+                </div>
+            `).join('');
+        }
+
+        async function acceptSupport(ticketId) {
+            try {
+                const res = await fetch(`/Chat/AcceptSupport?ticketId=${ticketId}`, {
+                    method: 'POST'
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    await loadChats();
+                    selectChat(data.chatId, "Support Session", "/img/default-avatar.png", true);
+                    loadPendingRequests(); // Refresh the list to remove the accepted ticket
+                } else {
+                    const error = await res.json();
+                    Swal.fire('Error', error.message || 'Failed to accept request.', 'error');
+                }
+            } catch (err) {
+                console.error('Accept support error:', err);
+            }
+        }
+
+        async function contactAdmin() {
+            try {
+                const res = await fetch("/Chat/GetAdminAccount");
+                if (!res.ok) {
+                    Swal.fire('Error', 'Admin account is currently unavailable.', 'error');
+                    return;
+                }
+                const admin = await res.json();
+                
+                const createRes = await fetch("/Chat/CreateDirectChat", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        targetAccountId: admin.accountId,
+                        contextType: 'system'
+                    })
+                });
+                
+                if (createRes.ok) {
+                    const data = await createRes.json();
+                    await loadChats();
+                    selectChat(data.chatId, admin.fullName, admin.avatarUrl, true);
+                } else {
+                    const err = await createRes.json();
+                    Swal.fire('Error', err.message || 'Failed to connect with Admin.', 'error');
+                }
+            } catch (err) {
+                console.error("Contact admin error:", err);
+            }
+        }
+        // ------------------------------ //
 
         function handleSearchInput() {
             const query = document.getElementById('search-chats').value.trim();
@@ -318,9 +455,7 @@
                 if (!currentQuery) return;
                 
                 try {
-                    const res = await fetch(`${API_URL}/api/chat/search?q=${encodeURIComponent(currentQuery)}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
+                    const res = await fetch(`/Chat/Search?q=${encodeURIComponent(currentQuery)}`);
                     allChats = await res.json();
                     applyChatFilters();
                 } catch (err) {
@@ -332,8 +467,37 @@
         // 3. Chọn cuộc hội thoại
         async function selectChat(chatId, name, avatar, isOnline = true) {
             if (activeChatId === chatId) return;
+            
+            // Clear typing state for previous chat if any
+            if (activeChatId && typeof chatPageTypingTimeout !== 'undefined') {
+                try {
+                    chatPageConnection.invoke("Typing", activeChatId, false);
+                    clearTimeout(chatPageTypingTimeout);
+                } catch(e) {}
+            }
+            
             activeChatId = chatId;
             
+            // Reset input box
+            const msgInput = document.getElementById('msg-input');
+            if (msgInput) {
+                msgInput.value = "";
+                msgInput.style.height = 'auto';
+            }
+            
+            // Reset attachments
+            if (typeof selectedFiles !== 'undefined') {
+                selectedFiles = [];
+                if (typeof renderAttachmentPreview === 'function') renderAttachmentPreview();
+            }
+
+            // Join SignalR group to receive typing and read events for newly created chats
+            if (chatPageConnection && chatPageConnection.state === signalR.HubConnectionState.Connected) {
+                try {
+                    await chatPageConnection.invoke("JoinChat", chatId);
+                } catch (e) { console.error("JoinChat error:", e); }
+            }
+
             document.getElementById('empty-state').style.display = 'none';
             document.getElementById('chat-content').style.display = 'flex';
             document.getElementById('header-name').innerText = name;
@@ -358,9 +522,7 @@
             loadChats(); // Update active class
 
             try {
-                const res = await fetch(`${API_URL}/api/chat/history?roomId=${chatId}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await fetch(`/Chat/GetHistory?roomId=${chatId}`);
                 const messages = await res.json();
                 
                 const list = document.getElementById('message-list');
@@ -369,16 +531,21 @@
                 scrollToBottom();
 
                 // Broadcast read receipt
-                connection.invoke("MarkAsRead", chatId);
+                chatPageConnection.invoke("MarkAsRead", chatId);
+                
+                // Refresh local chat list and global sidebar unread badge
+                await loadChats();
+                if (typeof loadUnreadSummary === 'function') loadUnreadSummary();
             } catch (err) {
                 console.error("Load history error:", err);
             }
         }
 
         function appendMessage(m) {
+            console.log('appendMessage received:', m);
             const list = document.getElementById('message-list');
             const sid = senderIdOf(m);
-            const isMe = sid === myAccountId && myAccountId > 0;
+            const isMe = sid === chatMyAccountId && chatMyAccountId > 0;
             const attachments = m.attachments || m.Attachments || [];
             
             let attachmentHtml = "";
@@ -386,14 +553,18 @@
                 attachmentHtml = `
                     <div class="msg-attachments mt-2 flex flex-col gap-2">
                         ${attachments.map(a => {
-                            if (a.fileType === 'image') {
-                                return `<a href="${a.fileUrl}" target="_blank" class="block rounded-lg overflow-hidden border border-slate-100 shadow-sm max-w-[200px]">
-                                            <img src="${a.fileUrl}" class="w-full h-auto" />
+                            const fType = a.fileType || a.FileType;
+                            const fUrl = a.fileUrl || a.FileUrl;
+                            const fName = a.fileName || a.FileName || 'Document';
+                            
+                            if (fType === 'image') {
+                                return `<a href="${fUrl}" target="_blank" class="block rounded-lg overflow-hidden border border-slate-100 shadow-sm max-w-[200px]">
+                                            <img src="${fUrl}" class="w-full h-auto" />
                                         </a>`;
                             } else {
-                                return `<a href="${a.fileUrl}" target="_blank" class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100 hover:bg-slate-100 transition-colors text-xs text-slate-700 max-w-[250px]">
+                                return `<a href="${fUrl}" target="_blank" class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100 hover:bg-slate-100 transition-colors text-xs text-slate-700 max-w-[250px]">
                                             <span class="material-symbols-outlined text-slate-400">description</span>
-                                            <span class="truncate flex-1">${a.fileName || 'Document'}</span>
+                                            <span class="truncate flex-1">${fName}</span>
                                             <span class="material-symbols-outlined text-slate-400 text-sm">download</span>
                                         </a>`;
                             }
@@ -455,28 +626,47 @@
         async function sendMsg() {
             const input = document.getElementById('msg-input');
             const content = input.value.trim();
-            if (!activeChatId) return;
+            if (!activeChatId) {
+                Swal.fire('Error', 'Please select a valid chat first.', 'error');
+                return;
+            }
             if (!content && selectedFiles.length === 0) return;
+            
+            // Disable button during upload
+            const sendBtn = document.getElementById('btn-send');
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span>';
 
             // 1. Upload files trước nếu có
             const attachments = [];
             for (const file of selectedFiles) {
                 const uploaded = await uploadFile(file);
-                if (uploaded) attachments.push(uploaded);
+                if (uploaded) {
+                    attachments.push({
+                        FileUrl: uploaded.fileUrl || uploaded.FileUrl,
+                        FileName: uploaded.fileName || uploaded.FileName,
+                        FileType: uploaded.fileType || uploaded.FileType,
+                        FileSize: uploaded.fileSize || uploaded.FileSize
+                    });
+                }
             }
 
             try {
-                await connection.invoke("SendMessage", {
-                    chatId: activeChatId,
-                    content: content || (attachments.length > 0 ? "Sent an attachment" : ""),
-                    attachments: attachments
+                await chatPageConnection.invoke("SendMessage", {
+                    ChatId: activeChatId,
+                    Content: content || (attachments.length > 0 ? "Sent an attachment" : ""),
+                    Attachments: attachments
                 });
                 input.value = "";
                 selectedFiles = [];
                 renderAttachmentPreview();
-                await connection.invoke("Typing", activeChatId, false);
+                await chatPageConnection.invoke("Typing", activeChatId, false);
             } catch (err) {
                 console.error("Send message error:", err);
+                Swal.fire('Error', 'Failed to send message.', 'error');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<span class="material-symbols-outlined">send</span>';
             }
         }
 
@@ -484,9 +674,8 @@
             const formData = new FormData();
             formData.append('file', file);
             try {
-                const res = await fetch(`${API_URL}/api/chatattachment/upload`, {
+                const res = await fetch(`/Chat/UploadAttachment`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
                 });
                 if (!res.ok) throw new Error("Upload failed");
@@ -500,42 +689,95 @@
         function handleFileSelect(input) {
             if (input.files && input.files[0]) {
                 selectedFiles.push(input.files[0]);
+                console.log('In handleFileSelect, selectedFiles',selectedFiles);  
                 renderAttachmentPreview();
                 input.value = ""; // Reset để chọn lại cùng file
             }
         }
 
+        function removeAllFiles() {
+            selectedFiles = [];
+            renderAttachmentPreview();
+        }
+
         function renderAttachmentPreview() {
-            const preview = document.getElementById('attachment-preview');
+            const previewContainer = document.getElementById('attachment-preview');
+            const countText = document.getElementById('attachment-count-text');
+            const thumbnailsContainer = document.getElementById('attachment-thumbnails');
+            
             if (selectedFiles.length === 0) {
-                preview.classList.add('hidden');
+                previewContainer.classList.add('hidden');
+                previewContainer.classList.remove('flex');
                 return;
             }
-            preview.classList.remove('hidden');
-            preview.innerHTML = selectedFiles.map((f, i) => `
-                <div class="relative bg-slate-50 p-2 pr-8 rounded-lg border border-slate-200 text-xs flex items-center gap-2 min-w-[120px]">
-                    <span class="material-symbols-outlined text-slate-400">description</span>
-                    <span class="truncate max-w-[100px]">${f.name}</span>
-                    <button onclick="removeSelectedFile(${i})" class="absolute top-1 right-1 text-slate-400 hover:text-red-500">
-                        <span class="material-symbols-outlined text-sm">close</span>
-                    </button>
-                </div>
-            `).join('');
+            
+            previewContainer.classList.remove('hidden');
+            previewContainer.classList.add('flex');
+            
+            const imgCount = selectedFiles.filter(f => f.type.startsWith('image/')).length;
+            const docCount = selectedFiles.length - imgCount;
+            let title = [];
+            if (imgCount > 0) title.push(`${imgCount} ${imgCount === 1 ? 'image' : 'images'}`);
+            if (docCount > 0) title.push(`${docCount} ${docCount === 1 ? 'file' : 'files'}`);
+            countText.textContent = title.join(', ');
+
+            thumbnailsContainer.innerHTML = selectedFiles.map((f, i) => {
+                const isImage = f.type.startsWith('image/');
+                const previewUrl = isImage ? URL.createObjectURL(f) : '';
+                
+                if (isImage) {
+                    return `
+                        <div class="relative w-[60px] h-[60px] flex-shrink-0 rounded-lg border border-slate-200 overflow-hidden group">
+                            <img src="${previewUrl}" class="w-full h-full object-cover" />
+                            <button onclick="removeSelectedFile(${i})" class="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span class="material-symbols-outlined text-[14px]">close</span>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="relative w-[60px] h-[60px] flex-shrink-0 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center p-1 group">
+                            <span class="material-symbols-outlined text-slate-400 text-[24px]">description</span>
+                            <span class="text-[9px] text-slate-500 truncate w-full text-center mt-1 px-1">${f.name}</span>
+                            <button onclick="removeSelectedFile(${i})" class="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span class="material-symbols-outlined text-[14px]">close</span>
+                            </button>
+                        </div>
+                    `;
+                }
+            }).join('') + `
+                <button onclick="document.getElementById('file-input').click()" class="w-[60px] h-[60px] flex-shrink-0 bg-slate-50 hover:bg-slate-100 transition-colors rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+            `;
         }
 
         function removeSelectedFile(index) {
             selectedFiles.splice(index, 1);
+            console.log('In removeSelectedFile, selectedFiles',selectedFiles); 
             renderAttachmentPreview();
         }
 
         async function confirmDeleteChat() {
             if (!activeChatId) return;
             
-            if (confirm("Are you sure you want to clear this chat history? This cannot be undone.")) {
+            const confirmResult = await Swal.fire({
+                title: 'Confirm Clear Chat',
+                text: "Are you sure you want to clear this chat history? This cannot be undone.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Clear',
+                cancelButtonText: 'Cancel',
+                background: '#ffffff',
+                customClass: { popup: 'rounded-2xl shadow-xl' }
+            });
+
+            if (confirmResult.isConfirmed) {
                 try {
-                    const res = await fetch(`${API_URL}/api/chat/${activeChatId}/clear`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${token}` }
+                    const res = await fetch(`/Chat/ClearHistory?chatId=${activeChatId}`, {
+                        method: 'DELETE'
                     });
                     
                     if (res.ok) {
@@ -549,19 +791,32 @@
                         
                         // Refresh sidebar
                         loadChats();
+                        
+                        // Update global sidebar unread badge
+                        if (typeof loadUnreadSummary === 'function') loadUnreadSummary();
+
+                        Swal.fire({
+                            title: 'Cleared!',
+                            text: 'The chat history was successfully cleared.',
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false,
+                            background: '#ffffff',
+                            customClass: { popup: 'rounded-2xl shadow-xl' }
+                        });
                     } else {
-                        alert("Failed to clear chat history.");
+                        Swal.fire('Error', 'Failed to clear chat history.', 'error');
                     }
                 } catch (err) {
                     console.error("Clear chat error:", err);
-                    alert("An error occurred while clearing chat history.");
+                    Swal.fire('Error', 'An error occurred while clearing chat history.', 'error');
                 }
             }
         }
 
         // Typing & Auto-resize logic
         const msgInput = document.getElementById('msg-input');
-        let typingTimeout;
+        let chatPageTypingTimeout;
 
         msgInput.addEventListener('input', function() {
             // Auto resize
@@ -569,11 +824,11 @@
             this.style.height = (this.scrollHeight) + 'px';
 
             if (!activeChatId) return;
-            connection.invoke("Typing", activeChatId, true);
+            chatPageConnection.invoke("Typing", activeChatId, true);
             
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                connection.invoke("Typing", activeChatId, false);
+            clearTimeout(chatPageTypingTimeout);
+            chatPageTypingTimeout = setTimeout(() => {
+                chatPageConnection.invoke("Typing", activeChatId, false);
             }, 3000);
         });
 
@@ -589,6 +844,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await initSignalR();
             await loadChats();
+            await loadPendingRequests();
 
             // Hook up event listeners for instant chat filtering
             const searchChats = document.getElementById('search-chats');

@@ -1,0 +1,181 @@
+@startuml ViewNotificationList_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "NotificationController" as FrontendController <<frontend controller>> #FFE6E6 {
+    + Admin() : IActionResult
+    + GetAllAdmin() : Task<IActionResult>
+}
+
+class NotificationViewModel #E6CCFF {
+    + NotificationId : int
+    + ReceiverId : int
+    + ReceiverFullName : string?
+    + ReceiverEmail : string?
+    + Title : string
+    + Content : string
+    + LinkAction : string?
+    + IsRead : bool
+    + CreatedAt : DateTime?
+    + ReceiverRole : string?
+    + SenderId : int?
+    + SenderRole : string?
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "NotificationController" as BackendController <<backend controller>> #FFE6E6 {
+    - _notiService : INotificationService
+    + GetAllNotifications(page: int, pageSize: int) : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class NotificationAdminResponseDto #E6CCFF {
+    + NotificationId : int
+    + Title : string?
+    + Content : string?
+    + IsRead : bool?
+    + CreatedAt : DateTime?
+    + ReceiverEmail : string?
+    + ReceiverFullName : string?
+    + ReceiverRole : string?
+    + ReceiverId : int?
+    + SenderId : int?
+    + SenderRole : string?
+    + LinkAction : string?
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Notification #CCFFE6 {
+    + NotificationId : int
+    + SenderId : int?
+    + ReceiverId : int?
+    + Title : string?
+    + Content : string?
+    + LinkAction : string?
+    + IsRead : bool?
+    + IsRemoved : bool?
+    + CreatedAt : DateTime?
+}
+
+class Account #CCFFE6 {
+    + AccountId : int
+    + Email : string
+    + Username : string?
+    + PasswordHash : string?
+    + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
+}
+
+class User #CCFFE6 {
+    + UserId : int
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+}
+
+class Manager #CCFFE6 {
+    + ManagerId : int
+    + Role : string?
+    + DisplayName : string
+    + FullName : string?
+    + PhoneNumber : string?
+    + AvatarUrl : string?
+    + Bio : string?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface INotificationService #FFE6CC {
+    //+ GetAllNotificationsForAdminAsync(page: int, pageSize: int) : Task<PagedResult<NotificationAdminResponseDto>>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface INotificationRepository #FFE6CC {
+    //+ GetAllAsync(page: int, pageSize: int) : Task<(List<Notification> Items, int TotalCount)>//
+    //+ AutoCleanupAdminNotificationsAsync() : Task<int>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class NotificationService #CCE5FF {
+    - _repo : INotificationRepository
+    + GetAllNotificationsForAdminAsync(page: int, pageSize: int) : Task<PagedResult<NotificationAdminResponseDto>>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class NotificationRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetAllAsync(page: int, pageSize: int) : Task<(List<Notification> Items, int TotalCount)>
+    + AutoCleanupAdminNotificationsAsync() : Task<int>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Accounts : DbSet<Account>
+    + Users : DbSet<User>
+    + Managers : DbSet<Manager>
+    + Notifications : DbSet<Notification>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === COMPOSITION (filled diamond) ===
+Account *-- User
+Account *-- Manager
+Account *-- Notification
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+BackendController --> INotificationService
+NotificationService --> INotificationRepository
+NotificationRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+NotificationService ..|> INotificationService
+NotificationRepository ..|> INotificationRepository
+
+' === DEPENDENCY (dashed arrows) ===
+FrontendController ..> BackendController
+FrontendController ..> NotificationViewModel
+BackendController ..> NotificationAdminResponseDto
+NotificationService ..> NotificationAdminResponseDto
+NotificationRepository ..> Notification
+
+@enduml

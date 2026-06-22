@@ -10,6 +10,8 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
+        CreateMap<Notification, NotificationResponseDto>();
+
         // Reports Mapping
         CreateMap<CourseReport, MyCourseReportResponse>()
             .ForMember(dest => dest.ReportId, opt => opt.MapFrom(src => src.CourseReportId))
@@ -86,6 +88,10 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.InstructorCoursesCount, opt => opt.MapFrom(src => src.Instructor != null && src.Instructor.Courses != null ? src.Instructor.Courses.Count : 0))
             .ForMember(dest => dest.InstructorReviewCount, opt => opt.Ignore())
             .ForMember(dest => dest.InstructorStudentsCount, opt => opt.Ignore())
+            .ForMember(dest => dest.Lessons, opt => opt.MapFrom(src => src.Lessons));
+
+        CreateMap<Course, CourseModerationDetailResponse>()
+            .ForMember(dest => dest.CourseThumbnailUrl, opt => opt.MapFrom(src => src.CourseThumbnailUrl))
             .ForMember(dest => dest.Lessons, opt => opt.MapFrom(src => src.Lessons));
 
         CreateMap<Lesson, LessonResponse>()

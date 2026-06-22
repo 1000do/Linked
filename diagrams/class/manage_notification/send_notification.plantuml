@@ -1,0 +1,297 @@
+@startuml ManageNotification_ClassDiagram
+
+' Styling & Settings
+skinparam style strictuml
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor White
+    BorderColor #1A73E8
+    ArrowColor #5F6368
+}
+
+!define ABSTRACT_COLOR #FFE6CC
+!define SERVICE_COLOR #CCE5FF
+!define DTO_COLOR #E6CCFF
+!define ENTITY_COLOR #CCFFE6
+!define REPOSITORY_COLOR #FFFFCC
+!define CONTROLLER_COLOR #FFE6E6
+!define DbContext #E6F3FF
+
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F9F9F9
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+
+' ==================== FRONTEND ====================
+
+class "NotificationController" as FrontendController <<frontend controller>> #FFE6E6 {
+    - _api : ApiClient
+    + Index() : Task<IActionResult>
+    + GetListTiny() : Task<IActionResult>
+    + Admin() : IActionResult
+    + GetAllAdmin() : Task<IActionResult>
+    + GetMyNotifications() : Task<IActionResult>
+    + MarkAllAsRead() : Task<IActionResult>
+    + MarkAsRead(id: int) : Task<IActionResult>
+    + Delete(id: int) : Task<IActionResult>
+    + SendAdvanced(payload: object) : Task<IActionResult>
+    + GetUnreadSummary() : Task<IActionResult>
+    + SearchEmails(query: string) : Task<IActionResult>
+}
+
+class NotificationViewModel #E6CCFF {
+    + NotificationId : int
+    + ReceiverId : int
+    + ReceiverFullName : string?
+    + ReceiverEmail : string?
+    + Title : string
+    + Content : string
+    + LinkAction : string?
+    + IsRead : bool
+    + CreatedAt : DateTime?
+    + ReceiverRole : string?
+    + SenderId : int?
+    + SenderRole : string?
+}
+
+' ==================== BACKEND - CONTROLLER ====================
+
+class "NotificationController" as BackendController <<backend controller>> #FFE6E6 {
+    - _notiService : INotificationService
+    - _chatService : IChatService
+    + GetMyNotifications(page: int, pageSize: int) : Task<IActionResult>
+    + GetAllNotifications(page: int, pageSize: int) : Task<IActionResult>
+    + MarkAllAsRead() : Task<IActionResult>
+    + MarkAsRead(id: int) : Task<IActionResult>
+    + Delete(id: int) : Task<IActionResult>
+    + SearchEmails(query: string) : Task<IActionResult>
+    + SendTest(dto: NotificationSendDto) : Task<IActionResult>
+    + SendAdvanced(dto: NotificationAdvancedDto) : Task<IActionResult>
+    + GetUnreadSummary() : Task<IActionResult>
+}
+
+' ==================== BACKEND - DTOs ====================
+
+class NotificationSendDto #E6CCFF {
+    + ReceiverId : int
+    + Title : string
+    + Content : string
+}
+
+class NotificationAdvancedDto #E6CCFF {
+    + TargetType : string
+    + Emails : List<string>?
+    + Title : string
+    + Content : string
+    + LinkAction : string?
+}
+
+class NotificationAdminResponseDto #E6CCFF {
+    + NotificationId : int
+    + Title : string?
+    + Content : string?
+    + IsRead : bool?
+    + CreatedAt : DateTime?
+    + ReceiverEmail : string?
+    + ReceiverFullName : string?
+    + ReceiverRole : string?
+    + ReceiverId : int?
+    + SenderId : int?
+    + SenderRole : string?
+    + LinkAction : string?
+}
+
+' ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Notification #CCFFE6 {
+    + NotificationId : int
+    + SenderId : int?
+    + ReceiverId : int?
+    + Title : string?
+    + Content : string?
+    + LinkAction : string?
+    + IsRead : bool?
+    + IsRemoved : bool?
+    + CreatedAt : DateTime?
+    + Receiver : Account?
+    + Sender : Account?
+}
+
+class Account #CCFFE6 {
+    + AccountId : int
+    + Email : string
+    + Username : string?
+    + PasswordHash : string?
+    + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
+    + User : User?
+    + Manager : Manager?
+}
+
+class User #CCFFE6 {
+    + UserId : int
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+}
+
+class Manager #CCFFE6 {
+    + ManagerId : int
+    + Role : string?
+    + DisplayName : string
+    + FullName : string?
+    + PhoneNumber : string?
+    + AvatarUrl : string?
+    + Bio : string?
+}
+
+' ==================== BACKEND - SERVICE INTERFACES ====================
+
+interface INotificationService #FFE6CC {
+    //+ GetNotificationsForUserAsync(userId: int, page: int, pageSize: int) : Task<PagedResult<NotificationResponseDto>>//
+    //+ GetAllNotificationsForAdminAsync(page: int, pageSize: int) : Task<PagedResult<NotificationAdminResponseDto>>//
+    //+ SendNotificationAsync(receiverId: int, title: string, content: string, linkAction: string?) : Task<bool>//
+    //+ SendBulkNotificationsAsync(dtos: IEnumerable<NotificationBulkDto>) : Task<bool>//
+    //+ DeleteNotificationAsync(notiId: int, userId: int) : Task<bool>//
+    //+ GetAllNotificationsAsync(page: int, pageSize: int) : Task<PagedResult<NotificationResponseDto>>//
+    //+ MarkAsReadAsync(notificationId: int, userId: int) : Task<bool>//
+    //+ MarkAllAsReadAsync(userId: int) : Task<bool>//
+    //+ SearchEmailsAsync(query: string, senderId: int, senderRole: string) : Task<List<string>>//
+    //+ GetUnreadCountAsync(userId: int) : Task<int>//
+    //+ SendAdvancedAsync(dto: NotificationAdvancedDto, senderId: int, senderRole: string) : Task<int>//
+}
+
+interface IChatService #FFE6CC {
+    //+ GetTotalUnreadCountAsync(accountId: int) : Task<int>//
+}
+
+' ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+interface INotificationRepository #FFE6CC {
+    //+ GetByReceiverIdAsync(userId: int, page: int, pageSize: int) : Task<(List<Notification> Items, int TotalCount)>//
+    //+ GetByIdAsync(id: int) : Task<Notification?>//
+    //+ AddAsync(notification: Notification) : Task<void>//
+    //+ AddRangeAsync(notifications: IEnumerable<Notification>) : Task<void>//
+    //+ Delete(notification: Notification) : void//
+    //+ Update(notification: Notification) : void//
+    //+ UpdateRange(notifications: IEnumerable<Notification>) : void//
+    //+ SaveChangesAsync() : Task<int>//
+    //+ GetAllAsync(page: int, pageSize: int) : Task<(List<Notification> Items, int TotalCount)>//
+    //+ GetUnreadByReceiverIdAsync(userId: int) : Task<List<Notification>>//
+    //+ GetUnreadCountAsync(userId: int) : Task<int>//
+    //+ AutoCleanupAdminNotificationsAsync() : Task<int>//
+    //+ GetSentNotificationsCountAsync(senderId: int) : Task<int>//
+}
+
+interface IUserRepository #FFE6CC {
+    //+ GetAccountByEmailAsync(email: string) : Task<Account?>//
+    //+ GetRoleByAccountIdAsync(accountId: int) : Task<string>//
+    //+ GetAllUserIdsAsync() : Task<List<int>>//
+    //+ GetUserIdsForStaffSenderAsync() : Task<List<int>>//
+    //+ GetUserIdsForAdminSenderAsync() : Task<List<int>>//
+    //+ SearchEmailsByQueryAsync(query: string, senderId: int, senderRole: string, take: int) : Task<List<string>>//
+}
+
+' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class NotificationService #CCE5FF {
+    - _repo : INotificationRepository
+    - _userRepo : IUserRepository
+    - _hubContext : IHubContext<NotificationHub>
+    + GetNotificationsForUserAsync(userId: int, page: int, pageSize: int) : Task<PagedResult<NotificationResponseDto>>
+    + GetAllNotificationsAsync(page: int, pageSize: int) : Task<PagedResult<NotificationResponseDto>>
+    + SendNotificationAsync(receiverId: int, title: string, content: string, linkAction: string?) : Task<bool>
+    + DeleteNotificationAsync(notiId: int, userId: int) : Task<bool>
+    + MarkAsReadAsync(notificationId: int, userId: int) : Task<bool>
+    + MarkAllAsReadAsync(userId: int) : Task<bool>
+    + GetAllNotificationsForAdminAsync(page: int, pageSize: int) : Task<PagedResult<NotificationAdminResponseDto>>
+    + SearchEmailsAsync(query: string, senderId: int, senderRole: string) : Task<List<string>>
+    + GetUnreadCountAsync(userId: int) : Task<int>
+    + SendAdvancedAsync(dto: NotificationAdvancedDto, senderId: int, senderRole: string) : Task<int>
+    + SendBulkNotificationsAsync(dtos: IEnumerable<NotificationBulkDto>) : Task<bool>
+}
+
+' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class NotificationRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetByReceiverIdAsync(userId: int, page: int, pageSize: int) : Task<(List<Notification> Items, int TotalCount)>
+    + GetAllAsync(page: int, pageSize: int) : Task<(List<Notification> Items, int TotalCount)>
+    + GetByIdAsync(id: int) : Task<Notification?>
+    + Delete(notification: Notification) : void
+    + AddAsync(notification: Notification) : Task<void>
+    + AddRangeAsync(notifications: IEnumerable<Notification>) : Task<void>
+    + Update(notification: Notification) : void
+    + UpdateRange(notifications: IEnumerable<Notification>) : void
+    + SaveChangesAsync() : Task<int>
+    + GetUnreadByReceiverIdAsync(userId: int) : Task<List<Notification>>
+    + GetUnreadCountAsync(userId: int) : Task<int>
+    + AutoCleanupAdminNotificationsAsync() : Task<int>
+    + GetSentNotificationsCountAsync(senderId: int) : Task<int>
+}
+
+class UserRepository #FFFFCC {
+    - _context : AppDbContext
+    + GetAccountByEmailAsync(email: string) : Task<Account?>
+    + GetRoleByAccountIdAsync(accountId: int) : Task<string>
+    + GetAllUserIdsAsync() : Task<List<int>>
+    + GetUserIdsForStaffSenderAsync() : Task<List<int>>
+    + GetUserIdsForAdminSenderAsync() : Task<List<int>>
+    + SearchEmailsByQueryAsync(query: string, senderId: int, senderRole: string, take: int) : Task<List<string>>
+}
+
+' ==================== BACKEND - DbContext ====================
+
+class AppDbContext #E6F3FF {
+    + Accounts : DbSet<Account>
+    + Users : DbSet<User>
+    + Managers : DbSet<Manager>
+    + Notifications : DbSet<Notification>
+    ---
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) : void
+    # OnModelCreating(modelBuilder: ModelBuilder) : void
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' === COMPOSITION (filled diamond) ===
+Account *-- User
+Account *-- Manager
+Account *-- Notification
+
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+BackendController --> INotificationService
+BackendController --> IChatService
+NotificationService --> INotificationRepository
+NotificationService --> IUserRepository
+NotificationRepository --> AppDbContext
+UserRepository --> AppDbContext
+
+' === INTERFACE REALIZATION ===
+NotificationService ..|> INotificationService
+NotificationRepository ..|> INotificationRepository
+UserRepository ..|> IUserRepository
+
+' === DEPENDENCY (dashed arrows) ===
+FrontendController ..> BackendController
+FrontendController ..> NotificationViewModel
+BackendController ..> NotificationSendDto
+BackendController ..> NotificationAdvancedDto
+BackendController ..> NotificationAdminResponseDto
+NotificationService ..> NotificationAdvancedDto
+NotificationService ..> NotificationAdminResponseDto
+NotificationService ..> Notification
+NotificationRepository ..> Notification
+UserRepository ..> Account
+
+@enduml

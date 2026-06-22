@@ -81,7 +81,15 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 config.ConfigValue = jsonString;
                 _context.SystemConfigs.Update(config);
             }
-            var affected = await _context.SaveChangesAsync();
+            int affected;
+            try
+            {
+                affected = await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new CourseMarketplaceBE.Domain.Exceptions.SystemConfigException("Database operation failed due to a constraint violation or data issue.", ex);
+            }
             if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
         }
 
@@ -106,7 +114,14 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                     UpdatedAt = DateTime.Now
                 });
             }
-            return await _context.SaveChangesAsync();
+            try
+            {
+                return await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new CourseMarketplaceBE.Domain.Exceptions.SystemConfigException("Database operation failed due to a constraint violation or data issue.", ex);
+            }
         }
     }
 }

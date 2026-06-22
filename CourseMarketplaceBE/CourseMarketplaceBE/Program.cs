@@ -222,7 +222,9 @@ public class Program
         builder.Services.AddScoped<IChatService, ChatService>();
         builder.Services.AddScoped<ICourseModerationService, CourseModerationService>();
         builder.Services.AddScoped<ICourseAiModerationService, CourseAiModerationService>();
-        builder.Services.AddScoped<IAdminAiService, AdminAiService>();
+        builder.Services.AddScoped<IAiModelManagementService, AiModelManagementService>();
+        builder.Services.AddScoped<IAiConfigurationService, AiConfigurationService>();
+        builder.Services.AddScoped<IAiModerationLogService, AiModerationLogService>();
         builder.Services.AddScoped<IUserReportModerationService, UserReportModerationService>();
         builder.Services.AddScoped<IAiModelRepository, AiModelRepository>();
         builder.Services.AddScoped<ICourseAiIntegrationRepository, CourseAiIntegrationRepository>();
@@ -237,10 +239,14 @@ public class Program
         builder.Services.AddScoped<IContentHashService, ContentHashService>();
         builder.Services.AddScoped<IAvatarFrameRepository, AvatarFrameRepository>();
         builder.Services.AddScoped<IAvatarFrameService, AvatarFrameService>();
+        builder.Services.AddSingleton<Ganss.Xss.IHtmlSanitizer, Ganss.Xss.HtmlSanitizer>();
+        builder.Services.AddScoped<IHtmlTextManipulationService, HtmlTextManipulationService>();
 
         // 📋 Report (User, Instructor, Staff, Admin)
         builder.Services.AddScoped<IReportRepository, ReportRepository>();
-        builder.Services.AddScoped<IReportService, ReportService>();
+        builder.Services.AddScoped<IReportSubmissionService, ReportSubmissionService>();
+        builder.Services.AddScoped<IReportModerationService, ReportModerationService>();
+        builder.Services.AddScoped<IModerationPenaltyService, ModerationPenaltyService>();
 
 
         // 🔥 Background Tasks

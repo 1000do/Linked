@@ -20,7 +20,7 @@ Depending on the specific use case, a class diagram may include:
 - **Repository** & **IRepository**: Data access logic and its corresponding interface.
 - **AppDbContext**: EF Core / Database context class.
 - **Entity**: Domain or database entities.
-- **Exclude**: Exclude any framework-native or programming-language-native participants (e.g., `ApiClient`, `List`, `Dictionary`, etc.).
+- **Exclude**: Exclude any framework-native, external library, or programming-language-native participants (e.g., `ApiClient`, `List`, `Dictionary`, `IMapper`, `HttpClient`, etc.). Additionally, if a class or interface is referenced but would be drawn without any methods or attributes, **skip it entirely** (do not include it as a field and do not draw relationship arrows to it).
 
 ---
 
@@ -99,8 +99,12 @@ To maintain consistency across diagrams, assign relationships strictly according
   - **Field Attributes**: Include private field attributes related to the functionalities, formatted as `visibility attributeName : Interface/Class/Data Type` (e.g., `- _courseRepository : ICourseRepository`).
   - **Full Method Signatures**: Provide complete signatures for methods, specifying visibility (`+` for public, `-` for private, `#` for protected), arguments with their types, and the return type (e.g., `+ CreateCourseAsync(request: CourseCreateRequest, instructorId: int): Task<CourseResponse>`).
   - **Interface Content Styling**: For interfaces, write all internal contents (methods, properties, attributes) entirely in italics. In PlantUML, format them with double slashes (e.g., `//+ CreateCourseAsync(request: CourseCreateRequest, instructorId: int): Task<CourseResponse>//`).
-  - **Relevance**: For Controllers, Services, and Repositories, keep attributes and methods clean and relevant to the specific use case to avoid clutter.
+  - **Relevance**: For Controllers, Services, Repositories, and AppDbContext, keep attributes and methods clean and relevant to the specific use case to avoid clutter.
+    - Identify methods that contain the main execution flow (usually public methods defined in the interface contracts).
+    - Only include dependencies and their corresponding private fields if they are directly implemented or referenced in these main public methods.
+    - If the main public methods use private helper methods, and there are dependencies or fields abstracted behind these private helpers, **skip them** for simplicity.
   - **Data Models (ViewModels, DTOs, Entities)**: If a participant is a ViewModel, DTO, or Entity, you **MUST include ALL of its fields and properties** in the class block. Furthermore, if any of those properties map to another ViewModel, DTO, or Entity that is ALSO present in the diagram, you **MUST explicitly connect them** in the Relationships section using an appropriate relationship (e.g., `Account -- Lockout`).
+  - **Shared Name Resolution (String Aliasing)**: If a Frontend Controller and a Backend Controller share the exact same class name, you **MUST** use PlantUML's string aliasing syntax to keep the visual name exact while allowing distinct relationships. Define them as separate blocks by placing the exact real name in quotes, followed by `as [InternalAlias]` and their respective stereotype (e.g., `class "AdminAiServiceController" as FrontendController <<frontend controller>>` and `class "AdminAiServiceController" as BackendController <<backend controller>>`). Similarly, if a ViewModel and a DTO share the exact same name, use the string aliasing syntax with `<<view model>>` and `<<dto>>` stereotypes (e.g., `class "CreateAiModelRequest" as CreateAiModelRequestVM <<view model>>`). Do not make up non-existent names for the quoted display name.
 - **Standard Colors**:
   - Abstract/Interface: `ABSTRACT_COLOR` `#FFE6CC`
   - Service Implementation: `SERVICE_COLOR` `#CCE5FF`
@@ -241,6 +245,22 @@ class Course #CCFFE6 {
     + UpdatedAt : DateTime?
     + CourseStatus : string?
     + CourseFlagCount : int?
+    + CourseAiIntegrations : ICollection<CourseAiIntegration>
+    + CartItems : ICollection<CartItem>
+    + Category : Category?
+    + Coupon : Coupon?
+    + Enrollments : ICollection<Enrollment>
+    + Instructor : Instructor?
+    + Lessons : ICollection<Lesson>
+    + OrderItems : ICollection<OrderItem>
+    + WishlistItems : ICollection<WishlistItem>
+    + CourseExt : CourseExt?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
 }
 
 class Category #CCFFE6 {
@@ -248,6 +268,9 @@ class Category #CCFFE6 {
     + CategoriesName : string
     + Description : string?
     + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CategoryStatus : string?
+    + Courses : ICollection<Course>
 }
 
 class Instructor #CCFFE6 {
@@ -262,6 +285,12 @@ class Instructor #CCFFE6 {
     + RejectionReason : string?
     + StripeAccountId : string?
     + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
+    + Courses : ICollection<Course>
+    + InstructorPayouts : ICollection<InstructorPayout>
+    + InstructorNavigation : User
 }
 
 class Coupon #CCFFE6 {
@@ -276,102 +305,41 @@ class Coupon #CCFFE6 {
     + UsageLimit : int?
     + UsedCount : int?
     + IsActive : bool?
+    + Courses : ICollection<Course>
+    + Manager : Manager?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
 
 interface ICourseCommandService #FFE6CC {
     //+ CreateCourseAsync(request: CourseCreateRequest, instructorId: int) : Task<CourseResponse>//
-    //+ UpdateCourseAsync(courseId: int, request: CourseUpdateRequest, instructorId: int) : Task<CourseResponse>//
-    //+ UpdateCourseStatusAsync(courseId: int, status: string, instructorId: int) : Task<void>//
-    //+ DeleteCourseAsync(courseId: int, instructorId: int) : Task<void>//
-    //+ IntegrateAItoCourseAsync(command: CourseAIIntegrationCommand) : Task<CourseAIIntegrationResult>//
-    //+ UpdateCourseStatusAndFeedbackAsync(courseId: int, status: string, feedback: string?) : Task<void>//
 }
 
 interface ICourseQueryService #FFE6CC {
-    //+ GetAllPublishedCoursesAsync(userId: int?) : Task<IEnumerable<CourseResponse>>//
-    //+ GetPublishedCoursesPagedAsync(query: string?, category: string?, sort: string?, price: string?, rating: string?, page: int?, pageSize: int?, userId: int?) : Task<PagedResult<CourseResponse>>//
-    //+ GetInstructorCoursesAsync(instructorId: int) : Task<IEnumerable<CourseResponse>>//
-    //+ GetInstructorCoursesPagedAsync(instructorId: int, search: string?, status: string?, page: int?, pageSize: int?) : Task<PagedResult<CourseResponse>>//
-    //+ GetCourseWithDetailsAsync(courseId: int, instructorId: int, userId: int?) : Task<CourseDetailResponse?>//
-    //+ IsEnrolledAsync(userId: int, courseId: int) : Task<bool>//
     //+ GetCategoriesAsync() : Task<IEnumerable<CategoryResponse>>//
-    //+ GetByModelAndCourseAsync(modelId: int, courseId: int) : Task<CourseAiIntegrationResponse>//
 }
 
 interface IInstructorRepository #FFE6CC {
-    //+ GetPendingInstructorsAsync(page: int, pageSize: int) : Task<(IEnumerable<Instructor>, int)>//
     //+ GetByIdAsync(id: int) : Task<Instructor?>//
-    //+ GetByIdWithNavigationAsync(instructorId: int) : Task<Instructor?>//
-    //+ AddAsync(instructor: Instructor) : Task<void>//
-    //+ Update(instructor: Instructor) : void//
-    //+ GetAllApplicationsDtoAsync() : Task<List<InstructorDashboardDto>>//
-    //+ GetDashboardDtoAsync(userId: int) : Task<InstructorDashboardDto?>//
-    //+ GetRejectedApplicationDtoAsync(userId: int) : Task<InstructorDashboardDto?>//
-    //+ GetStatsAsync(userId: int) : Task<InstructorStats?>//
-    //+ CountActiveCoursesAsync(instructorId: int) : Task<int>//
-    //+ GetPayoutsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<PagedResult<InstructorPayoutDto>>//
-    //+ GetTotalApprovedInstructorsCountAsync() : Task<int>//
-    //+ GetInstructorsWithStripeAsync() : Task<List<Instructor>>//
     //+ SaveChangesAsync() : Task<int>//
 }
 
 interface ICourseRepository #FFE6CC {
-    //+ GetInstructorCoursesAsync(instructorId: int) : Task<IEnumerable<Course>>//
-    //+ GetInstructorCoursesPagedAsync(instructorId: int, search: string?, status: string?, page: int?, pageSize: int?) : Task<(IEnumerable<Course>, int)>//
-    //+ GetCourseWithDetailsAsync(courseId: int) : Task<Course?>//
-    //+ GetByIdAsync(courseId: int) : Task<Course?>//
-    //+ HasEnrollmentsAsync(courseId: int) : Task<bool>//
-    //+ GetAllPublishedCoursesAsync() : Task<IEnumerable<Course>>//
-    //+ GetAllPublishedCoursesPagedAsync(search: string?, category: string?, sort: string?, price: string?, rating: string?, page: int?, pageSize: int?) : Task<(IEnumerable<Course>, int)>//
-    //+ IsEnrolledAsync(userId: int, courseId: int) : Task<bool>//
-    //+ GetEnrolledCoursesAsync(userId: int) : Task<IEnumerable<Course>>//
-    //+ GetCategoriesAsync() : Task<IEnumerable<Category>>//
-    //+ GetCourseStatsAsync(courseIds: IEnumerable<int>) : Task<IEnumerable<CourseStats>>//
-    //+ GetCourseStatsAsync(courseId: int) : Task<CourseStats?>//
     //+ AddAsync(course: Course) : Task<void>//
-    //+ Update(course: Course) : void//
-    //+ Delete(course: Course) : void//
-    //+ GetTotalPublishedCoursesCountAsync() : Task<int>//
-    //+ GetAveragePlatformRatingAsync() : Task<decimal>//
-    //+ GetPendingCoursesModerationAsync(filter: ModerationFilterDto) : Task<PagedResult<CourseModerationDto>>//
-    //+ GetCourseModerationStatsAsync() : Task<CourseModerationStatsDto>//
-    //+ IsOwnerAsync(userId: int, courseId: int) : Task<bool>//
-    //+ GetCourseWithInstructorAsync(courseId: int) : Task<Course?>//
-    //+ GetActiveEnrollmentAsync(userId: int, courseId: int) : Task<Enrollment?>//
     //+ SaveChangesAsync() : Task<int>//
 }
 
 interface IFileUploadService #FFE6CC {
     //+ UploadImageAsync(file: IFormFile) : Task<string?>//
     //+ UploadVideoAsync(file: IFormFile) : Task<string?>//
-    //+ DeleteFileAsync(fileUrl: string) : Task<bool>//
-    //+ MoveToTrashAsync(fileUrl: string) : Task<string?>//
-    //+ GetPublicIdFromUrl(fileUrl: string) : string?//
-    //+ DeleteFileByPublicIdAsync(publicId: string, resourceType: string) : Task<bool>//
-    //+ UploadFileAsync(file: IFormFile) : Task<string?>//
-    //+ RestoreFromTrashAsync(publicId: string, resourceType: string) : Task<string?>//
 }
 
 interface IContentHashService #FFE6CC {
-    //+ NormalizeText(text: string) : string//
     //+ ComputeCourseHashAsync(text: string) : Task<string>//
-    //+ ComputeFileHashAsync(fileBytes: byte[]) : Task<string>//
     //+ SaveCourseHashesAsync(command: SaveCourseHashesCommand) : Task<void>//
-    //+ GetCourseHashesAsync(courseId: int) : Task<CourseExtDto>//
-    //+ GetAllCourseHashesAsync() : Task<List<CourseExtDto>>//
 }
 
 interface IRedisService #FFE6CC {
-    //+ SetUserOnlineAsync(accountId: int, connectionId: string) : Task<void>//
-    //+ SetUserOfflineAsync(accountId: int, connectionId: string) : Task<void>//
-    //+ IsUserOnlineAsync(accountId: int) : Task<bool>//
-    //+ IncrementUnreadCountAsync(accountId: int, chatId: int) : Task<void>//
-    //+ ClearUnreadCountAsync(accountId: int, chatId: int) : Task<void>//
-    //+ GetUnreadCountAsync(accountId: int, chatId: int) : Task<int>//
-    //+ SetCacheAsync<T>(key: string, value: T, expiry: TimeSpan?) : Task<void>//
-    //+ GetCacheAsync<T>(key: string) : Task<T?>//
     //+ RemoveCacheAsync(key: string) : Task<void>//
 }
 
@@ -385,9 +353,6 @@ class CourseCommandService #CCE5FF {
     - _contentHashService : IContentHashService
     
     + CreateCourseAsync(request: CourseCreateRequest, instructorId: int) : Task<CourseResponse>
-    + UpdateCourseAsync(courseId: int, request: CourseUpdateRequest, instructorId: int) : Task<CourseResponse>
-    + UpdateCourseStatusAsync(courseId: int, status: string, instructorId: int) : Task<void>
-    + DeleteCourseAsync(courseId: int, instructorId: int) : Task<void>
     - UpdateCourseHashesAsync(course: Course) : Task<void>
 }
 
@@ -396,28 +361,17 @@ class CourseCommandService #CCE5FF {
 class CourseRepository #FFFFCC {
     - _context : AppDbContext
     
-    + GetInstructorCoursesAsync(instructorId: int) : Task<IEnumerable<Course>>
-    + GetInstructorCoursesPagedAsync(instructorId: int, search: string?, status: string?, page: int?, pageSize: int?) : Task<(IEnumerable<Course>, int)>
-    + GetCourseWithDetailsAsync(courseId: int) : Task<Course?>
-    + GetByIdAsync(courseId: int) : Task<Course?>
     + AddAsync(course: Course) : Task<void>
-    + Update(course: Course) : void
-    + Delete(course: Course) : void
     + SaveChangesAsync() : Task<int>
 }
 
 ' ==================== BACKEND - DbContext ====================
 
 class AppDbContext #E6F3FF {
-    + Accounts : DbSet<Account>
-    + Lockouts : DbSet<Lockout>
     + Categories : DbSet<Category>
     + Coupons : DbSet<Coupon>
     + Courses : DbSet<Course>
-    + Enrollments : DbSet<Enrollment>
     + Instructors : DbSet<Instructor>
-    + Lessons : DbSet<Lesson>
-    + Users : DbSet<User>
     ---
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) : void
     # OnModelCreating(modelBuilder: ModelBuilder) : void

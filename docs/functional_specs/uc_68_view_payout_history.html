@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.68 View payout history</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.68. View payout history</strong></p>
+
+<p><strong>Function Trigger:</strong> Instructors click the "Payout History" (or "Payouts") tab in their dashboard.</p>
+
+<p><strong>Function Description:</strong> Allows instructors to track their historical and pending payout transfers, including sequential numbering, course sale references, net payout amounts, and real-time Stripe settlement statuses.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The instructor must be logged in.</li>
+            <li>- The instructor must have a valid session cookie.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>View Payout History List Successfully:</strong>
+                <ul>
+                    <li>1. The instructor accesses the Payouts / Earnings tab in the dashboard.</li>
+                    <li>2. The system retrieves and displays a paginated list of credited payout records with the following columns: No. (Sequential number of the payout record), Course Title (Name of the sold course, with details showing the gross sales split), Net Payout (The actual earnings credited. Positive earnings show in green text), Status (Visual status badge of the transfer: To Bank (Paid) - Paid out to the instructor's bank account, In Transit - Payout is currently being processed by Stripe Connect, Stripe Wallet - Settled to the instructor's Stripe balance, ready to be swept to the bank, Unpaid (Pending) - Awaiting scheduled trigger).</li>
+                    <li>3. The Instructor can filter payouts by Keyword (course title, Stripe references) and Status (Success, In Progress, Failed), or sort them by date and amount.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Filter &amp; Search Payouts)</strong>
+        <ul>
+            <li>1. The instructor inputs a keyword in the search box or selects a Status.</li>
+            <li>2. The instructor clicks the "Filter" button.</li>
+            <li>3. The system refreshes the list to show matching payout items.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Displaying Refunded/Deducted Payouts)</strong>
+        <ul>
+            <li>1. If a learner request for a refund has been approved, the system generates a negative entry (deduction) on the instructor's ledger.</li>
+            <li>2. The system displays this record in the payout list with: Net Payout (The negative value highlighted in red text), Status (A red status badge showing 'Refunded').</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Stripe Transfer Fails)</strong>
+        <ul>
+            <li>1. During bulk payout execution, if Stripe Connect encounters a transfer failure (e.g. due to verification requirements):</li>
+            <li>2. The system marks the payout record as failed and displays a red status badge showing 'Failed'.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- The platform displays the list of payout records corresponding to course sales.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Expired / Unauthorized Access:</strong> The instructor's session is expired, or they attempt to access /Instructor/Payouts without logging in. The system redirects the instructor to the Account Login page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Expected Payout Date Calculation:</strong> The expected payout date (PayoutDate field in the database) is automatically calculated at the time of purchase as the configured payout day of the next month (e.g., the 15th of the next month) relative to the transaction date. This reflects the platform's monthly billing cycle and the 14-day escrow window.</li>
+            <li>- <strong>Sequential Numbering (No.):</strong> The first column in the payout history table must display sequential numbers (No., e.g., #1, #2, #3) instead of the escrow clearance date, avoiding confusion for the user.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>
