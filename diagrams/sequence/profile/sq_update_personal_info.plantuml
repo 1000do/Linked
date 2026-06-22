@@ -29,8 +29,9 @@ hide footbox
 mainframe Update Personal Info
 actor User as act
 
-participant "Account/EditProfile.cshtml" as view
-participant "Account/Profile.cshtml" as r_view
+participant "EditProfileView" as view
+participant "ProfileView" as r_view
+participant "LoginView" as login_view
 participant "AccountController" as fe_ctrl <<frontend controller>>
 participant "ProfileController" as be_ctrl <<backend controller>>
 participant ":UserProfileService" as sv
@@ -53,8 +54,10 @@ view->fe_ctrl++: Send POST /Account/EditProfile (MultipartFormData)
 fe_ctrl->fe_ctrl++: Check AccessToken cookie
 fe_ctrl--
 group opt [No AccessToken]
-    fe_ctrl-->>view: Redirect to /Account/Login
-    view-->>act: Display login page
+    fe_ctrl-->>view: Return statusCode 302
+    view->login_view++: Redirect to Login page
+    login_view-->>act: Display Login page
+    deactivate login_view
 end
 
 fe_ctrl->be_ctrl++: Send PUT /api/Profile/update (MultipartFormData with AccessToken)
@@ -63,7 +66,7 @@ be_ctrl->be_ctrl++: Validate ModelState
 be_ctrl--
 group opt [Invalid ModelState]
     be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-    fe_ctrl-->>view: Return statusCode 400 with error
+    fe_ctrl-->>view: Return statusCode 200 (with ErrorMessage)
     view-->>act: Display error message
 end
 
@@ -71,8 +74,8 @@ be_ctrl->be_ctrl++: Validate login session & Parse userId
 be_ctrl--
 group opt [Invalid login session]
     be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
-    fe_ctrl-->>view: Redirect to /Account/Login
-    view-->>act: Display login page
+    fe_ctrl-->>view: Return statusCode 200 (with ErrorMessage)
+    view-->>act: Display error message
 end
 
 be_ctrl->sv++: Call UpdateProfileAsync(userId, request)
@@ -84,34 +87,34 @@ db-->>ctx--: Return user record
 ctx-->>repo--: Return User entity
 repo-->>sv--: Return User entity
 
-group opt [User not found]
+group opt [User or Account not found]
     sv-->>be_ctrl: Return false
     be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-    fe_ctrl-->>view: Return statusCode 400
+    fe_ctrl-->>view: Return statusCode 200 (with ErrorMessage)
     view-->>act: Display update error message
 end
 
 group opt [Email modified on Google Account]
     sv-->>be_ctrl: throw InvalidOperationException
-    be_ctrl-->>fe_ctrl: Return statusCode 400
-    fe_ctrl-->>view: Return statusCode 400
+    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view: Return statusCode 200 (with ErrorMessage)
     view-->>act: Display block message
 end
 
 group opt [Invalid email format]
     sv-->>be_ctrl: throw InvalidOperationException
-    be_ctrl-->>fe_ctrl: Return statusCode 400
-    fe_ctrl-->>view: Return statusCode 400
+    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view: Return statusCode 200 (with ErrorMessage)
     view-->>act: Display format error
 end
 
 group opt [AvatarFile != null]
     sv->upload_sv++: Call UploadImageAsync(AvatarFile)
     upload_sv-->>sv--: Return avatarUrl
-    group opt [Upload failed]
+    group opt [Upload failed (avatarUrl is null)]
         sv-->>be_ctrl: Return false
-        be_ctrl-->>fe_ctrl: Return statusCode 400
-        fe_ctrl-->>view: Return statusCode 400
+        be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+        fe_ctrl-->>view: Return statusCode 200 (with ErrorMessage)
         view-->>act: Display upload error
     end
 end
@@ -120,8 +123,14 @@ sv->repo++: Call UpdateUserProfileAsync(userId, fullName, bio, dob, avatarUrl, p
 
 repo->ctx++: Begin database transaction
 ctx-->>repo--: Return transaction
-repo->ctx++: Set modified fields on User and Account entities
-ctx-->>repo--: Return
+
+repo->ctx++: Query User joined with navigation details
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return user record
+ctx-->>repo--: Return User entity
+
+repo->repo++: Set modified fields on User, Account, and Instructor entities
+repo--
 
 group opt [Email is modified]
     repo->ctx++: Check if email is already taken
@@ -133,8 +142,8 @@ group opt [Email is modified]
         ctx-->>repo--: Return
         repo-->>sv: throw InvalidOperationException
         sv-->>be_ctrl: throw Exception
-        be_ctrl-->>fe_ctrl: Return statusCode 400
-        fe_ctrl-->>view: Return statusCode 400
+        be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+        fe_ctrl-->>view: Return statusCode 200 (with ErrorMessage)
         view-->>act: Display "Email taken" message
     end
 end
@@ -158,28 +167,28 @@ alt [numberOfRowsAffected > 0]
     fe_ctrl->be_ctrl++: Send GET /api/Profile
     be_ctrl->sv++: Call GetUserProfileAsync(userId)
     sv->repo++: Call GetUserByIdAsync(userId)
-    repo->ctx++: Query User details
+    repo->ctx++: Query User joined with navigation details
     ctx->db++: Execute SELECT query
-    db-->>ctx--: Return data
+    db-->>ctx--: Return user record
     ctx-->>repo--: Return User entity
     repo-->>sv--: Return User entity
     sv-->>be_ctrl--: Return UserProfileResponse DTO
-    be_ctrl-->>fe_ctrl--: Return statusCode 200 with user profile data
+    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Success)
     
     fe_ctrl->fe_ctrl++: Sync display cookies
     fe_ctrl--
-    fe_ctrl->r_view++: Redirect to Profile view
+    fe_ctrl->r_view++: Redirect to Profile page
     deactivate fe_ctrl
     deactivate view
     r_view-->>act--: Display "Updated successfully!" and show updated profile info
-else [numberOfRowsAffected = 0]
+else [numberOfRowsAffected = 0 or Exception]
     repo->ctx++: Rollback transaction
     ctx-->>repo--: Return
     repo-->>sv--: Return false
     
     sv-->>be_ctrl--: Return false
     be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
-    fe_ctrl-->>view--: Return statusCode 400 with error
+    fe_ctrl-->>view--: Return statusCode 200 (with ErrorMessage)
     view-->>act--: Display update error message
 end
 @enduml
