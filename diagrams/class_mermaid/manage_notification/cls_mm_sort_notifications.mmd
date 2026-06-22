@@ -1,0 +1,165 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class NotificationControllerFE["NotificationController"] {
+    <<frontend controller>>
+    + Admin() IActionResult
+    + GetAllAdmin() Task~IActionResult~
+}
+
+class NotificationViewModel {
+    + NotificationId : int
+    + ReceiverId : int
+    + ReceiverFullName : string?
+    + ReceiverEmail : string?
+    + Title : string
+    + Content : string
+    + LinkAction : string?
+    + IsRead : bool
+    + CreatedAt : DateTime?
+    + ReceiverRole : string?
+    + SenderId : int?
+    + SenderRole : string?
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class NotificationControllerBE["NotificationController"] {
+    <<backend controller>>
+    - _notiService : INotificationService
+    + GetAllNotifications(page: int, pageSize: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class NotificationAdminResponseDto {
+    + NotificationId : int
+    + Title : string?
+    + Content : string?
+    + IsRead : bool?
+    + CreatedAt : DateTime?
+    + ReceiverEmail : string?
+    + ReceiverFullName : string?
+    + ReceiverRole : string?
+    + ReceiverId : int?
+    + SenderId : int?
+    + SenderRole : string?
+    + LinkAction : string?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Notification {
+    + NotificationId : int
+    + SenderId : int?
+    + ReceiverId : int?
+    + Title : string?
+    + Content : string?
+    + LinkAction : string?
+    + IsRead : bool?
+    + IsRemoved : bool?
+    + CreatedAt : DateTime?
+}
+
+class Account {
+    + AccountId : int
+    + Email : string
+    + Username : string?
+    + PasswordHash : string?
+    + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
+}
+
+class User {
+    + UserId : int
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+}
+
+class Manager {
+    + ManagerId : int
+    + Role : string?
+    + DisplayName : string
+    + FullName : string?
+    + PhoneNumber : string?
+    + AvatarUrl : string?
+    + Bio : string?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class INotificationService {
+    <<interface>>
+    + GetAllNotificationsForAdminAsync(page: int, pageSize: int) Task~PagedResult~NotificationAdminResponseDto~~ *
+}
+
+%% ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+class INotificationRepository {
+    <<interface>>
+    + GetAllAsync(page: int, pageSize: int) Task~ValueTuple~List~Notification~~int~~~ *
+    + AutoCleanupAdminNotificationsAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class NotificationService {
+    - _repo : INotificationRepository
+    + GetAllNotificationsForAdminAsync(page: int, pageSize: int) Task~PagedResult~NotificationAdminResponseDto~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class NotificationRepository {
+    - _context : AppDbContext
+    + GetAllAsync(page: int, pageSize: int) Task~ValueTuple~List~Notification~~int~~~
+    + AutoCleanupAdminNotificationsAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Accounts : DbSet~Account~
+    + Users : DbSet~User~
+    + Managers : DbSet~Manager~
+    + Notifications : DbSet~Notification~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION ===
+Account *-- User
+Account *-- Manager
+Account *-- Notification
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+NotificationControllerBE --> INotificationService
+NotificationService --> INotificationRepository
+NotificationRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+NotificationService ..|> INotificationService
+NotificationRepository ..|> INotificationRepository
+
+%% === DEPENDENCY ===
+NotificationControllerFE ..> NotificationControllerBE
+NotificationControllerFE ..> NotificationViewModel
+NotificationControllerBE ..> NotificationAdminResponseDto
+NotificationService ..> NotificationAdminResponseDto
+NotificationRepository ..> Notification
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
