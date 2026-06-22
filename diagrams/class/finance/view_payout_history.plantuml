@@ -3,144 +3,137 @@
 ' Styling & Settings
 skinparam style strictuml
 skinparam shadowing false
+skinparam classAttributeIconSize 0
 skinparam class {
     BackgroundColor White
-    BorderColor #1A73E8
-    ArrowColor #5F6368
+    BorderColor #333333
+    ArrowColor #333333
 }
 
-!define ABSTRACT_COLOR #FFE6CC
-!define SERVICE_COLOR #CCE5FF
-!define DTO_COLOR #E6CCFF
-!define ENTITY_COLOR #CCFFE6
-!define REPOSITORY_COLOR #FFFFCC
-!define CONTROLLER_COLOR #FFE6E6
-
 skinparam backgroundColor #FFFFFF
-skinparam classBackgroundColor #F9F9F9
+skinparam classBackgroundColor #FFFFFF
 skinparam classBorderColor #333333
 skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class TransactionControllerFE #FFE6E6 {
-    - _api : ApiClient
+class TransactionControllerFE #FFFFFF {
     + Instructor(payoutPage: int, payoutPageSize: int, payoutKeyword: string?, payoutSortBy: string?, payoutStatus: string?) : Task<IActionResult>
 }
 
-class InstructorPayoutPagedViewModel #E6CCFF {
-    + Items : List<InstructorPayoutViewModel>
-    + TotalCount : int
-    + Page : int
-    + PageSize : int
-    + TotalPages : int
+class InstructorPayoutPagedViewModel #FFFFFF {
+    - Items : List<InstructorPayoutViewModel>
+    - TotalCount : int
+    - Page : int
+    - PageSize : int
+    - TotalPages : int
 }
 
-class InstructorPayoutViewModel #E6CCFF {
-    + PayoutId : int
-    + Amount : decimal
-    + PayoutDate : DateTime
-    + IsPaid : bool
-    + CourseTitle : string
-    + TotalAmount : decimal
-    + PayoutStatus : string?
-    + PaidToBankAt : DateTime?
-    + StripeTransferId : string?
-    + StripePayoutId : string?
+class InstructorPayoutViewModel #FFFFFF {
+    - PayoutId : int
+    - Amount : decimal
+    - PayoutDate : DateTime
+    - IsPaid : bool
+    - CourseTitle : string
+    - TotalAmount : decimal
+    - PayoutStatus : string?
+    - PaidToBankAt : DateTime?
+    - StripeTransferId : string?
+    - StripePayoutId : string?
 }
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class InstructorControllerBE #FFE6E6 {
+class InstructorControllerBE #FFFFFF {
     - _instructorService : IInstructorService
     + GetPayouts(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<IActionResult>
 }
 
 ' ==================== BACKEND - DTOs ====================
 
-class InstructorPayoutDto #E6CCFF {
-    + PayoutId : int
-    + Amount : decimal
-    + PayoutDate : DateTime
-    + IsPaid : bool
-    + CourseTitle : string
-    + TotalAmount : decimal
-    + PayoutStatus : string?
-    + PaidToBankAt : DateTime?
-    + StripeTransferId : string?
-    + StripePayoutId : string?
+class InstructorPayoutDto #FFFFFF {
+    - PayoutId : int
+    - Amount : decimal
+    - PayoutDate : DateTime
+    - IsPaid : bool
+    - CourseTitle : string
+    - TotalAmount : decimal
+    - PayoutStatus : string?
+    - PaidToBankAt : DateTime?
+    - StripeTransferId : string?
+    - StripePayoutId : string?
 }
 
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
-class InstructorPayout #CCFFE6 {
-    + PayoutId : int <<PK>>
-    + TransactionId : int? <<FK>>
-    + InstructorId : int? <<FK>>
-    + PayoutAmount : decimal
-    + PayoutDate : DateTime
-    + IsPaid : bool
-    + PayoutStatus : string
-    + StripeTransferId : string?
-    + StripePayoutId : string?
-    + PaidToBankAt : DateTime?
-    + Transaction : Transaction?
-    + Instructor : Instructor?
+class InstructorPayout #FFFFFF {
+    - PayoutId : int
+    - TransactionId : int?
+    - InstructorId : int?
+    - PayoutAmount : decimal
+    - PayoutDate : DateTime
+    - IsPaid : bool
+    - PayoutStatus : string
+    - StripeTransferId : string?
+    - StripePayoutId : string?
+    - PaidToBankAt : DateTime?
+    - Transaction : Transaction?
+    - Instructor : Instructor?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
 
-interface IInstructorService #FFE6CC {
-    //+ GetPayoutsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<List<InstructorPayoutDto>>//
+interface IInstructorService #FFFFFF {
+    //+ GetPayoutsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<PagedResult<InstructorPayoutDto>>//
 }
 
 ' ==================== BACKEND - REPOSITORY INTERFACES ====================
 
-interface IInstructorRepository #FFE6CC {
-    //+ GetPayoutsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<(List<InstructorPayoutDto> Items, int TotalCount)>//
+interface IInstructorRepository #FFFFFF {
+    //+ GetPayoutsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<PagedResult<InstructorPayoutDto>>//
 }
 
 ' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
-class InstructorService #CCE5FF {
+class InstructorService #FFFFFF {
     - _repo : IInstructorRepository
-    + GetPayoutsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<List<InstructorPayoutDto>>
+    + GetPayoutsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<PagedResult<InstructorPayoutDto>>
 }
 
 ' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
-class InstructorRepository #FFFFCC {
+class InstructorRepository #FFFFFF {
     - _context : AppDbContext
-    + GetPayoutsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<(List<InstructorPayoutDto> Items, int TotalCount)>
+    + GetPayoutsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) : Task<PagedResult<InstructorPayoutDto>>
 }
 
 ' ==================== BACKEND - DbContext ====================
 
-class AppDbContext #E6F3FF {
+class AppDbContext #FFFFFF {
     + InstructorPayouts : DbSet<InstructorPayout>
 }
 
 ' ==================== RELATIONSHIPS ====================
 
 ' === COMPOSITION / AGGREGATION ===
-InstructorPayoutPagedViewModel *-- InstructorPayoutViewModel
+InstructorPayoutPagedViewModel -down-* InstructorPayoutViewModel
 
-' === UNIDIRECTIONAL ASSOCIATION ===
-TransactionControllerFE ..> InstructorControllerBE : calls
-InstructorControllerBE --> IInstructorService
-InstructorService --> IInstructorRepository
-InstructorRepository --> AppDbContext
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+TransactionControllerFE -down..> InstructorControllerBE
+InstructorControllerBE -down--> IInstructorService
+InstructorService -down--> IInstructorRepository
+InstructorRepository -down--> AppDbContext
 
 ' === INTERFACE REALIZATION ===
-InstructorService ..|> IInstructorService
-InstructorRepository ..|> IInstructorRepository
+InstructorService -up..|> IInstructorService
+InstructorRepository -up..|> IInstructorRepository
 
-' === DEPENDENCY ===
-TransactionControllerFE ..> InstructorPayoutPagedViewModel : uses
-InstructorControllerBE ..> InstructorPayoutDto : uses
-IInstructorService ..> InstructorPayoutDto : uses
-InstructorService ..> InstructorPayoutDto : uses
-InstructorRepository ..> InstructorPayoutDto : projects
-InstructorRepository ..> InstructorPayout : queries
+' === DEPENDENCY (dashed arrows) ===
+TransactionControllerFE -left..> InstructorPayoutPagedViewModel
+InstructorControllerBE -down..> InstructorPayoutDto
+IInstructorService -down..> InstructorPayoutDto
+InstructorService -down..> InstructorPayoutDto
+InstructorRepository -down..> InstructorPayoutDto
+InstructorRepository -down..> InstructorPayout
 
 @enduml

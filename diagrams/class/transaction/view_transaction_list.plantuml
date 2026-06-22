@@ -9,25 +9,26 @@ skinparam class {
     ArrowColor #5F6368
 }
 
-!define ABSTRACT_COLOR #FFE6CC
-!define SERVICE_COLOR #CCE5FF
-!define DTO_COLOR #E6CCFF
-!define ENTITY_COLOR #CCFFE6
-!define REPOSITORY_COLOR #FFFFCC
-!define CONTROLLER_COLOR #FFE6E6
+!define ABSTRACT_COLOR #FFFFFF
+!define SERVICE_COLOR #FFFFFF
+!define DTO_COLOR #FFFFFF
+!define ENTITY_COLOR #FFFFFF
+!define REPOSITORY_COLOR #FFFFFF
+!define CONTROLLER_COLOR #FFFFFF
+!define DB_COLOR #FFFFFF
 
 skinparam backgroundColor #FFFFFF
-skinparam classBackgroundColor #F9F9F9
+skinparam classBackgroundColor #FFFFFF
 skinparam classBorderColor #333333
 skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class TransactionControllerFE #FFE6E6 {
+class TransactionControllerFE #FFFFFF {
     + History(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) : Task<IActionResult>
 }
 
-class TransactionPagedVM #E6CCFF {
+class TransactionPagedVM #FFFFFF {
     + Items : List<TransactionListItemVM>
     + TotalCount : int
     + Page : int
@@ -35,7 +36,7 @@ class TransactionPagedVM #E6CCFF {
     + TotalPages : int
 }
 
-class TransactionListItemVM #E6CCFF {
+class TransactionListItemVM #FFFFFF {
     + TransactionId : int
     + StripeSessionId : string?
     + Date : DateTime?
@@ -53,14 +54,14 @@ class TransactionListItemVM #E6CCFF {
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class TransactionControllerBE #FFE6E6 {
+class TransactionControllerBE #FFFFFF {
     - _transactionService : ITransactionService
     + GetMyTransactions(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) : Task<IActionResult>
 }
 
 ' ==================== BACKEND - DTOs ====================
 
-class TransactionListDto #E6CCFF {
+class TransactionListDto #FFFFFF {
     + TransactionId : int
     + StripeSessionId : string?
     + Date : DateTime?
@@ -78,11 +79,11 @@ class TransactionListDto #E6CCFF {
 
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
-class Transaction #CCFFE6 {
-    + TransactionId : int <<PK>>
-    + OrderItemId : int? <<FK>>
-    + AccountFrom : int? <<FK>>
-    + AccountTo : int? <<FK>>
+class Transaction #FFFFFF {
+    + TransactionId : int
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
     + Amount : decimal
     + TransferRate : decimal
     + StripeSessionId : string?
@@ -97,8 +98,8 @@ class Transaction #CCFFE6 {
     + AccountToNavigation : Account?
 }
 
-class TransactionExt #CCFFE6 {
-    + TransactionId : int <<PK, FK>>
+class TransactionExt #FFFFFF {
+    + TransactionId : int
     + RefundReason : string?
     + RefundAdminNote : string?
     + RefundRequestedAt : DateTime?
@@ -107,33 +108,33 @@ class TransactionExt #CCFFE6 {
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
 
-interface ITransactionService #FFE6CC {
-    //+ GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) : Task<List<TransactionListDto>>//
+interface ITransactionService #FFFFFF {
+    //+ GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) : Task<PagedResult<TransactionListDto>>//
 }
 
 ' ==================== BACKEND - REPOSITORY INTERFACES ====================
 
-interface ITransactionRepository #FFE6CC {
+interface ITransactionRepository #FFFFFF {
     //+ GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) : Task<(List<TransactionListDto> Items, int TotalCount)>//
 }
 
 ' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
-class TransactionService #CCE5FF {
+class TransactionService #FFFFFF {
     - _repo : ITransactionRepository
     + GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) : Task<List<TransactionListDto>>
 }
 
 ' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
-class TransactionRepository #FFFFCC {
+class TransactionRepository #FFFFFF {
     - _context : AppDbContext
     + GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) : Task<(List<TransactionListDto> Items, int TotalCount)>
 }
 
 ' ==================== BACKEND - DbContext ====================
 
-class AppDbContext #E6F3FF {
+class AppDbContext #FFFFFF {
     + Transactions : DbSet<Transaction>
     + TransactionExts : DbSet<TransactionExt>
 }
@@ -144,8 +145,8 @@ class AppDbContext #E6F3FF {
 TransactionPagedVM *-- TransactionListItemVM
 Transaction *-- TransactionExt
 
-' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-TransactionControllerFE ..> TransactionControllerBE : calls
+' === UNIDIRECTIONAL ASSOCIATION ===
+TransactionControllerFE ..> TransactionControllerBE
 TransactionControllerBE --> ITransactionService
 TransactionService --> ITransactionRepository
 TransactionRepository --> AppDbContext
@@ -154,11 +155,11 @@ TransactionRepository --> AppDbContext
 TransactionService ..|> ITransactionService
 TransactionRepository ..|> ITransactionRepository
 
-' === DEPENDENCY (dashed arrows) ===
-TransactionControllerFE ..> TransactionPagedVM : uses
-TransactionControllerBE ..> TransactionListDto : uses
-TransactionService ..> TransactionListDto : uses
-TransactionRepository ..> TransactionListDto : uses
-TransactionRepository ..> Transaction : queries
+' === DEPENDENCY ===
+TransactionControllerFE ..> TransactionPagedVM
+TransactionControllerBE ..> TransactionListDto
+TransactionService ..> TransactionListDto
+TransactionRepository ..> TransactionListDto
+TransactionRepository ..> Transaction
 
 @enduml

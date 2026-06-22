@@ -3,57 +3,50 @@
 ' Styling & Settings
 skinparam style strictuml
 skinparam shadowing false
+skinparam classAttributeIconSize 0
 skinparam class {
     BackgroundColor White
-    BorderColor #1A73E8
-    ArrowColor #5F6368
+    BorderColor #333333
+    ArrowColor #333333
 }
 
-!define ABSTRACT_COLOR #FFE6CC
-!define SERVICE_COLOR #CCE5FF
-!define DTO_COLOR #E6CCFF
-!define ENTITY_COLOR #CCFFE6
-!define REPOSITORY_COLOR #FFFFCC
-!define CONTROLLER_COLOR #FFE6E6
-
 skinparam backgroundColor #FFFFFF
-skinparam classBackgroundColor #F9F9F9
+skinparam classBackgroundColor #FFFFFF
 skinparam classBorderColor #333333
 skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class TransactionControllerFE #FFE6E6 {
-    - _api : ApiClient
+class TransactionControllerFE #FFFFFF {
     + Instructor(page: int, pageSize: int, year: int?, month: int?) : Task<IActionResult>
 }
 
-class InstructorFinancePageVM #E6CCFF {
-    + Transactions : TransactionPagedVM
-    + Payouts : InstructorPayoutPagedViewModel
-    + CourseRevenues : List<InstructorCourseRevenueResponse>
+class InstructorFinancePageVM #FFFFFF {
+    - Transactions : TransactionPagedVM
+    - Payouts : InstructorPayoutPagedViewModel
+    - CourseRevenues : List<InstructorCourseRevenueResponse>
 }
 
-class InstructorPayoutPagedViewModel #E6CCFF {
-    + Items : List<InstructorPayoutViewModel>
-    + TotalCount : int
-    + Page : int
-    + PageSize : int
-    + TotalPages : int
+class InstructorPayoutPagedViewModel #FFFFFF {
+    - Items : List<InstructorPayoutViewModel>
+    - TotalCount : int
+    - Page : int
+    - PageSize : int
+    - TotalPages : int
 }
 
-class InstructorPayoutViewModel #E6CCFF {
-    + PayoutId : int
-    + TransactionId : int?
-    + PayoutAmount : decimal
-    + PayoutDate : DateTime
-    + IsPaid : bool
-    + PayoutStatus : string?
+class InstructorPayoutViewModel #FFFFFF {
+    - PayoutId : int
+    - TransactionId : int?
+    - PayoutAmount : decimal
+    - PayoutDate : DateTime
+    - IsPaid : bool
+    - PayoutStatus : string?
 }
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class InstructorControllerBE #FFE6E6 {
+class InstructorControllerBE #FFFFFF {
     - _instructorService : IInstructorService
     + GetDashboard() : Task<IActionResult>
     + GetPayoutDays() : Task<IActionResult>
@@ -61,93 +54,93 @@ class InstructorControllerBE #FFE6E6 {
 
 ' ==================== BACKEND - DTOs ====================
 
-class InstructorDashboardDto #E6CCFF {
-    + InstructorId : int
-    + TotalStudents : int
-    + AverageRating : decimal
-    + ActiveCoursesCount : int
-    + TotalRevenue : decimal
-    + StripeAccountId : string?
-    + StripeOnboardingStatus : string?
-    + PayoutsEnabled : bool
-    + ChargesEnabled : bool
+class InstructorDashboardDto #FFFFFF {
+    - InstructorId : int
+    - TotalStudents : int
+    - AverageRating : decimal
+    - ActiveCoursesCount : int
+    - TotalRevenue : decimal
+    - StripeAccountId : string?
+    - StripeOnboardingStatus : string?
+    - PayoutsEnabled : bool
+    - ChargesEnabled : bool
 }
 
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
-class Instructor #CCFFE6 {
-    + InstructorId : int <<PK>>
-    + ProfessionalTitle : string?
-    + ExpertiseCategories : string?
-    + LinkedinUrl : string?
-    + YoutubeUrl : string?
-    + FacebookUrl : string?
-    + DocumentUrl : string?
-    + ApprovalStatus : string?
-    + RejectionReason : string?
-    + StripeAccountId : string?
-    + StripeOnboardingStatus : string?
-    + PayoutsEnabled : bool
-    + ChargesEnabled : bool
+class Instructor #FFFFFF {
+    - InstructorId : int
+    - ProfessionalTitle : string?
+    - ExpertiseCategories : string?
+    - LinkedinUrl : string?
+    - YoutubeUrl : string?
+    - FacebookUrl : string?
+    - DocumentUrl : string?
+    - ApprovalStatus : string?
+    - RejectionReason : string?
+    - StripeAccountId : string?
+    - StripeOnboardingStatus : string?
+    - PayoutsEnabled : bool
+    - ChargesEnabled : bool
 }
 
-class InstructorPayout #CCFFE6 {
-    + PayoutId : int <<PK>>
-    + TransactionId : int? <<FK>>
-    + InstructorId : int? <<FK>>
-    + PayoutAmount : decimal
-    + PayoutDate : DateTime
-    + IsPaid : bool
-    + PayoutStatus : string
-    + StripeTransferId : string?
-    + StripePayoutId : string?
-    + PaidToBankAt : DateTime?
-    + Transaction : Transaction?
-    + Instructor : Instructor?
+class InstructorPayout #FFFFFF {
+    - PayoutId : int
+    - TransactionId : int?
+    - InstructorId : int?
+    - PayoutAmount : decimal
+    - PayoutDate : DateTime
+    - IsPaid : bool
+    - PayoutStatus : string
+    - StripeTransferId : string?
+    - StripePayoutId : string?
+    - PaidToBankAt : DateTime?
+    - Transaction : Transaction?
+    - Instructor : Instructor?
 }
 
-class Transaction #CCFFE6 {
-    + TransactionId : int <<PK>>
-    + OrderItemId : int? <<FK>>
-    + AccountFrom : int? <<FK>>
-    + AccountTo : int? <<FK>>
-    + Amount : decimal
-    + TransferRate : decimal
-    + StripeSessionId : string?
-    + StripePaymentintentId : string?
-    + Currency : string?
-    + TransactionsStatus : string?
-    + TransactionType : string?
-    + TransactionCreatedAt : DateTime?
-    + TransactionExt : TransactionExt?
-    + OrderItem : OrderItem?
-    + AccountFromNavigation : Account?
-    + AccountToNavigation : Account?
+class Transaction #FFFFFF {
+    - TransactionId : int
+    - OrderItemId : int?
+    - AccountFrom : int?
+    - AccountTo : int?
+    - Amount : decimal
+    - TransferRate : decimal
+    - StripeSessionId : string?
+    - StripePaymentintentId : string?
+    - Currency : string?
+    - TransactionsStatus : string?
+    - TransactionType : string?
+    - TransactionCreatedAt : DateTime?
+    - TransactionExt : TransactionExt?
+    - OrderItem : OrderItem?
+    - AccountFromNavigation : Account?
+    - AccountToNavigation : Account?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
 
-interface IInstructorService #FFE6CC {
+interface IInstructorService #FFFFFF {
     //+ GetInstructorDashboardAsync(userId: int) : Task<InstructorDashboardDto?>//
 }
 
 ' ==================== BACKEND - REPOSITORY INTERFACES ====================
 
-interface IInstructorRepository #FFE6CC {
+interface IInstructorRepository #FFFFFF {
     //+ GetDashboardDtoAsync(userId: int) : Task<InstructorDashboardDto?>//
     //+ GetStatsAsync(userId: int) : Task<InstructorStats?>//
 }
 
 ' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
-class InstructorService #CCE5FF {
+class InstructorService #FFFFFF {
     - _repo : IInstructorRepository
     + GetInstructorDashboardAsync(userId: int) : Task<InstructorDashboardDto?>
 }
 
 ' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
-class InstructorRepository #FFFFCC {
+class InstructorRepository #FFFFFF {
     - _context : AppDbContext
     + GetDashboardDtoAsync(userId: int) : Task<InstructorDashboardDto?>
     + GetStatsAsync(userId: int) : Task<InstructorStats?>
@@ -155,7 +148,7 @@ class InstructorRepository #FFFFCC {
 
 ' ==================== BACKEND - DbContext ====================
 
-class AppDbContext #E6F3FF {
+class AppDbContext #FFFFFF {
     + Instructors : DbSet<Instructor>
     + InstructorPayouts : DbSet<InstructorPayout>
     + Transactions : DbSet<Transaction>
@@ -164,26 +157,26 @@ class AppDbContext #E6F3FF {
 ' ==================== RELATIONSHIPS ====================
 
 ' === COMPOSITION / AGGREGATION ===
-InstructorFinancePageVM o-- InstructorPayoutPagedViewModel
-InstructorPayoutPagedViewModel *-- InstructorPayoutViewModel
-Instructor *-- InstructorPayout
-Transaction *-- InstructorPayout
+InstructorFinancePageVM -down-o InstructorPayoutPagedViewModel
+InstructorPayoutPagedViewModel -down-* InstructorPayoutViewModel
+Instructor -down-* InstructorPayout
+Transaction -down* InstructorPayout
 
-' === UNIDIRECTIONAL ASSOCIATION ===
-TransactionControllerFE ..> InstructorControllerBE : calls
-InstructorControllerBE --> IInstructorService
-InstructorService --> IInstructorRepository
-InstructorRepository --> AppDbContext
+' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+TransactionControllerFE -down..> InstructorControllerBE
+InstructorControllerBE -down--> IInstructorService
+InstructorService -down--> IInstructorRepository
+InstructorRepository -down--> AppDbContext
 
 ' === INTERFACE REALIZATION ===
-InstructorService ..|> IInstructorService
-InstructorRepository ..|> IInstructorRepository
+InstructorService -up..|> IInstructorService
+InstructorRepository -up..|> IInstructorRepository
 
-' === DEPENDENCY ===
-TransactionControllerFE ..> InstructorFinancePageVM : uses
-InstructorControllerBE ..> InstructorDashboardDto : uses
-IInstructorService ..> InstructorDashboardDto : returns
-InstructorService ..> InstructorDashboardDto : creates
-InstructorRepository ..> Instructor : queries
+' === DEPENDENCY (dashed arrows) ===
+TransactionControllerFE -left..> InstructorFinancePageVM
+InstructorControllerBE -down..> InstructorDashboardDto
+IInstructorService -down..> InstructorDashboardDto
+InstructorService -down..> InstructorDashboardDto
+InstructorRepository -down..> Instructor
 
 @enduml
