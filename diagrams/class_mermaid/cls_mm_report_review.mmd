@@ -1,0 +1,160 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class ReportControllerFE["ReportController"] {
+    <<frontend controller>>
+    + ReportCourseReview(model: CreateReviewReportViewModel) Task~IActionResult~
+    + ReportLessonReview(model: CreateReviewReportViewModel) Task~IActionResult~
+}
+
+class CreateReviewReportViewModel {
+    <<view model>>
+    + ReviewId : int
+    + Reason : string
+    + Description : string?
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class ReportControllerBE["ReportController"] {
+    <<backend controller>>
+    - _reportService : IReportSubmissionService
+    
+    + ReportCourseReview(request: CreateCourseReviewReportRequest) Task~IActionResult~
+    + ReportLessonReview(request: CreateLessonReviewReportRequest) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class CreateCourseReviewReportRequest {
+    <<dto>>
+    + CourseReviewId : int
+    + Reason : string
+    + Description : string?
+}
+
+class CreateLessonReviewReportRequest {
+    <<dto>>
+    + LessonReviewId : int
+    + Reason : string
+    + Description : string?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class CourseReviewReport {
+    + CourseReviewReportId : int
+    + ReporterId : int?
+    + CourseReviewId : int?
+    + ResolverId : int?
+    + Reason : string?
+    + Description : string?
+    + UserReportsStatus : string?
+    + ResolutionNote : string?
+    + ResolvedAt : DateTime?
+    + AccessGrantedUntil : DateTime?
+    + CreatedAt : DateTime?
+    + Reporter : Account?
+    + Resolver : Account?
+    + CourseReview : CourseReview?
+}
+
+class LessonReviewReport {
+    + LessonReviewReportId : int
+    + ReporterId : int?
+    + LessonReviewId : int?
+    + ResolverId : int?
+    + Reason : string?
+    + Description : string?
+    + UserReportsStatus : string?
+    + ResolutionNote : string?
+    + ResolvedAt : DateTime?
+    + AccessGrantedUntil : DateTime?
+    + CreatedAt : DateTime?
+    + Reporter : Account?
+    + Resolver : Account?
+    + LessonReview : LessonReview?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IReportSubmissionService {
+    <<interface>>
+    + CreateCourseReviewReportAsync(reporterId: int, request: CreateCourseReviewReportRequest) Task~bool~ *
+    + CreateLessonReviewReportAsync(reporterId: int, request: CreateLessonReviewReportRequest) Task~bool~ *
+}
+
+class IReportRepository {
+    <<interface>>
+    + GetPendingCourseReviewReportAsync(reporterId: int, courseReviewId: int, reason: string) Task~CourseReviewReport?~ *
+    + AddCourseReviewReportAsync(report: CourseReviewReport) Task *
+    + GetPendingLessonReviewReportAsync(reporterId: int, lessonReviewId: int, reason: string) Task~LessonReviewReport?~ *
+    + AddLessonReviewReportAsync(report: LessonReviewReport) Task *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ReportSubmissionService {
+    - _reportRepo : IReportRepository
+    
+    + CreateCourseReviewReportAsync(reporterId: int, request: CreateCourseReviewReportRequest) Task~bool~
+    + CreateLessonReviewReportAsync(reporterId: int, request: CreateLessonReviewReportRequest) Task~bool~
+    - ValidateCourseReviewReportAsync(reporterId: int, courseReviewId: int, reason: string) Task
+    - ValidateLessonReviewReportAsync(reporterId: int, lessonReviewId: int, reason: string) Task
+    - SaveChangesAndHandleExceptionsAsync() Task
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ReportRepository {
+    - _context : AppDbContext
+    
+    + GetPendingCourseReviewReportAsync(reporterId: int, courseReviewId: int, reason: string) Task~CourseReviewReport?~
+    + AddCourseReviewReportAsync(report: CourseReviewReport) Task
+    + GetPendingLessonReviewReportAsync(reporterId: int, lessonReviewId: int, reason: string) Task~LessonReviewReport?~
+    + AddLessonReviewReportAsync(report: LessonReviewReport) Task
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + CourseReviewReports : DbSet~CourseReviewReport~
+    + LessonReviewReports : DbSet~LessonReviewReport~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+ReportControllerBE --> IReportSubmissionService
+ReportSubmissionService --> IReportRepository
+ReportRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+ReportSubmissionService ..|> IReportSubmissionService
+ReportRepository ..|> IReportRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+ReportControllerFE ..> ReportControllerBE
+ReportControllerFE ..> CreateReviewReportViewModel
+
+ReportControllerBE ..> CreateCourseReviewReportRequest
+ReportControllerBE ..> CreateLessonReviewReportRequest
+
+ReportSubmissionService ..> CreateCourseReviewReportRequest
+ReportSubmissionService ..> CreateLessonReviewReportRequest
+ReportSubmissionService ..> CourseReviewReport
+ReportSubmissionService ..> LessonReviewReport
+
+ReportRepository ..> CourseReviewReport
+ReportRepository ..> LessonReviewReport
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

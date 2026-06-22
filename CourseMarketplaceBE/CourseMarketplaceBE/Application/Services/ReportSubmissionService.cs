@@ -37,12 +37,7 @@ public class ReportSubmissionService : IReportSubmissionService
 
     public async Task<bool> CreateCourseReportAsync(int reporterId, CreateCourseReportRequest request)
     {
-        await ValidateCourseEligibilityAsync(reporterId, request.CourseId);
-
-        if (string.IsNullOrWhiteSpace(request.Reason))
-            throw new InvalidOperationException("Report reason cannot be empty.");
-
-        await CheckDuplicateCourseReportAsync(reporterId, request.CourseId, request.Reason);
+        await ValidateCourseReportAsync(reporterId, request.CourseId, request.Reason);
 
         var report = new CourseReport
         {
@@ -55,33 +50,14 @@ public class ReportSubmissionService : IReportSubmissionService
         };
 
         await _reportRepo.AddCourseReportAsync(report);
-        int numRowsAffected;
-        try
-        {
-            numRowsAffected = await _reportRepo.SaveChangesAsync();
-        }
-        catch (ReportException ex)
-        {
-            throw new BadRequestException(ex.Message);
-        }
-
-        if (numRowsAffected == 0)
-            throw new InvalidOperationException("Failed to save changes.");
+        await SaveChangesAndHandleExceptionsAsync();
             
         return true;
     }
 
     public async Task<bool> CreateCourseReviewReportAsync(int reporterId, CreateCourseReviewReportRequest request)
     {
-        var review = await _reviewRepo.GetCourseReviewByIdAsync(request.CourseReviewId)
-            ?? throw new InvalidOperationException("Review not found.");
-
-        if (string.IsNullOrWhiteSpace(request.Reason))
-            throw new InvalidOperationException("Report reason cannot be empty.");
-
-        var existing = await _reportRepo.GetPendingCourseReviewReportAsync(reporterId, request.CourseReviewId, request.Reason);
-        if (existing != null)
-            throw new InvalidOperationException("You already have a pending report with this reason for this review.");
+        await ValidateCourseReviewReportAsync(reporterId, request.CourseReviewId, request.Reason);
 
         var report = new CourseReviewReport
         {
@@ -94,33 +70,14 @@ public class ReportSubmissionService : IReportSubmissionService
         };
 
         await _reportRepo.AddCourseReviewReportAsync(report);
-        int numRowsAffected;
-        try
-        {
-            numRowsAffected = await _reportRepo.SaveChangesAsync();
-        }
-        catch (ReportException ex)
-        {
-            throw new BadRequestException(ex.Message);
-        }
-
-        if (numRowsAffected == 0)
-            throw new InvalidOperationException("Failed to save changes.");
+        await SaveChangesAndHandleExceptionsAsync();
             
         return true;
     }
 
     public async Task<bool> CreateLessonReviewReportAsync(int reporterId, CreateLessonReviewReportRequest request)
     {
-        var review = await _reviewRepo.GetLessonReviewByIdAsync(request.LessonReviewId)
-            ?? throw new InvalidOperationException("Review not found.");
-
-        if (string.IsNullOrWhiteSpace(request.Reason))
-            throw new InvalidOperationException("Report reason cannot be empty.");
-
-        var existing = await _reportRepo.GetPendingLessonReviewReportAsync(reporterId, request.LessonReviewId, request.Reason);
-        if (existing != null)
-            throw new InvalidOperationException("You already have a pending report with this reason for this review.");
+        await ValidateLessonReviewReportAsync(reporterId, request.LessonReviewId, request.Reason);
 
         var report = new LessonReviewReport
         {
@@ -133,18 +90,7 @@ public class ReportSubmissionService : IReportSubmissionService
         };
 
         await _reportRepo.AddLessonReviewReportAsync(report);
-        int numRowsAffected;
-        try
-        {
-            numRowsAffected = await _reportRepo.SaveChangesAsync();
-        }
-        catch (ReportException ex)
-        {
-            throw new BadRequestException(ex.Message);
-        }
-
-        if (numRowsAffected == 0)
-            throw new InvalidOperationException("Failed to save changes.");
+        await SaveChangesAndHandleExceptionsAsync();
             
         return true;
     }
@@ -178,7 +124,7 @@ public class ReportSubmissionService : IReportSubmissionService
 
     // ── Private helpers ─────────────────────────────────────────────────────
 
-    private async Task ValidateCourseEligibilityAsync(int reporterId, int courseId)
+    private async Task ValidateCourseReportAsync(int reporterId, int courseId, string reason)
     {
         var course = await _courseRepo.GetByIdAsync(courseId)
             ?? throw new InvalidOperationException("Course not found.");
@@ -196,12 +142,54 @@ public class ReportSubmissionService : IReportSubmissionService
         var enrollment = await _enrollmentRepo.GetEnrollmentWithProgressAsync(reporterId, courseId);
         if (enrollment == null)
             throw new InvalidOperationException("You must be enrolled in the course before reporting it.");
-    }
 
-    private async Task CheckDuplicateCourseReportAsync(int reporterId, int courseId, string reason)
-    {
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new InvalidOperationException("Report reason cannot be empty.");
+
         var existing = await _reportRepo.GetPendingCourseReportAsync(reporterId, courseId, reason);
         if (existing != null)
             throw new InvalidOperationException("You already have a pending report with this reason for this course.");
+    }
+
+    private async Task ValidateCourseReviewReportAsync(int reporterId, int courseReviewId, string reason)
+    {
+        var review = await _reviewRepo.GetCourseReviewByIdAsync(courseReviewId)
+            ?? throw new InvalidOperationException("Review not found.");
+
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new InvalidOperationException("Report reason cannot be empty.");
+
+        var existing = await _reportRepo.GetPendingCourseReviewReportAsync(reporterId, courseReviewId, reason);
+        if (existing != null)
+            throw new InvalidOperationException("You already have a pending report with this reason for this review.");
+    }
+
+    private async Task ValidateLessonReviewReportAsync(int reporterId, int lessonReviewId, string reason)
+    {
+        var review = await _reviewRepo.GetLessonReviewByIdAsync(lessonReviewId)
+            ?? throw new InvalidOperationException("Review not found.");
+
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new InvalidOperationException("Report reason cannot be empty.");
+
+        var existing = await _reportRepo.GetPendingLessonReviewReportAsync(reporterId, lessonReviewId, reason);
+        if (existing != null)
+            throw new InvalidOperationException("You already have a pending report with this reason for this review.");
+    }
+
+    private async Task SaveChangesAndHandleExceptionsAsync()
+    {
+        int numRowsAffected;
+        try
+        {
+            numRowsAffected = await _reportRepo.SaveChangesAsync();
+        }
+        catch (ReportException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
+
+        if (numRowsAffected == 0)
+            throw new InvalidOperationException("Failed to save changes.");
     }
 }

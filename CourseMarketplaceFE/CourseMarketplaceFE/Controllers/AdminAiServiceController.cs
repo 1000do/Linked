@@ -9,6 +9,8 @@ using System.Text.Json;
 using CourseMarketplaceFE.Helpers;
 using Microsoft.AspNetCore.Authorization;
 
+using CourseMarketplaceFE.Models.Common;
+
 namespace CourseMarketplaceFE.Controllers;
 
 [Authorize(Roles = "admin")]
@@ -16,13 +18,6 @@ public class AdminAiServiceController : Controller
 {
     private readonly ApiClient _api;
     private readonly JsonSerializerOptions _jsonOpts = new() { PropertyNameCaseInsensitive = true };
-
-    private class ApiResp<T>
-    {
-        public bool Success { get; set; }
-        public T? Data { get; set; }
-        public string? Message { get; set; }
-    }
 
     public AdminAiServiceController(ApiClient api)
     {
@@ -56,7 +51,7 @@ public class AdminAiServiceController : Controller
 
             if (modelsResp.IsSuccessStatusCode) {
                  var json = await modelsResp.Content.ReadAsStringAsync();
-                 var parsed = JsonSerializer.Deserialize<ApiResp<PagedResult<AiModelViewModel>>>(json, _jsonOpts);
+                 var parsed = JsonSerializer.Deserialize<BaseApiResponse<PagedResult<AiModelViewModel>>>(json, _jsonOpts);
                  if (parsed?.Data != null) {
                      model.AiModels = parsed.Data.Items;
                      ViewBag.ModelTotalPages = parsed.Data.TotalPages;
@@ -66,21 +61,21 @@ public class AdminAiServiceController : Controller
             var allModelsResp = await allModelsTask;
             if (allModelsResp.IsSuccessStatusCode) {
                  var json = await allModelsResp.Content.ReadAsStringAsync();
-                 var parsed = JsonSerializer.Deserialize<ApiResp<List<AiModelViewModel>>>(json, _jsonOpts);
+                 var parsed = JsonSerializer.Deserialize<BaseApiResponse<List<AiModelViewModel>>>(json, _jsonOpts);
                  if (parsed?.Data != null) model.AllActiveModels = parsed.Data.Where(m => m.ModelStatus == "active").ToList();
             }
 
             var configResp = await configTask;
             if (configResp.IsSuccessStatusCode) {
                  var json = await configResp.Content.ReadAsStringAsync();
-                 var parsed = JsonSerializer.Deserialize<ApiResp<AiConfigurationViewModel>>(json, _jsonOpts);
+                 var parsed = JsonSerializer.Deserialize<BaseApiResponse<AiConfigurationViewModel>>(json, _jsonOpts);
                  if (parsed?.Data != null) model.Config = parsed.Data;
             }
 
             var courseLogResp = await courseLogTask;
             if (courseLogResp.IsSuccessStatusCode) {
                  var json = await courseLogResp.Content.ReadAsStringAsync();
-                 var parsed = JsonSerializer.Deserialize<ApiResp<PagedResult<CourseModerationLogViewModel>>>(json, _jsonOpts);
+                 var parsed = JsonSerializer.Deserialize<BaseApiResponse<PagedResult<CourseModerationLogViewModel>>>(json, _jsonOpts);
                  if (parsed?.Data != null) {
                      model.CourseLogs = parsed.Data.Items;
                      ViewBag.CourseTotalPages = parsed.Data.TotalPages;
@@ -90,7 +85,7 @@ public class AdminAiServiceController : Controller
             var cReviewLogResp = await cReviewLogTask;
             if (cReviewLogResp.IsSuccessStatusCode) {
                  var json = await cReviewLogResp.Content.ReadAsStringAsync();
-                 var parsed = JsonSerializer.Deserialize<ApiResp<PagedResult<ReviewModerationLogViewModel>>>(json, _jsonOpts);
+                 var parsed = JsonSerializer.Deserialize<BaseApiResponse<PagedResult<ReviewModerationLogViewModel>>>(json, _jsonOpts);
                  if (parsed?.Data != null) {
                      model.CourseReviewLogs = parsed.Data.Items;
                      ViewBag.CReviewTotalPages = parsed.Data.TotalPages;
@@ -100,7 +95,7 @@ public class AdminAiServiceController : Controller
             var lReviewLogResp = await lReviewLogTask;
             if (lReviewLogResp.IsSuccessStatusCode) {
                  var json = await lReviewLogResp.Content.ReadAsStringAsync();
-                 var parsed = JsonSerializer.Deserialize<ApiResp<PagedResult<ReviewModerationLogViewModel>>>(json, _jsonOpts);
+                 var parsed = JsonSerializer.Deserialize<BaseApiResponse<PagedResult<ReviewModerationLogViewModel>>>(json, _jsonOpts);
                  if (parsed?.Data != null) {
                      model.LessonReviewLogs = parsed.Data.Items;
                      ViewBag.LReviewTotalPages = parsed.Data.TotalPages;
@@ -110,6 +105,102 @@ public class AdminAiServiceController : Controller
         catch { }
 
         return View(model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetModelsPartial(int page = 1)
+    {
+        var model = new AdminAiServicePageViewModel();
+        ViewBag.ModelPage = page;
+        
+        try {
+            var resp = await _api.GetAsync($"admin/ai-service/models?page={page}&pageSize=10");
+            if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Account");
+
+            if (resp.IsSuccessStatusCode) {
+                var json = await resp.Content.ReadAsStringAsync();
+                var parsed = JsonSerializer.Deserialize<BaseApiResponse<PagedResult<AiModelViewModel>>>(json, _jsonOpts);
+                if (parsed?.Data != null) {
+                    model.AiModels = parsed.Data.Items;
+                    ViewBag.ModelTotalPages = parsed.Data.TotalPages;
+                }
+            }
+        } catch { }
+
+        return PartialView("_ModelsTablePartial", model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetCourseLogsPartial(int page = 1)
+    {
+        var model = new AdminAiServicePageViewModel();
+        ViewBag.CoursePage = page;
+        
+        try {
+            var resp = await _api.GetAsync($"admin/ai-service/logs/course?page={page}&pageSize=10");
+            if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Account");
+
+            if (resp.IsSuccessStatusCode) {
+                var json = await resp.Content.ReadAsStringAsync();
+                var parsed = JsonSerializer.Deserialize<BaseApiResponse<PagedResult<CourseModerationLogViewModel>>>(json, _jsonOpts);
+                if (parsed?.Data != null) {
+                    model.CourseLogs = parsed.Data.Items;
+                    ViewBag.CourseTotalPages = parsed.Data.TotalPages;
+                }
+            }
+        } catch { }
+
+        return PartialView("_CourseLogsTablePartial", model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetCourseReviewLogsPartial(int page = 1)
+    {
+        var model = new AdminAiServicePageViewModel();
+        ViewBag.CReviewPage = page;
+        
+        try {
+            var resp = await _api.GetAsync($"admin/ai-service/logs/course-review?page={page}&pageSize=10");
+            if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Account");
+
+            if (resp.IsSuccessStatusCode) {
+                var json = await resp.Content.ReadAsStringAsync();
+                var parsed = JsonSerializer.Deserialize<BaseApiResponse<PagedResult<ReviewModerationLogViewModel>>>(json, _jsonOpts);
+                if (parsed?.Data != null) {
+                    model.CourseReviewLogs = parsed.Data.Items;
+                    ViewBag.CReviewTotalPages = parsed.Data.TotalPages;
+                }
+            }
+        } catch { }
+
+        return PartialView("_CourseReviewLogsTablePartial", model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetLessonReviewLogsPartial(int page = 1)
+    {
+        var model = new AdminAiServicePageViewModel();
+        ViewBag.LReviewPage = page;
+        
+        try {
+            var resp = await _api.GetAsync($"admin/ai-service/logs/lesson-review?page={page}&pageSize=10");
+            if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                return RedirectToAction("Login", "Account");
+
+            if (resp.IsSuccessStatusCode) {
+                var json = await resp.Content.ReadAsStringAsync();
+                var parsed = JsonSerializer.Deserialize<BaseApiResponse<PagedResult<ReviewModerationLogViewModel>>>(json, _jsonOpts);
+                if (parsed?.Data != null) {
+                    model.LessonReviewLogs = parsed.Data.Items;
+                    ViewBag.LReviewTotalPages = parsed.Data.TotalPages;
+                }
+            }
+        } catch { }
+
+        return PartialView("_LessonReviewLogsTablePartial", model);
     }
 
     public async Task<IActionResult> CourseModerationLogDetail(int id)
@@ -125,7 +216,7 @@ public class AdminAiServiceController : Controller
             }
             
             var json = await resp.Content.ReadAsStringAsync();
-            var parsed = JsonSerializer.Deserialize<ApiResp<CourseModerationLogViewModel>>(json, _jsonOpts);
+            var parsed = JsonSerializer.Deserialize<BaseApiResponse<CourseModerationLogViewModel>>(json, _jsonOpts);
             if (parsed?.Data == null) {
                 TempData["Error"] = "Log data is corrupted or not found.";
                 return RedirectToAction("Index", new { tab = "logs", subtab = "course" });
@@ -154,7 +245,7 @@ public class AdminAiServiceController : Controller
             }
             
             var json = await resp.Content.ReadAsStringAsync();
-            var parsed = JsonSerializer.Deserialize<ApiResp<ReviewModerationLogViewModel>>(json, _jsonOpts);
+            var parsed = JsonSerializer.Deserialize<BaseApiResponse<ReviewModerationLogViewModel>>(json, _jsonOpts);
             if (parsed?.Data == null) {
                 TempData["Error"] = "Log data is corrupted or not found.";
                 return RedirectToAction("Index", new { tab = "logs", subtab = type == "course" ? "course_review" : "lesson_review" });

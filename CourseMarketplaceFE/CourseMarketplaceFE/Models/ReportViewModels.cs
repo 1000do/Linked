@@ -117,6 +117,10 @@ namespace CourseMarketplaceFE.Models
         public float? ReviewRating { get; set; }
         public string? ReviewAuthorEmail { get; set; }
         public string? ReviewAuthorName { get; set; }
+        public int? CourseId { get; set; }
+        public string? CourseTitle { get; set; }
+        public int? LessonId { get; set; }
+        public string? LessonTitle { get; set; }
         public string? Reason { get; set; }
         public string? Description { get; set; }
         public string? Status { get; set; }
@@ -144,5 +148,14 @@ namespace CourseMarketplaceFE.Models
         public string? CourseTitle { get; set; }
         public int CourseFlagCount { get; set; }
         public List<MyCourseReportViewModel> Reports { get; set; } = new();
+    }
+
+    // ViewModel cho trang tổng hợp Admin Moderation (chứa toàn bộ data trang đầu)
+    public class ReportModerationPageViewModel
+    {
+        public ReportStatsViewModel Stats { get; set; } = new();
+        public PagedResult<CourseReportDetailViewModel> CourseReports { get; set; } = new();
+        public PagedResult<ReviewReportDetailViewModel> CourseReviewReports { get; set; } = new();
+        public PagedResult<ReviewReportDetailViewModel> LessonReviewReports { get; set; } = new();
     }
 }

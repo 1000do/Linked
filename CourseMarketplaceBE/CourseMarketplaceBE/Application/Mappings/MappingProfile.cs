@@ -33,16 +33,17 @@ public class MappingProfile : Profile
         CreateMap<CourseReport, CourseReportDetailResponse>()
             .ForMember(dest => dest.ReportId, opt => opt.MapFrom(src => src.CourseReportId))
             .ForMember(dest => dest.ReporterEmail, opt => opt.MapFrom(src => src.Reporter.Email))
+            .ForMember(dest => dest.ReporterName, opt => opt.MapFrom(src => src.Reporter != null ? (src.Reporter.User != null ? src.Reporter.User.FullName : src.Reporter.Username) : null))
             .ForMember(dest => dest.CourseTitle, opt => opt.MapFrom(src => src.Course.Title))
             .ForMember(dest => dest.CourseFlagCount, opt => opt.MapFrom(src => src.Course.CourseFlagCount ?? 0))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.CourseReportsStatus))
-            .ForMember(dest => dest.ResolverEmail, opt => opt.MapFrom(src => src.Resolver.Email));
+            .ForMember(dest => dest.ResolverEmail, opt => opt.MapFrom(src => src.Resolver != null ? src.Resolver.Email : null));
 
         CreateMap<CourseReviewReport, ReviewReportDetailResponse>()
             .ForMember(dest => dest.ReportId, opt => opt.MapFrom(src => src.CourseReviewReportId))
             .ForMember(dest => dest.ReviewType, opt => opt.MapFrom(src => "course_review"))
             .ForMember(dest => dest.ReporterEmail, opt => opt.MapFrom(src => src.Reporter.Email))
-            .ForMember(dest => dest.ReporterName, opt => opt.Ignore())
+            .ForMember(dest => dest.ReporterName, opt => opt.MapFrom(src => src.Reporter != null ? (src.Reporter.User != null ? src.Reporter.User.FullName : src.Reporter.Username) : null))
             .ForMember(dest => dest.ReviewComment, opt => opt.MapFrom(src => src.CourseReview.Comment))
             .ForMember(dest => dest.ReviewRating, opt => opt.MapFrom(src => src.CourseReview.Rating))
             .ForMember(dest => dest.ReviewAuthorName, opt => opt.MapFrom(src => src.CourseReview != null && src.CourseReview.Enrollment != null && src.CourseReview.Enrollment.User != null ? src.CourseReview.Enrollment.User.FullName : null))
@@ -55,7 +56,7 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.ReportId, opt => opt.MapFrom(src => src.LessonReviewReportId))
             .ForMember(dest => dest.ReviewType, opt => opt.MapFrom(src => "lesson_review"))
             .ForMember(dest => dest.ReporterEmail, opt => opt.MapFrom(src => src.Reporter.Email))
-            .ForMember(dest => dest.ReporterName, opt => opt.Ignore())
+            .ForMember(dest => dest.ReporterName, opt => opt.MapFrom(src => src.Reporter != null ? (src.Reporter.User != null ? src.Reporter.User.FullName : src.Reporter.Username) : null))
             .ForMember(dest => dest.ReviewComment, opt => opt.MapFrom(src => src.LessonReview.Comment))
             .ForMember(dest => dest.ReviewRating, opt => opt.MapFrom(src => src.LessonReview.Rating))
             .ForMember(dest => dest.ReviewAuthorName, opt => opt.MapFrom(src => src.LessonReview != null && src.LessonReview.Enrollment != null && src.LessonReview.Enrollment.User != null ? src.LessonReview.Enrollment.User.FullName : null))

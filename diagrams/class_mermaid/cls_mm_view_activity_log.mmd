@@ -1,0 +1,263 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminAiServiceControllerFE["AdminAiServiceController"] {
+    <<frontend controller>>
+    + Index(tab: string, subtab: string, modelPage: int, coursePage: int, cReviewPage: int, lReviewPage: int) Task~IActionResult~
+}
+
+class AdminAiServicePageViewModel {
+    <<view model>>
+    + AiModels : List~AiModelViewModel~
+    + AllActiveModels : List~AiModelViewModel~
+    + Config : AiConfigurationViewModel
+    + CourseLogs : List~CourseModerationLogViewModel~
+    + CourseReviewLogs : List~ReviewModerationLogViewModel~
+    + LessonReviewLogs : List~ReviewModerationLogViewModel~
+}
+
+class BaseAiLogViewModel {
+    <<view model>>
+    + LogId : int
+    + ModelId : int
+    + ModelName : string
+    + ErrorMessage : string?
+    + LatencyMs : int
+    + LogCreatedAt : DateTime
+    + ResultStatus : string?
+    + OutputJson : string?
+    + InputJson : string?
+}
+
+class CourseModerationLogViewModel {
+    <<view model>>
+    + CourseId : int
+    + Title : string
+    + TokenUsage : int
+    + InteractionType : string?
+}
+
+class ReviewModerationLogViewModel {
+    <<view model>>
+    + ReviewId : int
+    + Comment : string
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AdminAiServiceControllerBE["AdminAiServiceController"] {
+    <<backend controller>>
+    - _aiLogService : IAiModerationLogService
+    
+    + GetCourseModerationLogs(req: PagedRequestDto) Task~IActionResult~
+    + GetCourseReviewModerationLogs(req: PagedRequestDto) Task~IActionResult~
+    + GetLessonReviewModerationLogs(req: PagedRequestDto) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class PagedRequestDto {
+    <<dto>>
+    + Page : int
+    + PageSize : int
+}
+
+class PagedResultCourseAdminDto["PagedResult~CourseModerationLogAdminDto~"] {
+    <<dto>>
+    + Items : IEnumerable~CourseModerationLogAdminDto~
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+}
+
+class PagedResultReviewAdminDto["PagedResult~ReviewModerationLogAdminDto~"] {
+    <<dto>>
+    + Items : IEnumerable~ReviewModerationLogAdminDto~
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+}
+
+class BaseAiLogAdminDto {
+    <<dto>>
+    + LogId : int
+    + ModelId : int
+    + ModelName : string
+    + ErrorMessage : string?
+    + LatencyMs : int
+    + LogCreatedAt : DateTime
+    + ResultStatus : string?
+    + OutputJson : string?
+    + InputJson : string?
+}
+
+class CourseModerationLogAdminDto {
+    <<dto>>
+    + CourseId : int
+    + Title : string
+    + TokenUsage : int
+    + InteractionType : string?
+}
+
+class ReviewModerationLogAdminDto {
+    <<dto>>
+    + ReviewId : int
+    + Comment : string
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class CourseAiUsageLog {
+    + LogId : int
+    + IntegrationId : int?
+    + InteractionType : string?
+    + InputJson : string?
+    + OutputJson : string?
+    + LatencyMs : float?
+    + TokenUsage : float?
+    + ErrorMessage : string?
+    + LogCreatedAt : DateTime?
+}
+
+class CourseReviewModerationLog {
+    + LogId : int
+    + ModelId : int?
+    + CourseReviewId : int?
+    + InputJson : string?
+    + OutputJson : string?
+    + LatencyMs : float?
+    + ErrorMessage : string?
+    + LogCreatedAt : DateTime?
+}
+
+class LessonReviewModerationLog {
+    + LogId : int
+    + ModelId : int?
+    + LessonReviewId : int?
+    + InputJson : string?
+    + OutputJson : string?
+    + LatencyMs : float?
+    + ErrorMessage : string?
+    + LogCreatedAt : DateTime?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAiModerationLogService {
+    <<interface>>
+    + GetCourseModerationLogsAsync(req: PagedRequestDto) Task~PagedResult~CourseModerationLogAdminDto~~ *
+    + GetCourseReviewModerationLogsAsync(req: PagedRequestDto) Task~PagedResult~ReviewModerationLogAdminDto~~ *
+    + GetLessonReviewModerationLogsAsync(req: PagedRequestDto) Task~PagedResult~ReviewModerationLogAdminDto~~ *
+}
+
+class ICourseAiUsageLogRepository {
+    <<interface>>
+    + GetPagedAdminAsync(page: int, pageSize: int) Task~(List~CourseAiUsageLog~, int)~ *
+}
+
+class ICourseReviewModerationLogRepository {
+    <<interface>>
+    + GetPagedAdminAsync(page: int, pageSize: int) Task~(List~CourseReviewModerationLog~, int)~ *
+}
+
+class ILessonReviewModerationLogRepository {
+    <<interface>>
+    + GetPagedAdminAsync(page: int, pageSize: int) Task~(List~LessonReviewModerationLog~, int)~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AiModerationLogService {
+    - _courseLogRepo : ICourseAiUsageLogRepository
+    - _courseReviewLogRepo : ICourseReviewModerationLogRepository
+    - _lessonReviewLogRepo : ILessonReviewModerationLogRepository
+    
+    + GetCourseModerationLogsAsync(req: PagedRequestDto) Task~PagedResult~CourseModerationLogAdminDto~~
+    + GetCourseReviewModerationLogsAsync(req: PagedRequestDto) Task~PagedResult~ReviewModerationLogAdminDto~~
+    + GetLessonReviewModerationLogsAsync(req: PagedRequestDto) Task~PagedResult~ReviewModerationLogAdminDto~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CourseAiUsageLogRepository {
+    - _context : AppDbContext
+    + GetPagedAdminAsync(page: int, pageSize: int) Task~(List~CourseAiUsageLog~, int)~
+}
+
+class CourseReviewModerationLogRepository {
+    - _context : AppDbContext
+    + GetPagedAdminAsync(page: int, pageSize: int) Task~(List~CourseReviewModerationLog~, int)~
+}
+
+class LessonReviewModerationLogRepository {
+    - _context : AppDbContext
+    + GetPagedAdminAsync(page: int, pageSize: int) Task~(List~LessonReviewModerationLog~, int)~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + CourseAiUsageLogs : DbSet~CourseAiUsageLog~
+    + CourseReviewModerationLogs : DbSet~CourseReviewModerationLog~
+    + LessonReviewModerationLogs : DbSet~LessonReviewModerationLog~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === INHERITANCE (solid line with hollow arrow) ===
+CourseModerationLogViewModel --|> BaseAiLogViewModel
+ReviewModerationLogViewModel --|> BaseAiLogViewModel
+CourseModerationLogAdminDto --|> BaseAiLogAdminDto
+ReviewModerationLogAdminDto --|> BaseAiLogAdminDto
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+AdminAiServiceControllerBE --> IAiModerationLogService
+AiModerationLogService --> ICourseAiUsageLogRepository
+AiModerationLogService --> ICourseReviewModerationLogRepository
+AiModerationLogService --> ILessonReviewModerationLogRepository
+
+CourseAiUsageLogRepository --> AppDbContext
+CourseReviewModerationLogRepository --> AppDbContext
+LessonReviewModerationLogRepository --> AppDbContext
+
+%% === AGGREGATION ===
+AdminAiServicePageViewModel o-- CourseModerationLogViewModel
+AdminAiServicePageViewModel o-- ReviewModerationLogViewModel
+
+PagedResultCourseAdminDto o-- CourseModerationLogAdminDto
+PagedResultReviewAdminDto o-- ReviewModerationLogAdminDto
+
+%% === INTERFACE REALIZATION ===
+AiModerationLogService ..|> IAiModerationLogService
+CourseAiUsageLogRepository ..|> ICourseAiUsageLogRepository
+CourseReviewModerationLogRepository ..|> ICourseReviewModerationLogRepository
+LessonReviewModerationLogRepository ..|> ILessonReviewModerationLogRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+AdminAiServiceControllerFE ..> AdminAiServiceControllerBE
+AdminAiServiceControllerFE ..> AdminAiServicePageViewModel
+
+AdminAiServiceControllerBE ..> PagedRequestDto
+AdminAiServiceControllerBE ..> PagedResultCourseAdminDto
+AdminAiServiceControllerBE ..> PagedResultReviewAdminDto
+
+AiModerationLogService ..> PagedRequestDto
+AiModerationLogService ..> PagedResultCourseAdminDto
+AiModerationLogService ..> PagedResultReviewAdminDto
+AiModerationLogService ..> CourseModerationLogAdminDto
+AiModerationLogService ..> ReviewModerationLogAdminDto
+
+CourseAiUsageLogRepository ..> CourseAiUsageLog
+CourseReviewModerationLogRepository ..> CourseReviewModerationLog
+LessonReviewModerationLogRepository ..> LessonReviewModerationLog
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

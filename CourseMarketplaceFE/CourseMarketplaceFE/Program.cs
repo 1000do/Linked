@@ -1,6 +1,6 @@
+using System.Security.Claims;
 using CourseMarketplaceFE.Helpers;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using System.Security.Claims;
 
 namespace CourseMarketplaceFE
 {

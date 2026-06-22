@@ -126,25 +126,25 @@ namespace CourseMarketplaceBE.Presentation.Controllers
 
         /// <summary>Lấy tất cả course reports (có thể lọc theo status)</summary>
         [HttpGet("reports/courses")]
-        public async Task<IActionResult> GetAllCourseReports([FromQuery] string? status = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetAllCourseReports([FromQuery] PagedReportRequestDto request)
         {
-            var reports = await _reportService.GetAllCourseReportsAsync(status, page, pageSize);
+            var reports = await _reportService.GetAllCourseReportsAsync(request);
             return Ok(ApiResponse<object>.SuccessResponse(reports));
         }
 
         /// <summary>Lấy tất cả course review reports (có thể lọc theo status)</summary>
         [HttpGet("reports/course-reviews")]
-        public async Task<IActionResult> GetAllCourseReviewReports([FromQuery] string? status = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetAllCourseReviewReports([FromQuery] PagedReportRequestDto request)
         {
-            var reports = await _reportService.GetAllCourseReviewReportsAsync(status, page, pageSize);
+            var reports = await _reportService.GetAllCourseReviewReportsAsync(request);
             return Ok(ApiResponse<object>.SuccessResponse(reports));
         }
 
         /// <summary>Lấy tất cả lesson review reports (có thể lọc theo status)</summary>
         [HttpGet("reports/lesson-reviews")]
-        public async Task<IActionResult> GetAllLessonReviewReports([FromQuery] string? status = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetAllLessonReviewReports([FromQuery] PagedReportRequestDto request)
         {
-            var reports = await _reportService.GetAllLessonReviewReportsAsync(status, page, pageSize);
+            var reports = await _reportService.GetAllLessonReviewReportsAsync(request);
             return Ok(ApiResponse<object>.SuccessResponse(reports));
         }
 

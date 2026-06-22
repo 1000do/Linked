@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 
+using CourseMarketplaceFE.Models.Common;
+
 namespace CourseMarketplaceFE.Controllers
 {
     public class AdminModerationController : Controller
@@ -110,24 +112,54 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // ── Danh sách báo cáo chính thức (FE) ───────────────────────────────
-        public async Task<IActionResult> Reports()
+        public async Task<IActionResult> Reports(int coursePage = 1, int cReviewPage = 1, int lReviewPage = 1)
         {
-            var stats = new ReportStatsViewModel();
-            var response = await _apiClient.GetAsync("/api/admin/moderation/reports/stats");
-            if (response.IsSuccessStatusCode)
+            var model = new ReportModerationPageViewModel();
+
+            try
             {
-                var content = await response.Content.ReadAsStringAsync();
-                try
+                var statsTask = _apiClient.GetAsync("/api/admin/moderation/reports/stats");
+                var coursesTask = _apiClient.GetAsync($"/api/admin/moderation/reports/courses?page={coursePage}&pageSize=10");
+                var cReviewsTask = _apiClient.GetAsync($"/api/admin/moderation/reports/course-reviews?page={cReviewPage}&pageSize=10");
+                var lReviewsTask = _apiClient.GetAsync($"/api/admin/moderation/reports/lesson-reviews?page={lReviewPage}&pageSize=10");
+
+                await Task.WhenAll(statsTask, coursesTask, cReviewsTask, lReviewsTask);
+
+                var statsResp = await statsTask;
+                if (statsResp.IsSuccessStatusCode)
                 {
-                    using var doc = JsonDocument.Parse(content);
-                    if (doc.RootElement.TryGetProperty("data", out var dataEl))
-                    {
-                        stats = JsonSerializer.Deserialize<ReportStatsViewModel>(dataEl.ToString(), _jsonOptions) ?? new ReportStatsViewModel();
-                    }
+                    var json = await statsResp.Content.ReadAsStringAsync();
+                    var parsed = JsonSerializer.Deserialize<ApiResp<ReportStatsViewModel>>(json, _jsonOptions);
+                    if (parsed?.Data != null) model.Stats = parsed.Data;
                 }
-                catch { }
+
+                var coursesResp = await coursesTask;
+                if (coursesResp.IsSuccessStatusCode)
+                {
+                    var json = await coursesResp.Content.ReadAsStringAsync();
+                    var parsed = JsonSerializer.Deserialize<BaseApiResponse<PagedResult<CourseReportDetailViewModel>>>(json, _jsonOptions);
+                    if (parsed?.Data != null) model.CourseReports = parsed.Data;
+                }
+
+                var cReviewsResp = await cReviewsTask;
+                if (cReviewsResp.IsSuccessStatusCode)
+                {
+                    var json = await cReviewsResp.Content.ReadAsStringAsync();
+                    var parsed = JsonSerializer.Deserialize<BaseApiResponse<PagedResult<ReviewReportDetailViewModel>>>(json, _jsonOptions);
+                    if (parsed?.Data != null) model.CourseReviewReports = parsed.Data;
+                }
+
+                var lReviewsResp = await lReviewsTask;
+                if (lReviewsResp.IsSuccessStatusCode)
+                {
+                    var json = await lReviewsResp.Content.ReadAsStringAsync();
+                    var parsed = JsonSerializer.Deserialize<BaseApiResponse<PagedResult<ReviewReportDetailViewModel>>>(json, _jsonOptions);
+                    if (parsed?.Data != null) model.LessonReviewReports = parsed.Data;
+                }
             }
-            return View(stats);
+            catch { }
+
+            return View(model);
         }
 
         // API AJAX lấy thống kê report
@@ -145,56 +177,59 @@ namespace CourseMarketplaceFE.Controllers
 
         // API AJAX lấy báo cáo khóa học
         [HttpGet]
-        public async Task<IActionResult> GetCourseReports(string? status)
+        public async Task<IActionResult> GetCourseReports(string? status, int page = 1)
         {
-            var url = "/api/admin/moderation/reports/courses";
+            var url = $"/api/admin/moderation/reports/courses?page={page}&pageSize=10";
             if (!string.IsNullOrEmpty(status) && status != "all")
             {
-                url += $"?status={status}";
+                url += $"&status={status}";
             }
             var response = await _apiClient.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                return Content(content, "application/json");
+                var parsed = JsonSerializer.Deserialize<BaseApiResponse<PagedResult<CourseReportDetailViewModel>>>(content, _jsonOptions);
+                return PartialView("_CourseReportsPartial", parsed?.Data ?? new PagedResult<CourseReportDetailViewModel>());
             }
-            return Json(new { success = false });
+            return PartialView("_CourseReportsPartial", new PagedResult<CourseReportDetailViewModel>());
         }
 
         // API AJAX lấy báo cáo đánh giá khóa học
         [HttpGet]
-        public async Task<IActionResult> GetCourseReviewReports(string? status)
+        public async Task<IActionResult> GetCourseReviewReports(string? status, int page = 1)
         {
-            var url = "/api/admin/moderation/reports/course-reviews";
+            var url = $"/api/admin/moderation/reports/course-reviews?page={page}&pageSize=10";
             if (!string.IsNullOrEmpty(status) && status != "all")
             {
-                url += $"?status={status}";
+                url += $"&status={status}";
             }
             var response = await _apiClient.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                return Content(content, "application/json");
+                var parsed = JsonSerializer.Deserialize<BaseApiResponse<PagedResult<ReviewReportDetailViewModel>>>(content, _jsonOptions);
+                return PartialView("_ReviewReportsPartial", parsed?.Data ?? new PagedResult<ReviewReportDetailViewModel>());
             }
-            return Json(new { success = false });
+            return PartialView("_ReviewReportsPartial", new PagedResult<ReviewReportDetailViewModel>());
         }
 
         // API AJAX lấy báo cáo đánh giá bài học
         [HttpGet]
-        public async Task<IActionResult> GetLessonReviewReports(string? status)
+        public async Task<IActionResult> GetLessonReviewReports(string? status, int page = 1)
         {
-            var url = "/api/admin/moderation/reports/lesson-reviews";
+            var url = $"/api/admin/moderation/reports/lesson-reviews?page={page}&pageSize=10";
             if (!string.IsNullOrEmpty(status) && status != "all")
             {
-                url += $"?status={status}";
+                url += $"&status={status}";
             }
             var response = await _apiClient.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                return Content(content, "application/json");
+                var parsed = JsonSerializer.Deserialize<BaseApiResponse<PagedResult<ReviewReportDetailViewModel>>>(content, _jsonOptions);
+                return PartialView("_ReviewReportsPartial", parsed?.Data ?? new PagedResult<ReviewReportDetailViewModel>());
             }
-            return Json(new { success = false });
+            return PartialView("_ReviewReportsPartial", new PagedResult<ReviewReportDetailViewModel>());
         }
 
         // Resolve course report

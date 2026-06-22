@@ -35,8 +35,14 @@
                 </div>
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs font-bold text-slate-700">Profile Picture</label>
-                    <input type="file" name="AvatarFile" id="avatarInput" accept="image/*"
-                           class="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white file:cursor-pointer hover:file:bg-slate-800 transition-all" />
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="document.getElementById('avatarInput').click()"
+                                class="py-1.5 px-3 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white cursor-pointer transition-all">
+                            Choose File
+                        </button>
+                        <span id="avatarFileName" class="text-xs text-slate-500">No file chosen</span>
+                    </div>
+                    <input type="file" name="AvatarFile" id="avatarInput" accept="image/*" class="hidden" />
                 </div>
             </div>
 
@@ -50,7 +56,7 @@
             <!-- Full Name -->
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs font-bold text-slate-700">Full Name</label>
-                <input type="text" id="fullNameInput" name="FullName" value="@Model.FullName" placeholder="Họ và tên"
+                <input type="text" id="fullNameInput" name="FullName" value="@Model.FullName" placeholder="Full Name"
                        class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
             </div>
 
@@ -86,12 +92,20 @@
         // Live image preview
         document.getElementById('avatarInput').addEventListener('change', function(event) {
             const file = event.target.files[0];
+            const fileNameSpan = document.getElementById('avatarFileName');
             if (file) {
+                if (fileNameSpan) {
+                    fileNameSpan.textContent = file.name;
+                }
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     document.getElementById('avatarPreview').src = e.target.result;
                 };
                 reader.readAsDataURL(file);
+            } else {
+                if (fileNameSpan) {
+                    fileNameSpan.textContent = "No file chosen";
+                }
             }
         });
 
