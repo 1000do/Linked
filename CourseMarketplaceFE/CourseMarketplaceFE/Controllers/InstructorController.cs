@@ -2,6 +2,7 @@ using System.Text.Json;
 using CourseMarketplaceFE.Helpers;
 using CourseMarketplaceFE.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CourseMarketplaceFE.Controllers;
 
@@ -12,6 +13,7 @@ namespace CourseMarketplaceFE.Controllers;
 /// POST     /Instructor/SetupPayout → Gọi API setup Stripe → redirect
 /// GET      /Instructor/StripeReturn → Stripe redirect về → verify → hiển thị kết quả
 /// </summary>
+[Authorize(Roles = "user,instructor")]
 public class InstructorController : Controller
 {
     private readonly ApiClient _api;
