@@ -13,11 +13,19 @@ public class EnrollmentService : IEnrollmentService
 {
     private readonly IEnrollmentRepository _repo;
     private readonly ICourseRepository _courseRepo;
+    private readonly INotificationService _notificationService;
+    private readonly IUserRepository _userRepo;
 
-    public EnrollmentService(IEnrollmentRepository repo, ICourseRepository courseRepo)
+    public EnrollmentService(
+        IEnrollmentRepository repo, 
+        ICourseRepository courseRepo,
+        INotificationService notificationService,
+        IUserRepository userRepo)
     {
         _repo = repo;
         _courseRepo = courseRepo;
+        _notificationService = notificationService;
+        _userRepo = userRepo;
     }
 
     public async Task EnrollFreeAsync(int userId, int courseId)
@@ -61,6 +69,20 @@ public class EnrollmentService : IEnrollmentService
 
 
             await transaction.CommitAsync();
+
+            // 4. Send Notification to Instructor
+            if (course.InstructorId.HasValue)
+            {
+                var student = await _userRepo.GetUserByIdAsync(userId);
+                var studentName = student?.FullName ?? "A student";
+                
+                await _notificationService.SendNotificationAsync(
+                    course.InstructorId.Value,
+                    "New student enrolled",
+                    $"{studentName} has enrolled in your free course '{course.Title}'.",
+                    $"/Course/Details/{courseId}" 
+                );
+            }
         }
         catch
         {
