@@ -1,0 +1,116 @@
+classDiagram
+direction LR
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class ChatControllerBE["ChatController"] {
+    <<backend controller>>
+    - _chatService : IChatService
+    + GetChatHistory(roomId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class MessageDto {
+    + MessageId : int
+    + ChatId : int
+    + SenderId : int?
+    + SenderName : string
+    + SenderAvatar : string?
+    + Content : string
+    + IsSeen : bool
+    + MessageStatus : string
+    + SentAt : DateTime?
+    + Attachments : List~AttachmentDto~
+}
+
+class AttachmentDto {
+    + AttachmentId : int
+    + FileUrl : string
+    + FileName : string?
+    + FileType : string?
+    + FileSize : long?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Message {
+    + MessageId : int
+    + ChatId : int
+    + SenderId : int?
+    + Content : string
+    + SentAt : DateTime?
+}
+
+class ChatParticipant {
+    + ChatId : int
+    + AccountId : int
+    + ClearedAt : DateTime?
+    + UnreadCount : int
+    + LastReadAt : DateTime?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IChatService {
+    <<interface>>
+    + GetChatHistoryAsync(chatId: int, accountId: int) Task~List~MessageDto~~ *
+}
+
+%% ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+class IChatRepository {
+    <<interface>>
+    + GetMessagesByChatIdAsync(chatId: int) Task~List~Message~~ *
+    + GetParticipantAsync(chatId: int, accountId: int) Task~ChatParticipant?~ *
+    + MarkAsReadAsync(chatId: int, accountId: int) Task *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ChatService {
+    - _chatRepository : IChatRepository
+    + GetChatHistoryAsync(chatId: int, accountId: int) Task~List~MessageDto~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ChatRepository {
+    - _context : AppDbContext
+    + GetMessagesByChatIdAsync(chatId: int) Task~List~Message~~
+    + GetParticipantAsync(chatId: int, accountId: int) Task~ChatParticipant?~
+    + MarkAsReadAsync(chatId: int, accountId: int) Task
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Messages : DbSet~Message~
+    + ChatParticipants : DbSet~ChatParticipant~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION ===
+MessageDto *-- AttachmentDto
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+ChatControllerBE --> IChatService
+ChatService --> IChatRepository
+ChatRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+ChatService ..|> IChatService
+ChatRepository ..|> IChatRepository
+
+%% === DEPENDENCY ===
+ChatControllerBE ..> MessageDto
+ChatService ..> MessageDto
+ChatRepository ..> Message
+ChatRepository ..> ChatParticipant
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

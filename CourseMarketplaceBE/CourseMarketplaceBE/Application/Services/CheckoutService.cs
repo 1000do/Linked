@@ -5,6 +5,7 @@ using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using CourseMarketplaceBE.Domain.Constants;
 
 namespace CourseMarketplaceBE.Application.Services;
@@ -35,6 +36,7 @@ public class CheckoutService : ICheckoutService
     private readonly IAdminFinanceService _adminFinanceService;
     private readonly IGiftRepository _giftRepo;
     private readonly IEmailService _emailService;
+    private readonly IConfiguration _configuration;
 
     public CheckoutService(
         ICheckoutRepository repo,
@@ -48,7 +50,8 @@ public class CheckoutService : ICheckoutService
         ICouponRepository couponRepo,
         IUserRepository userRepo,
         IGiftRepository giftRepo,
-        IEmailService emailService)
+        IEmailService emailService,
+        IConfiguration configuration)
     {
         _repo = repo;
         _enrollmentRepo = enrollmentRepo;
@@ -62,6 +65,7 @@ public class CheckoutService : ICheckoutService
         _adminFinanceService = adminFinanceService;
         _giftRepo = giftRepo;
         _emailService = emailService;
+        _configuration = configuration;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -362,7 +366,7 @@ public class CheckoutService : ICheckoutService
         }
         else
         {
-            feBaseUrl = "http://localhost:5005";
+            feBaseUrl = _configuration.GetValue<string>("FrontendBaseUrl") ?? "http://localhost:5208";
         }
 
         var metadata = new Dictionary<string, string>
@@ -432,7 +436,7 @@ public class CheckoutService : ICheckoutService
         }
         else
         {
-            feBaseUrl = "http://localhost:5005";
+            feBaseUrl = _configuration.GetValue<string>("FrontendBaseUrl") ?? "http://localhost:5208";
         }
 
         var metadata = new Dictionary<string, string>
@@ -608,7 +612,7 @@ public class CheckoutService : ICheckoutService
                         string recipientName = metadata.TryGetValue("recipientName", out var rn) ? rn : null;
                         string giftMessage = metadata.TryGetValue("giftMessage", out var gm) ? gm : null;
                         string cardTheme = metadata.TryGetValue("cardTheme", out var theme) ? theme : "classic";
-                        string feBaseUrl = metadata.TryGetValue("feBaseUrl", out var fbUrl) ? fbUrl : "http://localhost:5005";
+                        string feBaseUrl = metadata.TryGetValue("feBaseUrl", out var fbUrl) ? fbUrl : (_configuration.GetValue<string>("FrontendBaseUrl") ?? "http://localhost:5208");
 
                         var token = Guid.NewGuid().ToString("N");
 
@@ -1063,7 +1067,7 @@ public class CheckoutService : ICheckoutService
                         string recipientName = metadata.TryGetValue("recipientName", out var rn) ? rn : null;
                         string giftMessage = metadata.TryGetValue("giftMessage", out var gm) ? gm : null;
                         string cardTheme = metadata.TryGetValue("cardTheme", out var theme) ? theme : "classic";
-                        string feBaseUrl = metadata.TryGetValue("feBaseUrl", out var fbUrl) ? fbUrl : "http://localhost:5005";
+                        string feBaseUrl = metadata.TryGetValue("feBaseUrl", out var fbUrl) ? fbUrl : (_configuration.GetValue<string>("FrontendBaseUrl") ?? "http://localhost:5208");
 
                         var token = Guid.NewGuid().ToString("N");
 

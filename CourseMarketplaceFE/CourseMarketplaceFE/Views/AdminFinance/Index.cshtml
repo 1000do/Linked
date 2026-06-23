@@ -1222,7 +1222,7 @@
 
         // SIGNALR Tự động Reload
         const connection = new signalR.HubConnectionBuilder()
-            .withUrl("http://localhost:5207/financeHub")
+            .withUrl("/financeHub")
             .withAutomaticReconnect()
             .build();
 

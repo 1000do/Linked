@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace CourseMarketplaceFE.Models
@@ -11,17 +12,25 @@ namespace CourseMarketplaceFE.Models
     // Model gửi yêu cầu báo cáo khóa học
     public class CreateCourseReportViewModel
     {
+        [Required]
         public int CourseId { get; set; }
+        [Required]
+        [MaxLength(255)]
         public string Reason { get; set; } = null!;
+        [MaxLength(1000)]
         public string? Description { get; set; }
     }
 
     // Model gửi yêu cầu báo cáo đánh giá khóa học / bài học (dùng chung)
     public class CreateReviewReportViewModel
     {
+        [Required]
         public int ReviewId { get; set; }
         public string ReviewType { get; set; } = "course_review"; // "course_review" hoặc "lesson_review"
+        [Required]
+        [MaxLength(255)]
         public string Reason { get; set; } = null!;
+        [MaxLength(1000)]
         public string? Description { get; set; }
     }
 
@@ -32,7 +41,10 @@ namespace CourseMarketplaceFE.Models
     // Model gửi yêu cầu giải quyết report
     public class ResolveReportViewModel
     {
+        [Required]
+        [MaxLength(50)]
         public string Status { get; set; } = null!; // resolved | rejected | escalated | under_review
+        [MaxLength(1000)]
         public string? ResolutionNote { get; set; }
         public bool RemoveContent { get; set; } = false;
     }
@@ -105,6 +117,10 @@ namespace CourseMarketplaceFE.Models
         public float? ReviewRating { get; set; }
         public string? ReviewAuthorEmail { get; set; }
         public string? ReviewAuthorName { get; set; }
+        public int? CourseId { get; set; }
+        public string? CourseTitle { get; set; }
+        public int? LessonId { get; set; }
+        public string? LessonTitle { get; set; }
         public string? Reason { get; set; }
         public string? Description { get; set; }
         public string? Status { get; set; }
@@ -132,5 +148,14 @@ namespace CourseMarketplaceFE.Models
         public string? CourseTitle { get; set; }
         public int CourseFlagCount { get; set; }
         public List<MyCourseReportViewModel> Reports { get; set; } = new();
+    }
+
+    // ViewModel cho trang tổng hợp Admin Moderation (chứa toàn bộ data trang đầu)
+    public class ReportModerationPageViewModel
+    {
+        public ReportStatsViewModel Stats { get; set; } = new();
+        public PagedResult<CourseReportDetailViewModel> CourseReports { get; set; } = new();
+        public PagedResult<ReviewReportDetailViewModel> CourseReviewReports { get; set; } = new();
+        public PagedResult<ReviewReportDetailViewModel> LessonReviewReports { get; set; } = new();
     }
 }

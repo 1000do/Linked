@@ -1,0 +1,163 @@
+classDiagram
+direction LR
+
+%% ==================== BACKEND - SIGNALR HUB ====================
+
+class ChatHub {
+    <<signalr hub>>
+    - _chatService : IChatService
+    + SendMessage(dto: SendMessageDto) Task
+    - GetAccountId() int
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class SendMessageDto {
+    + ChatId : int
+    + Content : string
+    + Attachments : List~AttachmentInputDto~?
+}
+
+class AttachmentInputDto {
+    + FileUrl : string
+    + FileName : string?
+    + FileType : string?
+    + FileSize : long?
+}
+
+class MessageDto {
+    + MessageId : int
+    + ChatId : int
+    + SenderId : int?
+    + SenderName : string
+    + SenderAvatar : string?
+    + Content : string
+    + IsSeen : bool
+    + MessageStatus : string
+    + SentAt : DateTime?
+    + Attachments : List~AttachmentDto~
+}
+
+class AttachmentDto {
+    + AttachmentId : int
+    + FileUrl : string
+    + FileName : string?
+    + FileType : string?
+    + FileSize : long?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Chat {
+    + ChatId : int
+    + ChatName : string?
+    + ChatType : string
+    + ContextType : string?
+    + ContextId : int?
+    + CreatedAt : DateTime?
+    + LastMessageAt : DateTime?
+}
+
+class Message {
+    + MessageId : int
+    + ChatId : int
+    + SenderId : int?
+    + Content : string
+    + IsSeen : bool
+    + MessageStatus : string
+    + SentAt : DateTime?
+    + ReceivedAt : DateTime?
+}
+
+class MessageAttachment {
+    + AttachmentId : int
+    + MessageId : int
+    + FileUrl : string
+    + FileName : string?
+    + FileType : string?
+    + FileSize : long?
+    + CreatedAt : DateTime?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IChatService {
+    <<interface>>
+    + SaveMessageAsync(senderId: int, dto: SendMessageDto) Task~MessageDto~ *
+    + GetParticipantIdsAsync(chatId: int) Task~List~int~~ *
+}
+
+class IRedisService {
+    <<interface>>
+    + IncrementUnreadCountAsync(accountId: int, chatId: int) Task *
+}
+
+%% ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+class IChatRepository {
+    <<interface>>
+    + AddMessageAsync(message: Message) Task *
+    + GetChatByIdAsync(chatId: int) Task~Chat?~ *
+    + UpdateChatAsync(chat: Chat) Task *
+    + GetParticipantIdsAsync(chatId: int) Task~List~int~~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ChatService {
+    - _repo : IChatRepository
+    - _redisService : IRedisService
+    + SaveMessageAsync(senderId: int, dto: SendMessageDto) Task~MessageDto~
+    + GetParticipantIdsAsync(chatId: int) Task~List~int~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ChatRepository {
+    - _context : AppDbContext
+    + AddMessageAsync(message: Message) Task
+    + GetChatByIdAsync(chatId: int) Task~Chat?~
+    + UpdateChatAsync(chat: Chat) Task
+    + GetParticipantIdsAsync(chatId: int) Task~List~int~~
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Chats : DbSet~Chat~
+    + Messages : DbSet~Message~
+    + MessageAttachments : DbSet~MessageAttachment~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION ===
+Chat *-- Message
+Message *-- MessageAttachment
+SendMessageDto *-- AttachmentInputDto
+MessageDto *-- AttachmentDto
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+ChatHub --> IChatService
+ChatService --> IChatRepository
+ChatService --> IRedisService
+ChatRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+ChatService ..|> IChatService
+ChatRepository ..|> IChatRepository
+
+%% === DEPENDENCY ===
+ChatHub ..> SendMessageDto
+ChatHub ..> MessageDto
+ChatService ..> SendMessageDto
+ChatService ..> MessageDto
+ChatService ..> Message
+ChatService ..> MessageAttachment
+ChatRepository ..> Message
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

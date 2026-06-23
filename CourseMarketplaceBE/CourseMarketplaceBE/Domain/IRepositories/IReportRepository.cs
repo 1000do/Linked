@@ -15,6 +15,7 @@ public interface IReportRepository
     Task<CourseReport?> GetPendingCourseReportAsync(int reporterId, int courseId, string reason);
     Task AddCourseReportAsync(CourseReport report);
     void UpdateCourseReport(CourseReport report);
+    Task<int> CountCourseReportsByStatusAsync(string status, DateTime? resolvedAtDate);
 
     // ── Course Review Reports ───────────────────────────────────────────────
 
@@ -24,6 +25,7 @@ public interface IReportRepository
     Task<CourseReviewReport?> GetPendingCourseReviewReportAsync(int reporterId, int reviewId, string reason);
     Task AddCourseReviewReportAsync(CourseReviewReport report);
     void UpdateCourseReviewReport(CourseReviewReport report);
+    Task<int> CountCourseReviewReportsByStatusAsync(string status, DateTime? resolvedAtDate);
 
     // ── Lesson Review Reports ───────────────────────────────────────────────
 
@@ -33,6 +35,7 @@ public interface IReportRepository
     Task<LessonReviewReport?> GetPendingLessonReviewReportAsync(int reporterId, int reviewId, string reason);
     Task AddLessonReviewReportAsync(LessonReviewReport report);
     void UpdateLessonReviewReport(LessonReviewReport report);
+    Task<int> CountLessonReviewReportsByStatusAsync(string status, DateTime? resolvedAtDate);
 
     // ── Shared ──────────────────────────────────────────────────────────────
 

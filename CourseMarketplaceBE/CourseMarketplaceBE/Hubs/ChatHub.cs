@@ -28,6 +28,8 @@ public class ChatHub : Hub
     public override async Task OnConnectedAsync()
     {
         var accountIdStr = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = Context.User?.FindFirst(ClaimTypes.Role)?.Value?.ToLower() ?? "user";
+
         if (int.TryParse(accountIdStr, out int accountId))
         {
             await _redisService.SetUserOnlineAsync(accountId, Context.ConnectionId);
@@ -39,6 +41,10 @@ public class ChatHub : Hub
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, $"Chat_{chat.ChatId}");
             }
+
+            // Ticket-based support groups
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"Role_{role}");
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{accountId}");
         }
         await base.OnConnectedAsync();
     }
@@ -77,14 +83,23 @@ public class ChatHub : Hub
 
         try
         {
+            Console.WriteLine($"[ChatHub] SendMessage received: Content='{dto.Content}', Attachments count={(dto.Attachments?.Count ?? 0)}");
+            
             // 1. Lưu tin nhắn vào DB
             var messageDto = await _chatService.SaveMessageAsync(accountId, dto);
 
-            // 2. Gửi tin nhắn real-time tới những người trong Group Chat
-            await Clients.Group($"Chat_{dto.ChatId}").SendAsync("ReceiveMessage", messageDto);
+            // 2. Lấy danh sách participants
+            var participantIds = await _chatService.GetParticipantIdsAsync(dto.ChatId);
 
-            // 3. Tăng unread count trong Redis cho các thành viên khác
-            // (Logic này có thể chuyển vào ChatService để đồng bộ hơn)
+            // 3. Gửi tin nhắn real-time tới từng người thông qua User_{id}
+            foreach (var pId in participantIds)
+            {
+                await Clients.Group($"User_{pId}").SendAsync("ReceiveMessage", messageDto);
+            }
+
+            // (Tuỳ chọn: vẫn giữ gửi cho group chat để đảm bảo đồng bộ nếu cần, 
+            // nhưng gửi qua User_{pId} đã đủ để trigger loadChats() ở FE)
+            // await Clients.Group($"Chat_{dto.ChatId}").SendAsync("ReceiveMessage", messageDto);
         }
         catch (Exception ex)
         {
@@ -113,13 +128,25 @@ public class ChatHub : Hub
         var accountId = GetAccountId();
         var name = Context.User?.FindFirst(ClaimTypes.Name)?.Value ?? "Someone";
         
-        await Clients.Group($"Chat_{chatId}").SendAsync("UserTyping", new { ChatId = chatId, AccountId = accountId, Name = name, IsTyping = isTyping });
+        var participantIds = await _chatService.GetParticipantIdsAsync(chatId);
+        foreach (var pId in participantIds)
+        {
+            await Clients.Group($"User_{pId}").SendAsync("UserTyping", new { ChatId = chatId, AccountId = accountId, Name = name, IsTyping = isTyping });
+        }
     }
 
     public async Task MarkAsRead(int chatId)
     {
         var accountId = GetAccountId();
-        await Clients.Group($"Chat_{chatId}").SendAsync("MessageRead", new { ChatId = chatId, AccountId = accountId });
+        
+        // Actually reset unread count in DB and Redis
+        await _chatService.MarkChatAsReadAsync(chatId, accountId);
+        
+        var participantIds = await _chatService.GetParticipantIdsAsync(chatId);
+        foreach (var pId in participantIds)
+        {
+            await Clients.Group($"User_{pId}").SendAsync("MessageRead", new { ChatId = chatId, AccountId = accountId });
+        }
     }
 
     private int GetAccountId()

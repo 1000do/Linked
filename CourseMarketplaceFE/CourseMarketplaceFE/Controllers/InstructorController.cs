@@ -2,6 +2,7 @@ using System.Text.Json;
 using CourseMarketplaceFE.Helpers;
 using CourseMarketplaceFE.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CourseMarketplaceFE.Controllers;
 
@@ -12,6 +13,7 @@ namespace CourseMarketplaceFE.Controllers;
 /// POST     /Instructor/SetupPayout → Gọi API setup Stripe → redirect
 /// GET      /Instructor/StripeReturn → Stripe redirect về → verify → hiển thị kết quả
 /// </summary>
+[Authorize(Roles = "user,instructor")]
 public class InstructorController : Controller
 {
     private readonly ApiClient _api;
@@ -491,11 +493,18 @@ public class InstructorController : Controller
 
             // Đọc thẳng thành List giống hệt cách làm của bên User
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var list = JsonSerializer.Deserialize<List<NotificationViewModel>>(json, options);
+            var apiResp = JsonSerializer.Deserialize<ApiResponseWrapper<PagedResult<NotificationViewModel>>>(json, options);
 
-            return View(list ?? new List<NotificationViewModel>());
+            return View(apiResp?.Data?.Items ?? new List<NotificationViewModel>());
         }
         return View(new List<NotificationViewModel>());
+    }
+
+    private class ApiResponseWrapper<T>
+    {
+        public bool Success { get; set; }
+        public T? Data { get; set; }
+        public string? Message { get; set; }
     }
     [HttpPost]
     [IgnoreAntiforgeryToken] // Diệt lỗi 400 khi gọi AJAX

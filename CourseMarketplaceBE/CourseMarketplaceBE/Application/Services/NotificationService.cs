@@ -1,9 +1,13 @@
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Domain.Exceptions;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using AutoMapper;
 
 namespace CourseMarketplaceBE.Application.Services
 {
@@ -12,24 +16,37 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly INotificationRepository _repo;
         private readonly IUserRepository _userRepo;
         private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly IMapper _mapper;
 
         public NotificationService(
             INotificationRepository repo,
             IUserRepository userRepo,
-            IHubContext<NotificationHub> hubContext)
+            IHubContext<NotificationHub> hubContext,
+            IMapper mapper)
         {
             _repo = repo;
             _userRepo = userRepo;
             _hubContext = hubContext;
+            _mapper = mapper;
         }
 
-        public async Task<List<Notification>> GetNotificationsForUserAsync(int userId)
-            => await _repo.GetByReceiverIdAsync(userId);
+        public async Task<PagedResult<NotificationResponseDto>> GetNotificationsForUserAsync(int userId, int page = 1, int pageSize = int.MaxValue)
+        {
+            var (entities, count) = await _repo.GetByReceiverIdAsync(userId, page, pageSize);
+            if (!entities.Any()) throw new KeyNotFoundException("No notifications found.");
+            var dtos = _mapper.Map<List<NotificationResponseDto>>(entities);
+            return new PagedResult<NotificationResponseDto> { Items = dtos, TotalCount = count };
+        }
 
-        public async Task<List<Notification>> GetAllNotificationsAsync()
-            => await _repo.GetAllAsync();
+        public async Task<PagedResult<NotificationResponseDto>> GetAllNotificationsAsync(int page = 1, int pageSize = int.MaxValue)
+        {
+            var (entities, count) = await _repo.GetAllAsync(page, pageSize);
+            if (!entities.Any()) throw new KeyNotFoundException("No notifications found.");
+            var dtos = _mapper.Map<List<NotificationResponseDto>>(entities);
+            return new PagedResult<NotificationResponseDto> { Items = dtos, TotalCount = count };
+        }
 
-        public async Task SendNotificationAsync(int receiverId, string title, string content, string? linkAction)
+        public async Task<bool> SendNotificationAsync(int receiverId, string title, string content, string? linkAction)
         {
             var now = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(7), DateTimeKind.Unspecified);
 
@@ -44,9 +61,10 @@ namespace CourseMarketplaceBE.Application.Services
             };
 
             await _repo.AddAsync(noti);
-            int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            if (numberOfRowsAffected > 0)
+            try
             {
+                int numberOfRowsAffected = await _repo.SaveChangesAsync();
+                if (numberOfRowsAffected == 0) throw new InvalidOperationException("Failed to send notification.");
 
                 await _hubContext.Clients.User(receiverId.ToString())
                     .SendAsync("ReceiveNotification", new
@@ -60,66 +78,91 @@ namespace CourseMarketplaceBE.Application.Services
                         receiverId = noti.ReceiverId
                     });
                 await _hubContext.Clients.Group("managers").SendAsync("ReceiveNotification");
+                return true;
             }
-            else
+            catch (NotificationException ex)
             {
-                throw new InvalidOperationException("Falied to send notification!");
+                throw new BadRequestException(ex.Message);
             }
         }
 
         public async Task<bool> DeleteNotificationAsync(int notiId, int userId)
         {
             var noti = await _repo.GetByIdAsync(notiId);
-            if (noti == null || noti.ReceiverId != userId) return false;
+            if (noti == null || noti.ReceiverId != userId)
+                throw new KeyNotFoundException("Notification not found.");
 
             _repo.Delete(noti);
-            int n = await _repo.SaveChangesAsync();
-
-            if (n > 0)
+            try
             {
+                int n = await _repo.SaveChangesAsync();
+                if (n == 0) throw new InvalidOperationException("Failed to delete notification.");
 
-                // Bổ sung dòng này: Báo cho Admin biết để xóa dòng đó khỏi bảng lịch sử
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification");
-
                 return true;
             }
-            else
+            catch (NotificationException ex)
             {
-                throw new InvalidOperationException("Failed to delete notification");
+                throw new BadRequestException(ex.Message);
             }
-
-            await _hubContext.Clients.All.SendAsync("ReceiveNotification");
-            return true;
         }
 
         public async Task<bool> MarkAsReadAsync(int notificationId, int userId)
         {
-            var result = await _repo.MarkAsReadAsync(notificationId, userId);
-            if (result)
+            var noti = await _repo.GetByIdAsync(notificationId);
+            if (noti == null || noti.ReceiverId != userId)
+                throw new KeyNotFoundException("Notification not found.");
+
+            noti.IsRead = true;
+            _repo.Update(noti);
+
+            try
             {
+                int n = await _repo.SaveChangesAsync();
+                if (n == 0) throw new InvalidOperationException("Failed to mark as read.");
+
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification");
+                return true;
             }
-            return result;
+            catch (NotificationException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
         }
 
         public async Task<bool> MarkAllAsReadAsync(int userId)
         {
-            var result = await _repo.MarkAllAsReadAsync(userId);
-            if (result)
+            var unreads = await _repo.GetUnreadByReceiverIdAsync(userId);
+            if (!unreads.Any()) return true;
+
+            foreach (var noti in unreads)
             {
+                noti.IsRead = true;
+            }
+            _repo.UpdateRange(unreads);
+
+            try
+            {
+                int n = await _repo.SaveChangesAsync();
+                if (n == 0) throw new InvalidOperationException("Failed to save changes.");
                 await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", null);
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification");
+                return true;
             }
-            return result;
+            catch (NotificationException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
         }
 
-        public async Task<List<NotificationAdminResponseDto>> GetAllNotificationsForAdminAsync()
+        public async Task<PagedResult<NotificationAdminResponseDto>> GetAllNotificationsForAdminAsync(int page = 1, int pageSize = int.MaxValue)
         {
             await _repo.AutoCleanupAdminNotificationsAsync();
 
-            var notifications = await _repo.GetAllAsync();
+            var (notifications, count) = await _repo.GetAllAsync(page, pageSize);
+            if (!notifications.Any()) throw new KeyNotFoundException("No notifications found.");
 
-            return notifications.Select(n => {
+            var dtos = notifications.Select(n => {
                 string role = "broadcast";
                 if (n.Receiver != null)
                 {
@@ -166,9 +209,11 @@ namespace CourseMarketplaceBE.Application.Services
                     ReceiverRole = role,
                     ReceiverId = n.ReceiverId,
                     SenderId = n.SenderId,
-                    SenderRole = senderRole
+                    SenderRole = senderRole,
+                    LinkAction = n.LinkAction
                 };
             }).ToList();
+            return new PagedResult<NotificationAdminResponseDto> { Items = dtos, TotalCount = count };
         }
 
         public async Task<List<string>> SearchEmailsAsync(string query, int senderId, string senderRole)
@@ -243,6 +288,7 @@ namespace CourseMarketplaceBE.Application.Services
                 ReceiverId = uid,
                 Title = dto.Title,
                 Content = dto.Content,
+                LinkAction = dto.LinkAction,
                 CreatedAt = now,
                 IsRead = false
             }).ToList();
@@ -261,7 +307,7 @@ namespace CourseMarketplaceBE.Application.Services
                     notificationId = 0,
                     title = dto.Title,
                     content = dto.Content,
-                    linkAction = (string?)null,
+                    linkAction = dto.LinkAction,
                     createdAt = now,
                     isRead = false,
                     receiverId = uid,
@@ -275,9 +321,9 @@ namespace CourseMarketplaceBE.Application.Services
             return targetUserIds.Count;
         }
 
-        public async Task SendBulkNotificationsAsync(IEnumerable<NotificationBulkDto> dtos)
+        public async Task<bool> SendBulkNotificationsAsync(IEnumerable<NotificationBulkDto> dtos)
         {
-            if (dtos == null || !dtos.Any()) return;
+            if (dtos == null || !dtos.Any()) return true;
 
             var now = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(7), DateTimeKind.Unspecified);
 
@@ -314,6 +360,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             await _hubContext.Clients.Group("managers").SendAsync("ReceiveNotification");
+            return true;
         }
     }
 }

@@ -5,13 +5,22 @@ using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using Stripe;
+using Microsoft.Extensions.Configuration;
 
 namespace CourseMarketplaceBE.Infrastructure.Services
 {
     public class StripeConnectService : IStripeConnectService
     {
+        private readonly IConfiguration _configuration;
+
+        public StripeConnectService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
         public async Task<StripeConnectSetupResponse> SetupExpressAccountAsync(int userId, string email, string country, string professionalTitle, string expertiseCategories, string? existingStripeAccountId = null)
         {
+            var frontendUrl = _configuration.GetValue<string>("FrontendBaseUrl") ?? "http://localhost:5208";
             var onboardingType = "account_onboarding";
             string stripeAccountId = existingStripeAccountId ?? "";
 
@@ -21,8 +30,8 @@ namespace CourseMarketplaceBE.Infrastructure.Services
                 var reLink = await reLinkService.CreateAsync(new AccountLinkCreateOptions
                 {
                     Account = stripeAccountId,
-                    RefreshUrl = "http://localhost:5208/Instructor/OnboardingRefresh",
-                    ReturnUrl = $"http://localhost:5208/Instructor/StripeReturn?instructorId={userId}",
+                    RefreshUrl = $"{frontendUrl}/Instructor/OnboardingRefresh",
+                    ReturnUrl = $"{frontendUrl}/Instructor/StripeReturn?instructorId={userId}",
                     Type = onboardingType
                 });
 
@@ -59,8 +68,8 @@ namespace CourseMarketplaceBE.Infrastructure.Services
             var link = await linkService.CreateAsync(new AccountLinkCreateOptions
             {
                 Account = stripeAccount.Id,
-                RefreshUrl = "http://localhost:5208/Instructor/OnboardingRefresh",
-                ReturnUrl = $"http://localhost:5208/Instructor/StripeReturn?instructorId={userId}",
+                RefreshUrl = $"{frontendUrl}/Instructor/OnboardingRefresh",
+                ReturnUrl = $"{frontendUrl}/Instructor/StripeReturn?instructorId={userId}",
                 Type = onboardingType
             });
 

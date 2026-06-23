@@ -273,7 +273,7 @@
     });
 
     // ─── DATA LOADING ───
-    const cartApiUrl = "http://localhost:5207/api/cart/summary";
+    const cartApiUrl = "/Cart/GetSummaryAjax";
     const headerToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`;
 
     async function loadCartPreview() {
@@ -344,7 +344,7 @@
         const container = document.getElementById('categories-items-container');
         if (!container) return;
         try {
-            const res = await fetch("http://localhost:5207/api/public/courses/categories");
+            const res = await fetch("/api/public/courses/categories");
             if (!res.ok) return;
             const result = await res.json();
             const categories = result?.data ?? [];
@@ -366,7 +366,7 @@
         const badge = document.getElementById('wishlist-badge');
         if (!badge || !headerToken) return;
         try {
-            const res = await fetch("http://localhost:5207/api/Wishlist/count", {
+            const res = await fetch("/api/Wishlist/count", {
                 headers: { 'Authorization': `Bearer ${headerToken}` }
             });
             if (!res.ok) return;

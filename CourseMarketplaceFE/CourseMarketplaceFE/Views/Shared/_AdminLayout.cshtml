@@ -217,6 +217,8 @@
             <div class="flex items-center gap-5">
                 @await RenderSectionAsync("HeaderActions", required: false)
                 
+
+
                 <div class="flex items-center gap-3 pl-5 border-l border-slate-200">
                     <div class="flex flex-col items-end">
                         <span class="layout-manager-name text-xs font-bold text-slate-900">@managerName</span>
@@ -292,18 +294,28 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             const ADMIN_LAYOUT_TOKEN = `@Html.Raw(token)`;
+            window.ADMIN_LAYOUT_TOKEN = ADMIN_LAYOUT_TOKEN;
+            
             if (ADMIN_LAYOUT_TOKEN) {
+                // Initialize unread badge and top notifications on load
+                loadAdminTopNotifications();
+
                 const connection = new signalR.HubConnectionBuilder()
-                    .withUrl("http://localhost:5207/notificationHub", {
+                    .withUrl("/notificationHub", {
                         accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
                     })
                     .withAutomaticReconnect()
                     .build();
 
                 connection.on("ReceiveNotification", function (noti) {
-                    // 1. Show red dot at sidebar notification menu
+                    // 1. Show red dot at sidebar and header notification menu
                     const adminBadge = document.getElementById('admin-noti-badge');
                     if (adminBadge) adminBadge.classList.remove('hidden');
+                    const headerBadge = document.getElementById('header-admin-noti-badge');
+                    if (headerBadge) headerBadge.classList.remove('hidden');
+
+                    // Reload dropdown list
+                    if (typeof loadAdminTopNotifications === 'function') loadAdminTopNotifications();
 
                     // Dispatch event for child views (like Notification/Admin page to reload list)
                     document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
@@ -355,6 +367,40 @@
                 connection.start().catch(err => console.error("Admin Notification Hub connection error: ", err));
             }
         });
+
+
+
+        function timeSince(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " years ago";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " months ago";
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + " days ago";
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + " hours ago";
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + " mins ago";
+            return Math.floor(seconds) + " seconds ago";
+        }
+
+        async function loadAdminTopNotifications() {
+            const sidebarBadge = document.getElementById('admin-noti-badge');
+            if (!window.ADMIN_LAYOUT_TOKEN) return;
+
+            try {
+                const response = await fetch("/Notification/GetAllAdmin");
+                if (response.ok) {
+                    const result = await response.json();
+                    const notifications = result.data?.items || [];
+                    const hasUnread = notifications.some(n => n.isRead === false);
+                    if (sidebarBadge) hasUnread ? sidebarBadge.classList.remove('hidden') : sidebarBadge.classList.add('hidden');
+                }
+            } catch (err) {
+                console.error("Fetch error:", err);
+            }
+        }
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

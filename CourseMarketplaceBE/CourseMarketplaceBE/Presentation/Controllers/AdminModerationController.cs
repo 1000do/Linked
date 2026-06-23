@@ -1,9 +1,12 @@
+using System;
+using System.Collections.Generic;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 
 namespace CourseMarketplaceBE.Presentation.Controllers
 {
@@ -14,12 +17,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers
     {
         private readonly ICourseModerationService _courseModerationService;
         private readonly IUserReportModerationService _userReportModerationService;
-        private readonly IReportService _reportService;
+        private readonly IReportModerationService _reportService;
 
         public AdminModerationController(
             ICourseModerationService courseModerationService,
             IUserReportModerationService userReportModerationService,
-            IReportService reportService)
+            IReportModerationService reportService)
         {
             _courseModerationService = courseModerationService;
             _userReportModerationService = userReportModerationService;
@@ -123,25 +126,25 @@ namespace CourseMarketplaceBE.Presentation.Controllers
 
         /// <summary>Lấy tất cả course reports (có thể lọc theo status)</summary>
         [HttpGet("reports/courses")]
-        public async Task<IActionResult> GetAllCourseReports([FromQuery] string? status = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetAllCourseReports([FromQuery] PagedReportRequestDto request)
         {
-            var reports = await _reportService.GetAllCourseReportsAsync(status, page, pageSize);
+            var reports = await _reportService.GetAllCourseReportsAsync(request);
             return Ok(ApiResponse<object>.SuccessResponse(reports));
         }
 
         /// <summary>Lấy tất cả course review reports (có thể lọc theo status)</summary>
         [HttpGet("reports/course-reviews")]
-        public async Task<IActionResult> GetAllCourseReviewReports([FromQuery] string? status = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetAllCourseReviewReports([FromQuery] PagedReportRequestDto request)
         {
-            var reports = await _reportService.GetAllCourseReviewReportsAsync(status, page, pageSize);
+            var reports = await _reportService.GetAllCourseReviewReportsAsync(request);
             return Ok(ApiResponse<object>.SuccessResponse(reports));
         }
 
         /// <summary>Lấy tất cả lesson review reports (có thể lọc theo status)</summary>
         [HttpGet("reports/lesson-reviews")]
-        public async Task<IActionResult> GetAllLessonReviewReports([FromQuery] string? status = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetAllLessonReviewReports([FromQuery] PagedReportRequestDto request)
         {
-            var reports = await _reportService.GetAllLessonReviewReportsAsync(status, page, pageSize);
+            var reports = await _reportService.GetAllLessonReviewReportsAsync(request);
             return Ok(ApiResponse<object>.SuccessResponse(reports));
         }
 
@@ -166,9 +169,17 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             {
                 return StatusCode(403, ApiResponse<string>.ErrorResponse(ex.Message));
             }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to resolve course report"));
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
             }
         }
 
@@ -189,9 +200,17 @@ namespace CourseMarketplaceBE.Presentation.Controllers
                     ? Ok(ApiResponse<string>.SuccessResponse("Course review report resolved successfully."))
                     : NotFound(ApiResponse<string>.ErrorResponse("Report not found."));
             }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to resolve course review report"));
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
             }
         }
 
@@ -212,9 +231,17 @@ namespace CourseMarketplaceBE.Presentation.Controllers
                     ? Ok(ApiResponse<string>.SuccessResponse("Lesson review report resolved successfully."))
                     : NotFound(ApiResponse<string>.ErrorResponse("Report not found."));
             }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to resolve lesson review report"));
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
             }
         }
 
@@ -238,9 +265,17 @@ namespace CourseMarketplaceBE.Presentation.Controllers
                     ? Ok(ApiResponse<string>.SuccessResponse("Course removed successfully."))
                     : NotFound(ApiResponse<string>.ErrorResponse("Course not found."));
             }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to remove course"));
+                return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
             }
         }
     }

@@ -45,7 +45,7 @@ services:
   #     SPAM_MODEL_PATH: ${SPAM_MODEL_PATH}
   #     TOXIC_MODEL_PATH: ${TOXIC_MODEL_PATH}
   #     CLIP_MODEL_NAME: ${CLIP_MODEL_NAME}
-  #     DISTILBERT_MODEL_NAME: ${DISTILBERT_MODEL_NAME}
+  #     TEXT_EMBEDDING_MODEL_NAME: ${TEXT_EMBEDDING_MODEL_NAME}
   #   volumes:
   #     - ./ai_models:/app/models
   #   ports:
@@ -68,6 +68,7 @@ services:
     environment:
       ConnectionStrings__DefaultConnection: "Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}"
       AllowedOrigins: ${ALLOWED_ORIGINS}
+      FrontendBaseUrl: ${FRONTEND_BASE_URL:-http://localhost:5208}
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       ASPNETCORE_URLS: "http://+:80"
       JWT_KEY: ${JWT_KEY}
@@ -103,6 +104,7 @@ services:
       dockerfile: CourseMarketplaceFE/CourseMarketplaceFE/Dockerfile
     environment:
       BackendApiUrl: "http://backend:80/api/"
+      BackendBaseUrl: "http://backend:80"
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       Stripe__PublishableKey: ${STRIPE_PUBLISHABLE_KEY}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}

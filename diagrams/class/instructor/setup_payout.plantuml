@@ -3,34 +3,28 @@
 ' Styling & Settings
 skinparam style strictuml
 skinparam shadowing false
+skinparam classAttributeIconSize 0
 skinparam class {
     BackgroundColor White
-    BorderColor #1A73E8
-    ArrowColor #5F6368
+    BorderColor #333333
+    ArrowColor #333333
 }
 
-!define ABSTRACT_COLOR #FFE6CC
-!define SERVICE_COLOR #CCE5FF
-!define DTO_COLOR #E6CCFF
-!define ENTITY_COLOR #CCFFE6
-!define REPOSITORY_COLOR #FFFFCC
-!define CONTROLLER_COLOR #FFE6E6
-
 skinparam backgroundColor #FFFFFF
-skinparam classBackgroundColor #F9F9F9
+skinparam classBackgroundColor #FFFFFF
 skinparam classBorderColor #333333
 skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class InstructorControllerFE #FFE6E6 {
+class InstructorControllerFE #FFFFFF {
     + SetupPayout() : Task<IActionResult>
     + StripeReturn(instructorId: int) : Task<IActionResult>
 }
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class InstructorControllerBE #FFE6E6 {
+class InstructorControllerBE #FFFFFF {
     - _instructorService : IInstructorService
     + SetupPayout() : Task<IActionResult>
     + StripeReturn(instructorId: int) : Task<IActionResult>
@@ -38,51 +32,51 @@ class InstructorControllerBE #FFE6E6 {
 
 ' ==================== BACKEND - DTOs ====================
 
-class StripeSetupResponse #E6CCFF {
-    + OnboardingUrl : string
-    + StripeAccountId : string
+class StripeSetupResponse #FFFFFF {
+    - OnboardingUrl : string
+    - StripeAccountId : string
 }
 
-class StripeAccountStatus #E6CCFF {
-    + DetailsSubmitted : bool
-    + PayoutsEnabled : bool
-    + ChargesEnabled : bool
+class StripeAccountStatus #FFFFFF {
+    - DetailsSubmitted : bool
+    - PayoutsEnabled : bool
+    - ChargesEnabled : bool
 }
 
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
-class Instructor #CCFFE6 {
-    + InstructorId : int <<PK, FK>>
-    + ProfessionalTitle : string?
-    + ExpertiseCategories : string?
-    + LinkedinUrl : string?
-    + YoutubeUrl : string?
-    + FacebookUrl : string?
-    + DocumentUrl : string?
-    + ApprovalStatus : string?
-    + RejectionReason : string?
-    + StripeAccountId : string?
-    + StripeOnboardingStatus : string?
-    + PayoutsEnabled : bool?
-    + ChargesEnabled : bool?
-    + StripeCountry : string?
+class Instructor #FFFFFF {
+    - InstructorId : int
+    - ProfessionalTitle : string?
+    - ExpertiseCategories : string?
+    - LinkedinUrl : string?
+    - YoutubeUrl : string?
+    - FacebookUrl : string?
+    - DocumentUrl : string?
+    - ApprovalStatus : string?
+    - RejectionReason : string?
+    - StripeAccountId : string?
+    - StripeOnboardingStatus : string?
+    - PayoutsEnabled : bool?
+    - ChargesEnabled : bool?
+    - StripeCountry : string?
 }
 
 ' ==================== BACKEND - SERVICE INTERFACES ====================
 
-interface IInstructorService #FFE6CC {
+interface IInstructorService #FFFFFF {
     //+ SetupStripePayoutAsync(userId: int) : Task<StripeSetupResponse>//
     //+ VerifyStripeOnboardingAsync(instructorId: int) : Task<string>//
 }
 
-interface IStripeConnectService #FFE6CC {
+interface IStripeConnectService #FFFFFF {
     //+ SetupExpressAccountAsync(userId: int, email: string, country: string, title: string, category: string, currentAccountId: string?) : Task<StripeSetupResponse>//
     //+ GetAccountStatusAsync(stripeAccountId: string) : Task<StripeAccountStatus>//
 }
 
 ' ==================== BACKEND - REPOSITORY INTERFACES ====================
 
-interface IInstructorRepository #FFE6CC {
+interface IInstructorRepository #FFFFFF {
     //+ GetByIdAsync(id: int) : Task<Instructor?>//
     //+ GetByIdWithNavigationAsync(id: int) : Task<Instructor?>//
     //+ SaveChangesAsync() : Task<int>//
@@ -90,7 +84,7 @@ interface IInstructorRepository #FFE6CC {
 
 ' ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
-class InstructorService #CCE5FF {
+class InstructorService #FFFFFF {
     - _repo : IInstructorRepository
     - _stripeConnect : IStripeConnectService
     + SetupStripePayoutAsync(userId: int) : Task<StripeSetupResponse>
@@ -99,7 +93,7 @@ class InstructorService #CCE5FF {
 
 ' ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
-class InstructorRepository #FFFFCC {
+class InstructorRepository #FFFFFF {
     - _context : AppDbContext
     + GetByIdAsync(id: int) : Task<Instructor?>
     + GetByIdWithNavigationAsync(id: int) : Task<Instructor?>
@@ -108,28 +102,27 @@ class InstructorRepository #FFFFCC {
 
 ' ==================== BACKEND - DbContext ====================
 
-class AppDbContext #E6F3FF {
+class AppDbContext #FFFFFF {
     + Instructors : DbSet<Instructor>
 }
 
 ' ==================== RELATIONSHIPS ====================
 
 ' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-InstructorControllerFE ..> InstructorControllerBE : calls
-InstructorControllerBE --> IInstructorService
-InstructorService --> IInstructorRepository
-InstructorService --> IStripeConnectService
-InstructorRepository --> AppDbContext
+InstructorControllerFE -down..> InstructorControllerBE
+InstructorControllerBE -down--> IInstructorService
+InstructorService -down--> IInstructorRepository
+InstructorService -down--> IStripeConnectService
+InstructorRepository -down--> AppDbContext
 
 ' === INTERFACE REALIZATION ===
-InstructorService ..|> IInstructorService
-InstructorRepository ..|> IInstructorRepository
+InstructorService -up..|> IInstructorService
+InstructorRepository -up..|> IInstructorRepository
 
 ' === DEPENDENCY (dashed arrows) ===
-InstructorControllerBE ..> StripeSetupResponse : uses
-InstructorService ..> StripeSetupResponse : creates
-InstructorService ..> StripeAccountStatus : uses
-' InstructorRepository ..> Instructor : queries
-InstructorRepository ..> Instructor : saves
+InstructorControllerBE -down..> StripeSetupResponse
+InstructorService -down..> StripeSetupResponse
+InstructorService -down..> StripeAccountStatus
+InstructorRepository -down..> Instructor
 
 @enduml

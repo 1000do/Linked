@@ -42,6 +42,7 @@ namespace CourseMarketplaceBE.Infrastructure.Services
             IRedisService redisService)
         {
             _httpClient = httpClient;
+            _httpClient.Timeout = TimeSpan.FromMinutes(10);
             _logger = logger;
             _aiModelRepository = aiModelRepository;
             _usageLogRepository = usageLogRepository;

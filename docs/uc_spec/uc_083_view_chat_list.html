@@ -1,0 +1,174 @@
+<div class="uc-container" style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <style>
+        .uc-container, .uc-container table, .uc-container tr, .uc-container td, .uc-container p, .uc-container ol, .uc-container ul, .uc-container li, .uc-container span, .uc-container strong, .uc-container b {
+            font-family: 'Times New Roman', serif !important;
+            font-size: 12pt !important;
+            color: black !important;
+        }
+    </style>
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">UC ID and Name</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">UC-83-View Chat List</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Created By:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Antigravity</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Date Created:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">20/06/2026</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Primary Actor:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Staff, Admin</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Secondary Actors:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Trigger:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Actor accesses the Chat page under the Admin Panel dashboard.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Description:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Allows the Actor to view their list of active support or moderation conversations, view pending support request tickets (Staff only), search for specific conversations, filter by unread status, and sort the conversation list.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Preconditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><b>PRE-1.</b> Actor must be successfully authenticated.</p>
+                <p style="margin: 0;"><b>PRE-2.</b> Actor's role must be Staff or Admin.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Post-conditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><b>POST-1.</b> The system renders the list of active support/moderation conversations in the chat sidebar.</p>
+                <p style="margin: 0;"><b>POST-2.</b> The system displays the list of pending support requests in the sidebar (Staff only).</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Normal Flow:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A. View Chat List Successfully</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>Actor accesses the Chat page under the Admin Panel dashboard.</li>
+                    <li>The system checks the Actor's authentication status.</li>
+                    <li>The system validates that the Actor's role is Staff or Admin.</li>
+                    <li>The system requests the list of active support/moderation conversations.</li>
+                    <li>The system requests the list of pending support requests (if the Actor is Staff).</li>
+                    <li>The system retrieves the list of active support/moderation conversations from the database.</li>
+                    <li>The system retrieves the list of pending support requests from the database (if the Actor is Staff).</li>
+                    <li>The system displays the Chat page with the chat sidebar containing the active conversation list, pending requests list (Staff only), search input, filter dropdown, and sort dropdown.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Alternative Flows:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A.8.1 Filter by Unread Messages</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor selects "Unread" from the `"chat-filter-status"` dropdown.</li>
+                    <li>The system filters the active support/moderation chat list to display only conversations with an unread message count greater than zero.</li>
+                    <li>Back to step 8.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.8.2 Sort by Name (A-Z)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor selects "Name (A-Z)" from the `"chat-sort"` dropdown.</li>
+                    <li>The system sorts the list of active conversations alphabetically by the partner's name.</li>
+                    <li>Back to step 8.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.8.3 Sort by Unread First</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor selects "Unread First" from the `"chat-sort"` dropdown.</li>
+                    <li>The system sorts the list of active conversations to display those with unread messages at the top.</li>
+                    <li>Back to step 8.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.8.4 Search Users/Conversations</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor enters a search term in the `"search-chats"` input box.</li>
+                    <li>The system triggers a query after a brief debounce delay (300ms).</li>
+                    <li>The system retrieves the filtered conversation list matching the search term.</li>
+                    <li>Back to step 8.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.8.5 Clear Search Input</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clears the text in the `"search-chats"` input box.</li>
+                    <li>The system retrieves the default active conversation list.</li>
+                    <li>Back to step 8.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.8.6 Contact Admin (Only for Staff)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor (Staff) clicks the `"Contact Admin"` button.</li>
+                    <li>The system requests the Admin account details.</li>
+                    <li>The system creates a direct chat channel with the Admin.</li>
+                    <li>The system updates the conversation list and opens the chat room.</li>
+                    <li>Back to step 8.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>A.8.7 Accept Support Request (Only for Staff)</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>Actor (Staff) clicks the `"Accept Request"` button next to a pending support ticket.</li>
+                    <li>The system updates the support ticket status to accepted.</li>
+                    <li>The system creates a support chat room between the Actor (Staff) and the requester.</li>
+                    <li>The system removes the support ticket from the pending requests list.</li>
+                    <li>The system updates the conversation list and opens the support chat room.</li>
+                    <li>Back to step 8.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Exceptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>EX-1 Session Invalid (Not Logged In)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system displays an authentication error message.</li>
+                    <li>The system redirects the user to the login page.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-3 Unauthorized Access</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects that the Actor is neither Staff nor Admin.</li>
+                    <li>The system displays an access denied error message.</li>
+                    <li>The system redirects the Actor to the dashboard/home page.</li>
+                </ol>
+
+                <p style="margin: 0 0 5px 0;"><strong>EX-6 Retrieval Failed</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>The system fails to retrieve the conversation list or pending requests.</li>
+                    <li>The system displays a bad request error notification.</li>
+                    <li>Back to step 8.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Priority:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Frequency of Use:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">High</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Business Rules:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;">1. <strong>Support Request Assignment:</strong> Pending support tickets are visible only to Staff members. When a Staff member clicks `"Accept Request"`, the ticket is assigned to them and removed from the public pending list. Admin members do not receive or view pending support requests from users.</p>
+                <p style="margin: 0 0 5px 0;">2. <strong>Staff-Admin Escalation:</strong> Staff members can use the `"Contact Admin"` button to establish a direct communication channel with an Admin for escalation or administrative assistance. Admin members can view and reply to active conversations initiated by Staff members, but cannot initiate support chats or receive user tickets.</p>
+                <p style="margin: 0;">3. <strong>Real-Time Synchronization:</strong> Both active conversations and pending requests list are synchronized in real-time using SignalR hub notifications.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Other Information:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Assumptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;">Staff, Admin has stable internet connection.</p>
+            </td>
+        </tr>
+    </table>
+</div>

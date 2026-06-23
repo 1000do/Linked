@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.Services;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Exceptions;
 using CourseMarketplaceBE.Domain.IRepositories;
 using FluentAssertions;
 using NSubstitute;
@@ -99,7 +101,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mapperMock.Map<List<AiModelAdminDto>>(models).Returns(dtos);
 
             //Act
-            var result = await _sut.GetPagedModelsAsync(page, pageSize);
+            var result = await _sut.GetPagedModelsAsync(new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = page, PageSize = pageSize });
 
             //Assert
             result.Items.Should().BeEquivalentTo(dtos);
@@ -110,27 +112,28 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetPagedModelsAsync_WhenEmpty_ShouldThrowKeyNotFoundException()
+        public async Task GetPagedModelsAsync_WhenPageOrPageSizeIsInvalid_ShouldUseDefaults()
         {
             //Arrange 1
-            int page = 1;
-            int pageSize = 10;
-            var emptyModels = new List<AiModel>();
+            var req = new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = 0, PageSize = -5 };
+            var models = new List<AiModel> { new AiModel() };
+            var dtos = new List<AiModelAdminDto> { new AiModelAdminDto() };
 
             //Arrange 2
-            _aiModelRepoMock.GetPagedAdminAsync(page, pageSize).Returns((emptyModels, 0));
-            
+            _aiModelRepoMock.GetPagedAdminAsync(1, 10).Returns((models, 1));
+            _mapperMock.Map<List<AiModelAdminDto>>(models).Returns(dtos);
+
             //Act
-            Func<Task> act = async () => await _sut.GetPagedModelsAsync(page, pageSize);
+            var result = await _sut.GetPagedModelsAsync(req);
 
             //Assert
-            await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("No AI models found.");
-            
-            await _aiModelRepoMock.Received(1).GetPagedAdminAsync(page, pageSize);
-            _mapperMock.DidNotReceive().Map<List<AiModelAdminDto>>(Arg.Any<List<AiModel>>());
+            result.Items.Should().BeEquivalentTo(dtos);
+            result.TotalCount.Should().Be(1);
+
+            await _aiModelRepoMock.Received(1).GetPagedAdminAsync(1, 10);
+            _mapperMock.Received(1).Map<List<AiModelAdminDto>>(models);
         }
 
-        // GetModelByIdAsync
         [Fact]
         public async Task GetModelByIdAsync_WhenExists_ShouldReturnModel()
         {
@@ -222,6 +225,27 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             await _aiModelRepoMock.Received(1).SaveChangesAsync();
         }
 
+        [Fact]
+        public async Task AddModelAsync_WhenDbConstraintViolated_ShouldThrowBadRequestException()
+        {
+            //Arrange 1
+            var req = new CreateAiModelRequest { ModelName = "Test" };
+            var addedModel = new AiModel {ModelId = 1, ModelName = req.ModelName};
+
+            //Arrange 2
+            _aiModelRepoMock.Add(Arg.Any<AiModel>()).Returns(addedModel);
+            _aiModelRepoMock.SaveChangesAsync().Returns<int>(x => throw new AiModelException("Db constraint violated"));
+
+            //Act
+            Func<Task> act = async () => await _sut.AddModelAsync(req);
+
+            //Assert
+            await act.Should().ThrowAsync<BadRequestException>().WithMessage("Db constraint violated");
+
+            _aiModelRepoMock.Received(1).Add(Arg.Is<AiModel>(m => m.ModelName == req.ModelName));
+            await _aiModelRepoMock.Received(1).SaveChangesAsync();
+        }
+
         // UpdateModelAsync
         [Fact]
         public async Task UpdateModelAsync_WhenExists_ShouldReturnUpdatedModel()
@@ -297,6 +321,31 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("No changes were saved to the database.");
+
+            await _aiModelRepoMock.Received(1).GetByIdAsync(mockId);
+            _aiModelRepoMock.Received(1).Update(Arg.Is<AiModel>(m => m.ModelProvider == req.ModelProvider));
+            await _aiModelRepoMock.Received(1).SaveChangesAsync();
+        }
+
+        [Fact]
+        public async Task UpdateModelAsync_WhenDbConstraintViolated_ShouldThrowBadRequestException()
+        {
+            //Arrange 1
+            var mockId = 1;
+            var req = new UpdateAiModelRequest { ModelProvider = "New" };
+            var existingModel = new AiModel { ModelId = mockId };
+            var updatedModel = new AiModel { ModelId = mockId, ModelProvider = req.ModelProvider };
+
+            //Arrange 2
+            _aiModelRepoMock.GetByIdAsync(mockId).Returns(existingModel);
+            _aiModelRepoMock.Update(Arg.Any<AiModel>()).Returns(updatedModel);
+            _aiModelRepoMock.SaveChangesAsync().Returns<int>(x => throw new AiModelException("Db constraint violated"));
+
+            //Act
+            Func<Task> act = async () => await _sut.UpdateModelAsync(mockId, req);
+
+            //Assert
+            await act.Should().ThrowAsync<BadRequestException>().WithMessage("Db constraint violated");
 
             await _aiModelRepoMock.Received(1).GetByIdAsync(mockId);
             _aiModelRepoMock.Received(1).Update(Arg.Is<AiModel>(m => m.ModelProvider == req.ModelProvider));
@@ -383,6 +432,27 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("No changes were saved to the database.");
+
+            await _aiModelRepoMock.Received(1).GetByIdAsync(mockId);
+            await _aiModelRepoMock.Received(1).SaveChangesAsync();
+        }
+
+        [Fact]
+        public async Task ToggleModelStatusAsync_WhenDbConstraintViolated_ShouldThrowBadRequestException()
+        {
+            //Arrange 1
+            var mockId = 1;
+            var existingModel = new AiModel { ModelId = mockId, ModelStatus = AiModelConst.Active };
+
+            //Arrange 2
+            _aiModelRepoMock.GetByIdAsync(mockId).Returns(existingModel);
+            _aiModelRepoMock.SaveChangesAsync().Returns<int>(x => throw new AiModelException("Db constraint violated"));
+
+            //Act
+            Func<Task> act = async () => await _sut.ToggleModelStatusAsync(mockId);
+
+            //Assert
+            await act.Should().ThrowAsync<BadRequestException>().WithMessage("Db constraint violated");
 
             await _aiModelRepoMock.Received(1).GetByIdAsync(mockId);
             await _aiModelRepoMock.Received(1).SaveChangesAsync();
@@ -485,6 +555,25 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             await _configRepoMock.Received(1).UpsertConfigAsync(SystemConfigKeys.ModerationThreshold, Arg.Any<string>(), Arg.Any<string>());
         }
 
+        [Fact]
+        public async Task UpdateThresholdsAsync_WhenDbConstraintViolated_ShouldThrowBadRequestException()
+        {
+            //Arrange 1
+            var req = new UpdateThresholdsRequest { SpamConfidenceThreshold = 0.5f, ToxicityConfidenceThreshold = 0.6f, SimilarityScoreThreshold = 0.7f };
+
+            //Arrange 2
+            _configRepoMock.UpsertConfigAsync(SystemConfigKeys.ModerationThreshold, Arg.Any<string>(), Arg.Any<string>())
+                .Returns<int>(x => throw new SystemConfigException("Db constraint violated"));
+
+            //Act
+            Func<Task> act = async () => await _sut.UpdateThresholdsAsync(req);
+
+            //Assert
+            await act.Should().ThrowAsync<BadRequestException>().WithMessage("Db constraint violated");
+
+            await _configRepoMock.Received(1).UpsertConfigAsync(SystemConfigKeys.ModerationThreshold, Arg.Any<string>(), Arg.Any<string>());
+        }
+
         // UpdateIntegrationAsync
         [Fact]
         public async Task UpdateIntegrationAsync_ShouldReturnTrue()
@@ -522,6 +611,25 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             await _configRepoMock.Received(1).UpsertConfigAsync(req.ConfigKey, req.ConfigValue, Arg.Any<string>());
         }
 
+        [Fact]
+        public async Task UpdateIntegrationAsync_WhenDbConstraintViolated_ShouldThrowBadRequestException()
+        {
+            //Arrange 1
+            var req = new UpdateIntegrationRequest { ConfigKey = "key", ConfigValue = "value" };
+
+            //Arrange 2
+            _configRepoMock.UpsertConfigAsync(req.ConfigKey, req.ConfigValue, Arg.Any<string>())
+                .Returns<int>(x => throw new SystemConfigException("Db constraint violated"));
+
+            //Act
+            Func<Task> act = async () => await _sut.UpdateIntegrationAsync(req);
+
+            //Assert
+            await act.Should().ThrowAsync<BadRequestException>().WithMessage("Db constraint violated");
+
+            await _configRepoMock.Received(1).UpsertConfigAsync(req.ConfigKey, req.ConfigValue, Arg.Any<string>());
+        }
+
         // GetCourseModerationLogsAsync
         [Fact]
         public async Task GetCourseModerationLogsAsync_ShouldReturnMappedLogsAndTotalCount()
@@ -538,7 +646,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mapperMock.Map<List<CourseModerationLogAdminDto>>(logs).Returns(dtos);
 
             //Act
-            var result = await _sut.GetCourseModerationLogsAsync(page, pageSize);
+            var result = await _sut.GetCourseModerationLogsAsync(new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = page, PageSize = pageSize });
 
             //Assert
             result.Items.Should().BeEquivalentTo(dtos);
@@ -549,27 +657,28 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetCourseModerationLogsAsync_WhenEmpty_ShouldThrowKeyNotFoundException()
+        public async Task GetCourseModerationLogsAsync_WhenPageOrPageSizeIsInvalid_ShouldUseDefaults()
         {
             //Arrange 1
-            int page = 1;
-            int pageSize = 10;
-            var emptyLogs = new List<CourseAiUsageLog>();
+            var req = new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = 0, PageSize = -5 };
+            var logs = new List<CourseAiUsageLog> { new CourseAiUsageLog() };
+            var dtos = new List<CourseModerationLogAdminDto> { new CourseModerationLogAdminDto() };
 
             //Arrange 2
-            _courseLogRepoMock.GetPagedAdminAsync(page, pageSize).Returns((emptyLogs, 0));
-            
+            _courseLogRepoMock.GetPagedAdminAsync(1, 10).Returns((logs, 1));
+            _mapperMock.Map<List<CourseModerationLogAdminDto>>(logs).Returns(dtos);
+
             //Act
-            Func<Task> act = async () => await _sut.GetCourseModerationLogsAsync(page, pageSize);
+            var result = await _sut.GetCourseModerationLogsAsync(req);
 
             //Assert
-            await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("No course moderation logs found.");
+            result.Items.Should().BeEquivalentTo(dtos);
+            result.TotalCount.Should().Be(1);
 
-            await _courseLogRepoMock.Received(1).GetPagedAdminAsync(page, pageSize);
-            _mapperMock.DidNotReceive().Map<List<CourseModerationLogAdminDto>>(Arg.Any<List<CourseAiUsageLog>>());
+            await _courseLogRepoMock.Received(1).GetPagedAdminAsync(1, 10);
+            _mapperMock.Received(1).Map<List<CourseModerationLogAdminDto>>(logs);
         }
 
-        // GetCourseModerationLogDetailAsync
         [Fact]
         public async Task GetCourseModerationLogDetailAsync_WhenExists_ShouldReturnMappedLog()
         {
@@ -627,7 +736,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mapperMock.Map<List<ReviewModerationLogAdminDto>>(logs).Returns(dtos);
 
             //Act
-            var result = await _sut.GetCourseReviewModerationLogsAsync(page, pageSize);
+            var result = await _sut.GetCourseReviewModerationLogsAsync(new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = page, PageSize = pageSize });
 
             //Assert
             result.Items.Should().BeEquivalentTo(dtos);
@@ -638,27 +747,28 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetCourseReviewModerationLogsAsync_WhenEmpty_ShouldThrowKeyNotFoundException()
+        public async Task GetCourseReviewModerationLogsAsync_WhenPageOrPageSizeIsInvalid_ShouldUseDefaults()
         {
             //Arrange 1
-            int page = 1;
-            int pageSize = 10;
-            var emptyLogs = new List<CourseReviewModerationLog>();
+            var req = new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = 0, PageSize = -5 };
+            var logs = new List<CourseReviewModerationLog> { new CourseReviewModerationLog() };
+            var dtos = new List<ReviewModerationLogAdminDto> { new ReviewModerationLogAdminDto() };
 
             //Arrange 2
-            _courseReviewLogRepoMock.GetPagedAdminAsync(page, pageSize).Returns((emptyLogs, 0));
-            
+            _courseReviewLogRepoMock.GetPagedAdminAsync(1, 10).Returns((logs, 1));
+            _mapperMock.Map<List<ReviewModerationLogAdminDto>>(logs).Returns(dtos);
+
             //Act
-            Func<Task> act = async () => await _sut.GetCourseReviewModerationLogsAsync(page, pageSize);
+            var result = await _sut.GetCourseReviewModerationLogsAsync(req);
 
             //Assert
-            await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("No course review moderation logs found.");
+            result.Items.Should().BeEquivalentTo(dtos);
+            result.TotalCount.Should().Be(1);
 
-            await _courseReviewLogRepoMock.Received(1).GetPagedAdminAsync(page, pageSize);
-            _mapperMock.DidNotReceive().Map<List<ReviewModerationLogAdminDto>>(Arg.Any<List<CourseReviewModerationLog>>());
+            await _courseReviewLogRepoMock.Received(1).GetPagedAdminAsync(1, 10);
+            _mapperMock.Received(1).Map<List<ReviewModerationLogAdminDto>>(logs);
         }
 
-        // GetCourseReviewModerationLogDetailAsync
         [Fact]
         public async Task GetCourseReviewModerationLogDetailAsync_WhenExists_ShouldReturnMappedLog()
         {
@@ -716,7 +826,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mapperMock.Map<List<ReviewModerationLogAdminDto>>(logs).Returns(dtos);
 
             //Act
-            var result = await _sut.GetLessonReviewModerationLogsAsync(page, pageSize);
+            var result = await _sut.GetLessonReviewModerationLogsAsync(new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = page, PageSize = pageSize });
 
             //Assert
             result.Items.Should().BeEquivalentTo(dtos);
@@ -727,27 +837,28 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetLessonReviewModerationLogsAsync_WhenEmpty_ShouldThrowKeyNotFoundException()
+        public async Task GetLessonReviewModerationLogsAsync_WhenPageOrPageSizeIsInvalid_ShouldUseDefaults()
         {
             //Arrange 1
-            int page = 1;
-            int pageSize = 10;
-            var emptyLogs = new List<LessonReviewModerationLog>();
+            var req = new CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto { Page = 0, PageSize = -5 };
+            var logs = new List<LessonReviewModerationLog> { new LessonReviewModerationLog() };
+            var dtos = new List<ReviewModerationLogAdminDto> { new ReviewModerationLogAdminDto() };
 
             //Arrange 2
-            _lessonReviewLogRepoMock.GetPagedAdminAsync(page, pageSize).Returns((emptyLogs, 0));
-            
+            _lessonReviewLogRepoMock.GetPagedAdminAsync(1, 10).Returns((logs, 1));
+            _mapperMock.Map<List<ReviewModerationLogAdminDto>>(logs).Returns(dtos);
+
             //Act
-            Func<Task> act = async () => await _sut.GetLessonReviewModerationLogsAsync(page, pageSize);
+            var result = await _sut.GetLessonReviewModerationLogsAsync(req);
 
             //Assert
-            await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("No lesson review moderation logs found.");
+            result.Items.Should().BeEquivalentTo(dtos);
+            result.TotalCount.Should().Be(1);
 
-            await _lessonReviewLogRepoMock.Received(1).GetPagedAdminAsync(page, pageSize);
-            _mapperMock.DidNotReceive().Map<List<ReviewModerationLogAdminDto>>(Arg.Any<List<LessonReviewModerationLog>>());
+            await _lessonReviewLogRepoMock.Received(1).GetPagedAdminAsync(1, 10);
+            _mapperMock.Received(1).Map<List<ReviewModerationLogAdminDto>>(logs);
         }
 
-        // GetLessonReviewModerationLogDetailAsync
         [Fact]
         public async Task GetLessonReviewModerationLogDetailAsync_WhenExists_ShouldReturnMappedLog()
         {
@@ -790,3 +901,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
     }
 }
+
+
+
+
+

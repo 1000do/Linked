@@ -131,7 +131,12 @@
             <div class="space-y-1.5">
                 <label class="text-xs font-medium text-slate-700">Message Details</label>
                 <input type="text" id="title" maxlength="255" required class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow mb-3" placeholder="Message Title...">
-                <textarea id="content" rows="4" required class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow resize-none" placeholder="Write message details..."></textarea>
+                <textarea id="content" rows="4" required class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow resize-none mb-3" placeholder="Write message details..."></textarea>
+            </div>
+
+            <div class="space-y-1.5">
+                <label class="text-xs font-medium text-slate-700">Link Action (Optional)</label>
+                <input type="text" id="linkAction" maxlength="500" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow" placeholder="https://... or /Course/Details/123">
             </div>
 
             <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
@@ -174,6 +179,12 @@
                     <p id="detail-content" class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap break-words"></p>
                 </div>
             </div>
+            <div id="detail-link-container" class="hidden">
+                <label class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Action Link</label>
+                <div class="mt-1">
+                    <a id="detail-link" href="#" target="_blank" class="text-sm font-medium text-emerald-600 hover:text-emerald-700 underline break-all"></a>
+                </div>
+            </div>
             <div class="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-100">
                 <span id="detail-time"></span>
                 <span id="detail-status" class="font-semibold"></span>
@@ -189,7 +200,7 @@
 
 @section Scripts {
     <script>
-        const API_URL = "http://localhost:5207/api/Notification";
+        const API_URL = "/Notification";
         const TOKEN = `@Html.Raw(token)`;
 
         let currentPage = 1;
@@ -212,9 +223,10 @@
 
         async function loadHistory() {
             try {
-                const res = await fetch(`${API_URL}/all`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
+                const res = await fetch(`${API_URL}/GetAllAdmin`);
                 if (res.ok) {
-                    allNotifications = await res.json();
+                    const apiResp = await res.json();
+                    allNotifications = apiResp.data?.items || [];
                     applyFilters();
                 }
             } catch (err) { console.error(err); }
@@ -369,8 +381,9 @@
             const query = e.target.value.trim();
             if (query.length < 1) { suggestions.classList.add('hidden'); return; }
             try {
-                const res = await fetch(`${API_URL}/search-emails?query=${query}`, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
-                const data = await res.json();
+                const res = await fetch(`${API_URL}/SearchEmails?query=${query}`);
+                const apiResp = await res.json();
+                const data = apiResp.data || [];
                 if (data.length > 0) {
                     suggestions.innerHTML = data.filter(m => !selectedEmails.includes(m))
                         .map(m => `<div class="px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer" onclick="addTag('${m}')">${m}</div>`).join('');
@@ -442,6 +455,17 @@
             document.getElementById('detail-recipient').innerText = `${noti.receiverFullName || 'System Broadcast'} (${noti.receiverEmail || 'all-users@system.com'})`;
             document.getElementById('detail-title').innerText = noti.title;
             document.getElementById('detail-content').innerText = noti.content;
+            
+            const linkContainer = document.getElementById('detail-link-container');
+            const linkAnchor = document.getElementById('detail-link');
+            if (noti.linkAction) {
+                linkAnchor.href = noti.linkAction;
+                linkAnchor.innerText = noti.linkAction;
+                linkContainer.classList.remove('hidden');
+            } else {
+                linkContainer.classList.add('hidden');
+            }
+
             document.getElementById('detail-time').innerText = `Created at: ${formatDateTime(noti.createdAt)}`;
             document.getElementById('detail-status').innerHTML = noti.isRead 
                 ? `<span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Read</span>` 
@@ -466,11 +490,8 @@
                 !noti.isRead) {
                 
                 try {
-                    const res = await fetch(`${API_URL}/mark-as-read/${id}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `Bearer ${TOKEN}`
-                        }
+                    const res = await fetch(`${API_URL}/MarkAsRead/${id}`, {
+                        method: 'PUT'
                     });
                     if (res.ok) {
                         noti.isRead = true;
@@ -522,14 +543,15 @@
             btn.disabled = true; btn.innerText = "Sending...";
 
             try {
-                const res = await fetch(`${API_URL}/send-advanced`, {
+                const res = await fetch(`${API_URL}/SendAdvanced`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         targetType: type,
                         emails: selectedEmails,
                         title: document.getElementById('title').value,
-                        content: document.getElementById('content').value
+                        content: document.getElementById('content').value,
+                        linkAction: document.getElementById('linkAction').value || null
                     })
                 });
 

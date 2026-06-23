@@ -2607,7 +2607,7 @@ namespace CourseMarketplaceBE.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<Vector>("Embedding")
-                        .HasColumnType("vector(768)")
+                        .HasColumnType("vector(384)")
                         .HasColumnName("text_embedding");
 
                     b.Property<int?>("MaterialId")

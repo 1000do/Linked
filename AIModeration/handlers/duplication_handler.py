@@ -117,13 +117,13 @@ class DuplicationHandler(BaseHandler):
                     # Mapping should follow allowed types in embedding_service, not text_extraction_service
                     mapped_type = self.embedding_service.get_file_type_for_embedding(file_ext)
                     
-                    # Resolve embedding_type: "media" for image/video, "text" for text/pdf/word
+                    # Resolve embedding_type: "media" for image/video, "text" for text/pdf/word/powerpoint/excel
                     emb_type = "media" if mapped_type in ("image", "video") else "text"
                     
                     # Map generators based on process type if possible
                     selected_model_id = model_id
                     for g in generators:
-                        if g.process_type and g.process_type.lower() in mapped_type.lower():
+                        if g.process_type and g.process_type.lower() in emb_type.lower():
                             selected_model_id = g.model_id
                             break
 

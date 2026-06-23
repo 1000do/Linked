@@ -84,6 +84,8 @@ public class CourseQuizItemResponse
     public bool IsHidden { get; set; }
 }
 
+
+
 public class CategoryResponse
 {
     public int CategoryId { get; set; }

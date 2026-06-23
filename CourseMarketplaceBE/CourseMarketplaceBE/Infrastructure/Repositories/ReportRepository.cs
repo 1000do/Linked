@@ -1,6 +1,7 @@
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Domain.Exceptions;
 using CourseMarketplaceBE.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -22,7 +23,8 @@ public class ReportRepository : IReportRepository
 
     public async Task<CourseReport?> GetCourseReportByIdAsync(int reportId)
         => await _context.CourseReports
-            .Include(r => r.Reporter)
+            .Include(r => r.Reporter!)
+                .ThenInclude(a => a.User)
             .Include(r => r.Course)
             .Include(r => r.Resolver)
             .FirstOrDefaultAsync(r => r.CourseReportId == reportId);
@@ -30,14 +32,16 @@ public class ReportRepository : IReportRepository
     public async Task<(List<CourseReport> Items, int TotalCount)> GetAllCourseReportsAsync(string? status = null, int page = 1, int pageSize = 10)
     {
         var query = _context.CourseReports
-            .Include(r => r.Reporter)
+            .Include(r => r.Reporter!)
+                .ThenInclude(a => a.User)
             .Include(r => r.Course)
             .Include(r => r.Resolver)
             .Where(r => status == null || r.CourseReportsStatus == status);
             
         var totalCount = await query.CountAsync();
         var items = await query
-            .OrderByDescending(r => r.CreatedAt)
+            .OrderByDescending(r => r.CourseReportsStatus == "pending" ? 1 : 0)
+            .ThenBy(r => r.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -54,7 +58,8 @@ public class ReportRepository : IReportRepository
 
     public async Task<List<CourseReport>> GetCourseReportsByCourseAsync(int courseId)
         => await _context.CourseReports
-            .Include(r => r.Reporter)
+            .Include(r => r.Reporter!)
+                .ThenInclude(a => a.User)
             .Where(r => r.CourseId == courseId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
@@ -72,11 +77,22 @@ public class ReportRepository : IReportRepository
     public void UpdateCourseReport(CourseReport report)
         => _context.CourseReports.Update(report);
 
+    public async Task<int> CountCourseReportsByStatusAsync(string status, DateTime? resolvedAtDate)
+    {
+        var query = _context.CourseReports.Where(r => r.CourseReportsStatus == status);
+        if (resolvedAtDate.HasValue)
+        {
+            query = query.Where(r => r.ResolvedAt != null && r.ResolvedAt.Value.Date == resolvedAtDate.Value.Date);
+        }
+        return await query.CountAsync();
+    }
+
     // ── Course Review Reports ───────────────────────────────────────────────
 
     public async Task<CourseReviewReport?> GetCourseReviewReportByIdAsync(int reportId)
         => await _context.CourseReviewReports
-            .Include(r => r.Reporter)
+            .Include(r => r.Reporter!)
+                .ThenInclude(a => a.User)
             .Include(r => r.CourseReview)
             .Include(r => r.Resolver)
             .FirstOrDefaultAsync(r => r.CourseReviewReportId == reportId);
@@ -84,7 +100,8 @@ public class ReportRepository : IReportRepository
     public async Task<(List<CourseReviewReport> Items, int TotalCount)> GetAllCourseReviewReportsAsync(string? status = null, int page = 1, int pageSize = 10)
     {
         var query = _context.CourseReviewReports
-            .Include(r => r.Reporter)
+            .Include(r => r.Reporter!)
+                .ThenInclude(a => a.User)
             .Include(r => r.CourseReview!)
                 .ThenInclude(cr => cr.Enrollment)
                     .ThenInclude(e => e.User)
@@ -96,7 +113,8 @@ public class ReportRepository : IReportRepository
             
         var totalCount = await query.CountAsync();
         var items = await query
-            .OrderByDescending(r => r.CreatedAt)
+            .OrderByDescending(r => r.UserReportsStatus == "pending" ? 1 : 0)
+            .ThenBy(r => r.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -124,11 +142,22 @@ public class ReportRepository : IReportRepository
     public void UpdateCourseReviewReport(CourseReviewReport report)
         => _context.CourseReviewReports.Update(report);
 
+    public async Task<int> CountCourseReviewReportsByStatusAsync(string status, DateTime? resolvedAtDate)
+    {
+        var query = _context.CourseReviewReports.Where(r => r.UserReportsStatus == status);
+        if (resolvedAtDate.HasValue)
+        {
+            query = query.Where(r => r.ResolvedAt != null && r.ResolvedAt.Value.Date == resolvedAtDate.Value.Date);
+        }
+        return await query.CountAsync();
+    }
+
     // ── Lesson Review Reports ───────────────────────────────────────────────
 
     public async Task<LessonReviewReport?> GetLessonReviewReportByIdAsync(int reportId)
         => await _context.LessonReviewReports
-            .Include(r => r.Reporter)
+            .Include(r => r.Reporter!)
+                .ThenInclude(a => a.User)
             .Include(r => r.LessonReview)
             .Include(r => r.Resolver)
             .FirstOrDefaultAsync(r => r.LessonReviewReportId == reportId);
@@ -136,7 +165,8 @@ public class ReportRepository : IReportRepository
     public async Task<(List<LessonReviewReport> Items, int TotalCount)> GetAllLessonReviewReportsAsync(string? status = null, int page = 1, int pageSize = 10)
     {
         var query = _context.LessonReviewReports
-            .Include(r => r.Reporter)
+            .Include(r => r.Reporter!)
+                .ThenInclude(a => a.User)
             .Include(r => r.LessonReview!)
                 .ThenInclude(lr => lr.Enrollment)
                     .ThenInclude(e => e.User)
@@ -148,7 +178,8 @@ public class ReportRepository : IReportRepository
             
         var totalCount = await query.CountAsync();
         var items = await query
-            .OrderByDescending(r => r.CreatedAt)
+            .OrderByDescending(r => r.UserReportsStatus == "pending" ? 1 : 0)
+            .ThenBy(r => r.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -176,10 +207,29 @@ public class ReportRepository : IReportRepository
     public void UpdateLessonReviewReport(LessonReviewReport report)
         => _context.LessonReviewReports.Update(report);
 
+    public async Task<int> CountLessonReviewReportsByStatusAsync(string status, DateTime? resolvedAtDate)
+    {
+        var query = _context.LessonReviewReports.Where(r => r.UserReportsStatus == status);
+        if (resolvedAtDate.HasValue)
+        {
+            query = query.Where(r => r.ResolvedAt != null && r.ResolvedAt.Value.Date == resolvedAtDate.Value.Date);
+        }
+        return await query.CountAsync();
+    }
+
     // ── Shared ──────────────────────────────────────────────────────────────
 
     public async Task<int> SaveChangesAsync()
-        => await _context.SaveChangesAsync();
+    {
+        try
+        {
+            return await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new ReportException("A database error occurred while saving report changes.", ex);
+        }
+    }
 
     public async Task<int> GetResolvedReportsCountAsync(int resolverId)
     {

@@ -116,7 +116,7 @@
 @section Scripts {
     <script>
         const TOKEN_USER = '@tokenFromServer';
-        const API_URL = "http://localhost:5207/api/Notification";
+        const API_URL = "/Notification";
 
         let allNotifications = [];
         let filteredNotifications = [];
@@ -132,11 +132,10 @@
                 return;
             }
             try {
-                const response = await fetch(`${API_URL}`, {
-                    headers: { 'Authorization': `Bearer ${TOKEN_USER}` }
-                });
+                const response = await fetch(`${API_URL}/GetMyNotifications`);
                 if (response.ok) {
-                    allNotifications = await response.json();
+                    const apiResp = await response.json();
+                    allNotifications = apiResp.data?.items || [];
                     applyNotificationFilters();
                 }
             } catch (error) {
@@ -318,9 +317,8 @@
 
         async function markAsRead(id) {
             try {
-                const response = await fetch(`${API_URL}/mark-as-read/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `Bearer ${TOKEN_USER}` }
+                const response = await fetch(`${API_URL}/MarkAsRead/${id}`, {
+                    method: 'PUT'
                 });
 
                 if (response.ok) {
@@ -348,9 +346,8 @@
             if (!confirmResult.isConfirmed) return;
 
             try {
-                const response = await fetch(`${API_URL}/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${TOKEN_USER}` }
+                const response = await fetch(`${API_URL}/Delete/${id}`, {
+                    method: 'DELETE'
                 });
                 if (response.ok) {
                     Swal.fire({
@@ -385,9 +382,8 @@
             }
 
             try {
-                const response = await fetch(`${API_URL}/mark-all-as-read`, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `Bearer ${TOKEN_USER}` }
+                const response = await fetch(`${API_URL}/MarkAllAsRead`, {
+                    method: 'PUT'
                 });
 
                 if (response.ok) {

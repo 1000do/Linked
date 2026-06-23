@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.128 Reject Refund Request</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.128. Reject Refund Request</strong></p>
+
+<p><strong>Function Trigger:</strong> Admin clicks the "Reject" button on the pending refund request row.</p>
+
+<p><strong>Function Description:</strong> Allows administrators to reject a student's pending refund request. The system reverts the transaction status to success, records the administrative rejection note, retains the student's course access, and notifies the student.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>The administrator must be successfully logged into the system.</li>
+            <li>The administrator account must have platform-wide financial management permissions.</li>
+            <li>The user must have at least one refund request record.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Reject Refund Request Successfully:</strong>
+                <ul>
+                    <li>Admin accesses the admin finance dashboard page AdminFinance.</li>
+                    <li>Admin selects the "Refund Requests" tab.</li>
+                    <li>Admin clicks the "Reject" button on the pending refund request row.</li>
+                    <li>The system displays the "Reject Refund" confirmation dialog containing a required feedback input field.</li>
+                    <li>Admin inputs the rejection reason and clicks the "Reject Request" button.</li>
+                    <li>The system updates the transaction status to "succeeded" and saves the rejection note in the database.</li>
+                    <li>The system sends a notification to the student about the rejected refund.</li>
+                    <li>The system closes the confirmation dialog and displays a rejection success notification.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Click Cancel)</strong>
+        <ul>
+            <li>Admin clicks the "Cancel" button on the confirmation dialog.</li>
+            <li>The system closes the confirmation dialog.</li>
+            <li>Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Reject Reason Missing)</strong>
+        <ul>
+            <li>Admin clicks the "Reject Request" button without entering a rejection reason.</li>
+            <li>The system displays a validation error message: "You must enter a rejection reason!".</li>
+            <li>Back to step 5.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>The transaction status is reverted to "succeeded" in the database.</li>
+            <li>The administrator's rejection note is saved in the database.</li>
+            <li>The student's course enrollment remains active in the database.</li>
+            <li>The student receives a notification indicating the rejection of the refund.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+            <li><strong>Transaction Not Found:</strong> The system displays a transaction not found error message. Back to step 1.</li>
+            <li><strong>Status is Not Pending:</strong> The system displays an error message indicating the transaction is not in a pending status. Back to step 2.</li>
+            <li><strong>Transfer Reversal Failed:</strong> The system displays an error message regarding the failure to reverse the instructor's transfer. Back to step 3.</li>
+            <li><strong>Stripe Refund Failed:</strong> The system displays an error message regarding the failure to process the refund on Stripe. Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li><strong>Rejection Reason Required:</strong> Unlike approval, rejecting a refund request strictly requires a non-empty administrative explanation to provide clarity to the student.</li>
+            <li><strong>Status Restored to Succeeded:</strong> The transaction state returns to succeed as if the refund request was never initiated.</li>
+            <li><strong>No Financial Changes:</strong> No funds are transferred, reversed, or refunded via Stripe Connect. The platform commissions and instructor earnings remain intact.</li>
+            <li><strong>Uninterrupted Learning Access:</strong> The student's course enrollment status (EnrollmentStatus) remains active, ensuring they continue to have full access to learning materials.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

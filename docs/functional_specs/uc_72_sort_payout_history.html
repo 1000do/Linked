@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2.2.3.72 Sort payout History</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; list-style-type: none; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>2.2.3.72. Sort payout History</strong></p>
+
+<p><strong>Function Trigger:</strong> Instructor selects a sorting option and clicks the "Filter" button.</p>
+
+<p><strong>Function Description:</strong> Allows an instructor to sort their payout history list ("Payout History" tab) based on date or payout amount.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>- The instructor is successfully authenticated.</li>
+            <li>- The instructor is on the instructor transaction history page.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Sort Payout History Successfully:</strong>
+                <ul>
+                    <li>1. Instructor accesses the instructor transaction page.</li>
+                    <li>2. Instructor selects the "Payout History" tab.</li>
+                    <li>3. Instructor clicks the sorting dropdown.</li>
+                    <li>4. Instructor selects a sorting option.</li>
+                    <li>5. Instructor clicks the "Filter" button.</li>
+                    <li>6. The system requests the sorted payout history from the server.</li>
+                    <li>7. The server queries the payouts from the database sorted by the selected criteria.</li>
+                    <li>8. The system displays the sorted list of payouts to the instructor.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Reset sort)</strong>
+        <ul>
+            <li>1. Instructor clicks the "Reset" link.</li>
+            <li>2. The system resets the sorting dropdown to the default option.</li>
+            <li>3. The system requests the default payout history from the server.</li>
+            <li>4. The server queries the default payouts from the database.</li>
+            <li>5. The system displays the default list of payouts.</li>
+            <li>6. Back to step 3.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>- The system displays the list of payouts sorted according to the selected sorting option.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li>- <strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>- <strong>Default Sorting:</strong> The payout list is sorted by date newest to oldest by default if no sorting option is explicitly selected.</li>
+            <li>- <strong>Pagination Retention:</strong> Selecting a new sorting option resets the active page back to page 1.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

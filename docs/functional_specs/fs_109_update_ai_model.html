@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-109 - Update AI Model</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-109 - Update AI Model</strong></p>
+    <p><strong>Function Trigger:</strong> Admin clicks the edit icon on a model entry in the AI model list.</p>
+    <p><strong>Function Description:</strong> Allows an Admin to update an existing AI model's configuration details. The edit form allows modification of provider, version, path, and description. The system validates all required fields before persisting the changes to the database.</p>
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+    <p><strong>Function Details</strong></p>
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Admin must be successfully authenticated.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Edit AI Model Details Successfully:</strong>
+                    <ul>
+                        <li>Admin accesses the AI Service management page.</li>
+                        <li>The system validates the Admin's access authorization.</li>
+                        <li>Admin clicks the edit icon on a model entry.</li>
+                        <li>The system displays the edit modal pre-filled with the current model details.</li>
+                        <li>Admin modifies the model details.</li>
+                        <li>Admin clicks the "Save Changes" button.</li>
+                        <li>The system displays a confirmation dialog.</li>
+                        <li>Admin confirms the action.</li>
+                        <li>The system validates the form inputs.</li>
+                        <li>The system updates the model record in the database.</li>
+                        <li>The system displays a success notification.</li>
+                        <li>The system reloads the page.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Admin Cancels Confirmation)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>Admin clicks the cancel button on the confirmation dialog.</li>
+                        <li>Back to step 4.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Form Validation Failed)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>The system detects one or more required fields are invalid.</li>
+                        <li>The system displays a validation error message.</li>
+                        <li>Back to step 4.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The selected AI model record is updated in the database.</li>
+                <li>The model list on the UI reflects the updated information after page reload.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+                <li><strong>Unauthorized Access:</strong> The system detects the current user does not have Admin authorization. The system displays an unauthorized access error message. The system redirects the user to the login page.</li>
+                <li><strong>Model Not Found:</strong> The system cannot locate the target model record during the update operation. The system displays a model not found error message. Back to step 4.</li>
+                <li><strong>Database Save Failed:</strong> The system fails to persist the model changes to the database. The system displays an error message regarding the database save failure. Back to step 4.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Universal Form Data Validation:</strong> All submitted form fields must pass strict data type, format, length, and value constraints (e.g., report descriptions must be at least 20 characters, and confidence thresholds must be decimals between 0.01 and 1.0) before the system processes the submission.</li>
+                <li><strong>Admin Authorization for AI Services:</strong> Only authenticated Admin actors are authorized to access and perform actions within the AI Service and Model Management module (including adding/updating models, toggling status, viewing details/list, configuring thresholds, and viewing activity logs).</li>
+                <li><strong>List Sorting and Ordering:</strong> Administrative lists (such as the AI model list and activity logs) are sorted in descending order of their latest timestamp (last modified date for models, creation date for logs), ensuring that the most recent entries are displayed first.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

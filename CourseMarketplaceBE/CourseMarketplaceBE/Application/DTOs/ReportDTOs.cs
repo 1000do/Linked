@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using CourseMarketplaceBE.Application.DTOs.Common;
 
 namespace CourseMarketplaceBE.Application.DTOs;
 
@@ -7,30 +9,48 @@ namespace CourseMarketplaceBE.Application.DTOs;
 // REQUEST DTOs (User / Instructor tạo report)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+public class PagedReportRequestDto : PagedRequestDto
+{
+    [MaxLength(50)]
+    public string? Status { get; set; }
+}
+
 /// <summary>User/Instructor tạo report khóa học</summary>
 public class CreateCourseReportRequest
 {
+    [Required]
     public int CourseId { get; set; }
 
     /// <summary>VD: "Nội dung sai lệch", "Vi phạm bản quyền", "Spam", "Nội dung người lớn"</summary>
+    [Required]
+    [MaxLength(255)]
     public string Reason { get; set; } = null!;
 
+    [MaxLength(1000)]
     public string? Description { get; set; }
 }
 
 /// <summary>User/Instructor tạo report review khóa học</summary>
 public class CreateCourseReviewReportRequest
 {
+    [Required]
     public int CourseReviewId { get; set; }
+    [Required]
+    [MaxLength(255)]
     public string Reason { get; set; } = null!;
+    [MaxLength(1000)]
     public string? Description { get; set; }
 }
 
 /// <summary>User/Instructor tạo report review bài học</summary>
 public class CreateLessonReviewReportRequest
 {
+    [Required]
     public int LessonReviewId { get; set; }
+    [Required]
+    [MaxLength(255)]
     public string Reason { get; set; } = null!;
+    [MaxLength(1000)]
     public string? Description { get; set; }
 }
 
@@ -42,8 +62,11 @@ public class CreateLessonReviewReportRequest
 public class ResolveReportRequest
 {
     /// <summary>resolved | rejected | escalated | under_review</summary>
+    [Required]
+    [MaxLength(50)]
     public string Status { get; set; } = null!;
 
+    [MaxLength(1000)]
     public string? ResolutionNote { get; set; }
 
     /// <summary>

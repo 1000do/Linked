@@ -1082,7 +1082,7 @@
             }
 
             const notiConn = new signalR.HubConnectionBuilder()
-                .withUrl("http://localhost:5207/notificationHub", { accessTokenFactory: () => currentToken })
+                .withUrl("/notificationHub", { accessTokenFactory: () => currentToken })
                 .withAutomaticReconnect().build();
 
             notiConn.on("ReceiveNotification", (noti) => {

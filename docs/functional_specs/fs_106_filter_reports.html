@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-106 - Filter Reports</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-106 - Filter Reports</strong></p>
+    <p><strong>Function Trigger:</strong> Staff or Admin selects a filter criteria (report type tab, subtab, or status dropdown) in the Report Center.</p>
+    <p><strong>Function Description:</strong> Filters reports by type (Course, Review, Lesson) or status.</p>
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+    <p><strong>Function Details</strong></p>
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>The actor must be authenticated.</li>
+                <li>The actor must have Staff or Admin role.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Filter Reports Successfully:</strong>
+                    <ul>
+                        <li>Staff or Admin accesses the Report Center page.</li>
+                        <li>The system validates the actor's authentication and authorization.</li>
+                        <li>The actor selects a filter criteria (report type tab, review subtab, or status dropdown).</li>
+                        <li>The system retrieves the paginated list of reports matching the active combination of report type, subtype (if applicable), and status.</li>
+                        <li>The system displays the filtered list of reports.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Empty Filter Result)</strong>
+            <ul>
+                <li>If the user selects this alternative flow:
+                    <ul>
+                        <li>The system detects the retrieved list of reports is empty.</li>
+                        <li>The system displays an empty state message indicating that no reports were found.</li>
+                        <li>Use case ends.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The system displays the paginated list of reports matching the selected filter criteria.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message. The system redirects the user to the login page.</li>
+                <li><strong>Unauthorized Access:</strong> The system detects the actor does not have the Staff or Admin role. The system redirects the actor to the home page or access denied page.</li>
+                <li><strong>Database Query Failure:</strong> The system encounters an error while retrieving the reports from the database. The system displays an error message regarding the data retrieval failure. Use case ends.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Independent Status Filters:</strong> The status filter in the Course Reports tab maintains its own independent state from the status filter in the Review Reports tab.</li>
+                <li><strong>Subtab Filter Retention:</strong> When switching between the "Course Reviews" and "Lesson Reviews" subtabs, the currently active status filter is retained and applied to the newly selected subtype.</li>
+                <li><strong>Universal Empty State Display:</strong> Whenever a list retrieval operation yields no records (either due to an empty database or active filter criteria), the system displays a user-friendly empty state message instead of a blank table or list container.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

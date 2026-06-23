@@ -1,4 +1,6 @@
 using System;
+using CourseMarketplaceBE.Domain.Exceptions;
+using CourseMarketplaceBE.Application.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -98,9 +100,18 @@ public class ReportService : IReportService
         };
 
         await _reportRepo.AddCourseReportAsync(report);
-        int numRowsAffected = await _reportRepo.SaveChangesAsync();
+        int numRowsAffected;
+        try
+        {
+            numRowsAffected = await _reportRepo.SaveChangesAsync();
+        }
+        catch (ReportException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
+
         if (numRowsAffected == 0)
-            throw new InvalidOperationException("Failed to save changes");
+            throw new InvalidOperationException("Failed to save changes.");
             
         return true;
     }
@@ -130,9 +141,18 @@ public class ReportService : IReportService
         };
 
         await _reportRepo.AddCourseReviewReportAsync(report);
-        int numRowsAffected = await _reportRepo.SaveChangesAsync();
+        int numRowsAffected;
+        try
+        {
+            numRowsAffected = await _reportRepo.SaveChangesAsync();
+        }
+        catch (ReportException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
+
         if (numRowsAffected == 0)
-            throw new InvalidOperationException("Failed to save changes");
+            throw new InvalidOperationException("Failed to save changes.");
             
         return true;
     }
@@ -162,9 +182,18 @@ public class ReportService : IReportService
         };
 
         await _reportRepo.AddLessonReviewReportAsync(report);
-        int numRowsAffected = await _reportRepo.SaveChangesAsync();
+        int numRowsAffected;
+        try
+        {
+            numRowsAffected = await _reportRepo.SaveChangesAsync();
+        }
+        catch (ReportException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
+
         if (numRowsAffected == 0)
-            throw new InvalidOperationException("Failed to save changes");
+            throw new InvalidOperationException("Failed to save changes.");
             
         return true;
     }
@@ -207,6 +236,7 @@ public class ReportService : IReportService
     public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseReportDetailResponse>> GetAllCourseReportsAsync(string? status = null, int page = 1, int pageSize = 10)
     {
         var (reports, totalCount) = await _reportRepo.GetAllCourseReportsAsync(status, page, pageSize);
+        if (totalCount == 0) throw new KeyNotFoundException("No reports found.");
         var items = _mapper.Map<IEnumerable<CourseReportDetailResponse>>(reports).ToList();
         return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseReportDetailResponse>(items, totalCount, page, pageSize);
     }
@@ -214,6 +244,7 @@ public class ReportService : IReportService
     public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<ReviewReportDetailResponse>> GetAllCourseReviewReportsAsync(string? status = null, int page = 1, int pageSize = 10)
     {
         var (reports, totalCount) = await _reportRepo.GetAllCourseReviewReportsAsync(status, page, pageSize);
+        if (totalCount == 0) throw new KeyNotFoundException("No course review reports found.");
         var items = _mapper.Map<IEnumerable<ReviewReportDetailResponse>>(reports).ToList();
         return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<ReviewReportDetailResponse>(items, totalCount, page, pageSize);
     }
@@ -221,6 +252,7 @@ public class ReportService : IReportService
     public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<ReviewReportDetailResponse>> GetAllLessonReviewReportsAsync(string? status = null, int page = 1, int pageSize = 10)
     {
         var (reports, totalCount) = await _reportRepo.GetAllLessonReviewReportsAsync(status, page, pageSize);
+        if (totalCount == 0) throw new KeyNotFoundException("No lesson review reports found.");
         var items = _mapper.Map<IEnumerable<ReviewReportDetailResponse>>(reports).ToList();
         return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<ReviewReportDetailResponse>(items, totalCount, page, pageSize);
     }
@@ -260,7 +292,7 @@ public class ReportService : IReportService
     public async Task<bool> ResolveCourseReportAsync(int reportId, int resolverId, ResolveReportRequest request)
     {
         var report = await _reportRepo.GetCourseReportByIdAsync(reportId);
-        if (report == null) return false;
+        if (report == null) throw new KeyNotFoundException("Report not found.");
 
         // Chặn Staff giải quyết báo cáo đã bị escalated
         if (report.CourseReportsStatus == ReportStatus.Escalated.ToValue())
@@ -348,7 +380,18 @@ public class ReportService : IReportService
         }
 
         _reportRepo.UpdateCourseReport(report);
-        await _reportRepo.SaveChangesAsync();
+        int rowsAffected;
+        try
+        {
+            rowsAffected = await _reportRepo.SaveChangesAsync();
+        }
+        catch (ReportException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
+
+        if (rowsAffected == 0)
+            throw new InvalidOperationException("Failed to save changes.");
 
         if (course != null && request.Status == ReportStatus.Resolved.ToValue() && request.RemoveContent)
         {
@@ -386,7 +429,7 @@ public class ReportService : IReportService
     public async Task<bool> ResolveCourseReviewReportAsync(int reportId, int resolverId, ResolveReportRequest request)
     {
         var report = await _reportRepo.GetCourseReviewReportByIdAsync(reportId);
-        if (report == null) return false;
+        if (report == null) throw new KeyNotFoundException("Report not found.");
 
         bool hasSaved = false;
 
@@ -423,7 +466,18 @@ public class ReportService : IReportService
         }
 
         _reportRepo.UpdateCourseReviewReport(report);
-        await _reportRepo.SaveChangesAsync();
+        int rowsAffected;
+        try
+        {
+            rowsAffected = await _reportRepo.SaveChangesAsync();
+        }
+        catch (ReportException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
+
+        if (rowsAffected == 0)
+            throw new InvalidOperationException("Failed to save changes.");
 
         // Notify reporter of outcome
         if (report.ReporterId.HasValue)
@@ -466,7 +520,7 @@ public class ReportService : IReportService
     public async Task<bool> ResolveLessonReviewReportAsync(int reportId, int resolverId, ResolveReportRequest request)
     {
         var report = await _reportRepo.GetLessonReviewReportByIdAsync(reportId);
-        if (report == null) return false;
+        if (report == null) throw new KeyNotFoundException("Report not found.");
 
         bool hasSaved = false;
 
@@ -503,7 +557,18 @@ public class ReportService : IReportService
         }
 
         _reportRepo.UpdateLessonReviewReport(report);
-        await _reportRepo.SaveChangesAsync();
+        int rowsAffected;
+        try
+        {
+            rowsAffected = await _reportRepo.SaveChangesAsync();
+        }
+        catch (ReportException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
+
+        if (rowsAffected == 0)
+            throw new InvalidOperationException("Failed to save changes.");
 
         // Notify reporter of outcome
         if (report.ReporterId.HasValue)
@@ -545,14 +610,25 @@ public class ReportService : IReportService
     public async Task<bool> RemoveCourseAsync(int courseId, int adminId)
     {
         var course = await _courseRepo.GetByIdAsync(courseId);
-        if (course == null) return false;
+        if (course == null) throw new KeyNotFoundException("Course not found.");
 
         // Gỡ khóa học khỏi nền tảng (xóa mềm/khóa)
         course.IsRemoved = true;
         course.CourseStatus = CourseStatus.Archived.ToValue();
         course.UpdatedAt = DateTime.Now;
 
-        await _reportRepo.SaveChangesAsync();
+        int rowsAffected;
+        try
+        {
+            rowsAffected = await _reportRepo.SaveChangesAsync();
+        }
+        catch (ReportException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
+
+        if (rowsAffected == 0)
+            throw new InvalidOperationException("Failed to save changes.");
         
         await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
         return true;
@@ -628,11 +704,12 @@ public class ReportService : IReportService
 
     private async Task<bool> HandleReviewRemovalPenaltyAsync(Enrollment? enrollment, string? resolutionNote, string? linkAction)
     {
-        if (enrollment != null && enrollment.UserId != 0)
+        if (enrollment == null || enrollment.UserId == 0)
         {
-            return await ProcessReviewStrikeAsync((int)enrollment.UserId, resolutionNote ?? "Review violation", linkAction);
+            return false;
         }
-        return false;
+
+        return await ProcessReviewStrikeAsync((int)enrollment.UserId, resolutionNote ?? "Review violation", linkAction);
     }
 
 }

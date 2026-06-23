@@ -123,86 +123,9 @@
 
         <!-- ───────────────── TAB: ALL AI MODELS ───────────────── -->
         <div id="content-models" class="tab-content overflow-x-auto @(activeTab == "models" ? "" : "hidden")">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="border-b border-slate-200 bg-slate-50/50">
-                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Model</th>
-                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Type / Process</th>
-                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Last Modified</th>
-                        <th class="px-6 py-3.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-sm">
-                    @if(Model.AiModels.Any()) {
-                        @foreach(var item in Model.AiModels) {
-                            <tr class="hover:bg-slate-50/30 transition-colors">
-                                <td class="px-6 py-4">
-                                    <div class="flex flex-col">
-                                        <span class="font-semibold text-slate-900">@item.ModelName <span class="text-xs text-slate-400 font-normal ml-1">v@(item.ModelVersion)</span></span>
-                                        <span class="text-[11px] text-slate-500 font-mono mt-0.5">@item.ModelPath</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 align-middle">
-                                    <div class="flex flex-col gap-0.5">
-                                        <span class="text-slate-700 capitalize">@item.ModelType.Replace("_", " ")</span>
-                                        <span class="text-xs text-slate-400 capitalize">@item.ProcessType</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 align-middle">
-                                    <div class="flex items-center gap-2">
-                                        @if(item.ModelStatus == "active") {
-                                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                                            <span class="font-medium text-emerald-600 text-xs">Active</span>
-                                        } else {
-                                            <span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
-                                            <span class="font-medium text-slate-500 text-xs">Inactive</span>
-                                        }
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 align-middle text-slate-500 text-xs">
-                                    @item.ModelUpdatedAt?.ToString("MMM dd yyyy HH:mm:ss")
-                                </td>
-                                <td class="px-6 py-4 align-middle text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <button type="button" onclick="openDetailsModal(this)"
-                                                data-id="@item.ModelId"
-                                                data-name="@item.ModelName"
-                                                data-version="@item.ModelVersion"
-                                                data-provider="@item.ModelProvider"
-                                                data-type="@item.ModelType"
-                                                data-process="@item.ProcessType"
-                                                data-path="@item.ModelPath"
-                                                data-desc="@item.Description"
-                                                data-updated="@item.ModelUpdatedAt?.ToString("MMM dd yyyy HH:mm:ss")"
-                                                class="p-1.5 text-slate-400 hover:text-indigo-600 transition-colors" title="View Details">
-                                            <span class="material-symbols-outlined text-[18px]">visibility</span>
-                                        </button>
-                                        <button onclick="openEditAiModelModal(@item.ModelId, '@item.ModelProvider', '@item.ModelVersion', '@item.ModelPath', '@item.Description')" class="p-1.5 text-slate-400 hover:text-slate-900 transition-colors" title="Edit Model">
-                                            <span class="material-symbols-outlined text-[18px]">edit</span>
-                                        </button>
-                                        <button onclick="toggleModelStatus(@item.ModelId)" class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-out focus:outline-none @(item.ModelStatus == "active" ? "bg-emerald-500" : "bg-slate-200")" title="Toggle Status">
-                                            <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition duration-300 ease-out @(item.ModelStatus == "active" ? "translate-x-4" : "translate-x-0")"></span>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    } else {
-                        <tr>
-                            <td colspan="5" class="px-6 py-8 text-center text-slate-500">No AI Models found.</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        
-        @if(ViewBag.ModelTotalPages > 1) {
-            <div class="px-6 py-4 border-t border-slate-200 flex justify-between items-center bg-slate-50">
-                <a href="?tab=models&modelPage=@(ViewBag.ModelPage - 1)&coursePage=@ViewBag.CoursePage&cReviewPage=@ViewBag.CReviewPage&lReviewPage=@ViewBag.LReviewPage" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.ModelPage <= 1 ? "pointer-events-none opacity-50" : "")">Previous</a>
-                <span class="text-sm text-slate-500">Page @ViewBag.ModelPage of @ViewBag.ModelTotalPages</span>
-                <a href="?tab=models&modelPage=@(ViewBag.ModelPage + 1)&coursePage=@ViewBag.CoursePage&cReviewPage=@ViewBag.CReviewPage&lReviewPage=@ViewBag.LReviewPage" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.ModelPage >= ViewBag.ModelTotalPages ? "pointer-events-none opacity-50" : "")">Next</a>
+            <div id="modelsTableContainer">
+                <partial name="_ModelsTablePartial" model="Model" />
             </div>
-        }
         </div>
 
         <!-- ───────────────── TAB: AI ACTIVITY LOGS ───────────────── -->
@@ -225,172 +148,23 @@
 
             <!-- Subtab Content: Course Moderation -->
             <div id="sub-content-course" class="subtab-content overflow-x-auto @(activeSubtab == "course" ? "" : "hidden")">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-slate-100 bg-slate-50/30">
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Course</th>
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Model</th>
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Result</th>
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Latency</th>
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tokens</th>
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Logged At</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 text-sm">
-                        @if(Model.CourseLogs.Any()) {
-                            @foreach(var log in Model.CourseLogs) {
-                                <tr onclick="window.location.href='/AdminAiService/CourseModerationLogDetail/@log.LogId'" class="hover:bg-slate-50/50 transition-colors cursor-pointer group">
-                                    <td class="px-6 py-3.5">
-                                        <div class="flex flex-col">
-                                            <span class="font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">@log.Title</span>
-                                            <span class="text-[10px] text-slate-400 font-mono">ID: @log.CourseId</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-3.5">
-                                        <span class="text-xs text-slate-600">@log.ModelName</span>
-                                    </td>
-                                    <td class="px-6 py-3.5">
-                                        @if(log.ResultStatus == "Flagged" || log.ResultStatus == "Match Found") {
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-100">@log.ResultStatus</span>
-                                        } else if (log.ResultStatus == "ERROR") {
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-red-50 text-red-700 border border-red-100">ERROR</span>
-                                        } else if (log.ResultStatus == "Manual Audit") {
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-100">@log.ResultStatus</span>
-                                        } else {
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">@log.ResultStatus</span>
-                                        }
-                                    </td>
-                                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.LatencyMs ms</td>
-                                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.TokenUsage</td>
-                                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.LogCreatedAt.ToString("MMM dd yyyy HH:mm:ss")</td>
-                                </tr>
-                            }
-                        } else {
-                            <tr>
-                                <td colspan="6" class="px-6 py-8 text-center text-slate-500">No logs found.</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-                @if(ViewBag.CourseTotalPages > 1) {
-                    <div class="px-6 py-4 border-t border-slate-200 flex justify-between items-center bg-slate-50">
-                        <a href="?tab=logs&subtab=course&modelPage=@ViewBag.ModelPage&coursePage=@(ViewBag.CoursePage - 1)&cReviewPage=@ViewBag.CReviewPage&lReviewPage=@ViewBag.LReviewPage" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.CoursePage <= 1 ? "pointer-events-none opacity-50" : "")">Previous</a>
-                        <span class="text-sm text-slate-500">Page @ViewBag.CoursePage of @ViewBag.CourseTotalPages</span>
-                        <a href="?tab=logs&subtab=course&modelPage=@ViewBag.ModelPage&coursePage=@(ViewBag.CoursePage + 1)&cReviewPage=@ViewBag.CReviewPage&lReviewPage=@ViewBag.LReviewPage" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.CoursePage >= ViewBag.CourseTotalPages ? "pointer-events-none opacity-50" : "")">Next</a>
-                    </div>
-                }
+                <div id="course_logsTableContainer">
+                    <partial name="_CourseLogsTablePartial" model="Model" />
+                </div>
             </div>
 
             <!-- Subtab Content: Course Review Moderation -->
             <div id="sub-content-course_review" class="subtab-content overflow-x-auto @(activeSubtab == "course_review" ? "" : "hidden")">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-slate-100 bg-slate-50/30">
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Review</th>
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Model</th>
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Result</th>
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Latency</th>
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Logged At</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 text-sm">
-                        @if(Model.CourseReviewLogs.Any()) {
-                            @foreach(var log in Model.CourseReviewLogs) {
-                                <tr onclick="window.location.href='/AdminAiService/ReviewModerationLogDetail/@log.LogId?type=course'" class="hover:bg-slate-50/50 transition-colors cursor-pointer group">
-                                    <td class="px-6 py-3.5">
-                                        <div class="flex flex-col">
-                                            <span class="font-medium text-slate-800 group-hover:text-indigo-600 transition-colors">
-                                                @(log.Comment.Length > 10 ? log.Comment.Substring(0, 10) + "..." : log.Comment)
-                                            </span>
-                                            <span class="text-[10px] text-slate-400 font-mono">ID: @log.ReviewId</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-3.5 text-xs text-slate-600">@log.ModelName</td>
-                                    <td class="px-6 py-3.5">
-                                        @if(log.ResultStatus == "Flagged" || log.ResultStatus == "Match Found") {
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-100">@log.ResultStatus</span>
-                                        } else if (log.ResultStatus == "ERROR") {
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-red-50 text-red-700 border border-red-100">ERROR</span>
-                                        } else if (log.ResultStatus == "Manual Audit") {
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-100">@log.ResultStatus</span>
-                                        } else {
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">@log.ResultStatus</span>
-                                        }
-                                    </td>
-                                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.LatencyMs ms</td>
-                                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.LogCreatedAt.ToString("MMM dd yyyy HH:mm:ss")</td>
-                                </tr>
-                            }
-                        } else {
-                            <tr>
-                                <td colspan="5" class="px-6 py-8 text-center text-slate-500">No logs found.</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-                @if(ViewBag.CReviewTotalPages > 1) {
-                    <div class="px-6 py-4 border-t border-slate-200 flex justify-between items-center bg-slate-50">
-                        <a href="?tab=logs&subtab=course_review&modelPage=@ViewBag.ModelPage&coursePage=@ViewBag.CoursePage&cReviewPage=@(ViewBag.CReviewPage - 1)&lReviewPage=@ViewBag.LReviewPage" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.CReviewPage <= 1 ? "pointer-events-none opacity-50" : "")">Previous</a>
-                        <span class="text-sm text-slate-500">Page @ViewBag.CReviewPage of @ViewBag.CReviewTotalPages</span>
-                        <a href="?tab=logs&subtab=course_review&modelPage=@ViewBag.ModelPage&coursePage=@ViewBag.CoursePage&cReviewPage=@(ViewBag.CReviewPage + 1)&lReviewPage=@ViewBag.LReviewPage" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.CReviewPage >= ViewBag.CReviewTotalPages ? "pointer-events-none opacity-50" : "")">Next</a>
-                    </div>
-                }
+                <div id="course_review_logsTableContainer">
+                    <partial name="_CourseReviewLogsTablePartial" model="Model" />
+                </div>
             </div>
 
             <!-- Subtab Content: Lesson Review Moderation -->
             <div id="sub-content-lesson_review" class="subtab-content overflow-x-auto @(activeSubtab == "lesson_review" ? "" : "hidden")">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-slate-100 bg-slate-50/30">
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Review</th>
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Model</th>
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Result</th>
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Latency</th>
-                            <th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Logged At</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 text-sm">
-                        @if(Model.LessonReviewLogs.Any()) {
-                            @foreach(var log in Model.LessonReviewLogs) {
-                                <tr onclick="window.location.href='/AdminAiService/ReviewModerationLogDetail/@log.LogId?type=lesson'" class="hover:bg-slate-50/50 transition-colors cursor-pointer group">
-                                    <td class="px-6 py-3.5">
-                                        <div class="flex flex-col">
-                                            <span class="font-medium text-slate-800 group-hover:text-indigo-600 transition-colors">
-                                                @(log.Comment.Length > 10 ? log.Comment.Substring(0, 10) + "..." : log.Comment)
-                                            </span>
-                                            <span class="text-[10px] text-slate-400 font-mono">ID: @log.ReviewId</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-3.5 text-xs text-slate-600">@log.ModelName</td>
-                                    <td class="px-6 py-3.5">
-                                        @if(log.ResultStatus == "Flagged" || log.ResultStatus == "Match Found") {
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-100">@log.ResultStatus</span>
-                                        } else if (log.ResultStatus == "ERROR") {
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-red-50 text-red-700 border border-red-100">ERROR</span>
-                                        } else if (log.ResultStatus == "Manual Audit") {
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-100">@log.ResultStatus</span>
-                                        } else {
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">@log.ResultStatus</span>
-                                        }
-                                    </td>
-                                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.LatencyMs ms</td>
-                                    <td class="px-6 py-3.5 text-slate-500 text-xs">@log.LogCreatedAt.ToString("MMM dd yyyy HH:mm:ss")</td>
-                                </tr>
-                            }
-                        } else {
-                            <tr>
-                                <td colspan="5" class="px-6 py-8 text-center text-slate-500">No logs found.</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-                @if(ViewBag.LReviewTotalPages > 1) {
-                    <div class="px-6 py-4 border-t border-slate-200 flex justify-between items-center bg-slate-50">
-                        <a href="?tab=logs&subtab=lesson_review&modelPage=@ViewBag.ModelPage&coursePage=@ViewBag.CoursePage&cReviewPage=@ViewBag.CReviewPage&lReviewPage=@(ViewBag.LReviewPage - 1)" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.LReviewPage <= 1 ? "pointer-events-none opacity-50" : "")">Previous</a>
-                        <span class="text-sm text-slate-500">Page @ViewBag.LReviewPage of @ViewBag.LReviewTotalPages</span>
-                        <a href="?tab=logs&subtab=lesson_review&modelPage=@ViewBag.ModelPage&coursePage=@ViewBag.CoursePage&cReviewPage=@ViewBag.CReviewPage&lReviewPage=@(ViewBag.LReviewPage + 1)" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(ViewBag.LReviewPage >= ViewBag.LReviewTotalPages ? "pointer-events-none opacity-50" : "")">Next</a>
-                    </div>
-                }
+                <div id="lesson_review_logsTableContainer">
+                    <partial name="_LessonReviewLogsTablePartial" model="Model" />
+                </div>
             </div>
 
         </div>
@@ -588,7 +362,13 @@
             }
         }
 
-        function openEditAiModelModal(id, provider, version, path, desc) {
+        function openEditAiModelModal(btn) {
+            const id = btn.getAttribute('data-id');
+            const provider = btn.getAttribute('data-provider');
+            const version = btn.getAttribute('data-version');
+            const path = btn.getAttribute('data-path');
+            const desc = btn.getAttribute('data-desc');
+
             document.getElementById('editModelId').value = id;
             document.getElementById('editModelProvider').value = provider;
             document.getElementById('editModelVersion').value = version;
@@ -611,6 +391,19 @@
                 modal.classList.add('hidden');
                 document.getElementById('editAiModelForm').reset();
             }, 300);
+        }
+
+        function navigateToLogDetail(basePath) {
+            let url = basePath;
+            const search = window.location.search;
+            if (search) {
+                if (url.includes('?')) {
+                    url += '&' + search.substring(1);
+                } else {
+                    url += search;
+                }
+            }
+            window.location.href = url;
         }
 
         async function submitAddAiModel(e) {
@@ -647,8 +440,15 @@
             });
 
             if (res.ok) {
-                Swal.fire({ title: 'Success', text: 'Model added successfully', icon: 'success', customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' } }).then(() => window.location.reload());
+                Swal.fire({
+                    title: 'Success',
+                    text: 'Model added successfully', 
+                    icon: 'success', 
+                    customClass: { 
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl' 
+                        } });
                 closeAddAiModelModal();
+                fetchPage('models', 1);
             } else {
                 const err = await res.json();
                 Swal.fire('Error', err.Message || 'Failed to add model', 'error');
@@ -686,8 +486,15 @@
             });
 
             if (res.ok) {
-                Swal.fire({ title: 'Success', text: 'Model updated successfully', icon: 'success', customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' } }).then(() => window.location.reload());
+                Swal.fire({ 
+                    title: 'Success', 
+                    text: 'Model updated successfully', 
+                    icon: 'success', 
+                    customClass: { 
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl' 
+                        } });
                 closeEditAiModelModal();
+                fetchPage('models', 1);
             } else {
                 const err = await res.json();
                 Swal.fire('Error', err.Message || 'Failed to edit model', 'error');
@@ -744,7 +551,12 @@
             });
 
             if(res.ok) {
-                Swal.fire({ title: 'Success', text: 'Thresholds updated successfully', icon: 'success', customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' } });
+                Swal.fire({ 
+                    title: 'Success', 
+                    text: 'Thresholds updated successfully', 
+                    icon: 'success', 
+                    customClass: { 
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl' } });
             } else {
                 const err = await res.json();
                 Swal.fire('Error', err.Message || 'Failed to update', 'error');
@@ -794,7 +606,12 @@
             }
 
             if (success) {
-                Swal.fire({ title: 'Success', text: 'Integration configs saved', icon: 'success', customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' } });
+                Swal.fire({ 
+                    title: 'Success', 
+                    text: 'Integration configs saved', 
+                    icon: 'success', 
+                    customClass: { 
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl' } });
             } else {
                 Swal.fire('Error', 'Failed to update some configurations', 'error');
             }
@@ -819,7 +636,16 @@
             });
 
             if (res.ok) {
-                Swal.fire({ title: 'Status Toggled', text: 'Model status changed', icon: 'success', timer: 1500, showConfirmButton: false, customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' } }).then(() => window.location.reload());
+                Swal.fire({ 
+                    title: 'Status Toggled', 
+                    text: 'Model status changed', 
+                    icon: 'success', 
+                    timer: 1500, 
+                    showConfirmButton: false, 
+                    customClass: { 
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl' 
+                        } });
+                fetchPage('models', 1);
             } else {
                 const err = await res.json();
                 Swal.fire('Error', err.Message || 'Failed to toggle status', 'error');
@@ -858,6 +684,42 @@
                 confirmButtonText: 'Close',
                 customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' }
             });
+        }
+
+        async function fetchPage(type, page) {
+            let url = '';
+            let stateKey = '';
+            
+            if (type === 'models') {
+                url = `/AdminAiService/GetModelsPartial?page=${page}`;
+                stateKey = 'modelPage';
+            } else if (type === 'course_logs') {
+                url = `/AdminAiService/GetCourseLogsPartial?page=${page}`;
+                stateKey = 'coursePage';
+            } else if (type === 'course_review_logs') {
+                url = `/AdminAiService/GetCourseReviewLogsPartial?page=${page}`;
+                stateKey = 'cReviewPage';
+            } else if (type === 'lesson_review_logs') {
+                url = `/AdminAiService/GetLessonReviewLogsPartial?page=${page}`;
+                stateKey = 'lReviewPage';
+            }
+
+            const res = await fetch(url);
+            if (res.redirected) {
+                window.location.href = res.url;
+                return;
+            }
+
+            if (res.ok) {
+                const html = await res.text();
+                document.getElementById(`${type}TableContainer`).innerHTML = html;
+                
+                const currentUrl = new URL(window.location);
+                currentUrl.searchParams.set(stateKey, page);
+                window.history.pushState({}, '', currentUrl);
+            } else {
+                Swal.fire('Error', 'Failed to load page.', 'error');
+            }
         }
     </script>
 }

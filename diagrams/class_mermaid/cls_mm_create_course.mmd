@@ -1,0 +1,258 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class InstructorCourseController {
+    + Create() Task~IActionResult~
+    + Create(model: CreateCourseViewModel) Task~IActionResult~
+    - GetCategoriesAsync() Task~List~CategoryViewModel~~
+    - LoadStripeStatusAsync() Task
+    - LoadTransferRateAsync() Task
+}
+
+class CreateCourseViewModel {
+    + Title : string
+    + CategoryId : int
+    + Description : string
+    + Price : decimal
+    + CourseThumbnailUrl : string
+    + WhatYouWillLearn : string
+    + Requirements : string
+    + CouponId : int?
+    + AvailableCategories : List~CategoryViewModel~
+}
+
+class CategoryViewModel {
+    + CategoryId : int
+    + CategoriesName : string
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class CourseController {
+    - _courseCommandService : ICourseCommandService
+    
+    + CreateCourse(request: CourseCreateRequest) Task~IActionResult~
+    - GetInstructorId() int
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class CourseCreateRequest {
+    + CategoryId : int
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ThumbnailFile : IFormFile?
+}
+
+class CourseResponse {
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CourseStatus : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + InstructorName : string?
+    + TotalStudents : int
+    + RatingAverage : decimal
+    + CategoryName : string?
+    + InstructorAvatarUrl : string?
+    + InstructorBio : string?
+    + InstructorProfessionalTitle : string?
+    + InstructorReviewCount : int
+    + InstructorStudentsCount : int
+    + InstructorCoursesCount : int
+    + IsEnrolled : bool
+    + IsOwner : bool
+    + TotalReviews : int
+    + LastApprovedAt : DateTime?
+    + AppliedCouponCode : string?
+    + AppliedCouponType : string?
+    + AppliedCouponValue : decimal?
+    + IsRemoved : bool
+    + IsInAnyCart : bool
+    + FlagCount : int
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Course {
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + CourseAiIntegrations : ICollection~CourseAiIntegration~
+    + CartItems : ICollection~CartItem~
+    + Category : Category?
+    + Coupon : Coupon?
+    + Enrollments : ICollection~Enrollment~
+    + Instructor : Instructor?
+    + Lessons : ICollection~Lesson~
+    + OrderItems : ICollection~OrderItem~
+    + WishlistItems : ICollection~WishlistItem~
+    + CourseExt : CourseExt?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+class Category {
+    + CategoryId : int
+    + CategoriesName : string
+    + Description : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CategoryStatus : string?
+    + Courses : ICollection~Course~
+}
+
+class Instructor {
+    + InstructorId : int
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string?
+    + ApprovalStatus : string?
+    + RejectionReason : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
+    + Courses : ICollection~Course~
+    + InstructorPayouts : ICollection~InstructorPayout~
+    + InstructorNavigation : User
+}
+
+class Coupon {
+    + CouponId : int
+    + ManagerId : int?
+    + CouponCode : string
+    + CouponType : string?
+    + DiscountValue : decimal
+    + MinOrderValue : decimal
+    + StartDate : DateTime?
+    + EndDate : DateTime?
+    + UsageLimit : int?
+    + UsedCount : int?
+    + IsActive : bool?
+    + Courses : ICollection~Course~
+    + Manager : Manager?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ICourseCommandService {
+    <<interface>>
+    + CreateCourseAsync(request: CourseCreateRequest, instructorId: int) Task~CourseResponse~ *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + AddAsync(course: Course) void *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class IFileUploadService {
+    <<interface>>
+    + UploadImageAsync(file: IFormFile) Task~string?~ *
+    + UploadVideoAsync(file: IFormFile) Task~string?~ *
+}
+
+class IHtmlTextManipulationService {
+    <<interface>>
+    + SanitizeHtml(html: string) string *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CourseCommandService {
+    - _courseRepository : ICourseRepository
+    - _uploadService : IFileUploadService
+    - _htmlTextManipulationService : IHtmlTextManipulationService
+    
+    + CreateCourseAsync(request: CourseCreateRequest, instructorId: int) Task~CourseResponse~
+    - CheckInstructorRights(instructorId: int) Task~ValueTuple~int, bool~~
+    - SaveChangesWithFingerprintAsync() Task~int~
+    - GetDuplicateFieldFromErrorMessage(message: string) string
+    - AddCourseFingerprintAsync(course: Course) Task~Course~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CourseRepository {
+    - _context : AppDbContext
+    
+    + AddAsync(course: Course) void
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Categories : DbSet~Category~
+    + Coupons : DbSet~Coupon~
+    + Courses : DbSet~Course~
+    + Instructors : DbSet~Instructor~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION (filled diamond) ===
+Instructor *-- Course
+
+%% === AGGREGATION (hollow diamond) ===
+CreateCourseViewModel o-- CategoryViewModel
+Category o-- Course
+Course -- Coupon
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+CourseController --> ICourseCommandService
+CourseCommandService --> ICourseRepository
+CourseCommandService --> IFileUploadService
+CourseCommandService --> IHtmlTextManipulationService
+CourseRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+CourseCommandService ..|> ICourseCommandService
+CourseRepository ..|> ICourseRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+InstructorCourseController ..> CourseController
+InstructorCourseController ..> CreateCourseViewModel
+CourseController ..> CourseCreateRequest
+CourseCommandService ..> CourseCreateRequest
+CourseCommandService ..> CourseResponse
+CourseCommandService ..> Course
+CourseRepository ..> Course
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
