@@ -1,0 +1,87 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class CartControllerFE["CartController"] {
+    <<frontend controller>>
+    + RemoveFromCart(courseId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class CartControllerBE["CartController"] {
+    <<backend controller>>
+    - _cartService : ICartService
+    + RemoveFromCart(courseId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class CartItem {
+    + Id : int
+    + UserId : int?
+    + CourseId : int?
+    + AddedDate : DateTime?
+    + Price : decimal?
+    + Course : Course?
+    + User : User?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ICartService {
+    <<interface>>
+    + RemoveFromCartAsync(userId: int, courseId: int) Task *
+}
+
+%% ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+class ICartRepository {
+    <<interface>>
+    + GetCartItemAsync(userId: int, courseId: int) Task~CartItem?~ *
+    + RemoveCartItem(item: CartItem) void *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CartService {
+    - _repo : ICartRepository
+    + RemoveFromCartAsync(userId: int, courseId: int) Task
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CartRepository {
+    - _context : AppDbContext
+    + GetCartItemAsync(userId: int, courseId: int) Task~CartItem?~
+    + RemoveCartItem(item: CartItem) void
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + CartItems : DbSet~CartItem~
+    + SaveChangesAsync(cancellationToken: CancellationToken) Task~int~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+CartControllerBE --> ICartService
+CartService --> ICartRepository
+CartRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+CartService ..|> ICartService
+CartRepository ..|> ICartRepository
+
+%% === DEPENDENCY ===
+CartControllerFE ..> CartControllerBE
+CartRepository ..> CartItem
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

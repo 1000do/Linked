@@ -1,0 +1,100 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class FrontendController["ChatController"] {
+    <<frontend controller>>
+    + ClearHistory(chatId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class BackendController["ChatController"] {
+    <<backend controller>>
+    - _chatService : IChatService
+    + ClearChatHistory(chatId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Chat {
+    + ChatId : int
+    + ChatName : string?
+    + ChatType : string
+    + ContextType : string?
+    + ContextId : int?
+    + CreatedAt : DateTime?
+    + LastMessageAt : DateTime?
+}
+
+class ChatParticipant {
+    + ChatId : int
+    + AccountId : int
+    + Role : string
+    + UnreadCount : int
+    + LastReadAt : DateTime?
+    + JoinedAt : DateTime?
+    + ClearedAt : DateTime?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IChatService {
+    <<interface>>
+    + ClearChatHistoryAsync(chatId: int, accountId: int) Task~bool~ *
+}
+
+%% ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+class IChatRepository {
+    <<interface>>
+    + GetParticipantAsync(chatId: int, accountId: int) Task~ChatParticipant?~ *
+    + UpdateParticipantAsync(participant: ChatParticipant) Task *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ChatService {
+    - _repo : IChatRepository
+    + ClearChatHistoryAsync(chatId: int, accountId: int) Task~bool~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ChatRepository {
+    - _context : AppDbContext
+    + GetParticipantAsync(chatId: int, accountId: int) Task~ChatParticipant?~
+    + UpdateParticipantAsync(participant: ChatParticipant) Task
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Chats : DbSet~Chat~
+    + ChatParticipants : DbSet~ChatParticipant~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION ===
+Chat *-- ChatParticipant
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+BackendController --> IChatService
+ChatService --> IChatRepository
+ChatRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+ChatService ..|> IChatService
+ChatRepository ..|> IChatRepository
+
+%% === DEPENDENCY ===
+FrontendController ..> BackendController
+ChatRepository ..> ChatParticipant
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

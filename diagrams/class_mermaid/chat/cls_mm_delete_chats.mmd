@@ -1,0 +1,74 @@
+classDiagram
+direction LR
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class ChatControllerBE["ChatController"] {
+    <<backend controller>>
+    - _chatService : IChatService
+    + ClearChatHistory(chatId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class ChatParticipant {
+    + ChatId : int
+    + AccountId : int
+    + ClearedAt : DateTime?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IChatService {
+    <<interface>>
+    + ClearChatHistoryAsync(chatId: int, accountId: int) Task~bool~ *
+}
+
+%% ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+class IChatRepository {
+    <<interface>>
+    + GetParticipantAsync(chatId: int, accountId: int) Task~ChatParticipant?~ *
+    + UpdateParticipantAsync(participant: ChatParticipant) Task *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ChatService {
+    - _chatRepository : IChatRepository
+    + ClearChatHistoryAsync(chatId: int, accountId: int) Task~bool~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ChatRepository {
+    - _context : AppDbContext
+    + GetParticipantAsync(chatId: int, accountId: int) Task~ChatParticipant?~
+    + UpdateParticipantAsync(participant: ChatParticipant) Task
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + ChatParticipants : DbSet~ChatParticipant~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+ChatControllerBE --> IChatService
+ChatService --> IChatRepository
+ChatRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+ChatService ..|> IChatService
+ChatRepository ..|> IChatRepository
+
+%% === DEPENDENCY ===
+ChatRepository ..> ChatParticipant
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

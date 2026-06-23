@@ -1,0 +1,156 @@
+classDiagram
+direction LR
+
+%% ==================== BACKEND - HUB ====================
+
+class ChatHub {
+    - _chatService : IChatService
+    + SendMessage(dto: SendMessageDto) Task
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class SendMessageDto {
+    + ChatId : int
+    + Content : string
+    + Attachments : List~AttachmentInputDto~?
+}
+
+class AttachmentInputDto {
+    + FileUrl : string
+    + FileName : string?
+    + FileType : string?
+    + FileSize : long?
+}
+
+class MessageDto {
+    + MessageId : int
+    + ChatId : int
+    + SenderId : int?
+    + SenderName : string
+    + SenderAvatar : string?
+    + Content : string
+    + IsSeen : bool
+    + MessageStatus : string
+    + SentAt : DateTime?
+    + Attachments : List~AttachmentDto~
+}
+
+class AttachmentDto {
+    + AttachmentId : int
+    + FileUrl : string
+    + FileName : string?
+    + FileType : string?
+    + FileSize : long?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Message {
+    + MessageId : int
+    + ChatId : int
+    + SenderId : int?
+    + Content : string
+    + SentAt : DateTime?
+    + MessageStatus : string
+}
+
+class MessageAttachment {
+    + AttachmentId : int
+    + MessageId : int?
+    + FileUrl : string
+    + FileName : string?
+    + FileType : string?
+    + FileSize : long?
+    + CreatedAt : DateTime?
+}
+
+class Chat {
+    + ChatId : int
+    + LastMessageAt : DateTime?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IChatService {
+    <<interface>>
+    + SaveMessageAsync(senderId: int, dto: SendMessageDto) Task~MessageDto~ *
+}
+
+class IRedisService {
+    <<interface>>
+    + IncrementUnreadCountAsync(accountId: int, chatId: int) Task *
+}
+
+%% ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+class IChatRepository {
+    <<interface>>
+    + IsParticipantAsync(chatId: int, accountId: int) Task~bool~ *
+    + HasActiveReportForChatAsync(chatId: int) Task~bool~ *
+    + AddMessageAsync(message: Message) Task *
+    + GetChatByIdAsync(chatId: int) Task~Chat?~ *
+    + UpdateChatAsync(chat: Chat) Task *
+    + GetParticipantIdsAsync(chatId: int) Task~List~int~~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ChatService {
+    - _chatRepository : IChatRepository
+    - _redisService : IRedisService
+    + SaveMessageAsync(senderId: int, dto: SendMessageDto) Task~MessageDto~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ChatRepository {
+    - _context : AppDbContext
+    + IsParticipantAsync(chatId: int, accountId: int) Task~bool~
+    + HasActiveReportForChatAsync(chatId: int) Task~bool~
+    + AddMessageAsync(message: Message) Task
+    + GetChatByIdAsync(chatId: int) Task~Chat?~
+    + UpdateChatAsync(chat: Chat) Task
+    + GetParticipantIdsAsync(chatId: int) Task~List~int~~
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Messages : DbSet~Message~
+    + MessageAttachments : DbSet~MessageAttachment~
+    + Chats : DbSet~Chat~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION ===
+Message *-- MessageAttachment
+Chat *-- Message
+SendMessageDto *-- AttachmentInputDto
+MessageDto *-- AttachmentDto
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+ChatHub --> IChatService
+ChatService --> IChatRepository
+ChatService --> IRedisService
+ChatRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+ChatService ..|> IChatService
+ChatRepository ..|> IChatRepository
+
+%% === DEPENDENCY ===
+ChatHub ..> SendMessageDto
+ChatHub ..> MessageDto
+ChatService ..> SendMessageDto
+ChatService ..> MessageDto
+ChatService ..> Message
+ChatRepository ..> Message
+ChatRepository ..> Chat
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

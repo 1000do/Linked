@@ -301,7 +301,7 @@
                 loadAdminTopNotifications();
 
                 const connection = new signalR.HubConnectionBuilder()
-                    .withUrl("http://localhost:5207/notificationHub", {
+                    .withUrl("/notificationHub", {
                         accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
                     })
                     .withAutomaticReconnect()

@@ -1,0 +1,147 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class CartControllerFE["CartController"] {
+    <<frontend controller>>
+    + AddToCart(courseId: int, returnUrl: string?) Task~IActionResult~
+    + AddToCartAjax(id: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class CartControllerBE["CartController"] {
+    <<backend controller>>
+    - _cartService : ICartService
+    - _authService : IAuthService
+    + AddToCart(courseId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class CartItem {
+    + Id : int
+    + UserId : int?
+    + CourseId : int?
+    + AddedDate : DateTime?
+    + Price : decimal?
+    + Course : Course?
+}
+
+class Course {
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + CourseAiIntegrations : ICollection~CourseAiIntegration~
+    + CartItems : ICollection~CartItem~
+    + Category : Category?
+    + Coupon : Coupon?
+    + Enrollments : ICollection~Enrollment~
+    + Instructor : Instructor?
+    + Lessons : ICollection~Lesson~
+    + OrderItems : ICollection~OrderItem~
+    + WishlistItems : ICollection~WishlistItem~
+    + CourseExt : CourseExt?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ICartService {
+    <<interface>>
+    + AddToCartAsync(userId: int, courseId: int) Task *
+}
+
+class IAuthService {
+    <<interface>>
+    + IsEmailVerifiedAsync(userId: int) Task~bool~ *
+}
+
+%% ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+class ICartRepository {
+    <<interface>>
+    + IsCourseInCartAsync(userId: int, courseId: int) Task~bool~ *
+    + AddCartItemAsync(item: CartItem) Task *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + GetByIdAsync(courseId: int) Task~Course?~ *
+    + IsEnrolledAsync(userId: int, courseId: int) Task~bool~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CartService {
+    - _repo : ICartRepository
+    - _courseRepo : ICourseRepository
+    + AddToCartAsync(userId: int, courseId: int) Task
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CartRepository {
+    - _context : AppDbContext
+    + IsCourseInCartAsync(userId: int, courseId: int) Task~bool~
+    + AddCartItemAsync(item: CartItem) Task
+    + SaveChangesAsync() Task~int~
+}
+
+class CourseRepository {
+    - _context : AppDbContext
+    + GetByIdAsync(courseId: int) Task~Course?~
+    + IsEnrolledAsync(userId: int, courseId: int) Task~bool~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + CartItems : DbSet~CartItem~
+    + Courses : DbSet~Course~
+    + SaveChangesAsync(cancellationToken: CancellationToken) Task~int~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+CartControllerBE --> ICartService
+CartControllerBE --> IAuthService
+CartService --> ICartRepository
+CartService --> ICourseRepository
+CartRepository --> AppDbContext
+CourseRepository --> AppDbContext
+
+%% === BIDIRECTIONAL ASSOCIATION ===
+Course -- CartItem
+
+%% === INTERFACE REALIZATION ===
+CartService ..|> ICartService
+CartRepository ..|> ICartRepository
+CourseRepository ..|> ICourseRepository
+
+%% === DEPENDENCY ===
+CartControllerFE ..> CartControllerBE
+CartService ..> CartItem
+CartRepository ..> CartItem
+CourseRepository ..> Course
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

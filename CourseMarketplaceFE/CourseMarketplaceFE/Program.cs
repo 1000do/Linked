@@ -56,6 +56,47 @@ namespace CourseMarketplaceFE
             // Đăng ký ApiClient (auto-attach AccessToken + auto-refresh khi 401)
             builder.Services.AddScoped<ApiClient>();
 
+            // --- CẤU HÌNH YARP (REVERSE PROXY) CHO SIGNALR & API ---
+            var backendBaseUrl = builder.Configuration.GetValue<string>("BackendBaseUrl") ?? "http://localhost:5207";
+            builder.Services.AddReverseProxy()
+                .LoadFromMemory(new[]
+                {
+                    new Yarp.ReverseProxy.Configuration.RouteConfig
+                    {
+                        RouteId = "api_route",
+                        ClusterId = "backend_cluster",
+                        Match = new Yarp.ReverseProxy.Configuration.RouteMatch { Path = "/api/{**catch-all}" }
+                    },
+                    new Yarp.ReverseProxy.Configuration.RouteConfig
+                    {
+                        RouteId = "chathub_route",
+                        ClusterId = "backend_cluster",
+                        Match = new Yarp.ReverseProxy.Configuration.RouteMatch { Path = "/chatHub/{**catch-all}" }
+                    },
+                    new Yarp.ReverseProxy.Configuration.RouteConfig
+                    {
+                        RouteId = "notifhub_route",
+                        ClusterId = "backend_cluster",
+                        Match = new Yarp.ReverseProxy.Configuration.RouteMatch { Path = "/notificationHub/{**catch-all}" }
+                    },
+                    new Yarp.ReverseProxy.Configuration.RouteConfig
+                    {
+                        RouteId = "financehub_route",
+                        ClusterId = "backend_cluster",
+                        Match = new Yarp.ReverseProxy.Configuration.RouteMatch { Path = "/financeHub/{**catch-all}" }
+                    }
+                }, new[]
+                {
+                    new Yarp.ReverseProxy.Configuration.ClusterConfig
+                    {
+                        ClusterId = "backend_cluster",
+                        Destinations = new Dictionary<string, Yarp.ReverseProxy.Configuration.DestinationConfig>(StringComparer.OrdinalIgnoreCase)
+                        {
+                            { "backend_destination", new Yarp.ReverseProxy.Configuration.DestinationConfig { Address = backendBaseUrl } }
+                        }
+                    }
+                });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -119,6 +160,8 @@ namespace CourseMarketplaceFE
             });
 
             app.UseAuthorization();
+
+            app.MapReverseProxy();
 
             app.MapControllerRoute(
               name: "default",

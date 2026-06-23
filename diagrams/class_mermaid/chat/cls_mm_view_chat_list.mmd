@@ -1,0 +1,125 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class ChatControllerFE["ChatController"] {
+    <<frontend controller>>
+    + Index() IActionResult
+    + Learner() IActionResult
+    + Instructor() IActionResult
+    + Admin() IActionResult
+    - GetActorFromCookie() string
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class ChatControllerBE["ChatController"] {
+    <<backend controller>>
+    - _chatService : IChatService
+    + GetMyChats() Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class ChatListDto {
+    + ChatId : int
+    + ChatName : string?
+    + ChatType : string
+    + LastMessage : string?
+    + LastMessageAt : DateTime?
+    + PartnerName : string?
+    + PartnerAvatar : string?
+    + ContextType : string?
+    + ContextId : int?
+    + UnreadCount : int
+    + IsOnline : bool
+    + PartnerId : int?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class ChatParticipant {
+    + ChatId : int
+    + AccountId : int
+    + Role : string
+    + JoinedAt : DateTime
+    + ClearedAt : DateTime?
+    + UnreadCount : int
+    + LastReadAt : DateTime?
+}
+
+class Chat {
+    + ChatId : int
+    + ChatName : string?
+    + ChatType : string
+    + ContextType : string?
+    + ContextId : int?
+    + CreatedAt : DateTime?
+    + LastMessageAt : DateTime?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IChatService {
+    <<interface>>
+    + GetMyChatsAsync(accountId: int) Task~List~ChatListDto~~ *
+}
+
+class IRedisService {
+    <<interface>>
+    + GetUnreadCountAsync(accountId: int, chatId: int) Task~int~ *
+    + IsUserOnlineAsync(accountId: int) Task~bool~ *
+}
+
+%% ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+class IChatRepository {
+    <<interface>>
+    + GetParticipantsByAccountIdAsync(accountId: int) Task~List~ChatParticipant~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ChatService {
+    - _chatRepository : IChatRepository
+    - _redisService : IRedisService
+    + GetMyChatsAsync(accountId: int) Task~List~ChatListDto~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ChatRepository {
+    - _context : AppDbContext
+    + GetParticipantsByAccountIdAsync(accountId: int) Task~List~ChatParticipant~~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + ChatParticipants : DbSet~ChatParticipant~
+    + Chats : DbSet~Chat~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+ChatControllerBE --> IChatService
+ChatService --> IChatRepository
+ChatService --> IRedisService
+ChatRepository --> AppDbContext
+ChatParticipant --> Chat
+
+%% === INTERFACE REALIZATION ===
+ChatService ..|> IChatService
+ChatRepository ..|> IChatRepository
+
+%% === DEPENDENCY ===
+ChatControllerFE ..> ChatControllerBE
+ChatControllerBE ..> ChatListDto
+ChatService ..> ChatListDto
+ChatRepository ..> ChatParticipant
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
