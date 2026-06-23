@@ -12,7 +12,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 /// Endpoints dành cho User và Instructor:
 /// - Tạo report (khóa học, course review, lesson review)
 /// - Xem lịch sử report của mình
-/// - Instructor: xem reports nhận được trên khóa học của mình
+/// - Manager: xem reports nhận được trên khóa học của mình
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -141,7 +141,8 @@ public class ReportController : ControllerBase
     /// Instructor xem danh sách reports nhắm vào một khóa học cụ thể của mình.
     /// </summary>
     [HttpGet("instructor/courses/{courseId}")]
-    [Authorize(Roles = "instructor,admin")]
+    [Authorize]
+    //[Authorize(Roles = "instructor,admin")]
     public async Task<IActionResult> GetReportsOnMyCourse(int courseId)
     {
         var userId = GetUserId();

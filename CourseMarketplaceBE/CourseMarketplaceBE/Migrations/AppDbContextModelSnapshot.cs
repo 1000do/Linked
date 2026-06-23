@@ -603,7 +603,10 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnName("requirements");
 
                     b.Property<int>("ThreatLevel")
-                        .HasColumnType("integer");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("threat_level");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -789,6 +792,52 @@ namespace CourseMarketplaceBE.Migrations
                         .IsUnique();
 
                     b.ToTable("course_exts", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseQuiz", b =>
+                {
+                    b.Property<int>("CourseQuizId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("course_quiz_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CourseQuizId"));
+
+                    b.Property<DateTime?>("AddedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("added_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("integer")
+                        .HasColumnName("course_id");
+
+                    b.Property<bool>("IsHidden")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_hidden");
+
+                    b.Property<int>("OrderIndex")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("order_index");
+
+                    b.Property<int>("QuizId")
+                        .HasColumnType("integer")
+                        .HasColumnName("quiz_id");
+
+                    b.HasKey("CourseQuizId")
+                        .HasName("course_quizzes_pkey");
+
+                    b.HasIndex("QuizId");
+
+                    b.HasIndex(new[] { "CourseId", "QuizId" }, "uq_course_quiz")
+                        .IsUnique();
+
+                    b.ToTable("course_quizzes", (string)null);
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseReport", b =>
@@ -1121,6 +1170,103 @@ namespace CourseMarketplaceBE.Migrations
                     b.ToTable("enrollments", (string)null);
                 });
 
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Gift", b =>
+                {
+                    b.Property<int>("GiftId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("gift_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("GiftId"));
+
+                    b.Property<string>("CardTheme")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("classic")
+                        .HasColumnName("card_theme");
+
+                    b.Property<DateTime?>("ClaimedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("claimed_at");
+
+                    b.Property<int?>("ClaimedByUserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("claimed_by_user_id");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("DeliveryStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("pending")
+                        .HasColumnName("delivery_status");
+
+                    b.Property<string>("GiftMessage")
+                        .HasColumnType("text")
+                        .HasColumnName("gift_message");
+
+                    b.Property<bool>("IsClaimed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_claimed");
+
+                    b.Property<int>("OrderItemId")
+                        .HasColumnType("integer")
+                        .HasColumnName("order_item_id");
+
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("recipient_email");
+
+                    b.Property<string>("RecipientName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("recipient_name");
+
+                    b.Property<string>("RedemptionToken")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("redemption_token");
+
+                    b.Property<int?>("SenderId")
+                        .HasColumnType("integer")
+                        .HasColumnName("sender_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("GiftId")
+                        .HasName("gifts_pkey");
+
+                    b.HasIndex("ClaimedByUserId");
+
+                    b.HasIndex("OrderItemId");
+
+                    b.HasIndex("SenderId");
+
+                    b.HasIndex(new[] { "DeliveryStatus" }, "idx_gifts_delivery");
+
+                    b.HasIndex(new[] { "RecipientEmail" }, "idx_gifts_recipient");
+
+                    b.HasIndex(new[] { "RedemptionToken" }, "idx_gifts_token")
+                        .IsUnique();
+
+                    b.ToTable("gifts", (string)null);
+                });
+
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Instructor", b =>
                 {
                     b.Property<int>("InstructorId")
@@ -1167,6 +1313,10 @@ namespace CourseMarketplaceBE.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("professional_title");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text")
+                        .HasColumnName("rejection_reason");
 
                     b.Property<string>("StripeAccountId")
                         .HasMaxLength(255)
@@ -1623,11 +1773,29 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("manager_id");
 
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("avatar_url");
+
+                    b.Property<string>("Bio")
+                        .HasColumnType("text")
+                        .HasColumnName("bio");
+
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("display_name");
+
+                    b.Property<string>("FullName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("full_name");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("phone_number");
 
                     b.Property<string>("Role")
                         .HasMaxLength(50)
@@ -2064,6 +2232,319 @@ namespace CourseMarketplaceBE.Migrations
                     b.HasIndex("ManagerId");
 
                     b.ToTable("platform_withdrawals", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Quiz", b =>
+                {
+                    b.Property<int>("QuizId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("quiz_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("QuizId"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("integer")
+                        .HasColumnName("course_id");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<int>("InstructorId")
+                        .HasColumnType("integer")
+                        .HasColumnName("instructor_id");
+
+                    b.Property<bool>("IsHidden")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_hidden");
+
+                    b.Property<bool>("IsRemoved")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_removed");
+
+                    b.Property<int>("PassingScore")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(70)
+                        .HasColumnName("passing_score");
+
+                    b.Property<int?>("TimeLimitMinutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("time_limit_minutes");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("title");
+
+                    b.Property<int>("TotalQuestions")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(10)
+                        .HasColumnName("total_questions");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("QuizId")
+                        .HasName("quizzes_pkey");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("InstructorId");
+
+                    b.ToTable("quizzes", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizAttempt", b =>
+                {
+                    b.Property<int>("AttemptId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("attempt_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AttemptId"));
+
+                    b.Property<bool?>("IsPassed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_passed");
+
+                    b.Property<int>("QuizId")
+                        .HasColumnType("integer")
+                        .HasColumnName("quiz_id");
+
+                    b.Property<int?>("Score")
+                        .HasColumnType("integer")
+                        .HasColumnName("score");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("started_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("submitted_at");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("AttemptId")
+                        .HasName("quiz_attempts_pkey");
+
+                    b.HasIndex("QuizId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("quiz_attempts", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizAttemptAnswer", b =>
+                {
+                    b.Property<int>("AnswerId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("answer_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AnswerId"));
+
+                    b.Property<int>("AttemptId")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempt_id");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("question_id");
+
+                    b.Property<int?>("SelectedOptionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("selected_option_id");
+
+                    b.HasKey("AnswerId")
+                        .HasName("quiz_attempt_answers_pkey");
+
+                    b.HasIndex("AttemptId");
+
+                    b.HasIndex("QuestionId");
+
+                    b.HasIndex("SelectedOptionId");
+
+                    b.ToTable("quiz_attempt_answers", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizAttemptQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AttemptId")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempt_id");
+
+                    b.Property<int>("OrderIndex")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("order_index");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("question_id");
+
+                    b.HasKey("Id")
+                        .HasName("quiz_attempt_questions_pkey");
+
+                    b.HasIndex("QuestionId");
+
+                    b.HasIndex(new[] { "AttemptId", "QuestionId" }, "uq_quiz_attempt_question")
+                        .IsUnique();
+
+                    b.ToTable("quiz_attempt_questions", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizLessonDistribution", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("LessonId")
+                        .HasColumnType("integer")
+                        .HasColumnName("lesson_id");
+
+                    b.Property<int>("Percentage")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("percentage");
+
+                    b.Property<int>("QuizId")
+                        .HasColumnType("integer")
+                        .HasColumnName("quiz_id");
+
+                    b.HasKey("Id")
+                        .HasName("quiz_lesson_distributions_pkey");
+
+                    b.HasIndex("LessonId");
+
+                    b.HasIndex(new[] { "QuizId", "LessonId" }, "uq_quiz_lesson_dist")
+                        .IsUnique();
+
+                    b.ToTable("quiz_lesson_distributions", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizOption", b =>
+                {
+                    b.Property<int>("OptionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("option_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("OptionId"));
+
+                    b.Property<bool>("IsCorrect")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_correct");
+
+                    b.Property<string>("OptionText")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("option_text");
+
+                    b.Property<int>("OrderIndex")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("order_index");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("question_id");
+
+                    b.HasKey("OptionId")
+                        .HasName("quiz_options_pkey");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("quiz_options", (string)null);
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizQuestion", b =>
+                {
+                    b.Property<int>("QuestionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("question_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("QuestionId"));
+
+                    b.Property<int>("CourseId")
+                        .HasColumnType("integer")
+                        .HasColumnName("course_id");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int>("LessonId")
+                        .HasColumnType("integer")
+                        .HasColumnName("lesson_id");
+
+                    b.Property<int>("OrderIndex")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("order_index");
+
+                    b.Property<string>("QuestionText")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("question_text");
+
+                    b.Property<string>("QuestionType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("SingleChoice")
+                        .HasColumnName("question_type");
+
+                    b.HasKey("QuestionId")
+                        .HasName("quiz_questions_pkey");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("LessonId");
+
+                    b.ToTable("quiz_questions", (string)null);
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.SystemConfig", b =>
@@ -2537,6 +3018,27 @@ namespace CourseMarketplaceBE.Migrations
                     b.Navigation("Course");
                 });
 
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseQuiz", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Course", "Course")
+                        .WithMany("CourseQuizzes")
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("course_quizzes_course_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Quiz", "Quiz")
+                        .WithMany("CourseQuizzes")
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("course_quizzes_quiz_id_fkey");
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Quiz");
+                });
+
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.CourseReport", b =>
                 {
                     b.HasOne("CourseMarketplaceBE.Domain.Entities.Course", "Course")
@@ -2639,6 +3141,34 @@ namespace CourseMarketplaceBE.Migrations
                     b.Navigation("Course");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Gift", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.User", "ClaimedByUser")
+                        .WithMany()
+                        .HasForeignKey("ClaimedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("gifts_claimed_by_user_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.OrderItem", "OrderItem")
+                        .WithMany()
+                        .HasForeignKey("OrderItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("gifts_order_item_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Account", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("gifts_sender_id_fkey");
+
+                    b.Navigation("ClaimedByUser");
+
+                    b.Navigation("OrderItem");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Instructor", b =>
@@ -2926,6 +3456,152 @@ namespace CourseMarketplaceBE.Migrations
                     b.Navigation("Manager");
                 });
 
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Quiz", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("quizzes_course_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Instructor", "Instructor")
+                        .WithMany("Quizzes")
+                        .HasForeignKey("InstructorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("quizzes_instructor_id_fkey");
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Instructor");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizAttempt", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Quiz", "Quiz")
+                        .WithMany("QuizAttempts")
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("quiz_attempts_quiz_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.User", "User")
+                        .WithMany("QuizAttempts")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("quiz_attempts_user_id_fkey");
+
+                    b.Navigation("Quiz");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizAttemptAnswer", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.QuizAttempt", "QuizAttempt")
+                        .WithMany("QuizAttemptAnswers")
+                        .HasForeignKey("AttemptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("quiz_attempt_answers_attempt_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.QuizQuestion", "QuizQuestion")
+                        .WithMany("QuizAttemptAnswers")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("quiz_attempt_answers_question_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.QuizOption", "SelectedOption")
+                        .WithMany("QuizAttemptAnswers")
+                        .HasForeignKey("SelectedOptionId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("quiz_attempt_answers_selected_option_id_fkey");
+
+                    b.Navigation("QuizAttempt");
+
+                    b.Navigation("QuizQuestion");
+
+                    b.Navigation("SelectedOption");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizAttemptQuestion", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.QuizAttempt", "Attempt")
+                        .WithMany()
+                        .HasForeignKey("AttemptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("quiz_attempt_questions_attempt_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.QuizQuestion", "Question")
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("quiz_attempt_questions_question_id_fkey");
+
+                    b.Navigation("Attempt");
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizLessonDistribution", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Lesson", "Lesson")
+                        .WithMany()
+                        .HasForeignKey("LessonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("quiz_lesson_distributions_lesson_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Quiz", "Quiz")
+                        .WithMany("QuizLessonDistributions")
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("quiz_lesson_distributions_quiz_id_fkey");
+
+                    b.Navigation("Lesson");
+
+                    b.Navigation("Quiz");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizOption", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.QuizQuestion", "QuizQuestion")
+                        .WithMany("QuizOptions")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("quiz_options_question_id_fkey");
+
+                    b.Navigation("QuizQuestion");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizQuestion", b =>
+                {
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("quiz_questions_course_id_fkey");
+
+                    b.HasOne("CourseMarketplaceBE.Domain.Entities.Lesson", "Lesson")
+                        .WithMany()
+                        .HasForeignKey("LessonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("quiz_questions_lesson_id_fkey");
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Lesson");
+                });
+
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.SystemConfig", b =>
                 {
                     b.HasOne("CourseMarketplaceBE.Domain.Entities.Manager", "Manager")
@@ -3130,6 +3806,8 @@ namespace CourseMarketplaceBE.Migrations
 
                     b.Navigation("CourseExt");
 
+                    b.Navigation("CourseQuizzes");
+
                     b.Navigation("Enrollments");
 
                     b.Navigation("Lessons");
@@ -3158,6 +3836,8 @@ namespace CourseMarketplaceBE.Migrations
                     b.Navigation("Courses");
 
                     b.Navigation("InstructorPayouts");
+
+                    b.Navigation("Quizzes");
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.LearningMaterial", b =>
@@ -3198,6 +3878,32 @@ namespace CourseMarketplaceBE.Migrations
                     b.Navigation("Transactions");
                 });
 
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Quiz", b =>
+                {
+                    b.Navigation("CourseQuizzes");
+
+                    b.Navigation("QuizAttempts");
+
+                    b.Navigation("QuizLessonDistributions");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizAttempt", b =>
+                {
+                    b.Navigation("QuizAttemptAnswers");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizOption", b =>
+                {
+                    b.Navigation("QuizAttemptAnswers");
+                });
+
+            modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizQuestion", b =>
+                {
+                    b.Navigation("QuizAttemptAnswers");
+
+                    b.Navigation("QuizOptions");
+                });
+
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.Transaction", b =>
                 {
                     b.Navigation("InstructorPayouts");
@@ -3214,6 +3920,8 @@ namespace CourseMarketplaceBE.Migrations
                     b.Navigation("Instructor");
 
                     b.Navigation("OrderInfos");
+
+                    b.Navigation("QuizAttempts");
 
                     b.Navigation("WishlistItems");
                 });

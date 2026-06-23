@@ -86,7 +86,14 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.InstructorCoursesCount, opt => opt.MapFrom(src => src.Instructor != null && src.Instructor.Courses != null ? src.Instructor.Courses.Count : 0))
             .ForMember(dest => dest.InstructorReviewCount, opt => opt.Ignore())
             .ForMember(dest => dest.InstructorStudentsCount, opt => opt.Ignore())
-            .ForMember(dest => dest.Lessons, opt => opt.MapFrom(src => src.Lessons));
+            .ForMember(dest => dest.Lessons, opt => opt.MapFrom(src => src.Lessons))
+            .ForMember(dest => dest.CourseQuizzes, opt => opt.MapFrom(src => src.CourseQuizzes));
+
+        CreateMap<CourseQuiz, CourseQuizItemResponse>()
+            .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Quiz != null ? src.Quiz.Title : ""))
+            .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Quiz != null ? src.Quiz.Description : null))
+            .ForMember(dest => dest.QuestionCount, opt => opt.MapFrom(src => src.Quiz != null ? src.Quiz.TotalQuestions : 0))
+            .ForMember(dest => dest.TimeLimitMinutes, opt => opt.MapFrom(src => src.Quiz != null ? src.Quiz.TimeLimitMinutes : null));
 
         CreateMap<Lesson, LessonResponse>()
             .ForMember(dest => dest.LearningMaterials, opt => opt.MapFrom(src => src.LearningMaterials));

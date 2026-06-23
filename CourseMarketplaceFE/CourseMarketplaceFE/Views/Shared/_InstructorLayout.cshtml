@@ -59,6 +59,7 @@
     </script>
     <script>
         const LAYOUT_TOKEN = '@tokenForLayout';
+        const API_BASE_URL = '@(Context.RequestServices.GetService<IConfiguration>()?["BackendApiUrl"] ?? "http://localhost:5207/api/")';
     </script>
 
     <style>
@@ -152,10 +153,34 @@
                 <span class="@GetIconClass(isMyCourses)">dashboard</span>
                 Dashboard
             </a>
-            <a href="#" class="@GetNavClass(false) @disabledClass">
-                <span class="@GetIconClass(false)">bar_chart</span>
-                Analytics
-            </a>
+
+            @{
+                bool isQuestionBank = currentController == "QuestionBank";
+                bool isQuizList = currentController == "Quiz";
+                bool isQuizGroupOpen = isQuestionBank || isQuizList;
+                
+                string quizGroupClass = isQuizGroupOpen 
+                    ? "nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-semibold text-[#006a62] group cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden" 
+                    : "nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden";
+            }
+            <details class="group/details" @(isQuizGroupOpen ? "open" : "")>
+                <summary class="@quizGroupClass">
+                    <span class="@GetIconClass(isQuizGroupOpen)">folder_special</span>
+                    Quiz Management
+                    <span class="material-symbols-outlined ml-auto text-[18px] text-slate-400 transition-transform duration-300 group-open/details:rotate-180">expand_more</span>
+                </summary>
+                <div class="mt-1 pl-9 space-y-1">
+                    <a href="/QuestionBank" class="@GetNavClass(isQuestionBank) @disabledClass">
+                        <span class="material-symbols-outlined text-[16px] @(isQuestionBank ? "text-[#006b60]" : "text-slate-400")">arrow_right</span>
+                        Question Bank
+                    </a>
+                    <a href="/Quiz" class="@GetNavClass(isQuizList) @disabledClass">
+                        <span class="material-symbols-outlined text-[16px] @(isQuizList ? "text-[#006b60]" : "text-slate-400")">arrow_right</span>
+                        Quizzes
+                    </a>
+                </div>
+            </details>
+
 
             @{
                 bool isTransaction = currentController == "Transaction" && (currentAction == "Instructor" || currentAction == "InstructorDetail");
@@ -202,7 +227,7 @@
             }
             <a href="/Instructor/ApplicationStatus" class="@GetNavClass(isSettings)">
                 <span class="@GetIconClass(isSettings)">settings</span>
-                Settings
+                Application Status
             </a>
         </nav>
         

@@ -56,6 +56,8 @@ public partial class Course
 
     public virtual CourseExt? CourseExt { get; set; }
 
+    public virtual ICollection<CourseQuiz> CourseQuizzes { get; set; } = new List<CourseQuiz>();
+
     public string? WhatYouWillLearn { get; set; }
 
     public string? Requirements { get; set; }

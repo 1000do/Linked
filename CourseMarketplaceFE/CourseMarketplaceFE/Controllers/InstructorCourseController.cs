@@ -351,6 +351,18 @@ namespace CourseMarketplaceFE.Controllers
                             var rawJson = lessonsEl.GetRawText();
                             ViewBag.LessonsJson = rawJson;
                         }
+
+                        // Load Quizzes
+                        var quizResp = await _api.GetAsync($"courses/{id}/quizzes");
+                        if (quizResp.IsSuccessStatusCode)
+                        {
+                            var qJson = await quizResp.Content.ReadAsStringAsync();
+                            using var qDoc = JsonDocument.Parse(qJson);
+                            if (qDoc.RootElement.TryGetProperty("data", out var qData))
+                            {
+                                ViewBag.QuizzesJson = qData.GetRawText();
+                            }
+                        }
                     }
                     else
                     {

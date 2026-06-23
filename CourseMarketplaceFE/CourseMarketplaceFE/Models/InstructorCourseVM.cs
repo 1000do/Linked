@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace CourseMarketplaceFE.Models
 {
     public class CourseListViewModel
     {
+        [JsonPropertyName("courseId")]
         public int Id { get; set; }
         public string Title { get; set; } = null!;
         public int Students { get; set; }

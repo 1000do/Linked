@@ -27,7 +27,7 @@ namespace CourseMarketplaceFE.Controllers
             ViewBag.PageSize = pageSize;
 
             // Fetch categories
-            var catRes = await _apiClient.GetAsync("/api/public/categories");
+            var catRes = await _apiClient.GetAsync("public/courses/categories");
             if (catRes.IsSuccessStatusCode)
             {
                 var catContent = await catRes.Content.ReadAsStringAsync();

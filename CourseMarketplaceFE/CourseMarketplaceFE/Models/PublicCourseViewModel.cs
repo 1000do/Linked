@@ -36,6 +36,19 @@ namespace CourseMarketplaceFE.Models
     {
         public List<LessonViewModel> Lessons { get; set; } = new List<LessonViewModel>();
         public int FlagCount { get; set; }
+        public List<CourseQuizItemViewModel> CourseQuizzes { get; set; } = new List<CourseQuizItemViewModel>();
+    }
+
+    public class CourseQuizItemViewModel
+    {
+        public int CourseQuizId { get; set; }
+        public int CourseId { get; set; }
+        public int QuizId { get; set; }
+        public string Title { get; set; } = null!;
+        public string? Description { get; set; }
+        public int QuestionCount { get; set; }
+        public int? TimeLimitMinutes { get; set; }
+        public bool IsHidden { get; set; }
     }
 
     public class LessonViewModel

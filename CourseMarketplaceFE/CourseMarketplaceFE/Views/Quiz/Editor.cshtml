@@ -1,0 +1,398 @@
+@using System.Text.Json
+@model CourseMarketplaceFE.Models.QuizEditorViewModel
+@{
+    ViewData["Title"] = "Quiz Editor - " + Model.Title;
+    Layout = "_InstructorLayout";
+    
+    var jsonOpts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    var distributionsJson = JsonSerializer.Serialize(Model.Distributions, jsonOpts);
+    var coursesJson = JsonSerializer.Serialize(Model.AvailableCourses, jsonOpts);
+}
+
+<div class="py-8 px-8 max-w-4xl mx-auto flex flex-col gap-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <a href="/Quiz" class="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors" title="Back to Quizzes">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <div>
+                <h1 class="text-2xl font-headline font-extrabold text-slate-900 flex items-center gap-2">
+                    @Model.Title
+                    @if (Model.IsHidden)
+                    {
+                        <span class="px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">Hidden</span>
+                    }
+                </h1>
+            </div>
+        </div>
+        <a href="/QuizAttempt/Preview/@Model.QuizId" target="_blank" class="px-4 py-2 bg-indigo-50 text-indigo-700 font-bold rounded-lg hover:bg-indigo-100 transition-colors flex items-center gap-2 border border-indigo-200 shadow-sm">
+            <span class="material-symbols-outlined text-[20px]">visibility</span>
+            Preview as Learner
+        </a>
+    </div>
+
+    <!-- Settings Card -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h2 class="text-lg font-bold text-slate-800 mb-4">Quiz Settings</h2>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Quiz Title <span class="text-red-500">*</span></label>
+                <input type="text" id="settingTitle" required value="@Model.Title" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Description</label>
+                <textarea id="settingDesc" rows="2" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none">@Model.Description</textarea>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Total Questions</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="settingTotalQuestions" required min="1" max="1000" value="@Model.TotalQuestions" oninput="updateRandomizeButton()" class="flex-1 px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none">
+                        <button type="button" id="btnRandomize" onclick="randomizeQuestions()" title="Please enter Total Questions first" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-200 opacity-50 cursor-not-allowed transition-all" disabled>
+                            <span class="material-symbols-outlined align-middle">shuffle</span>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Time Limit (mins)</label>
+                    <input type="number" id="settingTime" min="1" value="@Model.TimeLimitMinutes" placeholder="Unlimited" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Passing Score (%)</label>
+                    <input type="number" id="settingScore" required min="0" max="100" value="@Model.PassingScore" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Distribution Settings -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between mb-2">
+            <h2 class="text-lg font-bold text-slate-800">Lesson Question Distributions</h2>
+            <span id="distributionTotal" class="px-3 py-1 bg-slate-100 rounded-full text-sm font-bold text-slate-600">Total: 0</span>
+        </div>
+        <p class="text-sm text-slate-500 mb-6">Select lessons and specify the exact number of questions that should be pulled from each lesson. The total must equal Total Questions.</p>
+        
+        <div id="distError" class="hidden bg-red-50 text-red-600 p-3 rounded-lg text-sm font-medium border border-red-100 mb-4"></div>
+
+        <div id="distributionsContainer" class="flex flex-col gap-2 mb-4 max-h-64 overflow-y-auto pr-2">
+            <!-- Distribution items will be rendered here -->
+        </div>
+    </div>
+
+    <!-- Question Pool -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h2 class="text-lg font-bold text-slate-800 mb-2">Question Pool (View Only)</h2>
+        <p class="text-sm text-slate-500 mb-4">These are the questions drawn from the Question Bank based on your lesson distributions. To edit questions, go to the Question Bank.</p>
+        
+        <div id="questionPoolContainer" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+            <div class="text-center p-8 text-slate-500">
+                <span class="material-symbols-outlined animate-spin text-2xl">refresh</span>
+                <p class="mt-2 text-sm">Loading questions...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Save All Bar -->
+<div class="sticky bottom-0 bg-white border-t border-slate-200 p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-50 w-full flex justify-center mt-8">
+    <div class="max-w-4xl w-full flex items-center justify-between px-8">
+        <span id="saveStatus" class="text-slate-500 font-medium text-sm"></span>
+        <button type="button" id="btnSaveAll" onclick="saveAll()" class="px-8 py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/30 hover:bg-primary/90 flex items-center gap-2 text-lg transition-all">
+            <span class="material-symbols-outlined">save</span> Save Quiz Settings
+        </button>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const quizId = @Model.QuizId;
+        const courseId = @Model.CourseId;
+        let distributions = @Html.Raw(distributionsJson) || [];
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            updateRandomizeButton();
+            loadCourseLessons();
+            loadQuestionPool();
+        });
+
+        function updateRandomizeButton() {
+            const totalInput = document.getElementById('settingTotalQuestions');
+            const btn = document.getElementById('btnRandomize');
+            const val = parseInt(totalInput.value || 0);
+            if (val > 0) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.title = 'Randomize questions among selected lessons';
+            } else {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.title = 'Please enter Total Questions first';
+            }
+        }
+
+        async function loadCourseLessons() {
+            const container = document.getElementById('distributionsContainer');
+            
+            if (!courseId || courseId === 0) {
+                container.innerHTML = '<div class="text-sm text-slate-500">Course ID missing.</div>';
+                return;
+            }
+
+            container.innerHTML = '<div class="text-sm text-slate-500">Loading lessons...</div>';
+
+            try {
+                const response = await fetch('/QuestionBank/CourseLessonsSummary?courseId=' + courseId);
+                const data = await response.json();
+                
+                let lessons = [];
+                if (Array.isArray(data)) {
+                    lessons = data;
+                } else if (data && data.data && Array.isArray(data.data)) {
+                    lessons = data.data;
+                }
+                
+                if (lessons.length > 0) {
+                    container.innerHTML = '';
+                    lessons.forEach(lesson => {
+                        // find existing distribution count
+                        const existing = distributions.find(d => d.lessonId === lesson.lessonId);
+                        const count = existing ? existing.questionCount : 0;
+                        const isChecked = existing ? 'checked' : '';
+                        const inputDisabled = existing ? '' : 'disabled';
+                        const inputOpacity = existing ? '' : 'opacity-50';
+
+                        const row = document.createElement('div');
+                        row.className = 'flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 hover:border-primary/30 transition-colors shadow-sm';
+                        row.innerHTML = `
+                            <div class="flex items-center gap-3 flex-1 min-w-0 pr-4">
+                                <input type="checkbox" class="lesson-checkbox w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary" ${isChecked} onchange="toggleLessonInput(this, ${lesson.lessonId})">
+                                <div>
+                                    <p class="text-sm font-semibold text-slate-800 truncate" title="${lesson.title}">${lesson.title}</p>
+                                    <p class="text-xs text-slate-500">${lesson.availableQuestionCount} questions available in bank</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="number" min="0" max="${lesson.availableQuestionCount}" value="${count}" data-lesson-id="${lesson.lessonId}" data-available="${lesson.availableQuestionCount}" 
+                                       class="lesson-dist-input w-20 px-2 py-1 text-sm border border-slate-200 rounded focus:ring-1 focus:ring-primary outline-none transition-all ${inputOpacity}" 
+                                       ${inputDisabled} oninput="updateTotalQuestions()">
+                                <span class="text-sm text-slate-600 font-medium">câu</span>
+                            </div>
+                        `;
+                        container.appendChild(row);
+                    });
+                    updateTotalQuestions();
+                } else {
+                    container.innerHTML = '<div class="text-sm text-amber-600">No lessons found or no questions available in this course.</div>';
+                }
+            } catch (err) {
+                container.innerHTML = '<div class="text-sm text-red-600">Failed to load lessons.</div>';
+            }
+        }
+
+        function toggleLessonInput(checkbox, lessonId) {
+            const input = document.querySelector(`.lesson-dist-input[data-lesson-id="${lessonId}"]`);
+            if (checkbox.checked) {
+                input.disabled = false;
+                input.classList.remove('opacity-50');
+            } else {
+                input.disabled = true;
+                input.value = 0;
+                input.classList.add('opacity-50');
+            }
+            updateTotalQuestions();
+        }
+
+        function randomizeQuestions() {
+            const errorDiv = document.getElementById('distError');
+            if (errorDiv) errorDiv.classList.add('hidden');
+
+            const totalTarget = parseInt(document.getElementById('settingTotalQuestions').value || 0);
+            if (totalTarget <= 0) return;
+
+            const enabledInputs = Array.from(document.querySelectorAll('.lesson-dist-input:not([disabled])'));
+            if (enabledInputs.length === 0) {
+                if (errorDiv) {
+                    errorDiv.innerHTML = "Please check at least one lesson to distribute questions.";
+                    errorDiv.classList.remove('hidden');
+                }
+                return;
+            }
+
+            // reset all enabled inputs to 0
+            enabledInputs.forEach(input => input.value = 0);
+
+            let remaining = totalTarget;
+            let availableLessons = [...enabledInputs]; // clone array
+            
+            // simple random distribution ensuring we don't exceed available questions
+            while (remaining > 0 && availableLessons.length > 0) {
+                const randIndex = Math.floor(Math.random() * availableLessons.length);
+                const targetInput = availableLessons[randIndex];
+                
+                const currentVal = parseInt(targetInput.value);
+                const maxAvailable = parseInt(targetInput.getAttribute('data-available'));
+                
+                if (currentVal < maxAvailable) {
+                    targetInput.value = currentVal + 1;
+                    remaining--;
+                } else {
+                    // remove this lesson from available candidates because it's full
+                    availableLessons.splice(randIndex, 1);
+                }
+            }
+
+            if (remaining > 0) {
+                if (errorDiv) {
+                    errorDiv.innerHTML = `Cannot distribute all ${totalTarget} questions. The selected lessons only have a combined total of ${totalTarget - remaining} questions available.`;
+                    errorDiv.classList.remove('hidden');
+                }
+            }
+
+            updateTotalQuestions();
+        }
+
+        function updateTotalQuestions() {
+            const inputs = document.querySelectorAll('.lesson-dist-input:not([disabled])');
+            let total = 0;
+            inputs.forEach(input => {
+                total += parseInt(input.value || 0);
+            });
+            const display = document.getElementById('distributionTotal');
+            const targetTotal = parseInt(document.getElementById('settingTotalQuestions').value || 0);
+            
+            display.textContent = 'Total: ' + total + ' / ' + targetTotal;
+            if (total !== targetTotal && targetTotal > 0) {
+                display.className = "px-3 py-1 bg-rose-100 rounded-full text-sm font-bold text-rose-700 border border-rose-200";
+            } else if (targetTotal > 0) {
+                display.className = "px-3 py-1 bg-emerald-100 rounded-full text-sm font-bold text-emerald-700 border border-emerald-200";
+            } else {
+                display.className = "px-3 py-1 bg-slate-100 rounded-full text-sm font-bold text-slate-600";
+            }
+        }
+
+        async function loadQuestionPool() {
+            const container = document.getElementById('questionPoolContainer');
+            try {
+                // We'll need an endpoint in QuizController FE to proxy this
+                const response = await fetch('/Quiz/QuestionPool/' + quizId);
+                const data = await response.json();
+                if (data.success && data.data) {
+                    if (data.data.length === 0) {
+                        container.innerHTML = '<div class="p-6 text-center text-slate-500">No questions available in the pool.</div>';
+                        return;
+                    }
+                    container.innerHTML = '';
+                    data.data.forEach((q, idx) => {
+                        const div = document.createElement('div');
+                        div.className = 'p-4 border border-slate-100 bg-slate-50 rounded-xl';
+                        div.innerHTML = `
+                            <div class="flex items-start gap-3">
+                                <div class="w-6 h-6 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">${idx + 1}</div>
+                                <div>
+                                    <p class="text-sm font-medium text-slate-800">${q.questionText}</p>
+                                    <div class="mt-2 pl-2 border-l-2 border-slate-200 space-y-1">
+                                        ${q.options.map(o => `
+                                            <div class="text-xs ${o.isCorrect ? 'text-emerald-600 font-bold' : 'text-slate-500'}">
+                                                ${o.isCorrect ? '<span class="material-symbols-outlined text-[14px] align-middle">check_circle</span>' : '•'} ${o.optionText}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(div);
+                    });
+                } else {
+                    container.innerHTML = '<div class="p-6 text-center text-red-500">Failed to load question pool.</div>';
+                }
+            } catch (err) {
+                container.innerHTML = '<div class="p-6 text-center text-red-500">Error loading question pool.</div>';
+            }
+        }
+
+        async function saveAll() {
+            const btn = document.getElementById('btnSaveAll');
+            const status = document.getElementById('saveStatus');
+            
+            const title = document.getElementById('settingTitle').value.trim();
+            const desc = document.getElementById('settingDesc').value.trim();
+            const time = document.getElementById('settingTime').value;
+            const score = document.getElementById('settingScore').value;
+            const totalQs = document.getElementById('settingTotalQuestions').value;
+
+            // Gather distributions
+            const inputs = document.querySelectorAll('.lesson-dist-input:not([disabled])');
+            let totalQuestionsCount = 0;
+            const newDistributions = [];
+            let distributionError = null;
+
+            inputs.forEach(input => {
+                const count = parseInt(input.value || 0);
+                if (count > 0) {
+                    totalQuestionsCount += count;
+                    const lessonId = parseInt(input.getAttribute('data-lesson-id'));
+                    const available = parseInt(input.getAttribute('data-available'));
+                    
+                    if (count > available) {
+                        distributionError = `Not enough questions in Lesson ID ${lessonId}. Required: ${count}, Available: ${available}.`;
+                    }
+
+                    newDistributions.push({ lessonId, questionCount: count });
+                }
+            });
+
+            if (distributionError) {
+                status.innerHTML = `<span class="text-rose-600">${distributionError}</span>`;
+                return;
+            }
+
+            if (totalQuestionsCount !== parseInt(totalQs)) {
+                status.innerHTML = `<span class="text-rose-600">Sum of questions in lessons (${totalQuestionsCount}) must equal Total Questions (${totalQs}).</span>`;
+                return;
+            }
+
+            const payload = {
+                title: title,
+                description: desc || null,
+                timeLimitMinutes: time ? parseInt(time) : null,
+                passingScore: parseInt(score),
+                totalQuestions: parseInt(totalQs),
+                distributions: newDistributions
+            };
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Saving...';
+            status.textContent = 'Saving...';
+            status.className = 'text-slate-500 font-medium text-sm';
+
+            try {
+                const response = await fetch(`/Quiz/Update/${quizId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    status.textContent = 'Changes saved successfully!';
+                    status.className = 'text-emerald-600 font-medium text-sm';
+                    setTimeout(() => status.textContent = '', 3000);
+                    // Reload question pool to reflect new distributions
+                    loadQuestionPool();
+                } else {
+                    status.textContent = data.message || 'Error saving changes.';
+                    status.className = 'text-red-600 font-medium text-sm';
+                    alert(data.message);
+                }
+            } catch (err) {
+                status.textContent = 'Network error.';
+                status.className = 'text-red-600 font-medium text-sm';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined">save</span> Save Quiz Settings';
+            }
+        }
+    </script>
+}
