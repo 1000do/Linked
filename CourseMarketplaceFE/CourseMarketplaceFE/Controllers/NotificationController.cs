@@ -1,6 +1,7 @@
 using CourseMarketplaceFE.Helpers;
 using CourseMarketplaceFE.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 
 namespace CourseMarketplaceFE.Controllers
@@ -27,6 +28,7 @@ namespace CourseMarketplaceFE.Controllers
             _api = api;
         }
 
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> Index()
         {
             var response = await _api.GetAsync("notification");
@@ -40,6 +42,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> GetListTiny()
         {
             var response = await _api.GetAsync("notification");
@@ -52,6 +55,7 @@ namespace CourseMarketplaceFE.Controllers
             return Json(new object[] { });
         }
 
+        [Authorize(Roles = "admin,staff")]
         public IActionResult Admin()
         {
             return View();

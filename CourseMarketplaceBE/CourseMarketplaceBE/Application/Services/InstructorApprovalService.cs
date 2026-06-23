@@ -1,6 +1,6 @@
-using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.IRepositories;
 
 namespace CourseMarketplaceBE.Application.Services
@@ -33,7 +33,7 @@ namespace CourseMarketplaceBE.Application.Services
                 ApprovalStatus = i.ApprovalStatus,
                 ExpertiseCategories = i.ExpertiseCategories
             }).ToList();
-            
+
             return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<InstructorApprovalDto>(items, totalCount, page, pageSize);
         }
 
@@ -62,7 +62,7 @@ namespace CourseMarketplaceBE.Application.Services
                 ? "Congratulations! Your instructor application has been approved."
                 : $"Unfortunately, your instructor application was not accepted. Reason: {dto.Reason}";
 
-            string link = dto.Status == CourseMarketplaceBE.Domain.Constants.InstructorApprovalStatus.Approved.ToValue() ? "/InstructorCourse/Create" : "/Instructor/Dashboard";
+            string link = "/Instructor/ApplicationStatus";
             await _notiService.SendNotificationAsync(instructor.InstructorId, "Application Result", message, link);
 
             return true;
