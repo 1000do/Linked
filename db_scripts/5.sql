@@ -743,14 +743,14 @@ CREATE INDEX idx_chat_participants_read ON chat_participants(account_id, last_re
 INSERT INTO categories (category_id, categories_name, description, category_status) 
 VALUES 
 (1, 'Design', 'Courses related to graphic design, UX/UI, 3D modeling, and creative arts.', 'active'), 
-(2, 'Development', 'Software development, programming languages, web development, and mobile app creation.', 'active'), 
+(2, 'Software Development', 'Software development, programming languages, web development, and mobile app creation.', 'active'), 
 (3, 'Business', 'Business management, leadership, strategy, finance, and entrepreneurship.', 'active'),
 (4, 'Marketing', 'Digital marketing, SEO, social media advertising, and content strategy.', 'active'),
 (5, 'Photography & Video', 'Photography, video editing, cinematography, and digital imaging.', 'active'),
 (6, 'Music', 'Music theory, instrument playing, audio production, and songwriting.', 'active'),
 (7, 'Languages', 'Learn English, Japanese, Chinese, Spanish, and other languages.', 'active'),
 (8, 'Health & Fitness', 'Fitness, nutrition, yoga, meditation, and personal well-being.', 'active'),
-(9, 'Data Science', 'Data science, machine learning, deep learning, and artificial intelligence.', 'active'),
+(9, 'Data Science & AI Engineering', 'Data science, machine learning, deep learning, and artificial intelligence.', 'active'),
 (10, 'Personal Development', 'Public speaking, career development, memory improvement, and productivity.', 'active'),
 (11, 'Finance & Investing', 'Personal finance, stock market investing, trading, and cryptocurrency.', 'active'),
 (12, 'Office Productivity', 'Microsoft Excel, PowerPoint, Google Workspace, and office tools.', 'active'),
