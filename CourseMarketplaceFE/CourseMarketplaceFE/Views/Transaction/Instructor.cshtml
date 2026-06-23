@@ -1383,7 +1383,7 @@
 
         if (instructorId) {
             const financeConn = new signalR.HubConnectionBuilder()
-                .withUrl("http://localhost:5207/financeHub")
+                .withUrl("/financeHub")
                 .withAutomaticReconnect()
                 .build();
 
