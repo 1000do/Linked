@@ -291,6 +291,21 @@ public class CartController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // --- BFF PROXY FOR AJAX --- //
+    [HttpGet]
+    public async Task<IActionResult> GetSummaryAjax(string? couponCode)
+    {
+        if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
+            return Unauthorized();
+        
+        var url = string.IsNullOrWhiteSpace(couponCode)
+            ? "cart/summary"
+            : $"cart/summary?couponCode={Uri.EscapeDataString(couponCode)}";
+        var response = await _api.GetAsync(url);
+        var json = await response.Content.ReadAsStringAsync();
+        return Content(json, "application/json");
+    }
+
     // ─── 6. CHECKOUT — TRANG THANH TOÁN EMbedded STRIPE ELEMENTS ────────
     /// <summary>
     /// GET /Cart/Checkout

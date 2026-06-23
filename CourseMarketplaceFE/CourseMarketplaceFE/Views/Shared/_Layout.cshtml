@@ -354,7 +354,7 @@
                 btn.style.pointerEvents = 'none';
                 btn.style.opacity = '0.7';
 
-                const response = await fetch(`http://localhost:5207/api/Wishlist/toggle/${courseId}`, {
+                const response = await fetch(`/api/Wishlist/toggle/${courseId}`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${currentToken}`,
@@ -729,7 +729,7 @@
             if (typeof currentToken === 'undefined' || !currentToken) return;
 
             try {
-                const res = await fetch('http://localhost:5207/api/cart/summary', {
+                const res = await fetch('/Cart/GetSummaryAjax', {
                     headers: { 'Authorization': `Bearer ${currentToken}` }
                 });
                 if (!res.ok) return;
@@ -1346,7 +1346,7 @@
 
                 // SignalR Noti
                 const notiConn = new signalR.HubConnectionBuilder()
-                    .withUrl("http://localhost:5207/notificationHub", { accessTokenFactory: () => currentToken })
+                    .withUrl("/notificationHub", { accessTokenFactory: () => currentToken })
                     .withAutomaticReconnect().build();
                 notiConn.on("ReceiveNotification", (noti) => {
                     loadTopNotifications();
@@ -1418,7 +1418,7 @@
 
                 // SignalR Chat
                 miniChatConn = new signalR.HubConnectionBuilder()
-                    .withUrl("http://localhost:5207/chatHub", { accessTokenFactory: () => currentToken })
+                    .withUrl("/chatHub", { accessTokenFactory: () => currentToken })
                     .withAutomaticReconnect().build();
 
                 miniChatConn.on("ReceiveMessage", function (message) {
