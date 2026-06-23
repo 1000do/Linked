@@ -92,6 +92,9 @@ public class CheckoutService : ICheckoutService
             if (item.Course == null || item.Course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
                 throw new InvalidOperationException($"The course \"{item.Course?.Title ?? "Unknown"}\" is not published and cannot be purchased.");
 
+            if (item.Course.InstructorId == userId)
+                throw new InvalidOperationException($"You cannot purchase your own course \"{item.Course.Title}\".");
+
             if (item.CourseId.HasValue && await _courseRepo.IsEnrolledAsync(userId, item.CourseId.Value))
                 throw new InvalidOperationException(
                     $"You have already purchased the course \"{item.Course?.Title}\". Please remove it from the cart.");
@@ -221,6 +224,9 @@ public class CheckoutService : ICheckoutService
 
         if (course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
             throw new InvalidOperationException($"The course \"{course.Title}\" is not published and cannot be purchased.");
+
+        if (course.InstructorId == userId)
+            throw new InvalidOperationException($"You cannot purchase your own course \"{course.Title}\".");
 
         if (await _courseRepo.IsEnrolledAsync(userId, courseId))
             throw new InvalidOperationException($"You have already purchased the course \"{course.Title}\".");

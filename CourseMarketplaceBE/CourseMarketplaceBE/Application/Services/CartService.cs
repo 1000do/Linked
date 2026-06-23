@@ -38,6 +38,10 @@ public class CartService : ICartService
         if (course == null || course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
             throw new InvalidOperationException("Course does not exist or is not published.");
 
+        // Kiểm tra không cho phép giảng viên tự mua khóa học của mình
+        if (course.InstructorId == userId)
+            throw new InvalidOperationException("You cannot add your own course to the cart.");
+
         // Kiểm tra user đã enrolled chưa (không cần mua lại)
         if (await _courseRepo.IsEnrolledAsync(userId, courseId))
             throw new InvalidOperationException("You have already purchased this course.");
