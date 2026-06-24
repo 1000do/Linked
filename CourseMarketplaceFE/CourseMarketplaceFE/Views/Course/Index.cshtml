@@ -68,16 +68,19 @@
             </div>
             
             <div class="flex flex-wrap gap-2.5 pb-2">
+                @{
+                    var currentCategoryList = (currentCategory ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Select(c => c.Trim()).ToList();
+                }
                 <!-- All Categories pill -->
                 <button type="button" onclick="selectCategoryPill('')" data-category-pill=""
-                        class="category-pill px-5 py-2.5 rounded-full text-xs md:text-sm font-semibold border transition-all duration-300 flex items-center gap-2 @(string.IsNullOrEmpty(currentCategory) ? "bg-primary border-primary text-white shadow-md shadow-primary/20 scale-105" : "bg-white border-slate-200 text-slate-600 hover:border-primary/30 hover:text-primary hover:bg-slate-50/50")">
-                    <span class="material-symbols-outlined text-[18px]" style='font-variation-settings: "FILL" @(string.IsNullOrEmpty(currentCategory) ? "1" : "0")'>apps</span>
+                        class="category-pill px-5 py-2.5 rounded-full text-xs md:text-sm font-semibold border transition-all duration-300 flex items-center gap-2 @(!currentCategoryList.Any() ? "bg-primary border-primary text-white shadow-md shadow-primary/20 scale-105" : "bg-white border-slate-200 text-slate-600 hover:border-primary/30 hover:text-primary hover:bg-slate-50/50")">
+                    <span class="material-symbols-outlined text-[18px]" style='font-variation-settings: "FILL" @(!currentCategoryList.Any() ? "1" : "0")'>apps</span>
                     All Categories
                 </button>
 
                 @foreach (var cat in sidebarCategories)
                 {
-                    var isCatActive = currentCategory == cat.CategoriesName;
+                    var isCatActive = currentCategoryList.Contains(cat.CategoriesName);
                     var catIcon = "school";
                     if (cat.CategoriesName.Contains("Lập trình") || cat.CategoriesName.Contains("Công nghệ")) catIcon = "code";
                     else if (cat.CategoriesName.Contains("Thiết kế") || cat.CategoriesName.Contains("Art")) catIcon = "palette";
@@ -322,7 +325,7 @@
                                     
                                     <!-- Short Description shown on horizontal List layout -->
                                     <p class="desc-text hidden text-xs text-slate-500 line-clamp-2 font-light leading-relaxed mb-3 mt-1">
-                                        @course.Description
+                                        @(System.Text.RegularExpressions.Regex.Replace(course.Description ?? "", "<.*?>", string.Empty).Replace("&amp;", "&").Replace("&nbsp;", " "))
                                     </p>
                                     
                                     <div class="flex items-center gap-2 text-xs text-slate-400 font-medium mb-3 mt-auto">
@@ -432,9 +435,9 @@
     document.addEventListener('DOMContentLoaded', () => {
         // Elements references
         const filterForm = document.getElementById('filter-form');
-        const queryInput = document.querySelector('input[name="query"]');
-        const categoryInput = document.querySelector('input[name="category"]');
-        const sortSelect = document.querySelector('select[name="sort"]');
+        const queryInput = filterForm ? filterForm.querySelector('input[name="query"]') : null;
+        const categoryInput = filterForm ? filterForm.querySelector('input[name="category"]') : null;
+        const sortSelect = filterForm ? filterForm.querySelector('select[name="sort"]') : null;
         const coursesContainer = document.getElementById('courses-container');
         const btnClearSearch = document.getElementById('btn-clear-search');
 
@@ -629,14 +632,32 @@
 
         // Hoisted local function declarations to prevent initialization ordering ReferenceErrors
         function selectCategoryPill(categoryName) {
-            categoryInput.value = categoryName;
+            if (categoryName === '') {
+                categoryInput.value = '';
+            } else {
+                let currentCategories = categoryInput.value ? categoryInput.value.split(',') : [];
+                if (currentCategories.includes(categoryName)) {
+                    currentCategories = currentCategories.filter(c => c !== categoryName);
+                } else {
+                    currentCategories.push(categoryName);
+                }
+                categoryInput.value = currentCategories.join(',');
+            }
             
-            // Update active pill UI class list
+            let selectedCategories = categoryInput.value ? categoryInput.value.split(',') : [];
+            
             document.querySelectorAll('.category-pill').forEach(pill => {
                 const pillVal = pill.getAttribute('data-category-pill') || '';
                 const icon = pill.querySelector('.material-symbols-outlined');
                 
-                if (pillVal === categoryName) {
+                let isSelected = false;
+                if (pillVal === '') {
+                    isSelected = selectedCategories.length === 0;
+                } else {
+                    isSelected = selectedCategories.includes(pillVal);
+                }
+                
+                if (isSelected) {
                     pill.className = "category-pill px-5 py-2.5 rounded-full text-xs md:text-sm font-semibold border transition-all duration-300 flex items-center gap-2 bg-primary border-primary text-white shadow-md shadow-primary/20 scale-105";
                     if (icon) icon.style.fontVariationSettings = '"FILL" 1';
                 } else {
@@ -644,12 +665,6 @@
                     if (icon) icon.style.fontVariationSettings = '"FILL" 0';
                 }
             });
-
-            // Also keep standard sidebar fallback select option in sync
-            const sideSelect = document.querySelector('select[name="category"]');
-            if (sideSelect) {
-                sideSelect.value = categoryName;
-            }
 
             updateFilters(1);
         }

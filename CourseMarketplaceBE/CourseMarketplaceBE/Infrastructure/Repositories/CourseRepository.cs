@@ -148,7 +148,11 @@ public class CourseRepository : ICourseRepository
         // 2. Filtering by category
         if (!string.IsNullOrEmpty(category))
         {
-            queryable = queryable.Where(c => c.Category != null && c.Category.CategoriesName == category);
+            var categoriesList = category.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(c => c.Trim()).ToList();
+            if (categoriesList.Any())
+            {
+                queryable = queryable.Where(c => c.Category != null && categoriesList.Contains(c.Category.CategoriesName));
+            }
         }
 
         // 3. Sorting & Joins
@@ -222,6 +226,8 @@ public class CourseRepository : ICourseRepository
                     .ThenInclude(u => u.UserNavigation)
             .Include(c => c.Lessons.Where(l => !l.IsRemoved).OrderBy(l => l.LessonId))
                 .ThenInclude(l => l.LearningMaterials.Where(m => m.LearningStatus != LearningStatus.Removed.ToValue()).OrderBy(m => m.MaterialId))
+            .Include(c => c.CourseQuizzes.Where(cq => !cq.Quiz.IsRemoved).OrderBy(cq => cq.OrderIndex))
+                .ThenInclude(cq => cq.Quiz)
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.CourseId == courseId);
     }
@@ -477,5 +483,14 @@ public class CourseRepository : ICourseRepository
         return await _context.SaveChangesAsync();
     }
 
+    public async Task<Dictionary<string, int>> CountCoursesByStatusAsync(int instructorId)
+    {
+        var counts = await _context.Courses
+            .Where(c => c.InstructorId == instructorId)
+            .GroupBy(c => c.CourseStatus)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(k => k.Status ?? "unknown", v => v.Count);
+        return counts;
+    }
 
 }

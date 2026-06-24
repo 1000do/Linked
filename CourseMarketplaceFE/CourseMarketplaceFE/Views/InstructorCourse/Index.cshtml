@@ -46,7 +46,7 @@
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
             <h3 class="text-sm font-semibold text-slate-500 mb-1">Active Courses</h3>
             <p class="text-3xl font-headline font-extrabold text-slate-900">@activeCourses</p>
-            <p class="text-xs font-medium text-slate-500 mt-2">@(courseList.Count - activeCourses) Pending / Draft</p>
+            <p class="text-xs font-medium text-slate-500 mt-2">@(Model.PendingCoursesCount + Model.DraftCoursesCount) Pending / Draft</p>
         </div>
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
             <h3 class="text-sm font-semibold text-slate-500 mb-1">Total Revenue</h3>
@@ -60,25 +60,25 @@
         <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[300px]">
             <div class="relative w-72">
                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
-                <input type="text" id="course-search-input" placeholder="Search courses by title..." oninput="applyFilters()" class="w-full bg-white border border-slate-200 rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-slate-400 shadow-sm" />
+                <input type="text" id="course-search-input" value="@Model.SearchTerm" placeholder="Search courses by title..." class="w-full bg-white border border-slate-200 rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-slate-400 shadow-sm" onkeydown="if(event.key === 'Enter') applyFilters()" />
             </div>
             
             <div class="relative">
                 <select id="status-filter" onchange="applyFilters()" class="appearance-none border border-slate-200 rounded-lg pl-4 pr-10 py-2 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow text-slate-700 shadow-sm cursor-pointer">
-                    <option value="All">All Status</option>
-                    <option value="Draft">Draft</option>
-                    <option value="Pending">Pending Review</option>
-                    <option value="Published">Published</option>
-                    <option value="Rejected">Rejected</option>
-                    <option value="Removed">Removed</option>
-                    <option value="Archived">Archived</option>
-                    <option value="permanently_locked">Permanently Locked</option>
+                    <option value="All" selected="@(string.IsNullOrEmpty(Model.FilterStatus) || Model.FilterStatus == "All")">All Status</option>
+                    <option value="Draft" selected="@(Model.FilterStatus == "Draft")">Draft</option>
+                    <option value="Pending" selected="@(Model.FilterStatus == "Pending")">Pending Review</option>
+                    <option value="Published" selected="@(Model.FilterStatus == "Published")">Published</option>
+                    <option value="Rejected" selected="@(Model.FilterStatus == "Rejected")">Rejected</option>
+                    <option value="Removed" selected="@(Model.FilterStatus == "Removed")">Removed</option>
+                    <option value="Archived" selected="@(Model.FilterStatus == "Archived")">Archived</option>
+                    <option value="permanently_locked" selected="@(Model.FilterStatus == "permanently_locked")">Permanently Locked</option>
                 </select>
                 <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
             </div>
 
             <div class="relative">
-                <select id="course-sort" onchange="applyFilters()" class="appearance-none border border-slate-200 rounded-lg pl-4 pr-10 py-2 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow text-slate-700 shadow-sm cursor-pointer">
+                <select id="course-sort" onchange="applySort()" class="appearance-none border border-slate-200 rounded-lg pl-4 pr-10 py-2 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-shadow text-slate-700 shadow-sm cursor-pointer">
                     <option value="newest">Updated: Newest</option>
                     <option value="oldest">Updated: Oldest</option>
                     <option value="students-desc">Students: High to Low</option>
@@ -138,11 +138,11 @@
     <div class="bg-gradient-to-r from-surface-container-low to-primary-container/30 rounded-2xl p-8 border border-primary-container/50 flex items-center justify-between">
         <div>
             <span class="px-3 py-1 bg-primary text-white text-[10px] font-extrabold uppercase tracking-widest rounded-full">New Feature</span>
-            <h2 class="text-2xl font-headline font-extrabold text-slate-900 mt-4 mb-2">Boost your course engagement with AI Quizzes</h2>
-            <p class="text-slate-600 max-w-xl">Instructors using our new auto-generated quiz tool see a 24% higher completion rate. Try it out in the Curriculum Editor today.</p>
+            <h2 class="text-2xl font-headline font-extrabold text-slate-900 mt-4 mb-2">Boost your course engagement with Quizzes</h2>
+            <p class="text-slate-600 max-w-xl">Create comprehensive assessments to evaluate your students' understanding. Independent quizzes can be built once and assigned to any of your courses seamlessly.</p>
         </div>
-        <a href="/InstructorCourse/Editor/1" class="px-6 py-3 bg-primary text-white rounded-xl font-bold flex items-center gap-2 hover:bg-secondary transition-colors shadow-lg shadow-primary/20">
-            Explore Quiz Tools <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+        <a href="/Quiz" class="px-6 py-3 bg-primary text-white rounded-xl font-bold flex items-center gap-2 hover:bg-secondary transition-colors shadow-lg shadow-primary/20">
+            Create a Quiz <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
         </a>
     </div>
 </div>
@@ -203,8 +203,12 @@
         })));
 
         const ITEMS_PER_PAGE = 6;
-        let currentPage = 1;
-        let filteredCourses = [...allCourses];
+        let currentPage = @Model.CurrentPage;
+        let totalItems = @Model.TotalItems;
+        let totalPages = @Model.TotalPages;
+        
+        // This is now purely the current page data from server
+        let displayedCourses = [...allCourses];
 
         function renderListView(courses) {
             const tbody = document.querySelector("#list-view tbody");
@@ -403,64 +407,44 @@
             }).join("");
         }
 
-        function applyFilters() {
-            const searchTerm = document.getElementById('course-search-input').value.toLowerCase().trim();
-            const status = document.getElementById('status-filter').value;
+        function applySort() {
             const sort = document.getElementById('course-sort').value;
-
-            filteredCourses = allCourses.filter(c => {
-                const matchSearch = !searchTerm || c.Title.toLowerCase().includes(searchTerm);
-                let matchStatus = false;
-                
-                const isPermanentlyLocked = (c.Status.toLowerCase() === 'archived' && c.FlagCount >= 3);
-                const conceptualStatus = isPermanentlyLocked ? 'permanently_locked' : c.Status.toLowerCase();
-                
-                if (status === 'All') {
-                    matchStatus = true;
-                } else if (status === 'Removed') {
-                    matchStatus = c.IsRemoved;
-                } else {
-                    matchStatus = !c.IsRemoved && conceptualStatus === status.toLowerCase();
-                }
-                return matchSearch && matchStatus;
-            });
-
-            // Sorting
+            // Sorting is only applied to the current page as backend API doesn't support sort parameter yet
             if (sort === 'newest') {
-                filteredCourses.sort((a, b) => new Date(b.UpdatedAt) - new Date(a.UpdatedAt));
+                displayedCourses.sort((a, b) => new Date(b.UpdatedAt) - new Date(a.UpdatedAt));
             } else if (sort === 'oldest') {
-                filteredCourses.sort((a, b) => new Date(a.UpdatedAt) - new Date(b.UpdatedAt));
+                displayedCourses.sort((a, b) => new Date(a.UpdatedAt) - new Date(b.UpdatedAt));
             } else if (sort === 'students-desc') {
-                filteredCourses.sort((a, b) => b.Students - a.Students);
+                displayedCourses.sort((a, b) => b.Students - a.Students);
             } else if (sort === 'rating-desc') {
-                filteredCourses.sort((a, b) => b.Rating - a.Rating);
+                displayedCourses.sort((a, b) => b.Rating - a.Rating);
             }
+            renderListView(displayedCourses);
+            renderGridView(displayedCourses);
+        }
 
-            currentPage = 1;
-            renderAll();
+        function applyFilters() {
+            const searchTerm = document.getElementById('course-search-input').value.trim();
+            const status = document.getElementById('status-filter').value;
+            
+            // Redirect to server-side filter
+            let url = '/InstructorCourse?page=1';
+            if (searchTerm) url += '&searchTerm=' + encodeURIComponent(searchTerm);
+            if (status && status !== 'All') url += '&status=' + encodeURIComponent(status);
+            
+            window.location.href = url;
         }
 
         function clearFilters() {
-            document.getElementById('course-search-input').value = '';
-            document.getElementById('status-filter').value = 'All';
-            document.getElementById('course-sort').value = 'newest';
-            applyFilters();
+            window.location.href = '/InstructorCourse';
         }
 
         function renderAll() {
-            const totalItems = filteredCourses.length;
-            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-            
-            const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
-            const endIdx = startIdx + ITEMS_PER_PAGE;
-            const paginatedCourses = filteredCourses.slice(startIdx, endIdx);
-
-            renderListView(paginatedCourses);
-            renderGridView(paginatedCourses);
-            renderPagination(totalItems, totalPages);
+            applySort(); // Applies initial sort to current page data
+            renderPagination();
         }
 
-        function renderPagination(totalItems, totalPages) {
+        function renderPagination() {
             const container = document.getElementById('pagination-container');
             if (totalPages <= 1) {
                 container.innerHTML = '';
@@ -473,7 +457,14 @@
             const endIdx = Math.min(currentPage * ITEMS_PER_PAGE, totalItems);
 
             let buttonsHtml = '';
-            for (let i = 1; i <= totalPages; i++) {
+            // Generate pagination logic (max 5 pages shown)
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
                 buttonsHtml += `<button onclick="changePage(${i})" class="w-10 h-10 rounded-lg border ${currentPage === i ? 'bg-primary text-white border-primary font-bold' : 'border-slate-200 hover:bg-white text-slate-600 font-semibold'} transition-all">${i}</button>`;
             }
 
@@ -494,10 +485,15 @@
         }
 
         window.changePage = function(page) {
-            const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
             if (page < 1 || page > totalPages) return;
-            currentPage = page;
-            renderAll();
+            const searchTerm = document.getElementById('course-search-input').value.trim();
+            const status = document.getElementById('status-filter').value;
+            
+            let url = '/InstructorCourse?page=' + page;
+            if (searchTerm) url += '&searchTerm=' + encodeURIComponent(searchTerm);
+            if (status && status !== 'All') url += '&status=' + encodeURIComponent(status);
+            
+            window.location.href = url;
         };
 
         // Delete modal

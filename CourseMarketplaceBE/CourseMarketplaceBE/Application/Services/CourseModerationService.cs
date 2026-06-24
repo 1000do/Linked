@@ -20,6 +20,8 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly IRedisService _redisService;
         private readonly INotificationService _notificationService;
         private readonly IUserRepository _userRepository;
+        private readonly ILessonService _lessonService;
+        private readonly IEmbeddingService _embeddingService;
 
         public CourseModerationService(
             ICourseRepository courseRepository,
@@ -28,7 +30,9 @@ namespace CourseMarketplaceBE.Application.Services
             IEnrollmentRepository enrollmentRepository,
             IRedisService redisService,
             INotificationService notificationService,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            ILessonService lessonService,
+            IEmbeddingService embeddingService)
         {
             _courseRepository = courseRepository;
             _materialRepository = materialRepository;
@@ -37,6 +41,8 @@ namespace CourseMarketplaceBE.Application.Services
             _redisService = redisService;
             _notificationService = notificationService;
             _userRepository = userRepository;
+            _lessonService = lessonService;
+            _embeddingService = embeddingService;
         }
 
         public async Task<CourseModerationStatsDto> GetCourseModerationStatsAsync()
@@ -66,10 +72,18 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 foreach (var material in materials)
                 {
-                    material.ModerationFeedback = null;
-                    material.LearningStatus = LearningStatus.Active.ToValue();
-                    _materialRepository.Update(material);
+                    if (material.LearningStatus != LearningStatus.Removed.ToValue())
+                    {
+                        material.ModerationFeedback = null;
+                        if (material.LearningStatus != LearningStatus.Active.ToValue())
+                        {
+                            material.LearningStatus = LearningStatus.Active.ToValue();
+                        }
+                        _materialRepository.Update(material);
+                    }
                 }
+
+                await _embeddingService.SaveValidDuplicateEmbeddingsAsync(courseId, new HashSet<int>());
             }
 
             var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
@@ -77,8 +91,11 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 foreach (var lesson in lessons)
                 {
-                    lesson.LessonStatus = LessonStatus.Active.ToValue();
-                    _lessonRepository.Update(lesson);
+                    if (lesson.LessonStatus != LessonStatus.Active.ToValue())
+                    {
+                        lesson.LessonStatus = LessonStatus.Active.ToValue();
+                        _lessonRepository.Update(lesson);
+                    }
                 }
             }
 
@@ -247,26 +264,36 @@ namespace CourseMarketplaceBE.Application.Services
 
             var courseFeedbackParts = new List<string>();
             var rejectedLessonIds = new HashSet<int>();
+            var rejectedMaterialIds = new HashSet<int>();
 
             course.ModerationFeedback = null;
-            // var allMaterials = await _materialRepository.GetByCourseIdAsync(request.CourseId);
-            // if (allMaterials != null)
-            // {
-            //     foreach (var m in allMaterials)
-            //     {
-            //         m.ModerationFeedback = null;
-            //         m.LearningStatus = LearningStatus.Active.ToValue();
-            //         _materialRepository.Update(m);
-            //     }
-            // }
+            var allMaterials = await _materialRepository.GetByCourseIdAsync(request.CourseId);
+            if (allMaterials != null)
+            {
+                foreach (var m in allMaterials)
+                {
+                    if (m.LearningStatus != LearningStatus.Removed.ToValue())
+                    {
+                        m.ModerationFeedback = null;
+                        if (m.LearningStatus != LearningStatus.Active.ToValue())
+                        {
+                            m.LearningStatus = LearningStatus.Active.ToValue();
+                        }
+                        _materialRepository.Update(m);
+                    }
+                }
+            }
 
             var lessons = await _lessonRepository.GetByCourseIdAsync(request.CourseId);
             if (lessons != null)
             {
                 foreach (var l in lessons)
                 {
-                    l.LessonStatus = LessonStatus.Active.ToValue();
-                    _lessonRepository.Update(l);
+                    if (l.LessonStatus != LessonStatus.Active.ToValue())
+                    {
+                        l.LessonStatus = LessonStatus.Active.ToValue();
+                        _lessonRepository.Update(l);
+                    }
                 }
             }
 
@@ -274,6 +301,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 if (item.Target == "file" && item.MaterialId.HasValue)
                 {
+                    rejectedMaterialIds.Add(item.MaterialId.Value);
                     var material = await _materialRepository.GetByIdAsync(item.MaterialId.Value);
                     if (material != null)
                     {
@@ -325,6 +353,9 @@ namespace CourseMarketplaceBE.Application.Services
                 : "Course rejected. Please check flagged files.";
             course.UpdatedAt = DateTime.Now;
 
+            // Conditionally restore duplicate embeddings for materials that were NOT rejected
+            await _embeddingService.SaveValidDuplicateEmbeddingsAsync(request.CourseId, excludedMaterialIds: rejectedMaterialIds);
+
             _courseRepository.Update(course);
             int rowsRejectDetailed = await _courseRepository.SaveChangesAsync();
             if (rowsRejectDetailed <= 0)
@@ -360,9 +391,15 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 foreach (var m in allMaterials)
                 {
-                    m.ModerationFeedback = null;
-                    m.LearningStatus = LearningStatus.Active.ToValue();
-                    _materialRepository.Update(m);
+                    if (m.LearningStatus != LearningStatus.Removed.ToValue())
+                    {
+                        m.ModerationFeedback = null;
+                        if (m.LearningStatus != LearningStatus.Active.ToValue())
+                        {
+                            m.LearningStatus = LearningStatus.Active.ToValue();
+                        }
+                        _materialRepository.Update(m);
+                    }
                 }
             }
 
@@ -371,8 +408,11 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 foreach (var l in lessons)
                 {
-                    l.LessonStatus = LessonStatus.Active.ToValue();
-                    _lessonRepository.Update(l);
+                    if (l.LessonStatus != LessonStatus.Active.ToValue())
+                    {
+                        l.LessonStatus = LessonStatus.Active.ToValue();
+                        _lessonRepository.Update(l);
+                    }
                 }
             }
 

@@ -70,6 +70,8 @@ public class InstructorDashboardDto
     public int TotalStudents { get; set; }
     public decimal AverageRating { get; set; }
     public int ActiveCoursesCount { get; set; }
+    public int PendingCoursesCount { get; set; }
+    public int DraftCoursesCount { get; set; }
     public decimal TotalRevenue { get; set; }
 }
 

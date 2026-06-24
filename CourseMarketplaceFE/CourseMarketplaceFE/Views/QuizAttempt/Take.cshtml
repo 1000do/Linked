@@ -1,0 +1,538 @@
+@model int
+@{
+    ViewData["Title"] = "Take Quiz";
+    Layout = "_Layout";
+    var isPreview = ViewBag.IsPreview == true;
+}
+
+<style>
+    /* Hide header and footer for immersive quiz experience */
+    header, footer { display: none !important; }
+    
+    body {
+        background-color: #f8fafc;
+        overflow: hidden; /* App takes full screen, no body scroll */
+    }
+
+    #quiz-app {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Custom scrollbar for sidebar */
+    .nav-scrollbar::-webkit-scrollbar { width: 4px; }
+    .nav-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .nav-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+</style>
+
+<div id="quiz-app">
+    @if (!string.IsNullOrEmpty(ViewBag.Error))
+    {
+        <div class="m-auto max-w-lg bg-red-50 border border-red-200 text-red-600 px-6 py-4 rounded-xl flex items-center gap-3">
+            <span class="material-symbols-outlined">error</span>
+            <span class="font-medium">@ViewBag.Error</span>
+            <a href="javascript:history.back()" class="ml-auto text-emerald-600 font-medium hover:underline">Go Back</a>
+        </div>
+    }
+    else
+    {
+        <div class="flex-1 flex items-center justify-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        const quizDataRaw = '@Html.Raw(ViewBag.QuizDataJson ?? "null")';
+        const isPreviewMode = @(isPreview ? "true" : "false");
+        let quizData = null;
+        let userAnswers = {}; // questionId -> selectedOptionId
+        let isSubmitted = false;
+        let timeRemaining = 0;
+        let timerInterval = null;
+        let currentQuestionIndex = 0;
+
+        if (quizDataRaw !== 'null') {
+            try {
+                quizData = JSON.parse(quizDataRaw);
+            } catch(e) { console.error("Error parsing quiz data", e); }
+        }
+
+        function initApp() {
+            if (!quizData) return;
+            
+            quizData.questions.forEach(q => {
+                userAnswers[q.questionId] = null;
+            });
+
+            if (quizData.timeLimitMinutes > 0) {
+                timeRemaining = quizData.timeLimitMinutes * 60;
+            }
+
+            renderIntro();
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function renderIntro() {
+            const html = `
+                <div class="flex-1 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden w-full max-w-4xl max-h-[90vh] flex flex-col">
+                        ${isPreviewMode ? '<div class="bg-amber-400 text-amber-950 text-center py-2 font-black text-sm tracking-widest uppercase">Preview Mode</div>' : ''}
+                        <div class="bg-emerald-600 text-white px-8 py-16 text-center relative shrink-0">
+                            <span class="material-symbols-outlined text-6xl mb-4 opacity-90 drop-shadow-md">quiz</span>
+                            <h1 class="text-4xl font-black mb-3 relative z-10 tracking-tight">${quizData.title}</h1>
+                            <p class="text-emerald-100 max-w-2xl mx-auto relative z-10 text-lg">${quizData.description || 'Test your knowledge on this topic.'}</p>
+                        </div>
+                        <div class="p-8 sm:p-12 overflow-y-auto">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex items-center gap-5">
+                                    <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shrink-0">
+                                        <span class="material-symbols-outlined text-3xl">format_list_bulleted</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Questions</p>
+                                        <p class="text-2xl font-black text-slate-900">${quizData.questions.length}</p>
+                                    </div>
+                                </div>
+                                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex items-center gap-5">
+                                    <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shrink-0">
+                                        <span class="material-symbols-outlined text-3xl">verified</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Passing Score</p>
+                                        <p class="text-2xl font-black text-slate-900">${quizData.passingScore}%</p>
+                                    </div>
+                                </div>
+                                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex items-center gap-5">
+                                    <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center shrink-0">
+                                        <span class="material-symbols-outlined text-3xl">timer</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Time Limit</p>
+                                        <p class="text-2xl font-black text-slate-900">${quizData.timeLimitMinutes > 0 ? quizData.timeLimitMinutes + ' mins' : 'Unlimited'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button onclick="startQuiz()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold py-4 px-12 rounded-2xl transition-all shadow-lg hover:shadow-xl text-lg inline-flex items-center gap-2">
+                                    Start Quiz <span class="material-symbols-outlined text-[24px]">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('quiz-app').innerHTML = html;
+        }
+
+        function startQuiz() {
+            if (quizData.timeLimitMinutes > 0) {
+                timerInterval = setInterval(() => {
+                    timeRemaining--;
+                    const timerEl = document.getElementById('quiz-timer');
+                    if (timerEl) {
+                        timerEl.textContent = formatTime(timeRemaining);
+                        if (timeRemaining <= 60) {
+                            timerEl.classList.remove('text-slate-600', 'bg-slate-100');
+                            timerEl.classList.add('text-red-600', 'bg-red-50', 'animate-pulse');
+                        }
+                    }
+                    if (timeRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        submitQuiz();
+                    }
+                }, 1000);
+            }
+            renderQuiz();
+        }
+
+        function selectOption(questionId, optionId) {
+            if (isSubmitted) return;
+            userAnswers[questionId] = optionId;
+            renderQuiz();
+        }
+
+        function changeQuestion(index) {
+            if (index >= 0 && index < quizData.questions.length) {
+                currentQuestionIndex = index;
+                renderQuiz();
+            }
+        }
+
+        function renderQuiz() {
+            const totalQuestions = quizData.questions.length;
+            const q = quizData.questions[currentQuestionIndex];
+            const answeredCount = Object.values(userAnswers).filter(v => v !== null).length;
+            const progressPct = (answeredCount / totalQuestions) * 100;
+
+            let optionsHtml = q.options.map(opt => {
+                const isSelected = userAnswers[q.questionId] === opt.optionId;
+                return `
+                    <div onclick="selectOption(${q.questionId}, ${opt.optionId})" 
+                         class="flex items-center gap-4 p-5 rounded-2xl border-[3px] transition-all cursor-pointer select-none
+                         ${isSelected ? 'border-emerald-600 bg-emerald-50/50 shadow-md transform -translate-y-0.5' : 'border-slate-100 bg-white hover:border-slate-300 hover:shadow-sm'}">
+                        <div class="w-6 h-6 rounded-full border-[3px] flex items-center justify-center shrink-0
+                             ${isSelected ? 'border-emerald-600' : 'border-slate-300'}">
+                            ${isSelected ? '<div class="w-2.5 h-2.5 bg-emerald-600 rounded-full"></div>' : ''}
+                        </div>
+                        <span class="text-lg ${isSelected ? 'font-bold text-emerald-950' : 'text-slate-700 font-medium'} leading-snug">${opt.optionText}</span>
+                    </div>
+                `;
+            }).join('');
+
+            // Sidebar HTML
+            let sidebarHtml = quizData.questions.map((sq, idx) => {
+                const isAnswered = userAnswers[sq.questionId] !== null;
+                const isActive = idx === currentQuestionIndex;
+                let bgClass = "bg-white border-slate-200 text-slate-500 hover:border-emerald-300";
+                if (isActive) bgClass = "bg-emerald-600 border-emerald-600 text-white font-bold shadow-md transform scale-110";
+                else if (isAnswered) bgClass = "bg-emerald-100 border-emerald-200 text-emerald-700 font-bold";
+
+                return `
+                    <button onclick="changeQuestion(${idx})" 
+                            class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${bgClass}">
+                        ${idx + 1}
+                    </button>
+                `;
+            }).join('');
+
+            const html = `
+                <!-- Top Nav -->
+                <div class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-10 shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <button onclick="confirmExit()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 transition-colors">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                        <h2 class="font-bold text-slate-800">${quizData.title}</h2>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-sm font-bold text-slate-400 uppercase tracking-widest hidden sm:block">
+                            Answered: <span class="text-emerald-600">${answeredCount} / ${totalQuestions}</span>
+                        </div>
+                        ${quizData.timeLimitMinutes > 0 ? `
+                            <div class="flex items-center gap-1.5 text-slate-600 font-mono font-bold bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200" id="quiz-timer">
+                                <span class="material-symbols-outlined text-[18px]">timer</span>
+                                ${formatTime(timeRemaining)}
+                            </div>
+                        ` : ''}
+                        <button onclick="confirmSubmit()" id="btn-submit" class="px-6 py-2 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-md">
+                            Submit
+                        </button>
+                    </div>
+                </div>
+
+                <div class="w-full h-1 bg-slate-100 shrink-0 relative">
+                    <div class="absolute top-0 left-0 h-full bg-emerald-500 transition-all duration-300 ease-out" style="width: ${progressPct}%"></div>
+                </div>
+
+                <!-- Main Layout -->
+                <div class="flex-1 flex overflow-hidden">
+                    
+                    <!-- Sidebar Navigation -->
+                    <div class="w-64 bg-slate-50 border-r border-slate-200 p-6 flex flex-col shrink-0 overflow-y-auto nav-scrollbar hidden md:block">
+                        <h3 class="font-bold text-slate-800 mb-4 uppercase tracking-wider text-xs">Questions</h3>
+                        <div class="flex flex-wrap gap-2">
+                            ${sidebarHtml}
+                        </div>
+                    </div>
+
+                    <!-- Question Flashcard Area -->
+                    <div class="flex-1 overflow-y-auto bg-slate-100/50 p-6 flex flex-col relative custom-scrollbar">
+                        ${isPreviewMode ? '<div class="absolute top-0 left-0 w-full bg-amber-400 text-amber-950 text-center py-1 font-black text-xs uppercase tracking-widest z-10 shadow-sm">Preview Mode Active</div>' : ''}
+                        
+                        <div class="flex-1 max-w-3xl w-full mx-auto flex flex-col justify-center my-8">
+                            
+                            <!-- Flashcard -->
+                            <div class="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 p-8 sm:p-12 min-h-[400px] flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div class="mb-4">
+                                    <span class="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-xs font-bold uppercase tracking-widest">Question ${currentQuestionIndex + 1}</span>
+                                </div>
+                                <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-800 leading-tight mb-10">${q.questionText}</h3>
+                                <div class="space-y-4 flex-1">
+                                    ${optionsHtml}
+                                </div>
+                            </div>
+
+                            <!-- Controls -->
+                            <div class="flex items-center justify-between mt-8">
+                                <button onclick="changeQuestion(${currentQuestionIndex - 1})" 
+                                        class="${currentQuestionIndex === 0 ? 'invisible' : ''} w-14 h-14 rounded-2xl bg-white border border-slate-200 text-slate-500 hover:text-emerald-600 hover:border-emerald-300 hover:shadow-md transition-all flex items-center justify-center active:scale-95">
+                                    <span class="material-symbols-outlined text-[28px]">arrow_back</span>
+                                </button>
+                                
+                                <button onclick="changeQuestion(${currentQuestionIndex + 1})" 
+                                        class="${currentQuestionIndex === totalQuestions - 1 ? 'invisible' : ''} w-14 h-14 rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg hover:shadow-xl transition-all flex items-center justify-center active:scale-95">
+                                    <span class="material-symbols-outlined text-[28px]">arrow_forward</span>
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('quiz-app').innerHTML = html;
+        }
+
+        function confirmExit() {
+            Swal.fire({
+                title: 'Exit Quiz?',
+                text: "Are you sure you want to exit? Your progress will be lost.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, exit',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.close();
+                    if (!window.closed) {
+                        location.href = isPreviewMode ? '/Quiz/Editor/' + quizData.quizId : '/';
+                    }
+                }
+            });
+        }
+
+        function confirmSubmit() {
+            const unanswered = Object.values(userAnswers).filter(v => v === null).length;
+            if (unanswered > 0) {
+                Swal.fire({
+                    title: 'Unanswered Questions',
+                    text: `You have ${unanswered} unanswered questions. Are you sure you want to submit?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, submit',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) submitQuiz();
+                });
+            } else {
+                Swal.fire({
+                    title: 'Submit Quiz',
+                    text: "Are you sure you want to submit your answers?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, submit',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) submitQuiz();
+                });
+            }
+        }
+
+        async function submitQuiz() {
+            if (isSubmitted) return;
+            isSubmitted = true;
+            clearInterval(timerInterval);
+            
+            const btn = document.getElementById('btn-submit');
+            if(btn) {
+                btn.disabled = true;
+                btn.innerHTML = 'Submitting...';
+                btn.classList.add('opacity-70');
+            }
+
+            if (isPreviewMode) {
+                // Local simulation for preview mode
+                setTimeout(() => {
+                    let correctCount = 0;
+                    quizData.questions.forEach(q => {
+                        const selectedId = userAnswers[q.questionId];
+                        const selectedOpt = q.options.find(o => o.optionId === selectedId);
+                        if (selectedOpt && selectedOpt.isCorrect) {
+                            correctCount++;
+                        }
+                    });
+                    const score = Math.round((correctCount / quizData.questions.length) * 100);
+                    
+                    // Mock detailed response for Preview Mode
+                    const mockDetail = {
+                        score: score,
+                        isPassed: score >= quizData.passingScore,
+                        correctCount: correctCount,
+                        totalQuestions: quizData.questions.length,
+                        questions: quizData.questions.map(q => {
+                            const selectedId = userAnswers[q.questionId];
+                            const isCorrect = q.options.some(o => o.optionId === selectedId && o.isCorrect);
+                            return {
+                                questionId: q.questionId,
+                                questionText: q.questionText,
+                                explanation: q.explanation,
+                                selectedOptionId: selectedId,
+                                isCorrect: isCorrect,
+                                options: q.options
+                            };
+                        })
+                    };
+
+                    renderResult(mockDetail);
+                }, 500);
+                return;
+            }
+
+            const payload = {
+                attemptId: quizData.attemptId,
+                answers: Object.keys(userAnswers).map(qid => ({
+                    questionId: parseInt(qid),
+                    selectedOptionId: userAnswers[qid]
+                }))
+            };
+
+            try {
+                const res = await fetch('/QuizAttempt/Submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    const attemptId = result.data.attemptId;
+                    // Fetch Details
+                    const detailRes = await fetch(`/QuizAttempt/Details/${attemptId}`);
+                    const detailResult = await detailRes.json();
+                    if (detailResult.success) {
+                        renderResult(detailResult.data);
+                    } else {
+                        // Fallback to basic result
+                        renderResult(result.data);
+                    }
+                } else {
+                    Swal.fire('Error', 'Submission failed: ' + result.message, 'error');
+                    isSubmitted = false;
+                    if(btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = 'Submit';
+                        btn.classList.remove('opacity-70');
+                    }
+                }
+            } catch(e) {
+                Swal.fire('Error', 'Network error', 'error');
+                isSubmitted = false;
+            }
+        }
+
+        function renderResult(data) {
+            const isPassed = data.isPassed;
+            const scoreColor = isPassed ? 'text-emerald-500' : 'text-red-500';
+            const icon = isPassed ? 'workspace_premium' : 'cancel';
+            const message = isPassed ? 'Congratulations! You passed the quiz.' : 'You did not pass. Keep studying and try again!';
+            
+            // Detailed breakdown HTML
+            let detailsHtml = '';
+            if (data.questions && data.questions.length > 0) {
+                detailsHtml = `
+                    <div class="mt-12 text-left">
+                        <h3 class="text-xl font-bold text-slate-800 mb-6">Detailed Results</h3>
+                        <div class="space-y-6">
+                `;
+
+                data.questions.forEach((q, idx) => {
+                    const qBg = q.isCorrect ? 'border-emerald-200 bg-emerald-50/30' : 'border-red-200 bg-red-50/30';
+                    const qIcon = q.isCorrect ? '<span class="material-symbols-outlined text-emerald-500 mt-1">check_circle</span>' : '<span class="material-symbols-outlined text-red-500 mt-1">cancel</span>';
+
+                    let optsHtml = q.options.map(o => {
+                        let optStyle = "text-slate-600";
+                        let optIcon = '<span class="material-symbols-outlined text-[18px] opacity-0">check</span>';
+                        if (o.isCorrect) {
+                            optStyle = "font-bold text-emerald-600 bg-emerald-100 px-2 py-1 rounded-md";
+                            optIcon = '<span class="material-symbols-outlined text-[18px] text-emerald-600">check</span>';
+                        } else if (o.optionId === q.selectedOptionId && !o.isCorrect) {
+                            optStyle = "font-bold text-red-600 bg-red-100 px-2 py-1 rounded-md line-through decoration-red-400";
+                            optIcon = '<span class="material-symbols-outlined text-[18px] text-red-600">close</span>';
+                        }
+
+                        return `
+                            <div class="flex items-center gap-2 mb-1.5 ${optStyle}">
+                                ${optIcon}
+                                <span>${o.optionText}</span>
+                            </div>
+                        `;
+                    }).join('');
+
+                    detailsHtml += `
+                        <div class="p-6 rounded-2xl border ${qBg}">
+                            <div class="flex items-start gap-3 mb-4">
+                                ${qIcon}
+                                <div>
+                                    <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Question ${idx + 1}</span>
+                                    <h4 class="text-lg font-bold text-slate-800 leading-tight">${q.questionText}</h4>
+                                </div>
+                            </div>
+                            <div class="ml-9 mb-4 border-l-2 border-slate-200 pl-4">
+                                ${optsHtml}
+                            </div>
+                            ${q.explanation ? `
+                                <div class="ml-9 mt-4 p-4 bg-white rounded-xl border border-emerald-100 shadow-sm flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-emerald-500">lightbulb</span>
+                                    <div>
+                                        <p class="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-1">Instructor Note</p>
+                                        <p class="text-sm text-slate-700 leading-relaxed font-medium">${q.explanation}</p>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+
+                detailsHtml += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            const html = `
+                <!-- Top Nav -->
+                <div class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-10 shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <h2 class="font-bold text-slate-800">Quiz Results: ${quizData.title}</h2>
+                    </div>
+                    <a href="${isPreviewMode ? '/Quiz/Editor/' + quizData.quizId : 'javascript:window.close()'}" class="px-6 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors">
+                        ${isPreviewMode ? 'Close Preview' : 'Close Window'}
+                    </a>
+                </div>
+
+                <!-- Scrollable Content -->
+                <div class="flex-1 overflow-y-auto bg-slate-50 p-6 custom-scrollbar">
+                    <div class="max-w-3xl mx-auto w-full pb-16">
+                        <div class="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden text-center mt-4">
+                            ${isPreviewMode ? '<div class="bg-amber-400 text-amber-950 text-center py-2 font-black text-sm tracking-widest uppercase">Preview Mode Result</div>' : ''}
+                            <div class="${isPassed ? 'bg-emerald-50' : 'bg-red-50'} py-16 px-6 border-b ${isPassed ? 'border-emerald-100' : 'border-red-100'}">
+                                <span class="material-symbols-outlined text-[80px] ${scoreColor} mb-6">${icon}</span>
+                                <h2 class="text-5xl font-black text-slate-900 mb-3 tracking-tight">Score: ${data.score}%</h2>
+                                <p class="${scoreColor} font-black text-xl uppercase tracking-widest">${isPassed ? 'PASSED' : 'FAILED'}</p>
+                            </div>
+                            <div class="p-8 sm:p-12">
+                                <p class="text-slate-600 mb-10 text-xl font-medium">${message}</p>
+                                
+                                <div class="grid grid-cols-2 gap-6 mb-10">
+                                    <div class="bg-slate-50 rounded-3xl p-6 border border-slate-100">
+                                        <p class="text-xs text-slate-400 uppercase font-bold mb-2 tracking-widest">Correct Answers</p>
+                                        <p class="text-4xl font-black text-slate-800">${data.correctCount} <span class="text-lg font-bold text-slate-400">/ ${data.totalQuestions}</span></p>
+                                    </div>
+                                    <div class="bg-slate-50 rounded-3xl p-6 border border-slate-100">
+                                        <p class="text-xs text-slate-400 uppercase font-bold mb-2 tracking-widest">Passing Required</p>
+                                        <p class="text-4xl font-black text-slate-800">${quizData.passingScore}%</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        ${detailsHtml}
+
+                    </div>
+                </div>
+            `;
+            document.getElementById('quiz-app').innerHTML = html;
+        }
+
+        document.addEventListener("DOMContentLoaded", initApp);
+    </script>
+}

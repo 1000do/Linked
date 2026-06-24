@@ -53,5 +53,7 @@ public partial class Instructor
 
     public virtual ICollection<InstructorPayout> InstructorPayouts { get; set; } = new List<InstructorPayout>();
 
+    public virtual ICollection<Quiz> Quizzes { get; set; } = new List<Quiz>();
+
     public virtual User InstructorNavigation { get; set; } = null!;
 }

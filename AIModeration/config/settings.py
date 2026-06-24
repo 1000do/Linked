@@ -37,7 +37,8 @@ class Settings(BaseSettings):
     TEXT_STRIDE: int = int(os.getenv("TEXT_STRIDE", 64))
     
     # Embedding config
-    EMBEDDING_DIMENSION: int = int(os.getenv("EMBEDDING_DIMENSION", 384))
+    MEDIA_EMBEDDING_DIM: int = int(os.getenv("MEDIA_EMBEDDING_DIM", 512))
+    TEXT_EMBEDDING_DIM: int = int(os.getenv("TEXT_EMBEDDING_DIM", 384))
     COSINE_SIMILARITY_THRESHOLD: float = float(os.getenv("COSINE_SIMILARITY_THRESHOLD", 0.85))
     
     # Timeout config (in seconds)
