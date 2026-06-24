@@ -182,53 +182,8 @@ public class GiftController : Controller
             return Redirect("/");
         }
 
-        // Gọi Backend API tạo Stripe payment intent cho quà tặng
-        var baseUrl = $"{Request.Scheme}://{Request.Host}";
-        var response = await _api.PostJsonAsync("checkout/gift-intent", new
-        {
-            courseId = courseId,
-            recipientEmail = recipientEmail,
-            recipientName = recipientName,
-            giftMessage = giftMessage,
-            cardTheme = cardTheme,
-            successUrl = $"{baseUrl}/Gift/CheckoutSuccess?session_id={{CHECKOUT_SESSION_ID}}",
-            cancelUrl = $"{baseUrl}/Gift/CheckoutCancel"
-        });
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var errJson = await response.Content.ReadAsStringAsync();
-            string errorMsg = "Failed to create gift payment intent.";
-            try
-            {
-                using var doc = JsonDocument.Parse(errJson);
-                if (doc.RootElement.TryGetProperty("message", out var m))
-                    errorMsg = m.GetString() ?? errorMsg;
-            }
-            catch { }
-
-            TempData["Error"] = errorMsg;
-            return Redirect($"/Gift/Setup?courseId={courseId}");
-        }
-
-        var intentJson = await response.Content.ReadAsStringAsync();
         string clientSecret = "";
         string paymentIntentId = "";
-
-        try
-        {
-            using var doc = JsonDocument.Parse(intentJson);
-            if (doc.RootElement.TryGetProperty("data", out var dataEl))
-            {
-                clientSecret = dataEl.TryGetProperty("sessionUrl", out var csEl) ? csEl.GetString() ?? "" : "";
-                paymentIntentId = dataEl.TryGetProperty("sessionId", out var idEl) ? idEl.GetString() ?? "" : "";
-            }
-        }
-        catch
-        {
-            TempData["Error"] = "Failed to parse checkout server data.";
-            return Redirect($"/Gift/Setup?courseId={courseId}");
-        }
 
         // Lấy thông tin email người dùng
         string userEmail = "";
@@ -281,6 +236,39 @@ public class GiftController : Controller
         ViewBag.CardTheme = cardTheme;
 
         return View(model);
+    }
+
+    // ─── 1.5. DYNAMIC GIFT PAYMENT INTENT CREATION VIA AJAX ───────────────
+    [HttpPost]
+    public async Task<IActionResult> CreateGiftPaymentIntentAjax(
+        int courseId,
+        string recipientEmail,
+        string? recipientName,
+        string? giftMessage,
+        string cardTheme)
+    {
+        if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
+            return Unauthorized(new { message = "Unauthorized" });
+
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        var response = await _api.PostJsonAsync("checkout/gift-intent", new
+        {
+            courseId = courseId,
+            recipientEmail = recipientEmail,
+            recipientName = recipientName,
+            giftMessage = giftMessage,
+            cardTheme = cardTheme,
+            successUrl = $"{baseUrl}/Gift/CheckoutSuccess?session_id={{CHECKOUT_SESSION_ID}}",
+            cancelUrl = $"{baseUrl}/Gift/CheckoutCancel"
+        });
+
+        var json = await response.Content.ReadAsStringAsync();
+        if (!response.IsSuccessStatusCode)
+        {
+            return BadRequest(json);
+        }
+
+        return Content(json, "application/json");
     }
 
     // ─── 2. MÀN HÌNH NHẬN QUÀ TẶNG (UC-17) ──────────────────────────────────
