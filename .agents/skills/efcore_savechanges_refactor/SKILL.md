@@ -1,13 +1,13 @@
 ---
 name: efcore_savechanges_refactor
-description: Audits and refactors Entity Framework Core's SaveChangesAsync() calls to return Task<int>, updates interfaces/repositories, implements service-level transactional checks, and handles InvalidOperationException in Controller endpoints with standardized BadRequest responses.
+description: Audits and refactors Entity Framework Core's SaveChangesAsync() calls to return Task<int>, adds explicit Domain exceptions in Repositories, extracts Service-level save helpers with transactional checks, and standardizes Controller endpoints to propagate descriptive BadRequest responses.
 ---
 
 # EF Core SaveChangesAsync() Refactoring Skill
 
 This skill provides comprehensive instructions, architectural guidelines, and code patterns for refactoring Entity Framework Core `SaveChangesAsync()` calls across a multi-layered .NET Web API application (Domain, Infrastructure, Application/Services, and Presentation/Controllers).
 
-The goal of this refactoring is to enforce transactional reliability by verifying that write operations successfully mutate the database, and responding with standardized BadRequest responses if they fail.
+The goal of this refactoring is to enforce transactional reliability by verifying that write operations successfully mutate the database, preventing silent failures, and responding with specific, standardized BadRequest responses if they fail.
 
 ---
 
@@ -17,10 +17,10 @@ The refactoring follows a clean architecture approach across four main layers:
 
 ```mermaid
 graph TD
-    Domain[Domain Layer: IRepositories] -->|1. Update Signatures| Infra[Infrastructure Layer: Repositories]
-    Infra -->|2. Return Task int| App[Application Layer: Services]
-    App -->|3. Validate numRowsAffected| Pres[Presentation Layer: Controllers]
-    Pres -->|4. Try-Catch & Return 400| Client[HTTP Client]
+    Domain[Domain Layer: IRepositories & Exceptions] -->|1. Update Signatures & Add Exceptions| Infra[Infrastructure Layer: Repositories]
+    Infra -->|2. Try/Catch DbUpdateException & Throw Domain Ex| App[Application Layer: Services]
+    App -->|3. Save Helper: Catch Domain Ex, Validate numRowsAffected| Pres[Presentation Layer: Controllers]
+    Pres -->|4. Catch & Return ex.Message as 400| Client[HTTP Client]
 ```
 
 ---
@@ -30,7 +30,8 @@ graph TD
 ### Phase 1: Domain & Infrastructure Layer Refactoring
 
 #### 1.1 Interface Refactoring (Domain)
-Search for all repository interfaces that define `SaveChangesAsync()`. Update their signatures from `Task` to `Task<int>`.
+1. Search for all repository interfaces that define `SaveChangesAsync()`. Update their signatures from `Task` to `Task<int>`.
+2. Ensure there is a specific Domain Exception for the entity (e.g., `MediaEmbeddingException`). If it doesn't exist, create it in `Domain/Exceptions/`.
 
 *   **File Pattern**: `Domain/IRepositories/I*Repository.cs`
 *   **Before**:
@@ -43,7 +44,7 @@ Search for all repository interfaces that define `SaveChangesAsync()`. Update th
     ```
 
 #### 1.2 Implementation Refactoring (Infrastructure)
-Update the corresponding concrete repository classes implementing the updated interface.
+Update the concrete repository classes. Wrap the `SaveChangesAsync()` call in a `try/catch` to intercept `DbUpdateException` and throw the specific custom Domain Exception with a clear, broad message about constraint violations or data issues.
 
 *   **File Pattern**: `Infrastructure/Repositories/*Repository.cs`
 *   **Before**:
@@ -54,89 +55,56 @@ Update the corresponding concrete repository classes implementing the updated in
 *   **After**:
     ```csharp
     public async Task<int> SaveChangesAsync()
-        => await _context.SaveChangesAsync();
+    {
+        try 
+        {
+            return await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new CustomEntityException("Database operation failed due to a constraint violation or data issue while saving [Entity Name].", ex);
+        }
+    }
     ```
 
 #### 1.3 Removing Nested SaveChangesAsync in Repository Methods
-To respect Unit of Work principles and prevent duplicate DB saves within the same business transaction:
-1. Search for repository methods (e.g., `AddXAsync`, `UpdateY`, `DeleteZ`) that have `await _context.SaveChangesAsync()` nested inside them.
+To respect Unit of Work principles and prevent duplicate DB saves:
+1. Search for repository methods that have `await _context.SaveChangesAsync()` nested inside them.
 2. Remove the nested `SaveChangesAsync()` call from the repository method.
-3. Refactor references in Services: First call the CRUD method, and then explicitly call `SaveChangesAsync()` at the Service layer level.
-
-*   **Before (Repository)**:
-    ```csharp
-    public async Task AddMessageAsync(Message msg)
-    {
-        await _context.Messages.AddAsync(msg);
-        await _context.SaveChangesAsync(); // <-- Nested Save (Remove this!)
-    }
-    ```
-*   **After (Repository)**:
-    ```csharp
-    public async Task AddMessageAsync(Message msg)
-    {
-        await _context.Messages.AddAsync(msg);
-    }
-    ```
-*   **Refactored Service Implementation**:
-    ```csharp
-    // First execute CRUD methods, then call SaveChangesAsync exactly once
-    await _chatRepository.AddMessageAsync(msg);
-    int numRowsAffected = await _chatRepository.SaveChangesAsync();
-    if (numRowsAffected == 0)
-        throw new InvalidOperationException("Failed to save changes");
-    ```
+3. Refactor references in Services: First call the CRUD method, and then explicitly call the Service-level save helper.
 
 ---
 
 ### Phase 2: Application (Service) Layer Transaction Validation
 
-Review all services that reference `SaveChangesAsync()`. Wrap the calls to validate the number of rows affected by the database operation.
+To keep the main orchestration logic clean, extract the `SaveChangesAsync()` call into a **private helper method** within the Service.
 
-#### 2.1 Standard Actions (Void/Task methods)
-For methods that execute writes but do not return custom data (or return void/Task):
-1.  Assign the returned value of the repository's `SaveChangesAsync()` call to `int numRowsAffected`.
-2.  Assert that `numRowsAffected > 0`.
-3.  If `numRowsAffected == 0`, throw an `InvalidOperationException("Failed to save changes")`.
+#### 2.1 Private Save Helper Method
+The helper method must:
+1. Call the repository's `SaveChangesAsync()`.
+2. Assert that `numRowsAffected > 0`. If `0`, throw an `InvalidOperationException` indicating exactly which entity failed to save (e.g., `"Failed to save course report"`).
+3. Catch the specific Domain Exception (e.g., `CustomEntityException`) and rethrow its message as a `BadRequestException`.
 
-*   **Before**:
+*   **Refactored Service Implementation**:
     ```csharp
-    await _reportRepo.AddCourseReportAsync(report);
-    await _reportRepo.SaveChangesAsync();
-    ```
-*   **After**:
-    ```csharp
-    await _reportRepo.AddCourseReportAsync(report);
-    int numRowsAffected = await _reportRepo.SaveChangesAsync();
-    if (numRowsAffected == 0)
-        throw new InvalidOperationException("Failed to save changes");
-    ```
-
-#### 2.2 Special Actions (Boolean methods / Handlers)
-For repository or service helper methods that return a `bool` representing database modification success:
-1.  Assign the return value of `SaveChangesAsync()` to `int numRowsAffected`.
-2.  Return `numRowsAffected > 0`.
-
-*   **Before**:
-    ```csharp
-    public async Task<bool> UpdateEmailVerifiedAsync(string email)
+    public async Task CreateReportAsync(Report report)
     {
-        var acc = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == email);
-        if (acc == null) return false;
-        acc.IsVerified = true;
-        await _context.SaveChangesAsync();
-        return true;
+        await _reportRepo.AddCourseReportAsync(report);
+        await SaveReportChangesAsync();
     }
-    ```
-*   **After**:
-    ```csharp
-    public async Task<bool> UpdateEmailVerifiedAsync(string email)
+
+    private async Task<int> SaveReportChangesAsync()
     {
-        var acc = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == email);
-        if (acc == null) return false;
-        acc.IsVerified = true;
-        int numRowsAffected = await _context.SaveChangesAsync();
-        return numRowsAffected > 0;
+        try
+        {
+            int numRowsAffected = await _reportRepo.SaveChangesAsync();
+            if (numRowsAffected == 0) throw new InvalidOperationException("Failed to save course report");
+            return numRowsAffected;
+        }
+        catch (CustomEntityException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
     }
     ```
 
@@ -144,23 +112,11 @@ For repository or service helper methods that return a `bool` representing datab
 
 ### Phase 3: Presentation Layer (Controller) Exception Handling
 
-In ASP.NET Controllers, wrap any write action (POST, PUT, DELETE, PATCH) calling refactored services in a `try-catch` block targeting `InvalidOperationException`. 
+In ASP.NET Controllers, wrap any write action (POST, PUT, DELETE, PATCH) calling refactored services in a `try-catch` block targeting `InvalidOperationException` and `BadRequestException`. 
 
-On catch, return status code **400 BadRequest** containing a standardized error message pattern: `$"Failed to {action}"` where `{action}` is the exact business function of the endpoint.
+On catch, return status code **400 BadRequest** containing the `ex.Message` propagated from the Service layer.
 
-*   **Before**:
-    ```csharp
-    [HttpPost("courses")]
-    public async Task<IActionResult> ReportCourse([FromBody] CreateCourseReportRequest request)
-    {
-        var userId = GetUserId();
-        if (userId == null) return Unauthorized();
-
-        await _reportService.CreateCourseReportAsync(userId.Value, request, IsInstructor());
-        return Ok(ApiResponse<string>.SuccessResponse("Submitted successfully."));
-    }
-    ```
-*   **After**:
+*   **Refactored Controller**:
     ```csharp
     [HttpPost("courses")]
     public async Task<IActionResult> ReportCourse([FromBody] CreateCourseReportRequest request)
@@ -175,7 +131,11 @@ On catch, return status code **400 BadRequest** containing a standardized error 
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to report course"));
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
@@ -183,21 +143,6 @@ On catch, return status code **400 BadRequest** containing a standardized error 
         }
     }
     ```
-
----
-
-## Standardized Error Message Guide
-
-Use the following naming conventions for `{action}` when responding with `$"Failed to {action}"`:
-
-| HTTP Method | Controller Action | Standardized Message |
-|---|---|---|
-| `POST` | Create coupon | `Failed to create coupon` |
-| `PUT` | Update coupon | `Failed to update coupon` |
-| `DELETE` | Remove item | `Failed to remove item` |
-| `POST` | Submit report | `Failed to report course` |
-| `PATCH` | Approve request | `Failed to resolve course report` |
-| `POST` | Toggle state | `Failed to toggle wishlist` |
 
 ---
 

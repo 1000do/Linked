@@ -20,6 +20,8 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly IRedisService _redisService;
         private readonly INotificationService _notificationService;
         private readonly IUserRepository _userRepository;
+        private readonly ILessonService _lessonService;
+        private readonly IEmbeddingService _embeddingService;
 
         public CourseModerationService(
             ICourseRepository courseRepository,
@@ -28,7 +30,9 @@ namespace CourseMarketplaceBE.Application.Services
             IEnrollmentRepository enrollmentRepository,
             IRedisService redisService,
             INotificationService notificationService,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            ILessonService lessonService,
+            IEmbeddingService embeddingService)
         {
             _courseRepository = courseRepository;
             _materialRepository = materialRepository;
@@ -37,6 +41,8 @@ namespace CourseMarketplaceBE.Application.Services
             _redisService = redisService;
             _notificationService = notificationService;
             _userRepository = userRepository;
+            _lessonService = lessonService;
+            _embeddingService = embeddingService;
         }
 
         public async Task<CourseModerationStatsDto> GetCourseModerationStatsAsync()
@@ -76,6 +82,8 @@ namespace CourseMarketplaceBE.Application.Services
                         _materialRepository.Update(material);
                     }
                 }
+
+                await _embeddingService.SaveValidDuplicateEmbeddingsAsync(courseId, new HashSet<int>());
             }
 
             var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
@@ -256,6 +264,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             var courseFeedbackParts = new List<string>();
             var rejectedLessonIds = new HashSet<int>();
+            var rejectedMaterialIds = new HashSet<int>();
 
             course.ModerationFeedback = null;
             var allMaterials = await _materialRepository.GetByCourseIdAsync(request.CourseId);
@@ -292,6 +301,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 if (item.Target == "file" && item.MaterialId.HasValue)
                 {
+                    rejectedMaterialIds.Add(item.MaterialId.Value);
                     var material = await _materialRepository.GetByIdAsync(item.MaterialId.Value);
                     if (material != null)
                     {
@@ -342,6 +352,9 @@ namespace CourseMarketplaceBE.Application.Services
                 ? string.Join("\n", courseFeedbackParts)
                 : "Course rejected. Please check flagged files.";
             course.UpdatedAt = DateTime.Now;
+
+            // Conditionally restore duplicate embeddings for materials that were NOT rejected
+            await _embeddingService.SaveValidDuplicateEmbeddingsAsync(request.CourseId, excludedMaterialIds: rejectedMaterialIds);
 
             _courseRepository.Update(course);
             int rowsRejectDetailed = await _courseRepository.SaveChangesAsync();

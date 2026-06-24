@@ -46,6 +46,8 @@ services:
   #     TOXIC_MODEL_PATH: ${TOXIC_MODEL_PATH}
   #     CLIP_MODEL_NAME: ${CLIP_MODEL_NAME}
   #     TEXT_EMBEDDING_MODEL_NAME: ${TEXT_EMBEDDING_MODEL_NAME}
+  #     MEDIA_EMBEDDING_DIM: ${MEDIA_EMBEDDING_DIM}
+  #     TEXT_EMBEDDING_DIM: ${TEXT_EMBEDDING_DIM}
   #   volumes:
   #     - ./ai_models:/app/models
   #   ports:

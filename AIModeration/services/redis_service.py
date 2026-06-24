@@ -4,16 +4,17 @@ from typing import List, Optional
 from core.models import (
     CourseDetailDto,
     AiModelDto,
-    MaterialEmbeddingResponse,
-    
+    MaterialEmbeddingResponse
 )
+from config.settings import get_settings, Settings
 from repositories.cache_repository import CacheRepository
 
 logger = logging.getLogger(__name__)
 
 class RedisService:
-    def __init__(self, cache_repository: Optional[CacheRepository] = None):
+    def __init__(self, cache_repository: Optional[CacheRepository] = None, settings: Optional[Settings] = None):
         self.cache_repository = cache_repository or CacheRepository()
+        self.settings = settings or get_settings()
 
     def get_course_details(self, course_id: int) -> Optional[CourseDetailDto]:
         """
@@ -54,8 +55,19 @@ class RedisService:
             return False
         emb_type = dto.embedding_type
         if not emb_type or emb_type not in ("text", "media"):
-            emb_type = "media" if len(dto.embedding) == 512 else "text"
+            emb_type = "media" if len(dto.embedding) == self.settings.MEDIA_EMBEDDING_DIM else "text"
         return self.cache_repository.set_material_embedding(dto.material_id, dto.embedding, emb_type, ttl)
+
+    def set_duplicate_material_embedding(self, dto: MaterialEmbeddingResponse, ttl: Optional[int] = None) -> bool:
+        """
+        Caches a newly generated embedding that was evaluated as duplicated.
+        """
+        if not dto.material_id or not dto.embedding:
+            return False
+        emb_type = dto.embedding_type
+        if not emb_type or emb_type not in ("text", "media"):
+            emb_type = "media" if len(dto.embedding) == self.settings.MEDIA_EMBEDDING_DIM else "text"
+        return self.cache_repository.set_duplicate_material_embedding(dto.material_id, dto.embedding, emb_type, ttl)
 
     def get_all_existing_embeddings(self) -> List[MaterialEmbeddingResponse]:
         """
@@ -97,7 +109,7 @@ class RedisService:
                     
                     if embedding_vector:
                         if not embedding_type or embedding_type not in ("text", "media"):
-                            embedding_type = "media" if len(embedding_vector) == 512 else "text"
+                            embedding_type = "media" if len(embedding_vector) == self.settings.MEDIA_EMBEDDING_DIM else "text"
                         embedding_id = parsed.get("EmbeddingId") or parsed.get("embeddingId")
                         
                         results.append(MaterialEmbeddingResponse(

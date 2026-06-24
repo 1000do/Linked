@@ -19,8 +19,6 @@ public class LessonService : ILessonService
     private readonly IFileUploadService _uploadService;
     private readonly IRedisService _redisService;
     private readonly IInstructorRepository _instructorRepository;
-    private readonly ITextEmbeddingRepository _textEmbeddingRepository;
-    private readonly IMediaEmbeddingRepository _mediaEmbeddingRepository;
     private readonly ILogger<LessonService> _logger;
     private readonly ILockoutRepository _lockoutRepo;
     private readonly IHtmlTextManipulationService _htmlTextManipulationService;
@@ -32,8 +30,6 @@ public class LessonService : ILessonService
         IFileUploadService uploadService,
         IRedisService redisService,
         IInstructorRepository instructorRepository,
-        ITextEmbeddingRepository textEmbeddingRepository,
-        IMediaEmbeddingRepository mediaEmbeddingRepository,
         ILogger<LessonService> logger,
         ILockoutRepository lockoutRepo,
         IHtmlTextManipulationService htmlTextManipulationService)
@@ -44,8 +40,6 @@ public class LessonService : ILessonService
         _uploadService = uploadService;
         _redisService = redisService;
         _instructorRepository = instructorRepository;
-        _textEmbeddingRepository = textEmbeddingRepository;
-        _mediaEmbeddingRepository = mediaEmbeddingRepository;
         _logger = logger;
         _lockoutRepo = lockoutRepo;
         _htmlTextManipulationService = htmlTextManipulationService;
@@ -705,107 +699,5 @@ public class LessonService : ILessonService
         {
             await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
         }
-    }
-
-    public async Task<List<MaterialEmbeddingResponse>> GetAllMaterialEmbeddingsAsync()
-    {
-        var textList = await _textEmbeddingRepository.GetAllAsync();
-        var mediaList = await _mediaEmbeddingRepository.GetAllAsync();
-
-        var result = new List<MaterialEmbeddingResponse>();
-
-        result.AddRange(textList.Select(e => new MaterialEmbeddingResponse
-        {
-            EmbeddingId = e.TextEmbeddingId,
-            MaterialId = e.MaterialId,
-            Embedding = e.Embedding,
-            EmbeddingType = "text"
-        }));
-
-        result.AddRange(mediaList.Select(e => new MaterialEmbeddingResponse
-        {
-            EmbeddingId = e.MediaEmbeddingId,
-            MaterialId = e.MaterialId,
-            Embedding = e.Embedding,
-            EmbeddingType = "media"
-        }));
-
-        return result;
-    }
-
-    public async Task SaveMaterialEmbeddingsAsync(int materialId, List<float> embedding, string embeddingType)
-    {
-        _logger.LogInformation("Saving new material embeddings for material {matId} with embedding type as {type}", materialId, embeddingType);
-        int rows = 0;
-        if (string.Equals(embeddingType, "media", StringComparison.OrdinalIgnoreCase))
-        {
-
-
-            _logger.LogInformation("Retrieving existing media embeddings for material {matId}", materialId);
-            var existingList = await _mediaEmbeddingRepository.GetByMaterialIdAsync(materialId);
-
-            var existing = existingList.FirstOrDefault();
-
-            if (existing == null)
-            {
-                _logger.LogInformation("No existing media embeddings found. Inserting new media embeddings for material {matId}", materialId);
-                var entity = new MediaEmbedding
-                {
-                    MaterialId = materialId,
-                    Embedding = embedding,
-                    CreatedAt = DateTime.UtcNow
-                };
-                await _mediaEmbeddingRepository.AddAsync(entity);
-            }
-            else
-            {
-                _logger.LogInformation("Existing media embeddings found. Updating media embeddings for material {matId}", materialId);
-                existing.Embedding = embedding;
-                _mediaEmbeddingRepository.Update(existing);
-            }
-
-            rows = await _mediaEmbeddingRepository.SaveChangesAsync();
-
-        }
-        else
-        {
-            _logger.LogInformation("Retrieving existing text embeddings for material {matId}", materialId);
-            var existingList = await _textEmbeddingRepository.GetByMaterialIdAsync(materialId);
-            var existing = existingList.FirstOrDefault();
-
-            if (existing == null)
-            {
-                _logger.LogInformation("No existing text embeddings found. Inserting new text embeddings for material {matId}", materialId);
-                var entity = new TextEmbedding
-                {
-                    MaterialId = materialId,
-                    Embedding = embedding,
-                    CreatedAt = DateTime.UtcNow
-                };
-                await _textEmbeddingRepository.AddAsync(entity);
-            }
-            else
-            {
-                _logger.LogInformation("Existing text embeddings found. Updating text embeddings for material {matId}", materialId);
-                existing.Embedding = embedding;
-                _textEmbeddingRepository.Update(existing);
-            }
-
-            rows = await _textEmbeddingRepository.SaveChangesAsync();
-
-        }
-
-        if (rows > 0)
-        {
-            _logger.LogInformation("Saved embeddings for material {matId} with embedding type as {type}", materialId, embeddingType);
-        }
-        else
-        {
-            _logger.LogError("Failed to save embeddings for material {matId} with embedding type as {type}", materialId, embeddingType);
-        }
-
-        // Invalidate redis cache for material_embedding
-        await _redisService.RemoveCacheAsync(CacheKeys.MaterialEmbedding.GetKey(materialId));
-        await _redisService.RemoveCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey());
     }
 }
