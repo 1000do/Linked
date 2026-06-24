@@ -276,7 +276,7 @@
         }
 
         const connection = new signalR.HubConnectionBuilder()
-            .withUrl("http://localhost:5207/notificationHub", {
+            .withUrl("/notificationHub", {
                 accessTokenFactory: () => LAYOUT_TOKEN
             })
             .withAutomaticReconnect()
@@ -355,7 +355,7 @@
 
         // Thêm SignalR cho Chat để cập nhật Message badge
         const chatConnection = new signalR.HubConnectionBuilder()
-            .withUrl("http://localhost:5207/chatHub", {
+            .withUrl("/chatHub", {
                 accessTokenFactory: () => LAYOUT_TOKEN
             })
             .withAutomaticReconnect()

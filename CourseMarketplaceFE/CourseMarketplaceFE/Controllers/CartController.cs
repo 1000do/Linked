@@ -2,6 +2,7 @@ using System.Text.Json;
 using CourseMarketplaceFE.Helpers;
 using CourseMarketplaceFE.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CourseMarketplaceFE.Controllers;
 
@@ -11,6 +12,7 @@ namespace CourseMarketplaceFE.Controllers;
 /// Không cần Session, không cần AddDistributedMemoryCache().
 /// ApiClient tự động gắn Bearer Token của user đang login khi gọi BE.
 /// </summary>
+[Authorize(Roles = "user,instructor")]
 public class CartController : Controller
 {
     private readonly ApiClient _api;
@@ -289,6 +291,21 @@ public class CartController : Controller
             TempData["CartSuccess"] = "Course removed from cart.";
 
         return RedirectToAction(nameof(Index));
+    }
+
+    // --- BFF PROXY FOR AJAX --- //
+    [HttpGet]
+    public async Task<IActionResult> GetSummaryAjax(string? couponCode)
+    {
+        if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
+            return Unauthorized();
+        
+        var url = string.IsNullOrWhiteSpace(couponCode)
+            ? "cart/summary"
+            : $"cart/summary?couponCode={Uri.EscapeDataString(couponCode)}";
+        var response = await _api.GetAsync(url);
+        var json = await response.Content.ReadAsStringAsync();
+        return Content(json, "application/json");
     }
 
     // ─── 6. CHECKOUT — TRANG THANH TOÁN EMbedded STRIPE ELEMENTS ────────

@@ -1,6 +1,7 @@
 using CourseMarketplaceFE.Helpers;
 using CourseMarketplaceFE.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CourseMarketplaceFE.Controllers
 {
@@ -15,6 +16,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ── Razor Views ───────────────────────────────────────────────────────
         public IActionResult Index() => View();
+        [Authorize(Roles = "admin,staff")]
         public IActionResult Admin() => View();
 
         // ── Proxy APIs (for JavaScript – bypasses HttpOnly cookie & Docker networking) ──

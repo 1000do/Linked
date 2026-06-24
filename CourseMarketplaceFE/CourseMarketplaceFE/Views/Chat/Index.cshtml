@@ -147,7 +147,7 @@
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <script>
-        const CHAT_API_URL = "http://localhost:5207";
+        const CHAT_API_URL = "";
         const chatPageToken = "@token";
 
         // ★ Lấy AccountId từ JWT token (đáng tin hơn cookie UserId)
@@ -390,6 +390,10 @@
 
         async function acceptSupport(ticketId) {
             try {
+                const ticket = pendingRequests.find(t => t.ticketId === ticketId);
+                const senderName = ticket ? ticket.senderName : "Support Session";
+                const senderAvatar = ticket ? ticket.senderAvatar : "/img/default-avatar.png";
+
                 const res = await fetch(`/Chat/AcceptSupport?ticketId=${ticketId}`, {
                     method: 'POST'
                 });
@@ -397,7 +401,7 @@
                 if (res.ok) {
                     const data = await res.json();
                     await loadChats();
-                    selectChat(data.chatId, "Support Session", "/img/default-avatar.png", true);
+                    selectChat(data.chatId, senderName, senderAvatar, true);
                     loadPendingRequests(); // Refresh the list to remove the accepted ticket
                 } else {
                     const error = await res.json();
@@ -478,6 +482,17 @@
             
             activeChatId = chatId;
             
+            // Try to resolve name and avatar from allChats list for absolute correctness
+            let displayName = name;
+            let displayAvatar = avatar;
+            let displayOnline = isOnline;
+            const existingChat = allChats.find(c => c.chatId === chatId);
+            if (existingChat) {
+                displayName = existingChat.partnerName || displayName;
+                displayAvatar = existingChat.partnerAvatar || displayAvatar;
+                displayOnline = existingChat.isOnline;
+            }
+            
             // Reset input box
             const msgInput = document.getElementById('msg-input');
             if (msgInput) {
@@ -500,10 +515,10 @@
 
             document.getElementById('empty-state').style.display = 'none';
             document.getElementById('chat-content').style.display = 'flex';
-            document.getElementById('header-name').innerText = name;
+            document.getElementById('header-name').innerText = displayName;
             
             const statusText = document.getElementById('header-status');
-            if (isOnline) {
+            if (displayOnline) {
                 statusText.innerText = 'Online';
                 statusText.classList.remove('text-slate-400');
                 statusText.classList.add('text-emerald-500');
@@ -513,7 +528,7 @@
                 statusText.classList.add('text-slate-400');
             }
 
-            let cleanAvatar = avatar;
+            let cleanAvatar = displayAvatar;
             if (!cleanAvatar || cleanAvatar === 'null' || cleanAvatar === 'undefined' || cleanAvatar.trim() === '') {
                 cleanAvatar = '/img/default-avatar.png';
             }
@@ -865,7 +880,9 @@
                 if (foundChat) {
                     selectChat(parsedId, foundChat.partnerName, foundChat.partnerAvatar, foundChat.isOnline);
                 } else {
-                    selectChat(parsedId, "Technical Support", "/img/default-avatar.png", false);
+                    const fallbackName = urlParams.get('fallbackName') || "User";
+                    const fallbackAvatar = urlParams.get('fallbackAvatar') || "/img/default-avatar.png";
+                    selectChat(parsedId, fallbackName, fallbackAvatar, false);
                 }
             }
         });

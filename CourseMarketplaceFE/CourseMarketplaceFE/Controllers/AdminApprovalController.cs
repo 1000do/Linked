@@ -2,9 +2,11 @@ using System.Text.Json;
 using CourseMarketplaceFE.Helpers;
 using CourseMarketplaceFE.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CourseMarketplaceFE.Controllers
 {
+    [Authorize(Roles = "admin,staff")]
     public class AdminApprovalController : Controller
     {
         private readonly ApiClient _apiClient;
@@ -12,7 +14,6 @@ namespace CourseMarketplaceFE.Controllers
 
         public AdminApprovalController(ApiClient apiClient) => _apiClient = apiClient;
 
-        // Trang danh sách chờ duyệt
         public async Task<IActionResult> Index(int page = 1, int pageSize = 10)
         {
             ViewBag.Page = page;

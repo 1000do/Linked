@@ -1399,7 +1399,9 @@
             const result = await response.json();
             if (response.ok) {
                 Swal.close();
-                window.location.href = `/Chat/Index?chatId=${result.chatId}`;
+                const fallbackName = encodeURIComponent('@Html.Raw(Model.InstructorName.Replace("'", "\\'"))');
+                const fallbackAvatar = encodeURIComponent('@Html.Raw(Model.InstructorAvatarUrl ?? "/img/default-avatar.png")');
+                window.location.href = `/Chat/Index?chatId=${result.chatId}&fallbackName=${fallbackName}&fallbackAvatar=${fallbackAvatar}`;
             } else {
                 Swal.fire('Error', result.message || 'Could not start conversation.', 'error');
             }

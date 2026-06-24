@@ -1,0 +1,133 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminAiServiceControllerFE["AdminAiServiceController"] {
+    <<frontend controller>>
+    + EditModel(id: int, req: UpdateAiModelRequest) Task~IActionResult~
+}
+
+class UpdateAiModelRequestVM["UpdateAiModelRequest"] {
+    <<view model>>
+    + ModelProvider : string
+    + ModelVersion : string
+    + ModelPath : string
+    + Description : string
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AdminAiServiceControllerBE["AdminAiServiceController"] {
+    <<backend controller>>
+    - _aiModelService : IAiModelManagementService
+    
+    + UpdateModel(id: int, req: UpdateAiModelRequest) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class UpdateAiModelRequestDTO["UpdateAiModelRequest"] {
+    <<dto>>
+    + ModelProvider : string
+    + ModelVersion : string
+    + ModelPath : string
+    + Description : string
+}
+
+class AiModelAdminDto {
+    + ModelId : int
+    + ModelName : string
+    + ModelVersion : string
+    + ModelPath : string
+    + ModelProvider : string
+    + ModelType : string
+    + ProcessType : string
+    + Description : string
+    + ModelStatus : string
+    + ModelUpdatedAt : DateTime?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class AiModel {
+    + ModelId : int
+    + ModelName : string
+    + ModelType : string?
+    + ModelProvider : string?
+    + ModelVersion : string?
+    + ModelStatus : string?
+    + Description : string?
+    + ModelCreatedAt : DateTime?
+    + ModelUpdatedAt : DateTime?
+    + ModelPath : string?
+    + ProcessType : string?
+    + CourseAiIntegrations : ICollection~CourseAiIntegration~
+    + CourseReviewModerationLogs : ICollection~CourseReviewModerationLog~
+    + LessonReviewModerationLogs : ICollection~LessonReviewModerationLog~
+    + MessageModerationLogs : ICollection~MessageModerationLog~
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAiModelManagementService {
+    <<interface>>
+    + UpdateModelAsync(id: int, req: UpdateAiModelRequest) Task~AiModelAdminDto~ *
+}
+
+class IAiModelRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~AiModel?~ *
+    + Update(model: AiModel) AiModel *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AiModelManagementService {
+    - _aiModelRepo : IAiModelRepository
+    
+    + UpdateModelAsync(id: int, req: UpdateAiModelRequest) Task~AiModelAdminDto~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class AiModelRepository {
+    - _context : AppDbContext
+    
+    + GetByIdAsync(id: int) Task~AiModel?~
+    + Update(model: AiModel) AiModel
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + AiModels : DbSet~AiModel~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+AdminAiServiceControllerBE --> IAiModelManagementService
+AiModelManagementService --> IAiModelRepository
+AiModelRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+AiModelManagementService ..|> IAiModelManagementService
+AiModelRepository ..|> IAiModelRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+AdminAiServiceControllerFE ..> AdminAiServiceControllerBE
+AdminAiServiceControllerFE ..> UpdateAiModelRequestVM
+AdminAiServiceControllerBE ..> UpdateAiModelRequestDTO
+AiModelManagementService ..> UpdateAiModelRequestDTO
+AiModelManagementService ..> AiModelAdminDto
+AiModelRepository ..> AiModel
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using CourseMarketplaceFE.Helpers;
 using CourseMarketplaceFE.Models;
@@ -31,6 +32,7 @@ public class ChatController : Controller
         };
     }
 
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public IActionResult Index()
     {
         ViewBag.Actor = GetActorFromCookie();
@@ -38,12 +40,14 @@ public class ChatController : Controller
         return View("Index");
     }
 
+    [Authorize(Roles = "user,instructor")]
     public IActionResult Learner()
     {
         ViewBag.Actor = "Learner";
         return View("Index");
     }
 
+    [Authorize(Roles = "instructor")]
     public IActionResult Instructor()
     {
         // Guard: Chỉ giảng viên đã duyệt mới được vào chat của Instructor
@@ -55,6 +59,7 @@ public class ChatController : Controller
         return View("Index");
     }
 
+    [Authorize(Roles = "admin,staff")]
     public IActionResult Admin()
     {
         ViewBag.Actor = "Admin";

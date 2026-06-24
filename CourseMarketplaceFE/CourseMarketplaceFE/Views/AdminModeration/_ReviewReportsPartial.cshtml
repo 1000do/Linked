@@ -1,0 +1,140 @@
+@using CourseMarketplaceFE.Models
+@using System.Text.Json
+@model PagedResult<ReviewReportDetailViewModel>
+
+@if (Model == null || Model.Items == null || !Model.Items.Any())
+{
+    <tr>
+        <td colspan="6" class="px-8 py-20 text-center">
+            <div class="flex flex-col items-center">
+                <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                    <span class="material-symbols-outlined text-slate-300 text-3xl">thumb_up</span>
+                </div>
+                <h4 class="text-slate-900 font-display font-bold">No Review Reports Found</h4>
+                <p class="text-slate-400 text-sm">Everything looks clean!</p>
+            </div>
+        </td>
+    </tr>
+}
+else
+{
+    @foreach (var item in Model.Items)
+    {
+        var reporterInitial = !string.IsNullOrEmpty(item.ReporterName) ? item.ReporterName.Substring(0, 1).ToUpper() : "U";
+        var isPending = item.Status == "pending";
+        var isUnderReview = item.Status == "under_review";
+        var isEscalated = item.Status == "escalated";
+
+        <tr class="group hover:bg-slate-50/80 transition-colors cursor-pointer @(isPending ? "bg-amber-50/20" : "")"
+            onclick="handleReviewRowClick(event, @item.ReportId)"
+            data-report="@JsonSerializer.Serialize(item, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })">
+            
+            <td class="px-8 py-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
+                        @reporterInitial
+                    </div>
+                    <div>
+                        <span class="font-bold text-slate-900 block">@item.ReporterName</span>
+                        <span class="text-[10px] text-slate-400 block">@item.ReporterEmail</span>
+                    </div>
+                </div>
+            </td>
+            
+            <td class="px-6 py-6 max-w-[280px]">
+                <div class="space-y-1">
+                    <p class="text-xs text-slate-900 italic font-semibold line-clamp-2">"@(string.IsNullOrEmpty(item.ReviewComment) ? "No comments" : item.ReviewComment)"</p>
+                    <div class="flex flex-col gap-0.5 text-slate-400 text-[10px]">
+                        <div class="flex items-center gap-1">
+                            <span>Author: <span class="font-bold text-slate-700">@(string.IsNullOrEmpty(item.ReviewAuthorName) ? "Unknown User" : item.ReviewAuthorName)</span></span>
+                            @if (item.ReviewRating.HasValue)
+                            {
+                                <span>• Rating: <span class="font-bold text-amber-500">@item.ReviewRating.Value⭐</span></span>
+                            }
+                        </div>
+                        @if (!string.IsNullOrEmpty(item.CourseTitle))
+                        {
+                            <div class="mt-1"><span>Course: <a href="/Course/Detail/@item.CourseId" target="_blank" class="font-bold text-primary hover:underline">@item.CourseTitle</a></span></div>
+                        }
+                        @if (!string.IsNullOrEmpty(item.LessonTitle))
+                        {
+                            <div><span>Lesson: <span class="font-bold text-slate-600">@item.LessonTitle</span></span></div>
+                        }
+                    </div>
+                </div>
+            </td>
+            
+            <td class="px-6 py-6 max-w-[220px]">
+                <div class="space-y-1">
+                    <span class="px-2 py-0.5 bg-red-50 text-red-600 rounded text-[9px] font-black uppercase tracking-wider">@item.Reason</span>
+                    <p class="text-[11px] text-slate-500 line-clamp-1">@(string.IsNullOrEmpty(item.Description) ? "No description" : item.Description)</p>
+                </div>
+            </td>
+            
+            <td class="px-6 py-6 text-xs text-slate-500 font-semibold">
+                <p class="text-slate-700">@(item.CreatedAt?.ToString("dd/MM/yyyy"))</p>
+                <p class="text-[10px] text-slate-400 font-bold uppercase">@(item.CreatedAt?.ToString("HH:mm"))</p>
+            </td>
+            
+            <td class="px-6 py-6">
+                @if (item.Status == "pending")
+                {
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[11px] font-bold uppercase tracking-wider animate-pulse"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Pending</span>
+                }
+                else if (item.Status == "resolved")
+                {
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-bold uppercase tracking-wider"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Resolved</span>
+                }
+                else if (item.Status == "rejected")
+                {
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-500 rounded-full text-[11px] font-bold uppercase tracking-wider">Rejected</span>
+                }
+                else if (item.Status == "escalated")
+                {
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-[11px] font-bold uppercase tracking-wider">Escalated</span>
+                }
+                else
+                {
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[11px] font-bold uppercase tracking-wider">@item.Status</span>
+                }
+            </td>
+            
+            <td class="px-8 py-6 text-right">
+                <div class="flex items-center justify-end gap-2">
+                    @if (isPending || isUnderReview || isEscalated)
+                    {
+                        if (isEscalated && User.IsInRole("staff"))
+                        {
+                            <button disabled class="flex items-center gap-1 px-4 py-2 bg-slate-300 text-slate-500 rounded-xl text-xs font-bold transition-all cursor-not-allowed opacity-60">
+                                <span class="material-symbols-outlined text-[16px]">lock</span> Escalated
+                            </button>
+                        }
+                        else
+                        {
+                            <button onclick="handleModerateReviewClick(event)" class="flex items-center gap-1 px-4 py-2 bg-primary hover:bg-secondary text-white rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95">
+                                <span class="material-symbols-outlined text-[16px]">verified_user</span> Moderate
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <button onclick="handleInfoButtonClick(event)" class="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl">Info</button>
+                    }
+                </div>
+            </td>
+        </tr>
+    }
+
+    @if (Model.TotalPages > 1)
+    {
+        <tr>
+            <td colspan="6" class="px-6 py-4 border-t border-slate-200">
+                <div class="flex justify-between items-center bg-transparent">
+                    <button onclick="loadReviewReports(@(Model.Page - 1))" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(Model.Page <= 1 ? "pointer-events-none opacity-50" : "")">Previous</button>
+                    <span class="text-sm text-slate-500">Page @Model.Page of @Model.TotalPages</span>
+                    <button onclick="loadReviewReports(@(Model.Page + 1))" class="px-3 py-1.5 text-sm font-semibold rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 @(Model.Page >= Model.TotalPages ? "pointer-events-none opacity-50" : "")">Next</button>
+                </div>
+            </td>
+        </tr>
+    }
+}
