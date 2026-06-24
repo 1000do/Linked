@@ -66,9 +66,15 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 foreach (var material in materials)
                 {
-                    material.ModerationFeedback = null;
-                    material.LearningStatus = LearningStatus.Active.ToValue();
-                    _materialRepository.Update(material);
+                    if (material.LearningStatus != LearningStatus.Removed.ToValue())
+                    {
+                        material.ModerationFeedback = null;
+                        if (material.LearningStatus != LearningStatus.Active.ToValue())
+                        {
+                            material.LearningStatus = LearningStatus.Active.ToValue();
+                        }
+                        _materialRepository.Update(material);
+                    }
                 }
             }
 
@@ -77,8 +83,11 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 foreach (var lesson in lessons)
                 {
-                    lesson.LessonStatus = LessonStatus.Active.ToValue();
-                    _lessonRepository.Update(lesson);
+                    if (lesson.LessonStatus != LessonStatus.Active.ToValue())
+                    {
+                        lesson.LessonStatus = LessonStatus.Active.ToValue();
+                        _lessonRepository.Update(lesson);
+                    }
                 }
             }
 
@@ -249,24 +258,33 @@ namespace CourseMarketplaceBE.Application.Services
             var rejectedLessonIds = new HashSet<int>();
 
             course.ModerationFeedback = null;
-            // var allMaterials = await _materialRepository.GetByCourseIdAsync(request.CourseId);
-            // if (allMaterials != null)
-            // {
-            //     foreach (var m in allMaterials)
-            //     {
-            //         m.ModerationFeedback = null;
-            //         m.LearningStatus = LearningStatus.Active.ToValue();
-            //         _materialRepository.Update(m);
-            //     }
-            // }
+            var allMaterials = await _materialRepository.GetByCourseIdAsync(request.CourseId);
+            if (allMaterials != null)
+            {
+                foreach (var m in allMaterials)
+                {
+                    if (m.LearningStatus != LearningStatus.Removed.ToValue())
+                    {
+                        m.ModerationFeedback = null;
+                        if (m.LearningStatus != LearningStatus.Active.ToValue())
+                        {
+                            m.LearningStatus = LearningStatus.Active.ToValue();
+                        }
+                        _materialRepository.Update(m);
+                    }
+                }
+            }
 
             var lessons = await _lessonRepository.GetByCourseIdAsync(request.CourseId);
             if (lessons != null)
             {
                 foreach (var l in lessons)
                 {
-                    l.LessonStatus = LessonStatus.Active.ToValue();
-                    _lessonRepository.Update(l);
+                    if (l.LessonStatus != LessonStatus.Active.ToValue())
+                    {
+                        l.LessonStatus = LessonStatus.Active.ToValue();
+                        _lessonRepository.Update(l);
+                    }
                 }
             }
 
@@ -360,9 +378,15 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 foreach (var m in allMaterials)
                 {
-                    m.ModerationFeedback = null;
-                    m.LearningStatus = LearningStatus.Active.ToValue();
-                    _materialRepository.Update(m);
+                    if (m.LearningStatus != LearningStatus.Removed.ToValue())
+                    {
+                        m.ModerationFeedback = null;
+                        if (m.LearningStatus != LearningStatus.Active.ToValue())
+                        {
+                            m.LearningStatus = LearningStatus.Active.ToValue();
+                        }
+                        _materialRepository.Update(m);
+                    }
                 }
             }
 
@@ -371,8 +395,11 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 foreach (var l in lessons)
                 {
-                    l.LessonStatus = LessonStatus.Active.ToValue();
-                    _lessonRepository.Update(l);
+                    if (l.LessonStatus != LessonStatus.Active.ToValue())
+                    {
+                        l.LessonStatus = LessonStatus.Active.ToValue();
+                        _lessonRepository.Update(l);
+                    }
                 }
             }
 

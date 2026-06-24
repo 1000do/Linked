@@ -453,12 +453,15 @@ public class CourseCommandService : ICourseCommandService
             {
                 foreach (var material in materials)
                 {
-                    material.ModerationFeedback = null;
-                    if (material.LearningStatus == LearningStatus.Rejected.ToValue())
+                    if (material.LearningStatus != LearningStatus.Removed.ToValue())
                     {
-                        material.LearningStatus = LearningStatus.Active.ToValue();
+                        material.ModerationFeedback = null;
+                        if (material.LearningStatus != LearningStatus.Active.ToValue())
+                        {
+                            material.LearningStatus = LearningStatus.Active.ToValue();
+                        }
+                        _materialRepository.Update(material);
                     }
-                    _materialRepository.Update(material);
                 }
             }
 
@@ -467,8 +470,11 @@ public class CourseCommandService : ICourseCommandService
             {
                 foreach (var lesson in lessons)
                 {
-                    lesson.LessonStatus = LessonStatus.Active.ToValue();
-                    _lessonRepository.Update(lesson);
+                    if (lesson.LessonStatus != LessonStatus.Active.ToValue())
+                    {
+                        lesson.LessonStatus = LessonStatus.Active.ToValue();
+                        _lessonRepository.Update(lesson);
+                    }
                 }
             }
         }

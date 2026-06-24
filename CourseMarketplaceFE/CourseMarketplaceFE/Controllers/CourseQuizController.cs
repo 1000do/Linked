@@ -116,21 +116,16 @@ namespace CourseMarketplaceFE.Controllers
                 {
                     var json = await resp.Content.ReadAsStringAsync();
                     using var doc = System.Text.Json.JsonDocument.Parse(json);
-                    var data = doc.RootElement.GetProperty("data");
-                    var items = data.GetProperty("items").EnumerateArray();
+                    var items = doc.RootElement.GetProperty("data").EnumerateArray();
                     
                     var list = new System.Collections.Generic.List<object>();
                     foreach (var item in items)
                     {
-                        var qCourseId = item.GetProperty("courseId").GetInt32();
-                        if (qCourseId == courseId)
-                        {
-                            list.Add(new {
-                                quizId = item.GetProperty("quizId").GetInt32(),
-                                title = item.GetProperty("title").GetString(),
-                                questionCount = item.GetProperty("questionCount").GetInt32()
-                            });
-                        }
+                        list.Add(new {
+                            quizId = item.GetProperty("quizId").GetInt32(),
+                            title = item.GetProperty("title").GetString(),
+                            questionCount = item.GetProperty("questionCount").GetInt32()
+                        });
                     }
                     return Json(new { success = true, data = list });
                 }
