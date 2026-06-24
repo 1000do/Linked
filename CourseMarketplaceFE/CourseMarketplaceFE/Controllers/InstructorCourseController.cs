@@ -107,6 +107,8 @@ namespace CourseMarketplaceFE.Controllers
                     viewModel.TotalStudents = statsData.GetProperty("totalStudents").GetInt32();
                     viewModel.AverageRating = (double)statsData.GetProperty("averageRating").GetDecimal();
                     viewModel.ActiveCoursesCount = statsData.GetProperty("activeCoursesCount").GetInt32();
+                    viewModel.PendingCoursesCount = statsData.TryGetProperty("pendingCoursesCount", out var pProp) ? pProp.GetInt32() : 0;
+                    viewModel.DraftCoursesCount = statsData.TryGetProperty("draftCoursesCount", out var dProp) ? dProp.GetInt32() : 0;
                     viewModel.TotalRevenue = statsData.GetProperty("totalRevenue").GetDecimal();
                 }
 

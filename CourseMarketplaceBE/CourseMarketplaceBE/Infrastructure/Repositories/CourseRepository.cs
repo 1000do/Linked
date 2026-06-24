@@ -483,5 +483,14 @@ public class CourseRepository : ICourseRepository
         return await _context.SaveChangesAsync();
     }
 
+    public async Task<Dictionary<string, int>> CountCoursesByStatusAsync(int instructorId)
+    {
+        var counts = await _context.Courses
+            .Where(c => c.InstructorId == instructorId)
+            .GroupBy(c => c.CourseStatus)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(k => k.Status ?? "unknown", v => v.Count);
+        return counts;
+    }
 
 }

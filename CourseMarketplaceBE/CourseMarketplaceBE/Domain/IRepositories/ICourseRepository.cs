@@ -43,5 +43,5 @@ public interface ICourseRepository
     Task<Course?> GetCourseWithInstructorAsync(int courseId);
     Task<Enrollment?> GetActiveEnrollmentAsync(int userId, int courseId);
     Task<int> SaveChangesAsync();
-    
+    Task<Dictionary<string, int>> CountCoursesByStatusAsync(int instructorId);
 }

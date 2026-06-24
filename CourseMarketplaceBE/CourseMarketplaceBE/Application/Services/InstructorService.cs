@@ -22,19 +22,22 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly IAdminFinanceRepository _financeRepo;
         private readonly IUserRepository _userRepo;
         private readonly IStripeConnectService _stripeConnect;
+        private readonly ICourseRepository _courseRepo;
 
         public InstructorService(
             IInstructorRepository repo,
             IFileUploadService uploadService,
             IAdminFinanceRepository financeRepo,
             IUserRepository userRepo,
-            IStripeConnectService stripeConnect)
+            IStripeConnectService stripeConnect,
+            ICourseRepository courseRepo)
         {
             _repo = repo;
             _uploadService = uploadService;
             _financeRepo = financeRepo;
             _userRepo = userRepo;
             _stripeConnect = stripeConnect;
+            _courseRepo = courseRepo;
         }
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -286,7 +289,10 @@ namespace CourseMarketplaceBE.Application.Services
                 dto.TotalRevenue = stats.TotalRevenue;
             }
 
-            dto.ActiveCoursesCount = await _repo.CountActiveCoursesAsync(userId);
+            var statusCounts = await _courseRepo.CountCoursesByStatusAsync(userId);
+            dto.ActiveCoursesCount = statusCounts.GetValueOrDefault(CourseStatus.Published.ToValue(), 0);
+            dto.PendingCoursesCount = statusCounts.GetValueOrDefault(CourseStatus.Pending.ToValue(), 0);
+            dto.DraftCoursesCount = statusCounts.GetValueOrDefault(CourseStatus.Draft.ToValue(), 0);
 
             return dto;
         }
