@@ -1,551 +1,119 @@
 @using LinkedLearn.Models.UserVM
 @model LoginViewModel
 @{
-    Layout = null;
-    ViewData["Title"] = "Đăng nhập";
+    ViewData["Title"] = "Login";
 }
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - LinkedLearn</title>
-    <link rel="icon" type="image/png" href="~/img/default-avatar.png" />
 
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <!-- Google Sign-In -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-
-    <!-- jQuery + Validation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
-
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        /* ─── Nền động dự phòng ─── */
-        @@keyframes bgShift {
-            0%   { background-position: 0% 50%; }
-            50%  { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        html, body {
-            width: 100%; height: 100%;
-            overflow: hidden;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(
-                145deg,
-                #010d0c 0%,
-                #071626 30%,
-                #13082a 65%,
-                #010e09 100%
-            );
-            background-size: 400% 400%;
-            animation: bgShift 24s ease infinite;
-            color: #fff;
-        }
-
-        /* ─── Video ─── */
-        #bgVideo {
-            position: fixed;
-            inset: 0;
-            width: 100%; height: 100%;
-            object-fit: cover;
-            z-index: 0;
-            opacity: 0;
-            transition: opacity 3s ease;
-        }
-        #bgVideo.visible { opacity: 0.42; }
-
-        /* ─── Overlay ─── */
-        .overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 1;
-            background: linear-gradient(
-                135deg,
-                rgba(1,10,8,0.90)  0%,
-                rgba(5,14,24,0.85) 50%,
-                rgba(15,6,28,0.90) 100%
-            );
-        }
-
-        /* ─── Hào quang tiên cảnh ─── */
-        @@keyframes floatA {
-            0%,100% { transform: translate(0,0)      scale(1);   opacity:.20; }
-            50%     { transform: translate(20px,-15px) scale(1.1); opacity:.32; }
-        }
-        @@keyframes floatB {
-            0%,100% { transform: translate(0,0)      scale(1);    opacity:.14; }
-            50%     { transform: translate(-18px,12px) scale(1.08); opacity:.24; }
-        }
-        @@keyframes floatC {
-            0%,100% { transform: translate(0,0)     scale(1);    opacity:.10; }
-            50%     { transform: translate(15px,15px) scale(1.12); opacity:.18; }
-        }
-
-        .halo {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(80px);
-            pointer-events: none;
-            z-index: 2;
-        }
-        .halo-gold   { width:480px; height:480px; top:-40px;  right:-40px;  background:radial-gradient(circle,rgba(251,191,36,.32) 0%,transparent 70%); animation:floatA 17s ease-in-out infinite; }
-        .halo-teal   { width:400px; height:400px; bottom:-60px; left:-60px;  background:radial-gradient(circle,rgba(67,232,216,.18) 0%,transparent 70%); animation:floatB 22s ease-in-out infinite; }
-        .halo-purple { width:340px; height:340px; top:42%;   left:38%;     background:radial-gradient(circle,rgba(167,139,250,.14) 0%,transparent 70%); animation:floatC 19s ease-in-out infinite 3s; }
-
-        /* ─── Sao lấp lánh ─── */
-        @@keyframes twinkle {
-            0%,100% { opacity:0;   transform:scale(.5); }
-            50%     { opacity:.85; transform:scale(1); }
-        }
-        .star {
-            position: fixed;
-            border-radius: 50%;
-            background: #fff;
-            animation: twinkle linear infinite;
-            z-index: 2;
-            pointer-events: none;
-        }
-
-        /* ─── Nút về trang chủ ─── */
-        .back-btn {
-            position: fixed;
-            top: 20px; left: 20px;
-            z-index: 20;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 9px 18px;
-            border-radius: 999px;
-            background: rgba(255,255,255,.05);
-            border: 1px solid rgba(255,255,255,.10);
-            color: rgba(255,255,255,.72);
-            font-family: 'Inter', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: .02em;
-            text-decoration: none;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            transition: background .2s, color .2s, border-color .2s;
-        }
-        .back-btn:hover {
-            background: rgba(255,255,255,.10);
-            color: #fff;
-            border-color: rgba(67,232,216,.35);
-        }
-        .mat-sym {
-            font-family: 'Material Symbols Outlined';
-            font-weight: 400;
-            font-style: normal;
-            font-size: 17px;
-            line-height: 1;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        /* ─── Wrapper căn giữa ─── */
-        .page-center {
-            position: relative;
-            z-index: 10;
-            width: 100%;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px 16px;
-        }
-
-        /* ─── Glass card ─── */
-        .glass-card {
-            width: 100%;
-            max-width: 436px;
-            background: rgba(5,16,14,.52);
-            backdrop-filter: blur(28px);
-            -webkit-backdrop-filter: blur(28px);
-            border: 1px solid rgba(255,255,255,.08);
-            border-radius: 28px;
-            padding: 40px 36px 36px;
-            box-shadow:
-                0 0 0 1px rgba(67,232,216,.05),
-                0 32px 64px rgba(0,0,0,.55),
-                inset 0 1px 0 rgba(255,255,255,.04);
-        }
-
-        /* ─── Logo ─── */
-        .logo-wrap {
-            width: 60px; height: 60px;
-            margin: 0 auto 14px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #006a62, #43e8d8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(255,255,255,.12);
-            box-shadow: 0 8px 24px rgba(0,106,98,.35);
-        }
-        .logo-wrap .mat-sym {
-            font-size: 28px;
-            color: #fff;
-            font-variation-settings: 'FILL' 1;
-        }
-
-        /* ─── Tiêu đề ─── */
-        .card-title {
-            font-family: 'Manrope', sans-serif;
-            font-size: 24px;
-            font-weight: 800;
-            color: #fff;
-            letter-spacing: -.02em;
-            text-align: center;
-            margin-bottom: 6px;
-        }
-        .card-sub {
-            font-size: 13px;
-            color: rgba(255,255,255,.45);
-            text-align: center;
-            margin-bottom: 26px;
-        }
-
-        /* ─── Labels ─── */
-        .field-label {
-            display: block;
-            font-size: 11px;
-            font-weight: 700;
-            color: rgba(255,255,255,.50);
-            text-transform: uppercase;
-            letter-spacing: .08em;
-            margin-bottom: 7px;
-        }
-
-        /* ─── Inputs ─── */
-        .field-wrap { position: relative; }
-        .field-icon {
-            position: absolute;
-            left: 14px; top: 50%;
-            transform: translateY(-50%);
-            font-family: 'Material Symbols Outlined';
-            font-size: 20px;
-            color: rgba(255,255,255,.30);
-            pointer-events: none;
-            line-height: 1;
-        }
-        .glass-input {
-            width: 100%;
-            padding: 13px 14px 13px 44px;
-            background: rgba(255,255,255,.04);
-            border: 1px solid rgba(255,255,255,.09);
-            border-radius: 12px;
-            color: #fff;
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            outline: none;
-            transition: border-color .25s, background .25s, box-shadow .25s;
-        }
-        .glass-input::placeholder { color: rgba(255,255,255,.25); }
-        .glass-input:focus {
-            background: rgba(255,255,255,.08);
-            border-color: rgba(67,232,216,.55);
-            box-shadow: 0 0 0 3px rgba(67,232,216,.10);
-        }
-        .toggle-pw {
-            position: absolute;
-            right: 12px; top: 50%;
-            transform: translateY(-50%);
-            background: none; border: none;
-            cursor: pointer;
-            color: rgba(255,255,255,.30);
-            display: flex; align-items: center;
-            transition: color .2s;
-            padding: 0;
-        }
-        .toggle-pw:hover { color: rgba(255,255,255,.70); }
-        .toggle-pw .mat-sym { font-size: 20px; }
-
-        /* ─── Validation ─── */
-        .val-msg {
-            display: block;
-            color: #fca5a5;
-            font-size: 11px;
-            margin-top: 5px;
-            font-weight: 500;
-            min-height: 16px;
-        }
-
-        /* ─── Alert banners ─── */
-        .alert-box {
-            margin-top: 12px;
-            border-radius: 12px;
-            padding: 10px 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            text-align: left;
-        }
-        .alert-box .mat-sym { font-size: 18px; flex-shrink: 0; }
-        .alert-error   { background:rgba(239,68,68,.12);  border:1px solid rgba(239,68,68,.25);  color:#fca5a5; }
-        .alert-success { background:rgba(16,185,129,.12); border:1px solid rgba(16,185,129,.25); color:#6ee7b7; }
-
-        /* ─── Nút đăng nhập ─── */
-        .btn-login {
-            width: 100%;
-            margin-top: 6px;
-            padding: 14px;
-            background: #006a62;
-            color: #fff;
-            font-family: 'Manrope', sans-serif;
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-            border: none;
-            border-radius: 13px;
-            cursor: pointer;
-            box-shadow: 0 8px 24px rgba(0,106,98,.30);
-            transition: background .2s, transform .1s, box-shadow .2s;
-        }
-        .btn-login:hover  { background:#005850; box-shadow:0 12px 32px rgba(0,106,98,.40); }
-        .btn-login:active { transform:scale(.98); }
-
-        /* ─── Divider ─── */
-        .divider {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 22px 0 18px;
-            color: rgba(255,255,255,.22);
-            font-size: 11px;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-        }
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: rgba(255,255,255,.09);
-        }
-
-        /* ─── Link đăng ký ─── */
-        .signup-row {
-            text-align: center;
-            margin-top: 22px;
-            font-size: 13px;
-            color: rgba(255,255,255,.40);
-        }
-        .signup-row a {
-            color: #43e8d8;
-            font-weight: 700;
-            text-decoration: none;
-            margin-left: 4px;
-        }
-        .signup-row a:hover { opacity: .8; }
-
-        /* ─── Căn giữa Google button ─── */
-        .g-btn-center { display: flex; justify-content: center; }
-
-        /* ─── Form gap ─── */
-        .form-fields { display: flex; flex-direction: column; gap: 16px; }
-        .pw-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
-        .forgot-link { font-size: 12px; color: #43e8d8; font-weight: 600; text-decoration: none; opacity: .85; }
-        .forgot-link:hover { opacity: 1; }
-    </style>
-</head>
-<body>
-
-    <!-- Video bồng lai tiên cảnh (mây hoàng hôn tím-hồng) -->
-    <video id="bgVideo" autoplay muted loop playsinline>
-        <source src="https://assets.mixkit.co/videos/preview/mixkit-clouds-in-a-pink-and-purple-sunset-31478-large.mp4" type="video/mp4" />
-    </video>
-
-    <!-- Lớp phủ tối -->
-    <div class="overlay"></div>
-
-    <!-- Hào quang huyền ảo -->
-    <div class="halo halo-gold"></div>
-    <div class="halo halo-teal"></div>
-    <div class="halo halo-purple"></div>
-
-    <!-- Sao (tạo bằng JS) -->
-    <div id="starField"></div>
-
-    <!-- Nút quay về -->
-    <a href="/" class="back-btn">
-        <span class="mat-sym">arrow_back</span>
-        Về trang chủ
-    </a>
-
-    <!-- Vùng căn giữa -->
-    <div class="page-center">
-        <div class="glass-card">
-
-            <!-- Logo + Tiêu đề -->
-            <div style="text-align:center;">
-                <div class="logo-wrap">
-                    <span class="mat-sym">school</span>
+<main class="min-h-[80vh] flex items-center justify-center pt-24 pb-12 px-6">
+    <div class="max-w-md w-full bg-white p-10 rounded-2xl shadow-xl border border-slate-100">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-headline font-extrabold text-primary mb-2">Welcome Back</h2>
+            
+            @if (ViewBag.ErrorMessage != null)
+            {
+                <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-4 text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <span class="material-symbols-outlined text-lg">error</span>
+                    <span>@ViewBag.ErrorMessage</span>
                 </div>
-                <h1 class="card-title">Chào mừng trở lại</h1>
-                <p class="card-sub">Bước vào thế giới tri thức của LinkedLearn</p>
+            }
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="bg-emerald-50 border border-emerald-200 text-emerald-600 px-4 py-3 rounded-xl mb-4 text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <span class="material-symbols-outlined text-lg">check_circle</span>
+                    <span>@TempData["SuccessMessage"]</span>
+                </div>
+            }
+        </div>
 
-                @if (ViewBag.ErrorMessage != null)
-                {
-                    <div class="alert-box alert-error">
-                        <span class="mat-sym">error</span>
-                        <span>@ViewBag.ErrorMessage</span>
-                    </div>
-                }
-                @if (TempData["SuccessMessage"] != null)
-                {
-                    <div class="alert-box alert-success">
-                        <span class="mat-sym">check_circle</span>
-                        <span>@TempData["SuccessMessage"]</span>
-                    </div>
-                }
+        <form asp-action="Login" method="post" class="space-y-6">
+            <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+            <div>
+                <label class="block text-sm font-bold text-slate-700 mb-2">Username or Email</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">person</span>
+                    <input asp-for="UsernameOrEmail" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                           placeholder="username or email@gmail.com" />
+                </div>
+                <span asp-validation-for="UsernameOrEmail" class="text-[10px] text-red-500"></span>
             </div>
 
-            <!-- Form -->
-            <form asp-action="Login" method="post" class="form-fields" style="margin-top:24px;">
-                <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
-
-                <!-- Tài khoản -->
-                <div>
-                    <label class="field-label">Tên đăng nhập hoặc Email</label>
-                    <div class="field-wrap">
-                        <span class="field-icon">person</span>
-                        <input asp-for="UsernameOrEmail"
-                               class="glass-input"
-                               placeholder="username hoặc email@gmail.com"
-                               autocomplete="username" />
-                    </div>
-                    <span asp-validation-for="UsernameOrEmail" class="val-msg"></span>
+            <div>
+                <div class="flex justify-between mb-2">
+                    <label class="text-sm font-bold text-slate-700">Password</label>
+                    <a class="text-xs text-primary font-medium hover:underline" href="/Account/ForgotPassword">Forgot Password?</a>
                 </div>
-
-                <!-- Mật khẩu -->
-                <div>
-                    <div class="pw-header">
-                        <label class="field-label" style="margin-bottom:0;">Mật khẩu</label>
-                        <a href="/Account/ForgotPassword" class="forgot-link">Quên mật khẩu?</a>
-                    </div>
-                    <div class="field-wrap">
-                        <span class="field-icon">lock</span>
-                        <input asp-for="Password" type="password" id="loginPassword"
-                               class="glass-input" style="padding-right:46px;"
-                               placeholder="••••••••"
-                               autocomplete="current-password" />
-                        <button type="button" class="toggle-pw" onclick="togglePw('loginPassword', this)">
-                            <span class="mat-sym">visibility</span>
-                        </button>
-                    </div>
-                    <span asp-validation-for="Password" class="val-msg"></span>
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">lock</span>
+                    <input asp-for="Password" type="password" id="loginPassword" class="w-full pl-10 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 transition-all" placeholder="••••••••" />
+                    <button type="button" onclick="togglePassword('loginPassword', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors flex items-center">
+                        <span class="material-symbols-outlined text-xl">visibility</span>
+                    </button>
                 </div>
+                <span asp-validation-for="Password" class="text-[10px] text-red-500"></span>
+            </div>
 
-                <!-- Đăng nhập -->
-                <button type="submit" class="btn-login">Đăng nhập</button>
-            </form>
+            <button class="w-full py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:opacity-90 transition-all active:scale-[0.98]" type="submit">
+                Login
+            </button>
+        </form>
 
-            <!-- Divider -->
-            <div class="divider">Hoặc tiếp tục với</div>
-
-            <!-- Google -->
+        <!-- GOOGLE LOGIN BUTTON -->
+        <div class="mt-6">
             <div id="g_id_onload"
                  data-client_id="@ViewBag.GoogleClientId"
                  data-callback="handleGoogleLogin"
-                 data-auto_prompt="false"></div>
-            <div class="g-btn-center">
-                <div class="g_id_signin"
-                     data-type="standard"
-                     data-size="large"
-                     data-theme="outline"
-                     data-text="sign_in_with"
-                     data-shape="rectangular"
-                     data-logo_alignment="left"
-                     data-width="364"></div>
+                 data-auto_prompt="false">
             </div>
 
-            <!-- Đăng ký -->
-            <p class="signup-row">
-                Chưa có tài khoản?
-                <a href="/Account/Register">Đăng ký ngay</a>
-            </p>
-
+            <div class="g_id_signin"
+                 data-type="standard"
+                 data-size="large"
+                 data-theme="outline"
+                 data-text="sign_in_with"
+                 data-shape="rectangular"
+                 data-logo_alignment="left">
+            </div>
         </div>
+
+        <p class="text-center text-sm text-slate-500 mt-8">
+            Don't have an account? <a href="/Account/Register" class="text-primary font-bold hover:underline">Sign up now</a>
+        </p>
     </div>
+</main>
 
-    <script>
-        // Video fade-in mượt
-        (function () {
-            var v = document.getElementById('bgVideo');
-            if (!v) return;
-            function show() { v.classList.add('visible'); }
-            v.addEventListener('canplay', show);
-            if (v.readyState >= 3) show();
-        })();
-
-        // Tạo sao lấp lánh
-        (function () {
-            var frag = document.createDocumentFragment();
-            for (var i = 0; i < 90; i++) {
-                var s = document.createElement('div');
-                s.className = 'star';
-                var sz = Math.random() * 2 + 0.5;
-                s.style.cssText =
-                    'width:' + sz + 'px;height:' + sz + 'px;' +
-                    'left:' + (Math.random() * 100) + '%;' +
-                    'top:'  + (Math.random() * 100) + '%;' +
-                    'animation-duration:' + (2 + Math.random() * 4) + 's;' +
-                    'animation-delay:'    + (Math.random() * 6)     + 's;' +
-                    'opacity:0;';
-                frag.appendChild(s);
-            }
-            document.getElementById('starField').appendChild(frag);
-        })();
-
-        // Toggle hiện/ẩn mật khẩu
-        function togglePw(id, btn) {
-            var inp = document.getElementById(id);
-            var ico = btn.querySelector('.mat-sym');
-            if (inp.type === 'password') {
-                inp.type = 'text';
-                ico.textContent = 'visibility_off';
-            } else {
-                inp.type = 'password';
-                ico.textContent = 'visibility';
-            }
+<script>
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('.material-symbols-outlined');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.textContent = 'visibility_off';
+        } else {
+            input.type = 'password';
+            icon.textContent = 'visibility';
         }
+    }
 
-        // Google Login
-        async function handleGoogleLogin(response) {
-            var res = await fetch('/Account/GoogleLogin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken: response.credential })
-            });
-            if (res.ok) {
-                var ret = '@Html.Raw(ViewBag.ReturnUrl)';
-                window.location.href = ret || '/';
+    async function handleGoogleLogin(response) {
+        const idToken = response.credential;
+
+        const res = await fetch("/Account/GoogleLogin", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ idToken: idToken })
+        });
+
+        if (res.ok) {
+            const returnUrl = '@Html.Raw(ViewBag.ReturnUrl)';
+            if (returnUrl) {
+                window.location.href = returnUrl;
             } else {
-                Swal.fire({
-                    title: 'Lỗi',
-                    text: 'Đăng nhập Google thất bại',
-                    icon: 'error',
-                    confirmButtonText: 'Đồng ý',
-                    confirmButtonColor: '#006a62'
-                });
+                window.location.href = "/";
             }
+        } else {
+            Swal.fire('Error', 'Google login failed', 'error');
         }
-    </script>
-</body>
-</html>
+    }
+</script>
