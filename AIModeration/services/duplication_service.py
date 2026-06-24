@@ -90,9 +90,10 @@ class DuplicationService(BaseService):
                 result['similarity_score'] = sim
                 result['existing_material_id'] = existing.material_id
                 break
-
+        
         if not match_found:
-            result['similarity_score'] = sum(scores)/len(scores)
+            # Hanlde non-exisiting embeddings case
+            result['similarity_score'] = sum(scores) / len(scores) if scores else 0.0
         
         return result
 

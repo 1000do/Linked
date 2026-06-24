@@ -1,8 +1,9 @@
+using System;
+using System.Collections.Generic;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Pgvector;
-
 namespace CourseMarketplaceBE.Infrastructure.Data;
 
 public partial class AppDbContext : DbContext

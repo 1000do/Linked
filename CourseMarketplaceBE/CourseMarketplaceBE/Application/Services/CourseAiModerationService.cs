@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AutoMapper;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs.Common;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.Enums;
+using CourseMarketplaceBE.Domain.Exceptions;
 using CourseMarketplaceBE.Domain.IRepositories;
 using Microsoft.Extensions.Logging;
-using AutoMapper;
 
 namespace CourseMarketplaceBE.Application.Services
 {
@@ -30,6 +33,8 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly ICourseRepository _courseRepository;
         private readonly IMapper _mapper;
         private readonly IHtmlTextManipulationService _htmlTextManipulationService;
+        private readonly IEmbeddingService _embeddingService;
+        private readonly IBackgroundTaskQueue _taskQueue;
 
         public CourseAiModerationService(
             IContentHashService contentHashService,
@@ -45,7 +50,9 @@ namespace CourseMarketplaceBE.Application.Services
             ILogger<CourseAiModerationService> logger,
             ICourseRepository courseRepository,
             IMapper mapper,
-            IHtmlTextManipulationService htmlTextManipulationService)
+            IHtmlTextManipulationService htmlTextManipulationService,
+            IEmbeddingService embeddingService,
+            IBackgroundTaskQueue taskQueue)
         {
             _contentHashService = contentHashService;
             _aiModerationService = aiModerationService;
@@ -61,6 +68,27 @@ namespace CourseMarketplaceBE.Application.Services
             _courseRepository = courseRepository;
             _mapper = mapper;
             _htmlTextManipulationService = htmlTextManipulationService;
+            _embeddingService = embeddingService;
+            _taskQueue = taskQueue;
+        }
+
+        public async Task StartCourseModerationAsync(CourseModerationRequest request, int instructorId)
+        {
+            // 1. Enforce all business validation checks, lockouts, and reset rejected statuses synchronously
+            await UpdateCourseStatusAndClearCacheAsync(request.CourseId, CourseStatus.Pending.ToValue(), instructorId);
+
+            // 2. Queue AI moderation for background processing
+            await _taskQueue.QueueBackgroundWorkItemAsync<ICourseAiModerationService>(async (moderationService, token) =>
+            {
+                try
+                {
+                    await moderationService.HandleCourseModerationAsync(request);
+                }
+                catch (Exception)
+                {
+                    // Exceptions should be logged internally by the moderation service
+                }
+            });
         }
 
         public async Task<CourseModerationDetailResponse?> GetCourseForModerationAsync(int courseId)
@@ -68,7 +96,7 @@ namespace CourseMarketplaceBE.Application.Services
             string cacheKey = CacheKeys.CourseModerationDetail.GetKey(courseId);
             _logger.LogInformation("GetCourseForModerationAsync: {CacheKey}", cacheKey);
             var response = await _redisService.GetCacheAsync<CourseModerationDetailResponse>(cacheKey);
-            
+
             if (response == null)
             {
                 var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
@@ -136,26 +164,6 @@ namespace CourseMarketplaceBE.Application.Services
             return await GetExactDuplicationResult(new ExactDuplicationCommand { CourseExt = current, ExistingCourseExts = others });
         }
 
-
-        private async Task PrepareMaterialEmbeddingsAsync()
-        {
-            var isInitialized = await _redisService.GetCacheAsync<bool>(CacheKeys.MaterialEmbeddingInitialized.GetKey());
-            if (isInitialized) return;
-
-            var allEmbeddings = await _lessonService.GetAllMaterialEmbeddingsAsync();
-            foreach (var e in allEmbeddings)
-            {
-                string cacheKey = CacheKeys.MaterialEmbedding.GetKey(e.MaterialId.GetValueOrDefault());
-                var cached = await _redisService.GetCacheAsync<MaterialEmbeddingResponse>(cacheKey);
-                if (cached == null)
-                {
-                    await _redisService.SetCacheAsync(cacheKey, e, CacheTtl.Medium.GetTtl());
-                }
-            }
-
-            await _redisService.SetCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey(), true, CacheTtl.Medium.GetTtl());
-        }
-
         private async Task<AssignAIModeratorsToCourseResult> AssignAIModeratorsToCourseAsync(int courseId, List<AiModelDto> models)
         {
             var thresholds = await _aiModerationService.GetScoreThresholdConfigAsync(SystemConfigKeys.ModerationThreshold);
@@ -201,7 +209,7 @@ namespace CourseMarketplaceBE.Application.Services
 
                 var materialIds = await GetCourseMaterialIdsAsync(courseId);
 
-                await PrepareMaterialEmbeddingsAsync();
+                await _embeddingService.PrepareMaterialEmbeddingsAsync();
 
                 return new PrepareForCourseAIModerationResult
                 {
@@ -280,12 +288,13 @@ namespace CourseMarketplaceBE.Application.Services
                 var integratedModelId = integration.ModelId;
 
                 var match = models.FirstOrDefault(
-                    model => 
+                    model =>
                     role.Contains(model.ProcessType?.ToLower() ?? "") &&
                     role.Contains(model.ModelType?.ToLower() ?? "")
                     );
 
-                if(match != null && match.ModelId != integratedModelId){
+                if (match != null && match.ModelId != integratedModelId)
+                {
                     integration.ModelId = match.ModelId;
                     integration.ConfigJson = JsonSerializer.Serialize(thresholds);
                     integration.AssignedAt = DateTime.UtcNow;
@@ -297,7 +306,21 @@ namespace CourseMarketplaceBE.Application.Services
 
             }
 
-            if (updateCount > 0) await _aiIntegrationRepository.SaveChangesAsync();
+            if (updateCount > 0) await SaveCourseAiIntegrationChangesAsync();
+        }
+
+        private async Task<int> SaveCourseAiIntegrationChangesAsync()
+        {
+            try
+            {
+                int rowsAffected = await _aiIntegrationRepository.SaveChangesAsync();
+                if (rowsAffected == 0) throw new InvalidOperationException("Failed to save course AI integration");
+                return rowsAffected;
+            }
+            catch (CourseAiIntegrationException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
         }
 
         private async Task<List<int>> GetCourseMaterialIdsAsync(int courseId)
@@ -313,79 +336,19 @@ namespace CourseMarketplaceBE.Application.Services
         private async Task ResolveCourseAIModerationResult(CourseModerationResult result)
         {
             _logger.LogInformation("Resolving AI moderation result for course {CourseId}", result.CourseId);
-            
-            await PersistMaterialEmbeddingsAsync(result.CourseId);
+
+            await _embeddingService.PersistMaterialEmbeddingsAsync(result.CourseId);
 
             var (threatLevel, feedback) = EvaluateModerationFeedback(result);
 
             await _courseCommandService.UpdateCourseStatusAndFeedbackAsync(
-                result.CourseId, 
-                CourseStatus.Pending.ToValue(), 
-                feedback, 
+                result.CourseId,
+                CourseStatus.Pending.ToValue(),
+                feedback,
                 threatLevel);
-            
+
             var notificationContent = $"Course {result.CourseId} requires manual review following AI Moderation. Threat Level: {threatLevel}.\n\nDetails:\n{feedback}";
             await _courseModerationService.NotifyAdminAsync("Manual Audit Required", notificationContent, UrlConst.AdminCourseModerationURL);
-        }
-
-        private async Task PersistMaterialEmbeddingsAsync(int courseId)
-        {
-            var materialIds = await GetCourseMaterialIdsAsync(courseId);
-
-            if (!materialIds.Any())
-            {
-                _logger.LogWarning("No learning materials found for courseId {id}. Skipping embedding persistence.", courseId);
-                return;
-            }
-
-            _logger.LogInformation("Persisting embeddings for {n} materials.", materialIds.Count);
-
-            foreach (var matId in materialIds)
-            {
-                await TryPersistSingleMaterialEmbeddingAsync(matId);
-            }
-        }
-
-        private async Task TryPersistSingleMaterialEmbeddingAsync(int matId)
-        {
-            string cacheKey = CacheKeys.MaterialEmbedding.GetKey(matId);
-            _logger.LogInformation("Retrieving MaterialEmbeddingResponse from cache key {cacheKey}", cacheKey);
-            var cachedResponse = await _redisService.GetCacheAsync<MaterialEmbeddingResponse>(cacheKey);
-
-            if (cachedResponse == null)
-            {
-                _logger.LogWarning("MaterialEmbeddingResponse for material {matId} is not found in cache", matId);
-                return;
-            }
-            
-            if (cachedResponse.Embedding == null)
-            {
-                _logger.LogWarning("Embedding is not provided for material {matId}", matId);
-                return;
-            }
-            
-            if (!cachedResponse.Embedding.Any())
-            {
-                _logger.LogWarning("Embedding contains no coordinate values for material {matId}", matId);
-                return;
-            }
-
-            _logger.LogInformation("Successfully retrieved MaterialEmbeddingResponse from cache key {cacheKey}\n{embedding}", cacheKey, JsonSerializer.Serialize(cachedResponse));
-            
-
-            await _lessonService.SaveMaterialEmbeddingsAsync(
-                matId,
-                cachedResponse.Embedding, 
-                GetEmbeddingType(cachedResponse));
-        }
-
-        private string GetEmbeddingType(MaterialEmbeddingResponse cachedResponse){
-            string embeddingType = cachedResponse.EmbeddingType ?? "";
-            if (embeddingType != "text" && embeddingType != "media")
-            {
-                embeddingType = cachedResponse.Embedding.Count == 512 ? "media" : "text";
-            }
-            return embeddingType;
         }
 
         private (AiThreatLevel ThreatLevel, string Feedback) EvaluateModerationFeedback(CourseModerationResult result)
@@ -402,7 +365,7 @@ namespace CourseMarketplaceBE.Application.Services
             else if (statusStr == ModerationStatus.Rejected.ToValue() || statusStr == ModerationStatus.Flagged.ToValue())
             {
                 threatLevel = AiThreatLevel.FlaggedOrRejected;
-                
+
                 var flaggedReasons = new List<string>();
                 foreach (var log in result.StageLogs)
                 {
@@ -413,7 +376,7 @@ namespace CourseMarketplaceBE.Application.Services
                         flaggedReasons.Add($"[{fields}] {reasonText}");
                     }
                 }
-                
+
                 if (flaggedReasons.Any())
                 {
                     feedback = "AI flagged the following issues:\n- " + string.Join("\n- ", flaggedReasons);
@@ -489,7 +452,7 @@ namespace CourseMarketplaceBE.Application.Services
 
 
 
-        private async Task<CourseModerationResult> HandleCourseModerationWithAIAsync(CouresModerationRequest request)
+        private async Task<CourseModerationResult> HandleCourseModerationWithAIAsync(CourseModerationRequest request)
         {
             try
             {
@@ -568,7 +531,7 @@ namespace CourseMarketplaceBE.Application.Services
             return (semanticReq, harmfulReq);
         }
 
-        public async Task<CourseModerationResult> HandleCourseModerationAsync(CouresModerationRequest request)
+        public async Task<CourseModerationResult> HandleCourseModerationAsync(CourseModerationRequest request)
         {
             try
             {

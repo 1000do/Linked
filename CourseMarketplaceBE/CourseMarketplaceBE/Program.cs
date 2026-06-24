@@ -147,6 +147,7 @@ public class Program
         builder.Services.AddScoped<ICourseQueryService, CourseQueryService>();
         builder.Services.AddScoped<ICourseCommandService, CourseCommandService>();
         builder.Services.AddScoped<ILessonService, LessonService>();
+        builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
         builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
         builder.Services.AddScoped<IReviewService, CourseMarketplaceBE.Application.Services.ReviewService>();
         builder.Services.AddScoped<ILandingPageService, LandingPageService>();
@@ -252,6 +253,9 @@ public class Program
         // 🔥 Background Tasks
         builder.Services.AddHostedService<PayoutScheduleTask>();
         builder.Services.AddHostedService<CourseMarketplaceBE.Infrastructure.BackgroundServices.CloudinaryCleanupService>();
+        
+        builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+        builder.Services.AddHostedService<CourseMarketplaceBE.Infrastructure.BackgroundServices.QueuedHostedService>();
 
         // Redis Configuration
         builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>

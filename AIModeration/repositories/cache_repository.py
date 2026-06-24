@@ -18,6 +18,7 @@ class CacheRepository:
     # Key prefixes
     COURSE_PREFIX = "course_moderation:detail:"
     EMBEDDING_PREFIX = "material_embedding:"
+    DUPLICATE_EMBEDDING_PREFIX = "duplicate_embedding:"
     LOG_PREFIX = "mod:log:"
     AI_MODEL_PREFIX = "ai_models:"
     EMBEDDINGS_INITIALIZED = "material_embedding:initialized"
@@ -219,6 +220,43 @@ class CacheRepository:
             return True
         except Exception as e:
             logger.error(f"Failed to cache embedding: {e}")
+            return False
+
+    def set_duplicate_material_embedding(self, material_id: int, embedding: List[float], embedding_type: str, ttl: int = None) -> bool:
+        """
+        Store duplicate material embedding in cache.
+        
+        Args:
+            material_id: Material identifier
+            embedding: embedding vector
+            embedding_type: 'text' or 'media'
+            ttl: Time-to-live in seconds
+            
+        Returns:
+            Success flag
+        """
+        if not self._ensure_connected():
+            logger.warning(f"Cannot cache duplicate embedding {material_id}: Redis unavailable")
+            return False
+        
+        key = f"{self.DUPLICATE_EMBEDDING_PREFIX}{material_id}"
+        ttl = ttl or self.CACHE_TTL
+        
+        try:
+            dto_dict = {
+                "embedding_id": 0,
+                "material_id": material_id,
+                "embedding": embedding,
+                "embedding_type": embedding_type
+            }
+
+            json_data = json.dumps(dto_dict)
+            logger.info(f"\nCaching Duplicate MaterialEmbeddingResponse...\nCache key: {key}\nValue: {json_data}")
+            self.redis_client.setex(key, ttl, json_data)
+            logger.debug(f"Duplicate Embedding cached: {key}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to cache duplicate embedding: {e}")
             return False
     
     # ========================================================================
