@@ -6,9 +6,11 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Linq;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Exceptions;
 using CourseMarketplaceBE.Domain.IRepositories;
 using Microsoft.Extensions.Logging;
 using Polly;
@@ -158,9 +160,21 @@ namespace CourseMarketplaceBE.Infrastructure.Services
             };
 
             await _usageLogRepository.AddAsync(log);
-            int numberOfRowsAffected = await _usageLogRepository.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
-                throw new InvalidOperationException("Failed to save changes");
+            await SaveUsageLogChangesAsync();
+        }
+
+        private async Task<int> SaveUsageLogChangesAsync()
+        {
+            try
+            {
+                int numberOfRowsAffected = await _usageLogRepository.SaveChangesAsync();
+                if (numberOfRowsAffected <= 0) throw new InvalidOperationException("Failed to save AI usage log");
+                return numberOfRowsAffected;
+            }
+            catch (CourseAiUsageLogException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
         }
 
         public async Task<bool> HealthCheckAsync()

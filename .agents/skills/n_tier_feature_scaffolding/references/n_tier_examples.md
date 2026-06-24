@@ -177,20 +177,23 @@ public class AiModelManagementService : IAiModelManagementService
         };
 
         var addedModel = _aiModelRepo.Add(model);
-        int affected;
+        await SaveModelChangesAsync();
+        
+        return _mapper.Map<AiModelAdminDto>(addedModel);
+    }
+
+    // Rule 2 & 8: SaveChanges Try/Catch extracted to a private helper
+    private async Task SaveModelChangesAsync()
+    {
         try
         {
-            affected = await _aiModelRepo.SaveChangesAsync();
+            int affected = await _aiModelRepo.SaveChangesAsync();
+            if (affected == 0) throw new InvalidOperationException("Failed to add AI Model.");
         }
         catch (AiModelException ex) // Rule 2: Catches Domain exception
         {
             throw new BadRequestException(ex.Message); // Rule 2: Re-throws as App exception
         }
-        
-        // Rule 2: Early Exit / Guard Clause Check
-        if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
-        
-        return _mapper.Map<AiModelAdminDto>(addedModel);
     }
 ```
 
@@ -212,8 +215,8 @@ Interacts directly with Entity Framework and throws explicit Domain-level except
             }
             catch (DbUpdateException ex)
             {
-                // Rule 1: Throw custom domain exception
-                throw new CourseMarketplaceBE.Domain.Exceptions.AiModelException("Database operation failed due to a constraint violation or data issue.", ex);
+                // Rule 1: Throw custom domain exception explicitly naming the entity
+                throw new CourseMarketplaceBE.Domain.Exceptions.AiModelException("Database operation failed due to a constraint violation or data issue while saving AI Model.", ex);
             }
         }
 ```
@@ -280,6 +283,19 @@ Demonstrates Rule 8 (Helper Extractions) and Rule 2 (Early exit for null checks 
     }
 
     // ── Extracted Helper Methods ────────────────────────────────────────────
+
+    private async Task SaveReportChangesAsync()
+    {
+        try
+        {
+            int affected = await _reportRepo.SaveChangesAsync();
+            if (affected == 0) throw new InvalidOperationException("Failed to resolve course report.");
+        }
+        catch (ReportException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
+    }
 
     private async Task<(CourseReport, Course)> GetCourseReportAndEntityAsync(int reportId)
     {
@@ -480,5 +496,152 @@ Detail views dynamically preserve query parameters to ensure the user returns to
         Back to Activity Logs
     </a>
 </div>
+```
+
+## 7. Background Tasks (Fire-and-Forget) (Rule 2)
+This example demonstrates how to safely enqueue background work without exhausting thread pools (`Task.Run`) or violating DI scopes (Service Locator).
+
+### Application Layer: Queue Interface
+```csharp
+// CourseMarketplaceBE/Application/IServices/IBackgroundTaskQueue.cs
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace CourseMarketplaceBE.Application.IServices
+{
+    public interface IBackgroundTaskQueue
+    {
+        ValueTask QueueBackgroundWorkItemAsync<TService>(Func<TService, CancellationToken, ValueTask> workItem) where TService : notnull;
+        ValueTask<Func<IServiceProvider, CancellationToken, ValueTask>> DequeueAsync(CancellationToken cancellationToken);
+    }
+}
+```
+
+### Infrastructure Layer: Queue Implementation
+```csharp
+// CourseMarketplaceBE/Infrastructure/BackgroundServices/BackgroundTaskQueue.cs
+using System;
+using System.Threading;
+using System.Threading.Channels;
+using System.Threading.Tasks;
+using CourseMarketplaceBE.Application.IServices;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace CourseMarketplaceBE.Infrastructure.BackgroundServices
+{
+    public class BackgroundTaskQueue : IBackgroundTaskQueue
+    {
+        private readonly Channel<Func<IServiceProvider, CancellationToken, ValueTask>> _queue;
+
+        public BackgroundTaskQueue()
+        {
+            var options = new BoundedChannelOptions(100) { FullMode = BoundedChannelFullMode.Wait };
+            _queue = Channel.CreateBounded<Func<IServiceProvider, CancellationToken, ValueTask>>(options);
+        }
+
+        public async ValueTask QueueBackgroundWorkItemAsync<TService>(Func<TService, CancellationToken, ValueTask> workItem) where TService : notnull
+        {
+            if (workItem == null) throw new ArgumentNullException(nameof(workItem));
+
+            Func<IServiceProvider, CancellationToken, ValueTask> wrapper = (serviceProvider, token) =>
+            {
+                var service = serviceProvider.GetRequiredService<TService>();
+                return workItem(service, token);
+            };
+
+            await _queue.Writer.WriteAsync(wrapper);
+        }
+
+        public async ValueTask<Func<IServiceProvider, CancellationToken, ValueTask>> DequeueAsync(CancellationToken cancellationToken)
+        {
+            return await _queue.Reader.ReadAsync(cancellationToken);
+        }
+    }
+}
+```
+
+### Infrastructure Layer: Hosted Service Processor
+```csharp
+// CourseMarketplaceBE/Infrastructure/BackgroundServices/QueuedHostedService.cs
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using CourseMarketplaceBE.Application.IServices;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+
+namespace CourseMarketplaceBE.Infrastructure.BackgroundServices
+{
+    public class QueuedHostedService : BackgroundService
+    {
+        private readonly ILogger<QueuedHostedService> _logger;
+        private readonly IServiceProvider _serviceProvider;
+
+        public QueuedHostedService(IBackgroundTaskQueue taskQueue, ILogger<QueuedHostedService> logger, IServiceProvider serviceProvider)
+        {
+            TaskQueue = taskQueue;
+            _logger = logger;
+            _serviceProvider = serviceProvider;
+        }
+
+        public IBackgroundTaskQueue TaskQueue { get; }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            _logger.LogInformation("Queued Hosted Service is running.");
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                var workItem = await TaskQueue.DequeueAsync(stoppingToken);
+                try
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    await workItem(scope.ServiceProvider, stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error occurred executing a background work item.");
+                }
+            }
+        }
+    }
+}
+```
+
+### Registration in `Program.cs`
+```csharp
+builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+builder.Services.AddHostedService<QueuedHostedService>();
+```
+
+### Usage in Application Service
+```csharp
+using CourseMarketplaceBE.Application.IServices;
+
+namespace CourseMarketplaceBE.Application.Services;
+
+public class CourseCommandService : ICourseCommandService
+{
+    private readonly IBackgroundTaskQueue _taskQueue;
+
+    // Inject the Singleton queue into the Scoped service
+    public CourseCommandService(IBackgroundTaskQueue taskQueue)
+    {
+        _taskQueue = taskQueue;
+    }
+
+    public async Task SubmitCourseAsync(int courseId)
+    {
+        // ... synchronous validation ...
+
+        // Queue the heavy background processing safely
+        // The queue will automatically resolve ICourseAiModerationService in its own scope
+        await _taskQueue.QueueBackgroundWorkItemAsync<ICourseAiModerationService>(async (moderationService, token) =>
+        {
+            await moderationService.ModerateCourseAsync(courseId, token);
+        });
+    }
+}
 ```
 ```

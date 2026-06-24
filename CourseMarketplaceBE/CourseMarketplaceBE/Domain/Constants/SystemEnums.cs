@@ -10,7 +10,8 @@ namespace CourseMarketplaceBE.Domain.Constants
         CourseModerationDetail,
         AiModelType,
         MaterialEmbedding,
-        MaterialEmbeddingInitialized
+        MaterialEmbeddingInitialized,
+        DuplicateMaterialEmbedding
     }
 
     public static class CacheKeysExtensions
@@ -26,6 +27,7 @@ namespace CourseMarketplaceBE.Domain.Constants
                 CacheKeys.AiModelType => $"ai_models:type:{param1}",
                 CacheKeys.MaterialEmbedding => $"material_embedding:{param1}",
                 CacheKeys.MaterialEmbeddingInitialized => "material_embedding:initialized",
+                CacheKeys.DuplicateMaterialEmbedding => $"duplicate_embedding:{param1}",
                 _ => throw new ArgumentOutOfRangeException(nameof(key), key, "Invalid redis cache key")
             };
         }
