@@ -561,25 +561,25 @@ public class CourseCommandService : ICourseCommandService
         };
     }
 
-    public async Task UpdateCourseStatusAndFeedbackAsync(int courseId, string status, string? feedback, AiThreatLevel? threatLevel = null)
+    public async Task UpdateCourseStatusAndFeedbackAsync(int courseId, string? status, string? feedback, AiThreatLevel? threatLevel = null)
     {
         var course = await _courseRepository.GetByIdAsync(courseId);
-        if (course != null)
-        {
-            course.CourseStatus = status.ToLower();
-            course.ModerationFeedback = feedback;
-            if (threatLevel.HasValue)
-            {
-                course.ThreatLevel = threatLevel.Value;
-            }
-            course.UpdatedAt = DateTime.UtcNow;
-            _courseRepository.Update(course);
-            int rowsFeedback = await _courseRepository.SaveChangesAsync();
-            if (rowsFeedback <= 0)
-                throw new InvalidOperationException("Failed to save changes when updating course status and feedback.");
+        if (course == null) throw new KeyNotFoundException($"Course {courseId} not found");
 
-            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
+        if (!string.IsNullOrWhiteSpace(status)) course.CourseStatus = status.ToLower();
+
+        course.ModerationFeedback = feedback;
+        if (threatLevel.HasValue)
+        {
+            course.ThreatLevel = threatLevel.Value;
         }
+        course.UpdatedAt = DateTime.UtcNow;
+        _courseRepository.Update(course);
+        int rowsFeedback = await _courseRepository.SaveChangesAsync();
+        if (rowsFeedback <= 0)
+            throw new InvalidOperationException("Failed to save changes when updating course status and feedback.");
+
+        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
     }
 
     private string StripHtml(string input)

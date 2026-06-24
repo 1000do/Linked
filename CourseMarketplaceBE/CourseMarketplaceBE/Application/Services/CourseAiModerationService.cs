@@ -343,7 +343,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             await _courseCommandService.UpdateCourseStatusAndFeedbackAsync(
                 result.CourseId,
-                CourseStatus.Pending.ToValue(),
+                null,
                 feedback,
                 threatLevel);
 
