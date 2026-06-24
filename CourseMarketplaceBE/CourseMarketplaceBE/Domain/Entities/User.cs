@@ -29,4 +29,6 @@ public partial class User
     public virtual Account UserNavigation { get; set; } = null!;
 
     public virtual ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();
+
+    public virtual ICollection<QuizAttempt> QuizAttempts { get; set; } = new List<QuizAttempt>();
 }

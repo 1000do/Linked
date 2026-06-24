@@ -248,6 +248,12 @@ public class Program
         builder.Services.AddScoped<IReportModerationService, ReportModerationService>();
         builder.Services.AddScoped<IModerationPenaltyService, ModerationPenaltyService>();
 
+        // 📝 Quiz Module
+        builder.Services.AddScoped<IQuizRepository, QuizRepository>();
+        builder.Services.AddScoped<IQuizService, QuizService>();
+        builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
+        builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
+
 
         // 🔥 Background Tasks
         builder.Services.AddHostedService<PayoutScheduleTask>();

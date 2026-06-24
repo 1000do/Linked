@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace CourseMarketplaceFE.Models
 {
     public class CourseListViewModel
     {
+        [JsonPropertyName("courseId")]
         public int Id { get; set; }
         public string Title { get; set; } = null!;
         public int Students { get; set; }
@@ -50,6 +52,8 @@ namespace CourseMarketplaceFE.Models
         public int TotalStudents { get; set; }
         public double AverageRating { get; set; }
         public int ActiveCoursesCount { get; set; }
+        public int PendingCoursesCount { get; set; }
+        public int DraftCoursesCount { get; set; }
         public decimal TotalRevenue { get; set; }
         
         // Pagination & Search

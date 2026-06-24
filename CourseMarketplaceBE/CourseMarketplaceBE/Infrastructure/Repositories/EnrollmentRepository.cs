@@ -80,6 +80,18 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
         public async Task AddMaterialCompletionAsync(MaterialCompletion completion)
             => await _context.MaterialCompletions.AddAsync(completion);
 
+        public async Task<bool> IsUserEnrolledInAnyCoursWithQuizAsync(int userId, int quizId)
+        {
+            // Kiểm tra user đã enroll ít nhất 1 course nào đó có chứa quiz này và quiz không bị ẩn trong course đó
+            return await _context.CourseQuizzes
+                .Where(cq => cq.QuizId == quizId && !cq.IsHidden)
+                .Join(_context.Enrollments,
+                    cq => cq.CourseId,
+                    e => e.CourseId,
+                    (cq, e) => e)
+                .AnyAsync(e => e.UserId == userId && e.EnrollmentStatus != "revoked");
+        }
+
         public async Task<IDbContextTransaction> BeginTransactionAsync()
             => await _context.Database.BeginTransactionAsync();
 

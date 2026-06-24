@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace CourseMarketplaceFE.Models
 {
@@ -19,7 +20,7 @@ namespace CourseMarketplaceFE.Models
         public decimal Price { get; set; }
         public DateTime? CreatedAt { get; set; }
         public string? CourseStatus { get; set; }
-        [System.Text.Json.Serialization.JsonPropertyName("course_thumbnail_url")]
+        [JsonPropertyName("course_thumbnail_url")]
         public string? CourseThumbnailUrl { get; set; }
         public string UrgencyLevel { get; set; } = "Normal";
         public string UrgencyColor { get; set; } = "slate";
