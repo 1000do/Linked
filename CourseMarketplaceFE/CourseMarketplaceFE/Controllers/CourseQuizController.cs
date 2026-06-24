@@ -63,12 +63,11 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost("CourseQuiz/Add")]
-        public async Task<IActionResult> Add(int courseId, [FromBody] CourseQuizAddRequest req)
+        public async Task<IActionResult> Add([FromBody] CourseQuizAddRequest req)
         {
             try
             {
-                req.CourseId = courseId; // Ensure it matches route
-                var resp = await _api.PostJsonAsync($"courses/{courseId}/quizzes", req);
+                var resp = await _api.PostJsonAsync($"courses/{req.CourseId}/quizzes", req);
                 if (resp.IsSuccessStatusCode)
                 {
                     return Json(new { success = true });

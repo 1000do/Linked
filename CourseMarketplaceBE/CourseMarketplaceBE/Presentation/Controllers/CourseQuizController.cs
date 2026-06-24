@@ -51,6 +51,7 @@ public class CourseQuizController : ControllerBase
     {
         try
         {
+            Console.WriteLine($"[DEBUG] AddQuizToCourse - Route courseId: {courseId}, Request CourseId: {request.CourseId}, QuizId: {request.QuizId}");
             request.CourseId = courseId; // Override từ route
             var instructorId = GetInstructorId();
             var result = await _quizService.AddQuizToCourseAsync(request, instructorId);
