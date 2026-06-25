@@ -168,6 +168,17 @@ class DuplicationHandler(BaseHandler):
 
         if is_duplicate:
             self.logger.warning(f"Duplication detected for Course ID {course_id}. Flagged materials: {[f'material_{mat_id}' for mat_id in matched_ids]}")
+            
+            # Cache embeddings: duplicated ones get separate prefix, others get normal prefix
+            for key, lst in new_embeddings_dict.items():
+                for new_emb in lst:
+                    if new_emb.material_id in matched_ids:
+                        self.logger.info(f"Setting DUPLICATE embeddings to cache for material {new_emb.material_id}")
+                        self.redis_service.set_duplicate_material_embedding(new_emb)
+                    else:
+                        self.logger.info(f"Setting new embeddings to cache for material {new_emb.material_id}")
+                        self.redis_service.set_material_embedding(new_emb)
+
             return CourseModerationResponse(
                 course_id=course_id,
                 moderation_status=ModerationStatus.FLAGGED.value,

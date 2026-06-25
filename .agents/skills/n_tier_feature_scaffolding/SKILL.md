@@ -40,7 +40,7 @@ This skill enforces the exact N-tier architectural pattern used in the Course Ma
   - **List Retrievals**: Return `Task<(List<Entity> Items, int TotalCount)>`.
   - **Write Operations**: 
     - Explicitly call `await _context.SaveChangesAsync()` and return its result (`Task<int>`), representing the number of rows affected. Do not return void.
-    - Wrap `SaveChangesAsync()` in `try/catch` blocks. Catch Entity Framework's `DbUpdateException` (from constraint violations) and re-throw it as a custom Domain Exception (e.g., `AiModelException`, `CourseException`) with a clear error message. 
+    - Wrap `SaveChangesAsync()` in `try/catch` blocks. Catch Entity Framework's `DbUpdateException` (from constraint violations or data issues) and re-throw it as a custom Domain Exception (e.g., `AiModelException`, `CourseException`) with a clear error message explicitly naming the entity (e.g., `"Database operation failed due to a constraint violation or data issue while saving [Entity Name]."`).
     - Explicitly add new custom exception files to `Domain/Exceptions` if the domain exception class doesn't already exist.
 
 ### 2. Backend: Application (Services)
@@ -50,14 +50,24 @@ This skill enforces the exact N-tier architectural pattern used in the Course Ma
 - **Return Types**:
   - **List Retrievals**: Check if the list is empty and throw `KeyNotFoundException`. Map the tuple from the repository into a `PagedResult<Dto>` and return the `PagedResult<Dto>` to the controller.
   - **Write Operations**: 
-    - Check the rows affected returned by the repository. If `rows == 0`, throw an `InvalidOperationException`.
-    - Wrap repository write operations in a `try/catch` block. Catch custom Domain Exceptions thrown by the Repository and re-throw them as an Application-level `BadRequestException` to ensure the controller knows the operation failed due to invalid state/data.
+    - **Private Helper Extraction:** The `SaveChangesAsync()` call, the `try/catch` block catching the Domain Exception, and the `rows == 0` check MUST be extracted into a **private helper method** (e.g., `Save[Entity]ChangesAsync()`) to keep the main business logic method clean.
+    - Inside the helper, check the rows affected returned by the repository. If `rows == 0`, throw an `InvalidOperationException` with an entity-specific message (e.g., `"Failed to save course report"`).
+    - Wrap repository write operations in a `try/catch` block within the private helper. Catch custom Domain Exceptions thrown by the Repository and re-throw them as an Application-level `BadRequestException` to ensure the controller knows the operation failed due to invalid state/data.
+  - **Background Tasks (Fire-and-Forget)**: 
+    - **DON'T:** Never use inline `Task.Run()` for fire-and-forget logic (exhausts the thread pool).
+    - **DON'T:** Never inject `IServiceProvider` into the Application Layer to manually resolve DI scopes (Service Locator anti-pattern).
+    - **DO:** Always use a strongly-typed generic `IBackgroundTaskQueue`.
+      1. **`Application/IServices/IBackgroundTaskQueue.cs`**: `ValueTask QueueBackgroundWorkItemAsync<TService>(Func<TService, CancellationToken, ValueTask> workItem) where TService : notnull;`
+      2. **`Infrastructure/BackgroundServices/BackgroundTaskQueue.cs`**: Implements the queue. Wraps the strongly typed action inside a scope resolver safely.
+      3. **`Infrastructure/BackgroundServices/QueuedHostedService.cs`**: Long-running background worker process to consume the queue.
+      4. **`Program.cs`**: Register via `AddSingleton<IBackgroundTaskQueue...>` and `AddHostedService<QueuedHostedService>`.
+      5. **Usage in Service**: `await _taskQueue.QueueBackgroundWorkItemAsync<IMyService>(async (svc, token) => await svc.ExecuteAsync());`
 
 ### 3. Backend: Presentation (API Controllers)
 - **Responsibility**: Handle HTTP routing, Authorization, and payload deserialization.
 - **Form/Payload Binding**: The payload from the frontend (ViewModel/DTO) should be automatically parsed as a DTO argument in the controller method by the ASP.NET Core framework.
 - **Encapsulate GET Parameters**: Avoid parameter bloat in Service and Controller GET methods. When handling multiple filters, pagination, or search queries, consolidate them into a single unified Request DTO parameter rather than passing 3+ primitive types (e.g., use `([FromQuery] PagedReportRequestDto request)` instead of `([FromQuery] string status, [FromQuery] int page, [FromQuery] int pageSize)`).
-- **Error Handling**: Use explicit `try/catch` blocks. Translate `KeyNotFoundException` to 404 Not Found, `InvalidOperationException` to 400 Bad Request, and `BadRequestException` to 400 Bad Request.
+- **Error Handling**: Use explicit `try/catch` blocks. Translate `KeyNotFoundException` to 404 Not Found. Catch both `InvalidOperationException` and `BadRequestException` and pass `ex.Message` directly to `ApiResponse<T>.ErrorResponse(ex.Message)` instead of hardcoding error strings.
 - **Response Format**: Always wrap responses in the standardized generic API response envelope (e.g., `ApiResp<T>` or `ApiResponse<T>`).
 
 ### 4. Backend: DTOs & Mappings

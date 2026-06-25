@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using CourseMarketplaceBE.Domain.Enums;
 using CourseMarketplaceBE.Domain.Constants;
+using CourseMarketplaceBE.Domain.Enums;
 
 namespace CourseMarketplaceBE.Application.DTOs
 {
@@ -121,10 +121,9 @@ namespace CourseMarketplaceBE.Application.DTOs
     /// <summary>
     /// DTO for course moderation request
     /// </summary>
-    public class CouresModerationRequest
+    public class CourseModerationRequest
     {
         public int CourseId { get; set; }
-        public int InstructorId { get; set; }
     }
 
     public class CourseModerationResult
@@ -305,7 +304,7 @@ namespace CourseMarketplaceBE.Application.DTOs
     {
         public int CourseId { get; set; }
         public List<int> MaterialIds { get; set; } = [];
-        
+
         public Dictionary<string, float> Thresholds { get; set; } = new();
         public List<AiModelDto> SemanticDeDuplicationModels { get; set; } = [];
         public List<AiModelDto> CourseHarmfulDetectionModels { get; set; } = [];

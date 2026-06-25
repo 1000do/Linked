@@ -43,7 +43,14 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
 
         public async Task<int> SaveChangesAsync()
         {
-            return await _context.SaveChangesAsync();
+            try
+            {
+                return await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new CourseMarketplaceBE.Domain.Exceptions.CourseAiIntegrationException("Database operation failed due to a constraint violation or data issue while saving Course AI Integration.", ex);
+            }
         }
 
         public async Task<CourseAiIntegration?> GetByIdAsync(int integrationId)

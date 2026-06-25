@@ -927,6 +927,39 @@
     </div>
 }
 
+<!-- Add Quiz Modal -->
+<div id="add-quiz-modal" class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6 transform scale-95 transition-transform duration-300">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-headline font-extrabold text-slate-900">Add Quiz to Course</h3>
+            <button onclick="closeAddQuizModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <div class="mb-4">
+            <p class="text-sm text-slate-500 mb-2">Select a quiz from your available quizzes to add to this course. Note that each quiz can only be added once.</p>
+            <div id="add-quiz-error" class="hidden mb-3 p-3 bg-red-50 text-red-600 text-sm rounded-lg font-medium border border-red-100"></div>
+            
+            <div class="border border-slate-200 rounded-xl overflow-hidden mt-4">
+                <div class="p-3 bg-slate-50 border-b border-slate-200 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-400 text-[20px]">search</span>
+                    <input type="text" id="add-quiz-search" placeholder="Search your quizzes..." class="w-full bg-transparent border-none focus:ring-0 text-sm outline-none" oninput="filterAddQuizList()">
+                </div>
+                <div id="add-quiz-list" class="max-h-64 overflow-y-auto divide-y divide-slate-100">
+                    <!-- Populated by JS -->
+                    <div class="p-8 text-center text-slate-500 text-sm">
+                        Loading quizzes...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+            <button onclick="closeAddQuizModal()" class="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script>
@@ -1276,6 +1309,7 @@
         const courseId = @courseId;
         // Pass JSON directly as a JS object to avoid quote/newline issues
         let lessonsData = @Html.Raw(ViewBag.LessonsJson ?? "[]");
+        let quizzesData = @Html.Raw(ViewBag.QuizzesJson ?? "[]");
 
         let initialCourseData = {
             title: document.getElementById('course-title-input')?.value || '',
@@ -1365,7 +1399,7 @@
         @if (ViewBag.ApiError != null) {
             <text>
             console.error("API Error:", "@Html.Raw(ViewBag.ApiError)");
-            // Show a warning banner at the top
+            
             const errBanner = document.createElement('div');
             errBanner.className = 'mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-semibold';
             errBanner.innerHTML = '<span class="material-symbols-outlined text-[16px] align-middle mr-1">error</span> @Html.Raw(ViewBag.ApiError) — Lesson data could not be loaded. Try logging in again.';
@@ -1493,6 +1527,67 @@
                 </div>
             </div>`;
             
+            // Render Quizzes Section
+            sectionHtml += `
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden border-l-4 border-l-indigo-500 mb-4 mt-6">
+                <div class="p-4 bg-slate-50/50 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Assessments</p>
+                        <h3 class="font-bold text-slate-900 text-sm">Course Quizzes</h3>
+                    </div>
+                    ${!isPending ? `
+                    <button type="button" onclick="openAddQuizModal()" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-bold rounded hover:bg-indigo-100 transition-colors flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">add</span> Add Quiz
+                    </button>
+                    ` : ''}
+                </div>
+                <div class="p-4 space-y-2">
+            `;
+            
+            if (quizzesData && quizzesData.length > 0) {
+                quizzesData.forEach((q, index) => {
+                    const quizTitle = q.quiz?.title || q.quiz?.Title || q.title || q.Title || 'Untitled Quiz';
+                    const isHidden = q.isHidden || q.IsHidden;
+                    const cId = q.courseId || q.CourseId;
+                    const qId = q.quizId || q.QuizId;
+                    
+                    sectionHtml += `
+                        <div class="bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between transition-all hover:border-indigo-300">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded bg-indigo-50 flex items-center justify-center shrink-0">
+                                    <span class="material-symbols-outlined text-[18px] text-indigo-600">quiz</span>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-slate-900 truncate max-w-[150px]">${quizTitle}</h4>
+                                    ${isHidden ? '<span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Hidden</span>' : ''}
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <label class="relative inline-flex items-center cursor-pointer" title="Toggle Visibility">
+                                    <input type="checkbox" class="sr-only peer" ${!isHidden ? 'checked' : ''} onchange="toggleQuizVisibility(${cId}, ${qId}, this)">
+                                    <div class="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-500"></div>
+                                </label>
+                                <button onclick="removeQuizFromCourse(${cId}, ${qId})" class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors" title="Remove from Course">
+                                    <span class="material-symbols-outlined text-[18px]">close</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                sectionHtml += `
+                    <div class="text-center py-6 text-slate-500 text-sm">
+                        <span class="material-symbols-outlined text-[24px] text-slate-300 mb-2 block">quiz</span>
+                        No quizzes added to this course yet.
+                    </div>
+                `;
+            }
+            
+            sectionHtml += `
+                </div>
+            </div>
+            `;
+            
             container.innerHTML = sectionHtml;
 
             // Update counters
@@ -1533,6 +1628,135 @@
                 if (firstLessonEl && (document.getElementById('lesson-editor-empty').classList.contains('z-10') || !document.getElementById('lesson-editor-empty').classList.contains('hidden'))) {
                     selectLesson(firstLessonEl);
                 }
+            }
+        }
+
+        let availableQuizzes = [];
+        let filteredQuizzes = [];
+        
+        window.openAddQuizModal = async function() {
+            const modal = document.getElementById('add-quiz-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.firstElementChild.classList.remove('scale-95');
+            }, 10);
+            
+            document.getElementById('add-quiz-error').classList.add('hidden');
+            document.getElementById('add-quiz-search').value = '';
+            document.getElementById('add-quiz-list').innerHTML = `<div class="p-8 text-center text-slate-500 text-sm">Loading your quizzes...</div>`;
+            
+            try {
+                const cId = @courseId;
+                // Fetch available quizzes for this course
+                const res = await fetch(`/CourseQuiz/Available/${cId}`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    availableQuizzes = data.data || [];
+                    
+                    // Filter out quizzes that are already in quizzesData
+                    const alreadyAddedIds = new Set(quizzesData.map(q => q.quizId || q.QuizId));
+                    availableQuizzes = availableQuizzes.filter(q => !alreadyAddedIds.has(q.quizId));
+                    
+                    filterAddQuizList();
+                } else {
+                    document.getElementById('add-quiz-list').innerHTML = `<div class="p-4 text-red-500">${data.message || 'Failed to load quizzes.'}</div>`;
+                }
+            } catch (err) {
+                document.getElementById('add-quiz-list').innerHTML = `<div class="p-4 text-red-500">Network error occurred while loading quizzes.</div>`;
+            }
+        };
+
+        window.closeAddQuizModal = function() {
+            const modal = document.getElementById('add-quiz-modal');
+            modal.classList.add('opacity-0');
+            modal.firstElementChild.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        };
+
+        window.filterAddQuizList = function() {
+            const term = document.getElementById('add-quiz-search').value.toLowerCase();
+            filteredQuizzes = availableQuizzes.filter(q => (q.title || '').toLowerCase().includes(term));
+            renderAddQuizList();
+        };
+
+        window.renderAddQuizList = function() {
+            const listEl = document.getElementById('add-quiz-list');
+            if (filteredQuizzes.length === 0) {
+                listEl.innerHTML = `<div class="p-8 text-center text-slate-500 text-sm">No available quizzes found.</div>`;
+                return;
+            }
+            
+            listEl.innerHTML = filteredQuizzes.map(q => `
+                <div class="p-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                    <div>
+                        <div class="font-bold text-slate-800 text-sm">${q.title}</div>
+                        <div class="text-xs text-slate-500 mt-0.5">${q.questionCount} Questions</div>
+                    </div>
+                    <button onclick="addQuizToCourse(${q.quizId})" class="px-3 py-1.5 bg-primary text-white text-xs font-bold rounded shadow shadow-primary/20 hover:bg-primary/90 transition-colors">
+                        Add to Course
+                    </button>
+                </div>
+            `).join('');
+        };
+
+        window.addQuizToCourse = async function(quizId) {
+            const cId = @courseId;
+            try {
+                // CourseQuiz/Add
+                const orderIdx = quizzesData ? quizzesData.length : 0;
+                const reqBody = { courseId: cId, quizId: quizId, orderIndex: orderIdx };
+                
+                const res = await fetch('/CourseQuiz/Add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(reqBody)
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    const errEl = document.getElementById('add-quiz-error');
+                    errEl.textContent = data.message || "Failed to add quiz to course.";
+                    errEl.classList.remove('hidden');
+                }
+            } catch(e) {
+                const errEl = document.getElementById('add-quiz-error');
+                errEl.textContent = "Network error occurred.";
+                errEl.classList.remove('hidden');
+            }
+        };
+
+        window.removeQuizFromCourse = async function(cId, qId) {
+            if(!confirm("Remove this quiz from the course?")) return;
+            try {
+                const res = await fetch(`/CourseQuiz/Remove?courseId=${cId}&quizId=${qId}`, { method: 'DELETE' });
+                if(res.ok) {
+                    window.location.reload();
+                } else {
+                    alert("Failed to remove quiz.");
+                }
+            } catch(e) { alert("Network error"); }
+        }
+
+        window.toggleQuizVisibility = async function(cId, qId, checkbox) {
+            const hide = !checkbox.checked;
+            try {
+                const res = await fetch(`/CourseQuiz/Hide?courseId=${cId}&quizId=${qId}&hide=${hide}`, { method: 'PATCH' });
+                if(res.ok) {
+                    window.location.reload();
+                } else {
+                    const data = await res.json().catch(() => null);
+                    checkbox.checked = !checkbox.checked;
+                    alert(data?.message || "Failed to toggle visibility. A student might be taking this quiz.");
+                }
+            } catch(e) { 
+                checkbox.checked = !checkbox.checked;
+                alert("Network error"); 
             }
         }
 

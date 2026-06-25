@@ -1,0 +1,539 @@
+@model CourseMarketplaceFE.Models.QuizListViewModel
+@{
+    ViewData["Title"] = "Quiz Management";
+    Layout = "_InstructorLayout";
+}
+
+<div class="p-8 max-w-7xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-headline font-extrabold text-slate-900">Quiz Management</h1>
+            <p class="text-slate-500 mt-2">Create and manage independent quizzes, then assign them to your courses.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="openCreateModal()" class="px-5 py-2.5 bg-primary text-white rounded-lg font-semibold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-[20px]">add</span> Create New Quiz
+            </button>
+        </div>
+    </div>
+
+    <!-- Error state -->
+    @if (!string.IsNullOrEmpty(ViewBag.Error))
+    {
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 flex items-center gap-3">
+            <span class="material-symbols-outlined">error</span>
+            <span class="font-medium">@ViewBag.Error</span>
+        </div>
+    }
+
+    <!-- QUIZ LIST -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="text-lg font-bold text-slate-800">Your Quizzes (@Model.TotalCount)</h2>
+            <div class="flex gap-2">
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+                    <input type="text" id="searchInput" value="@Model.SearchTerm" placeholder="Search quizzes..." 
+                           class="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all w-64">
+                </div>
+            </div>
+        </div>
+
+        @if (Model.Quizzes.Count == 0)
+        {
+            <div class="p-16 text-center">
+                <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                    <span class="material-symbols-outlined text-4xl text-slate-300">quiz</span>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">No quizzes found</h3>
+                <p class="text-slate-500 max-w-sm mx-auto mb-6">You haven't created any quizzes yet. Get started by creating your first quiz to evaluate your students.</p>
+                <button onclick="openCreateModal()" class="px-5 py-2 bg-slate-900 text-white rounded-lg font-semibold hover:bg-slate-800 transition-colors inline-flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">add</span> Create Quiz
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50/50 text-slate-500 text-xs uppercase tracking-wider font-semibold">
+                            <th class="px-6 py-4 rounded-tl-xl">Quiz Title</th>
+                            <th class="px-6 py-4">Course</th>
+                            <th class="px-6 py-4">Questions</th>
+                            <th class="px-6 py-4">Settings</th>
+                            <th class="px-6 py-4">Active</th>
+                            <th class="px-6 py-4">Created At</th>
+                            <th class="px-6 py-4 text-right rounded-tr-xl">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach (var quiz in Model.Quizzes)
+                        {
+                            <tr class="hover:bg-slate-50/50 transition-colors group">
+                                <td class="px-6 py-4">
+                                    <div class="font-bold text-slate-900">@quiz.Title</div>
+                                    @if (!string.IsNullOrEmpty(quiz.Description))
+                                    {
+                                        <div class="text-sm text-slate-500 truncate max-w-[300px]">@quiz.Description</div>
+                                    }
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 font-semibold text-xs border border-emerald-100/50">
+                                        <span class="material-symbols-outlined text-[14px]">school</span>
+                                        @quiz.CourseTitle
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 font-semibold text-xs border border-indigo-100/50">
+                                        <span class="material-symbols-outlined text-[14px]">format_list_bulleted</span>
+                                        @quiz.QuestionCount
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-slate-600 space-y-1">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="material-symbols-outlined text-[14px] text-slate-400">timer</span>
+                                            @(quiz.TimeLimitMinutes.HasValue ? $"{quiz.TimeLimitMinutes} mins" : "No limit")
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="material-symbols-outlined text-[14px] text-slate-400">task_alt</span>
+                                            Pass: @quiz.PassingScore%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer" @(!quiz.IsHidden ? "checked" : "") onchange="toggleQuizStatus(@quiz.QuizId, this.checked)">
+                                        <div class="w-9 h-5 bg-slate-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-primary/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                    </label>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-slate-500">
+                                        @(quiz.CreatedAt?.ToString("MMM dd, yyyy") ?? "-")
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <!-- TODO: Tới trang Editor -->
+                                        <a href="/Quiz/Editor/@quiz.QuizId" class="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Edit Quiz">
+                                            <span class="material-symbols-outlined text-[20px]">edit</span>
+                                        </a>
+                                        <button onclick="deleteQuiz(@quiz.QuizId)" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                                            <span class="material-symbols-outlined text-[20px]">delete</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal Create Quiz -->
+<div id="createModal" class="fixed inset-0 z-[100] hidden">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeCreateModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg pointer-events-auto transform scale-95 opacity-0 transition-all duration-200" id="createModalContent">
+            <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="text-xl font-bold text-slate-900">Create New Quiz</h3>
+                <button onclick="closeCreateModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <form id="createQuizForm" onsubmit="handleCreateQuiz(event)">
+                <div class="p-6 space-y-4">
+                    <div id="createError" class="hidden bg-red-50 text-red-600 p-3 rounded-lg text-sm font-medium border border-red-100"></div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Course <span class="text-red-500">*</span></label>
+                        <select id="quizCourse" required onchange="loadCourseLessons(this.value)" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                            <option value="">-- Select a Course --</option>
+                            @foreach (var course in Model.AvailableCourses)
+                            {
+                                <option value="@course.Id">@course.Title</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="col-span-3">
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Quiz Title <span class="text-red-500">*</span></label>
+                            <input type="text" id="quizTitle" required placeholder="e.g. C# Basics Assessment"
+                                   class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Description (Optional)</label>
+                        <textarea id="quizDescription" rows="2" placeholder="Brief instruction for students..."
+                                  class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Total Question<span class="text-red-500">*</span></label>
+                            <div class="flex gap-2">
+                                <input type="number" id="quizTotalQuestions" required min="1" value="10" oninput="updateRandomizeButton()"
+                                       class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                                <button type="button" id="btnRandomize" onclick="randomizeQuestions()" title="Randomize questions" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-200 opacity-50 cursor-not-allowed transition-all" disabled>
+                                    <span class="material-symbols-outlined align-middle">shuffle</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Time (mins)</label>
+                            <input type="number" id="quizTime" min="1" placeholder="Unlimited"
+                                   class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">Pass Score (%)</label>
+                            <input type="number" id="quizScore" required min="0" max="100" value="70"
+                                   class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
+                        </div>
+                    </div>
+
+                    <div id="lessonDistributionsContainer" class="hidden bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
+                        <h4 class="text-sm font-bold text-slate-800 flex items-center justify-between">
+                            <span>Lesson Question Distributions</span>
+                            <span id="totalQuestionsDisplay" class="px-2 py-0.5 bg-white border border-slate-200 rounded text-slate-600 font-bold">Total: 0</span>
+                        </h4>
+                        <div id="lessonDistributionsList" class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                            <!-- Populated dynamically -->
+                        </div>
+                        <p class="text-xs text-slate-500 italic">Select lessons and specify the exact number of questions that should be pulled from each lesson. The total must equal Total Questions.</p>
+                    </div>
+                </div>
+                
+                <div class="p-6 border-t border-slate-100 flex items-center justify-end gap-3 bg-slate-50/50 rounded-b-2xl">
+                    <button type="button" onclick="closeCreateModal()" class="px-5 py-2 text-slate-600 font-semibold hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
+                    <button type="submit" id="submitBtn" class="px-5 py-2 bg-primary text-white rounded-lg font-semibold shadow-sm hover:bg-primary/90 transition-all flex items-center gap-2">
+                        Create Quiz
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const modal = document.getElementById('createModal');
+        const content = document.getElementById('createModalContent');
+        
+        function openCreateModal() {
+            modal.classList.remove('hidden');
+            // setTimeout for transition
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+            document.getElementById('quizTitle').focus();
+            updateRandomizeButton();
+        }
+        
+        function closeCreateModal() {
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.getElementById('createQuizForm').reset();
+                document.getElementById('createError').classList.add('hidden');
+                document.getElementById('lessonDistributionsContainer').classList.add('hidden');
+                document.getElementById('lessonDistributionsList').innerHTML = '';
+            }, 200);
+        }
+
+        function updateRandomizeButton() {
+            const totalInput = document.getElementById('quizTotalQuestions');
+            const btn = document.getElementById('btnRandomize');
+            if(!totalInput || !btn) return;
+            const val = parseInt(totalInput.value || 0);
+            if (val > 0) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.title = 'Randomize questions among selected lessons';
+            } else {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.title = 'Please enter Total Questions first';
+            }
+        }
+
+        async function loadCourseLessons(courseId) {
+            const container = document.getElementById('lessonDistributionsContainer');
+            const list = document.getElementById('lessonDistributionsList');
+            
+            if (!courseId) {
+                container.classList.add('hidden');
+                list.innerHTML = '';
+                return;
+            }
+
+            list.innerHTML = '<div class="text-sm text-slate-500">Loading lessons...</div>';
+            container.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/QuestionBank/CourseLessonsSummary?courseId=' + courseId);
+                const data = await response.json();
+                
+                let lessons = [];
+                if (Array.isArray(data)) {
+                    lessons = data;
+                } else if (data && data.data && Array.isArray(data.data)) {
+                    lessons = data.data;
+                }
+                
+                if (lessons.length > 0) {
+                    list.innerHTML = '';
+                    lessons.forEach(lesson => {
+                        const count = 0;
+                        const isChecked = 'checked';
+                        const inputDisabled = '';
+                        const inputOpacity = '';
+
+                        const row = document.createElement('div');
+                        row.className = 'flex items-center justify-between p-2 bg-white rounded border border-slate-100 hover:border-primary/30 transition-colors shadow-sm';
+                        row.innerHTML = `
+                            <div class="flex items-center gap-3 flex-1 min-w-0 pr-4">
+                                <input type="checkbox" class="lesson-checkbox w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary" ${isChecked} onchange="toggleLessonInput(this, ${lesson.lessonId})">
+                                <div>
+                                    <p class="text-sm font-semibold text-slate-800 truncate" title="${lesson.title}">${lesson.title}</p>
+                                    <p class="text-xs text-slate-500">${lesson.availableQuestionCount} questions available in bank</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="number" min="0" max="${lesson.availableQuestionCount}" value="${count}" data-lesson-id="${lesson.lessonId}" data-available="${lesson.availableQuestionCount}" 
+                                       class="lesson-dist-input w-20 px-2 py-1 text-sm border border-slate-200 rounded focus:ring-1 focus:ring-primary outline-none transition-all ${inputOpacity}" 
+                                       ${inputDisabled} oninput="updateTotalQuestions()">
+                                <span class="text-sm text-slate-600 font-medium">câu</span>
+                            </div>
+                        `;
+                        list.appendChild(row);
+                    });
+                    updateTotalQuestions();
+                } else {
+                    list.innerHTML = '<div class="text-sm text-amber-600">No lessons found or no questions available in this course.</div>';
+                }
+            } catch (err) {
+                list.innerHTML = '<div class="text-sm text-red-600">Failed to load lessons.</div>';
+            }
+        }
+
+        function toggleLessonInput(checkbox, lessonId) {
+            const input = document.querySelector(`.lesson-dist-input[data-lesson-id="${lessonId}"]`);
+            if(!input) return;
+            if (checkbox.checked) {
+                input.disabled = false;
+                input.classList.remove('opacity-50');
+            } else {
+                input.disabled = true;
+                input.value = 0;
+                input.classList.add('opacity-50');
+            }
+            updateTotalQuestions();
+        }
+
+        function randomizeQuestions() {
+            const errorDiv = document.getElementById('createError');
+            errorDiv.classList.add('hidden');
+
+            const totalTarget = parseInt(document.getElementById('quizTotalQuestions').value || 0);
+            if (totalTarget <= 0) return;
+
+            const enabledInputs = Array.from(document.querySelectorAll('.lesson-dist-input:not([disabled])'));
+            if (enabledInputs.length === 0) {
+                errorDiv.innerHTML = "Please check at least one lesson to distribute questions.";
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            // reset all enabled inputs to 0
+            enabledInputs.forEach(input => input.value = 0);
+
+            let remaining = totalTarget;
+            let availableLessons = [...enabledInputs]; // clone array
+            
+            // simple random distribution ensuring we don't exceed available questions
+            while (remaining > 0 && availableLessons.length > 0) {
+                const randIndex = Math.floor(Math.random() * availableLessons.length);
+                const targetInput = availableLessons[randIndex];
+                
+                const currentVal = parseInt(targetInput.value);
+                const maxAvailable = parseInt(targetInput.getAttribute('data-available'));
+                
+                if (currentVal < maxAvailable) {
+                    targetInput.value = currentVal + 1;
+                    remaining--;
+                } else {
+                    // remove this lesson from available candidates because it's full
+                    availableLessons.splice(randIndex, 1);
+                }
+            }
+
+            if (remaining > 0) {
+                errorDiv.innerHTML = `Cannot distribute all ${totalTarget} questions. The selected lessons only have a combined total of ${totalTarget - remaining} questions available.`;
+                errorDiv.classList.remove('hidden');
+            }
+
+            updateTotalQuestions();
+        }
+
+        function updateTotalQuestions() {
+            const inputs = document.querySelectorAll('.lesson-dist-input:not([disabled])');
+            let total = 0;
+            inputs.forEach(input => {
+                total += parseInt(input.value || 0);
+            });
+            const display = document.getElementById('totalQuestionsDisplay');
+            if(!display) return;
+            display.textContent = 'Total: ' + total;
+            
+            const totalQs = parseInt(document.getElementById('quizTotalQuestions').value || 0);
+            if (total !== totalQs && inputs.length > 0) {
+                display.classList.add('text-red-600', 'bg-red-50', 'border-red-200');
+                display.classList.remove('text-slate-600', 'bg-white', 'border-slate-200', 'text-indigo-600');
+            } else {
+                display.classList.remove('text-red-600', 'bg-red-50', 'border-red-200');
+                display.classList.add('text-slate-600', 'bg-white', 'border-slate-200');
+            }
+        }
+
+        async function handleCreateQuiz(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const errorDiv = document.getElementById('createError');
+            
+            const courseId = document.getElementById('quizCourse').value;
+            const title = document.getElementById('quizTitle').value.trim();
+            const description = document.getElementById('quizDescription').value.trim();
+            const totalQuestions = document.getElementById('quizTotalQuestions').value;
+            const timeLimit = document.getElementById('quizTime').value;
+            const passingScore = document.getElementById('quizScore').value;
+            
+            if (!courseId) {
+                errorDiv.innerHTML = "Please select a course.";
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Gather distributions
+            const inputs = document.querySelectorAll('.lesson-dist-input:not([disabled])');
+            let totalQuestionsCount = 0;
+            const distributions = [];
+            let distributionError = null;
+
+            inputs.forEach(input => {
+                const count = parseInt(input.value || 0);
+                if (count > 0) {
+                    totalQuestionsCount += count;
+                    const lessonId = parseInt(input.getAttribute('data-lesson-id'));
+                    const available = parseInt(input.getAttribute('data-available'));
+                    
+                    if (count > available) {
+                        distributionError = `Not enough questions in Lesson ID ${lessonId}. Required: ${count}, Available: ${available}.`;
+                    }
+
+                    distributions.push({ lessonId, questionCount: count });
+                }
+            });
+
+            const totalQs = parseInt(totalQuestions || 0);
+            if (distributions.length > 0 && totalQuestionsCount !== totalQs) {
+                errorDiv.innerHTML = `Sum of questions in lessons (${totalQuestionsCount}) must equal Total Questions (${totalQs}).`;
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (distributionError) {
+                errorDiv.innerHTML = distributionError;
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            const payload = {
+                courseId: parseInt(courseId),
+                title,
+                description: description || null,
+                totalQuestions: totalQs,
+                timeLimitMinutes: timeLimit ? parseInt(timeLimit) : null,
+                passingScore: parseInt(passingScore),
+                distributions: distributions
+            };
+            
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Creating...';
+            btn.disabled = true;
+            errorDiv.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/Quiz/Create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    window.location.reload(); 
+                } else {
+                    errorDiv.innerHTML = data.message || "An error occurred.";
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorDiv.innerHTML = "Network error. Please try again.";
+                errorDiv.classList.remove('hidden');
+            } finally {
+                btn.innerHTML = 'Create Quiz';
+                btn.disabled = false;
+            }
+        }
+        
+        // Search functionality with debounce
+        let searchTimeout;
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                window.location.href = '/Quiz?searchTerm=' + encodeURIComponent(e.target.value);
+            }, 500);
+        });
+        
+        async function deleteQuiz(quizId) {
+            if(!confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) return;
+            
+            try {
+                const response = await fetch('/Quiz/Delete/' + quizId, { method: 'POST' });
+                const data = await response.json();
+                if(data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Failed to delete quiz.');
+                }
+            } catch (err) {
+                alert('Network error');
+            }
+        }
+
+        async function toggleQuizStatus(quizId, isChecked) {
+            const isHidden = !isChecked;
+            try {
+                const response = await fetch('/Quiz/ToggleHidden', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quizId: quizId, isHidden: isHidden })
+                });
+                const data = await response.json();
+                if (!data.success) {
+                    alert(data.message || 'Failed to update status.');
+                    window.location.reload();
+                }
+            } catch (err) {
+                alert('Network error');
+                window.location.reload();
+            }
+        }
+    </script>
+}

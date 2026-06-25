@@ -6,7 +6,7 @@ import tempfile
 import os
 import math
 import fitz
-from typing import Tuple, AsyncIterator, Dict, Any
+from typing import Tuple, AsyncIterator, Dict, Any, Optional
 from PIL import Image
 import cv2
 import easyocr
@@ -21,7 +21,7 @@ import numpy as np
 
 from core.exceptions import FileProcessingException
 from services.base_service import BaseService
-from config.settings import get_settings
+from config.settings import get_settings, Settings
 
 logger = logging.getLogger(__name__)
 
@@ -34,15 +34,16 @@ class TextExtractionService(BaseService):
     _ocr_reader = None
     _models_loaded = False
     
-    def __init__(self):
+    def __init__(self, settings: Optional[Settings] = None):
         """Initialize text extraction service."""
         super().__init__("TextExtractionService")
+        self.settings = settings or get_settings()
         
         if not TextExtractionService._models_loaded:
-            self._load_models()
+            self._load_models(self.settings)
             
     @classmethod
-    def _load_models(cls):
+    def _load_models(cls, settings: Settings):
         """Load models once (class-level cache)."""
         if cls._models_loaded:
             return
@@ -50,7 +51,6 @@ class TextExtractionService(BaseService):
         logger.info("Loading text extraction models...")
         
         try:
-            settings = get_settings()
             whisper_model_name = settings.WHISPER_MODEL_NAME
             
             device = settings.DEVICE

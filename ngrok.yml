@@ -1,0 +1,14 @@
+version: "3"
+agent:
+  authtoken: ${NGROK_TOKEN}
+tunnels:
+  cli-quickstart:
+    proto: http
+    addr: 5208
+    domain: ${FRONTEND_BASE_URL}
+    traffic_policy:
+      on_http_request:
+        - actions:
+            - type: oauth
+              config:
+                provider: google

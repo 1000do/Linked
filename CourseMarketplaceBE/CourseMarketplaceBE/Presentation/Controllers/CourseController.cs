@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using CourseMarketplaceBE.Domain.Constants;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -20,18 +20,15 @@ public class CourseController : ControllerBase
     private readonly ICourseQueryService _courseQueryService;
     private readonly ICourseCommandService _courseCommandService;
     private readonly ICourseAiModerationService _courseAiModerationService;
-    private readonly IServiceScopeFactory _serviceScopeFactory;
 
     public CourseController(
         ICourseQueryService courseQueryService,
         ICourseCommandService courseCommandService,
-        ICourseAiModerationService courseAiModerationService,
-        IServiceScopeFactory serviceScopeFactory)
+        ICourseAiModerationService courseAiModerationService)
     {
         _courseQueryService = courseQueryService;
         _courseCommandService = courseCommandService;
         _courseAiModerationService = courseAiModerationService;
-        _serviceScopeFactory = serviceScopeFactory;
     }
 
     private int GetInstructorId()
@@ -56,7 +53,7 @@ public class CourseController : ControllerBase
         {
             var instructorId = GetInstructorId();
             var result = await _courseQueryService.GetInstructorCoursesPagedAsync(instructorId, search, status, page, pageSize);
-            
+
             return Ok(ApiResponse<object>.SuccessResponse(result, "Retrieved courses successfully."));
         }
         catch (System.Collections.Generic.KeyNotFoundException ex)
@@ -206,30 +203,14 @@ public class CourseController : ControllerBase
     }
 
     [HttpPost("moderate")]
-    public async Task<IActionResult> ModerateCourse([FromBody] CouresModerationRequest request)
+    public async Task<IActionResult> ModerateCourse([FromBody] CourseModerationRequest request)
     {
         try
         {
             var instructorId = GetInstructorId();
-            request.InstructorId = instructorId;
 
-            // Enforce all business validation checks, lockouts, and reset rejected statuses
-            await _courseAiModerationService.UpdateCourseStatusAndClearCacheAsync(request.CourseId, CourseStatus.Pending.ToValue(), instructorId);
-
-            // Run AI moderation in a background fire-and-forget task
-            _ = Task.Run(async () =>
-            {
-                using var scope = _serviceScopeFactory.CreateScope();
-                var moderationService = scope.ServiceProvider.GetRequiredService<ICourseAiModerationService>();
-                try
-                {
-                    await moderationService.HandleCourseModerationAsync(request);
-                }
-                catch (Exception)
-                {
-                    // Exceptions should be logged internally by the moderation service
-                }
-            });
+            // Delegate to Application Layer Service to orchestrate the synchronous updates and background queueing
+            await _courseAiModerationService.StartCourseModerationAsync(request, instructorId);
 
             return Ok(ApiResponse<object>.SuccessResponse(new { }, "Moderation has been successfully submitted and is processing in the background."));
         }
@@ -241,9 +222,9 @@ public class CourseController : ControllerBase
         {
             return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
         }
-        catch (InvalidOperationException)
+        catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to submit course for moderation"));
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {

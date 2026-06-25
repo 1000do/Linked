@@ -69,6 +69,19 @@ public class CourseResponse
 public class CourseDetailResponse : CourseResponse
 {
     public List<LessonResponse> Lessons { get; set; } = new List<LessonResponse>();
+    public List<CourseQuizItemResponse> CourseQuizzes { get; set; } = new List<CourseQuizItemResponse>();
+}
+
+public class CourseQuizItemResponse
+{
+    public int CourseQuizId { get; set; }
+    public int CourseId { get; set; }
+    public int QuizId { get; set; }
+    public string Title { get; set; } = null!;
+    public string? Description { get; set; }
+    public int QuestionCount { get; set; }
+    public int? TimeLimitMinutes { get; set; }
+    public bool IsHidden { get; set; }
 }
 
 

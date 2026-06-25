@@ -16,6 +16,9 @@ namespace CourseMarketplaceBE.Domain.Constants
         public const float DefaultSpamScoreThreshold = 0.7f;
         public const float DefaultToxicScoreThreshold = 0.7f;
 
+        public const int MediaEmbeddingDim = 512;
+        public const int TextEmbeddingDim = 384;
+
         
     }
 }

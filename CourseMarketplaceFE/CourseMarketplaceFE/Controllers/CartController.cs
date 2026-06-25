@@ -359,45 +359,8 @@ public class CartController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        // 6.2 Gọi BE API tạo Stripe PaymentIntent
-        var intentResponse = await _api.PostJsonAsync("checkout/create-intent", new
-        {
-            couponCode = couponCode
-        });
-
-        if (!intentResponse.IsSuccessStatusCode)
-        {
-            var errorJson = await intentResponse.Content.ReadAsStringAsync();
-            string errorMsg = "An error occurred while creating checkout intent.";
-            try
-            {
-                using var doc = JsonDocument.Parse(errorJson);
-                if (doc.RootElement.TryGetProperty("message", out var m))
-                    errorMsg = m.GetString() ?? errorMsg;
-            }
-            catch { }
-            TempData["CartError"] = errorMsg;
-            return RedirectToAction(nameof(Index));
-        }
-
-        var intentJson = await intentResponse.Content.ReadAsStringAsync();
         string clientSecret = "";
         string paymentIntentId = "";
-
-        try
-        {
-            using var doc = JsonDocument.Parse(intentJson);
-            if (doc.RootElement.TryGetProperty("data", out var dataEl))
-            {
-                clientSecret = dataEl.TryGetProperty("sessionUrl", out var csEl) ? csEl.GetString() ?? "" : "";
-                paymentIntentId = dataEl.TryGetProperty("sessionId", out var idEl) ? idEl.GetString() ?? "" : "";
-            }
-        }
-        catch
-        {
-            TempData["CartError"] = "Failed to parse checkout server data.";
-            return RedirectToAction(nameof(Index));
-        }
 
         // 6.3 Lấy thông tin email người dùng từ Profile API
         string userEmail = "";
@@ -429,6 +392,27 @@ public class CartController : Controller
         };
 
         return View(model);
+    }
+
+    // ─── 6.25. DYNAMIC PAYMENT INTENT CREATION VIA AJAX ───────────────────
+    [HttpPost]
+    public async Task<IActionResult> CreatePaymentIntentAjax(string? couponCode)
+    {
+        if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
+            return Unauthorized(new { message = "Unauthorized" });
+
+        var response = await _api.PostJsonAsync("checkout/create-intent", new
+        {
+            couponCode = couponCode
+        });
+
+        var json = await response.Content.ReadAsStringAsync();
+        if (!response.IsSuccessStatusCode)
+        {
+            return BadRequest(json);
+        }
+
+        return Content(json, "application/json");
     }
 
     // ─── 6.5. DIRECT CHECKOUT (MUA NGAY KHÔNG QUA GIỎ HÀNG) ──────────────

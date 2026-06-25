@@ -20,6 +20,8 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         
         Task AddMaterialCompletionAsync(MaterialCompletion completion);
 
+        Task<bool> IsUserEnrolledInAnyCoursWithQuizAsync(int userId, int quizId);
+
         Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTransactionAsync();
         Task<int> SaveChangesAsync();
     }

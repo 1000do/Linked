@@ -2,6 +2,7 @@ using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using CourseMarketplaceBE.Presentation.Filters;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -64,6 +65,8 @@ public class AdminFinanceController : ControllerBase
     // GET /api/admin/finance/transfer-rate
     // ═══════════════════════════════════════════════════════════════════════
     [HttpGet("transfer-rate")]
+    [AllowAnonymous] // Cho phép ghi đè [Authorize(Roles="admin")] của Controller
+    [CustomAuthorize(requireAuth: true, "admin", "instructor","user")] // Chỉ Admin và Giảng viên mới được gọi API này
     public async Task<IActionResult> GetTransferRate()
     {
         try
