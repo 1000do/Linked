@@ -703,7 +703,17 @@
 
         function handleFileSelect(input) {
             if (input.files && input.files[0]) {
-                selectedFiles.push(input.files[0]);
+                const file = input.files[0];
+                
+                // 10MB Limit Check
+                const maxSize = 10 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    Swal.fire('Error', 'File size must not exceed 10MB.', 'error');
+                    input.value = "";
+                    return;
+                }
+
+                selectedFiles.push(file);
                 console.log('In handleFileSelect, selectedFiles',selectedFiles);  
                 renderAttachmentPreview();
                 input.value = ""; // Reset để chọn lại cùng file
