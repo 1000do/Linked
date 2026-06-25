@@ -422,7 +422,13 @@ public class CartController : Controller
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
             return Json(new { success = false, message = "Please login before purchasing." });
 
-        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        var scheme = Request.Headers.ContainsKey("X-Forwarded-Proto") 
+            ? Request.Headers["X-Forwarded-Proto"].ToString() 
+            : Request.Scheme;
+        var host = Request.Headers.ContainsKey("X-Forwarded-Host") 
+            ? Request.Headers["X-Forwarded-Host"].ToString() 
+            : Request.Host.ToString();
+        var baseUrl = $"{scheme}://{host}";
 
         var response = await _api.PostJsonAsync("checkout/direct", new
         {

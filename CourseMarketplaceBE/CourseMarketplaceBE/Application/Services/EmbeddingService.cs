@@ -120,7 +120,7 @@ public class EmbeddingService : IEmbeddingService
         try 
         {
             int rowsAffected = await _mediaEmbeddingRepository.SaveChangesAsync();
-            if (rowsAffected == 0) throw new InvalidOperationException("Failed to save media embedding");
+            /* zero rows exception removed */
             return rowsAffected;
         }
         catch (MediaEmbeddingException ex) 
@@ -161,7 +161,7 @@ public class EmbeddingService : IEmbeddingService
         try 
         {
             int rowsAffected = await _textEmbeddingRepository.SaveChangesAsync();
-            if (rowsAffected == 0) throw new InvalidOperationException("Failed to save text embedding");
+            /* zero rows exception removed */
             return rowsAffected;
         }
         catch (TextEmbeddingException ex) 

@@ -82,7 +82,7 @@ To keep the main orchestration logic clean, extract the `SaveChangesAsync()` cal
 #### 2.1 Private Save Helper Method
 The helper method must:
 1. Call the repository's `SaveChangesAsync()`.
-2. Assert that `numRowsAffected > 0`. If `0`, throw an `InvalidOperationException` indicating exactly which entity failed to save (e.g., `"Failed to save course report"`).
+2. **DO NOT** assert that `numRowsAffected > 0` or throw an exception on `0`. In EF Core, `SaveChangesAsync()` returning `0` is a successful no-op (e.g., the entity was updated with identical data, so no SQL was generated). Real database failures (like constraints or concurrency issues) will throw exceptions natively. 
 3. Catch the specific Domain Exception (e.g., `CustomEntityException`) and rethrow its message as a `BadRequestException`.
 
 *   **Refactored Service Implementation**:
@@ -97,9 +97,7 @@ The helper method must:
     {
         try
         {
-            int numRowsAffected = await _reportRepo.SaveChangesAsync();
-            if (numRowsAffected == 0) throw new InvalidOperationException("Failed to save course report");
-            return numRowsAffected;
+            return await _reportRepo.SaveChangesAsync();
         }
         catch (CustomEntityException ex)
         {
@@ -112,7 +110,7 @@ The helper method must:
 
 ### Phase 3: Presentation Layer (Controller) Exception Handling
 
-In ASP.NET Controllers, wrap any write action (POST, PUT, DELETE, PATCH) calling refactored services in a `try-catch` block targeting `InvalidOperationException` and `BadRequestException`. 
+In ASP.NET Controllers, wrap any write action (POST, PUT, DELETE, PATCH) calling refactored services in a `try-catch` block targeting `BadRequestException`. 
 
 On catch, return status code **400 BadRequest** containing the `ex.Message` propagated from the Service layer.
 
@@ -128,10 +126,6 @@ On catch, return status code **400 BadRequest** containing the `ex.Message` prop
         {
             await _reportService.CreateCourseReportAsync(userId.Value, request, IsInstructor());
             return Ok(ApiResponse<string>.SuccessResponse("Submitted successfully."));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (BadRequestException ex)
         {

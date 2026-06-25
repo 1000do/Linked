@@ -64,7 +64,7 @@ namespace CourseMarketplaceBE.Application.Services
             try
             {
                 int numberOfRowsAffected = await _repo.SaveChangesAsync();
-                if (numberOfRowsAffected == 0) throw new InvalidOperationException("Failed to send notification.");
+                /* zero rows exception removed */
 
                 await _hubContext.Clients.User(receiverId.ToString())
                     .SendAsync("ReceiveNotification", new
@@ -96,7 +96,7 @@ namespace CourseMarketplaceBE.Application.Services
             try
             {
                 int n = await _repo.SaveChangesAsync();
-                if (n == 0) throw new InvalidOperationException("Failed to delete notification.");
+                /* zero rows exception removed */
 
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification");
                 return true;
@@ -119,7 +119,7 @@ namespace CourseMarketplaceBE.Application.Services
             try
             {
                 int n = await _repo.SaveChangesAsync();
-                if (n == 0) throw new InvalidOperationException("Failed to mark as read.");
+                /* zero rows exception removed */
 
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification");
                 return true;
@@ -144,7 +144,7 @@ namespace CourseMarketplaceBE.Application.Services
             try
             {
                 int n = await _repo.SaveChangesAsync();
-                if (n == 0) throw new InvalidOperationException("Failed to save changes.");
+                /* zero rows exception removed */
                 await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", null);
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification");
                 return true;
@@ -295,10 +295,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             await _repo.AddRangeAsync(notifications);
             int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
-            {
-                throw new InvalidOperationException("Failed to save changes");
-            }
+            /* zero rows exception removed */
 
             foreach (var uid in targetUserIds)
             {
@@ -339,10 +336,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             await _repo.AddRangeAsync(notifications);
             int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
-            {
-                throw new InvalidOperationException("Failed to save changes");
-            }
+            /* zero rows exception removed */
 
             foreach (var noti in notifications)
             {

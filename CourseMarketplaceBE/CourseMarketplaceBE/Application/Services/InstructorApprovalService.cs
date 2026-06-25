@@ -54,8 +54,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             _repo.Update(instructor);
             int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
-                throw new InvalidOperationException("Failed to save changes");
+            /* zero rows exception removed */
 
             // Gửi thông báo cho người dùng (Sử dụng NotificationService bạn đã làm)
             string message = dto.Status == CourseMarketplaceBE.Domain.Constants.InstructorApprovalStatus.Approved.ToValue()
