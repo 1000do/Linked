@@ -31,13 +31,13 @@
 
         <!-- Action Buttons -->
         <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <a href="/Account/SendRegisterOtp?email=@Uri.EscapeDataString(email ?? "")" 
+            <a href="/Account/SendRegisterOtp?email=@Uri.EscapeDataString(email ?? "")&giftToken=@(ViewBag.GiftToken != null ? Uri.EscapeDataString(ViewBag.GiftToken) : "")&returnUrl=@(ViewBag.ReturnUrl != null ? Uri.EscapeDataString(ViewBag.ReturnUrl) : "")" 
                class="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-primary/95 text-white font-bold rounded-2xl shadow-xl shadow-primary/25 hover:shadow-primary/35 transition-all duration-300 text-center hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
                 <span class="material-symbols-outlined text-xl">verified_user</span>
                 <span>Verify Now (Recommended)</span>
             </a>
             
-            <a href="/Account/Login" 
+            <a href="/Account/Login?returnUrl=@(ViewBag.ReturnUrl != null ? Uri.EscapeDataString(ViewBag.ReturnUrl) : "")" 
                class="w-full sm:w-auto px-8 py-4 bg-slate-100 hover:bg-slate-200/80 text-slate-600 font-bold rounded-2xl transition-all duration-300 text-center hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
                 <span>Skip to Login</span>
                 <span class="material-symbols-outlined text-xl">arrow_forward</span>
