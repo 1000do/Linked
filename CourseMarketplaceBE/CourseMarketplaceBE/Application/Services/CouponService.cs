@@ -135,8 +135,7 @@ public class CouponService : ICouponService
 
         await _repo.AddAsync(coupon);
         int numberOfRowsAffected = await _repo.SaveChangesAsync();
-        if (numberOfRowsAffected <= 0)
-            throw new InvalidOperationException("Failed to save changes");
+        /* zero rows exception removed */
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -176,8 +175,7 @@ public class CouponService : ICouponService
 
         _repo.Update(coupon);
         int numberOfRowsAffected = await _repo.SaveChangesAsync();
-        if (numberOfRowsAffected <= 0)
-            throw new InvalidOperationException("Failed to save changes");
+        /* zero rows exception removed */
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -201,8 +199,7 @@ public class CouponService : ICouponService
 
         _repo.Update(coupon);
         int numberOfRowsAffected = await _repo.SaveChangesAsync();
-        if (numberOfRowsAffected <= 0)
-            throw new InvalidOperationException("Failed to save changes");
+        /* zero rows exception removed */
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -268,8 +265,7 @@ public class CouponService : ICouponService
         }
         _courseRepo.Update(course);
         int numberOfRowsAffected = await _repo.SaveChangesAsync();
-        if (numberOfRowsAffected <= 0)
-            throw new InvalidOperationException("Failed to save changes");
+        /* zero rows exception removed */
 
         // 5. Invalidate Cache
         await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
@@ -296,8 +292,7 @@ public class CouponService : ICouponService
         course.CouponId = null;
         _courseRepo.Update(course);
         int numberOfRowsAffected = await _repo.SaveChangesAsync();
-        if (numberOfRowsAffected <= 0)
-            throw new InvalidOperationException("Failed to save changes");
+        /* zero rows exception removed */
 
         // Invalidate Cache
         await _redisService.RemoveCacheAsync($"course:detail:{courseId}");

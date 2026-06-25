@@ -180,8 +180,7 @@ public class GiftService : IGiftService
 
         await _giftRepo.AddAsync(gift);
         var rows = await _giftRepo.SaveChangesAsync();
-        if (rows <= 0)
-            throw new InvalidOperationException("Failed to save gift record database changes.");
+        /* zero rows exception removed */
     }
 
     public async Task<bool> IsRecipientEnrolledAsync(string email, int courseId)

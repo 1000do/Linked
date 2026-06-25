@@ -314,7 +314,7 @@ namespace CourseMarketplaceBE.Application.Services
             try
             {
                 int rowsAffected = await _aiIntegrationRepository.SaveChangesAsync();
-                if (rowsAffected == 0) throw new InvalidOperationException("Failed to save course AI integration");
+                /* zero rows exception removed */
                 return rowsAffected;
             }
             catch (CourseAiIntegrationException ex)

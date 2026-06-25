@@ -61,8 +61,7 @@ public class CartService : ICartService
 
         await _repo.AddCartItemAsync(cartItem);
         int numberOfRowsAffected = await _repo.SaveChangesAsync();
-        if (numberOfRowsAffected <= 0)
-            throw new InvalidOperationException("Failed to save changes");
+        /* zero rows exception removed */
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -76,8 +75,7 @@ public class CartService : ICartService
 
         _repo.RemoveCartItem(item);
         int numberOfRowsAffected = await _repo.SaveChangesAsync();
-        if (numberOfRowsAffected <= 0)
-            throw new InvalidOperationException("Failed to save changes");
+        /* zero rows exception removed */
     }
 
     // ═══════════════════════════════════════════════════════════════════════

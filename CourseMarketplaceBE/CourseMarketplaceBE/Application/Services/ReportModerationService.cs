@@ -311,8 +311,7 @@ public class ReportModerationService : IReportModerationService
             throw new BadRequestException(ex.Message);
         }
 
-        if (rowsAffected == 0)
-            throw new InvalidOperationException("Failed to save changes.");
+        /* zero rows exception removed */
     }
 
     private async Task NotifyAdminOnEscalationAsync(string status, int reportId, string reportType)

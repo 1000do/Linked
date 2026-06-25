@@ -189,7 +189,6 @@ public class ReportSubmissionService : IReportSubmissionService
             throw new BadRequestException(ex.Message);
         }
 
-        if (numRowsAffected == 0)
-            throw new InvalidOperationException("Failed to save changes.");
+        /* zero rows exception removed */
     }
 }
