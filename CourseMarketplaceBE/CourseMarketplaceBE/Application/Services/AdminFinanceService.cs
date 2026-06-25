@@ -797,9 +797,7 @@ namespace CourseMarketplaceBE.Application.Services
                 }
             }
 
-            int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
-                throw new InvalidOperationException("Failed to save changes");
+            await _repo.SaveChangesAsync();
 
             // 🔥 Broadcast real-time update to all Admin and Instructor screens!
             try

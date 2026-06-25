@@ -425,9 +425,7 @@ namespace CourseMarketplaceBE.Application.Services
                 }
             }
 
-            int rowsSync = await _repo.SaveChangesAsync();
-            if (rowsSync <= 0)
-                throw new InvalidOperationException("Failed to save changes when syncing Stripe payouts.");
+            await _repo.SaveChangesAsync();
         }
 
         private void UpdatePayoutStatusFromStripe(InstructorPayout dbp, string status, DateTime? arrivalDate)
