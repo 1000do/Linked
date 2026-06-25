@@ -337,8 +337,6 @@ namespace CourseMarketplaceBE.Application.Services
         {
             _logger.LogInformation("Resolving AI moderation result for course {CourseId}", result.CourseId);
 
-            await _embeddingService.PersistMaterialEmbeddingsAsync(result.CourseId);
-
             var (threatLevel, feedback) = EvaluateModerationFeedback(result);
 
             await _courseCommandService.UpdateCourseStatusAndFeedbackAsync(

@@ -170,7 +170,7 @@ public class EmbeddingService : IEmbeddingService
         }
     }
 
-    public async Task SaveValidDuplicateEmbeddingsAsync(int courseId, HashSet<int> excludedMaterialIds)
+    public async Task PersistPendingMaterialEmbeddingsAsync(int courseId, HashSet<int> excludedMaterialIds)
     {
         var allMaterials = await _materialRepository.GetByCourseIdAsync(courseId);
         if (allMaterials == null || !allMaterials.Any())
@@ -178,7 +178,7 @@ public class EmbeddingService : IEmbeddingService
 
         foreach (var material in allMaterials)
         {
-            await ProcessDuplicateMaterialEmbeddingAsync(material.MaterialId, shouldSave: !excludedMaterialIds.Contains(material.MaterialId));
+            await ProcessPendingMaterialEmbeddingAsync(material.MaterialId, shouldSave: !excludedMaterialIds.Contains(material.MaterialId));
         }
     }
 
@@ -219,9 +219,9 @@ public class EmbeddingService : IEmbeddingService
         }
     }
 
-    private async Task ProcessDuplicateMaterialEmbeddingAsync(int materialId, bool shouldSave)
+    private async Task ProcessPendingMaterialEmbeddingAsync(int materialId, bool shouldSave)
     {
-        string cacheKey = CacheKeys.DuplicateMaterialEmbedding.GetKey(materialId);
+        string cacheKey = CacheKeys.PendingMaterialEmbedding.GetKey(materialId);
         
         try
         {

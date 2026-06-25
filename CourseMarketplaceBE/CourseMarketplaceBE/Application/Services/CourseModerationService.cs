@@ -83,7 +83,7 @@ namespace CourseMarketplaceBE.Application.Services
                     }
                 }
 
-                await _embeddingService.SaveValidDuplicateEmbeddingsAsync(courseId, new HashSet<int>());
+                await _embeddingService.PersistPendingMaterialEmbeddingsAsync(courseId, new HashSet<int>());
             }
 
             var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
@@ -353,8 +353,8 @@ namespace CourseMarketplaceBE.Application.Services
                 : "Course rejected. Please check flagged files.";
             course.UpdatedAt = DateTime.Now;
 
-            // Conditionally restore duplicate embeddings for materials that were NOT rejected
-            await _embeddingService.SaveValidDuplicateEmbeddingsAsync(request.CourseId, excludedMaterialIds: rejectedMaterialIds);
+            // Conditionally persist pending embeddings for materials that were NOT rejected
+            await _embeddingService.PersistPendingMaterialEmbeddingsAsync(request.CourseId, excludedMaterialIds: rejectedMaterialIds);
 
             _courseRepository.Update(course);
             int rowsRejectDetailed = await _courseRepository.SaveChangesAsync();
