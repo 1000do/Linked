@@ -44,6 +44,10 @@ namespace CourseMarketplaceBE.Infrastructure.Services
             // ★ Tiền đã về ngân hàng — cập nhật trạng thái cuối cùng cho tất cả
             foreach (var p in dbPayouts)
             {
+                if (p.PayoutStatus == PayoutStatus.Refunded.ToValue())
+                {
+                    continue;
+                }
                 p.PayoutStatus = PayoutStatus.Paid.ToValue();
                 p.PaidToBankAt = DateTime.UtcNow;
             }
@@ -73,6 +77,10 @@ namespace CourseMarketplaceBE.Infrastructure.Services
 
             foreach (var p in dbPayouts)
             {
+                if (p.PayoutStatus == PayoutStatus.Refunded.ToValue())
+                {
+                    continue;
+                }
                 p.PayoutStatus = PayoutStatus.Failed.ToValue();
             }
             await _financeRepo.SaveChangesAsync();
@@ -168,6 +176,10 @@ namespace CourseMarketplaceBE.Infrastructure.Services
 
             foreach (var p in dbPayouts)
             {
+                if (p.PayoutStatus == PayoutStatus.Refunded.ToValue())
+                {
+                    continue;
+                }
                 p.PayoutStatus = PayoutStatus.Paid.ToValue();
                 p.PaidToBankAt = DateTime.UtcNow;
                 p.IsPaid = true;

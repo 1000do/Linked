@@ -812,6 +812,10 @@ namespace CourseMarketplaceBE.Application.Services
 
         private void UpdatePayoutStatusFromStripeLocal(Domain.Entities.InstructorPayout dbp, string status, DateTime? arrivalDate)
         {
+            if (dbp.PayoutStatus == PayoutStatus.Refunded.ToValue())
+            {
+                return;
+            }
             var statusLower = status.ToLower();
             if (statusLower == "paid")
             {
