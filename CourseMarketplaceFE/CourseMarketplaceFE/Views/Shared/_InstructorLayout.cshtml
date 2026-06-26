@@ -338,7 +338,7 @@
                     return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
                 };
 
-                const displayTitle = truncateText(noti.title, 300);
+                const displayTitle = truncateText(noti.title, 255);
                 const displayContent = truncateText(noti.content, 100);
 
                 const Toast = Swal.mixin({
