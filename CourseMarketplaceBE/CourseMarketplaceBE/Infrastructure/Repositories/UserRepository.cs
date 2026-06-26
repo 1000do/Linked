@@ -331,10 +331,6 @@ public class UserRepository : IUserRepository
             {
                 query = query.Where(a => a.Manager != null && a.Manager.Role == "staff");
             }
-            else if (roleLower == "registered_staff")
-            {
-                query = query.Where(a => a.Manager != null && a.Manager.Role == "staff" && a.IsVerified);
-            }
             else if (roleLower == "user")
             {
                 query = query.Where(a => a.Manager == null);

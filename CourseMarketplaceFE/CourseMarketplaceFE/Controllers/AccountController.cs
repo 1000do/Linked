@@ -26,15 +26,25 @@ namespace CourseMarketplaceFE.Controllers
         // ================= AUTHENTICATION =================
 
         [HttpGet]
-        public IActionResult Register() => View();
+        public IActionResult Register(string? giftToken = null, string? returnUrl = null)
+        {
+            ViewBag.GiftToken = giftToken;
+            ViewBag.ReturnUrl = returnUrl;
+            return View();
+        }
 
         [HttpPost]
-        public async Task<IActionResult> Register(RegisterViewModel model)
+        public async Task<IActionResult> Register(RegisterViewModel model, string? giftToken = null, string? returnUrl = null)
         {
             if (!string.IsNullOrEmpty(model.Email) && !model.Email.EndsWith("@gmail.com"))
                 ModelState.AddModelError("Email", "Only Gmail registration is supported.");
 
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                ViewBag.GiftToken = giftToken;
+                ViewBag.ReturnUrl = returnUrl;
+                return View(model);
+            }
 
             // Endpoint register không cần auth → dùng HttpClient trực tiếp
             var client = _httpClientFactory.CreateClient("BackendApi");
@@ -50,10 +60,14 @@ namespace CourseMarketplaceFE.Controllers
             if (response.IsSuccessStatusCode)
             {
                 TempData["RecommendVerifyEmail"] = model.Email;
+                if (!string.IsNullOrEmpty(giftToken)) TempData["GiftToken"] = giftToken;
+                if (!string.IsNullOrEmpty(returnUrl)) TempData["ReturnUrl"] = returnUrl;
                 return RedirectToAction("VerifyRecommend");
             }
 
             await HandleApiError(response);
+            ViewBag.GiftToken = giftToken;
+            ViewBag.ReturnUrl = returnUrl;
             return View(model);
         }
 
@@ -467,6 +481,9 @@ namespace CourseMarketplaceFE.Controllers
             ViewBag.Email = email;
             TempData.Keep("VerifyEmail");
             TempData.Keep("ResetEmail");
+            TempData.Keep("GiftToken");
+            TempData.Keep("ReturnUrl");
+            TempData.Keep("IsVerifyFlow");
             return View();
         }
 
@@ -475,6 +492,8 @@ namespace CourseMarketplaceFE.Controllers
         {
             var email = TempData["VerifyEmail"]?.ToString() ?? TempData["ResetEmail"]?.ToString();
             var isEmailVerify = TempData["IsVerifyFlow"] != null;
+            var giftToken = TempData["GiftToken"]?.ToString();
+            var returnUrl = TempData["ReturnUrl"]?.ToString();
 
             if (string.IsNullOrEmpty(email))
                 return RedirectToAction("Login");
@@ -511,6 +530,8 @@ namespace CourseMarketplaceFE.Controllers
                 {
                     TempData.Keep("VerifyEmail");
                     TempData.Keep("IsVerifyFlow");
+                    TempData.Keep("GiftToken");
+                    TempData.Keep("ReturnUrl");
                 }
                 else
                 {
@@ -525,11 +546,18 @@ namespace CourseMarketplaceFE.Controllers
                 // 🔥 XÓA CỜ SAU KHI DÙNG
                 TempData.Remove("IsVerifyFlow");
                 TempData.Remove("VerifyEmail");
+                TempData.Remove("GiftToken");
+                TempData.Remove("ReturnUrl");
 
                 var cookieOptions = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddHours(24), Path = "/" };
                 Response.Cookies.Append("IsVerified", "true", cookieOptions);
 
                 TempData["SuccessMessage"] = "Email verification successful!";
+                
+                if (!string.IsNullOrEmpty(returnUrl))
+                {
+                    return RedirectToAction("Login", new { returnUrl = returnUrl });
+                }
                 return RedirectToAction("Profile");
             }
 
@@ -628,11 +656,17 @@ namespace CourseMarketplaceFE.Controllers
             if (string.IsNullOrEmpty(email)) return RedirectToAction("Login");
             ViewBag.Email = email;
             TempData.Keep("RecommendVerifyEmail");
+
+            ViewBag.GiftToken = TempData["GiftToken"]?.ToString();
+            ViewBag.ReturnUrl = TempData["ReturnUrl"]?.ToString();
+            TempData.Keep("GiftToken");
+            TempData.Keep("ReturnUrl");
+
             return View();
         }
 
         [HttpGet]
-        public async Task<IActionResult> SendRegisterOtp(string email)
+        public async Task<IActionResult> SendRegisterOtp(string email, string? giftToken = null, string? returnUrl = null)
         {
             if (string.IsNullOrEmpty(email)) return RedirectToAction("Login");
 
@@ -647,6 +681,8 @@ namespace CourseMarketplaceFE.Controllers
 
             TempData["VerifyEmail"] = email;
             TempData["IsVerifyFlow"] = true;
+            if (!string.IsNullOrEmpty(giftToken)) TempData["GiftToken"] = giftToken;
+            if (!string.IsNullOrEmpty(returnUrl)) TempData["ReturnUrl"] = returnUrl;
 
             return RedirectToAction("VerifyOtp");
         }

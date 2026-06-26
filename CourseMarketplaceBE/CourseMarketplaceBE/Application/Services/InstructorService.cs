@@ -425,13 +425,15 @@ namespace CourseMarketplaceBE.Application.Services
                 }
             }
 
-            int rowsSync = await _repo.SaveChangesAsync();
-            if (rowsSync <= 0)
-                throw new InvalidOperationException("Failed to save changes when syncing Stripe payouts.");
+            await _repo.SaveChangesAsync();
         }
 
         private void UpdatePayoutStatusFromStripe(InstructorPayout dbp, string status, DateTime? arrivalDate)
         {
+            if (dbp.PayoutStatus == PayoutStatus.Refunded.ToValue())
+            {
+                return;
+            }
             var statusLower = status.ToLower();
             if (statusLower == "paid")
             {
@@ -476,6 +478,8 @@ namespace CourseMarketplaceBE.Application.Services
                     TotalStudents = c.Enrollments?.Count ?? 0
                 }).ToList();
 
+            var totalReviews = await _repo.CountInstructorReviewsAsync(instructorId);
+
             return new InstructorPublicProfileDto
             {
                 InstructorId = instructorId,
@@ -490,7 +494,7 @@ namespace CourseMarketplaceBE.Application.Services
                 TotalStudents = stats?.TotalStudentsCount ?? 0,
                 TotalCourses = activeCourses,
                 AverageRating = (decimal)(stats?.InstructorRating ?? 0),
-                TotalReviews = 0, // Sẽ bổ sung sau nếu cần
+                TotalReviews = totalReviews,
                 Courses = courses
             };
         }

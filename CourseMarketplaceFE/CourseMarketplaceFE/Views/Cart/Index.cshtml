@@ -235,25 +235,47 @@
             </button>
         </div>
 
-        @* Manual Code Input *@
-        <div class="p-6 bg-white space-y-4">
-            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Enter coupon code below</p>
-            <form asp-action="ApplyCoupon" asp-controller="Cart" method="post" class="flex flex-col gap-3" id="manual-coupon-form">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="courseId" id="manual-coupon-course-id" />
-                <div class="relative flex items-center">
-                    <span class="absolute left-3 text-slate-400 font-bold material-symbols-outlined text-[20px] pointer-events-none select-none">confirmation_number</span>
-                    <input type="text" name="couponCode" id="manual-coupon-input"
-                           placeholder="e.g. DISCOUNT50..."
-                           class="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm uppercase font-mono font-bold tracking-widest text-slate-800 bg-slate-50 hover:bg-slate-100/50 focus:bg-white"
-                           style="text-transform:uppercase"
-                           autocomplete="off" />
-                </div>
-                <button type="submit"
-                        class="w-full py-3 bg-primary text-white text-xs font-black rounded-xl hover:bg-secondary transition-all uppercase tracking-widest shadow-md shadow-primary/20 active:scale-[0.98] flex items-center justify-center gap-2">
-                    <span class="material-symbols-outlined text-[16px]">check_circle</span> Apply Voucher
-                </button>
-            </form>
+        @* Available Vouchers List *@
+        <div class="p-6 bg-white max-h-[60vh] overflow-y-auto space-y-3">
+            @if (Model.AvailableCoupons != null && Model.AvailableCoupons.Any())
+            {
+                @foreach (var coupon in Model.AvailableCoupons)
+                {
+                    <div class="voucher-item border rounded-xl p-4 flex flex-col gap-2 @(coupon.IsEligible ? "border-emerald-200 bg-emerald-50/30" : "border-slate-200 opacity-60")" data-course-id="@coupon.CourseId" style="display: none;">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <span class="font-mono font-bold text-slate-800 text-sm">@coupon.CouponCode</span>
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded-full ml-2 @(string.Equals(coupon.CouponType, "percentage", StringComparison.OrdinalIgnoreCase) ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700")">
+                                    @(string.Equals(coupon.CouponType, "percentage", StringComparison.OrdinalIgnoreCase) ? $"{coupon.DiscountValue.ToString("0.##")}% OFF" : $"${coupon.DiscountValue.ToString("0.##")} OFF")
+                                </span>
+                            </div>
+                            @if (coupon.IsEligible)
+                            {
+                                <form asp-action="ApplyCoupon" asp-controller="Cart" method="post" class="m-0 flex-shrink-0">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="courseId" value="@coupon.CourseId" />
+                                    <input type="hidden" name="couponCode" value="@coupon.CouponCode" />
+                                    <button type="submit" class="px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:bg-secondary transition-colors shadow-sm shadow-primary/20">Apply</button>
+                                </form>
+                            }
+                        </div>
+                        @if (!coupon.IsEligible && !string.IsNullOrEmpty(coupon.ConditionMessage))
+                        {
+                            <p class="text-[11px] text-red-500 flex items-center gap-1 mt-2">
+                                <span class="material-symbols-outlined text-[14px]">error</span> @coupon.ConditionMessage
+                            </p>
+                        }
+                        @if (coupon.EndDate.HasValue)
+                        {
+                            <p class="text-[10px] text-slate-500 mt-1">Expires: @coupon.EndDate.Value.ToString("dd MMM yyyy")</p>
+                        }
+                    </div>
+                }
+            }
+            <div id="no-coupon-msg" class="text-center py-8" style="display: none;">
+                <span class="material-symbols-outlined text-slate-300 text-4xl mb-2">sentiment_dissatisfied</span>
+                <p class="text-sm text-slate-500">No applicable vouchers for this course.</p>
+            </div>
         </div>
 
         @* Modal Footer *@
@@ -325,19 +347,26 @@
         // Cập nhật tiêu đề modal với tên khóa học
         document.getElementById('modal-course-title').innerText = courseTitle;
         
-        // Cập nhật courseId cho input nhập thủ công
-        document.getElementById('manual-coupon-course-id').value = courseId;
+        // Filter and display available coupons for this course
+        const couponItems = document.querySelectorAll('.voucher-item');
+        let hasCoupons = false;
+        couponItems.forEach(item => {
+            if (item.dataset.courseId == courseId) {
+                item.style.display = 'flex';
+                hasCoupons = true;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        const noCouponMsg = document.getElementById('no-coupon-msg');
+        if (noCouponMsg) {
+            noCouponMsg.style.display = hasCoupons ? 'none' : 'block';
+        }
         
         const modal = document.getElementById('voucher-modal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-        
-        // Auto-focus manual coupon input
-        const couponInput = document.getElementById('manual-coupon-input');
-        if (couponInput) {
-            couponInput.value = '';
-            setTimeout(() => couponInput.focus(), 150);
-        }
 
         // Force reflow and add active transition classes for smooth popup scaling
         setTimeout(() => {

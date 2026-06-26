@@ -28,7 +28,7 @@
             }
         </div>
 
-        <form asp-controller="Account" asp-action="Register" method="post" class="space-y-4">
+        <form asp-controller="Account" asp-action="Register" asp-route-giftToken="@ViewBag.GiftToken" asp-route-returnUrl="@ViewBag.ReturnUrl" method="post" class="space-y-4">
 
             @* FullName *@
             <div>

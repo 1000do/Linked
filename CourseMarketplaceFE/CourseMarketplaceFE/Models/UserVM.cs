@@ -18,6 +18,7 @@ namespace LinkedLearn.Models.UserVM
 
         [Required(ErrorMessage = "Please enter your password")]
         [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
+        [RegularExpression(@"^(?=.*[^a-zA-Z0-9]).+$", ErrorMessage = "Password must contain at least 1 special character")]
         public string Password { get; set; } = null!;
 
         [Required(ErrorMessage = "Please confirm your password")]

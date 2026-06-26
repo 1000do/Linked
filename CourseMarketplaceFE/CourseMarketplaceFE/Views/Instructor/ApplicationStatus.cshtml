@@ -174,7 +174,7 @@
                                     Set up your Stripe account to receive direct payments from students. 
                                     You will keep <strong>70% of the revenue</strong> from every course enrollment.
                                 </p>
-                                <form asp-action="SetupPayout" asp-controller="Instructor" method="post" target="_blank">
+                                <form asp-action="SetupPayout" asp-controller="Instructor" method="post">
                                     @Html.AntiForgeryToken()
                                     <button type="submit"
                                             class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-sm">

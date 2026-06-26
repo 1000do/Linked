@@ -5,7 +5,7 @@
     Layout = "_AdminLayout";
 }
 
-<div class="flex flex-col gap-6">
+<div id="account-main-content" class="flex flex-col gap-6">
     <!-- Header with Stats & Actions -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -40,10 +40,7 @@
                class="px-4 py-2 text-xs md:text-sm rounded-lg transition-colors whitespace-nowrap @(Model.Role == "staff" ? activeClass : inactiveClass)">
                Staff Directory (CRUD)
             </a>
-            <a href="@Url.Action("Index", new { role = "registered_staff", keyword = Model.Keyword })" 
-               class="px-4 py-2 text-xs md:text-sm rounded-lg transition-colors whitespace-nowrap @(Model.Role == "registered_staff" ? activeClass : inactiveClass)">
-               Registered Staff (Verified)
-            </a>
+
         </div>
 
         <!-- Search input form -->
@@ -227,7 +224,7 @@
 
                                 <!-- Flag Column -->
                                 <td class="px-6 py-4 align-middle text-center">
-                                    @if (item.Role?.ToLower() != "admin")
+                                    @if (item.Role?.ToLower() != "admin" && item.Role?.ToLower() != "staff")
                                     {
                                         <button id="flag-btn-@item.AccountId" onclick="event.stopPropagation(); flagAccount(@item.AccountId)" 
                                                 class="inline-flex items-center justify-center p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50/50 hover:border-rose-100 border border-transparent transition-all duration-200"
@@ -556,10 +553,17 @@
             if (!confirmResult.isConfirmed) return;
 
             try {
+                const payload = { 
+                    displayName, 
+                    password: password === '' ? null : password, 
+                    phoneNumber: phoneNumber === '' ? null : phoneNumber, 
+                    accountStatus 
+                };
+
                 const response = await fetch(`/AdminAccount/EditStaff/${id}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                    body: JSON.stringify({ displayName, password, phoneNumber, accountStatus })
+                    body: JSON.stringify(payload)
                 });
 
                 const res = await response.json();
@@ -810,6 +814,93 @@
                 }
             } catch (err) {
                 Swal.fire({ title: 'Connection Failure', text: 'Could not contact administration server.', icon: 'error', confirmButtonColor: '#0f172a' });
+            }
+        }
+        // AJAX Pagination, Tabs & Search
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('account-main-content');
+            if (!container) return;
+
+            // Intercept clicks on links inside the container
+            container.addEventListener('click', async (e) => {
+                const link = e.target.closest('a');
+                if (link && link.href) {
+                    const url = new URL(link.href);
+                    if (url.pathname.toLowerCase() === '/adminaccount' || url.pathname.toLowerCase() === '/adminaccount/index') {
+                        e.preventDefault();
+                        await fetchAccounts(link.href);
+                    }
+                }
+            });
+
+            // Intercept form submission inside the container
+            container.addEventListener('submit', async (e) => {
+                const form = e.target.closest('form');
+                if (form) {
+                    const url = new URL(form.action, window.location.origin);
+                    if (url.pathname.toLowerCase() === '/adminaccount' || url.pathname.toLowerCase() === '/adminaccount/index') {
+                        e.preventDefault();
+                        const formData = new FormData(form);
+                        const params = new URLSearchParams(formData);
+                        const fetchUrl = `${url.pathname}?${params.toString()}`;
+                        await fetchAccounts(fetchUrl);
+                    }
+                }
+            });
+            
+            // Handle browser back/forward buttons
+            window.addEventListener('popstate', (e) => {
+                if (e.state && e.state.path) {
+                    fetchAccounts(e.state.path, false);
+                } else {
+                    window.location.reload();
+                }
+            });
+        });
+
+        async function fetchAccounts(url, pushState = true) {
+            const container = document.getElementById('account-main-content');
+            container.style.opacity = '0.5';
+            container.style.transition = 'opacity 0.2s ease-in-out';
+            
+            try {
+                const response = await fetch(url);
+                const html = await response.text();
+                
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newContent = doc.getElementById('account-main-content');
+                
+                if (newContent) {
+                    container.innerHTML = newContent.innerHTML;
+                    
+                    if (pushState) {
+                        window.history.pushState({ path: url }, '', url);
+                    }
+                }
+            } catch (err) {
+                console.error("AJAX Error:", err);
+            } finally {
+                container.style.opacity = '1';
+
+                // Reset global top-progress-bar and main content if triggered by Layout interceptor
+                const progressBar = document.getElementById('top-progress-bar');
+                if (progressBar) {
+                    progressBar.style.width = '100%';
+                    setTimeout(() => {
+                        progressBar.style.opacity = '0';
+                        setTimeout(() => { 
+                            progressBar.style.width = '0%'; 
+                            progressBar.style.opacity = '1'; 
+                        }, 200);
+                    }, 200);
+                }
+
+                const mainContent = document.querySelector('main');
+                if (mainContent) {
+                    mainContent.style.opacity = '1';
+                    mainContent.style.transform = 'scale(1)';
+                }
             }
         }
     </script>

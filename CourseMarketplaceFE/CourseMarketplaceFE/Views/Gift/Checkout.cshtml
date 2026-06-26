@@ -46,14 +46,14 @@
                     </h2>
 
                     <!-- Recipient details info -->
-                    <div class="space-y-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm">
-                        <div>
+                    <div class="space-y-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm overflow-hidden">
+                        <div class="min-w-0">
                             <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Recipient Name</span>
-                            <span class="font-bold text-slate-800">@(string.IsNullOrEmpty(recipientName) ? "Someone Special" : recipientName)</span>
+                            <span class="font-bold text-slate-800 break-words block">@(string.IsNullOrEmpty(recipientName) ? "Someone Special" : recipientName)</span>
                         </div>
-                        <div>
+                        <div class="min-w-0">
                             <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Recipient Email</span>
-                            <span class="font-bold text-slate-800">@recipientEmail</span>
+                            <span class="font-bold text-slate-800 break-all block">@recipientEmail</span>
                         </div>
                         <div>
                             <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Card Theme</span>
@@ -61,9 +61,9 @@
                         </div>
                         @if (!string.IsNullOrWhiteSpace(giftMessage))
                         {
-                            <div>
+                            <div class="min-w-0">
                                 <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Personal Message</span>
-                                <span class="font-medium text-slate-600 italic">“@giftMessage”</span>
+                                <span class="font-medium text-slate-600 italic break-words block">“@giftMessage”</span>
                             </div>
                         }
                     </div>
