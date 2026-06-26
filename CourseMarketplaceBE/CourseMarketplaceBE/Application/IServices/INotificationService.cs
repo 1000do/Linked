@@ -11,6 +11,7 @@ namespace CourseMarketplaceBE.Application.IServices
         Task<PagedResult<NotificationAdminResponseDto>> GetAllNotificationsForAdminAsync(int page = 1, int pageSize = int.MaxValue);
         Task<bool> SendNotificationAsync(int receiverId, string title, string content, string? linkAction);
         Task<bool> SendBulkNotificationsAsync(IEnumerable<NotificationBulkDto> dtos);
+
         Task<bool> DeleteNotificationAsync(int notiId, int userId);
         Task<PagedResult<NotificationResponseDto>> GetAllNotificationsAsync(int page = 1, int pageSize = int.MaxValue);
         Task<bool> MarkAsReadAsync(int notificationId, int userId);

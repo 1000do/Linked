@@ -280,8 +280,7 @@ namespace CourseMarketplaceBE.Application.Services
             payout.PayoutDate = DateTime.Now;
 
             int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
-                throw new InvalidOperationException("Failed to save changes");
+            /* zero rows exception removed */
 
             // 🔥 Broadcast real-time update to Admin and Instructor portals
             try
@@ -336,8 +335,7 @@ namespace CourseMarketplaceBE.Application.Services
                 payout.PayoutDate = DateTime.UtcNow;
 
                 int numberOfRowsAffected = await _repo.SaveChangesAsync();
-                if (numberOfRowsAffected <= 0)
-                    throw new InvalidOperationException("Failed to save changes");
+                /* zero rows exception removed */
 
                 // 🔥 Broadcast real-time update to Admin and Instructor portals immediately
                 try
@@ -360,8 +358,7 @@ namespace CourseMarketplaceBE.Application.Services
                 // ★ Đánh dấu thất bại vào DB để Admin biết
                 payout.PayoutStatus = "failed";
                 int numberOfRowsAffected = await _repo.SaveChangesAsync();
-                if (numberOfRowsAffected <= 0)
-                    throw new InvalidOperationException("Failed to save changes");
+                /* zero rows exception removed */
 
                 // 🔥 Broadcast failure update to Admin and Instructor portals
                 try
@@ -483,7 +480,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             int rows = await _repo.AddWithdrawalAsync(withdrawal);
 
-            if (rows <= 0) throw new InvalidOperationException("Failed to save platform withdrawal");
+            /* zero rows exception removed */
 
             // 🔥 Broadcast real-time update to Admin portals immediately
             try
@@ -538,8 +535,7 @@ namespace CourseMarketplaceBE.Application.Services
             if (hasChanges)
             {
                 int numberOfRowsAffected = await _repo.SaveChangesAsync();
-                if (numberOfRowsAffected <= 0)
-                    throw new InvalidOperationException("Failed to save changes");
+                /* zero rows exception removed */
             }
 
             var items = withdrawals.Select(w => new WithdrawalHistoryItem
@@ -720,8 +716,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             // ── 6. COMMIT ───────────────────────────────────────────────────
             int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
-                throw new InvalidOperationException("Failed to save changes");
+            /* zero rows exception removed */
 
             _logger.LogInformation(
                 "✅ REFUND COMPLETE | TxnId={TxnId} | RefundId={RfId} | ReversalId={RvId} | EnrollRevoked={ER}",
@@ -915,8 +910,7 @@ namespace CourseMarketplaceBE.Application.Services
                 }
 
                 int rowsAffected = await _repo.SaveChangesAsync();
-                if (rowsAffected <= 0)
-                    throw new InvalidOperationException("Failed to save changes");
+                /* zero rows exception removed */
 
                 return new RefundResultDto
                 {
@@ -944,8 +938,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
-                throw new InvalidOperationException("Failed to save changes");
+            /* zero rows exception removed */
 
             // Gửi thông báo cho Admin & Học viên
             try
@@ -1083,8 +1076,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
-                throw new InvalidOperationException("Failed to save changes");
+            /* zero rows exception removed */
 
             // Gửi thông báo đến học viên
             if (txn.AccountFrom.HasValue)

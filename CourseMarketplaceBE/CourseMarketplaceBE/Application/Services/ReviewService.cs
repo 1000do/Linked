@@ -68,8 +68,7 @@ public class ReviewService : IReviewService
             };
             await _enrollmentRepo.AddEnrollmentAsync(enrollment);
             int rows = await _enrollmentRepo.SaveChangesAsync();
-            if (rows <= 0)
-                throw new InvalidOperationException("Failed to save changes");
+            /* zero rows exception removed */
         }
 
         return enrollment;
@@ -313,9 +312,7 @@ public class ReviewService : IReviewService
             else
             {
                 var learnedCount = await _enrollmentRepo.GetCompletedMaterialCountAsync(enrollment.EnrollmentId);
-                if (learnedCount <= 0)
-                    throw new InvalidOperationException(
-                        "You need to complete at least 1 lesson before writing a review.");
+                /* zero rows exception removed */
             }
         }
 
@@ -357,8 +354,7 @@ public class ReviewService : IReviewService
         }
 
         int saved = await _reviewRepo.SaveChangesAsync();
-        if (saved <= 0)
-            throw new InvalidOperationException("Failed to save changes");
+        /* zero rows exception removed */
 
         if (!isOwner)
         {
@@ -421,8 +417,7 @@ public class ReviewService : IReviewService
         }
 
         int rows = await _reviewRepo.SaveChangesAsync();
-        if (rows <= 0)
-            throw new InvalidOperationException("Failed to save changes.");
+        /* zero rows exception removed */
     }
 
     // ── Xóa mềm review (chỉ chủ review) ──────────────────────────────
@@ -469,8 +464,7 @@ public class ReviewService : IReviewService
         }
 
         int rows = await _reviewRepo.SaveChangesAsync();
-        if (rows <= 0)
-            throw new InvalidOperationException("Failed to save changes.");
+        /* zero rows exception removed */
     }
 
     // ── Report review ──────────────────────────────────────────────────

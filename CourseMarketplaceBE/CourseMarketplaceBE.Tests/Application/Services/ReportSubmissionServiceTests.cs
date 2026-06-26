@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.Services;
+using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.Exceptions;
@@ -21,6 +22,8 @@ public class ReportSubmissionServiceTests
     private readonly ICourseRepository _courseRepoMock;
     private readonly IReviewRepository _reviewRepoMock;
     private readonly IMapper _mapperMock;
+    private readonly INotificationService _notificationServiceMock;
+    private readonly IUserRepository _userRepoMock;
     private readonly ReportSubmissionService _sut;
 
     public ReportSubmissionServiceTests()
@@ -30,13 +33,17 @@ public class ReportSubmissionServiceTests
         _courseRepoMock = Substitute.For<ICourseRepository>();
         _reviewRepoMock = Substitute.For<IReviewRepository>();
         _mapperMock = Substitute.For<IMapper>();
+        _notificationServiceMock = Substitute.For<INotificationService>();
+        _userRepoMock = Substitute.For<IUserRepository>();
 
         _sut = new ReportSubmissionService(
             _reportRepoMock,
             _enrollmentRepoMock,
             _courseRepoMock,
             _reviewRepoMock,
-            _mapperMock
+            _mapperMock,
+            _notificationServiceMock,
+            _userRepoMock
         );
     }
 
@@ -56,6 +63,7 @@ public class ReportSubmissionServiceTests
         _enrollmentRepoMock.GetEnrollmentWithProgressAsync(reporterId, req.CourseId).Returns(enrollment);
         _reportRepoMock.GetPendingCourseReportAsync(reporterId, req.CourseId, req.Reason).Returns((CourseReport?)null);
         _reportRepoMock.SaveChangesAsync().Returns(1);
+        _userRepoMock.GetAllManagerIdsAsync().Returns(new System.Collections.Generic.List<int> { 999 });
 
         //Act
         var result = await _sut.CreateCourseReportAsync(reporterId, req);
@@ -69,6 +77,7 @@ public class ReportSubmissionServiceTests
         await _reportRepoMock.Received(1).AddCourseReportAsync(Arg.Is<CourseReport>(r => 
             r.ReporterId == reporterId && r.CourseId == req.CourseId && r.Reason == req.Reason));
         await _reportRepoMock.Received(1).SaveChangesAsync();
+        await _notificationServiceMock.Received(1).SendBulkNotificationsAsync(Arg.Any<System.Collections.Generic.IEnumerable<NotificationBulkDto>>());
     }
 
     [Fact]
@@ -246,30 +255,6 @@ public class ReportSubmissionServiceTests
         await _reportRepoMock.Received(1).SaveChangesAsync();
     }
 
-    [Fact]
-    public async Task CreateCourseReportAsync_SaveZeroRows_ShouldThrowInvalidOperationException()
-    {
-        //Arrange 1
-        int reporterId = 1;
-        var req = new CreateCourseReportRequest { CourseId = 10, Reason = "Spam" };
-        var course = new Course { CourseId = 10, CourseStatus = CourseStatus.Published.ToValue(), InstructorId = 2 };
-        var enrollment = new Enrollment { UserId = reporterId, CourseId = 10 };
-
-        //Arrange 2
-        _courseRepoMock.GetByIdAsync(req.CourseId).Returns(course);
-        _enrollmentRepoMock.GetEnrollmentWithProgressAsync(reporterId, req.CourseId).Returns(enrollment);
-        _reportRepoMock.GetPendingCourseReportAsync(reporterId, req.CourseId, req.Reason).Returns((CourseReport?)null);
-        _reportRepoMock.SaveChangesAsync().Returns(0);
-
-        //Act
-        Func<Task> act = async () => await _sut.CreateCourseReportAsync(reporterId, req);
-
-        //Assert
-        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Failed to save changes.");
-        
-        await _reportRepoMock.Received(1).SaveChangesAsync();
-    }
-
     // ── CreateCourseReviewReportAsync ────────────────────────────────────────
 
     [Fact]
@@ -284,6 +269,7 @@ public class ReportSubmissionServiceTests
         _reviewRepoMock.GetCourseReviewByIdAsync(req.CourseReviewId).Returns(review);
         _reportRepoMock.GetPendingCourseReviewReportAsync(reporterId, req.CourseReviewId, req.Reason).Returns((CourseReviewReport?)null);
         _reportRepoMock.SaveChangesAsync().Returns(1);
+        _userRepoMock.GetAllManagerIdsAsync().Returns(new System.Collections.Generic.List<int> { 999 });
 
         //Act
         var result = await _sut.CreateCourseReviewReportAsync(reporterId, req);
@@ -296,6 +282,7 @@ public class ReportSubmissionServiceTests
         await _reportRepoMock.Received(1).AddCourseReviewReportAsync(Arg.Is<CourseReviewReport>(r => 
             r.ReporterId == reporterId && r.CourseReviewId == req.CourseReviewId && r.Reason == req.Reason));
         await _reportRepoMock.Received(1).SaveChangesAsync();
+        await _notificationServiceMock.Received(1).SendBulkNotificationsAsync(Arg.Any<System.Collections.Generic.IEnumerable<NotificationBulkDto>>());
     }
 
     [Fact]
@@ -382,28 +369,6 @@ public class ReportSubmissionServiceTests
         await _reportRepoMock.Received(1).SaveChangesAsync();
     }
 
-    [Fact]
-    public async Task CreateCourseReviewReportAsync_SaveZeroRows_ShouldThrowInvalidOperationException()
-    {
-        //Arrange 1
-        int reporterId = 1;
-        var req = new CreateCourseReviewReportRequest { CourseReviewId = 10, Reason = "Offensive" };
-        var review = new CourseReview { CourseReviewId = 10 };
-
-        //Arrange 2
-        _reviewRepoMock.GetCourseReviewByIdAsync(req.CourseReviewId).Returns(review);
-        _reportRepoMock.GetPendingCourseReviewReportAsync(reporterId, req.CourseReviewId, req.Reason).Returns((CourseReviewReport?)null);
-        _reportRepoMock.SaveChangesAsync().Returns(0);
-
-        //Act
-        Func<Task> act = async () => await _sut.CreateCourseReviewReportAsync(reporterId, req);
-
-        //Assert
-        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Failed to save changes.");
-        
-        await _reportRepoMock.Received(1).SaveChangesAsync();
-    }
-
     // ── CreateLessonReviewReportAsync ────────────────────────────────────────
 
     [Fact]
@@ -418,6 +383,7 @@ public class ReportSubmissionServiceTests
         _reviewRepoMock.GetLessonReviewByIdAsync(req.LessonReviewId).Returns(review);
         _reportRepoMock.GetPendingLessonReviewReportAsync(reporterId, req.LessonReviewId, req.Reason).Returns((LessonReviewReport?)null);
         _reportRepoMock.SaveChangesAsync().Returns(1);
+        _userRepoMock.GetAllManagerIdsAsync().Returns(new System.Collections.Generic.List<int> { 999 });
 
         //Act
         var result = await _sut.CreateLessonReviewReportAsync(reporterId, req);
@@ -430,6 +396,7 @@ public class ReportSubmissionServiceTests
         await _reportRepoMock.Received(1).AddLessonReviewReportAsync(Arg.Is<LessonReviewReport>(r => 
             r.ReporterId == reporterId && r.LessonReviewId == req.LessonReviewId && r.Reason == req.Reason));
         await _reportRepoMock.Received(1).SaveChangesAsync();
+        await _notificationServiceMock.Received(1).SendBulkNotificationsAsync(Arg.Any<System.Collections.Generic.IEnumerable<NotificationBulkDto>>());
     }
 
     [Fact]
@@ -512,28 +479,6 @@ public class ReportSubmissionServiceTests
 
         //Assert
         await act.Should().ThrowAsync<BadRequestException>().WithMessage("DB Error");
-        
-        await _reportRepoMock.Received(1).SaveChangesAsync();
-    }
-
-    [Fact]
-    public async Task CreateLessonReviewReportAsync_SaveZeroRows_ShouldThrowInvalidOperationException()
-    {
-        //Arrange 1
-        int reporterId = 1;
-        var req = new CreateLessonReviewReportRequest { LessonReviewId = 10, Reason = "Offensive" };
-        var review = new LessonReview { LessonReviewId = 10 };
-
-        //Arrange 2
-        _reviewRepoMock.GetLessonReviewByIdAsync(req.LessonReviewId).Returns(review);
-        _reportRepoMock.GetPendingLessonReviewReportAsync(reporterId, req.LessonReviewId, req.Reason).Returns((LessonReviewReport?)null);
-        _reportRepoMock.SaveChangesAsync().Returns(0);
-
-        //Act
-        Func<Task> act = async () => await _sut.CreateLessonReviewReportAsync(reporterId, req);
-
-        //Assert
-        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Failed to save changes.");
         
         await _reportRepoMock.Received(1).SaveChangesAsync();
     }

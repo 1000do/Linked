@@ -1,0 +1,106 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Lesson Review Report Detail
+
+actor "Staff / Admin" as act
+participant "ReportCenterPage" as view
+participant "LoginPage" as login_view
+participant "HomePage" as home_view
+participant "AdminModerationController" as fe_ctrl <<frontend controller>>
+participant ":PagedResult<ReviewReportDetailViewModel>" as view_model <<view model>>
+participant "AdminModerationController" as be_ctrl <<backend controller>>
+participant ":ReportModerationService" as sv
+participant ":PagedResult<ReviewReportDetailResponse>" as res <<dto>>
+participant ":ReportRepository" as repo
+database Database as db
+
+act ++
+act -> view++: Select "Lesson Review Reports" tab
+
+view -> fe_ctrl++: GET /AdminModeration/GetLessonReviewReports
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid (Not Logged In)
+    fe_ctrl -> login_view++: Redirect to login page
+    login_view -->> act--: Display authentication error message
+else Unauthorized Access
+    fe_ctrl -> home_view++: Redirect to home or access denied page
+    home_view -->> act--: Display access denied message
+else Authorized Access
+    fe_ctrl -> be_ctrl++: GET /api/admin/moderation/reports/lesson-reviews
+    be_ctrl -> sv++: Call GetAllLessonReviewReportsAsync(request)
+    
+    sv -> repo++: GetAllLessonReviewReportsAsync(status, page, pageSize)
+    repo -> db++: Query lesson review reports from database
+    
+    alt Empty Lesson Review Report List
+        db -->> repo: Return empty list, totalCount = 0
+        repo -->> sv: Return empty list, totalCount = 0
+        sv -->> be_ctrl: throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl: Return statusCode 404
+        fe_ctrl -->> view: Return empty PartialView
+        view -->> act: Display empty state message
+    else Database query successful
+        db -->> repo: Return (reports, totalCount)
+        db--
+        repo -->> sv: Return (reports, totalCount)
+        repo--
+        
+        sv -> sv++: Call Mapper to map entities to DTOs
+        sv--
+        
+        sv -> res++: Create PagedResult
+        res -->> sv--: Return object
+        
+        sv -->> be_ctrl--: Return PagedResult<ReviewReportDetailResponse>
+        
+        be_ctrl -->> fe_ctrl--: Return statusCode 200 with PagedResult
+        
+        fe_ctrl -> view_model++: Deserialize JSON to populate ViewModel
+        view_model -->> fe_ctrl--: Return populated ViewModel
+        
+        fe_ctrl -->> view--: Return PartialView with ViewModel
+        
+        view -->> act: Display lesson review reports
+        
+        act -> view: Click on a lesson review report row
+        
+        view -> view++: Retrieve selected lesson review report details from local state
+        view--
+        
+        opt Report contains resolution details (Resolved/Rejected)
+            view -> view++: Append Resolution Details (Moderator, Resolved At, Note)
+            view--
+        end
+        
+        view -->> act--: Display popup containing lesson review report details
+    end
+end
+@enduml

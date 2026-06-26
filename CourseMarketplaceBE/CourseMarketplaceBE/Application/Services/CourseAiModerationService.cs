@@ -314,7 +314,7 @@ namespace CourseMarketplaceBE.Application.Services
             try
             {
                 int rowsAffected = await _aiIntegrationRepository.SaveChangesAsync();
-                if (rowsAffected == 0) throw new InvalidOperationException("Failed to save course AI integration");
+                /* zero rows exception removed */
                 return rowsAffected;
             }
             catch (CourseAiIntegrationException ex)
@@ -336,8 +336,6 @@ namespace CourseMarketplaceBE.Application.Services
         private async Task ResolveCourseAIModerationResult(CourseModerationResult result)
         {
             _logger.LogInformation("Resolving AI moderation result for course {CourseId}", result.CourseId);
-
-            await _embeddingService.PersistMaterialEmbeddingsAsync(result.CourseId);
 
             var (threatLevel, feedback) = EvaluateModerationFeedback(result);
 

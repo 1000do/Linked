@@ -133,13 +133,9 @@ Handles routing and global exception translation into standardized generic API r
                 // Rule 3: Use standardized ApiResponse wrapper
                 return Ok(ApiResponse<object>.SuccessResponse(model, "Model added successfully"));
             }
-            catch (InvalidOperationException ex)
-            {
-                // Rule 3: Catch 400 exceptions
-                return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
-            }
             catch (BadRequestException ex)
             {
+                // Rule 3: Catch 400 exceptions
                 return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
             }
             catch (Exception ex)
@@ -187,8 +183,9 @@ public class AiModelManagementService : IAiModelManagementService
     {
         try
         {
-            int affected = await _aiModelRepo.SaveChangesAsync();
-            if (affected == 0) throw new InvalidOperationException("Failed to add AI Model.");
+            await _aiModelRepo.SaveChangesAsync();
+            // Note: We DO NOT check for 0 rows affected. EF Core natively handles 
+            // database failures (throwing DbUpdateException) which our repo catches.
         }
         catch (AiModelException ex) // Rule 2: Catches Domain exception
         {
@@ -257,7 +254,7 @@ The Backend-For-Frontend receives a POST from the UI but forwards it to the BE a
             {
                 return StatusCode(403, ApiResponse<string>.ErrorResponse(ex.Message));
             }
-            // ... Catch KeyNotFoundException, BadRequestException, InvalidOperationException
+            // ... Catch KeyNotFoundException, BadRequestException
         }
 ```
 
@@ -288,8 +285,7 @@ Demonstrates Rule 8 (Helper Extractions) and Rule 2 (Early exit for null checks 
     {
         try
         {
-            int affected = await _reportRepo.SaveChangesAsync();
-            if (affected == 0) throw new InvalidOperationException("Failed to resolve course report.");
+            await _reportRepo.SaveChangesAsync();
         }
         catch (ReportException ex)
         {

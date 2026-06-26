@@ -88,7 +88,7 @@ else Valid Session
             
             sv -> repo++: Call SaveChangesAsync()
             repo -> ctx++: Save changes
-            ctx -> db++: Execute query
+            ctx -> db++: Save changes to database
             db -->> ctx--: Return affected rows
             ctx -->> repo--: Return affected rows
             repo -->> sv--: Return numberOfRowsAffected

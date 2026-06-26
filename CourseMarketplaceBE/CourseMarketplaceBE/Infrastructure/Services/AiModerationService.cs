@@ -168,7 +168,7 @@ namespace CourseMarketplaceBE.Infrastructure.Services
             try
             {
                 int numberOfRowsAffected = await _usageLogRepository.SaveChangesAsync();
-                if (numberOfRowsAffected <= 0) throw new InvalidOperationException("Failed to save AI usage log");
+                /* zero rows exception removed */
                 return numberOfRowsAffected;
             }
             catch (CourseAiUsageLogException ex)
