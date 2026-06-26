@@ -96,8 +96,8 @@
     <div class="max-w-7xl mx-auto px-6 -mt-20 relative z-20">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
             
-            <!-- Left Column: Bio & Courses (8/12) -->
-            <div class="lg:col-span-8 space-y-12">
+            <!-- Left Column: Bio & Courses -->
+            <div class="lg:col-span-12 space-y-12">
                 
                 @* Bio Card *@
                 <div class="bg-white rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100 p-10 md:p-14 relative overflow-hidden">
@@ -124,7 +124,7 @@
                 </div>
 
                 @* Courses Section *@
-                <div>
+                <div id="courses">
                     <div class="flex items-center justify-between mb-8 px-4">
                         <h2 class="text-3xl font-black text-slate-900 flex items-center gap-4">
                             <span class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center">
@@ -132,13 +132,17 @@
                             </span>
                             Teaching Courses (@Model.TotalCourses)
                         </h2>
-                        <a href="#" class="text-sm font-black text-primary hover:underline decoration-2 underline-offset-4">All Courses</a>
+                        @if (Model.Courses.Count > 9)
+                        {
+                            <a href="#" id="btn-all-courses" onclick="toggleCourses(event)" class="text-sm font-black text-primary hover:underline decoration-2 underline-offset-4">All Courses</a>
+                        }
                     </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
+                        @{ var courseIdx = 0; }
                         @foreach (var course in Model.Courses)
                         {
-                            <a href="/Course/Details/@course.CourseId" class="group bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden hover:shadow-2xl hover:shadow-slate-200 hover:-translate-y-2 transition-all duration-500">
+                            var hiddenClass = courseIdx >= 9 ? "hidden course-hidden" : "";
+                            <a href="/Course/Details/@course.CourseId" class="group bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden hover:shadow-2xl hover:shadow-slate-200 hover:-translate-y-2 transition-all duration-500 @hiddenClass">
                                 <div class="aspect-[16/10] relative overflow-hidden">
                                     <img src="@(string.IsNullOrEmpty(course.ThumbnailUrl) ? "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800" : course.ThumbnailUrl)" 
                                          alt="@course.Title" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -162,64 +166,25 @@
                                     </div>
                                 </div>
                             </a>
+                            courseIdx++;
                         }
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column: Sidebar (4/12) -->
-            <div class="lg:col-span-4 space-y-8">
-                
-                @* Expertise Card *@
-                <div class="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 p-8 sticky top-24">
-                    <div class="mb-8">
-                        <h3 class="text-xl font-black text-slate-900 mb-2 flex items-center gap-3">
-                            <span class="material-symbols-outlined text-primary">psychology</span>
-                            Areas of Expertise
-                        </h3>
-                        <div class="h-1 w-12 bg-primary/20 rounded-full"></div>
-                    </div>
-                    
-                    <div class="flex flex-wrap gap-2 mb-10">
-                        @if (!string.IsNullOrEmpty(Model.ExpertiseCategories))
-                        {
-                            var cats = Model.ExpertiseCategories.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                            foreach (var cat in cats)
-                            {
-                                <span class="px-5 py-2.5 bg-slate-50 text-slate-600 text-xs font-black rounded-2xl border border-slate-100 hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-all cursor-default">@cat.Trim()</span>
-                            }
-                        }
-                    </div>
 
-                    @* Premium CTA *@
-                    <div class="relative rounded-3xl p-8 overflow-hidden group">
-                        <div class="absolute inset-0 bg-gradient-to-br from-primary to-indigo-600 group-hover:scale-110 transition-transform duration-700"></div>
-                        <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
-                        
-                        <div class="relative z-10 text-white">
-                            <h4 class="text-2xl font-black mb-4 leading-tight">Start learning today?</h4>
-                            <p class="text-sm opacity-80 mb-8 font-medium leading-relaxed">Join thousands of other students to master new skills with @Model.FullName.</p>
-                            <a href="#courses" class="flex items-center justify-center gap-3 w-full py-4 bg-white text-primary font-black rounded-2xl shadow-xl shadow-black/10 hover:shadow-2xl hover:-translate-y-1 active:scale-95 transition-all">
-                                <span>View Courses</span>
-                                <span class="material-symbols-outlined text-sm">arrow_forward</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    @* Help/Support Info *@
-                    <div class="mt-8 pt-8 border-t border-slate-50">
-                        <div class="flex items-center gap-4 text-slate-400">
-                            <span class="material-symbols-outlined text-xl">verified_user</span>
-                            <p class="text-[10px] font-bold uppercase tracking-widest leading-relaxed">Content protected by copyright and LinkedLearn policies</p>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script>
+        function toggleCourses(e) {
+            e.preventDefault();
+            const hiddenCourses = document.querySelectorAll('.course-hidden');
+            hiddenCourses.forEach(c => c.classList.remove('hidden'));
+            e.target.style.display = 'none';
+        }
+    </script>
 }

@@ -46,6 +46,8 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
             => await _context.Instructors
                 .Include(i => i.InstructorNavigation)
                     .ThenInclude(u => u!.UserNavigation)
+                .Include(i => i.Courses)
+                    .ThenInclude(c => c.Enrollments)
                 .FirstOrDefaultAsync(i => i.InstructorId == instructorId);
 
         // ── Write ─────────────────────────────────────────────────────────────
@@ -155,6 +157,12 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
 
         public async Task<int> CountActiveCoursesAsync(int instructorId)
             => await _context.Courses.CountAsync(c => c.InstructorId == instructorId && c.CourseStatus == CourseStatus.Published.ToValue());
+
+        public async Task<int> CountInstructorReviewsAsync(int instructorId)
+        {
+            return await _context.CourseReviews
+                .CountAsync(r => r.Enrollment.Course != null && r.Enrollment.Course.InstructorId == instructorId);
+        }
 
         public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.InstructorPayoutDto>> GetPayoutsAsync(int instructorId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null)
         {
