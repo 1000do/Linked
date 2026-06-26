@@ -335,8 +335,8 @@
                         <div class="text-xs text-slate-500 truncate mt-0.5">${n.receiverEmail || 'all-users@system.com'}</div>
                     </td>
                     <td class="px-5 py-3 align-top">
-                        <div class="font-medium text-slate-900">${n.title}</div>
-                        <div class="text-xs text-slate-600 mt-0.5">${n.content}</div>
+                        <div class="font-medium text-slate-900">${n.title && n.title.length > 100 ? n.title.substring(0, 100) + '...' : n.title}</div>
+                        <div class="text-xs text-slate-600 mt-0.5">${n.content && n.content.length > 100 ? n.content.substring(0, 100) + '...' : n.content}</div>
                     </td>
                     <td class="px-5 py-3 align-top text-xs text-slate-500 whitespace-nowrap">
                         ${formatDateTime(n.createdAt)}
