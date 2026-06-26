@@ -105,7 +105,7 @@ public class ReportModerationService : IReportModerationService
         await ValidateReportResolutionAccessAsync(report.CourseReportsStatus!, resolverId);
 
         report.CourseReportsStatus = request.Status;
-        report.ResolutionNote = request.ResolutionNote;
+        report.ResolutionNote = request.ResolutionNote ?? "Report has been resolved";
         report.ResolverId = resolverId;
         report.ResolvedAt = DateTime.Now;
 
@@ -134,7 +134,7 @@ public class ReportModerationService : IReportModerationService
         await ValidateReportResolutionAccessAsync(report.UserReportsStatus!, resolverId);
 
         report.UserReportsStatus = request.Status;
-        report.ResolutionNote = request.ResolutionNote;
+        report.ResolutionNote = request.ResolutionNote ?? "Report has been resolved";
         report.ResolverId = resolverId;
         report.ResolvedAt = DateTime.Now;
 
@@ -158,7 +158,7 @@ public class ReportModerationService : IReportModerationService
         await ValidateReportResolutionAccessAsync(report.UserReportsStatus!, resolverId);
 
         report.UserReportsStatus = request.Status;
-        report.ResolutionNote = request.ResolutionNote;
+        report.ResolutionNote = request.ResolutionNote ?? "Report has been resolved";
         report.ResolverId = resolverId;
         report.ResolvedAt = DateTime.Now;
 
@@ -326,6 +326,7 @@ public class ReportModerationService : IReportModerationService
         }
     }
 
+    // NOTE: This is a legacy method. Do not test it.
     public async Task<bool> RemoveCourseAsync(int courseId, int adminId)
     {
         var course = await _courseRepo.GetByIdAsync(courseId);
