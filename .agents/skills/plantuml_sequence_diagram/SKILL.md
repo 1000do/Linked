@@ -35,9 +35,10 @@ Do NOT invent custom actor names (like "Learner" or "Customer"). You must exclus
 | Participant Type | PlantUML Definition Example | Alias | Role |
 |---|---|---|---|
 | Actor | `actor User as act` | `act` | The human actor interacting with the system (choose from the standardized list above) |
-| View / UI | `participant "Form/ViewName" as view` | `view` | Razor views, frontend pages (`.cshtml`, HTML) |
+| View / UI | `participant "PageName" as view` | `view` | Name views using domain context (e.g. `AiServiceManagementPage`), NOT file paths like `Views/.../Index`. |
 | Redirect Target | `participant "RedirectForm" as r_view` | `r_view` | Target view after redirection |
 | Frontend Controller | `participant "ControllerName" as fe_ctrl <<frontend controller>>` | `fe_ctrl` | Standard MVC controller handling client requests |
+| View Model | `participant ":ViewModelClass" as view_model` | `view_model` | Page/View model mapped in the frontend controller |
 | Backend Controller | `participant "ControllerName" as be_ctrl <<backend controller>>` | `be_ctrl` | API Controller exposing REST services |
 | Service | `participant ":ServiceClass" as sv` | `sv` | Business logic service (e.g. `:CourseService`) |
 | Data Transfer / Response | `participant ":ResponseDto" as res` | `res` | Response or DTO class |
@@ -51,6 +52,7 @@ Do NOT invent custom actor names (like "Learner" or "Customer"). You must exclus
 - **Implementations Only:** Do not model interfaces (e.g., use `:CourseRepository` rather than `ICourseRepository`).
 - **Instance Prefixing:** Prefix class instances with a colon (e.g., `:CourseService`, `:CourseRepository`). Do not prefix views, controllers, or actor aliases.
 - **Visuals:** All participants except actors (stick figure) and databases (cylinder figure) must be drawn as rectangles.
+- **Participant Grouping Order:** Declare participants logically in the order of interaction. For example, place the `view_model` immediately after `fe_ctrl`, and the DTO (`res`) immediately after `sv`.
 
 ---
 
@@ -105,11 +107,12 @@ Ensure correct arrow types to model request/response control flow:
 Correctly managing activation (`++`) and deactivation (`--`) is critical to show when an object is executing or waiting.
 
 ### General Rules
-1. **Initial Call Activation (`++`):** Append `++` to the receiving participant when it receives its first call.
+1. **Actor Activation (`++`):** Always activate the actor's lifeline as the first thing in the sequence diagram by adding `act ++` at the top before any interactions.
+2. **Initial Call Activation (`++`):** Append `++` to the receiving participant when it receives its first call.
    - Example: `fe_ctrl -> be_ctrl++: Send POST request`
-2. **Return Deactivation (`--`):** Deactivate a participant's lifeline when it returns or throws an exception.
+3. **Return Deactivation (`--`):** Deactivate a participant's lifeline when it returns or throws an exception.
    - Example: `be_ctrl -->> fe_ctrl--: Return statusCode 200`
-3. **Completeness:** Every participant's lifeline (excluding the actor) must be fully deactivated by the time the flow finishes its execution paths.
+4. **Completeness:** Every participant's lifeline (excluding the actor) must be fully deactivated by the time the flow finishes its execution paths.
 
 ### Self-Call Activations
 - **Conditional Triggers (Opt/Alt):** If a self-call checks a condition to branch (e.g. `Validate ModelState`), activate the self-call and immediately deactivate it *before* opening the conditional block:
@@ -162,6 +165,7 @@ When dealing with nested `alt` fragments, clearly distinguish between "Local" an
 - When creating, fixing, editing, updating, validating, or modifying a diagram based on a use case specification, follow this strict mapping:
   - **Alternative flows** must be modeled as `opt` fragments.
   - **Exceptions** must be modeled as `alt` fragments.
+- **UI Extension Use Cases:** If a use case is purely a UI interaction (e.g., "View details") that relies on pre-fetched data from a parent base use case (e.g., "View List"), model the entire backend flow identically to the base use case. Append the specific UI interaction (e.g., `act -> view: Click "Details"`) inside the final success branch, and terminate the sequence immediately when the core objective is reached (e.g., `view -->> act--: Display details in a popup`). Do NOT model auxiliary "close popup" actions unless they trigger distinct backend logic.
 - **Form Input Validation (Alt Flow):** The invalid form input alternative flow could be just a client-side check on the view, or it could include an additional model state check in the frontend controller. If a diagram already models these two cases separately, keep them as they are.
 - **Session Invalid Exception:** You can assume that "session invalid" is never going to happen. Skip that exception and only model the rest.
 
@@ -175,7 +179,8 @@ When dealing with nested `alt` fragments, clearly distinguish between "Local" an
 - **Condensing Validation Logic:** Encourage condensing fine-grained, related validation checks into unified `else` branches. For example, combine a "course ownership check" and an "instructor lockout check" into a single `else Invalid Instructor Rights` branch to reduce visual noise.
 
 ### Abstracting Auxiliary Logic & Fetches
-- Verbose inline code blocks (like `foreach` loops) or secondary read operations (like fetching overall category lists, wishlist statuses, or generic stats when the main focus is a course list) should be aggressively abstracted into descriptive self-calls, but **only** if they apply to *auxiliary* changes/fetches outside the primary context. For example, in an operation for Courses, fetching/modifying Lessons is auxiliary and should be abstracted. In an operation for Lessons, modifying Courses or Learning Materials would be auxiliary. These self-calls should use natural language (e.g., `sv->sv++: Remove lessons in course` or `fe_ctrl->fe_ctrl++: Fetch overall performance statistics`).
+- Verbose inline code blocks (like `foreach` loops) or secondary read operations (like fetching overall category lists, wishlist statuses, or generic stats when the main focus is a course list) should be aggressively abstracted into descriptive self-calls, but **only** if they apply to *auxiliary* changes/fetches outside the primary context. For example, in an operation for Courses, fetching/modifying Lessons is auxiliary and should be abstracted. In an operation for Lessons, modifying Courses or Learning Materials would be auxiliary. These self-calls should use natural language (e.g., `sv->sv++: Remove lessons in course`).
+- **Complete Omission of Unrelated Fetches:** Completely omit auxiliary, unrelated API fetches (e.g., fetching general config dropdowns or unconnected moderation logs in a frontend controller) if they clutter the diagram and distract from the primary use case focus.
 
 ### Frontend Authentication/Authorization Validation
 - Complex authentication and authorization checks (e.g., checking cookies, roles, or calling backend APIs via action filters to validate access) should be abstracted into a single self-call at the frontend controller level (e.g., `fe_ctrl -> fe_ctrl++: Validate Dashboard Access`), immediately followed by a flat `alt` block handling the rejection branches (Login redirect, Not Found redirect, etc.).
@@ -197,6 +202,7 @@ When dealing with nested `alt` fragments, clearly distinguish between "Local" an
 ### UI Feedback and Redirections
 - Do not over-specify UI implementation details (e.g., "popup message", "toast", "simple p tag"). Use generic interaction descriptions like `Display success message` or `Display error message`.
 - If an action ends with displaying a success/error message and requires manual user intervention to proceed (e.g., clicking "Edit Now" to redirect), **do not model the subsequent manual click or redirect**. End the sequence path at the display of the initial message.
+- **Omit Secondary UI Refreshes:** Do not model secondary data fetches (like a `GET` request to reload a table or partial view) that occur automatically after the primary success message is displayed. Stop the flow at the success notification to keep the focus on the primary use case.
 - **Automatic Redirections Only**: Only include a redirection step when it occurs automatically without manual interaction from the actor. Model redirects directly from the Controller to the target View using a solid arrow (`->`), followed by the target view displaying and returning to the actor.
   ```plantuml
   fe_ctrl -> login_view++: Redirect to Login page
@@ -207,12 +213,13 @@ When dealing with nested `alt` fragments, clearly distinguish between "Local" an
 - Omit `fe_ctrl` if the frontend requests the backend directly (e.g. via direct AJAX/Fetch call without server-side MVC controller routing).
 - Omit ViewModels/DTOs from the diagram participants list if they are handled implicitly by ASP.NET Core binding and not explicitly manipulated in custom controller/service logic.
 
-### Database Operations (Insert/Update/Delete)
-- Assume that calls to `SaveChangesAsync()` at the repository level return an `int` variable named `numberOfRowsAffected` representing the number of mutated database rows.
-- Use `numberOfRowsAffected > 0` as the branching condition for the successful path vs. the failed path.
-- **Standardizing Check Trigger:** The conditional trigger for verifying database saves must be cleanly labeled as `Check numberOfRowsAffected`. Do not include the logical condition (like `> 0`) in the trigger label itself; leave the specific condition evaluations (`> 0` vs `= 0`) entirely to the `alt` branches.
-- In the failed path (`numberOfRowsAffected = 0`), show that the service throws an `InvalidOperationException` and the controllers catch and return a `400 BadRequest`.
-- **Database Exceptions:** Any exceptions that occur during database save operations (e.g., `DbUpdateException` for duplicate content) must be modeled as an `alt` fragment starting immediately after the save to database call.
+### Database Operations (Read/Write)
+- **Database Call Naming:** When modeling the database interaction (e.g., `ctx -> db++`), use a semantic message like `Save changes to database` or `Execute query` instead of raw SQL queries.
+- **Read Operations (No Explicit Exceptions):** Do NOT model unhandled database exceptions (e.g., `SqlException` or generic `alt Database query failed` blocks) for standard read/select operations unless explicitly caught and handled in the service/repository code. Assume the read succeeds and returns data or null.
+- **Aligning with Codebase Implementation:** Before modeling database failure paths for write operations, always check the actual repository and service code:
+  - **Exception-Based Saving (Preferred):** If the code uses a `try/catch` around `SaveChangesAsync()` to catch EF Core's `DbUpdateException` (or a domain exception like `AiModelException`), use an `alt DbUpdateException` fragment immediately following the database save call, with `else Saved Successfully` for the success path.
+  - **Integer-Based Checking:** Only if the code explicitly checks the returned integer, assume `SaveChangesAsync()` returns an `int` variable named `numberOfRowsAffected`. Use a self-call `Check numberOfRowsAffected` and branch on `numberOfRowsAffected > 0` vs `numberOfRowsAffected = 0`.
+- In the failed paths (whether exception or zero rows), accurately trace the exception thrown by the repository and service, ensuring it matches the actual codebase (e.g., throwing a `BadRequestException` which results in a `400 BadRequest` controller return).
 
 ### Distinct Return Paths
 - Paths for `alt` branches must remain separate from their entry point down to the final return to the actor. Even if two branches display a similar status code or error popup, they represent separate paths and must deactivate their lifelines independently.

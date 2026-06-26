@@ -1,0 +1,87 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View AI Model Details
+
+actor Admin as act
+participant "AiServiceManagementPage" as view
+participant "LoginPage" as login_view
+participant "AdminAiServiceController" as fe_ctrl <<frontend controller>>
+participant ":AdminAiServicePageViewModel" as view_model
+participant "AdminAiServiceController" as be_ctrl <<backend controller>>
+participant ":AiModelManagementService" as sv
+participant ":PagedResult<AiModelAdminDto>" as res
+participant ":AiModelRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Access AiServiceManagementPage
+view -> fe_ctrl++: Send GET request to /AdminAiService/Index
+fe_ctrl -> fe_ctrl++: Validate Admin authorization
+fe_ctrl--
+
+alt Unauthorized Access
+    fe_ctrl -> login_view++: Redirect to Login page
+    login_view -->> act--: Display Login page
+else Authorized Access
+    fe_ctrl -> be_ctrl++: Send GET request to /api/admin/ai-service/models
+    
+    be_ctrl -> sv++: Call GetPagedModelsAsync(request)
+    
+    sv -> repo++: Call GetPagedAdminAsync(request.Page, request.PageSize)
+    
+    repo -> ctx++: Query AiModels
+    ctx -> db++: Execute query
+    db -->> ctx--: Return data
+    ctx -->> repo--: Return data
+    repo -->> sv--: Return (List<AiModel>, totalCount)
+    
+    sv -> res++: Map to PagedResult<AiModelAdminDto>
+    res -->> sv--: Return PagedResult<AiModelAdminDto> object
+    
+    sv -->> be_ctrl--: Return PagedResult<AiModelAdminDto>
+    be_ctrl -->> fe_ctrl--: Return statusCode 200 with JSON data
+    
+    fe_ctrl -> view_model++: Map to AdminAiServicePageViewModel
+    view_model -->> fe_ctrl--: Return AdminAiServicePageViewModel object
+        
+    fe_ctrl -->> view: Return View with AdminAiServicePageViewModel
+    deactivate fe_ctrl
+    
+    alt Empty model list
+        view -->> act: Display empty state message
+    else Models found
+        view -->> act: Display AI model list
+        
+        act -> view: Click "Details" icon button on a model entry
+        view -> view++: Populate model details dialog
+        view--
+        view -->> act--: Display model details in a popup
+    end
+end
+@enduml

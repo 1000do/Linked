@@ -30,16 +30,15 @@ mainframe View Course Details
 
 actor Guest as act
 participant "CourseDetailsPage" as view
-participant "NotFoundPage" as not_found_view
 participant "ErrorPage" as error_view
 participant "CourseController" as fe_ctrl <<frontend controller>>
 participant "CoursePublicController" as be_ctrl <<backend controller>>
 participant ":CourseQueryService" as sv
+participant ":CourseDetailResponse" as res
 participant ":CourseRepository" as repo
 participant ":InstructorRepository" as inst_repo
 
 participant ":RedisService" as redis
-participant ":CourseDetailResponse" as res
 participant ":AppDbContext" as ctx
 database Database as db
 act++
@@ -89,8 +88,8 @@ be_ctrl--
 
 alt Course Not Found
     be_ctrl -->> fe_ctrl: Return statusCode 404
-    fe_ctrl -> not_found_view++: Redirect to Not Found page
-    not_found_view -->> act--: Display Not Found page
+    fe_ctrl -> error_view++: Redirect to Error page
+    error_view -->> act--: Display Error page
 else Unauthorized Access
     be_ctrl -->> fe_ctrl: Return statusCode 403
     fe_ctrl -> error_view++: Redirect to Error page
