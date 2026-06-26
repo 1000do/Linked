@@ -26,14 +26,14 @@
 
 hide footbox
 
-mainframe Delete Wishlist Items
+mainframe Delete Wishlist Item
 actor User as act
 
-participant "Wishlist/Index.cshtml" as view
+participant "WishlistView" as view
 participant "WishlistController" as fe_ctrl <<frontend controller>>
 participant "WishlistController" as be_ctrl <<backend controller>>
 participant ":WishlistService" as sv
-participant ":WishlistRepository" as repo
+participant ":WishlistRepository" as w_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -41,64 +41,54 @@ act++
 act->view++: Click "Remove" button next to a course
 view->fe_ctrl++: Send POST /Wishlist/Remove (with courseId)
 
-fe_ctrl->be_ctrl++: Send DELETE /api/wishlist/{courseId} (with AccessToken)
+fe_ctrl->be_ctrl++: Send DELETE /api/wishlist/{courseId}
 
 be_ctrl->be_ctrl++: Parse userId from token
 be_ctrl--
 
-group opt [userId == null]
-    be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
-    fe_ctrl-->>view: Redirect to /Account/Login
-    view-->>act: Display login page
-end
-
 be_ctrl->sv++: Call RemoveFromWishlistAsync(userId, courseId)
 
-sv->repo++: Call GetByUserAndCourseAsync(userId, courseId)
-repo->ctx++: Query WishlistItem
+sv->w_repo++: Call GetByUserAndCourseAsync(userId, courseId)
+w_repo->ctx++: Query WishlistItem
 ctx->db++: Execute SELECT query
-db-->>ctx--: Return record
-ctx-->>repo--: Return WishlistItem entity
-repo-->>sv--: Return WishlistItem entity
-
-group opt [item == null]
-    sv-->>be_ctrl: throw KeyNotFoundException
-    be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
-    fe_ctrl-->>view: Return View with error
-    view-->>act: Display error message
-end
-
-sv->repo++: Call RemoveAsync(item)
-repo->ctx++: Mark entity as deleted
-ctx-->>repo--: Return
-repo-->>sv--: Return
-
-sv->repo++: Call SaveChangesAsync()
-repo->ctx++: Call SaveChangesAsync()
-ctx->db++: Execute DELETE statement
 db-->>ctx--: Return result
-ctx-->>repo--: Return numberOfRowsAffected
-repo-->>sv--: Return numberOfRowsAffected
+ctx-->>w_repo--: Return item
+w_repo-->>sv--: Return item
 
-repo->repo++: Check numberOfRowsAffected
-repo--
+sv->sv++: Validate item
+sv--
 
-alt [numberOfRowsAffected > 0]
-    repo-->>sv: Return true
-    sv-->>be_ctrl: Return success
-    be_ctrl-->>fe_ctrl++: Return statusCode 200 (Success)
+alt [item == null]
+    sv-->>be_ctrl: throw KeyNotFoundException
+    be_ctrl-->>fe_ctrl: Return statusCode 404
+    fe_ctrl-->>view: Return statusCode 302
+    view-->>act: Reload wishlist page
+else [item != null]
+    sv->w_repo++: Call RemoveAsync(item)
+    w_repo->ctx++: Mark entity as deleted
+    ctx-->>w_repo--: Return result
+    w_repo-->>sv--: Return result
     
-    fe_ctrl -> view++: Redirect to Wishlist/Index
-    deactivate fe_ctrl
-    deactivate view
-    view-->>act: Reload wishlist page with course removed
-else [numberOfRowsAffected = 0]
-    repo-->>sv--: Return false
-    sv->sv++: throw InvalidOperationException
+    sv->w_repo++: Call SaveChangesAsync()
+    w_repo->ctx++: Call SaveChangesAsync()
+    ctx->db++: Execute DELETE statement
+    db-->>ctx--: Return result
+    ctx-->>w_repo--: Return numberOfRowsAffected
+    w_repo-->>sv--: Return numberOfRowsAffected
+    
+    sv->sv++: Check numberOfRowsAffected
     sv--
-    sv-->>be_ctrl--: throw InvalidOperationException
-    be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
-    fe_ctrl-->>view--: Return View with error message
-    view-->>act--: Display error message
+    
+    alt [numberOfRowsAffected = 0]
+        sv-->>be_ctrl: throw InvalidOperationException
+        be_ctrl-->>fe_ctrl: Return statusCode 400
+        fe_ctrl-->>view: Return statusCode 302
+        view-->>act: Reload wishlist page
+    else [numberOfRowsAffected > 0]
+        sv-->>be_ctrl--: Return result
+        be_ctrl-->>fe_ctrl--: Return statusCode 200
+        fe_ctrl-->>view--: Return statusCode 302
+        view-->>act--: Reload wishlist page
+    end
 end
 @enduml

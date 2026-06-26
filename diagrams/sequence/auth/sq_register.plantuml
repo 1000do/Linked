@@ -29,8 +29,8 @@ hide footbox
 mainframe Register
 actor Guest as act
 
-participant "Register.cshtml" as view
-participant "Login.cshtml" as login_view
+participant "RegisterFormView" as view
+participant "VerifyRecommendView" as verify_view
 participant "AccountController" as fe_ctrl <<frontend controller>>
 participant "AuthController" as be_ctrl <<backend controller>>
 participant ":AuthService" as sv
@@ -42,22 +42,40 @@ act++
 act->view++: Enter details and click "Register"
 view->fe_ctrl++: Send POST /Account/Register (with RegisterViewModel)
 
+fe_ctrl->fe_ctrl++: Validate ModelState and email domain
+fe_ctrl--
+
+group opt [Invalid ModelState or email domain]
+    fe_ctrl-->>view: Return statusCode 400
+    view-->>act: Display error message
+end
+
 fe_ctrl->be_ctrl++: Send POST /api/auth/register (with RegisterRequest JSON)
 
 be_ctrl->sv++: Call RegisterAsync(request)
+
+sv->sv++: Validate email domain
+sv--
+
+group opt [Email does not end with @gmail.com]
+    sv-->>be_ctrl: Return "Email must be a @gmail.com address"
+    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view: Return statusCode 400
+    view-->>act: Display error message
+end
 
 sv->repo++: Call IsEmailExistsAsync(email)
 repo->ctx++: Query Accounts table for email
 ctx->db++: Execute query
 db-->>ctx--: Return result
 ctx-->>repo--: Return boolean
-repo-->>sv--: Return true/false
+repo-->>sv--: Return result
 
 group opt [Email already exists]
-    sv-->>be_ctrl: Return "Email is already in use."
+    sv-->>be_ctrl: Return "Email already exists"
     be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
     fe_ctrl-->>view: Return statusCode 400
-    view-->>act: Display "Email is already in use" error
+    view-->>act: Display error message
 end
 
 sv->repo++: Call IsUsernameExistsAsync(username)
@@ -65,16 +83,16 @@ repo->ctx++: Query Accounts table for username
 ctx->db++: Execute query
 db-->>ctx--: Return result
 ctx-->>repo--: Return boolean
-repo-->>sv--: Return true/false
+repo-->>sv--: Return result
 
 group opt [Username already exists]
-    sv-->>be_ctrl: Return "Username is already in use."
+    sv-->>be_ctrl: Return "Username already exists"
     be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
     fe_ctrl-->>view: Return statusCode 400
-    view-->>act: Display "Username is already in use" error
+    view-->>act: Display error message
 end
 
-sv->sv++: Hash password using BCrypt / Identity hasher
+sv->sv++: Hash password using BCrypt
 sv--
 
 sv->sv++: Instantiate new Account & User entities\n(AccountStatus = "Active", IsVerified = false)
@@ -93,15 +111,13 @@ alt [numberOfRowsAffected > 0]
     repo-->>sv: Return true
     sv-->>be_ctrl: Return "Success"
     be_ctrl-->>fe_ctrl: Return statusCode 200 (Ok)
-    fe_ctrl -> login_view++: Redirect to Login page
-    login_view -->> act--: Display Login page with "Account registered successfully" message
+    fe_ctrl->verify_view++: Redirect to VerifyRecommend page
+    verify_view-->>act--: Display VerifyRecommend page
 else [numberOfRowsAffected = 0]
     repo-->>sv--: Return false
-    sv->sv++: throw InvalidOperationException
-    sv--
-    sv-->>be_ctrl--: throw InvalidOperationException
+    sv-->>be_ctrl--: Return "Error"
     be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
     fe_ctrl-->>view--: Return statusCode 400
-    view-->>act--: Display registration failed error message
+    view-->>act--: Display error message
 end
 @enduml

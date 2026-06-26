@@ -204,7 +204,7 @@ namespace CourseMarketplaceBE.Application.Services
         public async Task<bool> UpdateStaffAsync(int id, UpdateStaffRequest request)
         {
             var account = await _userRepository.GetAccountByIdAsync(id);
-            if (account == null || account.Manager == null || account.Manager.Role != "staff")
+            if (account == null || account.Manager == null || !string.Equals(account.Manager.Role, "staff", StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
@@ -230,7 +230,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 var oldStatus = account.AccountStatus;
                 account.AccountStatus = request.AccountStatus;
-                if (request.AccountStatus == AccountStatus.Banned.ToValue() && oldStatus != AccountStatus.Banned.ToValue())
+                if (request.AccountStatus.Equals(AccountStatus.Banned.ToValue(), StringComparison.OrdinalIgnoreCase) && !string.Equals(oldStatus, AccountStatus.Banned.ToValue(), StringComparison.OrdinalIgnoreCase))
                 {
                     var lockout = new Lockout
                     {
@@ -242,15 +242,13 @@ namespace CourseMarketplaceBE.Application.Services
                     };
                     await _lockoutRepository.AddAsync(lockout);
                 }
-                else if (request.AccountStatus != AccountStatus.Banned.ToValue() && oldStatus == AccountStatus.Banned.ToValue())
+                else if (!request.AccountStatus.Equals(AccountStatus.Banned.ToValue(), StringComparison.OrdinalIgnoreCase) && string.Equals(oldStatus, AccountStatus.Banned.ToValue(), StringComparison.OrdinalIgnoreCase))
                 {
                     await _lockoutRepository.RemoveAccountLockoutsAsync(account.AccountId);
                 }
             }
 
-            int rows3 = await _userRepository.SaveChangesAsync();
-            if (rows3 <= 0)
-                throw new InvalidOperationException("Failed to save changes when updating staff.");
+            await _userRepository.SaveChangesAsync();
             return true;
         }
 

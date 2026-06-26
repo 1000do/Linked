@@ -478,6 +478,8 @@ namespace CourseMarketplaceBE.Application.Services
                     TotalStudents = c.Enrollments?.Count ?? 0
                 }).ToList();
 
+            var totalReviews = await _repo.CountInstructorReviewsAsync(instructorId);
+
             return new InstructorPublicProfileDto
             {
                 InstructorId = instructorId,
@@ -492,7 +494,7 @@ namespace CourseMarketplaceBE.Application.Services
                 TotalStudents = stats?.TotalStudentsCount ?? 0,
                 TotalCourses = activeCourses,
                 AverageRating = (decimal)(stats?.InstructorRating ?? 0),
-                TotalReviews = 0, // Sẽ bổ sung sau nếu cần
+                TotalReviews = totalReviews,
                 Courses = courses
             };
         }

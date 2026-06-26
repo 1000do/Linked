@@ -26,60 +26,88 @@
 
 hide footbox
 
-mainframe Apply Coupons
+mainframe Apply Coupon
 actor User as act
 
-participant "Cart/Index.cshtml" as view
+participant "CartView" as view
 participant "CartController" as fe_ctrl <<frontend controller>>
 participant "CartController" as be_ctrl <<backend controller>>
 participant ":CartService" as sv
-participant ":CouponRepository" as couponRepo
+participant ":CartRepository" as cart_repo
+participant ":CouponRepository" as coupon_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act++
 act->view++: Enter coupon code and click "Apply"
-view->fe_ctrl++: Send POST /Cart/ApplyCoupon?couponCode=...
+view->fe_ctrl++: Send POST /Cart/ApplyCoupon (with couponCode)
 
-fe_ctrl->fe_ctrl++: Retrieve applied coupon map from cookies
-fe_ctrl--
-fe_ctrl->fe_ctrl++: Save updated coupon code to cookie map
+fe_ctrl->fe_ctrl++: Save coupon code to cookie
 fe_ctrl--
 
-fe_ctrl -> view++: Redirect to Cart page
-deactivate fe_ctrl
-deactivate view
-
+fe_ctrl-->>view--: Return statusCode 302
 view->fe_ctrl++: Send GET /Cart
 
-fe_ctrl->be_ctrl++: Send GET /api/cart/summary?couponCode=... (with Bearer Token)
+fe_ctrl->be_ctrl++: Send GET /api/cart/summary?couponCode=...
 
 be_ctrl->sv++: Call GetCartSummaryAsync(userId, couponCode)
-sv->couponRepo++: Call GetByCodeAsync(couponCode)
-couponRepo->ctx++: Query Coupon details by code
+
+sv->cart_repo++: Call GetCartItemsWithDetailsAsync(userId)
+cart_repo->ctx++: Query CartItems and Course details
 ctx->db++: Execute SELECT query
-db-->>ctx--: Return Coupon entity
-ctx-->>couponRepo--: Return Coupon entity
-couponRepo-->>sv--: Return Coupon entity
+db-->>ctx--: Return result
+ctx-->>cart_repo--: Return list
+cart_repo-->>sv--: Return list
 
-alt [Coupon is invalid (null / inactive / expired / limit reached)]
-    sv->sv++: Set validation error message and 0 discount
+sv->coupon_repo++: Call GetByCodeAsync(code)
+coupon_repo->ctx++: Query Coupon details
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return result
+ctx-->>coupon_repo--: Return coupon
+coupon_repo-->>sv--: Return coupon
+
+sv->sv++: Validate coupon
+sv--
+
+alt [Coupon is invalid or expired]
+    sv-->>be_ctrl--: throw InvalidOperationException
+    be_ctrl-->>fe_ctrl--: Return statusCode 400
+    
+    fe_ctrl->fe_ctrl++: Remove invalid coupon from cookie
+    fe_ctrl--
+    
+    fe_ctrl->be_ctrl++: Send GET /api/cart/summary (Retry without coupon)
+    
+    be_ctrl->sv++: Call GetCartSummaryAsync(...)
+    sv->sv++: Fetch items and calculate totals
     sv--
-    sv-->>be_ctrl: Return CartSummaryResponse DTO with CouponMessage
-else [Coupon is valid]
-    sv->sv++: Calculate discount based on CouponType (Percent / Flat) & MinOrderValue
+    
+    sv-->>be_ctrl--: Return CartSummaryResponse DTO
+    be_ctrl-->>fe_ctrl--: Return statusCode 200
+    
+    fe_ctrl->fe_ctrl++: Set error message
+    fe_ctrl--
+    
+    fe_ctrl-->>view: Return statusCode 200 (View with model)
+    view-->>act: Display error message
+else [Coupon is valid and eligible]
+    sv->sv++: Calculate DiscountAmount based on CouponType
     sv--
-    sv-->>be_ctrl--: Return CartSummaryResponse DTO with AppliedCouponCode & DiscountAmount
-end
-
-be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with CartSummaryResponse JSON
-fe_ctrl->fe_ctrl++: Map to CartViewModel
-fe_ctrl--
-fe_ctrl-->>view--: Return View(vm)
-
-alt [Coupon validation failed]
-    view-->>act: Display error Toast or warning badge
-else [Coupon applied successfully]
-    view-->>act--: Display discount value, updated subtotal/total, and success badge
+    
+    sv->coupon_repo++: Call GetActiveAvailableCouponsAsync(now)
+    coupon_repo->ctx++: Query active coupons
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return result
+    ctx-->>coupon_repo--: Return list
+    coupon_repo-->>sv--: Return list
+    
+    sv-->>be_ctrl--: Return CartSummaryResponse DTO
+    be_ctrl-->>fe_ctrl--: Return statusCode 200
+    
+    fe_ctrl->fe_ctrl++: Set success message
+    fe_ctrl--
+    
+    fe_ctrl-->>view--: Return statusCode 200 (View with model)
+    view-->>act--: Display discount and updated totals
 end
 @enduml

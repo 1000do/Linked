@@ -26,6 +26,7 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         Task<InstructorDashboardDto?> GetRejectedApplicationDtoAsync(int userId);
         Task<InstructorStats?> GetStatsAsync(int userId);
         Task<int> CountActiveCoursesAsync(int instructorId);
+        Task<int> CountInstructorReviewsAsync(int instructorId);
         Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.InstructorPayoutDto>> GetPayoutsAsync(int instructorId, int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, int? year = null, int? month = null);
         Task<int> GetTotalApprovedInstructorsCountAsync();
 

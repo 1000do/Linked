@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-117 - Delete Account (Toggle Ban)</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-117. Delete Account (Toggle Ban)</strong></p>
+
+    <p><strong>Function Trigger:</strong> Admin clicks the "Ban" (or "Delete") button next to an account.</p>
+
+    <p><strong>Function Description:</strong> Allows an Admin to deactivate (ban) or reactivate a registered account. Banning an account places a severe 100-year lockout suspension on it. Reactivating the account deletes all active lockout entries, immediately restoring access. The Super Admin account is protected from deletion/banning.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Admin must be logged in with Admin role privileges.</li>
+                <li>The target account must exist in the system.</li>
+                <li>Admin has stable internet connection.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Toggle Ban Successfully:</strong>
+                    <ul>
+                        <li>Admin accesses the Account Management page.</li>
+                        <li>Admin clicks the Ban (or Toggle Ban) button next to a specific account.</li>
+                        <li>The system checks if the Admin is authenticated.</li>
+                        <li>The system retrieves the target account details.</li>
+                        <li>The system verifies that the target account is not the Super Admin.</li>
+                        <li>The system toggles the account status. If the account was active, the system changes the status to banned and creates a 100-year lockout record. If the account was banned, the system changes the status to active and deletes all active lockout records.</li>
+                        <li>The system saves the changes to the database.</li>
+                        <li>The system displays a success message showing the new status and refreshes the account list.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The account's status is toggled in the database between active and banned.</li>
+                <li>Lockout records are created (if banned) or deleted (if unbanned) in the database.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system detects that the Admin is not authenticated or lacks admin privileges. The system redirects the Admin to the Login page.</li>
+                <li><strong>Account Not Found:</strong> The system detects that the target account ID does not exist in the database. The system displays the error message: "Account not found."</li>
+                <li><strong>Super Admin Ban Blocked:</strong> The system detects that the target account is the Super Admin account. The system displays the error message: "Cannot ban the Super Admin account."</li>
+                <li><strong>Database Save Failure:</strong> The system detects that saving the status changes failed (rows affected <= 0). The system displays an error message.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Super Admin Protection:</strong> The Super Admin account ("admin" role) is protected and cannot be banned or locked out.</li>
+                <li><strong>Lockout Duration:</strong> Banning an account creates a lockout record with a duration of 100 years to effectively disable login permissions permanently.</li>
+                <li><strong>Staff Start Date:</strong> For Staff accounts, the account creation timestamp (AccountCreatedAt) serves as the official start date of the staff member.</li>
+                <li><strong>Immediate Recovery:</strong> Unbanning an account deletes all active lockout entries immediately, restoring login access.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

@@ -114,6 +114,9 @@ public class AuthService : IAuthService
         if (!r.Email.ToLower().EndsWith("@gmail.com"))
             return "Email must be a @gmail.com address";
 
+        if (!System.Text.RegularExpressions.Regex.IsMatch(r.Password, @"^(?=.*[^a-zA-Z0-9]).+$"))
+            return "Password must contain at least 1 special character";
+
         if (await _userRepo.IsEmailExistsAsync(r.Email.ToLower()))
             return "Email already exists";
 

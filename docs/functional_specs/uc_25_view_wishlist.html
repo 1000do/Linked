@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Functional Specification - View Wishlist</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>1. View Wishlist</strong></p>
+<p><strong>Function Trigger:</strong> User accesses the wishlist page.</p>
+<p><strong>Function Description:</strong> Allows an authenticated User to view all courses they have saved in their personal wishlist. For each course, the system retrieves title, thumbnail, price, instructor name, average rating, enrollment count, and check if the User is currently enrolled in it.</p>
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+<p><strong>Function Details</strong></p>
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>User must be logged in.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>View Wishlist Successfully:</strong>
+                <ul>
+                    <li>User accesses the wishlist page.</li>
+                    <li>The system checks if the User is authenticated.</li>
+                    <li>The system extracts the user ID from the session claims.</li>
+                    <li>The system queries the database to retrieve wishlist records associated with the User.</li>
+                    <li>For each saved course, the system checks whether the User is already enrolled.</li>
+                    <li>For each saved course, the system retrieves course statistics (average rating and total students).</li>
+                    <li>The system renders and displays the wishlist page with the list of courses.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>The User's wishlist courses are successfully displayed on the screen.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Session Invalid (Not Logged In):</strong> The system detects that the User is not authenticated and redirects the User to the Login page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>User must be logged in.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>
