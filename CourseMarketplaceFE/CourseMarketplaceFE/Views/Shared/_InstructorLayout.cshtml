@@ -333,20 +333,22 @@
 
             // Show a premium real-time toast alert
             if (noti && noti.title && localStorage.getItem("AccountLocked") !== "true") {
-                const truncateText = (text, maxLength = 20) => {
+                const truncateText = (text, maxLength = 100) => {
                     if (!text) return "";
                     return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
                 };
 
-                const displayTitle = truncateText(noti.title, 20);
-                const displayContent = truncateText(noti.content, 20);
+                const displayTitle = truncateText(noti.title, 255);
+                const displayContent = truncateText(noti.content, 100);
 
                 const Toast = Swal.mixin({
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
-                    timer: 6000,
+                    timer: 10000,
                     timerProgressBar: true,
+                    width: '600px',
+                    padding: '24px',
                     didOpen: (toast) => {
                         toast.addEventListener('mouseenter', Swal.stopTimer);
                         toast.addEventListener('mouseleave', Swal.resumeTimer);
