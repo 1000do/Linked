@@ -215,7 +215,27 @@
     const currentRole = '@userRole';
 
     document.addEventListener("DOMContentLoaded", () => {
-        // Initial reports and stats are loaded via Razor Pages (Task.WhenAll)
+        // Parse URL params to open correct tab
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        const subtabParam = urlParams.get('subtab');
+
+        if (subtabParam) {
+            activeReviewSubTab = subtabParam;
+            document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+                if (btn.getAttribute('data-subtab') === subtabParam) {
+                    btn.classList.add('bg-white', 'text-slate-800', 'shadow-sm');
+                    btn.classList.remove('text-slate-500');
+                } else {
+                    btn.classList.remove('bg-white', 'text-slate-800', 'shadow-sm');
+                    btn.classList.add('text-slate-500');
+                }
+            });
+        }
+        
+        if (tabParam && tabParam !== 'course-reports') {
+            switchTab(tabParam);
+        }
     });
 
     function switchTab(tab) {

@@ -227,6 +227,11 @@ public class UserRepository : IUserRepository
         return admin?.ManagerId;
     }
 
+    public async Task<List<int>> GetAllManagerIdsAsync()
+    {
+        return await _context.Managers.Select(m => m.ManagerId).ToListAsync();
+    }
+
     public async Task<int> GetTotalStudentsCountAsync()
     {
         return await _context.Users.CountAsync();
