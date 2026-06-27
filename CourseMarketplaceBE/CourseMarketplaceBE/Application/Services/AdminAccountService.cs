@@ -283,8 +283,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             int rows4 = await _userRepository.SaveChangesAsync();
-            if (rows4 <= 0)
-                throw new InvalidOperationException("Failed to save changes when toggling ban status.");
+            /* zero rows exception removed */
             return account.AccountStatus;
         }
 
@@ -328,8 +327,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             int rows5 = await _userRepository.SaveChangesAsync();
-            if (rows5 <= 0)
-                throw new InvalidOperationException("Failed to save changes when flagging account.");
+            /* zero rows exception removed */
 
             // Send notification
             string reasonStr = string.IsNullOrWhiteSpace(reason) ? "No reason specified" : reason;

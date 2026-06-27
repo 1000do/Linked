@@ -541,7 +541,7 @@ public class CheckoutService : ICheckoutService
                 };
                 await _repo.AddOrderAsync(order);
                 int rows1 = await _repo.SaveChangesAsync();
-                if (rows1 <= 0) throw new InvalidOperationException("Failed to save changes");
+                /* zero rows exception removed */
 
                 foreach (var courseId in courseIds)
                 {
@@ -584,7 +584,7 @@ public class CheckoutService : ICheckoutService
                     };
                     await _repo.AddOrderItemAsync(orderItem);
                     int rows2 = await _repo.SaveChangesAsync();
-                    if (rows2 <= 0) throw new InvalidOperationException("Failed to save changes");
+                    /* zero rows exception removed */
 
                     // Increment coupon usage
                     if (isDiscounted && coupon != null)
@@ -609,7 +609,7 @@ public class CheckoutService : ICheckoutService
                     };
                     await _repo.AddTransactionAsync(transaction);
                     int rows3 = await _repo.SaveChangesAsync();
-                    if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
+                    /* zero rows exception removed */
 
                     if (checkoutType == "gift")
                     {
@@ -639,7 +639,7 @@ public class CheckoutService : ICheckoutService
 
                         await _giftRepo.AddAsync(gift);
                         int rowsGift = await _giftRepo.SaveChangesAsync();
-                        if (rowsGift <= 0) throw new InvalidOperationException("Failed to save gift record");
+                        /* zero rows exception removed */
 
                         // ── 2.5b Gửi Email Thiệp Quà Tặng ──────────────────────────
                         var claimLink = $"{feBaseUrl}/Gift/Claim?token={token}";
@@ -735,7 +735,7 @@ public class CheckoutService : ICheckoutService
                             };
                             await _enrollmentRepo.AddEnrollmentAsync(enrollment);
                             int rows4 = await _enrollmentRepo.SaveChangesAsync();
-                            if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
+                            /* zero rows exception removed */
                         }
                     }
 
@@ -996,7 +996,7 @@ public class CheckoutService : ICheckoutService
                 };
                 await _repo.AddOrderAsync(order);
                 int rows1 = await _repo.SaveChangesAsync();
-                if (rows1 <= 0) throw new InvalidOperationException("Failed to save changes");
+                /* zero rows exception removed */
 
                 foreach (var courseId in courseIds)
                 {
@@ -1039,7 +1039,7 @@ public class CheckoutService : ICheckoutService
                     };
                     await _repo.AddOrderItemAsync(orderItem);
                     int rows2 = await _repo.SaveChangesAsync();
-                    if (rows2 <= 0) throw new InvalidOperationException("Failed to save changes");
+                    /* zero rows exception removed */
 
                     // Increment coupon usage
                     if (isDiscounted && coupon != null)
@@ -1064,7 +1064,7 @@ public class CheckoutService : ICheckoutService
                     };
                     await _repo.AddTransactionAsync(transaction);
                     int rows3 = await _repo.SaveChangesAsync();
-                    if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
+                    /* zero rows exception removed */
 
                     if (checkoutType == "gift")
                     {
@@ -1094,7 +1094,7 @@ public class CheckoutService : ICheckoutService
 
                         await _giftRepo.AddAsync(gift);
                         int rowsGift = await _giftRepo.SaveChangesAsync();
-                        if (rowsGift <= 0) throw new InvalidOperationException("Failed to save gift record");
+                        /* zero rows exception removed */
 
                         // ── Gửi Email Thiệp Quà Tặng ──────────────────────────
                         var claimLink = $"{feBaseUrl}/Gift/Claim?token={token}";
@@ -1190,7 +1190,7 @@ public class CheckoutService : ICheckoutService
                             };
                             await _enrollmentRepo.AddEnrollmentAsync(enrollment);
                             int rows4 = await _enrollmentRepo.SaveChangesAsync();
-                            if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
+                            /* zero rows exception removed */
                         }
                     }
 
@@ -1279,7 +1279,7 @@ public class CheckoutService : ICheckoutService
                     await _repo.DeleteOrderAsync(order);
                 }
                 int rows6 = await _repo.SaveChangesAsync();
-                if (rows6 <= 0) throw new InvalidOperationException("Failed to save changes");
+                /* zero rows exception removed */
                 _logger.LogInformation("[CHECKOUT] Abandoned pending orders cleaned up successfully for user {UserId}.", userId);
             }
         }

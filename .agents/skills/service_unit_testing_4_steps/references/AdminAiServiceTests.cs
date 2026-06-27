@@ -44,7 +44,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // GetAllModelsAsync
         [Fact]
-        public async Task GetAllModelsAsync_ShouldReturnMappedModels()
+        public async Task GetAllModelsAsync_HasModels_ReturnsMappedAiModelAdminDtos()
         {
             //Arrange 1
             var models = new List<AiModel> { new AiModel { ModelId = 1 } };
@@ -65,7 +65,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetAllModelsAsync_WhenEmpty_ShouldThrowKeyNotFoundException()
+        public async Task GetAllModelsAsync_NoModelsFound_ThrowsKeyNotFoundException()
         {
             //Arrange 1
             var emptyModels = new List<AiModel>();
@@ -85,7 +85,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // GetPagedModelsAsync
         [Fact]
-        public async Task GetPagedModelsAsync_ShouldReturnMappedModelsAndTotalCount()
+        public async Task GetPagedModelsAsync_HasModels_ReturnsPagedResultOfDtos()
         {
             //Arrange 1
             int page = 1;
@@ -110,7 +110,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetPagedModelsAsync_WhenEmpty_ShouldThrowKeyNotFoundException()
+        public async Task GetPagedModelsAsync_NoModelsFound_ThrowsKeyNotFoundException()
         {
             //Arrange 1
             int page = 1;
@@ -132,7 +132,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // GetModelByIdAsync
         [Fact]
-        public async Task GetModelByIdAsync_WhenExists_ShouldReturnModel()
+        public async Task GetModelByIdAsync_ModelExists_ReturnsMappedDto()
         {
             //Arrange 1
             int mockId = 1;
@@ -154,7 +154,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetModelByIdAsync_WhenNotExists_ShouldThrowKeyNotFoundException()
+        public async Task GetModelByIdAsync_ModelNotFound_ThrowsKeyNotFoundException()
         {
             //Arrange 1
             int mockId = 1;
@@ -174,7 +174,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // AddModelAsync
         [Fact]
-        public async Task AddModelAsync_ShouldReturnAddedModel()
+        public async Task AddModelAsync_ValidRequest_ReturnsAddedModelDto()
         {
             //Arrange 1
             var req = new CreateAiModelRequest { ModelName = "Test" };
@@ -202,7 +202,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task AddModelAsync_WhenNotSaved_ShouldThrowInvalidOperationException()
+        public async Task AddModelAsync_DatabaseSaveFails_ThrowsInvalidOperationException()
         {
             //Arrange 1
             var req = new CreateAiModelRequest { ModelName = "Test" };
@@ -224,7 +224,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // UpdateModelAsync
         [Fact]
-        public async Task UpdateModelAsync_WhenExists_ShouldReturnUpdatedModel()
+        public async Task UpdateModelAsync_ModelExists_ReturnsUpdatedModelDto()
         {   
             //Arrange 1
             var mockId = 1;
@@ -259,7 +259,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task UpdateModelAsync_WhenNotFound_ShouldThrowKeyNotFoundException()
+        public async Task UpdateModelAsync_ModelNotFound_ThrowsKeyNotFoundException()
         {
             //Arrange 1
             var mockId = 1;
@@ -279,7 +279,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task UpdateModelAsync_WhenNotSaved_ShouldThrowInvalidOperationException()
+        public async Task UpdateModelAsync_DatabaseSaveFails_ThrowsInvalidOperationException()
         {
             //Arrange 1
             var mockId = 1;
@@ -305,7 +305,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // ToggleModelStatusAsync
         [Fact]
-        public async Task ToggleModelStatusAsync_WhenActive_ShouldSetInactive()
+        public async Task ToggleModelStatusAsync_ModelIsActive_SetsStatusToInactive()
         {
             //Arrange 1
             var mockId = 1;
@@ -327,7 +327,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task ToggleModelStatusAsync_WhenInactive_ShouldSetActive()
+        public async Task ToggleModelStatusAsync_ModelIsInactive_SetsStatusToActive()
         {
             //Arrange 1
             var mockId = 1;
@@ -349,7 +349,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task ToggleModelStatusAsync_WhenNotFound_ShouldThrowKeyNotFoundException()
+        public async Task ToggleModelStatusAsync_ModelNotFound_ThrowsKeyNotFoundException()
         {
             //Arrange 1
             var mockId = 1;
@@ -368,7 +368,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task ToggleModelStatusAsync_WhenNotSaved_ShouldThrowInvalidOperationException()
+        public async Task ToggleModelStatusAsync_DatabaseSaveFails_ThrowsInvalidOperationException()
         {
             //Arrange 1
             var mockId = 1;
@@ -390,7 +390,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // GetConfigurationsAsync
         [Fact]
-        public async Task GetConfigurationsAsync_ShouldReturnConfigs()
+        public async Task GetConfigurationsAsync_ConfigurationsExist_ReturnsMappedConfigs()
         {
             //Arrange 1
             string jsonThreshold = "{\"spam\":0.8,\"toxic\":0.7,\"similarity\":0.9}";
@@ -426,7 +426,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetConfigurationsAsync_WhenInvalidJson_ShouldUseDefaults()
+        public async Task GetConfigurationsAsync_InvalidJsonConfiguration_UsesDefaultThresholds()
         {
             //Arrange 1
             string invalidJson = "invalid json string";
@@ -447,7 +447,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // UpdateThresholdsAsync
         [Fact]
-        public async Task UpdateThresholdsAsync_ShouldReturnTrue()
+        public async Task UpdateThresholdsAsync_ValidRequest_UpdatesThresholdsAndReturnsTrue()
         {
             //Arrange 1
             var req = new UpdateThresholdsRequest { SpamConfidenceThreshold = 0.5f, ToxicityConfidenceThreshold = 0.6f, SimilarityScoreThreshold = 0.7f };
@@ -468,7 +468,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task UpdateThresholdsAsync_WhenNotSaved_ShouldThrowInvalidOperationException()
+        public async Task UpdateThresholdsAsync_DatabaseSaveFails_ThrowsInvalidOperationException()
         {
             //Arrange 1
             var req = new UpdateThresholdsRequest { SpamConfidenceThreshold = 0.5f, ToxicityConfidenceThreshold = 0.6f, SimilarityScoreThreshold = 0.7f };
@@ -487,7 +487,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // UpdateIntegrationAsync
         [Fact]
-        public async Task UpdateIntegrationAsync_ShouldReturnTrue()
+        public async Task UpdateIntegrationAsync_ValidRequest_UpdatesConfigAndReturnsTrue()
         {
             //Arrange 1
             var req = new UpdateIntegrationRequest { ConfigKey = "key", ConfigValue = "value" };
@@ -505,7 +505,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task UpdateIntegrationAsync_WhenNotSaved_ShouldThrowInvalidOperationException()
+        public async Task UpdateIntegrationAsync_DatabaseSaveFails_ThrowsInvalidOperationException()
         {
             //Arrange 1
             var req = new UpdateIntegrationRequest { ConfigKey = "key", ConfigValue = "value" };
@@ -524,7 +524,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // GetCourseModerationLogsAsync
         [Fact]
-        public async Task GetCourseModerationLogsAsync_ShouldReturnMappedLogsAndTotalCount()
+        public async Task GetCourseModerationLogsAsync_HasLogs_ReturnsPagedResultOfDtos()
         {
             //Arrange 1
             int page = 1;
@@ -549,7 +549,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetCourseModerationLogsAsync_WhenEmpty_ShouldThrowKeyNotFoundException()
+        public async Task GetCourseModerationLogsAsync_NoLogsFound_ThrowsKeyNotFoundException()
         {
             //Arrange 1
             int page = 1;
@@ -571,7 +571,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // GetCourseModerationLogDetailAsync
         [Fact]
-        public async Task GetCourseModerationLogDetailAsync_WhenExists_ShouldReturnMappedLog()
+        public async Task GetCourseModerationLogDetailAsync_LogExists_ReturnsMappedDto()
         {
             //Arrange 1
             int mockId = 1;
@@ -593,7 +593,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetCourseModerationLogDetailAsync_WhenNotExists_ShouldThrowKeyNotFoundException()
+        public async Task GetCourseModerationLogDetailAsync_LogNotFound_ThrowsKeyNotFoundException()
         {
             //Arrange 1
             int mockId = 1;
@@ -613,7 +613,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // GetCourseReviewModerationLogsAsync
         [Fact]
-        public async Task GetCourseReviewModerationLogsAsync_ShouldReturnMappedLogsAndTotalCount()
+        public async Task GetCourseReviewModerationLogsAsync_HasLogs_ReturnsPagedResultOfDtos()
         {
             //Arrange 1
             int page = 1;
@@ -638,7 +638,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetCourseReviewModerationLogsAsync_WhenEmpty_ShouldThrowKeyNotFoundException()
+        public async Task GetCourseReviewModerationLogsAsync_NoLogsFound_ThrowsKeyNotFoundException()
         {
             //Arrange 1
             int page = 1;
@@ -660,7 +660,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // GetCourseReviewModerationLogDetailAsync
         [Fact]
-        public async Task GetCourseReviewModerationLogDetailAsync_WhenExists_ShouldReturnMappedLog()
+        public async Task GetCourseReviewModerationLogDetailAsync_LogExists_ReturnsMappedDto()
         {
             //Arrange 1
             int mockId = 1;
@@ -682,7 +682,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetCourseReviewModerationLogDetailAsync_WhenNotExists_ShouldThrowKeyNotFoundException()
+        public async Task GetCourseReviewModerationLogDetailAsync_LogNotFound_ThrowsKeyNotFoundException()
         {
             //Arrange 1
             int mockId = 1;
@@ -702,7 +702,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // GetLessonReviewModerationLogsAsync
         [Fact]
-        public async Task GetLessonReviewModerationLogsAsync_ShouldReturnMappedLogsAndTotalCount()
+        public async Task GetLessonReviewModerationLogsAsync_HasLogs_ReturnsPagedResultOfDtos()
         {
             //Arrange 1
             int page = 1;
@@ -727,7 +727,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetLessonReviewModerationLogsAsync_WhenEmpty_ShouldThrowKeyNotFoundException()
+        public async Task GetLessonReviewModerationLogsAsync_NoLogsFound_ThrowsKeyNotFoundException()
         {
             //Arrange 1
             int page = 1;
@@ -749,7 +749,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // GetLessonReviewModerationLogDetailAsync
         [Fact]
-        public async Task GetLessonReviewModerationLogDetailAsync_WhenExists_ShouldReturnMappedLog()
+        public async Task GetLessonReviewModerationLogDetailAsync_LogExists_ReturnsMappedDto()
         {
             //Arrange 1
             int mockId = 1;
@@ -771,7 +771,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetLessonReviewModerationLogDetailAsync_WhenNotExists_ShouldThrowKeyNotFoundException()
+        public async Task GetLessonReviewModerationLogDetailAsync_LogNotFound_ThrowsKeyNotFoundException()
         {
             //Arrange 1
             int mockId = 1;

@@ -992,9 +992,10 @@ END $$;
 INSERT INTO 
 ai_models (model_name,model_type,model_provider,model_version, model_path, model_status,description, process_type)
 VALUES
-('harmful_text_classifier','classifier','local','1','/app/models/spam_1/,/app/models/toxic_3/','active','an ensemble of spam and toxic text classifier that was fine-tuned from distilbert multilingual cased','text'),
-('clip','embedding_generator','openai','1','openai/clip-vit-base-patch32','active','a multimodal model that was used to generate embeddings','media'),
-('distilbert','embedding_generator','hugging_face','1','distilbert-base-multilingual-cased','active','a language model that was used to generate embeddings','text');
+('harmful_text_classifier','classifier','local','1.0.0','/app/models/spam_1/,/app/models/toxic_3/','active','an ensemble of spam and toxic text classifier that was fine-tuned from distilbert multilingual cased','text'),
+('clip','embedding_generator','openai','1.0.0','openai/clip-vit-base-patch32','active','a multimodal model that was used to generate embeddings','media'),
+('distilbert','embedding_generator','hugging_face','1.0.0','distilbert-base-multilingual-cased','active','a language model that was used to generate embeddings','text'),
+('paraphrase-multilingual-MiniLM-L12-v2','embedding_generator','hugging_face','1.0.0','sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2','active','a multilingual language model that was used to generate embeddings','text');
 
 INSERT INTO
 system_configs(config_key,config_value,description)
