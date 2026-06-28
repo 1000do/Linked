@@ -26,10 +26,10 @@
 
 hide footbox
 
-mainframe View Notification Detail (User/Instructor)
+mainframe View Notification Detail (Staff/Admin)
 
-actor User as act
-participant "Notification/Index.cshtml" as view
+actor Admin as act
+participant "Notification/Admin.cshtml" as view
 participant "NotificationController" as fe_ctrl <<frontend controller>>
 participant "NotificationController" as be_ctrl <<backend controller>>
 participant ":NotificationService" as sv
@@ -40,11 +40,11 @@ participant "NotificationHub" as hub
 
 act++
 act->view++: Click on a notification row
-view->view++: Populate and display notification modal
+view->view++: Populate and display notification detail modal
 view--
 view-->>act: Display Notification Detail Modal
 
-alt [Notification is unread]
+alt [User role is staff AND notification belongs to user AND notification is unread]
     view->fe_ctrl++: Send PUT /Notification/MarkAsRead/{id}
     fe_ctrl->be_ctrl++: Send PUT /api/Notification/mark-as-read/{id} (with Bearer Token)
     
@@ -91,12 +91,12 @@ alt [Notification is unread]
             sv-->>be_ctrl--: Return true
             be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
             fe_ctrl-->>view--: Return JSON success response
-            view->view++: Update local notification state to read
+            view->view++: Update local notification state to read & refresh table
             view--
             view-->>act: Update notification UI to show as read
         end
     end
-else [Notification is already read]
+else [User is Admin OR notification does not belong to user OR is already read]
     view-->>act--: (No further action)
 end
 

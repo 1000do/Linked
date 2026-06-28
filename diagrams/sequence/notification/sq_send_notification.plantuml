@@ -26,92 +26,141 @@
 
 hide footbox
 
-mainframe Send Notification
-actor Admin as act
+mainframe Send Notifications (Staff/Admin)
 
-participant "Notification/SystemNotifications.cshtml" as view
+actor Admin as act
+participant "Notification/Admin.cshtml" as view
+participant "NotificationController" as fe_ctrl <<frontend controller>>
 participant "NotificationController" as be_ctrl <<backend controller>>
 participant ":NotificationService" as sv
 participant ":UserRepository" as user_repo
 participant ":NotificationRepository" as repo
-participant "NotificationHub" as hub
 participant ":AppDbContext" as ctx
 database Database as db
+participant "NotificationHub" as hub
 
 act++
-act->view++: Compose notification details
-act->view: Click "Send Notification"
-view->view++: Validate input form
+act->view++: Click "Create Notification" button
+view->view++: Open Compose Notification Modal
 view--
-group opt [Invalid input]
-    view-->>act: Display client-side warning alert
-end
+view-->>act: Display Compose Notification Modal
 
-act->view: Confirm and submit
-view->be_ctrl++: Send POST /api/Notification/send-advanced (JSON payload)
+act->view: Enter Title, Content, TargetType, and Emails
+act->view: Click "Send Notification" button
 
-be_ctrl->be_ctrl++: Validate title and content length
-be_ctrl--
-group opt [Title or Content length > 100 characters]
-    be_ctrl-->>view: Return statusCode 400 (BadRequest)
-    view-->>act: Display validation error message
-end
+view->view++: Validate input fields and prevent self-sending
+view--
 
-be_ctrl->sv++: Call SendAdvancedAsync(dto)
-
-alt [dto.TargetType == "ALL"]
-    sv->user_repo++: Call GetAllUserIdsAsync()
-    user_repo->ctx++: Query all user IDs
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return user IDs list
-    ctx-->>user_repo--: Return user IDs list
-    user_repo-->>sv--: Return user IDs list
-else [dto.TargetType == "SINGLE"]
-    loop for each email in dto.Emails
-        sv->user_repo++: Call GetUserIdByEmailAsync(email)
-        user_repo->ctx++: Query user ID by email
-        ctx->db++: Execute SELECT query
-        db-->>ctx--: Return userId
-        ctx-->>user_repo--: Return userId
-        user_repo-->>sv--: Return userId
+alt [Invalid input]
+    view-->>act: Display validation warning alert
+else [Valid input]
+    view->fe_ctrl++: Send POST /Notification/SendAdvanced
+    fe_ctrl->be_ctrl++: Send POST /api/Notification/send-advanced (with Bearer Token)
+    
+    alt [Unauthorized role]
+        be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
+        fe_ctrl-->>view: Return JSON error response
+        view-->>act: Display access denied message
+    else [Authorized Admin/Staff]
+        be_ctrl->sv++: Call SendAdvancedAsync(dto, senderId, senderRole)
+        
+        alt [dto.TargetType == "ALL"]
+            alt [senderRole == "staff"]
+                sv->user_repo++: Call GetUserIdsForStaffSenderAsync()
+                user_repo->ctx++: Query user IDs
+                ctx->db++: Execute SELECT query
+                db-->>ctx--: Return user IDs list
+                ctx-->>user_repo--: Return user IDs list
+                user_repo-->>sv--: Return user IDs list
+            else [senderRole == "admin"]
+                sv->user_repo++: Call GetUserIdsForAdminSenderAsync()
+                user_repo->ctx++: Query user IDs
+                ctx->db++: Execute SELECT query
+                db-->>ctx--: Return user IDs list
+                ctx-->>user_repo--: Return user IDs list
+                user_repo-->>sv--: Return user IDs list
+            end
+        else [dto.TargetType == "SINGLE"]
+            loop for each email in dto.Emails
+                sv->user_repo++: Call GetAccountByEmailAsync(email)
+                user_repo->ctx++: Query account by email
+                ctx->db++: Execute SELECT query
+                db-->>ctx--: Return Account entity
+                ctx-->>user_repo--: Return Account entity
+                user_repo-->>sv--: Return Account entity
+                
+                alt [recipient exists]
+                    sv->user_repo++: Call GetRoleByAccountIdAsync(accId)
+                    user_repo->ctx++: Query role by account ID
+                    ctx->db++: Execute SELECT query
+                    db-->>ctx--: Return role
+                    ctx-->>user_repo--: Return role
+                    user_repo-->>sv--: Return role
+                    
+                    alt [Invalid recipient role (staff sending to staff/admin or admin to admin)]
+                        sv-->>be_ctrl: throw InvalidOperationException
+                        be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+                        fe_ctrl-->>view: Return JSON error response
+                        view-->>act: Display error message
+                    end
+                end
+            end
+        end
+        
+        alt [targetUserIds is empty]
+            sv-->>be_ctrl: Return 0
+            be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view: Return JSON error response
+            view-->>act: Display error message
+        else [targetUserIds is not empty]
+            sv->repo++: Call AddRangeAsync(notifications)
+            repo->ctx++: Call AddRangeAsync(notifications)
+            ctx-->>repo--: Return
+            repo-->>sv--: Return
+            
+            sv->repo++: Call SaveChangesAsync()
+            repo->ctx++: Call SaveChangesAsync()
+            ctx->db++: Execute INSERT statements
+            
+            alt [Database Save Fails (throws DbUpdateException)]
+                db-->>ctx--: Throw DbUpdateException
+                ctx-->>repo--: Throw DbUpdateException
+                repo-->>sv--: Throw NotificationException
+                sv-->>be_ctrl: throw NotificationException
+                be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
+                fe_ctrl-->>view: Return JSON error response
+                view-->>act: Display database error message
+            else [Database Save Succeeds]
+                db-->>ctx--: Return result
+                ctx-->>repo--: Return result
+                repo-->>sv--: Return result
+                
+                loop for each userId in targetUserIds
+                    sv->hub++: Call Clients.User(userId).SendAsync("ReceiveNotification", payload)
+                    hub-->>sv: Broadcast notification via SignalR
+                    hub--
+                end
+                
+                sv->user_repo++: Call GetAllManagerIdsAsync()
+                user_repo->ctx++: Query manager IDs
+                ctx->db++: Execute SELECT query
+                db-->>ctx--: Return manager IDs list
+                ctx-->>user_repo--: Return manager IDs list
+                user_repo-->>sv--: Return manager IDs list
+                
+                opt [remaining managers exist]
+                    sv->hub++: Call Clients.Users(remainingManagerIds).SendAsync("ReceiveNotification")
+                    hub-->>sv: Broadcast notification to remaining managers
+                    hub--
+                end
+                
+                sv-->>be_ctrl--: Return targetUserIds.Count
+                be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+                fe_ctrl-->>view--: Return JSON success response
+                view-->>act--: Display success alert
+            end
+        end
     end
 end
 
-sv->sv++: Check if targetUserIds is empty
-sv--
-group opt [No target users found]
-    sv-->>be_ctrl: Return 0
-    be_ctrl-->>view: Return statusCode 200 with count = 0
-    view-->>act: Display failure or warning message
-end
-
-sv->repo++: Call AddRangeAsync(notifications)
-repo->ctx++: Call AddRangeAsync(notifications)
-ctx-->>repo--: Return
-repo-->>sv--: Return
-
-sv->repo++: Call SaveChangesAsync()
-repo->ctx++: Call SaveChangesAsync()
-ctx->db++: Execute INSERT statement
-db-->>ctx--: Return result
-ctx-->>repo--: Return numberOfRowsAffected
-repo-->>sv--: Return numberOfRowsAffected
-
-sv->sv++: Check numberOfRowsAffected
-sv--
-
-alt [numberOfRowsAffected > 0]
-    loop for each userId in targetUserIds
-        sv->hub++: Call Clients.User(userId).SendAsync("ReceiveNotification", notiData)
-        hub-->>sv: Broadcast notification via SignalR Hub
-        hub--
-    end
-    sv-->>be_ctrl: Return targetUserIds.Count
-    be_ctrl-->>view: Return statusCode 200 (Ok)
-    view-->>act: Display success message
-else [numberOfRowsAffected = 0]
-    sv-->>be_ctrl--: throw InvalidOperationException
-    be_ctrl-->>view--: Return statusCode 400 (BadRequest)
-    view-->>act--: Display database error message
-end
 @enduml
