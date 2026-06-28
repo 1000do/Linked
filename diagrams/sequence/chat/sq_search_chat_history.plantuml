@@ -1,4 +1,4 @@
-@startuml 
+@startuml
 <style>
     sequenceDiagram{
         actor{
@@ -26,47 +26,50 @@
 
 hide footbox
 
-mainframe Search Chat History
-actor User as act
+mainframe Search Conversations
 
-participant "Chat/Index.cshtml" as view
-participant "ChatJS" as js_ctrl
+actor User as act
+participant "ChatIndexPage" as view
+participant "ChatController" as fe_ctrl <<frontend controller>>
+participant "ChatController" as be_ctrl <<backend controller>>
+participant ":ChatService" as sv
+participant ":ChatRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
 
 act++
-act->view++: Enter keyword in search input field
-view->js_ctrl++: Call applyChatFilters()
+act->view++: Type search query in "search-chats" input field
+view->view++: EventListener: input event triggered
 
-js_ctrl->js_ctrl++: Get search input value
-js_ctrl--
+view->view++: handleSearchInput() (with debounce)
+view--
 
-alt [Query is empty]
-    js_ctrl->js_ctrl++: Call renderChatList(allChats)
-    js_ctrl->view++: Update chatListContainer DOM
-    view--
-    js_ctrl--
-    js_ctrl-->>view: Search query cleared
-    view-->>act: Display full active conversation list
-else [Query is not empty]
-    js_ctrl->js_ctrl++: Filter allChats by partnerName or lastMessage content
-    js_ctrl--
-    
-    js_ctrl->js_ctrl++: Sort filtered conversations
-    js_ctrl--
-    
-    alt [Filtered list is empty]
-        js_ctrl->js_ctrl++: Call renderChatList(emptyList)
-        js_ctrl->view++: Update chatListContainer with empty message
-        view--
-        js_ctrl--
-        js_ctrl-->>view: Search completed with no results
-        view-->>act: Display "No conversations found" message in sidebar
-    else [Filtered list has items]
-        js_ctrl->js_ctrl++: Call renderChatList(filtered)
-        js_ctrl->view++: Update chatListContainer with filtered cards
-        view--
-        js_ctrl--
-        js_ctrl-->>view--: Search completed successfully
-        view-->>act--: Display matching conversations in sidebar
-    end
-end
+view->fe_ctrl++: Send GET /Chat/Search?q={query}
+fe_ctrl->be_ctrl++: Send GET /api/Chat/search?q={query} (with Bearer Token)
+
+be_ctrl->sv++: Call SearchChatsAsync(accountId, query)
+
+sv->repo++: Call SearchParticipantsByAccountIdAsync(accountId, query)
+repo->ctx++: Call SearchParticipantsByAccountIdAsync(accountId, query)
+ctx->db++: Execute SELECT query
+
+db-->>ctx--: Return filtered ChatParticipants list
+ctx-->>repo--: Return filtered ChatParticipants list
+repo-->>sv--: Return filtered ChatParticipants list
+
+sv->sv++: Map to ChatListDto items
+sv--
+
+sv-->>be_ctrl--: Return ChatListDto list
+be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+fe_ctrl-->>view--: Return JSON search results
+
+view->view++: applyChatFilters()
+view--
+view->view++: renderChatList(searchResults)
+view--
+
+view-->>act--: Display filtered conversations in sidebar list
+deactivate view
+
 @enduml

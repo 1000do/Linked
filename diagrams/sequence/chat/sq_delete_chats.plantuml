@@ -1,4 +1,4 @@
-@startuml 
+@startuml
 <style>
     sequenceDiagram{
         actor{
@@ -26,75 +26,84 @@
 
 hide footbox
 
-mainframe Delete Chats (Clear Chat History)
-actor User as act
+mainframe Clear Chat History
 
-participant "Chat/Index.cshtml" as view
+actor User as act
+participant "ChatIndexPage" as view
+participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatController" as be_ctrl <<backend controller>>
 participant ":ChatService" as sv
 participant ":ChatRepository" as repo
+participant ":RedisService" as redis
 participant ":AppDbContext" as ctx
 database Database as db
 
 act++
-act->view++: Click "Delete Chat" button
-view->view++: Prompt confirmation dialog
+act->view++: Click the clear chat button
+view->view++: Confirm deletion with dialog
 view--
 
-alt [Confirmed]
-    view->be_ctrl++: Send DELETE /api/chat/{chatId}/clear (with Bearer Token)
-    be_ctrl->be_ctrl++: Get accountId from Claims
-    be_ctrl--
+alt [User cancels]
+    view-->>act: Do nothing
+else [User confirms]
+    view->fe_ctrl++: Send DELETE /Chat/ClearHistory?chatId={chatId}
+    fe_ctrl->be_ctrl++: Send DELETE /api/Chat/{chatId}/clear (with Bearer Token)
     
     be_ctrl->sv++: Call ClearChatHistoryAsync(chatId, accountId)
+    
     sv->repo++: Call GetParticipantAsync(chatId, accountId)
-    repo->ctx++: Query ChatParticipant by ChatId and AccountId
+    repo->ctx++: Call GetParticipantAsync(chatId, accountId)
     ctx->db++: Execute SELECT query
-    db-->>ctx--: Return ChatParticipant record
-    ctx-->>repo--: Return ChatParticipant
-    repo-->>sv--: Return ChatParticipant
+    
+    db-->>ctx--: Return participant
+    ctx-->>repo--: Return participant
+    repo-->>sv--: Return participant
     
     alt [participant == null]
         sv-->>be_ctrl: Return false
-        be_ctrl-->>view: Return statusCode 400 (BadRequest)
+        be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+        fe_ctrl-->>view: Return BadRequest
         view-->>act: Display error message
     else [participant != null]
         sv->sv++: Set participant.ClearedAt = DateTime.UtcNow
         sv--
-        sv->repo++: Call UpdateParticipantAsync(participant)
-        repo->ctx++: Mark entity as Modified
-        ctx-->>repo--: Return
-        repo-->>sv--: Return
+        
+        sv->repo: Call UpdateParticipantAsync(participant)
         
         sv->repo++: Call SaveChangesAsync()
         repo->ctx++: Call SaveChangesAsync()
-        ctx->db++: Execute UPDATE statement
-        db-->>ctx--: Return rows affected
-        ctx-->>repo--: Return numberOfRowsAffected
-        repo-->>sv--: Return numberOfRowsAffected
+        ctx->db++: Save changes (Execute UPDATE statement)
         
-        repo->repo++: Check numberOfRowsAffected
-        repo--
-        
-        alt [numberOfRowsAffected > 0]
-            repo-->>sv: Return true
-            sv-->>be_ctrl: Return true
-            be_ctrl-->>view: Return statusCode 200 (Ok)
-            view->view++: Clear message list UI & Hide panel
+        alt [Database Save Fails (throws DbUpdateException)]
+            db-->>ctx--: Throw DbUpdateException
+            ctx-->>repo--: Throw DbUpdateException
+            repo-->>sv--: Throw DbUpdateException
+            sv-->>be_ctrl: Throw DbUpdateException
+            be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
+            fe_ctrl-->>view: Return JSON error
+            view-->>act: Display database error message
+        else [Database Save Succeeds]
+            db-->>ctx--: Return result
+            ctx-->>repo--: Return result
+            repo-->>sv--: Return result
+            
+            sv->redis++: Call ClearUnreadCountAsync(accountId, chatId)
+            redis-->>sv--: Return
+            
+            sv-->>be_ctrl--: Return true
+            be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+            fe_ctrl-->>view--: Return Ok
+            
+            view->view++: Clear message list UI
             view--
-            view->view++: Reload chats list
+            view->view++: Hide chat content panel
             view--
-            view-->>act: Display success message
-        else [numberOfRowsAffected = 0]
-            repo-->>sv--: Return false
-            sv->sv++: throw InvalidOperationException
-            sv--
-            sv-->>be_ctrl--: throw InvalidOperationException
-            be_ctrl-->>view--: Return statusCode 400 (BadRequest)
-            view-->>act--: Display error message
+            view->view++: Show empty state
+            view--
+            
+            view-->>act--: Display empty panel and success message
         end
     end
-else [Cancelled]
-    view-->>act--: Do nothing
 end
+
 @enduml

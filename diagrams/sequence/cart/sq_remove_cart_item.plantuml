@@ -39,75 +39,70 @@ participant ":AppDbContext" as ctx
 database Database as db
 
 act++
-act -> view++: Click "Remove" button on a course in cart
-view -> view++: Prompt confirmation dialog
+act->view++: Click "Remove" button on a course in cart
+view->view++: Prompt confirmation dialog
 view--
-opt Cancel removal
-    act -> view: Cancel removal
-    view -->> act: Close dialog
-end
-act -> view: Confirm removal
-view -> fe_ctrl++: Send POST request to /Cart/RemoveFromCart
 
-fe_ctrl -> fe_ctrl++: Validate login session
-fe_ctrl--
-
-alt Unauthenticated Access
-    fe_ctrl -> login_view++: Redirect to Login page
-    login_view -->> act--: Display Login page
-else Valid Session
-    fe_ctrl -> be_ctrl++: Send DELETE request to /api/cart/remove/{courseId}
+alt [User cancels]
+    view-->>act: Do nothing
+else [User confirms]
+    view->fe_ctrl++: Send POST /Cart/RemoveFromCart (with courseId)
     
-    be_ctrl -> be_ctrl++: Validate JWT Token
-    be_ctrl--
-    
-    alt Invalid Token
-        be_ctrl -->> fe_ctrl: Return statusCode 401
-        fe_ctrl -> login_view++: Redirect to Login page
-        login_view -->> act--: Display Login page
-    else Valid Token
-        be_ctrl -> sv++: Call RemoveFromCartAsync(userId, courseId)
+    alt [AccessToken cookie is missing]
+        fe_ctrl->login_view++: Redirect to Login page
+        deactivate fe_ctrl
+        login_view-->>act: Display Login page
+    else [AccessToken cookie exists]
+        fe_ctrl->be_ctrl++: Send DELETE /api/cart/remove/{courseId} (with Bearer Token)
         
-        sv -> repo++: Call GetCartItemAsync(userId, courseId)
-        repo -> ctx++: Query cart item
-        ctx -> db++: Execute query
-        db -->> ctx--: Return data
-        ctx -->> repo--: Return entity
-        repo -->> sv--: Return CartItem object
-        
-        alt Cart Item Not Found
-            sv -->> be_ctrl: throw InvalidOperationException
-            be_ctrl -->> fe_ctrl: Return statusCode 400
-            fe_ctrl -->> view: Return statusCode 302
-            view -->> act: Display error message
-        else Cart Item Found
-            sv -> repo++: Call RemoveCartItem(item)
-            repo -> ctx++: Delete entity state
-            ctx -->> repo--: Return void
-            repo -->> sv--: Return result
+        alt [Token is invalid or expired]
+            be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
+            fe_ctrl->login_view: Redirect to Login page
+            login_view-->>act: Display Login page
+        else [Token is valid]
+            be_ctrl->sv++: Call RemoveFromCartAsync(userId, courseId)
             
-            sv -> repo++: Call SaveChangesAsync()
-            repo -> ctx++: Save changes
-            ctx -> db++: Execute query
-            db -->> ctx--: Return affected rows
-            ctx -->> repo--: Return affected rows
-            repo -->> sv--: Return numberOfRowsAffected
+            sv->repo++: Call GetCartItemAsync(userId, courseId)
+            repo->ctx++: Call GetCartItemAsync(userId, courseId)
+            ctx->db++: Execute SELECT query
             
-            sv -> sv++: Check numberOfRowsAffected
-            sv--
+            db-->>ctx--: Return CartItem entity
+            ctx-->>repo--: Return CartItem entity
+            repo-->>sv--: Return CartItem entity
             
-            alt numberOfRowsAffected = 0
-                sv -->> be_ctrl: throw InvalidOperationException
-                be_ctrl -->> fe_ctrl: Return statusCode 400
-                fe_ctrl -->> view: Return statusCode 302
-                view -->> act: Display error message
-            else numberOfRowsAffected > 0
-                sv -->> be_ctrl--: Return result
-                be_ctrl -->> fe_ctrl--: Return statusCode 200
-                fe_ctrl -->> view--: Return statusCode 302
-                view -->> act--: Display success message and updated cart
+            alt [item == null]
+                sv-->>be_ctrl: throw InvalidOperationException("Course not found in the cart.")
+                be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+                fe_ctrl-->>view: Return statusCode 302 (Redirect)
+                view-->>act: Display error message
+            else [item != null]
+                sv->repo: Call RemoveCartItem(item)
+                
+                sv->repo++: Call SaveChangesAsync()
+                repo->ctx++: Call SaveChangesAsync()
+                ctx->db++: Save changes (Execute DELETE statement)
+                
+                alt [Database Save Fails (throws DbUpdateException)]
+                    db-->>ctx--: Throw DbUpdateException
+                    ctx-->>repo--: Throw DbUpdateException
+                    repo-->>sv--: Throw DbUpdateException
+                    sv-->>be_ctrl: Throw DbUpdateException
+                    be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
+                    fe_ctrl-->>view: Return statusCode 302 (Redirect)
+                    view-->>act: Display database error message
+                else [Database Save Succeeds]
+                    db-->>ctx--: Return result
+                    ctx-->>repo--: Return result
+                    repo-->>sv--: Return result
+                    
+                    sv-->>be_ctrl--: Return
+                    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+                    fe_ctrl-->>view--: Return statusCode 302 (Redirect)
+                    view-->>act--: Display success message
+                end
             end
         end
     end
 end
+
 @enduml

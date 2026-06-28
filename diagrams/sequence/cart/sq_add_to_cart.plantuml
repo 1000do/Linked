@@ -27,9 +27,9 @@
 hide footbox
 
 mainframe Add to Cart
-actor User as act
 
-participant "CourseDetail.cshtml" as view
+actor User as act
+participant "CourseDetailPage" as view
 participant "CartController" as fe_ctrl <<frontend controller>>
 participant "CartController" as be_ctrl <<backend controller>>
 participant ":AuthService" as auth_sv
@@ -41,88 +41,107 @@ database Database as db
 
 act++
 act->view++: Click "Add to Cart" button
-view->fe_ctrl++: Send POST AJAX request to /Cart/AddToCartAjax/{courseId}
+view->fe_ctrl++: Send POST AJAX request to /Cart/AddToCartAjax?id={courseId}
 
-fe_ctrl->be_ctrl++: Send POST /api/cart/add (with Bearer Token & courseId)
-
-be_ctrl->auth_sv++: Call IsEmailVerifiedAsync(userId)
-auth_sv->ctx++: Check EmailVerification status
-ctx->db++: Execute SELECT query
-db-->>ctx--: Return verification status
-ctx-->>auth_sv--: Return verification status
-auth_sv-->>be_ctrl--: Return isVerified
-
-alt [Email is not verified]
-    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-    fe_ctrl-->>view: Return statusCode 400
-    view-->>act: Display verification warning message
-else [Email is verified]
-    be_ctrl->sv++: Call AddToCartAsync(userId, courseId)
+alt [AccessToken cookie is missing]
+    fe_ctrl-->>view: Return JSON (success = false, message = "Please login first.")
+    view-->>act: Display login warning message
+else [AccessToken cookie exists]
+    fe_ctrl->be_ctrl++: Send POST /api/cart/add/{courseId} (with Bearer Token)
     
-    sv->courseRepo++: Call IsEnrolledAsync(userId, courseId)
-    courseRepo->ctx++: Query student enrollments for course
+    be_ctrl->auth_sv++: Call IsEmailVerifiedAsync(userId)
+    auth_sv->ctx++: Call IsEmailVerifiedAsync(userId)
     ctx->db++: Execute SELECT query
-    db-->>ctx--: Return enrollment status
-    ctx-->>courseRepo--: Return status
-    courseRepo-->>sv--: Return status
+    db-->>ctx--: Return verification status
+    ctx-->>auth_sv--: Return verification status
+    auth_sv-->>be_ctrl--: Return isVerified
     
-    group opt [User already enrolled in course]
-        sv-->>be_ctrl: throw InvalidOperationException
+    alt [isVerified == false]
         be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-        fe_ctrl-->>view: Return statusCode 400
-        view-->>act: Display enrollment error message
-    end
-    
-    sv->repo++: Call IsCourseInCartAsync(userId, courseId)
-    repo->ctx++: Query CartItems
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return in-cart status
-    ctx-->>repo--: Return status
-    repo-->>sv--: Return status
-    
-    group opt [Course is already in cart]
-        sv-->>be_ctrl: throw InvalidOperationException
-        be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-        fe_ctrl-->>view: Return statusCode 400
-        view-->>act: Display already in cart message
-    end
-    
-    sv->courseRepo++: Call GetByIdAsync(courseId)
-    courseRepo->ctx++: Query Course details
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return Course entity
-    ctx-->>courseRepo--: Return entity
-    courseRepo-->>sv--: Return entity
-    
-    sv->repo++: Call AddCartItemAsync(item)
-    repo->ctx++: Add CartItem entity to context
-    ctx-->>repo--: Return
-    repo-->>sv--: Return
-    
-    sv->repo++: Call SaveChangesAsync()
-    repo->ctx++: Call SaveChangesAsync()
-    ctx->db++: Execute INSERT into Database
-    db-->>ctx--: Return rows affected
-    ctx-->>repo--: Return numberOfRowsAffected
-    repo-->>sv--: Return numberOfRowsAffected
-    
-    repo->repo++: Check numberOfRowsAffected
-    repo--
-    
-    alt [numberOfRowsAffected > 0]
-        repo-->>sv: Return true
-        sv-->>be_ctrl: Return success
-        be_ctrl-->>fe_ctrl: Return statusCode 200 (Ok)
-        fe_ctrl-->>view: Return statusCode 200
-        view-->>act: Display success Toast and update cart badge count
-    else [numberOfRowsAffected = 0]
-        repo-->>sv--: Return false
-        sv->sv++: throw InvalidOperationException
-        sv--
-        sv-->>be_ctrl--: throw InvalidOperationException
-        be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
-        fe_ctrl-->>view--: Return statusCode 400
-        view-->>act--: Display error Toast message
+        fe_ctrl-->>view: Return JSON (success = false, message = "Please verify your email address.")
+        view-->>act: Display email verification required message
+    else [isVerified == true]
+        be_ctrl->sv++: Call AddToCartAsync(userId, courseId)
+        
+        sv->courseRepo++: Call GetByIdAsync(courseId)
+        courseRepo->ctx++: Call GetByIdAsync(courseId)
+        ctx->db++: Execute SELECT query
+        db-->>ctx--: Return Course entity
+        ctx-->>courseRepo--: Return Course entity
+        courseRepo-->>sv--: Return Course entity
+        
+        alt [course == null || status != Published]
+            sv-->>be_ctrl: throw InvalidOperationException("Course does not exist or is not published.")
+            be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view: Return JSON (success = false)
+            view-->>act: Display course unavailable message
+        else [course != null && status == Published]
+            alt [course.InstructorId == userId]
+                sv-->>be_ctrl: throw InvalidOperationException("You cannot add your own course to the cart.")
+                be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+                fe_ctrl-->>view: Return JSON (success = false)
+                view-->>act: Display instructor restriction message
+            else [course.InstructorId != userId]
+                sv->courseRepo++: Call IsEnrolledAsync(userId, courseId)
+                courseRepo->ctx++: Call IsEnrolledAsync(userId, courseId)
+                ctx->db++: Execute SELECT query
+                db-->>ctx--: Return isEnrolled boolean
+                ctx-->>courseRepo--: Return result
+                courseRepo-->>sv--: Return result
+                
+                alt [isEnrolled == true]
+                    sv-->>be_ctrl: throw InvalidOperationException("You have already purchased this course.")
+                    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+                    fe_ctrl-->>view: Return JSON (success = false)
+                    view-->>act: Display already purchased message
+                else [isEnrolled == false]
+                    sv->repo++: Call IsCourseInCartAsync(userId, courseId)
+                    repo->ctx++: Call IsCourseInCartAsync(userId, courseId)
+                    ctx->db++: Execute SELECT query
+                    db-->>ctx--: Return isInCart boolean
+                    ctx-->>repo--: Return result
+                    repo-->>sv--: Return result
+                    
+                    alt [isInCart == true]
+                        sv-->>be_ctrl: throw InvalidOperationException("Course is already in the cart.")
+                        be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+                        fe_ctrl-->>view: Return JSON (success = false)
+                        view-->>act: Display already in cart message
+                    else [isInCart == false]
+                        sv->repo++: Call AddCartItemAsync(cartItem)
+                        repo->ctx++: Call AddCartItemAsync(cartItem)
+                        ctx-->>repo--: Return success
+                        repo-->>sv--: Return success
+                        
+                        sv->repo++: Call SaveChangesAsync()
+                        repo->ctx++: Call SaveChangesAsync()
+                        ctx->db++: Save changes (Execute INSERT statement)
+                        
+                        alt [Database Save Fails (throws DbUpdateException)]
+                            db-->>ctx--: Throw DbUpdateException
+                            ctx-->>repo--: Throw DbUpdateException
+                            repo-->>sv--: Throw DbUpdateException
+                            sv-->>be_ctrl: Throw DbUpdateException
+                            be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
+                            fe_ctrl-->>view: Return JSON (success = false)
+                            view-->>act: Display system error message
+                        else [Database Save Succeeds]
+                            db-->>ctx--: Return result
+                            ctx-->>repo--: Return result
+                            repo-->>sv--: Return result
+                            
+                            sv-->>be_ctrl--: Return
+                            be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+                            fe_ctrl-->>view--: Return JSON (success = true)
+                            view->view++: Update cart badge count
+                            view--
+                            view-->>act--: Display success toast notification
+                        end
+                    end
+                end
+            end
+        end
     end
 end
+
 @enduml

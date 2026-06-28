@@ -1,4 +1,4 @@
-@startuml 
+@startuml
 <style>
     sequenceDiagram{
         actor{
@@ -27,10 +27,10 @@
 hide footbox
 
 mainframe View Chat List
-actor User as act
 
-participant "Chat/Index.cshtml" as view
-participant "Login.cshtml" as login_view
+actor User as act
+participant "ChatIndexPage" as view
+participant "LoginPage" as login_view
 participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatController" as be_ctrl <<backend controller>>
 participant ":ChatService" as sv
@@ -42,46 +42,58 @@ database Database as db
 act++
 act->view++: Access Chat page
 view->fe_ctrl++: Send GET /Chat/Index
-fe_ctrl->fe_ctrl++: Get user credentials from cookies
-fe_ctrl--
-fe_ctrl-->>view--: Return View
-deactivate fe_ctrl
 
-view->view++: loadChats()
-view--
-view->be_ctrl++: Send GET /api/chat/list (with Bearer Token)
-
-be_ctrl->be_ctrl++: Get accountId from Claims
-be_ctrl--
-
-alt [Token is invalid or expired]
-    be_ctrl-->>view: Return statusCode 401 (Unauthorized)
-    view -> login_view++: Redirect to Login page
+alt [AccessToken cookie is missing]
+    fe_ctrl-->>view: Return statusCode 302 (Redirect)
+    view->login_view++: Redirect to Login page
     deactivate view
-    login_view -->> act--: Display Login page
-else [Token is valid]
-    be_ctrl->sv++: Call GetMyChatsAsync(accountId)
-    sv->repo++: Call GetParticipantsByAccountIdAsync(accountId)
-    repo->ctx++: Query ChatParticipants by AccountId
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return database records
-    ctx-->>repo--: Return List<ChatParticipant>
-    repo-->>sv--: Return List<ChatParticipant>
+    login_view-->>act: Display Login page
+else [AccessToken cookie exists]
+    fe_ctrl-->>view--: Return View
+    activate view
     
-    loop for each ChatParticipant in participants
-        sv->redis++: Call GetUnreadCountAsync(accountId, chatId)
-        redis-->>sv--: Return unreadCount
-        
-        sv->redis++: Call IsUserOnlineAsync(partnerId)
-        redis-->>sv--: Return isOnline
-    end
-    
-    sv->sv++: Map to List<ChatListDto>
-    sv--
-    sv-->>be_ctrl--: Return List<ChatListDto>
-    be_ctrl-->>view--: Return statusCode 200 (Ok) with JSON data
-    view->view++: renderChatList(chats)
+    view->view++: loadChats()
     view--
-    view-->>act--: Display Chat List with partners and unread counts
+    
+    view->fe_ctrl++: Send GET /Chat/GetList
+    fe_ctrl->be_ctrl++: Send GET /api/chat/list (with Bearer Token)
+    
+    alt [Token is invalid or expired]
+        be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
+        fe_ctrl-->>view: Return Unauthorized
+        view->login_view: Redirect to Login page
+        login_view-->>act--: Display Login page
+    else [Token is valid]
+        be_ctrl->sv++: Call GetMyChatsAsync(accountId)
+        
+        sv->repo++: Call GetParticipantsByAccountIdAsync(accountId)
+        repo->ctx++: Call GetParticipantsByAccountIdAsync(accountId)
+        ctx->db++: Execute SELECT query
+        
+        db-->>ctx--: Return participants list
+        ctx-->>repo--: Return List<ChatParticipant>
+        repo-->>sv--: Return List<ChatParticipant>
+        
+        loop for each ChatParticipant in participants
+            sv->redis++: Call GetUnreadCountAsync(accountId, chatId)
+            redis-->>sv--: Return unreadCount
+            
+            sv->redis++: Call IsUserOnlineAsync(partnerId)
+            redis-->>sv--: Return isOnline
+        end
+        
+        sv->sv++: Map to List<ChatListDto>
+        sv--
+        
+        sv-->>be_ctrl--: Return List<ChatListDto>
+        be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+        fe_ctrl-->>view--: Return JSON Chat List
+        
+        view->view++: renderChatList(chats)
+        view--
+        
+        view-->>act--: Display conversation list with online statuses and unread counts
+    end
 end
+
 @enduml
