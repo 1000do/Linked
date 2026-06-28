@@ -1,0 +1,71 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Instructor Applications Detail
+
+actor Staff as act
+participant "AdminApprovalIndexPage" as index_view
+participant "AdminApprovalDetailPage" as detail_view
+participant "AdminApprovalController" as fe_ctrl <<frontend controller>>
+participant "AdminApprovalController" as be_ctrl <<backend controller>>
+participant ":InstructorApprovalService" as sv
+participant ":InstructorRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->index_view++: Click "View Info" button on application row
+index_view->fe_ctrl++: Send GET /AdminApproval/Detail/{id}
+
+fe_ctrl->be_ctrl++: Send GET /api/AdminApproval/{id} (with Bearer Token)
+
+be_ctrl->sv++: Call GetDetailAsync(id)
+sv->repo++: Call GetByIdAsync(id)
+repo->ctx++: Call GetByIdAsync(id)
+ctx->db++: Execute SELECT query
+
+db-->>ctx--: Return instructor application
+ctx-->>repo--: Return instructor application
+repo-->>sv--: Return instructor application
+
+alt [application == null]
+    sv-->>be_ctrl: Return null
+    be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
+    fe_ctrl-->>index_view: Return statusCode 302 (Redirect)
+    index_view-->>act: Display pending list
+else [application exists]
+    sv->sv++: Map to InstructorApprovalDto
+    sv--
+    sv-->>be_ctrl--: Return InstructorApprovalDto
+    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+    
+    fe_ctrl->detail_view++: Return Detail View with model
+    detail_view-->>act--: Display instructor application detail
+end
+
+@enduml
