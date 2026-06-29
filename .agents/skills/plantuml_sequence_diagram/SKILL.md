@@ -109,7 +109,7 @@ Correctly managing activation (`++`) and deactivation (`--`) is critical to show
 ### General Rules
 1. **Actor Activation (`++`):** Always activate the actor's lifeline as the first thing in the sequence diagram by adding `act ++` at the top before any interactions.
 2. **Initial Call Activation (`++`):** Append `++` to the receiving participant when it receives its first call.
-   - Example: `fe_ctrl -> be_ctrl++: Send POST request`
+   - Example: `fe_ctrl -> be_ctrl++: POST /api/courses/moderate`
 3. **Return Deactivation (`--`):** Deactivate a participant's lifeline when it returns or throws an exception.
    - Example: `be_ctrl -->> fe_ctrl--: Return statusCode 200`
 4. **Completeness:** Every participant's lifeline (excluding the actor) must be fully deactivated by the time the flow finishes its execution paths.
@@ -194,7 +194,9 @@ When dealing with nested `alt` fragments, clearly distinguish between "Local" an
   - Example: `be_ctrl -->> fe_ctrl: Return statusCode 201`
   - Example: `fe_ctrl -->> view: Return statusCode 400`
 - **Nuance Rule (FE vs BE Status Codes):** Do not blindly assume that `fe_ctrl` always translates backend errors into a `302`. You MUST look at the exact implementation of the `fe_ctrl` method. Some methods return `RedirectToAction` (302), others might return JSON (for AJAX calls), and others might return a `View` (200). The `Return statusCode` in the diagram must reflect the actual code behavior.
-- Do not return generic `JSON (success=true/false)` messages for these steps unless explicitly returning `Json(...)` in code.
+- When explicitly returning JSON payloads (e.g. `Json(...)`), standardize the format without spaces around the equals sign, and include the message payload for errors:
+  - Success Example: `Return JSON (success=true)`
+  - Failure Example: `Return JSON (success=false, message)`
 
 ### Void and Task<void> Returns
 - Whenever modeling a call to a backend method that returns `Task<void>` or `void`, the return step in the sequence diagram must simply be modeled as `Return result` (e.g., `repo -->> sv--: Return result`).
@@ -223,6 +225,45 @@ When dealing with nested `alt` fragments, clearly distinguish between "Local" an
 
 ### Distinct Return Paths
 - Paths for `alt` branches must remain separate from their entry point down to the final return to the actor. Even if two branches display a similar status code or error popup, they represent separate paths and must deactivate their lifelines independently.
+
+### API/Controller Request Messages
+- When modeling requests between the view and frontend controller, or frontend controller and backend controller, explicitly state the HTTP Method and Route Path instead of using generic phrases like "Send POST request".
+  - Frontend Example: `view -> fe_ctrl++: POST /InstructorCourse/ModerateCourse`
+  - Backend Example: `fe_ctrl -> be_ctrl++: POST /api/courses/moderate`
+
+### DTO and Object Instantiation
+- When instantiating a DTO or result object (e.g., `participant ":ResponseDto" as res`), model it as a synchronous method call representing the constructor, and include key arguments to clarify its state. Do NOT use PlantUML's native `**` instantiation syntax.
+  - Example: `sv -> res++: Call CourseModerationResult(courseId, "MANUAL_AUDIT")`
+  - Return: `res -->> sv--: Return CourseModerationResult object`
+
+### Diagram Complexity and Ref Fragments
+To prevent sequence diagrams from becoming overwhelmingly complicated, large blocks of logic must be extracted into their own separate sequence diagrams and referenced using a `ref over` fragment. This applies to both sequential and concurrent execution flows.
+
+**CRITICAL RULE: User Approval Required for Extraction**
+Before extracting logic into a `ref` fragment (whether for sequential complexity or concurrent background tasks), you MUST explicitly ask the user for permission. Propose the extraction (detailing which logic to extract and the new file name) and only proceed with the `ref` extraction if the user explicitly approves.
+
+#### 1. Sequential Execution Extraction
+- If a main execution flow contains a complex, multi-step sub-process (e.g., a massive data sync or a heavily nested calculation), abstract that entire sub-process into a new file (e.g., `sq_sub_process_name.plantuml`).
+- In the main diagram, use `ref over` spanning the relevant participants to represent this sub-process, avoiding unnecessary clutter.
+  ```plantuml
+  sv -> sv++: ExecuteComplexProcess()
+  ref over sv, db: Handle Complex Sub Process
+  sv--
+  ```
+
+#### 2. Background Tasks and Concurrency (Par & Ref Fragments)
+- When a request kicks off a background task that runs concurrently with the original thread (e.g., `QueueBackgroundWorkItemAsync`), use a `par` fragment to separate the asynchronous execution from the main synchronous return path.
+- Place the extracted `ref over` fragment in the first branch of the `par` block to represent the background work.
+- Use the `else` branch of the `par` block to immediately return the queuing result and continue the synchronous flow back to the actor.
+  ```plantuml
+  sv -> queue++: QueueBackgroundWorkItemAsync(workItem)
+  par Background Execution
+      ref over sv, db: Handle Course Moderation With AI
+  else Main Thread Return
+      queue -->> sv--: Return result
+      sv -->> be_ctrl--: Return result
+  end
+  ```
 
 ---
 
