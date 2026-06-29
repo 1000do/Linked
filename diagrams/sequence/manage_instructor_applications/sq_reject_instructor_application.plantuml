@@ -1,0 +1,103 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Reject Instructor Application
+
+actor Staff as act
+participant "AdminApprovalIndexPage" as view
+participant "AdminApprovalController" as fe_ctrl <<frontend controller>>
+participant "AdminApprovalController" as be_ctrl <<backend controller>>
+participant ":InstructorApprovalService" as sv
+participant ":InstructorRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+participant ":NotificationService" as noti_sv
+
+act++
+act->view++: Click "Reject" on an instructor application row
+view->view++: Prompt dialog to enter rejection reason
+view--
+
+act->view: Enter reason and confirm rejection
+view->fe_ctrl++: Send POST /AdminApproval/Process?id={id}&status=Rejected&reason={reason}
+
+fe_ctrl->be_ctrl++: Send POST /api/AdminApproval/process (with Bearer Token)
+
+be_ctrl->sv++: Call ApproveOrRejectAsync(dto)
+sv->repo++: Call GetByIdAsync(dto.InstructorId)
+repo->ctx++: Call GetByIdAsync(instructorId)
+ctx->db++: Execute SELECT query
+
+db-->>ctx--: Return instructor entity
+ctx-->>repo--: Return instructor entity
+repo-->>sv--: Return instructor entity
+
+alt [instructor == null]
+    sv-->>be_ctrl: Return false
+    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view: Return JSON { success = false }
+    view-->>act: Display error message
+else [instructor exists]
+    sv->sv++: Set Status = "Rejected"
+    sv--
+    sv->sv++: Set RejectionReason = dto.Reason
+    sv--
+    
+    sv->repo: Call Update(instructor)
+    
+    sv->repo++: Call SaveChangesAsync()
+    repo->ctx++: Call SaveChangesAsync()
+    ctx->db++: Save changes (Execute UPDATE statement)
+    
+    alt [Database Save Fails (throws DbUpdateException)]
+        db-->>ctx--: Throw DbUpdateException
+        ctx-->>repo--: Throw DbUpdateException
+        repo-->>sv--: Throw DbUpdateException
+        sv-->>be_ctrl: Throw DbUpdateException
+        be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
+        fe_ctrl-->>view: Return JSON { success = false }
+        view-->>act: Display error message
+    else [Database Save Succeeds]
+        db-->>ctx--: Return result
+        ctx-->>repo--: Return result
+        repo-->>sv--: Return result
+        
+        sv->noti_sv++: Call SendNotificationAsync(instructorId, title, message, link)
+        noti_sv-->>sv--: Return success
+        
+        sv-->>be_ctrl--: Return true
+        be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+        fe_ctrl-->>view--: Return JSON { success = true }
+        
+        view->view++: Update row status / Remove row in DOM
+        view--
+        view-->>act--: Display rejection confirmation message
+    end
+end
+
+@enduml

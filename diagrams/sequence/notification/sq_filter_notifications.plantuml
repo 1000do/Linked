@@ -1,0 +1,60 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Filter Notifications (Staff/Admin)
+
+actor Admin as act
+participant "Notification/Admin.cshtml" as view
+
+act++
+alt [Click role tab]
+    act->view++: Click a role tab (all / student / instructor / staff-admin)
+    view->view++: switchRoleTab(role) (updates activeRoleTab & styles active button)
+    view--
+else [Change status select]
+    act->view++: Select option in status dropdown (all / unread / read)
+end
+
+view->view++: EventListener: click/change event triggered
+
+view->view++: applyFilters() (runs client-side filtering on cached notifications)
+note over view
+    Filters notifications by activeRoleTab:
+    - broadcast / student / instructor / staff-admin
+    Filters notifications by status:
+    - read / unread
+end note
+view--
+
+view->view++: renderTable() (paginates and renders filtered results)
+view--
+
+view-->>act: Display filtered notification list
+deactivate view
+deactivate view
+@enduml

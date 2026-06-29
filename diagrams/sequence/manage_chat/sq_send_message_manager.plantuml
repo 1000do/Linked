@@ -26,9 +26,9 @@
 
 hide footbox
 
-mainframe Send Messages
+mainframe Send Messages (Manager)
 
-actor User as act
+actor Staff as act
 participant "ChatIndexPage" as view
 participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatAttachmentController" as be_att_ctrl <<backend controller>>

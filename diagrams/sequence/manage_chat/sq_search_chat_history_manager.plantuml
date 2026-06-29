@@ -26,9 +26,9 @@
 
 hide footbox
 
-mainframe Search Conversations
+mainframe Search Conversations (Manager)
 
-actor User as act
+actor Staff as act
 participant "ChatIndexPage" as view
 participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatController" as be_ctrl <<backend controller>>
