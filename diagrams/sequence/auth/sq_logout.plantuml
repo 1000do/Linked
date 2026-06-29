@@ -29,11 +29,12 @@ hide footbox
 mainframe Logout
 actor User as act
 
-participant "Navbar/Layout" as view
-participant "Index.cshtml" as home_view
+participant "NavbarView" as view
+participant "HomeIndexView" as home_view
 participant "AccountController" as fe_ctrl <<frontend controller>>
 participant "AuthController" as be_ctrl <<backend controller>>
 participant ":AuthService" as sv
+participant ":UserRepository" as u_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -41,32 +42,36 @@ act++
 act->view++: Click "Logout" button
 view->fe_ctrl++: Send POST /Account/Logout (with Anti-forgery Token)
 
-fe_ctrl->be_ctrl++: Send POST /api/auth/logout (with Bearer Token)
+fe_ctrl->be_ctrl++: Send POST /api/auth/logout
 
 be_ctrl->be_ctrl++: Extract accountId from User claims
 be_ctrl--
 
-be_ctrl->sv++: Call LogoutAsync(accountId)
-sv->ctx++: Revoke active RefreshToken in DB
-ctx->db++: Execute update query
-db-->>ctx--: Return result
-ctx-->>sv--: Return success
-
-sv->ctx++: SaveChangesAsync()
-ctx->db++: Execute database update
-db-->>ctx--: Return numberOfRowsAffected
-ctx-->>sv--: Return success
-sv-->>be_ctrl--: Return result
+alt [accountId is valid]
+    be_ctrl->sv++: Call LogoutAsync(accountId)
+    sv->u_repo++: Call RevokeRefreshTokenAsync(accountId)
+    u_repo->ctx++: Set RefreshToken = null
+    ctx-->>u_repo--: Return result
+    
+    u_repo->ctx++: Call SaveChangesAsync()
+    ctx->db++: Execute UPDATE query
+    db-->>ctx--: Return result
+    ctx-->>u_repo--: Return numberOfRowsAffected
+    
+    u_repo-->>sv--: Return success
+    sv-->>be_ctrl--: Return true
+end
 
 be_ctrl->be_ctrl++: Clear API cookies (AccessToken, RefreshToken)
 be_ctrl--
+
 be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
 
-fe_ctrl->fe_ctrl++: Delete FE cookies (AccessToken, RefreshToken, UserName,\nAvatarUrl, UserRole, UserId, InstructorApprovalStatus)
+fe_ctrl->fe_ctrl++: Delete FE cookies (AccessToken, RefreshToken, UserName, AvatarUrl, UserRole, UserId)
 fe_ctrl--
 
 fe_ctrl -> home_view++: Redirect to Home Index page
 deactivate fe_ctrl
 deactivate view
-home_view -->> act--: Display homepage in logged-out state (with Login/Register buttons)
+home_view -->> act--: Display homepage in logged-out state
 @enduml

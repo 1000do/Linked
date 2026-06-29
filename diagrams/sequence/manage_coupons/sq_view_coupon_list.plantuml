@@ -1,4 +1,4 @@
-@startuml view_coupons_list
+@startuml 
 <style>
     sequenceDiagram{
         actor{
@@ -26,29 +26,32 @@
 
 hide footbox
 
-mainframe View Coupons List
+mainframe View Coupon List
 actor Admin as act
 
-participant "CouponListView" as view
-participant "CouponController" as be_ctrl
+participant "AdminCouponView" as view
+participant "   CouponController   " as be_ctrl <<backend controller>>
 participant ":CouponService" as sv
 participant ":CouponRepository" as repo
 participant ":AppDbContext" as ctx
-
 database Database as db
 
 act++
 act->view++: Access "Voucher Center" page / Search & Filter Coupons
-view->be_ctrl++: GET /api/coupon?isActive={isActive}&type={type}&search={search}
-be_ctrl->sv++: GetAll(managerId, isActive, type, search, isAdmin=true)
-sv->repo++: GetAllAsync(managerId=null, isActive, type, search)
-repo->ctx++: Query Coupons entities with filters\n(isActive, type, search, sorted by CouponId desc)
-ctx->db++: Execute SELECT query
-db-->>ctx--: Return matched Coupon entities
+view->be_ctrl++: Send GET /api/coupon?isActive={isActive}&type={type}&search={search} (AJAX)
+
+be_ctrl->sv++: Call GetAll(managerId, isActive, type, search, isAdmin=true)
+sv->repo++: Call GetAllAsync(managerId=null, isActive, type, search)
+repo->ctx++: Query Coupons
+ctx->db++: Execute SELECT query (with filters, ordered by CouponId desc)
+db-->>ctx--: Return result
 ctx-->>repo--: Return list of Coupon entities
 repo-->>sv--: Return list of Coupon entities
-sv->sv: Map list to List<CouponResponse>
+
+sv->sv++: Map list to List<CouponResponse>
+sv--
+
 sv-->>be_ctrl--: Return List<CouponResponse>
-be_ctrl-->>view--: Return status 200 with ApiResponse<List<CouponResponse>>
-view-->>act--: Render and display Coupon List table
+be_ctrl-->>view--: Return statusCode 200 (Ok)
+view-->>act--: Render filtered Coupon List table
 @enduml

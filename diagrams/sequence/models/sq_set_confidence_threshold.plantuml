@@ -1,0 +1,104 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Set Confidence Threshold
+
+actor Admin as act
+participant "AiServiceManagementPage" as view
+participant "LoginPage" as login_view
+participant "AdminAiServiceController" as fe_ctrl <<frontend controller>>
+participant "AdminAiServiceController" as be_ctrl <<backend controller>>
+participant ":AiConfigurationService" as sv
+participant ":SystemConfigRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Modify thresholds and click "Save Changes"
+view -> view++: Validate inputs
+view--
+
+opt Form Validation Failed
+    view -->> act: Display validation error message
+end
+
+view -> act: Display confirmation dialog
+
+opt Admin Cancels Confirmation
+    act -> view: Click cancel button
+    view -->> act: Close dialog
+end
+
+act -> view: Click confirm button
+
+view -> fe_ctrl++: Send POST request to /AdminAiService/UpdateThresholds
+fe_ctrl -> fe_ctrl++: Validate Admin authorization
+fe_ctrl--
+
+alt Unauthorized Access
+    fe_ctrl -> login_view++: Redirect to Login page
+    login_view -->> act--: Display Login page
+else Authorized Access
+    fe_ctrl -> be_ctrl++: Send POST request to /api/admin/ai-service/thresholds
+    
+    be_ctrl -> sv++: Call UpdateThresholdsAsync(req)
+    
+    sv -> sv++: Serialize new thresholds to jsonString
+    sv--
+    
+    sv -> repo++: Call UpsertConfigAsync(ModerationThreshold, jsonString, desc)
+    repo -> ctx++: Query existing configuration
+    ctx -> db++: Execute query
+    db -->> ctx--: Return data
+    ctx -->> repo--: Return SystemConfig object (if exists)
+    
+    repo -> repo++: Apply updates or create new entity
+    repo--
+    
+    repo -> ctx++: Call SaveChangesAsync()
+    ctx -> db++: Save changes to Database
+    
+    alt Database Save Failed
+        db -->> ctx: Throw DbUpdateException
+        ctx -->> repo: Throw DbUpdateException
+        repo -->> sv: Throw SystemConfigException
+        sv -->> be_ctrl: Throw BadRequestException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return statusCode 400
+        view -->> act: Display database save failure message
+    else Configuration Updated
+        db -->> ctx--: Return rows affected
+        ctx -->> repo--: Return rows affected
+        repo -->> sv--: Return rows affected
+        
+        sv -->> be_ctrl--: Return true
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        fe_ctrl -->> view--: Return statusCode 200
+        view -->> act--: Display success notification
+    end
+end
+@enduml

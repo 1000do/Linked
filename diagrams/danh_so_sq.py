@@ -9,6 +9,7 @@ class PlantUMLRenumberer:
         self.stack: List[str] = []
         self.block_stack: List[str] = []
         self.alt_roots: List[Optional[str]] = []
+        self.alt_branch_counts: List[int] = []
         self.last_main_number: str = "0"
         self.pending_branch: Optional[int] = None
         self.branch_started: bool = False
@@ -69,6 +70,7 @@ class PlantUMLRenumberer:
         self.stack.clear()
         self.block_stack.clear()
         self.alt_roots.clear()
+        self.alt_branch_counts.clear()
         self.last_main_number = "0"
         self.pending_branch = None
         self.branch_started = False
@@ -90,22 +92,31 @@ class PlantUMLRenumberer:
                 self.lines.append(original_line)
                 continue
 
-            if stripped.startswith('alt '):
-                label = self._clean_label(stripped[4:])
-                self.lines.append(f"alt {label}")
+            if stripped.startswith('alt ') or stripped.startswith('par ') or stripped in ('alt', 'par'):
+                is_alt = stripped.startswith('alt')
+                prefix = 'alt' if is_alt else 'par'
+                label_part = stripped[4:] if len(stripped) > 3 else ''
+                label = self._clean_label(label_part)
+                line_to_add = f"{prefix} {label}" if label else prefix
+                self.lines.append(line_to_add)
                 self.pending_branch = 1
                 self.block_stack.append('alt')
                 self.alt_roots.append(None)
+                self.alt_branch_counts.append(1)
                 continue
 
-            if stripped.startswith('else '):
-                label = self._clean_label(stripped[5:])
-                self.lines.append(f"else {label}")
+            if stripped.startswith('else ') or stripped == 'else':
+                label_part = stripped[5:] if len(stripped) > 4 else ''
+                label = self._clean_label(label_part)
+                line_to_add = f"else {label}" if label else "else"
+                self.lines.append(line_to_add)
                 if self.block_stack and self.block_stack[-1] == 'alt' and self.alt_roots and self.alt_roots[-1]:
+                    self.alt_branch_counts[-1] += 1
+                    branch_idx = self.alt_branch_counts[-1]
                     alt_root = self.alt_roots[-1]
                     base_parts = alt_root.split('.')[:-1]
                     base = '.'.join(base_parts)
-                    new_root = f"{base}.2"
+                    new_root = f"{base}.{branch_idx}"
                     self.stack[-1] = new_root
                 self.pending_branch = None
                 self.branch_started = False
@@ -140,6 +151,8 @@ class PlantUMLRenumberer:
                     popped = self.block_stack.pop()
                     if popped == 'alt':
                         alt_root = self.alt_roots.pop() if self.alt_roots else None
+                        if self.alt_branch_counts:
+                            self.alt_branch_counts.pop()
                         if self.stack:
                             self.stack.pop()
                         if not self.stack and alt_root:
@@ -161,9 +174,12 @@ class PlantUMLRenumberer:
 
             # Handle ref over
             if stripped.startswith('ref over '):
-                self.lines.append(original_line)
-                self.ref_active = True
-                continue
+                if ':' in stripped:
+                    pass  # Process as a single-line ref (message) below
+                else:
+                    self.lines.append(original_line)
+                    self.ref_active = True
+                    continue
 
             if stripped == 'end ref':
                 self.lines.append("end ref")
@@ -173,8 +189,9 @@ class PlantUMLRenumberer:
             # Handle messages and refs
             is_ref = False  # No longer needed as ref over handled separately
             arrows = ['->', '-->', '->>', '-->>', '<->', '<--', '<-', '++', '--']
-            is_message = any(op in stripped for op in arrows)
-            is_ref_text = self.ref_active and stripped.strip() and not stripped.startswith(('ref over', 'end ref', 'end', 'alt', 'else', 'loop', 'opt', 'group opt'))
+            is_single_line_ref = stripped.startswith('ref over ') and ':' in stripped
+            is_message = any(op in stripped for op in arrows) or is_single_line_ref
+            is_ref_text = self.ref_active and stripped.strip() and not stripped.startswith(('ref over', 'end ref', 'end', 'alt', 'par', 'else', 'loop', 'opt', 'group opt'))
 
             if is_message or is_ref_text:
                 if is_message:
@@ -225,29 +242,67 @@ class PlantUMLRenumberer:
         return self.lines
 
 
-def main(input_path: str, output_path: Optional[str] = None):
-    try:
-        with open(input_path, 'r', encoding='utf-8') as f:
-            lines = [x.rstrip('\n') for x in f.readlines()]
+def process_file(input_path: str, output_path: Optional[str] = None):
+    with open(input_path, 'r', encoding='utf-8') as f:
+        lines = [x.rstrip('\n') for x in f.readlines()]
 
-        renumberer = PlantUMLRenumberer()
-        processed = renumberer.process(lines)
+    renumberer = PlantUMLRenumberer()
+    processed = renumberer.process(lines)
+    
+    if output_path:
+        out_path = output_path
+    else:
+        from pathlib import Path
+        p = Path(input_path)
+        out_path = str(p.with_name(f"{p.stem}_renumbered{p.suffix}"))
+    with open(out_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(processed) + '\n')
 
-        out_path = output_path or input_path
-        with open(out_path, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(processed) + '\n')
+    print(f"✅ Đánh số hoàn chỉnh theo phân cấp: {out_path}")
 
-        print(f"✅ Đánh số hoàn chỉnh theo phân cấp: {out_path}")
-    except Exception as e:
-        print(f"❌ Lỗi: {e}")
-        sys.exit(1)
+
+def main():
+    import argparse
+    import os
+    from pathlib import Path
+
+    parser = argparse.ArgumentParser(description="PlantUML Sequence Diagram Renumberer")
+    parser.add_argument("-opt", choices=["file", "folder"], default="file", help="Chế độ xử lý: file hoặc folder")
+    parser.add_argument("input_path", help="Đường dẫn file hoặc thư mục đầu vào")
+    parser.add_argument("output_path", nargs="?", help="Đường dẫn file đầu ra (chỉ dùng cho chế độ file)")
+
+    args = parser.parse_args()
+
+    if args.opt == "file":
+        try:
+            process_file(args.input_path, args.output_path)
+        except Exception as e:
+            print(f"❌ Lỗi: {e}")
+            sys.exit(1)
+    elif args.opt == "folder":
+        input_dir = Path(args.input_path).resolve()
+        if not input_dir.is_dir():
+            print(f"❌ Lỗi: {args.input_path} không phải là thư mục hợp lệ.")
+            sys.exit(1)
+
+        output_dir = input_dir.with_name(f"{input_dir.name}_renumbered")
+        
+        files_processed = 0
+        extensions = ['*.puml', '*.plantuml']
+        for ext in extensions:
+            for file_path in input_dir.rglob(ext):
+                try:
+                    rel_path = file_path.relative_to(input_dir)
+                    out_path = output_dir / rel_path
+                    out_path.parent.mkdir(parents=True, exist_ok=True)
+                    
+                    process_file(str(file_path), str(out_path))
+                    files_processed += 1
+                except Exception as e:
+                    print(f"❌ Lỗi xử lý {file_path}: {e}")
+                    
+        print(f"✅ Hoàn tất! Đã xử lý {files_processed} tệp trong thư mục: {output_dir}")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("📌 Cách dùng: python danh_so.py <input.puml> [output.puml]")
-        sys.exit(1)
-
-    input_file = sys.argv[1]
-    output_file = sys.argv[2] if len(sys.argv) > 2 else None
-    main(input_file, output_file)
+    main()
