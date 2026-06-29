@@ -1,0 +1,72 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Filter Accounts
+actor Admin as act
+
+participant "AdminAccountView" as view
+participant "AdminAccountController" as fe_ctrl <<frontend controller>>
+participant "AdminAccountController" as be_ctrl <<backend controller>>
+participant ":AdminAccountService" as sv
+participant ":UserRepository" as u_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Select Role filter dropdown or enter Search Keyword
+view->fe_ctrl++: Send GET /AdminAccount/Index?keyword={kw}&role={role}&page=1
+
+fe_ctrl->be_ctrl++: Send GET /api/admin/accounts?keyword={kw}&role={role}&page=1&pageSize=5
+
+be_ctrl->sv++: Call GetAccountsPagedAsync(keyword, role, 1, 5)
+
+sv->u_repo++: Call GetAccountsPagedAsync(keyword, role, 1, 5)
+
+u_repo->ctx++: Call CountAsync() on filtered query
+ctx->db++: Execute SELECT COUNT(*) query
+db-->>ctx--: Return count result
+ctx-->>u_repo--: Return totalCount
+
+u_repo->ctx++: Call ToListAsync() with OrderBy, Skip, Take
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return result set
+ctx-->>u_repo--: Return list of Accounts
+
+u_repo-->>sv--: Return (items, totalCount) tuple
+
+sv->sv++: Map Account entities to AdminAccountListDto
+sv--
+
+sv-->>be_ctrl--: Return PagedResult<AdminAccountListDto>
+be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+
+fe_ctrl->fe_ctrl++: Parse JSON and construct ViewModel
+fe_ctrl--
+fe_ctrl-->>view--: Return View(model)
+view-->>act--: Render filtered Account List table
+@enduml

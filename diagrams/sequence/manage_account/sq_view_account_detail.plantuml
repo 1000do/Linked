@@ -1,0 +1,157 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Account Detail
+actor Admin as act
+
+participant "AdminAccountView" as view
+participant "AdminAccountController" as fe_ctrl <<frontend controller>>
+participant "AdminAccountController" as be_ctrl <<backend controller>>
+participant ":AdminAccountService" as sv
+participant ":UserRepository" as u_repo
+participant ":LockoutRepository" as lockout_repo
+participant ":ReportRepository" as report_repo
+participant ":NotificationRepository" as notif_repo
+participant ":ChatRepository" as chat_repo
+participant ":TransactionRepository" as trans_repo
+participant ":EnrollmentRepository" as enroll_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Click "View Detail" on an account
+view->fe_ctrl++: Send GET /AdminAccount/Detail/{id}
+
+== 1. Get Account Details ==
+fe_ctrl->be_ctrl++: Send GET /api/admin/accounts/{id}
+
+be_ctrl->sv++: Call GetAccountDetailAsync(id)
+sv->u_repo++: Call GetAccountByIdAsync(id)
+u_repo->ctx++: Query Account
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return result
+ctx-->>u_repo--: Return Account
+u_repo-->>sv--: Return Account
+
+sv->lockout_repo++: Call GetActiveLockoutAsync(id, "account")
+lockout_repo->ctx++: Query Lockout
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return result
+ctx-->>lockout_repo--: Return Lockout
+lockout_repo-->>sv--: Return Lockout
+
+opt [Account is Staff or Admin]
+    sv->report_repo++: Call GetResolvedReportsCountAsync(id)
+    report_repo->ctx++: Query Reports
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return result
+    ctx-->>report_repo--: Return count
+    report_repo-->>sv--: Return count
+    
+    sv->notif_repo++: Call GetSentNotificationsCountAsync(id)
+    notif_repo->ctx++: Query Notifications
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return result
+    ctx-->>notif_repo--: Return count
+    notif_repo-->>sv--: Return count
+    
+    sv->chat_repo++: Call GetActiveChatsCountAsync(id)
+    chat_repo->ctx++: Query Chats
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return result
+    ctx-->>chat_repo--: Return count
+    chat_repo-->>sv--: Return count
+end
+
+opt [Account is Student]
+    sv->trans_repo++: Call GetTotalSpentAsync(id)
+    trans_repo->ctx++: Query Transactions
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return result
+    ctx-->>trans_repo--: Return total
+    trans_repo-->>sv--: Return total
+    
+    sv->enroll_repo++: Call GetMyEnrolledCoursesAsync(id)
+    enroll_repo->ctx++: Query Enrollments
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return result
+    ctx-->>enroll_repo--: Return enrollments
+    enroll_repo-->>sv--: Return enrollments
+    
+    opt [Account is Instructor]
+        sv->trans_repo++: Call GetInstructorTotalRevenueAsync(id)
+        trans_repo->ctx++: Query Transactions
+        ctx->db++: Execute SELECT query
+        db-->>ctx--: Return result
+        ctx-->>trans_repo--: Return revenue
+        trans_repo-->>sv--: Return revenue
+        
+        sv->trans_repo++: Call GetInstructorTotalWithdrawnAsync(id)
+        trans_repo->ctx++: Query Transactions
+        ctx->db++: Execute SELECT query
+        db-->>ctx--: Return result
+        ctx-->>trans_repo--: Return withdrawn
+        trans_repo-->>sv--: Return withdrawn
+    end
+end
+
+sv-->>be_ctrl--: Return AdminAccountDetailDto
+be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+
+== 2. Get Account Transactions ==
+fe_ctrl->be_ctrl++: Send GET /api/admin/accounts/{id}/transactions
+
+be_ctrl->sv++: Call GetAccountTransactionsAsync(id)
+sv->u_repo++: Call GetAccountByIdAsync(id)
+u_repo->ctx++: Query Account
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return result
+ctx-->>u_repo--: Return Account
+u_repo-->>sv--: Return Account
+
+sv->trans_repo++: Call GetAccountTransactionsSummaryAsync(id)
+trans_repo->ctx++: Query Transactions
+ctx->db++: Execute SELECT query
+db-->>ctx--: Return result
+ctx-->>trans_repo--: Return summary
+trans_repo-->>sv--: Return summary
+
+sv-->>be_ctrl--: Return AccountTransactionSummaryDto
+be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+
+== 3. Render View ==
+alt [Both requests are successful]
+    fe_ctrl->fe_ctrl++: Parse JSON & construct ViewModel
+    fe_ctrl--
+    fe_ctrl-->>view--: Return View(model)
+    view-->>act--: Display Account Detail page
+else [Any request failed]
+    fe_ctrl-->>view--: Return statusCode 302 (Redirect to Index)
+    view-->>act--: Display Index page with error message
+end
+@enduml

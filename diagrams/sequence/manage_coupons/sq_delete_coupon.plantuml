@@ -1,0 +1,79 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Delete Coupon
+
+actor Admin as act
+participant "CouponListView" as view
+participant "CouponController" as be_ctrl <<backend controller>>
+participant ":CouponService" as sv
+participant ":CouponRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Click "Delete" on a Coupon
+view -> be_ctrl++: DELETE /api/coupon/{id}
+
+be_ctrl -> sv++: SoftDelete(id, GetUserId(), isAdmin)
+
+sv -> repo++: GetByIdAsync(id, filterId)
+repo -> ctx++: Query coupon
+ctx -> db++: Execute query
+db -->> ctx--: Return coupon or null
+ctx -->> repo--: Return coupon or null
+repo -->> sv--: Return coupon or null
+
+sv -> sv++: Validate coupon deletion request
+sv --
+
+alt Coupon not found
+    sv -->> be_ctrl: throw KeyNotFoundException
+    be_ctrl -->> view: Return statusCode 404
+    view -->> act: Display error message
+else Valid coupon deletion request
+    sv -> sv++: Set IsActive = false and EndDate = yesterday
+    sv --
+    
+    sv -> repo++: Update(coupon)
+    repo -> ctx++: Mark entity as modified
+    ctx -->> repo--: Return result
+    repo -->> sv--: Return result
+    
+    sv -> repo++: SaveChangesAsync()
+    repo -> ctx++: SaveChangesAsync()
+    ctx -> db++: Save changes to database
+    db -->> ctx--: Return rows affected
+    ctx -->> repo--: Return rows affected
+    repo -->> sv--: Return rows affected
+    
+    sv -->> be_ctrl--: Return result
+    be_ctrl -->> view--: Return statusCode 200
+    view -->> act--: Display success message
+end
+@enduml
