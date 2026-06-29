@@ -97,8 +97,8 @@ Use `mainframe <Title>` (e.g., `mainframe Create Course`) right after the header
 ## 4. Interaction Arrow Styles
 
 Ensure correct arrow types to model request/response control flow:
-- `->` (Solid Arrow): Synchronous calls, requests, redirects, or internal method invocation.
-- `-->>` (Dashed Arrow): Returns, responses, thrown exceptions, or messages displayed to the actor.
+- `->` (Solid Arrow): Synchronous calls, requests, or internal method invocation.
+- `-->>` (Dashed Arrow): Returns, responses, redirects, thrown exceptions, or messages displayed to the actor.
 
 ---
 
@@ -205,9 +205,10 @@ When dealing with nested `alt` fragments, clearly distinguish between "Local" an
 - Do not over-specify UI implementation details (e.g., "popup message", "toast", "simple p tag"). Use generic interaction descriptions like `Display success message` or `Display error message`.
 - If an action ends with displaying a success/error message and requires manual user intervention to proceed (e.g., clicking "Edit Now" to redirect), **do not model the subsequent manual click or redirect**. End the sequence path at the display of the initial message.
 - **Omit Secondary UI Refreshes:** Do not model secondary data fetches (like a `GET` request to reload a table or partial view) that occur automatically after the primary success message is displayed. Stop the flow at the success notification to keep the focus on the primary use case.
-- **Automatic Redirections Only**: Only include a redirection step when it occurs automatically without manual interaction from the actor. Model redirects directly from the Controller to the target View using a solid arrow (`->`), followed by the target view displaying and returning to the actor.
+- **Automatic Redirections Only**: Only include a redirection step when it occurs automatically without manual interaction from the actor. Because a redirect acts as a return response that completes the controller's lifecycle, model redirects using a dashed arrow (`-->>`) with a deactivation suffix (`--`) on the controller, followed by explicitly activating the target view on the next line.
   ```plantuml
-  fe_ctrl -> login_view++: Redirect to Login page
+  fe_ctrl -->> login_view--: Redirect to Login page
+  activate login_view
   login_view -->> act--: Display Login page
   ```
 
