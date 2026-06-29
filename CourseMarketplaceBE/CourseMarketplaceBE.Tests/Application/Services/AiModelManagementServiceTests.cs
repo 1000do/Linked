@@ -195,26 +195,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                         .Map<AiModelAdminDto>(addedModel);
         }
 
-        [Fact]
-        public async Task AddModelAsync_WhenNotSaved_ShouldThrowInvalidOperationException()
-        {
-            //Arrange 1
-            var req = new CreateAiModelRequest { ModelName = "Test" };
-            var addedModel = new AiModel {ModelId = 1, ModelName = req.ModelName};
 
-            //Arrange 2
-            _aiModelRepoMock.Add(Arg.Any<AiModel>()).Returns(addedModel);
-            _aiModelRepoMock.SaveChangesAsync().Returns(0);
-
-            //Act
-            Func<Task> act = async () => await _sut.AddModelAsync(req);
-
-            //Assert
-            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("No changes were saved to the database.");
-
-            _aiModelRepoMock.Received(1).Add(Arg.Is<AiModel>(m => m.ModelName == req.ModelName));
-            await _aiModelRepoMock.Received(1).SaveChangesAsync();
-        }
 
         [Fact]
         public async Task AddModelAsync_WhenAiModelException_ShouldThrowBadRequestException()
@@ -295,30 +276,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _aiModelRepoMock.DidNotReceive().Update(Arg.Any<AiModel>());
         }
 
-        [Fact]
-        public async Task UpdateModelAsync_WhenNotSaved_ShouldThrowInvalidOperationException()
-        {
-            //Arrange 1
-            var mockId = 1;
-            var req = new UpdateAiModelRequest { ModelProvider = "New" };
-            var existingModel = new AiModel { ModelId = mockId };
-            var updatedModel = new AiModel { ModelId = mockId, ModelProvider = req.ModelProvider };
 
-            //Arrange 2
-            _aiModelRepoMock.GetByIdAsync(mockId).Returns(existingModel);
-            _aiModelRepoMock.Update(Arg.Any<AiModel>()).Returns(updatedModel);
-            _aiModelRepoMock.SaveChangesAsync().Returns(0);
-
-            //Act
-            Func<Task> act = async () => await _sut.UpdateModelAsync(mockId, req);
-
-            //Assert
-            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("No changes were saved to the database.");
-
-            await _aiModelRepoMock.Received(1).GetByIdAsync(mockId);
-            _aiModelRepoMock.Received(1).Update(Arg.Is<AiModel>(m => m.ModelProvider == req.ModelProvider));
-            await _aiModelRepoMock.Received(1).SaveChangesAsync();
-        }
 
         [Fact]
         public async Task UpdateModelAsync_WhenAiModelException_ShouldThrowBadRequestException()
@@ -412,27 +370,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             await _aiModelRepoMock.DidNotReceive().SaveChangesAsync();
         }
 
-        [Fact]
-        public async Task ToggleModelStatusAsync_WhenNotSaved_ShouldThrowInvalidOperationException()
-        {
-            //Arrange 1
-            var mockId = 1;
-            var existingModel = new AiModel { ModelId = mockId, ModelStatus = AiModelConst.Active };
 
-            //Arrange 2
-            _aiModelRepoMock.GetByIdAsync(mockId).Returns(existingModel);
-            _aiModelRepoMock.SaveChangesAsync().Returns(0);
-
-            //Act
-            Func<Task> act = async () => await _sut.ToggleModelStatusAsync(mockId);
-
-            //Assert
-            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("No changes were saved to the database.");
-
-            await _aiModelRepoMock.Received(1).GetByIdAsync(mockId);
-            _aiModelRepoMock.Received(1).Update(existingModel);
-            await _aiModelRepoMock.Received(1).SaveChangesAsync();
-        }
 
         [Fact]
         public async Task ToggleModelStatusAsync_WhenAiModelException_ShouldThrowBadRequestException()

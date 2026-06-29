@@ -29,7 +29,7 @@ hide footbox
 mainframe Create Course
 actor Instructor as act
 
-participant "CourseCreationForm" as view
+participant "CourseCreationPage" as view
 participant "CloudStorageService" as cloud
 participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
 participant "CourseController" as be_ctrl <<backend controller>>
@@ -102,28 +102,19 @@ else Valid Instructor Rights
         be_ctrl -->> fe_ctrl: Return statusCode 400
         fe_ctrl -->> view: Return statusCode 400
         view -->> act: Display error message
-    else No Duplicate Content Detected
+    else Saved Successfully
         db-->>ctx--: Return numberOfRowsAffected
         ctx-->>ext_repo--: Return numberOfRowsAffected
         ext_repo -->> sv--: Return numberOfRowsAffected
         ' SaveChangesWithFingerprintAsync activation bar should end here since it either throws BadRequestException or Return numRows to its references
+        
+        sv -> res++: Call CourseResponse()
+        res -->> sv--: Return CourseResponse object
         sv--
-        ' From now on, for the Conditional Trigger of numberOfRowsAffected check should always be like this
-        sv->sv++:Check numberOfRowsAffected
-        sv--
-        alt numberOfRowsAffected > 0
-            sv -> res++: Call CourseResponse()
-            res -->> sv--: Return CourseResponse object
-            sv -->> be_ctrl: Return CourseResponse object
-            be_ctrl -->> fe_ctrl:Return statusCode 201
-            fe_ctrl -->> view: Return statusCode 201
-            view -->> act: Display course creation success message
-        else numberOfRowsAffected = 0
-            sv-->>be_ctrl--:throw InvalidOperationException
-            be_ctrl -->> fe_ctrl--:Return statusCode 400
-            fe_ctrl -->> view--: Return statusCode 400
-            view -->> act--: Display error message
-        end
+        sv -->> be_ctrl--: Return CourseResponse object
+        be_ctrl -->> fe_ctrl--:Return statusCode 201
+        fe_ctrl -->> view--: Return statusCode 201
+        view -->> act--: Display course creation success message
     end
 end
 

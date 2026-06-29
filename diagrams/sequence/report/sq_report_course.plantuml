@@ -1,0 +1,125 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Report Course
+
+actor User as act
+participant "CourseDetailsPage" as view
+participant "ReportController" as fe_ctrl <<frontend controller>>
+participant "ReportController" as be_ctrl <<backend controller>>
+participant ":ReportSubmissionService" as sv
+participant ":ReportRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Click "Report this course" button
+view -->> act: Display report course form modal
+view--
+
+opt Cancel reporting
+    act -> view++: Click "Cancel" button
+    view -->> act: Close report course modal
+    view--
+end
+
+act -> view++: Input reason and description, click "Submit Report"
+
+view -> fe_ctrl++: POST /Report/ReportCourse
+fe_ctrl -> fe_ctrl++: Validate ModelState
+fe_ctrl--
+
+alt Invalid ModelState
+    fe_ctrl -->> view: Return JSON (success = false)
+    view -->> act: Display error message
+else Valid ModelState
+    fe_ctrl -> be_ctrl++: POST /api/report/courses
+    be_ctrl -> sv++: Call CreateCourseReportAsync(reporterId, request)
+    
+    sv -> sv++: Validate course report request
+    sv--
+    
+    alt Course Not Reportable (InvalidOperationException)
+        sv -->> be_ctrl: throw InvalidOperationException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return JSON (success = false)
+        view -->> act: Display error message
+    else Invalid Reporter Rights (InvalidOperationException)
+        sv -->> be_ctrl: throw InvalidOperationException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return JSON (success = false)
+        view -->> act: Display error message
+    else Duplicate Pending Report (InvalidOperationException)
+        sv -->> be_ctrl: throw InvalidOperationException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return JSON (success = false)
+        view -->> act: Display duplicate report error message preventing submission
+    else Valid course report request
+        sv -> repo++: AddCourseReportAsync(report)
+        repo -> ctx++: Add(report)
+        ctx -->> repo: Return result
+        ctx--
+        repo -->> sv: Return result
+        repo--
+        
+        sv -> sv++: Call SaveChangesAndHandleExceptionsAsync()
+        sv -> repo++: SaveChangesAsync()
+        repo -> ctx++: SaveChangesAsync()
+        ctx -> db++: Save changes to database
+        
+        alt DbUpdateException
+            db -->> ctx: throw DbUpdateException
+            ctx -->> repo: throw DbUpdateException
+            repo -->> sv: throw ReportException
+            sv -->> be_ctrl: throw BadRequestException
+            be_ctrl -->> fe_ctrl: Return statusCode 400
+            fe_ctrl -->> view: Return JSON (success = false)
+            view -->> act: Display error message regarding report submission failure
+        else Saved Successfully
+            db -->> ctx: Return result
+            db--
+            ctx -->> repo: Return result
+            ctx--
+            repo -->> sv: Return result
+            repo--
+            sv--
+            
+            sv -> sv++: Call NotifyManagersAsync()
+            sv--
+            
+            sv -->> be_ctrl: Return true
+            sv--
+            be_ctrl -->> fe_ctrl: Return statusCode 200
+            be_ctrl--
+            fe_ctrl -->> view: Return JSON (success = true)
+            fe_ctrl--
+            view -->> act: Display success message regarding report submission
+            view--
+        end
+    end
+end
+@enduml

@@ -67,7 +67,7 @@ class HarmfulHandler(BaseHandler):
             )
 
         # 2. Check Text Harmful (Step 1)
-        text_flagged, flagged_fields, step1_logs = await self.harmful_service.check_text_harmful(
+        text_flagged, text_flagged_fields, step1_logs = await self.harmful_service.check_text_harmful(
             course=course,
             model_id=model_id,
             spam_threshold=spam_threshold,
@@ -75,19 +75,11 @@ class HarmfulHandler(BaseHandler):
         )
         
         all_stage_logs.extend(step1_logs)
+        all_flagged_fields = []
+        all_flagged_fields.extend(text_flagged_fields)
 
-        # If text flagged, exit immediately
         if text_flagged:
-            total_latency = (time.time() - stage_start) * 1000
-            self.logger.warning(f"Harmful text content detected for Course ID {course_id}. Flagged: {flagged_fields}")
-            return CourseModerationResponse(
-                course_id=course_id,
-                moderation_status=ModerationStatus.FLAGGED.value,
-                flagged_fields=flagged_fields,
-                overall_confidence_score=step1_logs[0].get("confidence_score", 0.9) if (step1_logs and isinstance(step1_logs[0], dict)) else (step1_logs[0].confidence_score if step1_logs else 0.9),
-                total_latency_ms=total_latency,
-                stage_logs=all_stage_logs
-            )
+            self.logger.warning(f"Harmful text content detected for Course ID {course_id}. Flagged: {text_flagged_fields}")
 
         # 3. Process candidates for media checking (Step 2)
         step2_candidates: Dict[str, Any] = {}
@@ -126,7 +118,7 @@ class HarmfulHandler(BaseHandler):
                             self.logger.error(f"Failed to download material {material.material_id} for harmful check: {e}")
 
         # Check Media Harmful (Step 2)
-        media_flagged, flagged_media, step2_logs = await self.harmful_service.check_media_text_harmful(
+        media_flagged, media_flagged_fields, step2_logs = await self.harmful_service.check_media_text_harmful(
             candidates=step2_candidates,
             model_id=model_id,
             spam_threshold=spam_threshold,
@@ -134,15 +126,28 @@ class HarmfulHandler(BaseHandler):
         )
         
         all_stage_logs.extend(step2_logs)
+        all_flagged_fields.extend(media_flagged_fields)
         total_latency = (time.time() - stage_start) * 1000
 
         if media_flagged:
-            self.logger.warning(f"Harmful media content detected for Course ID {course_id}. Flagged: {flagged_media}")
+            self.logger.warning(f"Harmful media content detected for Course ID {course_id}. Flagged: {media_flagged_fields}")
+            
+        if text_flagged or media_flagged:
+            conf1 = step1_logs[0].get("confidence_score", 0.9) if (step1_logs and isinstance(step1_logs[0], dict)) else (step1_logs[0].confidence_score if step1_logs else 0.9)
+            conf2 = step2_logs[0].get("confidence_score", 0.85) if (step2_logs and isinstance(step2_logs[0], dict)) else (step2_logs[0].confidence_score if step2_logs else 0.85)
+            
+            if text_flagged and media_flagged:
+                overall_conf = max(conf1, conf2)
+            elif text_flagged:
+                overall_conf = conf1
+            else:
+                overall_conf = conf2
+
             return CourseModerationResponse(
                 course_id=course_id,
                 moderation_status=ModerationStatus.FLAGGED.value,
-                flagged_fields=flagged_media,
-                overall_confidence_score=step2_logs[0].get("confidence_score", 0.85) if (step2_logs and isinstance(step2_logs[0], dict)) else (step2_logs[0].confidence_score if step2_logs else 0.85),
+                flagged_fields=all_flagged_fields,
+                overall_confidence_score=overall_conf,
                 total_latency_ms=total_latency,
                 stage_logs=all_stage_logs
             )

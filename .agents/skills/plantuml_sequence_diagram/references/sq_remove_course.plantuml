@@ -29,7 +29,7 @@ hide footbox
 mainframe Remove Course
 actor Instructor as act
 
-participant "InstructorCourseListView" as view
+participant "InstructorCourseListPage" as view
 participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
 participant "CourseController" as be_ctrl <<backend controller>>
 
@@ -115,7 +115,7 @@ else Valid course removal request
     
     sv->repo++: Call SaveChangesAsync()
     repo->ctx++: Call SaveChangesAsync()
-    ctx->db++: Save changes to Database
+    ctx->db++: Save changes to database
     db-->>ctx--: Return numberOfRowsAffected
     ctx-->>repo--: Return numberOfRowsAffected
     repo-->>sv--: Return numberOfRowsAffected

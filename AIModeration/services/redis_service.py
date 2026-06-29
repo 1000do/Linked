@@ -58,7 +58,7 @@ class RedisService:
             emb_type = "media" if len(dto.embedding) == self.settings.MEDIA_EMBEDDING_DIM else "text"
         return self.cache_repository.set_material_embedding(dto.material_id, dto.embedding, emb_type, ttl)
 
-    def set_duplicate_material_embedding(self, dto: MaterialEmbeddingResponse, ttl: Optional[int] = None) -> bool:
+    def set_pending_material_embedding(self, dto: MaterialEmbeddingResponse, ttl: Optional[int] = None) -> bool:
         """
         Caches a newly generated embedding that was evaluated as duplicated.
         """
@@ -67,7 +67,7 @@ class RedisService:
         emb_type = dto.embedding_type
         if not emb_type or emb_type not in ("text", "media"):
             emb_type = "media" if len(dto.embedding) == self.settings.MEDIA_EMBEDDING_DIM else "text"
-        return self.cache_repository.set_duplicate_material_embedding(dto.material_id, dto.embedding, emb_type, ttl)
+        return self.cache_repository.set_pending_material_embedding(dto.material_id, dto.embedding, emb_type, ttl)
 
     def get_all_existing_embeddings(self) -> List[MaterialEmbeddingResponse]:
         """

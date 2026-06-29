@@ -29,7 +29,7 @@ hide footbox
 mainframe Update Course Details
 
 actor Instructor as act
-participant "CourseEditForm" as view
+participant "CourseEditPage" as view
 participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
 participant "CourseController" as be_ctrl <<backend controller>>
 participant ":CourseCommandService" as sv
@@ -105,7 +105,7 @@ else Valid course update request
     sv -> sv++: Call SaveChangesWithFingerprintAsync()
     sv -> ext_repo++: Call SaveChangesAsync()
     ext_repo->ctx++: Call SaveChangesAsync()
-    ctx->db++: Save changes to Database
+    ctx->db++: Save changes to database
     
     alt Duplicate Content Detected
         db-->>ctx: throw DbUpdateException
@@ -115,31 +115,22 @@ else Valid course update request
         be_ctrl -->> fe_ctrl: Return statusCode 400
         fe_ctrl -->> view: Return statusCode 400
         view -->> act: Display error message
-    else No Duplicate Content Detected
+    else Saved Successfully
         db-->>ctx--: Return numberOfRowsAffected
         ctx-->>ext_repo--: Return numberOfRowsAffected
         ext_repo -->> sv--: Return numberOfRowsAffected
-        sv--
         
-        sv->sv++: Check numberOfRowsAffected
+        sv->redis++: Call RemoveCacheAsync(courseId)
+        redis-->>sv--: Return result
+        
+        sv->res++: Call CourseResponse()
+        res-->>sv--: Return CourseResponse object
+        
         sv--
-        alt numberOfRowsAffected > 0
-            sv->redis++: Call RemoveCacheAsync(courseId)
-            redis-->>sv--: Return result
-            
-            sv->res++: Call CourseResponse()
-            res-->>sv--: Return CourseResponse object
-            
-            sv-->>be_ctrl: Return CourseResponse object
-            be_ctrl-->>fe_ctrl: Return statusCode 200
-            fe_ctrl-->>view: Return statusCode 200
-            view-->>act: Display update success message
-        else numberOfRowsAffected = 0
-            sv-->>be_ctrl--: throw InvalidOperationException
-            be_ctrl-->>fe_ctrl--: Return statusCode 500
-            fe_ctrl-->>view--: Return statusCode 500
-            view-->>act--: Display error message
-        end
+        sv-->>be_ctrl--: Return CourseResponse object
+        be_ctrl-->>fe_ctrl--: Return statusCode 200
+        fe_ctrl-->>view--: Return statusCode 200
+        view-->>act--: Display update success message
     end
 end
 

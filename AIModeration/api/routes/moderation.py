@@ -132,6 +132,7 @@ async def full_moderation_pipeline(
         # If Stage 1 flags, return immediately
         if stage1_response.moderation_status == "FLAGGED":
             logger.warning(f"Course {course_id} FLAGGED in Stage 1")
+            # Comment the return statement for early exit
             return stage1_response
         
         # Stage 2

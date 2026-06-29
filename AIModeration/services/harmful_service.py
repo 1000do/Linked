@@ -47,50 +47,21 @@ class HarmfulService(BaseService):
         step = 1
         start_time = time.time()
         stage_logs = []
-        flagged_fields = []
-        aggregate_scores = []
-        overall_details = {}
 
-        async def check_field(field_name: str, val: Optional[str]):
-            if not val or not val.strip():
-                return
-            try:
-                res_action, conf_score, details = self.text_classifier.classify_text(
-                    val,
-                    spam_threshold=spam_threshold,
-                    toxic_threshold=toxic_threshold
-                )
-                overall_details[field_name] = details
-                if res_action == ModerationStatus.FLAGGED.value:
-                    flagged_fields.append(field_name)
-                    aggregate_scores.append(conf_score)
-            except Exception as e:
-                self.logger.warning(f"Failed to classify field {field_name}: {e}")
-
-        # Course Level Fields
-        await check_field("course.title", course.title)
-        await check_field("course.description", course.description)
-        await check_field("course.what_you_will_learn", course.what_you_will_learn)
-        await check_field("course.requirements", course.requirements)
-
-        # Lesson and Material Level Fields
-        for idx_l, lesson in enumerate(course.lessons):
-            await check_field(f"lesson_{lesson.lesson_id}.title", lesson.title)
-            for idx_m, mat in enumerate(lesson.materials):
-                await check_field(f"material_{mat.material_id}.title", mat.material_title)
-                await check_field(f"material_{mat.material_id}.description", mat.material_description)
-
-        is_flagged = len(flagged_fields) > 0
-        latency_ms = (time.time() - start_time) * 1000
-        confidence_score = float(np.mean(aggregate_scores)) if aggregate_scores else 1.0
-
-        reason = (
-            f"Harmful content detected in fields: {', '.join(flagged_fields)}"
-            if is_flagged
-            else f"No harmful content detected in text fields (spam_threshold: {spam_threshold}, toxic_threshold: {toxic_threshold})"
+        flagged_fields, aggregate_scores, overall_details = await self._evaluate_fields(
+            self._generate_text_fields(course), spam_threshold, toxic_threshold
         )
-        overall_details['flagged_count'] = len(flagged_fields)
-        result_status = ModerationStatus.FLAGGED.value if is_flagged else ModerationStatus.APPROVED.value
+
+        is_flagged, latency_ms, confidence_score, reason, result_status = self._compute_stage_metrics(
+            start_time=start_time,
+            flagged_content=flagged_fields,
+            aggregate_scores=aggregate_scores,
+            overall_details=overall_details,
+            spam_threshold=spam_threshold,
+            toxic_threshold=toxic_threshold,
+            reason_flagged_prefix="Harmful content detected in fields: ",
+            reason_clean="No harmful content detected in text fields"
+        )
 
         log_entry = self.build_stage_log(
             stage=self.STAGE,
@@ -105,6 +76,78 @@ class HarmfulService(BaseService):
         )
         stage_logs.append(log_entry)
         return is_flagged, flagged_fields, stage_logs
+
+    def _generate_text_fields(self, course: CourseDetailDto):
+        yield "course.title", course.title
+        yield "course.description", course.description
+        yield "course.what_you_will_learn", course.what_you_will_learn
+        yield "course.requirements", course.requirements
+
+        for lesson in course.lessons:
+            yield f"lesson_{lesson.lesson_id}.title", lesson.title
+            for mat in lesson.materials:
+                yield f"material_{mat.material_id}.title", mat.material_title
+                yield f"material_{mat.material_id}.description", mat.material_description
+
+    async def _evaluate_fields(
+        self, fields_iterator, spam_threshold: float, toxic_threshold: float
+    ) -> Tuple[List[str], List[float], Dict[str, Any]]:
+        flagged_fields = []
+        aggregate_scores = []
+        details_map = {}
+
+        for f_name, f_val in fields_iterator:
+            is_flagged, score, details = await self._classify_field_text(f_name, f_val, spam_threshold, toxic_threshold)
+            if details is not None:
+                details_map[f_name] = details
+            if is_flagged:
+                flagged_fields.append(f_name)
+                if score is not None:
+                    aggregate_scores.append(score)
+
+        return flagged_fields, aggregate_scores, details_map
+
+    async def _classify_field_text(
+        self, field_name: str, val: Optional[str], spam_threshold: float, toxic_threshold: float
+    ) -> Tuple[bool, Optional[float], Optional[Dict]]:
+        if not val or not val.strip():
+            return False, None, None
+        try:
+            res_action, conf_score, details = self.text_classifier.classify_text(
+                val,
+                spam_threshold=spam_threshold,
+                toxic_threshold=toxic_threshold
+            )
+            is_flagged = res_action == ModerationStatus.FLAGGED.value
+            return is_flagged, conf_score, details
+        except Exception as e:
+            self.logger.warning(f"Failed to classify field {field_name}: {e}")
+            return False, None, None
+
+    def _compute_stage_metrics(
+        self,
+        start_time: float,
+        flagged_content: List[str],
+        aggregate_scores: List[float],
+        overall_details: Dict[str, Any],
+        spam_threshold: float,
+        toxic_threshold: float,
+        reason_flagged_prefix: str,
+        reason_clean: str
+    ) -> Tuple[bool, float, float, str, str]:
+        is_flagged = len(flagged_content) > 0
+        latency_ms = (time.time() - start_time) * 1000
+        confidence_score = float(np.mean(aggregate_scores)) if aggregate_scores else 1.0
+
+        reason = (
+            f"{reason_flagged_prefix}{', '.join(flagged_content)}"
+            if is_flagged
+            else f"{reason_clean} (spam_threshold: {spam_threshold}, toxic_threshold: {toxic_threshold})"
+        )
+        overall_details['flagged_count'] = len(flagged_content)
+        result_status = ModerationStatus.FLAGGED.value if is_flagged else ModerationStatus.APPROVED.value
+
+        return is_flagged, latency_ms, confidence_score, reason, result_status
 
     async def check_media_text_harmful(
         self,
@@ -121,120 +164,23 @@ class HarmfulService(BaseService):
         stage_logs = []
 
         if not candidates:
-            latency_ms = (time.time() - start_time) * 1000
-            log_entry = self.build_stage_log(
-                stage=self.STAGE,
-                step=step,
-                result="SKIPPED",
-                reason="No media candidates provided for extraction",
-                confidence_score=1.0,
-                latency_ms=latency_ms,
-                model_id=model_id
-            )
-            stage_logs.append(log_entry)
+            stage_logs.append(self._handle_empty_media_candidates(step, start_time, model_id))
             return False, [], stage_logs
 
-        flagged_content = []
-        aggregate_scores = []
-        overall_details = {}
-        candidates_checked = 0
-        candidates_pending = 0
-
-        for alias, value in candidates.items():
-            file_type = value.get('file_type')
-            file_bytes = value.get('file_bytes')
-            logger.info(f'Checking media text on {alias} (file type: {file_type})...')
-
-            if not file_bytes:
-                continue
-
-            try:
-                candidates_checked += 1
-                
-                final_action = "APPROVED"
-                final_conf = 1.0
-                final_details = {"status": "APPROVED", "reason": "No segments processed"}
-                
-                segment_count = 0
-                all_segment_details = []
-                all_segment_scores = []
-                
-                async for chunk_text, extraction_conf, extraction_log in self.text_extractor.extract_generic_stream(
-                    content=file_bytes,
-                    material_type=file_type
-                ):
-                    if not chunk_text or not chunk_text.strip():
-                        continue
-                        
-                    segment_count += 1
-                    result_action, conf, details = self.text_classifier.classify_text(
-                        chunk_text,
-                        spam_threshold=spam_threshold,
-                        toxic_threshold=toxic_threshold
-                    )
-                    
-                    all_segment_details.append({
-                        "segment": segment_count,
-                        "source": extraction_log.get("source", "unknown"),
-                        "text_snippet": chunk_text[:60] + "..." if len(chunk_text) > 60 else chunk_text,
-                        "classification": details
-                    })
-                    all_segment_scores.append(conf)
-                    
-                    if result_action == ModerationStatus.FLAGGED.value:
-                        console_log = f'''
-                        {alias}
-                        Source: {extraction_log.get("source", "unknown")} 
-                        Segment {segment_count} was FLAGGED
-                        First 100 characters: {chunk_text[:100]}
-                        '''
-                        final_action = "FLAGGED"
-                        final_conf = conf
-                        final_details = details
-                        logger.warning(f'Fail-fast triggered for {console_log}')
-                        break
-                        # logger.warning(f"Harmful content detected on {console_log}")
-                    elif result_action == "MANUAL_AUDIT" and final_action != "FLAGGED":
-                        final_action = "MANUAL_AUDIT"
-                        final_conf = conf
-                        final_details = details
-
-                if segment_count == 0:
-                    overall_details[alias] = {"status": "SKIPPED", "reason": "No text extracted"}
-                    continue
-
-                if final_action == "APPROVED":
-                    avg_conf = float(np.mean(all_segment_scores)) if all_segment_scores else 1.0
-                    overall_details[alias] = {
-                        "action": "APPROVED",
-                        "score": avg_conf,
-                        "raw_label": "SAFE",
-                        "segments_processed": segment_count,
-                        "details": all_segment_details
-                    }
-                else:
-                    overall_details[alias] = final_details
-                
-                if final_action == ModerationStatus.FLAGGED.value:
-                    flagged_content.append(alias)
-                    aggregate_scores.append(final_conf)
-
-            except Exception as e:
-                self.logger.warning(f"Error extracting/classifying media {alias}: {e}")
-                overall_details[alias] = {"status": "ERROR", "reason": str(e)}
-                continue
-
-        is_flagged = len(flagged_content) > 0
-        latency_ms = (time.time() - start_time) * 1000
-        confidence_score = float(np.mean(aggregate_scores)) if aggregate_scores else 1.0
-
-        reason = (
-            f"Harmful content detected in: {', '.join(flagged_content)}"
-            if is_flagged
-            else f"No harmful content detected in course media and resources (spam_threshold: {spam_threshold}, toxic_threshold: {toxic_threshold})"
+        flagged_content, aggregate_scores, overall_details = await self._evaluate_media_candidates(
+            candidates, spam_threshold, toxic_threshold
         )
-        overall_details['flagged_count'] = len(flagged_content)
-        result_status = ModerationStatus.FLAGGED.value if is_flagged else ModerationStatus.APPROVED.value
+
+        is_flagged, latency_ms, confidence_score, reason, result_status = self._compute_stage_metrics(
+            start_time=start_time,
+            flagged_content=flagged_content,
+            aggregate_scores=aggregate_scores,
+            overall_details=overall_details,
+            spam_threshold=spam_threshold,
+            toxic_threshold=toxic_threshold,
+            reason_flagged_prefix="Harmful content detected in: ",
+            reason_clean="No harmful content detected in course media and resources"
+        )
 
         log_entry = self.build_stage_log(
             stage=self.STAGE,
@@ -249,3 +195,145 @@ class HarmfulService(BaseService):
         )
         stage_logs.append(log_entry)
         return is_flagged, flagged_content, stage_logs
+
+    async def _evaluate_media_candidates(
+        self, candidates: Dict[str, Any], spam_threshold: float, toxic_threshold: float
+    ) -> Tuple[List[str], List[float], Dict[str, Any]]:
+        flagged_content = []
+        aggregate_scores = []
+        overall_details = {}
+
+        for alias, value in candidates.items():
+            is_flagged, final_conf, final_details = await self._process_single_media_candidate(
+                alias, value, spam_threshold, toxic_threshold
+            )
+            overall_details[alias] = final_details
+            if is_flagged:
+                flagged_content.append(alias)
+                aggregate_scores.append(final_conf)
+
+        return flagged_content, aggregate_scores, overall_details
+
+    def _handle_empty_media_candidates(self, step: int, start_time: float, model_id: int) -> StageLog:
+        latency_ms = (time.time() - start_time) * 1000
+        return self.build_stage_log(
+            stage=self.STAGE,
+            step=step,
+            result="SKIPPED",
+            reason="No media candidates provided for extraction",
+            confidence_score=1.0,
+            latency_ms=latency_ms,
+            model_id=model_id
+        )
+
+    async def _process_single_media_candidate(
+        self, alias: str, value: Dict[str, Any], spam_threshold: float, toxic_threshold: float
+    ) -> Tuple[bool, float, Dict[str, Any]]:
+        file_type = value.get('file_type')
+        file_bytes = value.get('file_bytes')
+        logger.info(f'Checking media text on {alias} (file type: {file_type})...')
+
+        if not file_bytes:
+            return False, 1.0, {"status": "SKIPPED", "reason": "No file bytes provided"}
+
+        try:
+            return await self._process_media_content_batch(alias, file_bytes, file_type, spam_threshold, toxic_threshold)
+        except Exception as e:
+            self.logger.warning(f"Error extracting/classifying media {alias}: {e}")
+            return False, 1.0, {"status": "ERROR", "reason": str(e)}
+
+    async def _process_media_content_batch(
+        self, alias: str, file_bytes: bytes, file_type: str, spam_threshold: float, toxic_threshold: float
+    ) -> Tuple[bool, float, Dict[str, Any]]:
+        chunk_text, extraction_conf, extraction_log = await self.text_extractor.extract_generic_legacy(
+            content=file_bytes,
+            material_type=file_type
+        )
+        
+        if not chunk_text or not chunk_text.strip():
+            return False, 1.0, {"status": "SKIPPED", "reason": "No text extracted"}
+            
+        result_action, conf, details = self.text_classifier.classify_text(
+            chunk_text,
+            spam_threshold=spam_threshold,
+            toxic_threshold=toxic_threshold
+        )
+        
+        final_details = {
+            "source": extraction_log.get("source", "unknown"),
+            "text_length": len(chunk_text),
+            "classification": details
+        }
+        
+        is_flagged = result_action == ModerationStatus.FLAGGED.value
+        if is_flagged:
+            logger.warning(f"Flagged media batch: {alias}. Source: {extraction_log.get('source', 'unknown')}. Conf: {conf}")
+        
+        return is_flagged, conf, final_details
+
+    async def _process_media_segments(
+        self, alias: str, file_bytes: bytes, file_type: str, spam_threshold: float, toxic_threshold: float
+    ) -> Tuple[bool, float, Dict[str, Any]]:
+        final_action = "APPROVED"
+        final_conf = 1.0
+        final_details = {"status": "APPROVED", "reason": "No segments processed"}
+        
+        segment_count = 0
+        all_segment_details = []
+        all_segment_scores = []
+        
+        async for chunk_text, extraction_conf, extraction_log in self.text_extractor.extract_generic_stream(
+            content=file_bytes,
+            material_type=file_type
+        ):
+            if not chunk_text or not chunk_text.strip():
+                continue
+                
+            segment_count += 1
+            result_action, conf, details = self.text_classifier.classify_text(
+                chunk_text,
+                spam_threshold=spam_threshold,
+                toxic_threshold=toxic_threshold
+            )
+            
+            all_segment_details.append({
+                "segment": segment_count,
+                "source": extraction_log.get("source", "unknown"),
+                "text_snippet": chunk_text[:60] + "..." if len(chunk_text) > 60 else chunk_text,
+                "classification": details
+            })
+            all_segment_scores.append(conf)
+            
+            if result_action == ModerationStatus.FLAGGED.value:
+                console_log = f'''
+                {alias}
+                Source: {extraction_log.get("source", "unknown")} 
+                Segment {segment_count} was FLAGGED
+                First 100 characters: {chunk_text[:100]}
+                '''
+                final_action = "FLAGGED"
+                final_conf = conf
+                final_details = details
+                logger.warning(f'Fail-fast triggered for {console_log}')
+                break
+            elif result_action == "MANUAL_AUDIT" and final_action != "FLAGGED":
+                final_action = "MANUAL_AUDIT"
+                final_conf = conf
+                final_details = details
+
+        if segment_count == 0:
+            return False, 1.0, {"status": "SKIPPED", "reason": "No text extracted"}
+
+        if final_action == "APPROVED":
+            avg_conf = float(np.mean(all_segment_scores)) if all_segment_scores else 1.0
+            overall_detail = {
+                "action": "APPROVED",
+                "score": avg_conf,
+                "raw_label": "SAFE",
+                "segments_processed": segment_count,
+                "details": all_segment_details
+            }
+            return False, avg_conf, overall_detail
+        
+        is_flagged = final_action == ModerationStatus.FLAGGED.value
+        return is_flagged, final_conf, final_details

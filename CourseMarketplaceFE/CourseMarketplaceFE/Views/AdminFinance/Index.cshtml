@@ -344,10 +344,14 @@
             <div class="flex flex-col gap-3 w-full">
                 <div class="flex gap-3">
                     <div class="relative flex-1">
-                        <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Amount ($)</label>
-                        <input type="number" name="amount" step="0.01" min="0.50" max="@Model.Withdraw.Balance.Available" value="@Model.Withdraw.Balance.Available"
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase">Amount ($)</label>
+                            <span id="withdraw-amount-preview" class="text-[10px] font-mono font-bold text-emerald-600"></span>
+                        </div>
+                        <input type="text" id="withdraw-amount-display"
                                class="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all font-mono font-bold text-slate-900 text-sm @(isWithdrawDisabled ? "opacity-60 cursor-not-allowed" : "")"
-                               id="withdraw-amount" @(isWithdrawDisabled ? "disabled" : "") />
+                               @(isWithdrawDisabled ? "disabled" : "") />
+                        <input type="hidden" name="amount" id="withdraw-amount" value="@Model.Withdraw.Balance.Available" data-max="@Model.Withdraw.Balance.Available" />
                     </div>
                     <div class="relative flex-1">
                         <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Description (Optional)</label>
@@ -1353,11 +1357,12 @@
             const amountInput = document.getElementById('withdraw-amount');
             const amount = amountInput.value;
             const amountVal = parseFloat(amount);
+            const formattedAmount = isNaN(amountVal) ? '$0.00' : '$' + amountVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
             if (isNaN(amountVal) || amountVal < 0.50) {
                 await Swal.fire({
                     title: 'Invalid Withdrawal Amount',
-                    html: `<div class="text-slate-600 text-sm font-medium">The minimum withdrawal amount is <b>$0.50</b>. Available balance must cover the amount.</div><br/><span class="text-xs text-slate-400">Currently entered: <b>$${amount}</b></span>`,
+                    html: `<div class="text-slate-600 text-sm font-medium">The minimum withdrawal amount is <b>$0.50</b>. Available balance must cover the amount.</div><br/><span class="text-xs text-slate-400">Currently entered: <b>${formattedAmount}</b></span>`,
                     icon: 'error',
                     confirmButtonColor: '#10b981',
                     confirmButtonText: 'Understood',
@@ -1371,7 +1376,7 @@
 
             const confirmResult = await Swal.fire({
                 title: 'Confirm Withdrawal',
-                html: `Are you absolutely sure you want to withdraw <b class="text-emerald-600">$${amount}</b> from the Stripe balance to your corporate bank account?`,
+                html: `Are you absolutely sure you want to withdraw <b class="text-emerald-600">${formattedAmount}</b> from the Stripe balance to your corporate bank account?`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#10b981',
@@ -1419,6 +1424,104 @@
 
         // AJAX Dynamic Month/Year Dropdown Loading
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Withdraw Amount formatting
+            const withdrawDisplay = document.getElementById('withdraw-amount-display');
+            const withdrawHidden = document.getElementById('withdraw-amount');
+            const withdrawPreview = document.getElementById('withdraw-amount-preview');
+
+            if (withdrawDisplay && withdrawHidden) {
+                const maxVal = parseFloat(withdrawHidden.getAttribute('data-max') || '0');
+
+                function formatUSD(val) {
+                    const parsed = parseFloat(val);
+                    if (isNaN(parsed)) return '$0.00';
+                    return '$' + parsed.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+
+                // Format display numbers without pre-pending '$' sign
+                function formatDisplayUSD(val) {
+                    const parsed = parseFloat(val);
+                    if (isNaN(parsed)) return '';
+                    return parsed.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+
+                function cleanInputString(str) {
+                    let hasDot = str.includes('.');
+                    let commaCount = (str.match(/,/g) || []).length;
+                    
+                    if (!hasDot && commaCount === 1) {
+                        str = str.replace(',', '.');
+                    } else {
+                        str = str.replace(/,/g, '');
+                    }
+                    
+                    const dotParts = str.split('.');
+                    if (dotParts.length > 2) {
+                        str = dotParts[0] + '.' + dotParts.slice(1).join('');
+                    }
+                    return str.replace(/[^\d.]/g, '');
+                }
+
+                // Initial format
+                withdrawDisplay.value = formatDisplayUSD(withdrawHidden.value);
+                if (withdrawPreview) {
+                    withdrawPreview.textContent = formatUSD(withdrawHidden.value);
+                }
+
+                withdrawDisplay.addEventListener('focus', function() {
+                    if (withdrawHidden.value && !isNaN(parseFloat(withdrawHidden.value))) {
+                        this.value = parseFloat(withdrawHidden.value).toString();
+                    } else {
+                        this.value = '';
+                    }
+                });
+
+                withdrawDisplay.addEventListener('input', function() {
+                    let val = this.value;
+                    let clean = cleanInputString(val);
+                    
+                    let parsed = parseFloat(clean);
+                    if (!isNaN(parsed)) {
+                        if (parsed > maxVal) {
+                            parsed = maxVal;
+                            clean = maxVal.toString();
+                            this.value = clean;
+                        }
+                        withdrawHidden.value = clean;
+                        if (withdrawPreview) {
+                            withdrawPreview.textContent = formatUSD(clean);
+                        }
+                    } else {
+                        withdrawHidden.value = '';
+                        if (withdrawPreview) {
+                            withdrawPreview.textContent = '$0.00';
+                        }
+                    }
+                });
+
+                withdrawDisplay.addEventListener('blur', function() {
+                    let val = this.value;
+                    let clean = cleanInputString(val);
+                    let parsed = parseFloat(clean);
+                    if (!isNaN(parsed)) {
+                        if (parsed > maxVal) {
+                            parsed = maxVal;
+                        }
+                        withdrawHidden.value = parsed.toFixed(2);
+                        this.value = formatDisplayUSD(parsed);
+                        if (withdrawPreview) {
+                            withdrawPreview.textContent = formatUSD(parsed);
+                        }
+                    } else {
+                        withdrawHidden.value = '';
+                        this.value = '';
+                        if (withdrawPreview) {
+                            withdrawPreview.textContent = '$0.00';
+                        }
+                    }
+                });
+            }
+
             const filterForm = document.getElementById('periodFilterForm');
             if (filterForm) {
                 const selects = filterForm.querySelectorAll('select');

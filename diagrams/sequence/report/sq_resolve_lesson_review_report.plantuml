@@ -1,0 +1,98 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Resolve Lesson Review Report
+
+actor "Staff / Admin" as act
+participant "ReportCenterPage" as view
+participant "LoginPage" as login_view
+participant "HomePage" as home_view
+participant "AdminModerationController" as fe_ctrl <<frontend controller>>
+participant "AdminModerationController" as be_ctrl <<backend controller>>
+participant ":ReportModerationService" as sv
+participant ":ReportRepository" as repo
+database Database as db
+
+act ++
+act -> view++: Click "Moderate" on a lesson review report row
+view -->> act: Display Moderate Report popup
+
+act -> view: Select resolution status
+act -> view: Enter moderation notes
+act -> view: Click "Submit Decision"
+
+view -> fe_ctrl++: POST /AdminModeration/ResolveLessonReviewReport?reportId={id}
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid (Not Logged In)
+    fe_ctrl -> login_view++: Redirect to login page
+    login_view -->> act--: Display authentication error message
+else Unauthorized Access
+    fe_ctrl -> home_view++: Redirect to home or access denied page
+    home_view -->> act--: Display access denied message
+else Authorized Access
+    fe_ctrl -> be_ctrl++: PATCH /api/admin/moderation/reports/lesson-reviews/{reportId}
+    
+    be_ctrl -> sv++: Call ResolveLessonReviewReportAsync(reportId, request)
+    
+    sv->sv++: Update lesson review report fields
+    sv--
+
+    sv -> repo++: UpdateLessonReviewReport()
+    repo -->> sv--: Return updated report
+    
+    opt Report is accepted
+    sv -> sv++: ApplyLessonReviewPenaltyAsync()
+    sv--
+    end
+    sv -> sv++: SendResolutionNotificationsAsync()
+    sv--
+    
+    sv -> repo++: SaveChangesAsync()
+    repo -> db++: Save changes to database
+    
+    alt Database Save Failure
+        db -->> repo: Throw DbUpdateException
+        repo -->> sv: Throw ReportException
+        sv -->> be_ctrl: Throw BadRequestException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return JSON error response
+        view -->> act: Display error popup
+    else Success
+        db -->> repo--: Return numberOfRowsAffected
+        repo -->> sv--: Return numberOfRowsAffected
+        
+        sv -->> be_ctrl--: Return true
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        fe_ctrl -->> view--: Return JSON success response
+        
+        view -->> act--: Display success message
+    end
+end
+@enduml
