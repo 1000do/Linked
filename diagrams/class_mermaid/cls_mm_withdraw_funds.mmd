@@ -1,0 +1,146 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminFinanceControllerFE["AdminFinanceController"] {
+    <<frontend controller>>
+    + Withdraw(amount: decimal?, description: string?) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AdminFinanceControllerBE["AdminFinanceController"] {
+    <<backend controller>>
+    - _financeService : IAdminFinanceService
+    - _instructorService : IInstructorService
+    + Withdraw(request: WithdrawRequest) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class WithdrawRequest {
+    <<dto>>
+    + Amount : decimal?
+    + Description : string?
+}
+
+class WithdrawResponse {
+    <<dto>>
+    + WithdrawalId : int
+    + StripePayoutId : string
+    + Amount : decimal
+    + Status : string
+    + CreatedAt : DateTime
+}
+
+class PlatformBalanceResponse {
+    <<dto>>
+    + Available : decimal
+    + Incoming : decimal
+    + Total : decimal
+    + Currency : string
+    + PayoutScheduleInterval : string
+    + PayoutScheduleAnchor : string?
+}
+
+class StripePlatformBalanceDto {
+    <<dto>>
+    + Available : decimal
+    + Incoming : decimal
+    + Currency : string
+    + PayoutScheduleInterval : string
+    + PayoutScheduleAnchor : string?
+}
+
+class StripeWithdrawalResponseDto {
+    <<dto>>
+    + Id : string
+    + Amount : decimal
+    + Status : string
+    + ArrivalDate : DateTime?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class PlatformWithdrawal {
+    + WithdrawalId : int
+    + ManagerId : int?
+    + Amount : decimal
+    + Currency : string
+    + StripePayoutId : string?
+    + Status : string
+    + Description : string?
+    + CreatedAt : DateTime
+    + ArrivedAt : DateTime?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAdminFinanceService {
+    <<interface>>
+    + CreateWithdrawalAsync(request: WithdrawRequest, managerId: int) Task~WithdrawResponse~ *
+    + GetPlatformBalanceAsync() Task~PlatformBalanceResponse~ *
+}
+
+class IStripeConnectService {
+    <<interface>>
+    + GetPlatformBalanceAsync() Task~StripePlatformBalanceDto~ *
+    + CreatePlatformWithdrawalAsync(amount: decimal, description: string, managerId: int) Task~StripeWithdrawalResponseDto~ *
+}
+
+%% ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+class IAdminFinanceRepository {
+    <<interface>>
+    + AddWithdrawalAsync(withdrawal: PlatformWithdrawal) Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AdminFinanceService {
+    - _repo : IAdminFinanceRepository
+    - _stripeConnect : IStripeConnectService
+    + CreateWithdrawalAsync(request: WithdrawRequest, managerId: int) Task~WithdrawResponse~
+    + GetPlatformBalanceAsync() Task~PlatformBalanceResponse~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class AdminFinanceRepository {
+    - _context : AppDbContext
+    + AddWithdrawalAsync(withdrawal: PlatformWithdrawal) Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + PlatformWithdrawals : DbSet~PlatformWithdrawal~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+AdminFinanceControllerFE ..> AdminFinanceControllerBE
+AdminFinanceControllerBE --> IAdminFinanceService
+AdminFinanceService --> IAdminFinanceRepository
+AdminFinanceService --> IStripeConnectService
+AdminFinanceRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+AdminFinanceService ..|> IAdminFinanceService
+AdminFinanceRepository ..|> IAdminFinanceRepository
+
+%% === DEPENDENCY ===
+AdminFinanceControllerBE ..> WithdrawRequest
+AdminFinanceControllerBE ..> WithdrawResponse
+AdminFinanceService ..> WithdrawRequest
+AdminFinanceService ..> WithdrawResponse
+AdminFinanceService ..> PlatformBalanceResponse
+AdminFinanceService ..> PlatformWithdrawal
+IStripeConnectService ..> StripePlatformBalanceDto
+IStripeConnectService ..> StripeWithdrawalResponseDto
+AdminFinanceRepository ..> PlatformWithdrawal
+
+%% ==================== STYLES ====================
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
