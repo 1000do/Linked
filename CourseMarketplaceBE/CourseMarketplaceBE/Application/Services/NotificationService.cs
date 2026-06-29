@@ -66,28 +66,8 @@ namespace CourseMarketplaceBE.Application.Services
                 int numberOfRowsAffected = await _repo.SaveChangesAsync();
                 /* zero rows exception removed */
 
-                await _hubContext.Clients.User(receiverId.ToString())
-                    .SendAsync("ReceiveNotification", new
-                    {
-                        notificationId = noti.NotificationId,
-                        title = noti.Title,
-                        content = noti.Content,
-                        linkAction = noti.LinkAction,
-                        createdAt = noti.CreatedAt,
-                        isRead = false,
-                        receiverId = noti.ReceiverId
-                    });
-                
-                var allManagerIds = await _userRepo.GetAllManagerIdsAsync();
-                var remainingManagerIds = allManagerIds
-                    .Where(id => id != receiverId)
-                    .Select(id => id.ToString())
-                    .ToList();
-
-                if (remainingManagerIds.Any())
-                {
-                    await _hubContext.Clients.Users(remainingManagerIds).SendAsync("ReceiveNotification");
-                }
+                await DispatchSingleNotificationAsync(noti);
+                await NotifyRemainingManagersAsync(new[] { receiverId });
                 
                 return true;
             }
@@ -173,56 +153,20 @@ namespace CourseMarketplaceBE.Application.Services
             var (notifications, count) = await _repo.GetAllAsync(page, pageSize);
             if (!notifications.Any()) throw new KeyNotFoundException("No notifications found.");
 
-            var dtos = notifications.Select(n => {
-                string role = "broadcast";
-                if (n.Receiver != null)
-                {
-                    if (n.Receiver.Manager != null)
-                    {
-                        role = n.Receiver.Manager.Role?.ToLower() ?? "staff";
-                    }
-                    else if (n.Receiver.User != null)
-                    {
-                        role = n.Receiver.User.Instructor != null ? "instructor" : "student";
-                    }
-                    else
-                    {
-                        role = "student";
-                    }
-                }
-
-                string senderRole = "system";
-                if (n.Sender != null)
-                {
-                    if (n.Sender.Manager != null)
-                    {
-                        senderRole = n.Sender.Manager.Role?.ToLower() ?? "staff";
-                    }
-                    else if (n.Sender.User != null)
-                    {
-                        senderRole = n.Sender.User.Instructor != null ? "instructor" : "student";
-                    }
-                    else
-                    {
-                        senderRole = "student";
-                    }
-                }
-
-                return new NotificationAdminResponseDto
-                {
-                    NotificationId = n.NotificationId,
-                    Title = n.Title,
-                    Content = n.Content,
-                    IsRead = n.IsRead,
-                    CreatedAt = n.CreatedAt,
-                    ReceiverEmail = n.Receiver?.Email ?? "all-users@system.com",
-                    ReceiverFullName = n.Receiver?.User?.FullName ?? "System",
-                    ReceiverRole = role,
-                    ReceiverId = n.ReceiverId,
-                    SenderId = n.SenderId,
-                    SenderRole = senderRole,
-                    LinkAction = n.LinkAction
-                };
+            var dtos = notifications.Select(n => new NotificationAdminResponseDto
+            {
+                NotificationId = n.NotificationId,
+                Title = n.Title,
+                Content = n.Content,
+                IsRead = n.IsRead,
+                CreatedAt = n.CreatedAt,
+                ReceiverEmail = n.Receiver?.Email ?? "all-users@system.com",
+                ReceiverFullName = n.Receiver?.User?.FullName ?? "System",
+                ReceiverRole = GetAccountRole(n.Receiver, "broadcast"),
+                ReceiverId = n.ReceiverId,
+                SenderId = n.SenderId,
+                SenderRole = GetAccountRole(n.Sender, "system"),
+                LinkAction = n.LinkAction
             }).ToList();
             return new PagedResult<NotificationAdminResponseDto> { Items = dtos, TotalCount = count };
         }
@@ -236,6 +180,63 @@ namespace CourseMarketplaceBE.Application.Services
         }
 
         public async Task<int> SendAdvancedAsync(NotificationAdvancedDto dto, int senderId, string senderRole)
+        {
+            var targetUserIds = await ResolveTargetUserIdsAsync(dto, senderId, senderRole);
+            if (!targetUserIds.Any()) return 0;
+
+            var now = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(7), DateTimeKind.Unspecified);
+            var notifications = CreateAdvancedNotifications(targetUserIds, dto, senderId, now);
+
+            await _repo.AddRangeAsync(notifications);
+            int numberOfRowsAffected = await _repo.SaveChangesAsync();
+            /* zero rows exception removed */
+
+            await DispatchAdvancedNotificationsAsync(targetUserIds, dto, senderId, senderRole, now);
+            await NotifyRemainingManagersAsync(targetUserIds);
+
+            return targetUserIds.Count;
+        }
+
+        public async Task<bool> SendBulkNotificationsAsync(IEnumerable<NotificationBulkDto> dtos)
+        {
+            if (dtos == null || !dtos.Any()) return true;
+
+            var now = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(7), DateTimeKind.Unspecified);
+
+            var notifications = dtos.Select(dto => new Notification
+            {
+                ReceiverId = dto.ReceiverId,
+                Title = dto.Title,
+                Content = dto.Content,
+                LinkAction = dto.LinkAction,
+                IsRead = false,
+                CreatedAt = now
+            }).ToList();
+
+            await _repo.AddRangeAsync(notifications);
+            int numberOfRowsAffected = await _repo.SaveChangesAsync();
+            /* zero rows exception removed */
+
+            foreach (var noti in notifications)
+            {
+                await DispatchSingleNotificationAsync(noti);
+            }
+
+            await NotifyRemainingManagersAsync(notifications.Where(n => n.ReceiverId.HasValue).Select(n => n.ReceiverId.Value));
+
+            return true;
+        }
+
+
+        private string GetAccountRole(Account? account, string defaultRole)
+        {
+            if (account == null) return defaultRole;
+            if (account.Manager != null) return account.Manager.Role?.ToLower() ?? "staff";
+            if (account.User != null) return account.User.Instructor != null ? "instructor" : "student";
+            return "student";
+        }
+
+        private async Task<List<int>> ResolveTargetUserIdsAsync(NotificationAdvancedDto dto, int senderId, string senderRole)
         {
             var targetUserIds = new List<int>();
 
@@ -269,31 +270,31 @@ namespace CourseMarketplaceBE.Application.Services
                         }
 
                         var recipientRole = await _userRepo.GetRoleByAccountIdAsync(acc.AccountId);
-                        if (senderRole == "staff")
-                        {
-                            if (recipientRole == "staff" || recipientRole == "admin")
-                            {
-                                throw new InvalidOperationException("Staff cannot send notifications to staff or admin.");
-                            }
-                        }
-                        else if (senderRole == "admin")
-                        {
-                            if (recipientRole == "admin")
-                            {
-                                throw new InvalidOperationException("Admin cannot send notifications to other admins.");
-                            }
-                        }
+                        ValidateRecipientPermission(senderRole, recipientRole);
 
                         targetUserIds.Add(acc.AccountId);
                     }
                 }
             }
 
-            if (!targetUserIds.Any()) return 0;
+            return targetUserIds;
+        }
 
-            var now = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(7), DateTimeKind.Unspecified);
+        private void ValidateRecipientPermission(string senderRole, string recipientRole)
+        {
+            if (senderRole == "staff" && (recipientRole == "staff" || recipientRole == "admin"))
+            {
+                throw new InvalidOperationException("Staff cannot send notifications to staff or admin.");
+            }
+            if (senderRole == "admin" && recipientRole == "admin")
+            {
+                throw new InvalidOperationException("Admin cannot send notifications to other admins.");
+            }
+        }
 
-            var notifications = targetUserIds.Select(uid => new Notification
+        private List<Notification> CreateAdvancedNotifications(List<int> targetUserIds, NotificationAdvancedDto dto, int senderId, DateTime now)
+        {
+            return targetUserIds.Select(uid => new Notification
             {
                 SenderId = senderId,
                 ReceiverId = uid,
@@ -303,11 +304,10 @@ namespace CourseMarketplaceBE.Application.Services
                 CreatedAt = now,
                 IsRead = false
             }).ToList();
+        }
 
-            await _repo.AddRangeAsync(notifications);
-            int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            /* zero rows exception removed */
-
+        private async Task DispatchAdvancedNotificationsAsync(List<int> targetUserIds, NotificationAdvancedDto dto, int senderId, string senderRole, DateTime now)
+        {
             foreach (var uid in targetUserIds)
             {
                 await _hubContext.Clients.User(uid.ToString()).SendAsync("ReceiveNotification", new
@@ -323,9 +323,27 @@ namespace CourseMarketplaceBE.Application.Services
                     senderRole = senderRole
                 });
             }
+        }
 
+        private async Task DispatchSingleNotificationAsync(Notification noti)
+        {
+            await _hubContext.Clients.User(noti.ReceiverId.ToString())
+                .SendAsync("ReceiveNotification", new
+                {
+                    notificationId = noti.NotificationId,
+                    title = noti.Title,
+                    content = noti.Content,
+                    linkAction = noti.LinkAction,
+                    createdAt = noti.CreatedAt,
+                    isRead = false,
+                    receiverId = noti.ReceiverId
+                });
+        }
+
+        private async Task NotifyRemainingManagersAsync(IEnumerable<int> explicitlyNotifiedUserIds)
+        {
             var allManagerIds = await _userRepo.GetAllManagerIdsAsync();
-            var explicitlyNotified = targetUserIds.ToHashSet();
+            var explicitlyNotified = explicitlyNotifiedUserIds.ToHashSet();
             var remainingManagerIds = allManagerIds
                 .Where(id => !explicitlyNotified.Contains(id))
                 .Select(id => id.ToString())
@@ -335,59 +353,6 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 await _hubContext.Clients.Users(remainingManagerIds).SendAsync("ReceiveNotification");
             }
-
-            return targetUserIds.Count;
         }
-
-        public async Task<bool> SendBulkNotificationsAsync(IEnumerable<NotificationBulkDto> dtos)
-        {
-            if (dtos == null || !dtos.Any()) return true;
-
-            var now = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(7), DateTimeKind.Unspecified);
-
-            var notifications = dtos.Select(dto => new Notification
-            {
-                ReceiverId = dto.ReceiverId,
-                Title = dto.Title,
-                Content = dto.Content,
-                LinkAction = dto.LinkAction,
-                IsRead = false,
-                CreatedAt = now
-            }).ToList();
-
-            await _repo.AddRangeAsync(notifications);
-            int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            /* zero rows exception removed */
-
-            foreach (var noti in notifications)
-            {
-                await _hubContext.Clients.User(noti.ReceiverId.ToString())
-                    .SendAsync("ReceiveNotification", new
-                    {
-                        notificationId = noti.NotificationId,
-                        title = noti.Title,
-                        content = noti.Content,
-                        linkAction = noti.LinkAction,
-                        createdAt = noti.CreatedAt,
-                        isRead = false,
-                        receiverId = noti.ReceiverId
-                    });
-            }
-
-            var allManagerIds = await _userRepo.GetAllManagerIdsAsync();
-            var explicitlyNotifiedIds = notifications.Select(n => n.ReceiverId).ToHashSet();
-            var remainingManagerIds = allManagerIds
-                .Where(id => !explicitlyNotifiedIds.Contains(id))
-                .Select(id => id.ToString())
-                .ToList();
-
-            if (remainingManagerIds.Any())
-            {
-                await _hubContext.Clients.Users(remainingManagerIds).SendAsync("ReceiveNotification");
-            }
-
-            return true;
-        }
-
     }
 }

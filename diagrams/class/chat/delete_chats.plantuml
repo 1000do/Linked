@@ -24,7 +24,7 @@ skinparam arrowColor #333333
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class "ChatController" as ChatControllerBE #FFE6E6 {
+class "ChatController" as ChatControllerBE <<backend controller>> #FFE6E6 {
     - _chatService : IChatService
     + ClearChatHistory(chatId: int) : Task<IActionResult>
 }
@@ -32,8 +32,8 @@ class "ChatController" as ChatControllerBE #FFE6E6 {
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class ChatParticipant #CCFFE6 {
-    + ChatId : int <<PK, FK>>
-    + AccountId : int <<PK, FK>>
+    + ChatId : int
+    + AccountId : int
     + ClearedAt : DateTime?
 }
 
@@ -85,7 +85,7 @@ ChatService ..|> IChatService
 ChatRepository ..|> IChatRepository
 
 ' === DEPENDENCY ===
-ChatService ..> ChatParticipant : uses
-ChatRepository ..> ChatParticipant : uses
+ChatService ..> ChatParticipant
+ChatRepository ..> ChatParticipant
 
 @enduml

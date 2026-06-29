@@ -75,9 +75,9 @@ else [User confirms]
         ctx->db++: Save changes (Execute UPDATE statement)
         
         alt [Database Save Fails (throws DbUpdateException)]
-            db-->>ctx--: Throw DbUpdateException
-            ctx-->>repo--: Throw DbUpdateException
-            repo-->>sv--: Throw DbUpdateException
+            db-->>ctx: Throw DbUpdateException
+            ctx-->>repo: Throw DbUpdateException
+            repo-->>sv: Throw DbUpdateException
             sv-->>be_ctrl: Throw DbUpdateException
             be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
             fe_ctrl-->>view: Return JSON error
