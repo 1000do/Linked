@@ -1,0 +1,213 @@
+
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class InstructorCourseControllerFE["InstructorCourseController"] {
+    <<frontend controller>>
+    + ModerateCourse(courseId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class CourseController {
+    <<backend controller>>
+    - _courseAiModerationService : ICourseAiModerationService
+    
+    + ModerateCourse(request: CourseModerationRequest) Task~IActionResult~
+    - GetInstructorId() int
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class CourseModerationRequest {
+    <<dto>>
+    + CourseId : int
+}
+
+class CourseModerationResult {
+    <<dto>>
+    + CourseId : int
+    + ModerationStatus : string
+    + FlaggedFields : List~string~
+    + OverallConfidenceScore : float
+    + TotalLatencyMs : float
+    + StageLogs : List~StageLog~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Course {
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + CourseAiIntegrations : ICollection~CourseAiIntegration~
+    + CartItems : ICollection~CartItem~
+    + Category : Category?
+    + Coupon : Coupon?
+    + Enrollments : ICollection~Enrollment~
+    + Instructor : Instructor?
+    + Lessons : ICollection~Lesson~
+    + OrderItems : ICollection~OrderItem~
+    + WishlistItems : ICollection~WishlistItem~
+    + CourseExt : CourseExt?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ICourseAiModerationService {
+    <<interface>>
+    + StartCourseModerationAsync(request: CourseModerationRequest, instructorId: int) Task *
+    + HandleCourseModerationWithAIAsync(request: CourseModerationRequest) Task~CourseModerationResult~ *
+}
+
+class IAiModerationService {
+    <<interface>>
+    + HealthCheckAsync() Task~bool~ *
+    + ModerateCourseFullPipelineAsync(semanticReq: SemanticDuplicationRequest, harmfulReq: CourseHarmfulRequest) Task~CourseModerationResult~ *
+}
+
+class ICourseCommandService {
+    <<interface>>
+    + UpdateCourseStatusAsync(courseId: int, status: string, instructorId: int) Task *
+    + UpdateCourseStatusAndFeedbackAsync(courseId: int, status: string?, feedback: string?, threatLevel: AiThreatLevel?) Task *
+}
+
+class IRedisService {
+    <<interface>>
+    + RemoveCacheAsync(key: string) void *
+}
+
+class IBackgroundTaskQueue {
+    <<interface>>
+    + QueueBackgroundWorkItemAsync~ICourseAiModerationService~(workItem: Func) ValueTask *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~Course?~ *
+    + Update(course: Course) void *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CourseAiModerationService {
+    - _aiModerationService : IAiModerationService
+    - _courseCommandService : ICourseCommandService
+    - _redisService : IRedisService
+    - _taskQueue : IBackgroundTaskQueue
+    
+    + StartCourseModerationAsync(request: CourseModerationRequest, instructorId: int) Task
+    + HandleCourseModerationWithAIAsync(request: CourseModerationRequest) Task~CourseModerationResult~
+    - GetCourseForModerationAsync(courseId: int) Task~CourseModerationDetailResponse?~
+    - UpdateCourseStatusAndClearCacheAsync(courseId: int, status: string, instructorId: int) Task
+    - PrepareForCourseAIModeration(courseId: int) Task~PrepareForCourseAIModerationResult~
+    - CreateModerationRequests(courseId: int, prep: PrepareForCourseAIModerationResult) Tuple
+    - ResolveCourseAIModerationResult(result: CourseModerationResult) Task
+    - LogCourseAiModeration(command: LogCourseAiModerationCommand) Task
+    - NotifyManagersAsync(title: string, content: string, linkAction: string?) Task
+}
+
+class AiModerationService {
+    + HealthCheckAsync() Task~bool~
+    + ModerateCourseFullPipelineAsync(semanticReq: SemanticDuplicationRequest, harmfulReq: CourseHarmfulRequest) Task~CourseModerationResult~
+}
+
+class RedisService {
+    + RemoveCacheAsync(key: string) void
+}
+
+class BackgroundTaskQueue {
+    + QueueBackgroundWorkItemAsync~ICourseAiModerationService~(workItem: Func) ValueTask
+}
+
+class CourseCommandService {
+    - _courseRepository : ICourseRepository
+    - _redisService : IRedisService
+    
+    + UpdateCourseStatusAsync(courseId: int, status: string, instructorId: int) Task
+    + UpdateCourseStatusAndFeedbackAsync(courseId: int, status: string?, feedback: string?, threatLevel: AiThreatLevel?) Task
+    - ValidateCourseStatusUpdateAsync(courseId: int, status: string, instructorId: int) Task~Course~
+    - ValidateLandingPageRequirements(course: Course) void
+    - ValidateCourseDurationLimitsAsync(course: Course, instructorId: int) Task
+    - ReactivateCourseContentAsync(courseId: int) Task
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CourseRepository {
+    - _context : AppDbContext
+    
+    + GetByIdAsync(id: int) Task~Course?~
+    + Update(course: Course) void
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Courses : DbSet~Course~
+    + Instructors : DbSet~Instructor~
+    + Lessons : DbSet~Lesson~
+    + LearningMaterials : DbSet~LearningMaterial~
+    + Lockouts : DbSet~Lockout~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION (filled diamond) ===
+
+%% === AGGREGATION (hollow diamond) ===
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+CourseController --> ICourseAiModerationService
+CourseAiModerationService --> IAiModerationService
+CourseAiModerationService --> ICourseCommandService
+CourseAiModerationService --> IRedisService
+CourseAiModerationService --> IBackgroundTaskQueue
+CourseCommandService --> ICourseRepository
+CourseCommandService --> IRedisService
+CourseRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+CourseAiModerationService ..|> ICourseAiModerationService
+AiModerationService ..|> IAiModerationService
+CourseCommandService ..|> ICourseCommandService
+RedisService ..|> IRedisService
+CourseRepository ..|> ICourseRepository
+BackgroundTaskQueue ..|> IBackgroundTaskQueue
+
+%% === DEPENDENCY (dashed arrows) ===
+InstructorCourseControllerFE ..> CourseController
+CourseController ..> CourseModerationRequest
+CourseAiModerationService ..> CourseModerationRequest
+CourseAiModerationService ..> CourseModerationResult
+CourseCommandService ..> Course
+CourseRepository ..> Course
+
+%% === BIDIRECTIONAL ASSOCIATION ===
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
+
