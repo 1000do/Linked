@@ -1,0 +1,110 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Add AI Model
+
+actor Admin as act
+participant "AiServiceManagementPage" as view
+participant "LoginPage" as login_view
+participant "AdminAiServiceController" as fe_ctrl <<frontend controller>>
+participant "AdminAiServiceController" as be_ctrl <<backend controller>>
+participant ":AiModelManagementService" as sv
+participant ":AiModelAdminDto" as res
+participant ":AiModelRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Click "Add AI Model" button
+view -> view++: Open model registration modal
+view--
+act -> view: Fill in model details and click "Add Model"
+
+view -> view++: Prompt confirmation dialog
+view--
+
+opt Admin Cancels Confirmation
+    act -> view: Click cancel
+    view -->> act: Close dialog
+end
+
+act -> view: Confirm the action
+
+view -> view++: Validate form inputs
+view--
+
+opt Form Validation Failed
+    view -->> act: Display validation error message
+end
+
+view -> fe_ctrl++: Send POST request to /AdminAiService/AddModel
+
+fe_ctrl -> fe_ctrl++: Validate Admin Authorization
+fe_ctrl--
+
+alt Unauthorized Access
+    fe_ctrl -> login_view++: Redirect to Login page
+    login_view -->> act--: Display Login page
+else Valid Authorization
+    fe_ctrl -> be_ctrl++: Send POST request to /api/admin/ai-service/models (CreateAiModelRequest)
+    
+    be_ctrl -> sv++: Call AddModelAsync(req)
+    
+    sv -> repo++: Call Add(model)
+    repo -> ctx++: Call Add(model)
+    ctx -->> repo--: Return result
+    repo -->> sv--: Return AiModel
+    
+    sv -> repo++: Call SaveChangesAsync()
+    repo -> ctx++: Call SaveChangesAsync()
+    ctx -> db++: Save changes to database
+    
+    alt DbUpdateException
+        db -->> ctx: throw DbUpdateException
+        ctx -->> repo: throw DbUpdateException
+        repo -->> sv: throw AiModelException
+        sv -->> be_ctrl: throw BadRequestException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return statusCode 400
+        view -->> act: Display error message
+    else Saved Successfully
+        db -->> ctx--: Return numberOfRowsAffected
+        ctx -->> repo--: Return numberOfRowsAffected
+        repo -->> sv--: Return numberOfRowsAffected
+        
+        sv -> res++: Call AiModelAdminDto()
+        res -->> sv--: Return AiModelAdminDto object
+        
+        sv -->> be_ctrl--: Return AiModelAdminDto object
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        fe_ctrl -->> view--: Return JSON (success = true)
+        view -->> act--: Display success notification
+    end
+end
+
+@enduml

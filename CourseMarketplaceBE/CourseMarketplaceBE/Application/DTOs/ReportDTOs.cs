@@ -67,7 +67,7 @@ public class ResolveReportRequest
     public string Status { get; set; } = null!;
 
     [MaxLength(1000)]
-    public string? ResolutionNote { get; set; }
+    public string ResolutionNote { get; set; } = "Report has been resolved";
 
     /// <summary>
     /// Chỉ dùng khi Status = "resolved" và cần gỡ nội dung vi phạm.

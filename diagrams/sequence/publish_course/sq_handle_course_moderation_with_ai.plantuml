@@ -1,0 +1,70 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Handle Course Moderation With AI
+
+participant ":BackgroundTaskQueue" as queue
+participant ":CourseAiModerationService" as sv
+participant ":CourseModerationResult" as res
+participant ":AiModerationService" as ai_sv
+
+queue ++
+queue -> sv++: HandleCourseModerationWithAIAsync(request)
+sv -> ai_sv++: HealthCheckAsync()
+ai_sv -->> sv--: Return isHealthy
+
+alt AI Service unhealthy or offline
+    sv -> sv++: NotifyManagersAsync("AI Service Unhealthy", ...)
+    sv--
+    sv -> res++: Call CourseModerationResult(courseId,"MANUAL_AUDIT")
+    res -->> sv--: Return CourseModerationResult object
+    sv -->> queue: Return CourseModerationResult
+else AI Service healthy
+    sv -> sv++: PrepareForCourseAIModeration(courseId)
+    sv--
+    sv -> sv++: CreateModerationRequests(courseId, prep)
+    sv--
+    sv -> ai_sv++: ModerateCourseFullPipelineAsync(semanticReq, harmfulReq)
+    
+    alt AI Moderation request timeout or pipeline error
+        ai_sv -->> sv: throw Exception
+        sv -> sv++: NotifyManagersAsync("Moderation Process Exception", ...)
+        sv--
+        sv -> res++: Call CourseModerationResult(courseId,"MANUAL_AUDIT")
+        res -->> sv--: Return CourseModerationResult object
+        sv -->> queue: Return CourseModerationResult
+    else Moderation Pipeline Succeeded
+        ai_sv -->> sv--: Return CourseModerationResult
+        sv -> sv++: ResolveCourseAIModerationResult(result)
+        sv--
+        sv -> sv++: LogCourseAiModeration(command)
+        sv--
+        sv -->> queue--: Return CourseModerationResult
+    end
+end
+
+@enduml
