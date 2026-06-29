@@ -1,0 +1,128 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Publish Course
+
+actor Instructor as act
+participant "InstructorCourseEditorPage" as view
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
+participant "CourseController" as be_ctrl <<backend controller>>
+participant ":CourseAiModerationService" as sv
+participant ":CourseCommandService" as cmd_sv
+participant ":CourseRepository" as repo
+participant ":RedisService" as redis
+participant ":BackgroundTaskQueue" as queue
+database Database as db
+
+act ++
+
+act -> view++: Click "Submit for Review"
+view -> fe_ctrl++: POST /InstructorCourse/ModerateCourse
+fe_ctrl -> be_ctrl++: POST /api/courses/moderate
+be_ctrl -> sv++: StartCourseModerationAsync(request, instructorId)
+sv -> sv++: UpdateCourseStatusAndClearCacheAsync(courseId, "pending", instructorId)
+sv -> cmd_sv++: UpdateCourseStatusAsync(courseId, "pending", instructorId)
+cmd_sv -> cmd_sv++: Validate course update request
+cmd_sv--
+
+alt Course Not Found
+    cmd_sv -->> sv: throw KeyNotFoundException
+    sv -->> be_ctrl: throw KeyNotFoundException
+    be_ctrl -->> fe_ctrl: Return statusCode 404
+    fe_ctrl -->> view: Return JSON (success=false, message)
+    view -->> act: Display course not found error message
+else Invalid Instructor Rights
+    cmd_sv -->> sv: throw UnauthorizedAccessException
+    sv -->> be_ctrl: throw UnauthorizedAccessException
+    be_ctrl -->> fe_ctrl: Return statusCode 403
+    fe_ctrl -->> view: Return JSON (success=false, message)
+    view -->> act: Display error message regarding invalid instructor rights
+else Invalid Course Status
+    cmd_sv -->> sv: throw BadRequestException
+    sv -->> be_ctrl: throw BadRequestException
+    be_ctrl -->> fe_ctrl: Return statusCode 400
+    fe_ctrl -->> view: Return JSON (success=false, message)
+    view -->> act: Display error message regarding invalid course status
+else Invalid Course Landing Page Fields
+    cmd_sv -->> sv: throw BadRequestException
+    sv -->> be_ctrl: throw BadRequestException
+    be_ctrl -->> fe_ctrl: Return statusCode 400
+    fe_ctrl -->> view: Return JSON (success=false, message)
+    view -->> act: Display validation error message
+else Invalid Course Curriculum
+    cmd_sv -->> sv: throw BadRequestException
+    sv -->> be_ctrl: throw BadRequestException
+    be_ctrl -->> fe_ctrl: Return statusCode 400
+    fe_ctrl -->> view: Return JSON (success=false, message)
+    view -->> act: Display curriculum validation error message
+else Video Duration Limits Exceeded
+    cmd_sv -->> sv: throw BadRequestException
+    sv -->> be_ctrl: throw BadRequestException
+    be_ctrl -->> fe_ctrl: Return statusCode 400
+    fe_ctrl -->> view: Return JSON (success=false, message)
+    view -->> act: Display error message regarding video duration limits
+else Valid course update request
+    cmd_sv -> cmd_sv++: ReactivateCourseContentAsync(courseId)
+    cmd_sv--
+    cmd_sv -> repo++: Update(course)
+    repo -->> cmd_sv--: Return result
+    cmd_sv -> repo++: SaveChangesAsync()
+    repo -> db++: Save changes to database
+    alt DbUpdateException
+        db -->> repo: throw DbUpdateException
+        repo -->> cmd_sv: throw DbUpdateException
+        cmd_sv -->> sv: throw DbUpdateException
+        sv -->> be_ctrl: throw DbUpdateException
+        be_ctrl -->> fe_ctrl: Return statusCode 500
+        fe_ctrl -->> view: Return JSON (success=false, message)
+        view -->> act: Display database transaction failure message
+    else Saved Successfully
+        db -->> repo--: Return numberOfRowsAffected
+        repo -->> cmd_sv--: Return result
+        cmd_sv -> redis++: RemoveCacheAsync(key)
+        redis -->> cmd_sv--: Return result
+        cmd_sv -->> sv--: Return result
+        
+        sv -> redis++: RemoveCacheAsync(key)
+        redis -->> sv--: Return result
+        sv --
+        
+        sv -> queue++: QueueBackgroundWorkItemAsync(workItem)
+
+        par 
+            ref over sv, db: Handle Course Moderation With AI
+        else 
+            queue -->> sv--: Return result
+            sv -->> be_ctrl--: Return result
+        
+            be_ctrl -->> fe_ctrl--: Return statusCode 200
+            fe_ctrl -->> view--: Return JSON (success=true)
+            view -->> act--: Display success message
+        end
+    end
+end
+@enduml

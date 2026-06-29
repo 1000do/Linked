@@ -15,5 +15,5 @@ public interface IReportModerationService
     Task<bool> ResolveCourseReviewReportAsync(int reportId, int resolverId, ResolveReportRequest request);
     Task<bool> ResolveLessonReviewReportAsync(int reportId, int resolverId, ResolveReportRequest request);
 
-    Task<bool> RemoveCourseAsync(int courseId, int adminId);
+    // Task<bool> RemoveCourseAsync(int courseId, int adminId);
 }
