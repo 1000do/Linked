@@ -46,15 +46,17 @@ view -> fe_ctrl++: Send GET request to /InstructorCourse
 
 fe_ctrl -> fe_ctrl++: Validate Dashboard Access
 fe_ctrl--
-' redirection should use solid arrow with thick head, you basically request that page, am I right ?
 alt Unauthenticated Access
-    fe_ctrl -> login_view++: Redirect to Login page
+    fe_ctrl -->> login_view--: Redirect to Login page
+    activate login_view
     login_view -->> act--: Display Login page
 else Instructor Profile Not Found
-    fe_ctrl -> apply_view++: Redirect to Application Form page
+    fe_ctrl -->> apply_view--: Redirect to Application Form page
+    activate apply_view
     apply_view -->> act--: Display Application Form page
 else Application Pending or Rejected
-    fe_ctrl -> status_view++: Redirect to Application Status page
+    fe_ctrl -->> status_view--: Redirect to Application Status page
+    activate status_view
     status_view -->> act--: Display Application Status page
 else Valid Dashboard Access
     fe_ctrl -> be_course_ctrl++: Send GET request to /api/courses/my-courses
