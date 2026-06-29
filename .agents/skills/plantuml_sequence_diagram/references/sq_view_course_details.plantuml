@@ -87,12 +87,14 @@ be_ctrl -> be_ctrl++: Validate actor permission to view
 be_ctrl--
 
 alt Course Not Found
-    be_ctrl -->> fe_ctrl: Return statusCode 404
-    fe_ctrl -> error_view++: Redirect to Error page
+    be_ctrl -->> fe_ctrl--: Return statusCode 404
+    fe_ctrl -->> error_view--: Redirect to Error page
+    activate error_view
     error_view -->> act--: Display Error page
 else Unauthorized Access
-    be_ctrl -->> fe_ctrl: Return statusCode 403
-    fe_ctrl -> error_view++: Redirect to Error page
+    be_ctrl -->> fe_ctrl--: Return statusCode 403
+    fe_ctrl -->> error_view--: Redirect to Error page
+    activate error_view
     error_view -->> act--: Display Error page
 else Valid Access
     be_ctrl -->> fe_ctrl--: Return statusCode 200

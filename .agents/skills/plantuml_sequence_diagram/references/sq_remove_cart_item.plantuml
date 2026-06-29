@@ -53,7 +53,8 @@ fe_ctrl -> fe_ctrl++: Validate login session
 fe_ctrl--
 
 alt Unauthenticated Access
-    fe_ctrl -> login_view++: Redirect to Login page
+    fe_ctrl -->> login_view--: Redirect to Login page
+    activate login_view
     login_view -->> act--: Display Login page
 else Valid Session
     fe_ctrl -> be_ctrl++: Send DELETE request to /api/cart/remove/{courseId}
@@ -63,7 +64,8 @@ else Valid Session
     
     alt Invalid Token
         be_ctrl -->> fe_ctrl: Return statusCode 401
-        fe_ctrl -> login_view++: Redirect to Login page
+        fe_ctrl -->> login_view--: Redirect to Login page
+        activate login_view
         login_view -->> act--: Display Login page
     else Valid Token
         be_ctrl -> sv++: Call RemoveFromCartAsync(userId, courseId)
